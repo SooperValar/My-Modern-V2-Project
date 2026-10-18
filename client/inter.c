@@ -1,5 +1,4 @@
 #include <windows.h>
-#pragma hdrstop
 #include "common.h"
 #include "inter.h"
 

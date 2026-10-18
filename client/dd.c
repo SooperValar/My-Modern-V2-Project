@@ -1,21 +1,18 @@
 #include <stdio.h>
-#include <alloc.h>
+#include <malloc.h>
 #include <fcntl.h>
 #include <io.h>
 #include <stdlib.h>
+#include <string.h>
 #include <windows.h>
 #include <windowsx.h>
 #include <process.h>
 #include <time.h>
 #include <math.h>
-#pragma hdrstop
-#define INITGUID
-#include <ddraw.h>
-#include <dsound.h>
 #include "dd.h"
 #include "common.h"
 #include "inter.h"
-#include "lpng/png.h"
+#include "pngdec.h"
 
 int tricky_flag=0;
 
@@ -25,8 +22,6 @@ char *DDERR;
 extern int do_alpha;
 extern int do_shadow;
 
-HANDLE heap=NULL;
-
 int blockcnt=0,blocktot=0,blockgc=0;
 int alphapix=0,fullpix=0;
 
@@ -34,42 +29,47 @@ unsigned short *dd_load_png(FILE *fp,int *xs,int *ys,unsigned char **alpha_ptr,i
 void display_alpha(unsigned char *alpha,int alphacnt,int xf,int yf,int effect);
 FILE *load_pnglib(int nr);
 
+// PORT: the original used HeapCreate() with a fixed maximum size of 20MB,
+// while the sprite cache limit was derived from the total physical RAM.
+// On any machine with more than a few hundred MB of RAM this ran the heap
+// dry (HEAP_GENERATE_EXCEPTIONS -> instant crash) or, with >2GB RAM, made
+// maxmem negative so free_2nd_cache() spun forever (black screen).
 void init_xalloc(void)
 {
-	heap=HeapCreate(HEAP_GENERATE_EXCEPTIONS,maxmem+4096*1024,0);
 }
 
 void *xmalloc(int size)
 {
 	char *ptr;
 
-	blockcnt++; blocktot++;
+	ptr=malloc(size);
+	if (!ptr) return NULL;
 
-	ptr=HeapAlloc(heap,0,size);
-	usedmem+=HeapSize(heap,0,ptr)+16;
+	blockcnt++; blocktot++;
+	usedmem+=(int)_msize(ptr)+16;
 
 	return ptr;
 }
 
 void xfree(void *ptr)
 {
-	blockcnt--;
-	usedmem-=HeapSize(heap,0,ptr)+16;
+	if (!ptr) return;
 
-	HeapFree(heap,0,ptr);
+	blockcnt--;
+	usedmem-=(int)_msize(ptr)+16;
+
+	free(ptr);
 }
 
 void *xcalloc(int size1,int size2)
 {
-	int size;
 	unsigned char *ptr;
 
-	size=size1*size2;
+	ptr=calloc(size1,size2);
+	if (!ptr) return NULL;
 
 	blockcnt++; blocktot++;
-
-	ptr=HeapAlloc(heap,HEAP_ZERO_MEMORY,size);
-	usedmem+=HeapSize(heap,0,ptr)+16;
+	usedmem+=(int)_msize(ptr)+16;
 
 	return ptr;
 }
@@ -91,10 +91,21 @@ int MAXX1,MAXY1;
 int RED,GREEN,BLUE;
 int RGBM=-1;
 
-LPDIRECTDRAW dd=NULL;
+// PORT: DirectDraw surfaces replaced by plain memory buffers (RGB565).
+// sur2 is the back buffer everything is drawn into, sur1 holds the last
+// presented frame (used for screenshots), suro is the sprite tile cache.
+typedef struct dd_surface {
+	unsigned short *bits;
+	int w,h,pitch;	// pitch in pixels
+} DDSURF;
 
-LPDIRECTDRAWSURFACE sur1=NULL,sur2=NULL,suro=NULL;
-LPDIRECTDRAWCLIPPER clip=NULL;
+typedef DDSURF *LPDIRECTDRAWSURFACE;
+
+static DDSURF s1,s2,so;
+LPDIRECTDRAWSURFACE sur1=&s1,sur2=&s2,suro=&so;
+
+void win_present(unsigned short *bits,int w,int h);
+int win_show(void);
 
 void *load_file(char *file);
 void dd_invalidate_cache(void);
@@ -109,505 +120,100 @@ int cachex,cachey;
 
 DWORD total,left;
 
-void dd_error(HWND hwnd,char *msg,long err);
+#define CACHE_W		1024	// sprite cache: 32 x 128 tiles of 32x32 pixels
+#define CACHE_H		4096
 
-char *get_dderr(long err)
+static int alloc_surface(DDSURF *sur,int w,int h)
 {
-	char *ptr;
-
-	switch (err) {
-		case DDERR_INVALIDOBJECT:                       ptr="INVALIDOBJECT"; break;
-		case DDERR_INVALIDPARAMS:                       ptr="INVALIDPARAMS"; break;
-		case DDERR_OUTOFMEMORY:                         ptr="OUTOFMEMORY"; break;
-		case DDERR_SURFACEBUSY:                         ptr="SURFACEBUSY"; break;
-		case DDERR_SURFACELOST:                         ptr="SURFACELOST"; break;
-		case DDERR_WASSTILLDRAWING:                 ptr="WASSTILLDRAWING"; break;
-		case DDERR_INCOMPATIBLEPRIMARY:             ptr="INCOMPATIBLEPRIMARY"; break;
-		case DDERR_INVALIDCAPS:                   ptr="INVALIDCAPS"; break;
-		case DDERR_INVALIDPIXELFORMAT:            ptr="INVALIDPIXELFORMAT"; break;
-		case DDERR_NOALPHAHW:                     ptr="NOALPHAHW"; break;
-		case DDERR_NOCOOPERATIVELEVELSET:         ptr="NOCOOPERATIVELEVELSET"; break;
-		case DDERR_NODIRECTDRAWHW:                ptr="NODIRECTDRAWHW"; break;
-		case DDERR_NOEMULATION:                   ptr="NOEMULATION"; break;
-		case DDERR_NOEXCLUSIVEMODE:               ptr="NOEXCLUSIVEMODE"; break;
-		case DDERR_NOFLIPHW:                      ptr="NOFLIPHW"; break;
-		case DDERR_NOMIPMAPHW:                    ptr="NOMIPMAPHW"; break;
-		case DDERR_NOOVERLAYHW:                   ptr="NOOVERLAYHW"; break;
-		case DDERR_NOZBUFFERHW:                   ptr="NOZBUFFERHW"; break;
-		case DDERR_OUTOFVIDEOMEMORY:              ptr="OUTOFVIDEOMEMORY"; break;
-		case DDERR_PRIMARYSURFACEALREADYEXISTS:   ptr="PRIMARYSURFACEALREADYEXISTS"; break;
-		case DDERR_UNSUPPORTEDMODE:               ptr="UNSUPPORTEDMODE"; break;
-		case DDERR_EXCEPTION:                           ptr="EXCEPTION"; break;
-		case DDERR_GENERIC:                             ptr="GENERIC"; break;
-		case DDERR_INVALIDRECT:                         ptr="INVALIDRECT"; break;
-		case DDERR_NOTFLIPPABLE:                        ptr="NOTFLIPPABLE"; break;
-		case DDERR_UNSUPPORTED:                         ptr="UNSUPPORTED"; break;
-		default:                                                ptr="Unknown Error"; break;
-	}
-	return ptr;
+	sur->bits=calloc((size_t)w*h,sizeof(unsigned short));
+	if (!sur->bits) return 0;
+	sur->w=w;
+	sur->h=h;
+	sur->pitch=w;
+	return 1;
 }
 
 void dd_clear(void)
 {
-	unsigned short *ptr;
-	int n;
-
-	ptr=dd_get_ptr(sur1);
-	if (!ptr) return;
-	if (ptr) for (n=0; n<MAXX1*MAXY1; n++) ptr[n]=0;
-	dd_release_ptr(sur1);
-
-	ptr=dd_get_ptr(sur2);
-	if (!ptr) return;
-	if (ptr) for (n=0; n<MAXX1*MAXY1; n++) ptr[n]=0;
-	dd_release_ptr(sur2);
-
-	ptr=dd_get_ptr(suro);
-	if (!ptr) return;
-	if (ptr) for (n=0; n<MAXCACHE*1024; n++) ptr[n]=0;
-	dd_release_ptr(suro);
+	memset(sur1->bits,0,(size_t)sur1->pitch*sur1->h*2);
+	memset(sur2->bits,0,(size_t)sur2->pitch*sur2->h*2);
+	memset(suro->bits,0,(size_t)suro->pitch*suro->h*2);
 }
 
-struct vtab {
-	int x,y;
-};
+int usedvidmem=1;
 
-struct vtab vtab[]= {
-	{   1024,   2048},
-	{   800,    2048},
-	{   640,    2048},
-	{   512,    2048},
-	{   1024,   1024},
-	{   800,    1024},
-	{   640,    1024},
-	{   512,    1024},
-	{   1024,   600},
-	{   800,    600},
-	{   640,    600},
-	{   512,    600},
-	{   1024,   512},
-	{   800,    512},
-	{   640,    512},
-	{   512,    512},
-	{   1024,   480},
-	{   800,    480},
-	{   640,    480},
-	{   512,    480},
-	{   1024,   256},
-	{   800,    256},
-	{   640,    256},
-	{   512,    256},
-/*	{	1024,	128	},
-	{	800,	128	},
-	{	640,	128	},
-	{	512,	128	},
-	{	1024,	64	},
-	{	800,	64	},
-	{	640,	64	},
-	{	512,	64	},
-	{	256,	64	},
-	{	128,	64	},
-	{	64,	64	} */};
-
-int usedvidmem=0;
-
-#ifndef DB_WINDOWED
 int dd_init(HWND hwnd,int x,int y)
 {
-	DDSURFACEDESC surface;
-	long ret;
-	int ysize,n;
+	(void)hwnd;
 
-	MAXX=x; MAXY=y;
+	DDERR="OK";
 
-	if ((ret=DirectDrawCreate(NULL,&dd,NULL))!=DD_OK) {
-		DDERR=get_dderr(ret);
-		return -1;
-	}
+	MAXX=MAXX1=x;
+	MAXY=MAXY1=y;
 
-	ret=dd->lpVtbl->SetCooperativeLevel(dd,hwnd,DDSCL_EXCLUSIVE|DDSCL_FULLSCREEN);
-	if (ret!=DD_OK) {
-		dd->lpVtbl->Release(dd);
-		DDERR=get_dderr(ret);
-		return -2;
-	}
-
-	ret=dd->lpVtbl->SetDisplayMode(dd,x,y,16);
-	if (ret!=DD_OK) {
-		dd->lpVtbl->Release(dd);
-		DDERR=get_dderr(ret);
-		return -3;
-	}
-
-	surface.dwSize=sizeof(surface);
-	surface.dwFlags=DDSD_ALL;
-	ret=dd->lpVtbl->GetDisplayMode(dd,&surface);
-	if (ret!=DD_OK) {
-		dd->lpVtbl->RestoreDisplayMode(dd);
-		dd->lpVtbl->Release(dd);
-		DDERR=get_dderr(ret);
-		return -4;
-	}
-
-	if (!(surface.ddpfPixelFormat.dwFlags&DDPF_RGB)) {
-		dd->lpVtbl->RestoreDisplayMode(dd);
-		dd->lpVtbl->Release(dd);
-		DDERR=get_dderr(ret);
-		return -5;
-	}
-
-	RED=surface.ddpfPixelFormat.u2.dwRBitMask;
-	GREEN=surface.ddpfPixelFormat.u3.dwGBitMask;
-	BLUE=surface.ddpfPixelFormat.u4.dwBBitMask;
-
-	if (RED==0xF800 && GREEN==0x07E0 && BLUE==0x001F) RGBM=0;
-	else if (RED==0x7C00 && GREEN==0x03E0 && BLUE==0x001F) RGBM=1;
-	else if (RED==0x001F && GREEN==0x07E0 && BLUE==0xF800) RGBM=2;
-
-	if (tricky_flag) {
-		surface.dwSize=sizeof(surface);
-		surface.dwFlags=DDSD_CAPS|DDSD_HEIGHT|DDSD_WIDTH;
-		surface.ddsCaps.dwCaps=DDSCAPS_OFFSCREENPLAIN|DDSCAPS_VIDEOMEMORY;
-		surface.dwWidth=800;
-		surface.dwHeight=600;
-
-		dd->lpVtbl->CreateSurface(dd,&surface,&suro,NULL);
-	}
-
-	memset(&surface,0,sizeof(surface));
-	surface.dwSize=sizeof(surface);
-	surface.dwFlags=DDSD_CAPS|DDSD_BACKBUFFERCOUNT;
-	surface.ddsCaps.dwCaps=DDSCAPS_PRIMARYSURFACE|DDSCAPS_FLIP|DDSCAPS_COMPLEX;
-	surface.dwBackBufferCount=1;
-
-	ret=dd->lpVtbl->CreateSurface(dd,&surface,&sur1,NULL);
-	if (ret!=DD_OK) {
-		dd->lpVtbl->RestoreDisplayMode(dd);
-		dd->lpVtbl->Release(dd);
-		DDERR=get_dderr(ret);
-		return -6;
-	}
-
-	surface.dwSize=sizeof(surface);
-	surface.dwFlags=DDSD_CAPS;
-	surface.ddsCaps.dwCaps=DDSCAPS_BACKBUFFER;
-	ret=sur1->lpVtbl->GetAttachedSurface(sur1,&surface.ddsCaps,&sur2);
-	if (ret!=DD_OK) {
-		sur1->lpVtbl->Release(sur1);
-		dd->lpVtbl->RestoreDisplayMode(dd);
-		dd->lpVtbl->Release(dd);
-		DDERR=get_dderr(ret);
-		return -7;
-	}
-
-	if (tricky_flag) {
-		suro->lpVtbl->Release(suro);
-	}
-
-	surface.dwSize=sizeof(surface);
-	surface.dwFlags=DDSD_PITCH|DDSD_HEIGHT;
-	ret=sur1->lpVtbl->GetSurfaceDesc(sur1,&surface);
-	if (ret!=DD_OK) {
-		sur1->lpVtbl->Release(sur1);
-		dd->lpVtbl->RestoreDisplayMode(dd);
-		dd->lpVtbl->Release(dd);
-		DDERR=get_dderr(ret);
-		return -8;
-	}
-	MAXX1=surface.u1.lPitch/2;
-	MAXY1=surface.dwHeight;
-	MAXX=MAXX1;
-	MAXY=MAXY1;
-
-	surface.dwSize=sizeof(surface);
-	surface.dwFlags=DDSD_CAPS;
-	ret=sur1->lpVtbl->GetSurfaceDesc(sur2,&surface);
-	if (ret!=DD_OK) {
-		sur1->lpVtbl->Release(sur1);
-		dd->lpVtbl->RestoreDisplayMode(dd);
-		dd->lpVtbl->Release(dd);
-		DDERR=get_dderr(ret);
-		return -108;
-	}
-	usedvidmem=surface.ddsCaps.dwCaps&DDSCAPS_VIDEOMEMORY;
-
-	// trying some combinations
-	if (usedvidmem) {
-		for (n=0; n<sizeof(vtab)/sizeof(struct vtab); n++) {
-			surface.dwSize=sizeof(surface);
-			surface.dwFlags=DDSD_CAPS|DDSD_HEIGHT|DDSD_WIDTH;
-			surface.ddsCaps.dwCaps=DDSCAPS_OFFSCREENPLAIN|DDSCAPS_VIDEOMEMORY;
-			surface.dwWidth=vtab[n].x;
-			surface.dwHeight=vtab[n].y;
-
-			ret=dd->lpVtbl->CreateSurface(dd,&surface,&suro,NULL);
-			if (ret==DD_OK)	break;
-		}
-	} else ret=!DD_OK;
-
-	if (ret!=DD_OK) {
-		// trying some combinations
-		for (n=0; n<sizeof(vtab)/sizeof(struct vtab); n++) {
-			surface.dwSize=sizeof(surface);
-			surface.dwFlags=DDSD_CAPS|DDSD_HEIGHT|DDSD_WIDTH;
-			surface.ddsCaps.dwCaps=DDSCAPS_OFFSCREENPLAIN;
-			surface.dwWidth=vtab[n].x;
-			surface.dwHeight=vtab[n].y;
-
-			ret=dd->lpVtbl->CreateSurface(dd,&surface,&suro,NULL);
-			if (ret==DD_OK)	break;
-		}
-		if (ret!=DD_OK) {
-			DDERR=get_dderr(ret);
-			return -9;
-		}
-	}
-
-	surface.dwSize=sizeof(surface);
-	surface.dwFlags=DDSD_PITCH|DDSD_CAPS|DDSD_WIDTH;
-	ret=suro->lpVtbl->GetSurfaceDesc(suro,&surface);
-	if (ret!=DD_OK) {
-		sur1->lpVtbl->Release(sur1);
-		dd->lpVtbl->RestoreDisplayMode(dd);
-		dd->lpVtbl->Release(dd);
-		DDERR=get_dderr(ret);
-		return -10;
-	}
-	MAXXOVER=surface.u1.lPitch/2;		// God, I hate DirectDraw!! It sucks!!
-	ysize=surface.dwHeight;			// Absolutely everying seems to be variable.
-
-	if (!(surface.ddsCaps.dwCaps&DDSCAPS_VIDEOMEMORY)) {
-		xlog(0,"Could not allocate sprite cache (not enough video memory).");
-		xlog(0,"Performance will suffer severely.");
-	}
-
-	cachex=MAXXOVER/TILE;
-	cachey=ysize/TILE;
-
-	MAXCACHE=min(65535,cachex*cachey);
-
-	dd_clear();
-
-	return 0;
-}
-
-void dd_deinit(void)
-{
-	if (sur1) {
-		sur1->lpVtbl->Release(sur1); sur1=NULL;
-	}
-	if (dd) {
-		dd->lpVtbl->RestoreDisplayMode(dd);
-		dd->lpVtbl->Release(dd);
-		dd=NULL;
-	}
-}
-#else
-int dd_init(HWND hwnd,int x,int y)
-{
-	DDSURFACEDESC surface;
-	long ret;
-	int ysize,n;
-
-	printf("DirectDrawCreate\n");
-	if ((ret=DirectDrawCreate(NULL,&dd,NULL))!=DD_OK) {
-		DDERR=get_dderr(ret); return -1;
-	}
-
-	printf("SetCooperativeLevel\n");
-	ret=dd->lpVtbl->SetCooperativeLevel(dd,hwnd,DDSCL_NORMAL);
-	if (ret!=DD_OK) {
-		DDERR=get_dderr(ret); return -2;
-	}
-
-	printf("CreateSurface\n");
-	memset(&surface,0,sizeof(surface));
-	surface.dwSize=sizeof(surface);
-	surface.dwFlags=DDSD_CAPS;
-	surface.ddsCaps.dwCaps=DDSCAPS_PRIMARYSURFACE;
-
-	ret=dd->lpVtbl->CreateSurface(dd,&surface,&sur1,NULL);
-	if (ret!=DD_OK) {
-		DDERR=get_dderr(ret); return -3;
-	}
-
-	printf("CreateSurface 2\n");
-	memset(&surface,0,sizeof(surface));
-	surface.dwSize=sizeof(surface);
-	surface.dwFlags=DDSD_CAPS|DDSD_WIDTH|DDSD_HEIGHT|DDSD_PIXELFORMAT;
-	surface.ddsCaps.dwCaps=DDSCAPS_OFFSCREENPLAIN|DDSCAPS_VIDEOMEMORY;
-	surface.dwWidth=x;
-	surface.dwHeight=y;
-
-	surface.ddpfPixelFormat.dwSize=sizeof(surface.ddpfPixelFormat);
-	surface.ddpfPixelFormat.dwFlags=DDPF_RGB;
-	surface.ddpfPixelFormat.u1.dwRGBBitCount=16;
-	surface.ddpfPixelFormat.u2.dwRBitMask=0xf800;
-	surface.ddpfPixelFormat.u3.dwGBitMask=0x07e0;
-	surface.ddpfPixelFormat.u4.dwBBitMask=0x001f;
-	surface.ddpfPixelFormat.u5.dwRGBAlphaBitMask=0;
-
-	ret=dd->lpVtbl->CreateSurface(dd,&surface,&sur2,NULL);
-	if (ret!=DD_OK) {
-		DDERR=get_dderr(ret); return -4;
-	}
-
-	printf("CreateClipper\n");
-	ret=dd->lpVtbl->CreateClipper(dd,0,&clip,NULL);
-	if (ret!=DD_OK) {
-		DDERR=get_dderr(ret); return -5;
-	}
-
-	printf("Attach Clipper to Window\n");
-	ret=clip->lpVtbl->SetHWnd(clip,0,hwnd);
-	if (ret!=DD_OK) {
-		DDERR=get_dderr(ret); return -6;
-	}
-
-	printf("Attach Clipper to Primary\n");
-	ret=sur1->lpVtbl->SetClipper(sur1,clip);
-	if (ret!=DD_OK) {
-		DDERR=get_dderr(ret); return -7;
-	}
-
-	surface.dwSize=sizeof(surface);
-	surface.dwFlags=DDSD_PITCH|DDSD_HEIGHT;
-	ret=sur2->lpVtbl->GetSurfaceDesc(sur2,&surface);
-	if (ret!=DD_OK) {
-		sur2->lpVtbl->Release(sur2);
-		dd->lpVtbl->Release(dd);
-		DDERR=get_dderr(ret);
-		return -8;
-	}
-	MAXX1=surface.u1.lPitch/2;
-	MAXY1=surface.dwHeight;
-	MAXX=MAXX1;
-	MAXY=MAXY1;
-
+	// we always work in RGB565 internally, the presenter converts as needed
 	RED=0xF800;
 	GREEN=0x07E0;
 	BLUE=0x001F;
 	RGBM=0;
 
-	for (n=0; n<sizeof(vtab)/sizeof(struct vtab); n++) {
-		surface.dwSize=sizeof(surface);
-		surface.dwFlags=DDSD_CAPS|DDSD_HEIGHT|DDSD_WIDTH|DDSD_PIXELFORMAT;
-		surface.ddsCaps.dwCaps=DDSCAPS_OFFSCREENPLAIN|DDSCAPS_VIDEOMEMORY;
-		surface.dwWidth=vtab[n].x;
-		surface.dwHeight=vtab[n].y;
-		surface.ddpfPixelFormat.dwSize=sizeof(surface.ddpfPixelFormat);
-		surface.ddpfPixelFormat.dwFlags=DDPF_RGB;
-		surface.ddpfPixelFormat.u1.dwRGBBitCount=16;
-		surface.ddpfPixelFormat.u2.dwRBitMask=0x7c00;
-		surface.ddpfPixelFormat.u3.dwGBitMask=0x03e0;
-		surface.ddpfPixelFormat.u4.dwBBitMask=0x001f;
-		surface.ddpfPixelFormat.u5.dwRGBAlphaBitMask=0;
-
-		ret=dd->lpVtbl->CreateSurface(dd,&surface,&suro,NULL);
-		if (ret==DD_OK)	break;
+	if (!alloc_surface(sur1,x,y) || !alloc_surface(sur2,x,y)) {
+		DDERR="OUTOFMEMORY (frame buffer)";
+		return -1;
 	}
-	if (ret!=DD_OK) {
-		sur1->lpVtbl->Release(sur1);
-		sur2->lpVtbl->Release(sur2);
-		dd->lpVtbl->Release(dd);
-		DDERR=get_dderr(ret);
+	if (!alloc_surface(suro,CACHE_W,CACHE_H)) {
+		DDERR="OUTOFMEMORY (sprite cache)";
 		return -9;
 	}
 
-	surface.dwSize=sizeof(surface);
-	surface.dwFlags=DDSD_PITCH|DDSD_CAPS|DDSD_WIDTH;
-	ret=suro->lpVtbl->GetSurfaceDesc(suro,&surface);
-	if (ret!=DD_OK) {
-		sur1->lpVtbl->Release(sur1);
-		sur2->lpVtbl->Release(sur2);
-		dd->lpVtbl->Release(dd);
-		DDERR=get_dderr(ret);
-		return -10;
-	}
-	MAXXOVER=surface.u1.lPitch/2;	// God, I hate DirectDraw!! It sucks!!
-	ysize=surface.dwHeight;		// Absolutely everying seems to be variable.
-
-	if (!(surface.ddsCaps.dwCaps&DDSCAPS_VIDEOMEMORY)) {
-		xlog(0,"Could not allocate sprite cache (not enough video memory).");
-		xlog(0,"Performance will suffer severely.");
-	}
-
+	MAXXOVER=suro->pitch;
 	cachex=MAXXOVER/TILE;
-	cachey=ysize/TILE;
+	cachey=suro->h/TILE;
 
 	MAXCACHE=min(65535,cachex*cachey);
+
+	dd_clear();
+
+	if (!win_show()) {
+		DDERR="could not show game window";
+		return -2;
+	}
 
 	return 0;
 }
 
 void dd_deinit(void)
 {
-	if (sur1) {
-		sur1->lpVtbl->Release(sur1); sur1=NULL;
-	}
-
-	if (dd) {
-		dd->lpVtbl->Release(dd); dd=NULL;
-	}
+	// nothing to restore any more - no display mode change happens
 }
-#endif
+
+
+
 static int locks=0;
 
 void *dd_get_ptr(LPDIRECTDRAWSURFACE sur)
 {
-	DDSURFACEDESC surface;
-	long ret;
-
-	surface.dwSize=sizeof(surface);
-	ret=sur->lpVtbl->Lock(sur,NULL,&surface,DDLOCK_SURFACEMEMORYPTR|DDLOCK_WAIT,NULL);
-	if (ret!=DD_OK) {
-		dd_error(0,"dd_get_ptr",ret);
-		return NULL;
-	}
-
+	if (!sur || !sur->bits) return NULL;
 	locks++;
-
-	return surface.lpSurface;
+	return sur->bits;
 }
 
 int dd_release_ptr(LPDIRECTDRAWSURFACE sur)
 {
-	long ret;
-
+	(void)sur;
 	locks--;
-	ret=sur->lpVtbl->Unlock(sur,NULL);
-	if (ret!=DD_OK) {
-		dd_error(0,"dd_release_ptr",ret); return -1;
-	}
-
 	return 0;
 }
 
 void *_dd_get_ptr(LPDIRECTDRAWSURFACE sur)
 {
-	DDSURFACEDESC surface;
-	long ret;
-
-	surface.dwSize=sizeof(surface);
-
-	ret=sur->lpVtbl->Lock(sur,NULL,&surface,DDLOCK_SURFACEMEMORYPTR|DDLOCK_WAIT,NULL);
-	if (ret!=DD_OK) {
-		dd_error(0,"dd_get_ptr",ret); return NULL;
-	}
-
-	return surface.lpSurface;
+	if (!sur) return NULL;
+	return sur->bits;
 }
 
 int _dd_release_ptr(LPDIRECTDRAWSURFACE sur)
 {
-	long ret;
-
-	ret=sur->lpVtbl->Unlock(sur,NULL);
-
-	if (ret!=DD_OK) {
-		dd_error(0,"dd_release_ptr",ret); return -1;
-	}
-
+	(void)sur;
 	return 0;
 }
 
@@ -684,6 +290,25 @@ void dd_showbar(int xf,int yf,int xs,int ys,unsigned short col)
 	dd_release_ptr(sur2);
 }
 
+// QoL: copy a block of rows (x1..x2-1, h lines) of the back buffer from ysrc
+// to ydst. Used to grow HUD panels by repeating one of their rows.
+void dd_copy_rows(int x1,int x2,int ysrc,int ydst,int h)
+{
+	unsigned short tmp[MODEX];
+	int y,w;
+
+	if (x1<0) x1=0;
+	if (x2>MAXX) x2=MAXX;
+	w=x2-x1;
+	if (w<=0) return;
+
+	for (y=0; y<h; y++) {
+		if (ysrc+y<0 || ysrc+y>=MAXY || ydst+y<0 || ydst+y>=MAXY) continue;
+		memcpy(tmp,sur2->bits+(ysrc+y)*sur2->pitch+x1,w*2);
+		memcpy(sur2->bits+(ydst+y)*sur2->pitch+x1,tmp,w*2);
+	}
+}
+
 void dd_showbox(int xf,int yf,int xs,int ys,unsigned short col)
 {
 	unsigned short *ptr;
@@ -708,105 +333,51 @@ void dd_showbox(int xf,int yf,int xs,int ys,unsigned short col)
 
 int dd_set_background(int color)
 {
-	DDCOLORKEY key;
-	long ret;
-
 	background=(unsigned short)color;
-	key.dwColorSpaceLowValue=color;
-	key.dwColorSpaceHighValue=color;
-
-	ret=suro->lpVtbl->SetColorKey(suro,DDCKEY_SRCBLT,&key);
-
-	if (ret!=DD_OK) {
-		dd_error(0,"dd_set_background",ret); return -1;
-	}
-
 	return 0;
 }
 
-// BLTFast compatible (fairly)
-int DBBltFast(LPDIRECTDRAWSURFACE sur1,int xt,int yt,LPDIRECTDRAWSURFACE sur2,RECT *rect)
-{
-	unsigned short *from,*to;
-	DDSURFACEDESC surface;
-	int ret,ys,xs,x;
-
-	surface.dwSize=sizeof(surface);
-	ret=sur1->lpVtbl->Lock(sur1,NULL,&surface,DDLOCK_SURFACEMEMORYPTR|DDLOCK_WAIT,NULL);
-	if (ret!=DD_OK) {
-		dd_error(0,"dd_get_ptr",ret); return ret;
-	}
-	to=surface.lpSurface;
-
-	surface.dwSize=sizeof(surface);
-	ret=sur2->lpVtbl->Lock(sur2,NULL,&surface,DDLOCK_SURFACEMEMORYPTR|DDLOCK_WAIT,NULL);
-	if (ret!=DD_OK) {
-        sur1->lpVtbl->Unlock(sur1,NULL);
-		dd_error(0,"dd_get_ptr",ret); return ret;
-	}
-	from=surface.lpSurface;
-
-	from+=rect->top*MAXXOVER+rect->left;
-	to+=yt*MAXX+xt;
-	xs=rect->right-rect->left;
-	
-	for (ys=rect->bottom-rect->top; ys; ys--) {
-		for (x=0; x<xs; x++,from++,to++) {
-			if (*from!=RED+BLUE) *to=*from;
-		}
-		from+=MAXXOVER-xs;
-		to+=MAXX-xs;
-	}
-
-	sur1->lpVtbl->Unlock(sur1,NULL);
-	sur2->lpVtbl->Unlock(sur2,NULL);
-
-	return DD_OK;
-}
-
-// copy tile nr from offscreen to x,y at surface sur
+// copy tile nr from the sprite cache to x,y at surface sur (with color key)
 int dd_copytile(int nr,int x,int y,LPDIRECTDRAWSURFACE sur,int mapcheck)
 {
-	RECT rect;
-	long ret;
-	int xs=0,ys=0,xe=0,ye=0;
+	int xs=0,ys=0,xe=0,ye=0,w,h,sx,sy,i;
+	unsigned short *from,*to,key=background;
 
 	if (!mapcheck) {
 		if (x<-31 || y<-31 || x>=MODEX || y>=MODEY)	return 0;
 
-		if (x<0) {
-			xs=-x;    x=0;
-		}
-		if (y<0) {
-			ys=-y; y=0;
-		}
+		if (x<0) { xs=-x; x=0; }
+		if (y<0) { ys=-y; y=0; }
 
 		if (x+32>=MODEX) xe=x-MODEX+32;
 		if (y+32>=MODEY) ye=y-MODEY+32;
 	} else {
 		if (x<-31 || y<170 || x>=MODEX || y>=MODEY)	return 0;
 
-		if (x<0) {
-			xs=-x;    x=0;
-		}
-		if (y<200) {
-			ys=-y+200; y=200;
-		}
+		if (x<0) { xs=-x; x=0; }
+		if (y<200) { ys=-y+200; y=200; }
 
 		if (x+32>=MODEX) xe=x-MODEX+32;
 		if (y+32>=MODEY) ye=y-MODEY+32;
 	}
 
-	rect.left=(nr%cachex)*TILE+xs;  rect.right=(nr%cachex)*TILE+TILE-xe;
-	rect.top=(nr/cachex)*TILE+ys;   rect.bottom=(nr/cachex)*TILE+TILE-ye;
+	w=TILE-xs-xe;
+	h=TILE-ys-ye;
+	if (w<=0 || h<=0) return 0;
 
+	sx=(nr%cachex)*TILE+xs;
+	sy=(nr/cachex)*TILE+ys;
 
-	//ret=DBBltFast(sur,x,y,suro,&rect);	
-	ret=sur->lpVtbl->BltFast(sur,x,y,suro,&rect,DDBLTFAST_WAIT|DDBLTFAST_SRCCOLORKEY);	
+	from=suro->bits+sx+sy*suro->pitch;
+	to=sur->bits+x+y*sur->pitch;
 
-	if (ret!=DD_OK) {
-		dd_error(0,"dd_copytile",ret); return -1;
+	while (h--) {
+		for (i=0; i<w; i++)
+			if (from[i]!=key) to[i]=from[i];
+		from+=suro->pitch;
+		to+=sur->pitch;
 	}
+
 	return 0;
 }
 
@@ -955,63 +526,12 @@ void dd_alphaeffect_magic(int nr,int str,int xpos,int ypos,int xoff,int yoff)
 	else dd_alphaeffect_magic_0(nr,str,xpos,ypos,xoff,yoff);	
 }
 
-HDC dd_getDC(LPDIRECTDRAWSURFACE sur)
-{
-	HDC hdc;
-
-	suro->lpVtbl->GetDC(sur,&hdc);
-
-	return hdc;
-}
-
-void dd_releaseDC(HDC hdc,LPDIRECTDRAWSURFACE sur)
-{
-	suro->lpVtbl->ReleaseDC(sur,hdc);
-}
-
-#ifndef DB_WINDOWED
 void dd_flip(void)
 {
-	long ret;
-
-	ret=sur1->lpVtbl->Flip(sur1,NULL,DDFLIP_WAIT);
-	if (ret!=DD_OK) {
-		dd_error(0,"dd_flip",ret);
-	}
+	// keep a copy of what is on screen (for screenshots), then present
+	memcpy(sur1->bits,sur2->bits,(size_t)sur2->pitch*sur2->h*2);
+	win_present(sur2->bits,sur2->pitch,sur2->h);
 }
-#else
-void dd_flip(void)
-{
-	RECT rect;
-
-	GetWindowRect(desk_hwnd,&rect);
-
-	// determine bounds of window in a more sensible way !!!
-	rect.bottom-=1;
-	rect.left+=1;
-	rect.right-=1;
-	rect.top+=20;
-
-	sur1->lpVtbl->Blt(sur1,&rect,sur2,NULL,DDBLT_WAIT,NULL);
-}
-#endif
-
-/* Translate direct draw error code to human readable form. */
-void dd_error(HWND hwnd,char *msg,long err)
-{
-	char *ptr;
-	HDC hdc;
-
-	ptr=get_dderr(err);
-
-	if (err!=DDERR_SURFACELOST) {
-		hdc=GetWindowDC(hwnd);
-		TextOut(hdc,10,10,msg,strlen(msg));
-		TextOut(hdc,10,30,ptr,strlen(ptr));
-		ReleaseDC(hwnd,hdc);
-	}
-}
-
 
 /* -------------
    Helper routines for dd_load_bitmap
@@ -1049,7 +569,6 @@ void *load_file(char *file)
 	return ptr;
 }
 
-#pragma argsused
 static void unload_file(void *ptr)
 {
 	//xfree(ptr);
@@ -1058,50 +577,84 @@ static void unload_file(void *ptr)
 
 /* Load a bitmap and return it's contents */
 
+// PORT: decodes the BMP ourselves instead of letting GDI convert it to the
+// (16 bit) screen format through a DirectDraw surface DC.
 void *dd_load_bitmap(char *name,int *xs,int *ys,LPDIRECTDRAWSURFACE sur)
 {
-	BITMAPINFO *info;
+	unsigned char *ptr,*bits,*row;
 	BITMAPFILEHEADER *file_hdr;
-	HDC hdc,hdcMem;
-	char *ptr,*target;
-	void *bits;
-	HBITMAP hbm;
+	BITMAPINFOHEADER *bih;
+	RGBQUAD *pal;
+	unsigned short *target;
+	int w,h,x,y,bpp,stride,topdown,r,g,b,idx;
+	unsigned int v,rm=0,gm=0,bm=0;
+
+	(void)sur;
 
 	ptr=load_file(name);
 	if (ptr==NULL) return NULL;
 
-	if (sur->lpVtbl->GetDC(sur,&hdc)!=DD_OK) {
-		unload_file(ptr); sur->lpVtbl->ReleaseDC(sur,hdc); xlog(0,"cannot get dc"); return NULL;
-	}
-
 	file_hdr=(void*)ptr;
+	if (file_hdr->bfType!=0x4D42) return NULL;	// "BM"
+
+	bih=(void*)(ptr+sizeof(BITMAPFILEHEADER));
 	bits=ptr+file_hdr->bfOffBits;
-	info=(void*)&ptr[sizeof(BITMAPFILEHEADER)];
+	pal=(RGBQUAD*)((unsigned char*)bih+bih->biSize);
 
-	*xs=info->bmiHeader.biWidth;
-	*ys=info->bmiHeader.biHeight;
+	w=bih->biWidth;
+	h=bih->biHeight;
+	topdown=h<0;
+	if (topdown) h=-h;
+	bpp=bih->biBitCount;
 
-	hdcMem=CreateCompatibleDC(hdc);
-	if (hdcMem==0) {
-		unload_file(ptr); sur->lpVtbl->ReleaseDC(sur,hdc); xlog(0,"cannot create hdcmem"); return NULL;
+	if (w<=0 || h<=0 || w>4096 || h>4096) return NULL;
+	if (bih->biCompression!=BI_RGB && !(bih->biCompression==BI_BITFIELDS && (bpp==16 || bpp==32))) {
+		xlog(0,"%s: compressed bitmaps are not supported",name);
+		return NULL;
+	}
+	if (bpp!=8 && bpp!=16 && bpp!=24 && bpp!=32) {
+		xlog(0,"%s: %d bit bitmaps are not supported",name,bpp);
+		return NULL;
 	}
 
-	hbm=CreateDIBitmap(hdc,&info->bmiHeader,CBM_INIT,bits,info,DIB_RGB_COLORS);
-	if (hbm==0) {
-		unload_file(ptr); sur->lpVtbl->ReleaseDC(sur,hdc); DeleteDC(hdcMem); xlog(0,"cannot create hbm (%d)",GetLastError()); return NULL;
+	if (bpp==16) {
+		if (bih->biCompression==BI_BITFIELDS) {
+			unsigned int *m=(unsigned int*)pal;
+			rm=m[0]; gm=m[1]; bm=m[2];
+		} else { rm=0x7C00; gm=0x03E0; bm=0x001F; }
 	}
 
-	target=xmalloc(*xs**ys*2);
+	stride=((w*bpp+31)/32)*4;
 
-	GetBitmapBits(hbm,*xs**ys*2,target);
+	target=xmalloc(w*h*2);
+	if (!target) return NULL;
 
-	DeleteObject(hbm);
+	for (y=0; y<h; y++) {
+		row=bits+(size_t)(topdown ? y : h-1-y)*stride;
+		for (x=0; x<w; x++) {
+			switch (bpp) {
+				case 8:
+					idx=row[x];
+					r=pal[idx].rgbRed; g=pal[idx].rgbGreen; b=pal[idx].rgbBlue;
+					break;
+				case 16:
+					v=row[x*2]|(row[x*2+1]<<8);
+					if (rm==0xF800) { r=(v>>8)&0xF8; g=(v>>3)&0xFC; b=(v<<3)&0xF8; }
+					else { r=(v>>7)&0xF8; g=(v>>2)&0xF8; b=(v<<3)&0xF8; }
+					break;
+				case 24:
+					b=row[x*3]; g=row[x*3+1]; r=row[x*3+2];
+					break;
+				default:
+					b=row[x*4]; g=row[x*4+1]; r=row[x*4+2];
+					break;
+			}
+			target[x+y*w]=(unsigned short)(((r>>3)<<11)|((g>>2)<<5)|(b>>3));
+		}
+	}
 
-	DeleteDC(hdcMem);
-
-	sur->lpVtbl->ReleaseDC(sur,hdc);
-
-	unload_file(ptr);
+	*xs=w;
+	*ys=h;
 
 	return target;
 }
@@ -1118,7 +671,6 @@ void *dd_load_bitmap(char *name,int *xs,int *ys,LPDIRECTDRAWSURFACE sur)
 
 #define current_tick GetTickCount()
 
-static MEMORYSTATUS memstat;
 
 struct sprtab {
 	unsigned short *image;			// null means not loaded	
@@ -1147,9 +699,12 @@ void free_2nd_cache(void)
 {
 	int n,m,old=0,tmp,t;
 
+	int freed,panic=0;
+
 	t=GetTickCount();
 
-	while (usedmem+256*1024>maxmem) {
+	while (usedmem+256*1024>maxmem && panic++<64) {
+		freed=0;
 		for (n=0; n<MAXSPRITE; n++) {
 			if (!sprtab[n].image) continue;
 			if (!sprtab[n].ticker) continue;
@@ -1183,9 +738,11 @@ void free_2nd_cache(void)
 				sprtab[n].alphacnt=0;
 				sprtab[n].ticker=0;
 				sprtab[n].avgcol=0;
+				freed++;
 			}
 
 		}
+		if (!freed) break;
 	}
 }
 
@@ -1250,7 +807,7 @@ void dd_load_sprite(int nr)
 	int xs,ys,alphacnt=0;
 	unsigned short *optr=NULL;
 	unsigned char *alpha=NULL;
-	char buf[80];
+	char buf[300];
 	FILE *fp;
 
 	if (usedmem>maxmem) free_2nd_cache();
@@ -1305,8 +862,15 @@ void dd_invalidate_cache(void)
 
 void dd_init_sprites(void)
 {
-	GlobalMemoryStatus(&memstat);
-	maxmem=max(8192*1024,memstat.dwTotalPhys-8192*1024);
+	MEMORYSTATUSEX ms;
+
+	// PORT: GlobalMemoryStatus() overflows on machines with >2GB (returns
+	// -1 / 2GB), which made maxmem garbage. Use a sane fixed budget for the
+	// decoded sprite cache instead, capped by what is actually available.
+	ms.dwLength=sizeof(ms);
+	maxmem=256*1024*1024;
+	if (GlobalMemoryStatusEx(&ms) && ms.ullAvailPhys/4<(DWORDLONG)maxmem) maxmem=(int)(ms.ullAvailPhys/4);
+	if (maxmem<32*1024*1024) maxmem=32*1024*1024;
 	maxvid=MAXCACHE;
 
 	if (!sprtab) sprtab=xcalloc(MAXSPRITE,sizeof(struct sprtab));
@@ -1319,7 +883,6 @@ void dd_init_sprites(void)
 
 int gamma=5000;
 
-#pragma argsused
 unsigned short do_effect(unsigned short val,int effect,int seed1,int seed2,int sprite)
 {
 	int r,g,b,invis=0,tmp,grey=0,infra=0,water=0,red=0,green=0;
@@ -1583,7 +1146,7 @@ int gettile(unsigned int sprite,unsigned int effect,int x,int y,int xs)
 
 	cachetab[old].visible=tile2cache(old,sprite,x,y,xs,effect);
 	cachetab[old].sprite=nr;
-	cachetab[old].ticker=random(1024)+24;
+	cachetab[old].ticker=(rand()%1024)+24;
 	cachetab[old].effect=effect;
 	sprtab[sprite].cache[(x+y*xs)*MAXEFFECT+effect]=(short)old;
 
@@ -1654,43 +1217,48 @@ void copyspritex(int nr,int xpos,int ypos,int effect)
 
 void dd_savescreen(void)
 {
-	unsigned char *ptr;
-	int n;
-	HBITMAP hbm;
-	HDC hdc;
-	unsigned char *pix;
 	static int lasttime=0;
+	HGLOBAL mem;
+	BITMAPINFOHEADER *bih;
+	unsigned char *dst;
+	unsigned short v;
+	int x,y,stride;
 
 	if (time(NULL)-lasttime<10) {
 		xlog(0,"One moment please, I'm counting my bits!");
 		return;
 	}
 
-	lasttime=time(NULL);
+	lasttime=(int)time(NULL);
 
-	if (!OpenClipboard(desk_hwnd)) return;
-	if (!EmptyClipboard()) return;
+	stride=((MODEX*3)+3)&~3;
+	mem=GlobalAlloc(GMEM_MOVEABLE,sizeof(BITMAPINFOHEADER)+stride*MODEY);
+	if (!mem) return;
+	bih=GlobalLock(mem);
+	memset(bih,0,sizeof(*bih));
+	bih->biSize=sizeof(*bih);
+	bih->biWidth=MODEX;
+	bih->biHeight=MODEY;
+	bih->biPlanes=1;
+	bih->biBitCount=24;
+	bih->biCompression=BI_RGB;
+	dst=(unsigned char*)(bih+1);
 
-	sur1->lpVtbl->GetDC(sur1,&hdc);
+	for (y=0; y<MODEY; y++) {
+		unsigned char *row=dst+(size_t)(MODEY-1-y)*stride;
+		for (x=0; x<MODEX; x++) {
+			v=sur1->bits[x+y*sur1->pitch];
+			row[x*3+0]=(unsigned char)((v&0x001F)<<3);
+			row[x*3+1]=(unsigned char)((v&0x07E0)>>3);
+			row[x*3+2]=(unsigned char)((v&0xF800)>>8);
+		}
+	}
+	GlobalUnlock(mem);
 
-	hbm=CreateCompatibleBitmap(hdc,MODEX,MODEY);
-	if (hbm==NULL) return;
-
-	sur1->lpVtbl->ReleaseDC(sur1,hdc);
-
-	pix=xmalloc(MODEX*MODEY*2);
-	ptr=dd_get_ptr(sur1);
-	if (!ptr) return;
-
-	for (n=0; n<MODEX*MODEY*2; n++)	pix[n]=ptr[n];
-
-	dd_release_ptr(sur1);
-
-	if (!SetBitmapBits(hbm,MODEX*MODEY*2,pix)) return;
-	if (!SetClipboardData(CF_BITMAP,hbm)) return;
-	if (!CloseClipboard()) return;
-
-	xfree(pix);
+	if (!OpenClipboard(desk_hwnd)) { GlobalFree(mem); return; }
+	EmptyClipboard();
+	if (!SetClipboardData(CF_DIB,mem)) GlobalFree(mem);
+	CloseClipboard();
 
 	xlog(2,"Placed screenshot in clipboard.");
 }
@@ -1709,6 +1277,8 @@ void dd_gputc(int xpos,int ypos,int font,int c)
 	// image loaded?
 	if (!sprtab[nr].image) dd_load_sprite(nr);
 	if (!sprtab[nr].image) return;
+
+	if (c<0 || xpos<0 || ypos<0 || xpos+6>MAXX || ypos+9>MAXY) return;
 
 	off=c*6;
 	tptr=dd_get_ptr(sur2);
@@ -1770,6 +1340,8 @@ void dd_putc(int xpos,int ypos,char font,int c)
 	if (!sprtab[nr].image) dd_load_sprite(nr);
 	if (!sprtab[nr].image) return;
 
+	if (c<0 || xpos<0 || ypos<0 || xpos+6>MAXX || ypos+9>MAXY) return;
+
 	off=c*6;
 	tptr=dd_get_ptr(sur2);
 	if (!tptr) return;
@@ -1812,29 +1384,8 @@ void dd_xputtext(int x,int y,int font,char *format,...)
 
 int dd_isvisible(void)
 {
-	long ret;
-
-	ret=sur1->lpVtbl->IsLost(sur1);
-	if (ret!=DD_OK) {
-		sur1->lpVtbl->Restore(sur1);
-	}
-	ret=sur2->lpVtbl->IsLost(sur2);
-	if (ret!=DD_OK) {
-		sur2->lpVtbl->Restore(sur2);
-	}
-	ret=suro->lpVtbl->IsLost(suro);
-	if (ret!=DD_OK) {
-		suro->lpVtbl->Restore(suro); dd_invalidate_cache();
-	}
-
-	ret=sur1->lpVtbl->IsLost(sur1);
-	if (ret!=DD_OK)	return 0;
-	ret=sur2->lpVtbl->IsLost(sur2);
-	if (ret!=DD_OK)	return 0;
-	ret=suro->lpVtbl->IsLost(suro);
-	if (ret!=DD_OK)	return 0;
-
-	return 1;
+	// no lost surfaces any more; just skip drawing while minimized
+	return !IsIconic(desk_hwnd);
 }
 
 void dd_show_map(unsigned short *src,int xo,int yo)
@@ -1941,6 +1492,7 @@ void display_alpha(unsigned char *alpha,int alphacnt,int xf,int yf,int effect)
 
 	do_rgb8_effect(&r1,&g1,&b1,effect);
 
+	if (x+xf<0 || x+xf>=MAXX || y+yf<0 || y+yf>=MAXY) continue;
 	pos=x+xf+y*MAXX+yf*MAXX;
 	val=dst[pos];
 
@@ -1976,7 +1528,9 @@ void display_png(unsigned char *png,int xf,int yf,int xs,int ys)
     if (!dst) return;
 
     for (y=0; y<ys; y++) {
+	if (y+yf<0 || y+yf>=MAXY) continue;
 	for (x=0; x<xs; x++) {
+	    if (x+xf<0 || x+xf>=MAXX) continue;
 	    r1=png[x*4+y*xs*4+0];
 	    g1=png[x*4+y*xs*4+1];
 	    b1=png[x*4+y*xs*4+2];
@@ -2013,71 +1567,35 @@ void display_png(unsigned char *png,int xf,int yf,int xs,int ys)
 // the alpha information may be used, but doesnt need to - it just looks better...
 unsigned short *dd_load_png(FILE *fp,int *xs,int *ys,unsigned char **alpha_ptr,int *alphacnt_ptr)
 {
-    int x,y,n,m,alphacnt=0,alphamax=0,noalpha=0,mul=4,tmp,r,g,b,a;
-    unsigned char **row,*alpha=NULL;
+    int x,y,n,m,alphacnt=0,alphamax=0,noalpha=0,mul=4,r,g,b,a;
+    unsigned char *pix,*p,*alpha=NULL;
     unsigned short *bmp;
-    png_structp png_ptr;
-    png_infop info_ptr;
-    png_infop end_info;
 
-    png_ptr=png_create_read_struct(PNG_LIBPNG_VER_STRING,NULL,NULL,NULL);
-    if (!png_ptr) {
-	xlog(0,"create read"); return 0;
-    }
-
-    info_ptr=png_create_info_struct(png_ptr);
-    if (!info_ptr) {
-	png_destroy_read_struct(&png_ptr,(png_infopp)NULL,(png_infopp)NULL); xlog(0,"create info1"); return 0;
-    }
-
-    end_info=png_create_info_struct(png_ptr);
-    if (!end_info) {
-	png_destroy_read_struct(&png_ptr,&info_ptr,(png_infopp)NULL); xlog(0,"create info2"); return 0;
-    }
-
-    png_init_io(png_ptr,fp);
-
-    png_read_png(png_ptr,info_ptr,PNG_TRANSFORM_PACKING,NULL);
-
-    row=png_get_rows(png_ptr,info_ptr);
-    if (!row) {
-	png_destroy_read_struct(&png_ptr,&info_ptr,(png_infopp)NULL); xlog(0,"read row"); return 0;
-    }
-
-    x=png_get_image_width(png_ptr,info_ptr);
-    y=png_get_image_height(png_ptr,info_ptr);
-
-    tmp=png_get_rowbytes(png_ptr,info_ptr);
-    if (tmp==x*3) { noalpha=1; mul=3; }
-    else if (tmp!=x*4) {
-	png_destroy_read_struct(&png_ptr,&info_ptr,(png_infopp)NULL); xlog(0,"rowbytes!=x*4 (%d)",tmp); return 0;
-    }
-    if (png_get_bit_depth(png_ptr,info_ptr)!=8) {
-	png_destroy_read_struct(&png_ptr,&info_ptr,(png_infopp)NULL); xlog(0,"bit depth!=8"); return 0;
-    }
-    if (png_get_channels(png_ptr, info_ptr)!=mul) {
-	png_destroy_read_struct(&png_ptr,&info_ptr,(png_infopp)NULL); xlog(0,"channels!=mul"); return 0;
-    }
+    pix=png_decode(fp,&x,&y,&mul);
+    if (!pix) { xlog(0,"png decode failed"); return 0; }
+    if (mul==3) noalpha=1;
 
     bmp=xmalloc(x*y*2);
+    if (!bmp) { free(pix); return 0; }
 
     for (n=0; n<y; n++) {
 	for (m=0; m<x; m++) {
+	    p=pix+((size_t)n*x+m)*mul;
 	    if (noalpha) {
-		if (row[n][m*mul]>250 && row[n][m*mul+1]<5 && row[n][m*mul+2]>250) a=0;
+		if (p[0]>250 && p[1]<5 && p[2]>250) a=0;
 		else a=255;
-	    } else a=row[n][m*mul+3];
+	    } else a=p[3];
 
 	    // this gets the rgb info from the png and scales the colors to their original value. 3dsmax will mix the image
 	    // color and the background color AND supply alpha information, which is just plain wrong...
 	    if (a) {
-		    r=min(255,row[n][m*mul+0]*255/a);
-		    g=min(255,row[n][m*mul+1]*255/a);
-		    b=min(255,row[n][m*mul+2]*255/a);
+		    r=min(255,p[0]*255/a);
+		    g=min(255,p[1]*255/a);
+		    b=min(255,p[2]*255/a);
 	    } else {
-		    r=row[n][m*mul+0];
-		    g=row[n][m*mul+1];
-		    b=row[n][m*mul+2];
+		    r=p[0];
+		    g=p[1];
+		    b=p[2];
 	    }
 
 	    if ((do_alpha==0 && a<64) ||
@@ -2089,7 +1607,9 @@ unsigned short *dd_load_png(FILE *fp,int *xs,int *ys,unsigned char **alpha_ptr,i
 	    if (!noalpha && ((do_alpha==1 && a>63 && a<192) || (do_alpha==2 && a!=0 && a!=255))) {
 		if (alphacnt>=alphamax-8) {
 		    alphamax+=32;
-		    alpha=realloc(alpha,alphamax);
+		    p=realloc(alpha,alphamax);
+		    if (!p) break;
+		    alpha=p;
 		}
 		*(unsigned char*)(alpha+alphacnt)=(unsigned char)m; alphacnt+=1;
 		*(unsigned char*)(alpha+alphacnt)=(unsigned char)n; alphacnt+=1;
@@ -2103,9 +1623,9 @@ unsigned short *dd_load_png(FILE *fp,int *xs,int *ys,unsigned char **alpha_ptr,i
 	}
     }
 
-    if (alpha) alpha=realloc(alpha,alphacnt);
+    if (alpha && alphacnt) { p=realloc(alpha,alphacnt); if (p) alpha=p; }
 
-    png_destroy_read_struct(&png_ptr,&info_ptr,(png_infopp)NULL);
+    free(pix);
 
     *alpha_ptr=alpha;
     *alphacnt_ptr=alphacnt;

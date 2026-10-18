@@ -1,0 +1,100 @@
+// client.rc - resources for the ported client (standard RC format).
+// The original MERC.RC is in Borland Resource Workshop format; the icon and
+// cursors that were embedded in it as hex blocks are now separate files.
+#include <windows.h>
+#include "merc.rh"
+
+CURSOR_1 CURSOR "MOUSE.CUR"
+CURSOR_2 CURSOR "res_cursor_2.cur"
+CURSOR_3 CURSOR "res_cursor_3.cur"
+CURSOR_4 CURSOR "res_cursor_4.cur"
+CURSOR_5 CURSOR "res_cursor_5.cur"
+CURSOR_6 CURSOR "res_cursor_6.cur"
+CURSOR_7 CURSOR "res_cursor_7.cur"
+CURSOR_8 CURSOR "res_cursor_8.cur"
+CURSOR_9 CURSOR "res_cursor_9.cur"
+
+ICON_1 ICON "res_icon_1.ico"
+
+1 24 "client.manifest"
+
+OPTIONS DIALOG 6, 17, 251, 251
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX
+CAPTION "Game Setup"
+FONT 8, "MS Shell Dlg"
+{
+ DEFPUSHBUTTON "&Quit", IDCANCEL, 208, 228, 36, 14
+ EDITTEXT IDC_CNAME, 36, 32, 68, 12, WS_BORDER | WS_TABSTOP
+ AUTOCHECKBOX "Sound Effects", IDC_DOSOUND, 108, 212, 60, 12
+ LTEXT "STATUS: OK", IDC_STATUS, 16, 96, 152, 24
+ DEFPUSHBUTTON "Create New Account", IDC_NEW, 152, 8, 88, 14
+ LTEXT "Name:", -1, 12, 34, 24, 8
+ CONTROL "", -1, "static", SS_BLACKFRAME | WS_CHILD | WS_VISIBLE, 4, 4, 244, 244
+ LTEXT "New Account", IDC_RNAME, 12, 12, 136, 8
+ DEFPUSHBUTTON "&Load", IDC_LOAD, 48, 228, 36, 14
+ DEFPUSHBUTTON "S&ave", IDC_SAVE, 88, 228, 36, 14
+ DEFPUSHBUTTON "&Help", IDC_HELP, 168, 228, 36, 14
+ DEFPUSHBUTTON "&News", IDC_NEWS, 128, 228, 36, 14
+ DEFPUSHBUTTON "&Start", IDOK, 8, 228, 36, 14
+ LTEXT "Description:", -1, 12, 52, 44, 8
+ EDITTEXT IDC_DESC, 12, 64, 229, 20, ES_MULTILINE | WS_BORDER | WS_TABSTOP
+ AUTORADIOBUTTON "Male", IDC_MALE, 108, 168, 52, 12
+ AUTORADIOBUTTON "Female", IDC_FEMALE, 108, 180, 52, 12
+ AUTORADIOBUTTON "Templar", IDC_TEMP, 176, 96, 60, 12
+ AUTORADIOBUTTON "Mercenary", IDC_MERC, 176, 108, 60, 12
+ AUTORADIOBUTTON "Harakim", IDC_HARA, 176, 120, 60, 12
+ AUTORADIOBUTTON "Seyan'Du", IDC_SEY, 176, 136, 60, 12
+ CONTROL "", -1, "static", SS_BLACKFRAME | WS_CHILD | WS_VISIBLE, 12, 92, 160, 68
+ CONTROL "Full Alpha", IDC_FULLALPHA, "BUTTON", BS_AUTORADIOBUTTON, 20, 172, 52, 12
+ CONTROL "Partial Alpha", IDC_PARTIALALPHA, "BUTTON", BS_AUTORADIOBUTTON, 20, 184, 52, 12
+ CONTROL "No Alpha", IDC_NOALPHA, "BUTTON", BS_AUTORADIOBUTTON, 20, 196, 52, 12
+ CONTROL "Arch-Templar", IDC_ARCHTEMPLAR, "BUTTON", BS_AUTORADIOBUTTON, 176, 152, 60, 12
+ CONTROL "Arch-Harakim", IDC_ARCHHARAKIM, "BUTTON", BS_AUTORADIOBUTTON, 176, 164, 60, 12
+ CONTROL "Warrior", IDC_WARRIOR, "BUTTON", BS_AUTORADIOBUTTON, 176, 180, 60, 12
+ CONTROL "Sorcerer", IDC_SORCERER, "BUTTON", BS_AUTORADIOBUTTON, 176, 192, 60, 12
+ LTEXT "", IDC_MOD, 16, 132, 152, 24
+ LTEXT "Password:", -1, 128, 34, 38, 8
+ EDITTEXT IDC_PASS, 170, 32, 68, 12, ES_PASSWORD | WS_BORDER | WS_TABSTOP
+ CHECKBOX "Shadows", IDC_DOSHADOW, 20, 212, 60, 12, BS_AUTOCHECKBOX | WS_TABSTOP
+}
+1 VERSIONINFO 
+FILEVERSION 1, 0, 0, 0
+PRODUCTVERSION 1, 0, 0, 0
+FILEFLAGSMASK VS_FFI_FILEFLAGSMASK
+FILEOS VOS_NT_WINDOWS32
+FILETYPE VFT_APP
+{
+ BLOCK "StringFileInfo"
+ {
+  BLOCK "040904E4"
+  {
+   VALUE "CompanyName", "Daniel Brockhaus\000"
+   VALUE "Author", "Daniel Brockhaus\000"
+   VALUE "FileDescription", "Mercenaries of Astonia\000"
+   VALUE "FileVersion", "2.14.00\000"
+   VALUE "InternalName", "MERC\000"
+   VALUE "LegalCopyright", "Copyright \251 D.Brockhaus 1997-2001\000"
+   VALUE "OriginalFilename", "MERC.EXE\000"
+   VALUE "ProductName", "Mercenaries of Astonia\000"
+   VALUE "ProductVersion", "2.14.00\000"
+   VALUE "Comments", "Beta Test Version\000"
+  }
+
+  BLOCK "040704B0"
+  {
+   VALUE "CompanyName", "Daniel Brockhaus\000"
+   VALUE "Author", "Daniel Brockhaus\000"
+   VALUE "FileDescription", "Mercenaries of Astonia\000"
+   VALUE "FileVersion", "2.14.00\000"
+   VALUE "InternalName", "MERC\000"
+   VALUE "LegalCopyright", "Copyright \251 D.Brockhaus 1997-2001\000"
+   VALUE "OriginalFilename", "MERC.EXE\000"
+   VALUE "ProductName", "Mercenaries of Astonia\000"
+   VALUE "ProductVersion", "2.14.00\000"
+   VALUE "Comments", "Beta Test Version\000"
+  }
+
+ }
+
+}
+

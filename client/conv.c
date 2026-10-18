@@ -3,8 +3,7 @@
 #include <stdlib.h>
 #include <io.h>
 #include <fcntl.h>
-#include <dir.h>
-#pragma hdrstop
+#include <direct.h>
 #include "dd.h"
 #include "common.h"
 #include "inter.h"
@@ -51,7 +50,7 @@ void convert(HWND hwnd)
 			continue;
 		}
 
-		len=filelength(handle);
+		len=_filelength(handle);
 		ptr=malloc(len);
 		read(handle,ptr,len);
 		close(handle);
@@ -117,7 +116,7 @@ void conv_init(void)
 		exit(1);
 	}
 
-	len=filelength(hidx);
+	len=_filelength(hidx);
 	gfx=xmalloc(len);
 	if (!gfx) {
 		dd_deinit();
@@ -125,7 +124,7 @@ void conv_init(void)
 		MessageBox(desk_hwnd,"Error allocating menory!","Error",MB_ICONSTOP|MB_OK);
 		exit(1);
 	}
-	if (len<sizeof(struct gfx)*40000) {
+	if (len<(int)sizeof(struct gfx)*40000) {
 		dd_deinit();
 		save_options();
 		MessageBox(desk_hwnd,"Graphics file gx00.idx corrupt!","Error",MB_ICONSTOP|MB_OK);
@@ -137,7 +136,7 @@ void conv_init(void)
 	sprintf(file,"%sgx00.dat",path);
 
 	hdat=open(file,O_RDONLY|O_BINARY);
-	if (hidx==-1) {
+	if (hdat==-1) {
 		dd_deinit();
 		save_options();
 		MessageBox(desk_hwnd,"Graphics file gx00.dat not found!","Error",MB_ICONSTOP|MB_OK);
@@ -199,7 +198,8 @@ int create_pnglib(HWND hwnd)
 	int n,nr,hidx,hpng,hin,off;
 	char *buf;
 	int *idx;
-	struct ffblk ff;
+	struct _finddata_t ff;
+	intptr_t fh;
 
 	hidx=open("pnglib.idx",O_WRONLY|O_TRUNC|O_CREAT|O_BINARY,0666);
 	hpng=open("pnglib.dat",O_WRONLY|O_TRUNC|O_CREAT|O_BINARY,0666);
@@ -214,14 +214,15 @@ int create_pnglib(HWND hwnd)
 
 	write(hpng,"SCAR",4); off=4;
 
-	chdir("gfx");
-	if (!findfirst("*.png",&ff,FA_ARCH)) do {
-		nr=atoi(ff.ff_name);
+	_chdir("gfx");
+	fh=_findfirst("*.png",&ff);
+	if (fh!=-1) do {
+		nr=atoi(ff.name);
 		if (nr<0 || nr>=MAXSPRITE) continue;
 		sprintf(buf,"STATUS: Preparing pnglib.dat: %d",nr);
 		SetDlgItemText(hwnd,IDC_STATUS,buf);
 
-		hin=open(ff.ff_name,O_RDONLY|O_BINARY);
+		hin=open(ff.name,O_RDONLY|O_BINARY);
 		if (hin==-1) continue;
 
 		n=read(hin,buf,1024*256);
@@ -233,8 +234,9 @@ int create_pnglib(HWND hwnd)
 		off+=n;
 
 		//printf("off=%d, nr=%d (%d)\n",off,nr,idx[nr]);
-	} while (!findnext(&ff));
-	chdir("..");
+	} while (!_findnext(fh,&ff));
+	if (fh!=-1) _findclose(fh);
+	_chdir("..");
 
 	for (n=0; n<MAXSPRITE; n++) {
             write(hidx,idx+n,sizeof(int));
@@ -252,7 +254,7 @@ static int *idx=NULL;
 int init_pnglib(void)
 {
 	int hidx,n;
-	char file[80];
+	char file[300];
 
 	idx=calloc(MAXSPRITE,sizeof(int));
 
@@ -266,8 +268,9 @@ int init_pnglib(void)
 	}
 
 	for (n=0; n<MAXSPRITE; n++) {
-			if (read(hidx,idx+n,sizeof(int))<sizeof(int)) break;
+			if (read(hidx,idx+n,sizeof(int))<(int)sizeof(int)) break;
 	}
+	close(hidx);
 	/*if (n<MAXSPRITE) {
 		dd_deinit();
 		save_options();

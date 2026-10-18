@@ -1,56 +1,28 @@
 
 #include <stdio.h>
-#include <alloc.h>
+#include <malloc.h>
 #include <fcntl.h>
 #include <io.h>
 #include <stdlib.h>
 #include <windows.h>
 #include <windowsx.h>
-#include "ddraw.h"
+#include <commdlg.h>
+#include <shellapi.h>
 #include <process.h>
 #include <time.h>
-#include <dir.h>
-#pragma hdrstop
+#include <direct.h>
 #include "dd.h"
 #include "common.h"
 #include "inter.h"
 #include "merc.rh"
 
-/*
- * Borland and Microsoft disagree on the size of the OPENFILENAME structure.
- * The following header is excerpted from "win.h" as included with
- * Jacob Navia's * lcc32 compiler.
- */
-
-typedef struct tagOFN {
-	DWORD lStructSize;
-	HWND hwndOwner;
-	HINSTANCE hInstance;
-	LPCTSTR lpstrFilter;
-	LPTSTR lpstrCustomFilter;
-	DWORD nMaxCustFilter;
-	DWORD nFilterIndex;
-	LPTSTR lpstrFile;
-	DWORD nMaxFile;
-	LPTSTR lpstrFileTitle;
-	DWORD nMaxFileTitle;
-	LPCTSTR lpstrInitialDir;
-	LPCTSTR lpstrTitle;
-	DWORD Flags;
-	WORD nFileOffset;
-	WORD nFileExtension;
-	LPCTSTR lpstrDefExt;
-	DWORD lCustData;
-	LPOFNHOOKPROC lpfnHook;
-	LPCTSTR lpTemplateName;
-} LCC_OPENFILENAME,*LCC_LPOPENFILENAME;
+#define WM_LOGIN_DONE	(WM_APP+1)
 
 extern char history[20][128];
 extern int hist_len[20];
 extern char words[2048][40];
 extern char passwd[15];
 
-extern void pascal (*ctl3don)(HANDLE,short int);
 extern HBRUSH dlg_back;
 extern int dlg_col,dlg_fcol;
 
@@ -241,50 +213,12 @@ void save_char(HWND hwnd,char *name)
 	MessageBox(hwnd,buf,"Done",MB_OK);
 }
 
-int isNT(void)
-{
-	OSVERSIONINFO o;
-	o.dwOSVersionInfoSize=sizeof(o);
-
-	GetVersionEx(&o);
-
-	if (o.dwPlatformId==VER_PLATFORM_WIN32_NT) return 1;
-	else return 0;
-}
-
-struct mtp {
-	DWORD        lStructSize;
-	HWND         hwndOwner;
-	HINSTANCE    hInstance;
-	LPCSTR       lpstrFilter;
-	LPSTR        lpstrCustomFilter;
-	DWORD        nMaxCustFilter;
-	DWORD        nFilterIndex;
-	LPSTR        lpstrFile;
-	DWORD        nMaxFile;
-	LPSTR        lpstrFileTitle;
-	DWORD        nMaxFileTitle;
-	LPCSTR       lpstrInitialDir;
-	LPCSTR       lpstrTitle;
-	DWORD        Flags;
-	WORD         nFileOffset;
-	WORD         nFileExtension;
-	LPCSTR       lpstrDefExt;
-	LPARAM       lCustData;
-	LPOFNHOOKPROC lpfnHook;
-	LPCSTR       lpTemplateName;
-};
 
 int load_dialog(HWND hwnd,char *name)
 {
-	LCC_OPENFILENAME ofn;
+	OPENFILENAME ofn;
         char filter[]={MNAME" Character Save\0*.moa\0\0"};
 	char buf[256]={"\0"};
-	int disk,err;
-	char dir[256],dir2[300];
-
-	disk=getdisk();
-	getcurdir(0,dir);
 
 	memset(&ofn,0,sizeof(ofn));
 	ofn.lStructSize=sizeof(ofn);
@@ -297,38 +231,25 @@ int load_dialog(HWND hwnd,char *name)
 	ofn.nMaxFile=256;
 	ofn.lpstrInitialDir=NULL;
 	ofn.lpstrTitle="Load Character";
-	ofn.Flags=OFN_FILEMUSTEXIST|OFN_PATHMUSTEXIST;
+	ofn.Flags=OFN_FILEMUSTEXIST|OFN_PATHMUSTEXIST|OFN_NOCHANGEDIR;
 	ofn.nFileOffset=0;
 	ofn.nFileExtension=0;
 	ofn.lpstrDefExt="moa";
-	ofn.lCustData=NULL;
+	ofn.lCustData=0;
 	ofn.lpfnHook=NULL;
 
-	if (!GetOpenFileName((OPENFILENAME *) &ofn)) {
-		setdisk(disk);
-		chdir(dir);
-		return 0;
-	}
+	if (!GetOpenFileName(&ofn)) return 0;
 
 	strcpy(name,buf);
-
-	setdisk(disk);
-	sprintf(dir2,"\\%s",dir);
-	chdir(dir2);
 
 	return 1;
 }
 
 int save_dialog(HWND hwnd,char *name)
 {
-	LCC_OPENFILENAME ofn;
+	OPENFILENAME ofn;
         char filter[]={MNAME" Character Save\0*.moa\0\0"};
 	char buf[256];
-	int disk;
-	char dir[256],dir2[300];
-
-	disk=getdisk();
-	getcurdir(0,dir);
 
 	strcpy(buf,okey.name);
 	strcat(buf,".moa");
@@ -344,24 +265,16 @@ int save_dialog(HWND hwnd,char *name)
 	ofn.nMaxFile=256;
 	ofn.lpstrInitialDir=NULL;
 	ofn.lpstrTitle="Save Character as";
-	ofn.Flags=OFN_OVERWRITEPROMPT|OFN_PATHMUSTEXIST|OFN_HIDEREADONLY;
+	ofn.Flags=OFN_OVERWRITEPROMPT|OFN_PATHMUSTEXIST|OFN_HIDEREADONLY|OFN_NOCHANGEDIR;
 	ofn.nFileOffset=0;
 	ofn.nFileExtension=0;
 	ofn.lpstrDefExt="moa";
-	ofn.lCustData=NULL;
+	ofn.lCustData=0;
 	ofn.lpfnHook=NULL;
 
-	if (!GetSaveFileName((OPENFILENAME *) &ofn)) {
-		setdisk(disk);
-		chdir(dir);
-		return 0;
-	}
+	if (!GetSaveFileName(&ofn)) return 0;
 
 	strcpy(name,buf);
-
-	setdisk(disk);
-	sprintf(dir2,"\\%s",dir);
-	chdir(dir2);
 
 	return 1;
 }
@@ -388,23 +301,26 @@ void update_alpha(HWND hwnd)
 	if (do_alpha==0) CheckRadioButton(hwnd,IDC_FULLALPHA,IDC_NOALPHA,IDC_NOALPHA);
 }
 
-#pragma argsused
-APIENTRY OptionsProc(HWND hwnd,UINT message,WPARAM wParam,LPARAM lParam)
+INT_PTR CALLBACK OptionsProc(HWND hwnd,UINT message,WPARAM wParam,LPARAM lParam)
 {
 	int n;
 	char buf[256];
 	static int done=0;
-	CREATESTRUCT *cs;
+
+	(void)lParam;
 
 	switch (message) {
-		case WM_CTLCOLOR:
+		case WM_LOGIN_DONE:	// posted by so_connect() once logged in
+			EndDialog(hwnd,0);
+			return 1;
+
 		case WM_CTLCOLORDLG:
 		case WM_CTLCOLORSTATIC:
 		case WM_CTLCOLORBTN:
 		case WM_CTLCOLORSCROLLBAR:
 			SetTextColor((HDC) wParam,dlg_fcol);
 			SetBkColor((HDC) wParam,dlg_col);
-			return(int) dlg_back;
+			return(INT_PTR) dlg_back;
 
 		case WM_CLOSE:			
 			//if (IsDlgButtonChecked(hwnd,IDC_DOMUSIC)) domusic=1;
@@ -447,10 +363,10 @@ APIENTRY OptionsProc(HWND hwnd,UINT message,WPARAM wParam,LPARAM lParam)
 					GetDlgItemText(hwnd,IDC_DESC,pdata.desc,158);
 					GetDlgItemText(hwnd,IDC_PASS,passwd,15);
 
-					randomize();
+					srand((unsigned)time(NULL));
 
-					if (sex==0) sex=random(2)+1;
-					if (race==0) race=random(4)+1;
+					if (sex==0) sex=rand()%2+1;
+					if (race==0) race=rand()%4+1;
 
 					if (sex==1) {
 						if (race==1) race=3;
@@ -466,8 +382,8 @@ APIENTRY OptionsProc(HWND hwnd,UINT message,WPARAM wParam,LPARAM lParam)
 
 					save_options();
 					{
-						void so_connect(void*);
-						_beginthread(so_connect,16384,(void*)hwnd);
+						void so_connect(HWND);
+						_beginthread((void (__cdecl *)(void*))so_connect,65536,(void*)hwnd);
 					}
 
 					return 1;
@@ -630,7 +546,6 @@ APIENTRY OptionsProc(HWND hwnd,UINT message,WPARAM wParam,LPARAM lParam)
 					return 1;
 			}
 		case WM_INITDIALOG:
-			if (ctl3don) ctl3don(hwnd,0xfffe);
 
 			//CheckDlgButton(hwnd,IDC_DOMUSIC,opmusic);
 			CheckDlgButton(hwnd,IDC_DOSOUND,opsound);
@@ -662,7 +577,9 @@ void options(void)
 {
 	opmusic=domusic; opsound=dosound; opshadow=do_shadow;
 
-	if (DialogBox(hinst,MAKEINTRESOURCE(OPTIONS),desk_hwnd,OptionsProc)==-1) {
+	// PORT: no owner, so the dialog gets its own taskbar button
+	// (the main window stays hidden until login)
+	if (DialogBox(hinst,MAKEINTRESOURCE(OPTIONS),NULL,OptionsProc)==-1) {
 		MessageBeep(MB_ICONEXCLAMATION);
 	}
 	save_options();

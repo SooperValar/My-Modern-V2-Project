@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include <alloc.h>
+#include <malloc.h>
 #include <fcntl.h>
 #include <io.h>
 #include <stdlib.h>
@@ -7,8 +7,8 @@
 #include <windowsx.h>
 #include <process.h>
 #include <errno.h>
-#pragma hdrstop
-#include "dsound.h"
+#include <mmsystem.h>
+#include <dsound.h>
 
 #include "common.h"
 #include "inter.h"
@@ -30,11 +30,19 @@ LPDIRECTSOUNDBUFFER pb=NULL;
 LPDIRECTSOUNDBUFFER sb[10];
 static unsigned char used[10]={0,0,0,0,0,0,0,0,0,0};
 static int cpos[10];
-static int shandle[10];
+static int shandle[10]={-1,-1,-1,-1,-1,-1,-1,-1,-1,-1};
 static int start[10]={0,0,0,0,0,0,0,0,0,0};
 static int volume[10];
 static int pan[10];
 char sname[10][256];
+
+// PORT: the old code closed the same file twice / closed -1 after a sound
+// finished. Borland's CRT ignored that, the Microsoft CRT kills the process.
+static void sclose(int n)
+{
+	if (shandle[n]!=-1) close(shandle[n]);
+	shandle[n]=-1;
+}
 
 int init_sound(HWND hwnd)
 {
@@ -86,7 +94,6 @@ int init_sound(HWND hwnd)
 	return 0;
 }
 
-#pragma argsused
 void sound_error(int nr,HWND hwnd,char *title)
 {
 	/*char *err;
@@ -124,7 +131,6 @@ int play_sound(char *file,int vol,int p)
 	return n;
 }
 
-#pragma argsused
 void sounder(void *dummy)
 {
 	extern int quit;
@@ -163,10 +169,10 @@ void sounder(void *dummy)
 			}
 
 			if (start[n]) {
-					shandle[n]=open(sname[n],O_RDONLY|O_BINARY|O_DENYNONE);
-					lseek(shandle[n],0x2e,SEEK_SET); // skip wave header
+					shandle[n]=open(sname[n],O_RDONLY|O_BINARY);
+					if (shandle[n]!=-1) lseek(shandle[n],0x2e,SEEK_SET); // skip wave header
 					if (shandle[n]==-1) {
-						xlog(0,"%s: %s",sname[n],strerror(errno),sname[n]);
+						xlog(0,"%s: %s",sname[n],strerror(errno));
 						start[n]=0;
 						continue;
 					}
@@ -177,15 +183,15 @@ void sounder(void *dummy)
 
 			if (!start[n]) {
 				hr=sb[n]->lpVtbl->GetCurrentPosition(sb[n],&pos,NULL);
-				if (hr!=DD_OK) { sound_error(hr,desk_hwnd,"GetCurrentPosition"); continue; }
-				if (pos<cpos[n]+BUFFCHUNK && pos+(BUFFSIZE/2)>cpos[n]) continue;
+				if (hr!=DS_OK) { sound_error(hr,desk_hwnd,"GetCurrentPosition"); continue; }
+				if (pos<(DWORD)cpos[n]+BUFFCHUNK && pos+(BUFFSIZE/2)>(DWORD)cpos[n]) continue;
 				rsize=BUFFCHUNK;
 			} else { pos=0; rsize=BUFFSIZE; start[n]=0; }
 
 			//xlog("%X: pos=%dK, cpos[n]=%dK",n,pos>>10,cpos[n]>>10);
 
 			hr=sb[n]->lpVtbl->Lock(sb[n],cpos[n],rsize,&ptr1,&size1,&ptr2,&size2,0);
-			if (hr!=DD_OK) { sound_error(hr,desk_hwnd,"Lock"); used[n]=0; close(shandle[n]); continue; }
+			if (hr!=DS_OK) { sound_error(hr,desk_hwnd,"Lock"); used[n]=0; sclose(n); continue; }
 
 			if (shandle[n]!=-1)
 				len=read(shandle[n],ptr1,size1);
@@ -194,38 +200,37 @@ void sounder(void *dummy)
 			//xlog("size=%dK len=%dK",size1>>10,len>>10);
 			if (len<size1) {
 				memset((unsigned char*)ptr1+len,127,size1-len);
-				if (pos<cpos[n]) {
+				if (pos<(DWORD)cpos[n]) {
 					hr=sb[n]->lpVtbl->Play(sb[n],0,0,0);
-					if (hr!=DD_OK) { sound_error(hr,desk_hwnd,"Play"); close(shandle[n]); }
+					if (hr!=DS_OK) { sound_error(hr,desk_hwnd,"Play"); sclose(n); }
 					hr=sb[n]->lpVtbl->SetVolume(sb[n],volume[n]);
-					if (hr!=DD_OK) { sound_error(hr,desk_hwnd,"SetVolume"); close(shandle[n]); }
+					if (hr!=DS_OK) { sound_error(hr,desk_hwnd,"SetVolume"); sclose(n); }
 					hr=sb[n]->lpVtbl->SetPan(sb[n],pan[n]);
-					if (hr!=DD_OK) { sound_error(hr,desk_hwnd,"SetPan"); close(shandle[n]); }
+					if (hr!=DS_OK) { sound_error(hr,desk_hwnd,"SetPan"); sclose(n); }
 				} else {
 					hr=sb[n]->lpVtbl->GetStatus(sb[n],&status);
 					if (hr!=DS_OK) { sound_error(hr,desk_hwnd,"GetStatus"); continue; }
 					if ((status&DSBSTATUS_PLAYING)==0) {
 						hr=sb[n]->lpVtbl->Play(sb[n],0,0,0);
-						if (hr!=DD_OK) { sound_error(hr,desk_hwnd,"Play"); close(shandle[n]); }
+						if (hr!=DS_OK) { sound_error(hr,desk_hwnd,"Play"); sclose(n); }
 						hr=sb[n]->lpVtbl->SetVolume(sb[n],volume[n]);
-						if (hr!=DD_OK) { sound_error(hr,desk_hwnd,"SetVolume"); close(shandle[n]); }
+						if (hr!=DS_OK) { sound_error(hr,desk_hwnd,"SetVolume"); sclose(n); }
 						hr=sb[n]->lpVtbl->SetPan(sb[n],pan[n]);
-						if (hr!=DD_OK) { sound_error(hr,desk_hwnd,"SetPan"); close(shandle[n]); }
+						if (hr!=DS_OK) { sound_error(hr,desk_hwnd,"SetPan"); sclose(n); }
 					}
 				}
-				close(shandle[n]);
-				shandle[n]=-1;
+				sclose(n);
 			} else {
 				hr=sb[n]->lpVtbl->Play(sb[n],0,0,DSBPLAY_LOOPING);
-				if (hr!=DD_OK) { sound_error(hr,desk_hwnd,"Play"); continue; }
+				if (hr!=DS_OK) { sound_error(hr,desk_hwnd,"Play"); continue; }
 				hr=sb[n]->lpVtbl->SetVolume(sb[n],volume[n]);
-				if (hr!=DD_OK) { sound_error(hr,desk_hwnd,"SetVolume"); close(shandle[n]); }
+				if (hr!=DS_OK) { sound_error(hr,desk_hwnd,"SetVolume"); sclose(n); }
 				hr=sb[n]->lpVtbl->SetPan(sb[n],pan[n]);
-				if (hr!=DD_OK) { sound_error(hr,desk_hwnd,"SetPan"); close(shandle[n]); }
+				if (hr!=DS_OK) { sound_error(hr,desk_hwnd,"SetPan"); sclose(n); }
 			}
 
 			hr=sb[n]->lpVtbl->Unlock(sb[n],ptr1,size1,ptr2,0);
-			if (hr!=DD_OK) { sound_error(hr,desk_hwnd,"Unlock"); used[n]=0; close(shandle[n]); continue; }
+			if (hr!=DS_OK) { sound_error(hr,desk_hwnd,"Unlock"); used[n]=0; sclose(n); continue; }
 
 			cpos[n]+=size1;
 

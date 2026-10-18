@@ -1,0 +1,53 @@
+Astonia v2 client - modern Windows port
+========================================
+
+BUILD
+  Double-click build.bat (uses your Visual Studio). Output: merc.exe
+  No extra libraries needed - zlib and libpng were replaced by inflate.c
+  and pngdec.c, and the exe has no runtime DLL dependencies.
+
+RUN
+  Put merc.exe next to the game data (gx00.idx, gx00.dat, pnglib.idx,
+  pnglib.dat, gfx\, sfx\) and start it, or point it at the data:
+
+    merc.exe -h <server address> [-p <port>] [-d <data folder>] [-f | -w]
+
+    -h  server host/IP (new; default is still MHOST from common.h)
+    -p  server port (default 5555)
+    -d  folder containing the game data
+    -f  start fullscreen, -w start windowed
+
+  Alt+Enter     toggle fullscreen (borderless, no display mode change)
+  Window X /    same as the in-game exit (F12) - warns if not in a tavern
+  Alt+F4
+  client.ini    remembers fullscreen on/off and smooth=1/0 (smooth scaling)
+  client.log    startup info, errors and crash details are written here
+
+WHAT CHANGED (and why it would not run before)
+  1. Memory limit bug (the actual crash / black screen after login):
+     dd.c computed its sprite cache limit from the total RAM via
+     GlobalMemoryStatus(), but allocated from a fixed 20MB HeapCreate()
+     heap. On modern PCs the RAM value overflows (2GB cap or -1), so the
+     client either ran the heap dry -> HEAP_GENERATE_EXCEPTIONS -> instant
+     close, or got a negative limit -> free_2nd_cache() looped forever ->
+     black screen. Now: plain malloc and a 256MB cap.
+  2. DirectDraw removed: no exclusive 800x600x16 mode switch. The game
+     draws into memory buffers (same RGB565 code as before) and the frame
+     is scaled into a normal resizable window with GDI (integer scaling
+     when it fits, otherwise smooth). Mouse coordinates are mapped back.
+  3. Out-of-bounds writes fixed in display_alpha/display_png/text output
+     (sprites partially off screen wrote past the frame buffer).
+  4. Silent exit(1) on unexpected server data now shows a message
+     (server command number) and logs it - usually a version mismatch.
+  5. Login dialog: EndDialog moved to the dialog's own thread; dialog has
+     its own taskbar button. Load/Save character dialogs use the standard
+     OPENFILENAME struct.
+  6. Borland-only code replaced: alloc.h, dir.h, random/randomize,
+     getdisk/setdisk, findfirst, filelength, _export, CTL3D, WM_CTLCOLOR.
+  7. Resources: client.rc replaces the Borland-format MERC.RC; the icon
+     and cursors that were embedded in it as hex are now separate files.
+  8. DPI aware, 1ms timer resolution, crash handler.
+  DirectSound is kept (it still works on Windows 10/11). Network protocol,
+  merc.dat and .moa save formats are unchanged.
+
+The original Borland sources are kept in original_borland\.

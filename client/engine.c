@@ -1,10 +1,10 @@
-#include <alloc.h>
+#include <malloc.h>
 #include <windows.h>
 #include <stdarg.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include <math.h>
-#pragma hdrstop
 #include "dd.h"
 #include "common.h"
 #include "inter.h"
@@ -22,7 +22,7 @@ extern int cursor_type;
 extern HCURSOR cursor[10];
 
 // from dd.c
-int copysprite(int nr,int effect,int x,int y,int xoff,int yoff);
+void copysprite(int nr,int effect,int x,int y,int xoff,int yoff);
 void dd_flip(void);
 void dd_showbar(int xf,int yf,int xs,int ys,unsigned short col);
 void copyspritex(int nr,int xpos,int ypos,int effect);
@@ -304,6 +304,23 @@ static char logfont[XLL];
 
 int load=0;
 
+void dd_copy_rows(int x1,int x2,int ysrc,int ydst,int h);
+
+// QoL: one line of the stats/skills panel: name, base value in blue (font 3)
+// at the right end of the name column, modified value in yellow where it
+// always was (x=113). Names are shortened to 14 characters to make room.
+static void stat_line(int y,const char *name,int base,int total)
+{
+	char buf[16];
+
+	if (strlen(name)>14) { memcpy(buf,name,13); buf[13]='.'; buf[14]=0; }
+	else strcpy(buf,name);
+
+	dd_xputtext(5,y,1,"%s",buf);
+	dd_xputtext(90,y,3,"%3d",base);
+	dd_xputtext(113,y,1,"%3d",total);
+}
+
 void eng_display_win(int plr_sprite,int init)
 {
 	int y,n,m;
@@ -320,7 +337,6 @@ void eng_display_win(int plr_sprite,int init)
 		0,0,
 		0,0};
 
-	if (load) dd_xputtext(670,300+MAXTS,1,"%3d%%",load);
 
 	if (init) {
 		reset_block();
@@ -362,6 +378,17 @@ void eng_display_win(int plr_sprite,int init)
 		dd_xputtext(117,256,1,"Update");
 		dd_xputtext(162,256,1,"%7d",pl.points-stat_points_used);
 
+		// QoL: server load (only sent to gods) as a 4th row of this panel.
+		// The panel rows are 14 pixels apart: move the bottom border (y 281-282)
+		// down one row, then repeat the Experience row's background (y 267-280,
+		// divider line + background) in its old place. Done before any text
+		// is drawn so only the background gets copied.
+		if (load) {
+			dd_copy_rows(640,MODEX,281,295,2);
+			dd_copy_rows(640,MODEX,267,281,14);
+			dd_xputtext(646,285,1,"Server Load    %9d%%",load);
+		}
+
 		dd_xputtext(646,243,1,"Weapon value   %10d",pl.weapon);
 		dd_xputtext(646,257,1,"Armor value    %10d",pl.armor);
 		dd_xputtext(646,271,1,"Experience     %10d",pl.points_tot);
@@ -372,23 +399,23 @@ void eng_display_win(int plr_sprite,int init)
 		}
 
 		for (n=0; n<5; n++) {
-			dd_xputtext(5,4+n*14,1,"%-16.16s  %3d",at_name[n],pl.attrib[n][5]+stat_raised[n]);
+			stat_line(4+n*14,at_name[n],pl.attrib[n][0]+stat_raised[n],pl.attrib[n][5]+stat_raised[n]);
 			if (attrib_needed(n,pl.attrib[n][0]+stat_raised[n])<=pl.points-stat_points_used) dd_putc(136,4+n*14,1,'+');
 			if (stat_raised[n]>0) dd_putc(150,4+n*14,1,'-');
 			if (attrib_needed(n,pl.attrib[n][0]+stat_raised[n])!=HIGH_VAL) dd_xputtext(162,4+n*14,1,"%7d",attrib_needed(n,pl.attrib[n][0]+stat_raised[n]));
 		}
 
-		dd_xputtext(5, 74,1,"Hitpoints         %3d",pl.hp[5]+stat_raised[5]);
+		stat_line(74,"Hitpoints",pl.hp[0]+stat_raised[5],pl.hp[5]+stat_raised[5]);
 		if (hp_needed(pl.hp[0]+stat_raised[5])<=pl.points-stat_points_used)	dd_putc(136,74,1,'+');
 		if (stat_raised[5]>0) dd_putc(150,74,1,'-');
 		if (hp_needed(pl.hp[0]+stat_raised[5])!=HIGH_VAL) dd_xputtext(162,74,1,"%7d",hp_needed(pl.hp[0]+stat_raised[5]));
 
-		dd_xputtext(5, 88,1,"Endurance         %3d",pl.end[5]+stat_raised[6]);
+		stat_line(88,"Endurance",pl.end[0]+stat_raised[6],pl.end[5]+stat_raised[6]);
 		if (end_needed(pl.end[0]+stat_raised[6])<=pl.points-stat_points_used) dd_putc(136,88,1,'+');
 		if (stat_raised[6]>0) dd_putc(150,88,1,'-');
 		if (end_needed(pl.end[0]+stat_raised[6])!=HIGH_VAL)	dd_xputtext(162,88,1,"%7d",end_needed(pl.end[0]+stat_raised[6]));
 
-		dd_xputtext(5,102,1,"Mana              %3d",pl.mana[5]+stat_raised[7]);
+		stat_line(102,"Mana",pl.mana[0]+stat_raised[7],pl.mana[5]+stat_raised[7]);
 		if (mana_needed(pl.mana[0]+stat_raised[7])<=pl.points-stat_points_used)	dd_putc(136,102,1,'+');
 		if (stat_raised[7]>0) dd_putc(150,102,1,'-');
 		if (mana_needed(pl.mana[0]+stat_raised[7])!=HIGH_VAL) dd_xputtext(162,102,1,"%7d",mana_needed(pl.mana[0]+stat_raised[7]));
@@ -399,7 +426,7 @@ void eng_display_win(int plr_sprite,int init)
 				dd_xputtext(5,116+n*14,1,"unused");
 				continue;
 			}
-			dd_xputtext(5,116+n*14,1,"%-16.16s  %3d",skilltab[n+skill_pos].name,pl.skill[m][5]+stat_raised[n+8+skill_pos]);
+			stat_line(116+n*14,skilltab[n+skill_pos].name,pl.skill[m][0]+stat_raised[n+8+skill_pos],pl.skill[m][5]+stat_raised[n+8+skill_pos]);
 			if (skill_needed(m,pl.skill[m][0]+stat_raised[n+8+skill_pos])<=pl.points-stat_points_used) dd_putc(136,116+n*14,1,'+');
 			if (stat_raised[n+8+skill_pos]>0) dd_putc(150,116+n*14,1,'-');
 			if (skill_needed(m,pl.skill[m][0]+stat_raised[n+8+skill_pos])!=HIGH_VAL)
@@ -676,10 +703,10 @@ void display_floortile(int tile,int light,int x,int y,int xoff,int yoff,int mx,i
 
 void eng_display(int init)	// optimize me!!!!!
 {
-	int x,y,m,plr_sprite,tmp,mapx,mapy,selected_visible=0,alpha,alphastr;
+	int x,y,m,plr_sprite=0,tmp,mapx,mapy,selected_visible=0,alpha,alphastr;
 	extern int dd_cache_hit,dd_cache_miss,swap,MAXCACHE;
 	static unsigned short xmap[1024*1024];
-	static xm_flag=1;
+	static int xm_flag=1;
 
 	if (xm_flag) {
 		for (m=0; m<1024*1024; m++)	xmap[m]=0;
@@ -690,7 +717,7 @@ void eng_display(int init)	// optimize me!!!!!
 	if (!dd_isvisible()) return;
 
 	mouse(mx,my,0);
-	SetCursor(cursor[cursor_type]);
+	set_game_cursor(cursor[cursor_type]);
 
 	// *******
 	// * map *

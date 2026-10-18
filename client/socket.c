@@ -1,19 +1,22 @@
 #include <stdio.h>
-#include <alloc.h>
+#include <malloc.h>
 #include <fcntl.h>
 #include <io.h>
 #include <stdlib.h>
 #include <windows.h>
+#include <time.h>
+#include <ctype.h>
 #include <winsock.h>
-#include <zlib.h>
+#include "zlib.h"
 
 struct z_stream_s zs;
 
-#pragma hdrstop
 #include "common.h"
 #include "inter.h"
 #include "merc.rh"
 #include "dd.h"
+
+#define WM_LOGIN_DONE	(WM_APP+1)
 //#include "minilzo.h"
 
 char passwd[15]={0};
@@ -97,6 +100,7 @@ void so_error(char *err)
 
 	if (!do_exit) {
 		sprintf(buf,"Error: %s (%d)",err,WSAGetLastError());
+		dbg_log("so_error: %s",buf);
 		MessageBox(desk_hwnd,buf,"Irregular Exit",MB_ICONSTOP|MB_OK);
 	}
 
@@ -154,8 +158,8 @@ int so_login(unsigned char *buf,HWND hwnd)
 
 	if (buf[0]==SV_EXIT) {
 		tmp=*(unsigned int *)(buf+1);
-		if (tmp<1 || tmp>14) sprintf(xbuf,"STATUS: Server demands exit:\nunknown reason");
-		sprintf(xbuf,"STATUS: Server demands exit:\n%s",logout_reason[tmp]);
+		if (tmp<1 || tmp>14) sprintf(xbuf,"STATUS: Server demands exit:\nunknown reason (%u)",tmp);
+		else sprintf(xbuf,"STATUS: Server demands exit:\n%s",logout_reason[tmp]);
 		SetDlgItemText(hwnd,IDC_STATUS,xbuf);
 		return -1;
 	}
@@ -283,7 +287,7 @@ void so_connect(HWND hwnd)
 			return;
 		}
 		tmp=so_login(buf,hwnd);
-		if (tmp==-1) { so_status=0; close(sock); return; }
+		if (tmp==-1) { so_status=0; closesocket(sock); sock=-1; return; }
 	} while (!tmp);
 
 	Sleep(500);
@@ -300,7 +304,8 @@ void so_connect(HWND hwnd)
 	}
 
 
-        EndDialog(hwnd,0);	
+	// PORT: EndDialog() must run on the dialog's own thread
+	PostMessage(hwnd,WM_LOGIN_DONE,0,0);
 
 	return;
 }
@@ -657,7 +662,6 @@ void sv_log(unsigned char *buf,int font)
 	}
 }
 
-#pragma argsused
 void sv_scroll_right(unsigned char *buf)
 {
 	DEBUG("SV SCROLL_RIGHT");
@@ -665,7 +669,6 @@ void sv_scroll_right(unsigned char *buf)
 	memmove(map,map+1,sizeof(struct cmap)*(TILEX*TILEY-1));
 }
 
-#pragma argsused
 void sv_scroll_left(unsigned char *buf)
 {
 	DEBUG("SV SCROLL_LEFT");
@@ -673,7 +676,6 @@ void sv_scroll_left(unsigned char *buf)
 	memmove(map+1,map,sizeof(struct cmap)*(TILEX*TILEY-1));
 }
 
-#pragma argsused
 void sv_scroll_down(unsigned char *buf)
 {
 	DEBUG("SV SCROLL_DOWN");
@@ -681,7 +683,6 @@ void sv_scroll_down(unsigned char *buf)
 	memmove(map,map+TILEX,sizeof(struct cmap)*(TILEX*TILEY-TILEX));
 }
 
-#pragma argsused
 void sv_scroll_up(unsigned char *buf)
 {
 	DEBUG("SV SCROLL_UP");
@@ -689,7 +690,6 @@ void sv_scroll_up(unsigned char *buf)
 	memmove(map+TILEX,map,sizeof(struct cmap)*(TILEX*TILEY-TILEX));
 }
 
-#pragma argsused
 void sv_scroll_leftup(unsigned char *buf)
 {
 	DEBUG("SV SCROLL_LEFTUP");
@@ -697,7 +697,6 @@ void sv_scroll_leftup(unsigned char *buf)
 	memmove(map+TILEX+1,map,sizeof(struct cmap)*(TILEX*TILEY-TILEX-1));
 }
 
-#pragma argsused
 void sv_scroll_leftdown(unsigned char *buf)
 {
 	DEBUG("SV SCROLL_LEFTDOWN");
@@ -705,7 +704,6 @@ void sv_scroll_leftdown(unsigned char *buf)
 	memmove(map,map+TILEX-1,sizeof(struct cmap)*(TILEX*TILEY-TILEX+1));
 }
 
-#pragma argsused
 void sv_scroll_rightup(unsigned char *buf)
 {
 	DEBUG("SV SCROLL_RIGHTUP");
@@ -713,7 +711,6 @@ void sv_scroll_rightup(unsigned char *buf)
 	memmove(map+TILEX-1,map,sizeof(struct cmap)*(TILEX*TILEY-TILEX+1));
 }
 
-#pragma argsused
 void sv_scroll_rightdown(unsigned char *buf)
 {
 	DEBUG("SV SCROLL_RIGHTDOWN");
@@ -962,13 +959,12 @@ int sv_cmd(unsigned char *buf)
 		case  	SV_UNIQUE:             	sv_unique(buf); return 9;
 		case 	SV_IGNORE:		return sv_ignore(buf);
 
-		default: 			xlog(0,"Unknown SV: %d",buf[0]); return -1;
+		default: 			xlog(0,"Unknown SV: %d",buf[0]); dbg_log("unknown server command %d",buf[0]); return -1;
 	}
 
 	return 16;
 }
 
-#pragma argused
 void so_perf_report(int ticksize,int skip,int idle)
 {
 	unsigned char buf[16];
@@ -1120,10 +1116,36 @@ int tick_do(void)
 	lastn=-1;	// reset sv_setmap
 	ctick++; if (ctick>19) ctick=0;
 	
-        while (idx<csize) {
-		ret=sv_cmd(buf+idx);
-		if (ret==-1) { xlog(1,"Warning: syntax error in server data"); DEBUG("Warning: syntax error in server data"); exit(1); }
-		idx+=ret;
+        {
+		// PORT: trace of parsed commands, dumped to client.log on errors
+		static int trace_off[512],trace_cmd[512],trace_len[512];
+		static int errcnt=0;
+		int ntrace=0,i;
+
+	        while (idx<csize) {
+			ret=sv_cmd((unsigned char*)buf+idx);
+			if (ntrace<512) { trace_off[ntrace]=idx; trace_cmd[ntrace]=(unsigned char)buf[idx]; trace_len[ntrace]=ret; ntrace++; }
+			if (ret<=0) {
+				char line[128];
+				int p,k;
+
+				errcnt++;
+				dbg_log("PARSE ERROR #%d in tick %d (compressed=%d, size=%d) at offset %d, cmd=%d (0x%02X)",
+					errcnt,ticker,comp?1:0,csize,idx,(unsigned char)buf[idx],(unsigned char)buf[idx]);
+				if (errcnt<=5) {
+					for (i=0; i<ntrace; i++)
+						dbg_log("  cmd %3d (0x%02X) at %5d len %d",trace_cmd[i],trace_cmd[i],trace_off[i],trace_len[i]);
+					for (p=0; p<csize; p+=16) {
+						k=sprintf(line,"  %05d:",p);
+						for (i=p; i<p+16 && i<csize; i++) k+=sprintf(line+k," %02X",(unsigned char)buf[i]);
+						dbg_log("%s",line);
+					}
+				}
+				if (errcnt==1) xlog(0,"Warning: bad server data, details in client.log");
+				break;	// skip the rest of this tick and carry on
+			}
+			idx+=ret;
+		}
 	}
 
 	ticksize-=len;

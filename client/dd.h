@@ -1,4 +1,4 @@
-extern MAXX,MAXY;
+extern int MAXX,MAXY;
 extern unsigned int volatile dd_tick;
 
 int dd_init(HWND hwnd,int x,int y);
@@ -12,3 +12,6 @@ int dd_isvisible(void);
 void dd_deinit(void);
 void dd_shadow_clear(void);
 void dd_shadow(int nr,int xpos,int ypos,int xoff,int yoff);
+
+void dbg_log(const char *format,...);
+void set_game_cursor(HCURSOR c);
