@@ -363,12 +363,17 @@ These are not in the data files; moving one of these places means editing the co
 |---|---|---|---|---|---|
 | 14203 | ladder/hole | Hole | 564,542 | 924,102 Underground I | ok |
 
-### Thieves House I
+### Thieves Basement
 
 | Item | Kind | Name | At | Goes to | Check |
 |---|---|---|---|---|---|
 | 17097 | teleport | barrel (portal) | 21,22 | 518,549 Thieves House I | ok |
-| 15595 | teleport | barrel (portal) | 519,550 | 22,22 Thieves House I | ok |
+
+### Thieves House I
+
+| Item | Kind | Name | At | Goes to | Check |
+|---|---|---|---|---|---|
+| 15595 | teleport | barrel (portal) | 519,550 | 22,22 Thieves Basement | ok |
 
 ### Thieves House II
 
@@ -386,139 +391,139 @@ These are not in the data files; moving one of these places means editing the co
 
 | Item | Kind | Name | At | Goes to | Check |
 |---|---|---|---|---|---|
-| 12162 | ladder/hole | Tower Ladder | 824,350 | 833,356 Tower III | ok (next to it) |
+| 12162 | ladder/hole | Tower Ladder | 824,350 | 835,362 Tower III | ok (next to it) |
 | 4706 | ladder/hole | Hole (tower level 2 to 1) | 833,339 | 645,248 Tower I | ok (next to it) |
 
 ### Tower III
 
 | Item | Kind | Name | At | Goes to | Check |
 |---|---|---|---|---|---|
-| 7630 | ladder/hole | Tower Ladder | 824,365 | 833,372 Tower IV | ok (next to it) |
-| 7303 | ladder/hole | Hole | 833,356 | 824,350 Tower II | ok (next to it) |
+| 7630 | ladder/hole | Tower Ladder | 826,371 | 834,383 Tower IV | ok (next to it) |
+| 7303 | ladder/hole | Hole | 835,362 | 824,350 Tower II | ok (next to it) |
 
 ### Tower IV
 
 | Item | Kind | Name | At | Goes to | Check |
 |---|---|---|---|---|---|
-| 5074 | ladder/hole | Tower Ladder | 824,382 | 834,391 Tower V | ok (next to it) |
-| 5466 | ladder/hole | Hole | 833,372 | 824,365 Tower III | ok (next to it) |
+| 5074 | ladder/hole | Tower Ladder | 825,393 | 834,406 Tower V | ok (next to it) |
+| 5466 | ladder/hole | Hole | 834,383 | 826,371 Tower III | ok (next to it) |
 
 ### Tower IX
 
 | Item | Kind | Name | At | Goes to | Check |
 |---|---|---|---|---|---|
-| 3165 | ladder/hole | Tower Ladder | 856,399 | 867,406 Tower X | ok (next to it) |
-| 6885 | ladder/hole | Hole | 866,388 | 855,383 Tower VIII | ok (next to it) |
+| 3165 | ladder/hole | Tower Ladder | 847,387 | 857,398 Tower X | ok (next to it) |
+| 6885 | ladder/hole | Hole | 857,376 | 845,367 Tower VIII | ok (next to it) |
 
 ### Tower V
 
 | Item | Kind | Name | At | Goes to | Check |
 |---|---|---|---|---|---|
-| 1571 | ladder/hole | Hole | 834,391 | 824,382 Tower IV | ok (next to it) |
-| 2372 | ladder/hole | Tower Ladder | 834,398 | 862,341 Tower VI | ok (next to it) |
+| 1571 | ladder/hole | Hole | 834,406 | 825,393 Tower IV | ok (next to it) |
+| 2372 | ladder/hole | Tower Ladder | 834,413 | 830,423 Tower VI | ok (next to it) |
 
 ### Tower VI
 
 | Item | Kind | Name | At | Goes to | Check |
 |---|---|---|---|---|---|
-| 36 | ladder/hole | Hole | 862,341 | 834,398 Tower V | ok (next to it) |
-| 1577 | ladder/hole | Tower Ladder 6 to 7 | 867,350 | 866,366 Tower VII | ok (next to it) |
+| 36 | ladder/hole | Hole | 830,423 | 834,413 Tower V | ok (next to it) |
+| 1577 | ladder/hole | Tower Ladder 6 to 7 | 835,432 | 856,348 Tower VII | ok (next to it) |
 
 ### Tower VII
 
 | Item | Kind | Name | At | Goes to | Check |
 |---|---|---|---|---|---|
-| 6777 | ladder/hole | Tower Ladder | 855,367 | 867,383 Tower VIII | ok (next to it) |
-| 18398 | ladder/hole | Hole (tower level 7 to 6) | 866,366 | 867,350 Tower VI | ok (next to it) |
+| 6777 | ladder/hole | Tower Ladder | 845,349 | 857,367 Tower VIII | ok (next to it) |
+| 18398 | ladder/hole | Hole (tower level 7 to 6) | 856,348 | 835,432 Tower VI | ok (next to it) |
 
 ### Tower VIII
 
 | Item | Kind | Name | At | Goes to | Check |
 |---|---|---|---|---|---|
-| 12110 | ladder/hole | Tower Ladder | 855,383 | 866,388 Tower IX | ok (next to it) |
-| 2715 | ladder/hole | Hole | 867,383 | 855,367 Tower VII | ok (next to it) |
+| 12110 | ladder/hole | Tower Ladder | 845,367 | 857,376 Tower IX | ok (next to it) |
+| 2715 | ladder/hole | Hole | 857,367 | 845,349 Tower VII | ok (next to it) |
 
 ### Tower X
 
 | Item | Kind | Name | At | Goes to | Check |
 |---|---|---|---|---|---|
-| 4746 | ladder/hole | Tower Ladder | 855,418 | 868,423 Tower XI | ok (next to it) |
-| 1615 | ladder/hole | Hole | 867,406 | 856,399 Tower IX | ok (next to it) |
+| 4746 | ladder/hole | Tower Ladder | 845,410 | 858,416 Tower XI | ok (next to it) |
+| 1615 | ladder/hole | Hole | 857,398 | 847,387 Tower IX | ok (next to it) |
 
 ### Tower XI
 
 | Item | Kind | Name | At | Goes to | Check |
 |---|---|---|---|---|---|
-| 7251 | ladder/hole | Tower Ladder | 856,435 | 860,442 Tower XII | ok (next to it) |
-| 16052 | ladder/hole | Hole | 868,423 | 855,418 Tower X | ok (next to it) |
+| 7251 | ladder/hole | Tower Ladder | 846,428 | 876,339 Tower XII | ok (next to it) |
+| 16052 | ladder/hole | Hole | 858,416 | 845,410 Tower X | ok (next to it) |
 
 ### Tower XII
 
 | Item | Kind | Name | At | Goes to | Check |
 |---|---|---|---|---|---|
-| 5222 | ladder/hole | Hole | 860,442 | 856,435 Tower XI | ok (next to it) |
-| 6928 | ladder/hole | Tower Ladder 12 to 13 | 860,457 | 858,466 Tower XIII | ok (next to it) |
+| 5222 | ladder/hole | Hole | 876,339 | 846,428 Tower XI | ok (next to it) |
+| 6928 | ladder/hole | Tower Ladder 12 to 13 | 876,354 | 874,364 Tower XIII | ok (next to it) |
 
 ### Tower XIII
 
 | Item | Kind | Name | At | Goes to | Check |
 |---|---|---|---|---|---|
-| 14431 | ladder/hole | Tower Ladder 13 to 14 | 852,476 | 857,481 Tower XIV | ok (next to it) |
-| 13074 | ladder/hole | Hole (tower level 13 to 12) | 858,466 | 860,457 Tower XII | ok (next to it) |
+| 14431 | ladder/hole | Tower Ladder 13 to 14 | 868,374 | 874,382 Tower XIV | ok (next to it) |
+| 13074 | ladder/hole | Hole (tower level 13 to 12) | 874,364 | 876,354 Tower XII | ok (next to it) |
 
 ### Tower XIV
 
 | Item | Kind | Name | At | Goes to | Check |
 |---|---|---|---|---|---|
-| 7507 | ladder/hole | Tower Ladder 14 to 15 | 850,492 | 855,503 Tower XV | ok (next to it) |
-| 8777 | ladder/hole | Hole (tower level 14 to 13) | 857,481 | 852,476 Tower XIII | ok (next to it) |
+| 7507 | ladder/hole | Tower Ladder 14 to 15 | 867,393 | 878,405 Tower XV | ok (next to it) |
+| 8777 | ladder/hole | Hole (tower level 14 to 13) | 874,382 | 868,374 Tower XIII | ok (next to it) |
 
 ### Tower XIX
 
 | Item | Kind | Name | At | Goes to | Check |
 |---|---|---|---|---|---|
-| 16786 | ladder/hole | Hole (tower level 19 to 18) | 841,618 | 841,610 Tower XVIII | ok (next to it) |
-| 18480 | ladder/hole | Tower Ladder 19 to 20 | 856,633 | 848,642 Tower XX | ok (next to it) |
+| 16786 | ladder/hole | Hole (tower level 19 to 18) | 923,339 | 892,426 Tower XVIII | ok (next to it) |
+| 18480 | ladder/hole | Tower Ladder 19 to 20 | 938,354 | 933,363 Tower XX | ok (next to it) |
 
 ### Tower XV
 
 | Item | Kind | Name | At | Goes to | Check |
 |---|---|---|---|---|---|
-| 11453 | ladder/hole | Tower Ladder 15 to 16 | 844,519 | 859,526 Tower XVI | ok (next to it) |
-| 20139 | ladder/hole | Hole (tower level 15 to 14) | 855,503 | 850,492 Tower XIV | ok (next to it) |
+| 11453 | ladder/hole | Tower Ladder 15 to 16 | 867,421 | 912,340 Tower XVI | ok (next to it) |
+| 20139 | ladder/hole | Hole (tower level 15 to 14) | 878,405 | 867,393 Tower XIV | ok (next to it) |
 
 ### Tower XVI
 
 | Item | Kind | Name | At | Goes to | Check |
 |---|---|---|---|---|---|
-| 20148 | ladder/hole | Tower Ladder 16 to 17 | 845,562 | 853,572 Tower XVII | ok (next to it) |
-| 1917 | ladder/hole | Hole (tower level 16 to 15) | 859,526 | 844,519 Tower XV | ok (next to it) |
+| 20148 | ladder/hole | Tower Ladder 16 to 17 | 898,376 | 906,388 Tower XVII | ok (next to it) |
+| 1917 | ladder/hole | Hole (tower level 16 to 15) | 912,340 | 867,421 Tower XV | ok (next to it) |
 
 ### Tower XVII
 
 | Item | Kind | Name | At | Goes to | Check |
 |---|---|---|---|---|---|
-| 3957 | ladder/hole | Tower Ladder 17 to 18 | 841,588 | 855,595 Tower XVIII | ok |
-| 20014 | ladder/hole | Hole (tower level 17 to 16) | 853,572 | 845,562 Tower XVI | ok (next to it) |
+| 3957 | ladder/hole | Tower Ladder 17 to 18 | 894,404 | 906,411 Tower XVIII | ok |
+| 20014 | ladder/hole | Hole (tower level 17 to 16) | 906,388 | 898,376 Tower XVI | ok (next to it) |
 
 ### Tower XVIII
 
 | Item | Kind | Name | At | Goes to | Check |
 |---|---|---|---|---|---|
-| 9336 | ladder/hole | Tower Ladder 18 to 19 | 841,610 | 841,618 Tower XIX | ok (next to it) |
-| 6552 | ladder/hole | Hole (tower level 18 to 17) | 855,596 | 841,589 Tower XVII | ok |
+| 9336 | ladder/hole | Tower Ladder 18 to 19 | 892,426 | 923,339 Tower XIX | ok (next to it) |
+| 6552 | ladder/hole | Hole (tower level 18 to 17) | 906,412 | 894,405 Tower XVII | ok |
 
 ### Tower XX
 
 | Item | Kind | Name | At | Goes to | Check |
 |---|---|---|---|---|---|
-| 11662 | ladder/hole | Hole (tower level 20 to 19) | 848,642 | 856,633 Tower XIX | ok (next to it) |
-| 17507 | teleport | Magic Portal | 840,692 | 512,512 Temple of Skua | ok |
-| 8990 | teleport | Magic Portal | 845,679 | 840,686 Tower XX | ok |
-| 10799 | teleport | Magic Portal | 848,682 | 848,686 Tower XX | ok |
-| 17300 | teleport | Magic Portal | 848,692 | 512,512 Temple of Skua | ok |
-| 16100 | teleport | Magic Portal | 851,679 | 856,686 Tower XX | ok |
-| 18856 | teleport | Magic Portal | 856,692 | 512,512 Temple of Skua | ok |
+| 11662 | ladder/hole | Hole (tower level 20 to 19) | 933,363 | 938,354 Tower XIX | ok (next to it) |
+| 17507 | teleport | Magic Portal | 925,413 | 512,512 Temple of Skua | ok |
+| 8990 | teleport | Magic Portal | 930,400 | 925,407 Tower XX | ok |
+| 10799 | teleport | Magic Portal | 933,403 | 933,407 Tower XX | ok |
+| 17300 | teleport | Magic Portal | 933,413 | 512,512 Temple of Skua | ok |
+| 16100 | teleport | Magic Portal | 936,400 | 941,407 Tower XX | ok |
+| 18856 | teleport | Magic Portal | 941,413 | 512,512 Temple of Skua | ok |
 
 ### Underground I
 
