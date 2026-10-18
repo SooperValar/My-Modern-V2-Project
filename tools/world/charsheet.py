@@ -4,7 +4,7 @@
 Usage: python3 charsheet.py <client folder> <server folder> <out.png>
 A character's sprite is a base number (spaced 1024 apart); its frames are
 base+0..55 idle (8 directions x 8), then walking, fighting etc.
-Shown: the idle frame facing the viewer (south on screen), base+40.
+Shown: the idle frame facing the viewer (south on screen), base+48.
 """
 import struct,os,sys,collections
 sys.argv,argv=[sys.argv[0],sys.argv[1],'/tmp'],sys.argv
@@ -21,8 +21,8 @@ for fn in ('tchar.dat','char.dat'):
         if not sp: continue
         if fn=='tchar.dat': names[sp][d[o+1:o+41].split(b'\0')[0].decode('latin1')]+=1
         else: live[sp]+=1
-bases=sorted(set(names)|{b for b in range(976,40000,1024) if load(b+40)}|{b for b in range(2000,40000,1024) if load(b+40)})
-bases=[b for b in bases if load(b+40)]
+bases=sorted(set(names)|{b for b in range(976,40000,1024) if load(b+48)}|{b for b in range(2000,40000,1024) if load(b+48)})
+bases=[b for b in bases if load(b+48)]
 CW,CH=380,150; COLS=4
 rows=(len(bases)+COLS-1)//COLS
 sheet=Image.new('RGB',(COLS*CW,rows*CH+30),(40,40,48)); dr=ImageDraw.Draw(sheet)
@@ -30,7 +30,7 @@ dr.text((8,8),'Character sprites: base number, facing south (2x), and the NPC te
 for k,b in enumerate(bases):
     x,y=(k%COLS)*CW,(k//COLS)*CH+30
     dr.rectangle([x+2,y+2,x+CW-3,y+CH-3],outline=(80,80,95))
-    im=load(b+40)
+    im=load(b+48)
     if im:
         im2=im.resize((im.width*2,im.height*2),Image.NEAREST)
         sheet.paste(im2,(x+6,y+CH-6-im2.height),im2)
