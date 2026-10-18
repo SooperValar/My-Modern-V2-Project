@@ -34,13 +34,13 @@ static char intro_msg4[]={"Use #help (or /help) to get a listing of the text com
 static inline unsigned int _mcmp(unsigned char *a,unsigned char *b,unsigned int len)
 {
 	// align a
-	while (len>0 && ((int)(a)&3)) {
+	while (len>0 && ((unsigned long)(a)&3)) {
 		if (*a!=*b) return 1;
 		a++; b++; len--;
 	}
 	// compare as much as possible with 32 bit cmds
 	while (len>3) {
-		if (*(unsigned long *)a!=*(unsigned long *)b) return 1;
+		if (*(unsigned int *)a!=*(unsigned int *)b) return 1;
 		a+=4; b+=4; len-=4;
 	}
 	// compare remaining 0-3 bytes
@@ -60,13 +60,13 @@ static inline unsigned int mcmp(void *a,void *b,unsigned int len)
 static inline void *_fdiff(unsigned char *a,unsigned char *b,unsigned int len)
 {
 	// align a
-	while (len>0 && ((int)(a)&3)) {
+	while (len>0 && ((unsigned long)(a)&3)) {
 		if (*a!=*b) return a;
 		a++; b++; len--;
 	}
 	// compare as much as possible with 32 bit cmds
 	while (len>3) {
-		if (*(unsigned long *)a!=*(unsigned long *)b) {
+		if (*(unsigned int *)a!=*(unsigned int *)b) {
 			while (*a==*b) { a++; b++; }
 			return a;
 		}
@@ -89,13 +89,13 @@ static inline void *fdiff(void *a,void *b,unsigned int len)
 static inline unsigned int _mcpy(unsigned char *a,unsigned char *b,unsigned int len)
 {
 	// align a
-	while (len>0 && ((int)(a)&3)) {
+	while (len>0 && ((unsigned long)(a)&3)) {
 		*a=*b;
 		a++; b++; len--;
 	}
 	// compare as much as possible with 32 bit cmds
 	while (len>3) {
-		*(unsigned long *)a=*(unsigned long *)b;
+		*(unsigned int *)a=*(unsigned int *)b;
 		a+=4; b+=4; len-=4;
 	}
 	// compare remaining 0-3 bytes
@@ -159,7 +159,7 @@ void plr_challenge_newlogin(int nr)
         player[nr].lasttick=globs->ticker;
 
         buf[0]=SV_CHALLENGE;
-        *(unsigned long *)(buf+1)=tmp;
+        *(unsigned int *)(buf+1)=tmp;
 
         csend(nr,buf,16);
 
@@ -181,19 +181,19 @@ void plr_challenge_login(int nr)
         player[nr].lasttick=globs->ticker;
 
         buf[0]=SV_CHALLENGE;
-        *(unsigned long *)(buf+1)=tmp;
+        *(unsigned int *)(buf+1)=tmp;
 
         csend(nr,buf,16);
 
-        cn=*(unsigned long*)(player[nr].inbuf+1);
+        cn=*(unsigned int*)(player[nr].inbuf+1);
         if (cn<1 || cn>=MAXCHARS){
 		plog(nr,"sent wrong cn %d in challenge login",cn);
                 plr_logout(0,nr,LO_CHALLENGE);
                 return;
         }
         player[nr].usnr=cn;
-        player[nr].pass1=*(unsigned long*)(player[nr].inbuf+5);
-        player[nr].pass2=*(unsigned long*)(player[nr].inbuf+9);
+        player[nr].pass1=*(unsigned int*)(player[nr].inbuf+5);
+        player[nr].pass2=*(unsigned int*)(player[nr].inbuf+9);
 
 	send_mod(nr);
 }
@@ -202,9 +202,9 @@ void plr_challenge(int nr)
 {
         unsigned int tmp;
 	
-        tmp=*(unsigned long*)(player[nr].inbuf+1);
-        player[nr].version=*(unsigned long*)(player[nr].inbuf+5);
-        player[nr].race=*(unsigned long*)(player[nr].inbuf+9);
+        tmp=*(unsigned int*)(player[nr].inbuf+1);
+        player[nr].version=*(unsigned int*)(player[nr].inbuf+5);
+        player[nr].race=*(unsigned int*)(player[nr].inbuf+9);
 
         if (tmp!=xcrypt(player[nr].challenge)) {
                 plog(nr,"Challenge failed");
@@ -354,9 +354,9 @@ void plr_cmd_inv(int nr)
 
         cn=player[nr].usnr;
 
-        what=*(unsigned long*)(player[nr].inbuf+1);
-        n=*(unsigned long*)(player[nr].inbuf+5);
-        co=*(unsigned long*)(player[nr].inbuf+9);
+        what=*(unsigned int*)(player[nr].inbuf+1);
+        n=*(unsigned int*)(player[nr].inbuf+5);
+        co=*(unsigned int*)(player[nr].inbuf+9);
         if (co<1 || co>=MAXCHARS) co=0;
 
         if (what==0) { // normal inventory
@@ -659,8 +659,8 @@ void plr_cmd_skill(int nr)
 
         cn=player[nr].usnr;
 
-        n=*(unsigned long*)(player[nr].inbuf+1);
-        co=*(unsigned long*)(player[nr].inbuf+5);
+        n=*(unsigned int*)(player[nr].inbuf+1);
+        co=*(unsigned int*)(player[nr].inbuf+5);
 
         if (n<0 || n>99) return;        // sanity checks
         if (co<0 || co>=MAXCHARS) return;
@@ -862,7 +862,7 @@ void plr_cmd_exit(int nr)
 
 void plr_cmd_ctick(int nr)
 {
-        player[nr].rtick=*(unsigned long*)(player[nr].inbuf+1);
+        player[nr].rtick=*(unsigned int*)(player[nr].inbuf+1);
 	player[nr].lasttick=globs->ticker;
 }
 
@@ -1030,9 +1030,9 @@ void plr_newlogin(int nr)
         player[nr].pass2=ch[cn].pass2;
 
         buf[0]=SV_NEWPLAYER;
-        *(unsigned long*)(buf+1)=cn;
-        *(unsigned long*)(buf+5)=ch[cn].pass1;
-        *(unsigned long*)(buf+9)=ch[cn].pass2;
+        *(unsigned int*)(buf+1)=cn;
+        *(unsigned int*)(buf+5)=ch[cn].pass1;
+        *(unsigned int*)(buf+9)=ch[cn].pass2;
         *(unsigned char*)(buf+13)=VERSION&255;
         *(unsigned char*)(buf+14)=(VERSION>>8)&255;
         *(unsigned char*)(buf+15)=VERSION>>16;
@@ -1144,7 +1144,7 @@ void plr_login(int nr)
         player[nr].ticker_started=1;
 
         buf[0]=SV_LOGIN_OK;
-        *(unsigned long*)(buf+1)=VERSION;
+        *(unsigned int*)(buf+1)=VERSION;
         csend(nr,buf,16);
 
         buf[0]=SV_TICK;
@@ -1335,7 +1335,7 @@ void inline plr_change_stat(int nr,unsigned char *a,unsigned char *b,unsigned ch
         unsigned char buf[16];
 
         //if (a[0]!=b[0] || a[1]!=b[1] || a[2]!=b[2] || a[3]!=b[3] || a[4]!=b[4] || a[5]!=b[5]) {
-        if (*(unsigned long*)a!=*(unsigned long*)b ||
+        if (*(unsigned int*)a!=*(unsigned int*)b ||
             *(unsigned short*)(a+4)!=*(unsigned short*)(b+4)) {
                 buf[0]=code;
                 buf[1]=n;
@@ -1549,7 +1549,7 @@ void plr_change(int nr)
 			xsend(nr,buf,16);
 			buf[0]=SV_SETCHAR_NAME3;
 			mcpy(buf+1,ch[cn].name+30,10);
-			*(unsigned long*)(buf+11)=ch[cn].temp;
+			*(unsigned int*)(buf+11)=ch[cn].temp;
 			xsend(nr,buf,16);
 			mcpy(cpl->name,ch[cn].name,40);
 		}
@@ -1571,7 +1571,7 @@ void plr_change(int nr)
 		for (n=0; n<40; n++) {
                 if (cpl->item[n]!=(in=ch[cn].item[n]) || (!IS_BUILDING(cn) && it[in].flags&IF_UPDATE)) {
                         buf[0]=SV_SETCHAR_ITEM;
-                        *(unsigned long*)(buf+1)=n;
+                        *(unsigned int*)(buf+1)=n;
                         if (in) {
                                 if (IS_BUILDING(cn)) {
                                         if (in&0x40000000) {
@@ -1619,7 +1619,7 @@ void plr_change(int nr)
 		for (n=0; n<20; n++) {
 			if (cpl->worn[n]!=(in=ch[cn].worn[n]) || (it[in].flags&IF_UPDATE)) {
 				buf[0]=SV_SETCHAR_WORN;
-				*(unsigned long*)(buf+1)=n;
+				*(unsigned int*)(buf+1)=n;
 				if (in) {
 					if (it[in].active) *(short int*)(buf+5)=it[in].sprite[1];
 					else *(short int*)(buf+5)=it[in].sprite[0];
@@ -1639,7 +1639,7 @@ void plr_change(int nr)
 			if (cpl->spell[n]!=(in=ch[cn].spell[n]) ||
 			    (cpl->active[n]!=it[in].active*16/max(1,it[in].duration)) || (it[in].flags&IF_UPDATE)) {
 				buf[0]=SV_SETCHAR_SPELL;
-				*(unsigned long*)(buf+1)=n;
+				*(unsigned int*)(buf+1)=n;
 				if (in) {
 					*(short int*)(buf+5)=it[in].sprite[1];
 					*(short int*)(buf+7)=it[in].active*16/max(1,it[in].duration);
@@ -1724,8 +1724,8 @@ void plr_change(int nr)
             cpl->points_tot!=ch[cn].points_tot ||
             cpl->kindred!=ch[cn].kindred) {
                 buf[0]=SV_SETCHAR_PTS;
-                *(unsigned long*)(buf+1)=ch[cn].points;
-                *(unsigned long*)(buf+5)=ch[cn].points_tot;
+                *(unsigned int*)(buf+1)=ch[cn].points;
+                *(unsigned int*)(buf+5)=ch[cn].points_tot;
                 *(unsigned int*)(buf+9)=ch[cn].kindred;
                 xsend(nr,buf,13);
 
@@ -1736,9 +1736,9 @@ void plr_change(int nr)
 
         if (cpl->gold!=ch[cn].gold || cpl->armor!=ch[cn].armor || cpl->weapon!=ch[cn].weapon) {
                 buf[0]=SV_SETCHAR_GOLD;
-                *(unsigned long*)(buf+1)=ch[cn].gold;
-                *(unsigned long*)(buf+5)=ch[cn].armor;
-                *(unsigned long*)(buf+9)=ch[cn].weapon;
+                *(unsigned int*)(buf+1)=ch[cn].gold;
+                *(unsigned int*)(buf+5)=ch[cn].armor;
+                *(unsigned int*)(buf+9)=ch[cn].weapon;
                 xsend(nr,buf,13);
 
                 cpl->gold=ch[cn].gold;
@@ -2567,6 +2567,7 @@ void check_expire(int cn)
 	int erase=0,t,week=60*60*24*7,day=60*60*24;
 
 	t=time(NULL);
+	if (ch[cn].flags&CF_GOD) return;	// never expire gods
 	
 	if (ch[cn].points_tot==0) {
 		if (ch[cn].login_date+3*day<t) erase=1;

@@ -25,6 +25,7 @@ All rights reserved.
 #define GF_SPEEDY		(1<<4)
 #define GF_DIRTY		(1<<5)
 
+#pragma pack(push,4)
 struct global
 {
         int mdtime;
@@ -75,7 +76,7 @@ struct global
         int transfer_reset_time;
         int load_avg;
 
-        long load;
+        int load;
 
         int max_online;
         int max_online_per_hour[24];
@@ -87,6 +88,7 @@ struct global
 
 	int cap;
 };
+#pragma pack(pop)
 
 
 /*******/
@@ -392,8 +394,8 @@ struct character
         // item currently in hand (mouse cursor)
         unsigned int citem;
 
-        time_t creation_date;
-        time_t login_date;
+        int creation_date;
+        int login_date;
 
         unsigned int addr;
 
@@ -459,7 +461,7 @@ struct character
 
         int future3[12];
 
-        time_t logout_date;
+        int logout_date;
 
         // driver data
         int data[100];
