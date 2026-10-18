@@ -96,6 +96,8 @@ A new HUD drawn on its own canvas (window size ÷ 1.5) and composited over the w
 - **Shop window**: centered.
 - The carried-item cursor follows the mouse on the new canvas.
 
+**Colour theme** (`hud_theme` in `client.ini`, default 1): the HUD picture is recoloured when it loads: dark red marble becomes deep neutral grey and the gold borders and labels become tan at the same brightness. The coin icons and the blue background are kept. `hud_theme=0` brings back the original red/gold.
+
 The original 800×600 HUD code still runs in the background (it owns the game state the panels read). Only its presentation is replaced.
 
 ---

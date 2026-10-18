@@ -224,6 +224,7 @@ static int client_w=0,client_h=0;
 // world zoom: show a centered part of the 1280x960 world, scaled up.
 // client.ini [display] zoom=115 means 115%.
 static int world_zoom=115;
+extern int hud_theme;	// dd.c
 static int crop_x=0,crop_y=0,crop_w=SCREEN_W,crop_h=SCREEN_H;
 
 static void calc_crop(void)
@@ -506,6 +507,7 @@ static void load_display_settings(void)
 	else if (!fullscreen) fullscreen=GetPrivateProfileInt("display","fullscreen",0,ini_file);
 	smooth_scale=GetPrivateProfileInt("display","smooth",1,ini_file);
 	world_zoom=GetPrivateProfileInt("display","zoom",115,ini_file);
+	hud_theme=GetPrivateProfileInt("display","hud_theme",1,ini_file);
 }
 
 static void save_display_settings(void)
@@ -527,6 +529,7 @@ static void save_display_settings(void)
 	WritePrivateProfileString("display","fullscreen",fullscreen ? "1" : "0",ini_file);
 	WritePrivateProfileString("display","smooth",smooth_scale ? "1" : "0",ini_file);
 	sprintf(buf,"%d",world_zoom); WritePrivateProfileString("display","zoom",buf,ini_file);
+	sprintf(buf,"%d",hud_theme); WritePrivateProfileString("display","hud_theme",buf,ini_file);
 }
 
 // called by dd_init(): size and show the game window

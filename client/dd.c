@@ -814,6 +814,44 @@ void *conv_load(int nr,int *xs,int *ys);
 
 extern char path[];
 
+// HUD colour theme. 0 = original red marble / gold, 1 = deep grey / tan.
+// Applied to the HUD picture (sprite 1) when it is loaded, so every piece of
+// the HUD that comes from it (panels, borders, legacy panels) follows.
+int hud_theme=1;
+
+static void hud_theme_apply(unsigned short *p,int xs,int ys)
+{
+	int x,y,r,g,b,L,gv,s;
+	unsigned short v;
+
+	for (y=0; y<ys; y++) for (x=0; x<xs; x++) {
+		v=p[x+y*xs];
+		if (v==0xF81F) continue;
+		r=((v>>11)&31)*255/31; g=((v>>5)&63)*255/63; b=(v&31)*255/31;
+		if (b>r) continue;				// blue background: keep
+		L=(30*r+59*g+11*b)/100;
+		if (r*10>g*16+40) {				// dark red marble -> deep grey
+			gv=28+((L-14)*22)/100;
+			if (gv<18) gv=18;
+			if (gv>40) gv=40;
+			// neutral grey in RGB565: green gets exactly twice the red/blue level
+			p[x+y*xs]=(unsigned short)(((gv>>3)<<11)|(((gv>>3)*2)<<5)|((gv*107/100)>>3));
+			continue;
+		} else if (r+g>8) {				// gold -> tan, same brightness
+			// keep the coin icons in the gold buttons (legacy 217..303, 176..261)
+			if (x>=217 && x<304 && y>=176 && y<262 &&
+			    x!=218 && x!=219 && x!=246 && x!=247 && x!=274 && x!=275 && x!=301 && x!=302 &&
+			    y!=176 && y!=177 && y!=203 && y!=204 && y!=231 && y!=232 && y!=258 && y!=259 && y!=260) continue;
+			s=L*1000/911;
+			r=s; g=s*92/100; b=s*62/100;
+			if (r>255) r=255;
+			if (g>255) g=255;
+			if (b>255) b=255;
+		} else continue;
+		p[x+y*xs]=(unsigned short)(((r>>3)<<11)|((g>>2)<<5)|(b>>3));
+	}
+}
+
 void dd_load_sprite(int nr)
 {
 	int xs,ys,alphacnt=0;
@@ -854,6 +892,7 @@ void dd_load_sprite(int nr)
 	sprtab[nr].alphacnt=(unsigned short)alphacnt;
 	sprtab[nr].xs=(unsigned char)(xs/TILE);
 	sprtab[nr].ys=(unsigned char)(ys/TILE);
+	if (nr==1 && hud_theme==1) hud_theme_apply(optr,xs,ys);
 	sprtab[nr].avgcol=avgcolor(optr,xs,ys);
 
 	sprtab[nr].cache=xcalloc(MAXEFFECT*sizeof(short),sprtab[nr].xs*sprtab[nr].ys);
