@@ -1,0 +1,4478 @@
+[
+ {
+  "item": 19833,
+  "template": 1261,
+  "kind": "labyrinth exit",
+  "driver": 46,
+  "name": "Magic Portal (lab 10 spring)",
+  "x": 51,
+  "y": 838,
+  "area": "(unnamed)",
+  "data": [
+   512,
+   512,
+   0,
+   0
+  ],
+  "dest_x": 512,
+  "dest_y": 512,
+  "dest_area": "Temple of Skua",
+  "check": "ok"
+ },
+ {
+  "item": 20973,
+  "template": 1284,
+  "kind": "ladder/hole",
+  "driver": 16,
+  "name": "Teleport Wall (Lab 10 Winter)",
+  "x": 50,
+  "y": 804,
+  "area": "(unnamed)",
+  "data": [
+   24,
+   82,
+   0,
+   0
+  ],
+  "dest_x": 74,
+  "dest_y": 886,
+  "dest_area": "(unnamed)",
+  "check": "ok (next to it)"
+ },
+ {
+  "item": 9735,
+  "template": 1278,
+  "kind": "ladder/hole",
+  "driver": 16,
+  "name": "Teleport Wall (Lab 10 Spring)",
+  "x": 54,
+  "y": 787,
+  "area": "(unnamed)",
+  "data": [
+   23,
+   32,
+   0,
+   0
+  ],
+  "dest_x": 77,
+  "dest_y": 819,
+  "dest_area": "(unnamed)",
+  "check": "ok"
+ },
+ {
+  "item": 8648,
+  "template": 1280,
+  "kind": "ladder/hole",
+  "driver": 16,
+  "name": "Teleport Wall (Lab 10 Summer)",
+  "x": 67,
+  "y": 792,
+  "area": "(unnamed)",
+  "data": [
+   37,
+   32,
+   0,
+   0
+  ],
+  "dest_x": 104,
+  "dest_y": 824,
+  "dest_area": "(unnamed)",
+  "check": "ok (next to it)"
+ },
+ {
+  "item": 21203,
+  "template": 1282,
+  "kind": "ladder/hole",
+  "driver": 16,
+  "name": "Teleport Wall (Lab 10 Fall)",
+  "x": 67,
+  "y": 802,
+  "area": "(unnamed)",
+  "data": [
+   37,
+   77,
+   0,
+   0
+  ],
+  "dest_x": 104,
+  "dest_y": 879,
+  "dest_area": "(unnamed)",
+  "check": "ok (next to it)"
+ },
+ {
+  "item": 8694,
+  "template": 1283,
+  "kind": "ladder/hole",
+  "driver": 16,
+  "name": "Trap (Lab 10 Winter)",
+  "x": 74,
+  "y": 886,
+  "area": "(unnamed)",
+  "data": [
+   -16,
+   -86,
+   0,
+   0
+  ],
+  "dest_x": 58,
+  "dest_y": 800,
+  "dest_area": "(unnamed)",
+  "check": "ok"
+ },
+ {
+  "item": 5070,
+  "template": 1277,
+  "kind": "ladder/hole",
+  "driver": 16,
+  "name": "Trap (Lab 10 Spring)",
+  "x": 77,
+  "y": 821,
+  "area": "(unnamed)",
+  "data": [
+   -23,
+   -25,
+   0,
+   0
+  ],
+  "dest_x": 54,
+  "dest_y": 796,
+  "dest_area": "(unnamed)",
+  "check": "ok"
+ },
+ {
+  "item": 16108,
+  "template": 1279,
+  "kind": "ladder/hole",
+  "driver": 16,
+  "name": "Trap (Lab 10 Summer)",
+  "x": 104,
+  "y": 824,
+  "area": "(unnamed)",
+  "data": [
+   -44,
+   -32,
+   0,
+   0
+  ],
+  "dest_x": 60,
+  "dest_y": 792,
+  "dest_area": "(unnamed)",
+  "check": "ok"
+ },
+ {
+  "item": 21017,
+  "template": 1281,
+  "kind": "ladder/hole",
+  "driver": 16,
+  "name": "Trap (Lab 10 Fall)",
+  "x": 105,
+  "y": 879,
+  "area": "(unnamed)",
+  "data": [
+   -45,
+   -79,
+   0,
+   0
+  ],
+  "dest_x": 60,
+  "dest_y": 800,
+  "dest_area": "(unnamed)",
+  "check": "ok"
+ },
+ {
+  "item": 9806,
+  "template": 1297,
+  "kind": "ladder/hole",
+  "driver": 16,
+  "name": "Ladder (from Ghost King)",
+  "x": 267,
+  "y": 141,
+  "area": "(unnamed)",
+  "data": [
+   234,
+   438,
+   0,
+   0
+  ],
+  "dest_x": 501,
+  "dest_y": 579,
+  "dest_area": "Abandoned Gorn Clan Hall",
+  "check": "ok (next to it)"
+ },
+ {
+  "item": 2963,
+  "template": 1269,
+  "kind": "ladder/hole",
+  "driver": 16,
+  "name": "Ladder (from Spider Queen)",
+  "x": 302,
+  "y": 75,
+  "area": "(unnamed)",
+  "data": [
+   205,
+   326,
+   0,
+   0
+  ],
+  "dest_x": 507,
+  "dest_y": 401,
+  "dest_area": "Abandoned Kwai Clan Hall",
+  "check": "ok (next to it)"
+ },
+ {
+  "item": 5215,
+  "template": 1310,
+  "kind": "teleport",
+  "driver": 6,
+  "name": "Hole (to Room I in outlaw hideout",
+  "x": 30,
+  "y": 89,
+  "area": "(unnamed)",
+  "data": [
+   850,
+   120,
+   0,
+   0
+  ],
+  "dest_x": 850,
+  "dest_y": 120,
+  "dest_area": "Underground I",
+  "check": "ok"
+ },
+ {
+  "item": 18357,
+  "template": 1299,
+  "kind": "teleport",
+  "driver": 6,
+  "name": "Magic Portal (Lab 10 End)",
+  "x": 53,
+  "y": 785,
+  "area": "(unnamed)",
+  "data": [
+   63,
+   720,
+   10,
+   172053
+  ],
+  "note": "lab-solved portal, destination in code"
+ },
+ {
+  "item": 21202,
+  "template": 1300,
+  "kind": "teleport",
+  "driver": 6,
+  "name": "Magic Portal (To Summer)",
+  "x": 57,
+  "y": 826,
+  "area": "(unnamed)",
+  "data": [
+   70,
+   804,
+   0,
+   0
+  ],
+  "dest_x": 70,
+  "dest_y": 804,
+  "dest_area": "(unnamed)",
+  "check": "ok (next to it)"
+ },
+ {
+  "item": 15951,
+  "template": 1303,
+  "kind": "teleport",
+  "driver": 6,
+  "name": "Magic Portal (To Spring)",
+  "x": 70,
+  "y": 804,
+  "area": "(unnamed)",
+  "data": [
+   52,
+   838,
+   0,
+   0
+  ],
+  "dest_x": 52,
+  "dest_y": 838,
+  "dest_area": "(unnamed)",
+  "check": "ok"
+ },
+ {
+  "item": 7317,
+  "template": 1301,
+  "kind": "teleport",
+  "driver": 6,
+  "name": "Magic Portal (To Fall)",
+  "x": 86,
+  "y": 881,
+  "area": "(unnamed)",
+  "data": [
+   112,
+   851,
+   0,
+   0
+  ],
+  "dest_x": 112,
+  "dest_y": 851,
+  "dest_area": "(unnamed)",
+  "check": "ok (next to it)"
+ },
+ {
+  "item": 1803,
+  "template": 1302,
+  "kind": "teleport",
+  "driver": 6,
+  "name": "Magic Portal (To Winter)",
+  "x": 90,
+  "y": 886,
+  "area": "(unnamed)",
+  "data": [
+   86,
+   881,
+   0,
+   0
+  ],
+  "dest_x": 86,
+  "dest_y": 881,
+  "dest_area": "(unnamed)",
+  "check": "ok (next to it)"
+ },
+ {
+  "item": 17403,
+  "template": 1300,
+  "kind": "teleport",
+  "driver": 6,
+  "name": "Magic Portal (To Summer)",
+  "x": 112,
+  "y": 851,
+  "area": "(unnamed)",
+  "data": [
+   70,
+   804,
+   0,
+   0
+  ],
+  "dest_x": 70,
+  "dest_y": 804,
+  "dest_area": "(unnamed)",
+  "check": "ok (next to it)"
+ },
+ {
+  "item": 7588,
+  "template": 1301,
+  "kind": "teleport",
+  "driver": 6,
+  "name": "Magic Portal (To Fall)",
+  "x": 116,
+  "y": 788,
+  "area": "(unnamed)",
+  "data": [
+   112,
+   851,
+   0,
+   0
+  ],
+  "dest_x": 112,
+  "dest_y": 851,
+  "dest_area": "(unnamed)",
+  "check": "ok (next to it)"
+ },
+ {
+  "item": 16748,
+  "template": 1293,
+  "kind": "teleport",
+  "driver": 6,
+  "name": "Magic Portal",
+  "x": 322,
+  "y": 277,
+  "area": "(unnamed)",
+  "data": [
+   385,
+   284,
+   0,
+   0
+  ],
+  "dest_x": 385,
+  "dest_y": 284,
+  "dest_area": "Ice Pentagram Quest",
+  "check": "ok (next to it)"
+ },
+ {
+  "item": 8690,
+  "template": 1296,
+  "kind": "ladder/hole",
+  "driver": 16,
+  "name": "Hole (to Ghost King)",
+  "x": 501,
+  "y": 579,
+  "area": "Abandoned Gorn Clan Hall",
+  "data": [
+   -234,
+   -438,
+   0,
+   0
+  ],
+  "dest_x": 267,
+  "dest_y": 141,
+  "dest_area": "(unnamed)",
+  "check": "ok (next to it)"
+ },
+ {
+  "item": 12072,
+  "template": 1268,
+  "kind": "ladder/hole",
+  "driver": 16,
+  "name": "Hole (to Spider Queen)",
+  "x": 507,
+  "y": 401,
+  "area": "Abandoned Kwai Clan Hall",
+  "data": [
+   -205,
+   -326,
+   0,
+   0
+  ],
+  "dest_x": 302,
+  "dest_y": 75,
+  "dest_area": "(unnamed)",
+  "check": "ok (next to it)"
+ },
+ {
+  "item": 12346,
+  "template": 686,
+  "kind": "arena portal",
+  "driver": 47,
+  "name": "Magic Gate II",
+  "x": 496,
+  "y": 465,
+  "area": "Arena",
+  "data": [
+   482802,
+   476654,
+   486904,
+   0
+  ],
+  "dest_x": 498,
+  "dest_y": 471,
+  "dest_area": "Arena",
+  "check": "ok",
+  "note": "arena box (494,465)-(504,475)"
+ },
+ {
+  "item": 37179,
+  "template": 661,
+  "kind": "labyrinth exit",
+  "driver": 46,
+  "name": "Magic Portal",
+  "x": 505,
+  "y": 449,
+  "area": "Arena",
+  "data": [
+   512,
+   512,
+   0,
+   0
+  ],
+  "dest_x": 512,
+  "dest_y": 512,
+  "dest_area": "Temple of Skua",
+  "check": "ok"
+ },
+ {
+  "item": 16320,
+  "template": 679,
+  "kind": "special portal (code)",
+  "driver": 36,
+  "name": "Magic Gate II",
+  "x": 510,
+  "y": 465,
+  "area": "Arena",
+  "data": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "note": "destination in code"
+ },
+ {
+  "item": 1246,
+  "template": 162,
+  "kind": "labyrinth entrance",
+  "driver": 15,
+  "name": "Magic Portal",
+  "x": 607,
+  "y": 500,
+  "area": "Aston",
+  "data": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "note": "destination in code"
+ },
+ {
+  "item": 13724,
+  "template": 1120,
+  "kind": "ladder/hole",
+  "driver": 16,
+  "name": "Hole",
+  "x": 481,
+  "y": 441,
+  "area": "Aston",
+  "data": [
+   360,
+   -440,
+   0,
+   0
+  ],
+  "dest_x": 841,
+  "dest_y": 1,
+  "dest_area": "Underground I",
+  "check": "ok (next to it)"
+ },
+ {
+  "item": 5121,
+  "template": 1120,
+  "kind": "ladder/hole",
+  "driver": 16,
+  "name": "Hole",
+  "x": 482,
+  "y": 591,
+  "area": "Aston",
+  "data": [
+   360,
+   -440,
+   0,
+   0
+  ],
+  "dest_x": 842,
+  "dest_y": 151,
+  "dest_area": "Underground I",
+  "check": "ok"
+ },
+ {
+  "item": 17119,
+  "template": 1120,
+  "kind": "ladder/hole",
+  "driver": 16,
+  "name": "Hole",
+  "x": 585,
+  "y": 473,
+  "area": "Aston",
+  "data": [
+   360,
+   -440,
+   0,
+   0
+  ],
+  "dest_x": 945,
+  "dest_y": 33,
+  "dest_area": "Underground I",
+  "check": "ok (next to it)"
+ },
+ {
+  "item": 15241,
+  "template": 1120,
+  "kind": "ladder/hole",
+  "driver": 16,
+  "name": "Hole",
+  "x": 633,
+  "y": 441,
+  "area": "Aston",
+  "data": [
+   360,
+   -440,
+   0,
+   0
+  ],
+  "dest_x": 993,
+  "dest_y": 1,
+  "dest_area": "Underground I",
+  "check": "ok (next to it)"
+ },
+ {
+  "item": 2581,
+  "template": 179,
+  "kind": "teleport",
+  "driver": 6,
+  "name": "Magic Portal",
+  "x": 615,
+  "y": 500,
+  "area": "Aston",
+  "data": [
+   160,
+   96,
+   0,
+   0
+  ],
+  "dest_x": 160,
+  "dest_y": 96,
+  "dest_area": "Random Dungeon",
+  "check": "ok"
+ },
+ {
+  "item": 11451,
+  "template": 248,
+  "kind": "ladder/hole",
+  "driver": 16,
+  "name": "Hole",
+  "x": 64,
+  "y": 130,
+  "area": "Astonian Inn",
+  "data": [
+   567,
+   349,
+   0,
+   0
+  ],
+  "dest_x": 631,
+  "dest_y": 479,
+  "dest_area": "Astonian Inn",
+  "check": "ok"
+ },
+ {
+  "item": 9850,
+  "template": 1119,
+  "kind": "ladder/hole",
+  "driver": 16,
+  "name": "Tavern Ladder",
+  "x": 631,
+  "y": 480,
+  "area": "Astonian Inn",
+  "data": [
+   -568,
+   -350,
+   0,
+   0
+  ],
+  "dest_x": 63,
+  "dest_y": 130,
+  "dest_area": "Astonian Inn",
+  "check": "ok"
+ },
+ {
+  "item": 11817,
+  "template": 796,
+  "kind": "teleport",
+  "driver": 6,
+  "name": "Black Stronghold Iron Door",
+  "x": 425,
+  "y": 359,
+  "area": "Black Stronghold",
+  "data": [
+   425,
+   361,
+   0,
+   0
+  ],
+  "dest_x": 425,
+  "dest_y": 361,
+  "dest_area": "Black Stronghold",
+  "check": "ok"
+ },
+ {
+  "item": 13097,
+  "template": 786,
+  "kind": "teleport",
+  "driver": 6,
+  "name": "Black Stronghold Iron Door",
+  "x": 425,
+  "y": 360,
+  "area": "Black Stronghold",
+  "data": [
+   430,
+   352,
+   0,
+   0
+  ],
+  "dest_x": 430,
+  "dest_y": 352,
+  "dest_area": "Black Stronghold",
+  "check": "ok"
+ },
+ {
+  "item": 3942,
+  "template": 799,
+  "kind": "teleport",
+  "driver": 6,
+  "name": "Fire in Bowl",
+  "x": 437,
+  "y": 332,
+  "area": "Black Stronghold",
+  "data": [
+   443,
+   388,
+   0,
+   0
+  ],
+  "dest_x": 443,
+  "dest_y": 388,
+  "dest_area": "Black Stronghold",
+  "check": "ok"
+ },
+ {
+  "item": 1404,
+  "template": 799,
+  "kind": "teleport",
+  "driver": 6,
+  "name": "Fire in Bowl",
+  "x": 440,
+  "y": 375,
+  "area": "Black Stronghold",
+  "data": [
+   443,
+   388,
+   0,
+   0
+  ],
+  "dest_x": 443,
+  "dest_y": 388,
+  "dest_area": "Black Stronghold",
+  "check": "ok"
+ },
+ {
+  "item": 13538,
+  "template": 798,
+  "kind": "teleport",
+  "driver": 6,
+  "name": "Fire in Bowl",
+  "x": 440,
+  "y": 381,
+  "area": "Black Stronghold",
+  "data": [
+   438,
+   378,
+   0,
+   0
+  ],
+  "dest_x": 438,
+  "dest_y": 378,
+  "dest_area": "Black Stronghold",
+  "check": "ok"
+ },
+ {
+  "item": 10366,
+  "template": 798,
+  "kind": "teleport",
+  "driver": 6,
+  "name": "Fire in Bowl",
+  "x": 440,
+  "y": 389,
+  "area": "Black Stronghold",
+  "data": [
+   438,
+   378,
+   0,
+   0
+  ],
+  "dest_x": 438,
+  "dest_y": 378,
+  "dest_area": "Black Stronghold",
+  "check": "ok"
+ },
+ {
+  "item": 23291,
+  "template": 799,
+  "kind": "teleport",
+  "driver": 6,
+  "name": "Fire in Bowl",
+  "x": 443,
+  "y": 332,
+  "area": "Black Stronghold",
+  "data": [
+   443,
+   388,
+   0,
+   0
+  ],
+  "dest_x": 443,
+  "dest_y": 388,
+  "dest_area": "Black Stronghold",
+  "check": "ok"
+ },
+ {
+  "item": 12972,
+  "template": 798,
+  "kind": "teleport",
+  "driver": 6,
+  "name": "Fire in Bowl",
+  "x": 444,
+  "y": 375,
+  "area": "Black Stronghold",
+  "data": [
+   438,
+   378,
+   0,
+   0
+  ],
+  "dest_x": 438,
+  "dest_y": 378,
+  "dest_area": "Black Stronghold",
+  "check": "ok"
+ },
+ {
+  "item": 12164,
+  "template": 797,
+  "kind": "teleport",
+  "driver": 6,
+  "name": "Fire in Bowl",
+  "x": 446,
+  "y": 381,
+  "area": "Black Stronghold",
+  "data": [
+   440,
+   383,
+   0,
+   0
+  ],
+  "dest_x": 440,
+  "dest_y": 383,
+  "dest_area": "Black Stronghold",
+  "check": "ok"
+ },
+ {
+  "item": 11478,
+  "template": 798,
+  "kind": "teleport",
+  "driver": 6,
+  "name": "Fire in Bowl",
+  "x": 446,
+  "y": 389,
+  "area": "Black Stronghold",
+  "data": [
+   438,
+   378,
+   0,
+   0
+  ],
+  "dest_x": 438,
+  "dest_y": 378,
+  "dest_area": "Black Stronghold",
+  "check": "ok"
+ },
+ {
+  "item": 22291,
+  "template": 934,
+  "kind": "teleport",
+  "driver": 6,
+  "name": "Portal: floor tile 13",
+  "x": 368,
+  "y": 233,
+  "area": "Gargoyle's Nest",
+  "data": [
+   374,
+   233,
+   0,
+   0
+  ],
+  "dest_x": 374,
+  "dest_y": 233,
+  "dest_area": "Gargoyle's Nest",
+  "check": "ok"
+ },
+ {
+  "item": 2647,
+  "template": 933,
+  "kind": "teleport",
+  "driver": 6,
+  "name": "Ladder GN8",
+  "x": 371,
+  "y": 233,
+  "area": "Gargoyle's Nest",
+  "data": [
+   415,
+   323,
+   0,
+   0
+  ],
+  "dest_x": 415,
+  "dest_y": 323,
+  "dest_area": "Gargoyle's Nest",
+  "check": "ok"
+ },
+ {
+  "item": 22296,
+  "template": 930,
+  "kind": "teleport",
+  "driver": 6,
+  "name": "Ladder GN7",
+  "x": 373,
+  "y": 235,
+  "area": "Gargoyle's Nest",
+  "data": [
+   453,
+   327,
+   0,
+   0
+  ],
+  "dest_x": 453,
+  "dest_y": 327,
+  "dest_area": "Gargoyle's Nest",
+  "check": "ok"
+ },
+ {
+  "item": 22356,
+  "template": 927,
+  "kind": "teleport",
+  "driver": 6,
+  "name": "Ladder GN6",
+  "x": 373,
+  "y": 240,
+  "area": "Gargoyle's Nest",
+  "data": [
+   466,
+   320,
+   0,
+   0
+  ],
+  "dest_x": 466,
+  "dest_y": 320,
+  "dest_area": "Gargoyle's Nest",
+  "check": "ok"
+ },
+ {
+  "item": 832,
+  "template": 939,
+  "kind": "teleport",
+  "driver": 6,
+  "name": "Portal: floor tile 14",
+  "x": 375,
+  "y": 230,
+  "area": "Gargoyle's Nest",
+  "data": [
+   379,
+   233,
+   0,
+   0
+  ],
+  "dest_x": 379,
+  "dest_y": 233,
+  "dest_area": "Gargoyle's Nest",
+  "check": "ok"
+ },
+ {
+  "item": 20390,
+  "template": 933,
+  "kind": "teleport",
+  "driver": 6,
+  "name": "Ladder GN8",
+  "x": 376,
+  "y": 233,
+  "area": "Gargoyle's Nest",
+  "data": [
+   415,
+   323,
+   0,
+   0
+  ],
+  "dest_x": 415,
+  "dest_y": 323,
+  "dest_area": "Gargoyle's Nest",
+  "check": "ok"
+ },
+ {
+  "item": 7594,
+  "template": 928,
+  "kind": "teleport",
+  "driver": 6,
+  "name": "Portal: floor tile 10",
+  "x": 376,
+  "y": 238,
+  "area": "Gargoyle's Nest",
+  "data": [
+   373,
+   242,
+   0,
+   0
+  ],
+  "dest_x": 373,
+  "dest_y": 242,
+  "dest_area": "Gargoyle's Nest",
+  "check": "ok"
+ },
+ {
+  "item": 20336,
+  "template": 927,
+  "kind": "teleport",
+  "driver": 6,
+  "name": "Ladder GN6",
+  "x": 380,
+  "y": 235,
+  "area": "Gargoyle's Nest",
+  "data": [
+   466,
+   320,
+   0,
+   0
+  ],
+  "dest_x": 466,
+  "dest_y": 320,
+  "dest_area": "Gargoyle's Nest",
+  "check": "ok"
+ },
+ {
+  "item": 22083,
+  "template": 925,
+  "kind": "teleport",
+  "driver": 6,
+  "name": "Ladder GN5",
+  "x": 380,
+  "y": 240,
+  "area": "Gargoyle's Nest",
+  "data": [
+   451,
+   305,
+   0,
+   0
+  ],
+  "dest_x": 451,
+  "dest_y": 305,
+  "dest_area": "Gargoyle's Nest",
+  "check": "ok"
+ },
+ {
+  "item": 2844,
+  "template": 933,
+  "kind": "teleport",
+  "driver": 6,
+  "name": "Ladder GN8",
+  "x": 381,
+  "y": 233,
+  "area": "Gargoyle's Nest",
+  "data": [
+   415,
+   323,
+   0,
+   0
+  ],
+  "dest_x": 415,
+  "dest_y": 323,
+  "dest_area": "Gargoyle's Nest",
+  "check": "ok"
+ },
+ {
+  "item": 9716,
+  "template": 942,
+  "kind": "teleport",
+  "driver": 6,
+  "name": "Ladder GN9",
+  "x": 386,
+  "y": 233,
+  "area": "Gargoyle's Nest",
+  "data": [
+   411,
+   307,
+   0,
+   0
+  ],
+  "dest_x": 411,
+  "dest_y": 307,
+  "dest_area": "Gargoyle's Nest",
+  "check": "ok"
+ },
+ {
+  "item": 5440,
+  "template": 922,
+  "kind": "teleport",
+  "driver": 6,
+  "name": "Ladder GN5",
+  "x": 387,
+  "y": 235,
+  "area": "Gargoyle's Nest",
+  "data": [
+   462,
+   291,
+   0,
+   0
+  ],
+  "dest_x": 462,
+  "dest_y": 291,
+  "dest_area": "Gargoyle's Nest",
+  "check": "ok"
+ },
+ {
+  "item": 20906,
+  "template": 919,
+  "kind": "teleport",
+  "driver": 6,
+  "name": "Ladder GN4",
+  "x": 387,
+  "y": 240,
+  "area": "Gargoyle's Nest",
+  "data": [
+   476,
+   307,
+   0,
+   0
+  ],
+  "dest_x": 476,
+  "dest_y": 307,
+  "dest_area": "Gargoyle's Nest",
+  "check": "ok"
+ },
+ {
+  "item": 13296,
+  "template": 945,
+  "kind": "teleport",
+  "driver": 6,
+  "name": "Portal: floor tile 17",
+  "x": 388,
+  "y": 229,
+  "area": "Gargoyle's Nest",
+  "data": [
+   394,
+   233,
+   0,
+   0
+  ],
+  "dest_x": 394,
+  "dest_y": 233,
+  "dest_area": "Gargoyle's Nest",
+  "check": "ok"
+ },
+ {
+  "item": 17278,
+  "template": 917,
+  "kind": "teleport",
+  "driver": 6,
+  "name": "Portal: floor tile 6",
+  "x": 389,
+  "y": 243,
+  "area": "Gargoyle's Nest",
+  "data": [
+   394,
+   237,
+   0,
+   0
+  ],
+  "dest_x": 394,
+  "dest_y": 237,
+  "dest_area": "Gargoyle's Nest",
+  "check": "ok"
+ },
+ {
+  "item": 14565,
+  "template": 944,
+  "kind": "teleport",
+  "driver": 6,
+  "name": "Ladder GN10",
+  "x": 391,
+  "y": 233,
+  "area": "Gargoyle's Nest",
+  "data": [
+   438,
+   294,
+   0,
+   0
+  ],
+  "dest_x": 438,
+  "dest_y": 294,
+  "dest_area": "Gargoyle's Nest",
+  "check": "ok"
+ },
+ {
+  "item": 1249,
+  "template": 915,
+  "kind": "teleport",
+  "driver": 6,
+  "name": "Ladder GN3",
+  "x": 394,
+  "y": 235,
+  "area": "Gargoyle's Nest",
+  "data": [
+   476,
+   284,
+   0,
+   0
+  ],
+  "dest_x": 476,
+  "dest_y": 284,
+  "dest_area": "Gargoyle's Nest",
+  "check": "ok"
+ },
+ {
+  "item": 19933,
+  "template": 915,
+  "kind": "teleport",
+  "driver": 6,
+  "name": "Ladder GN3",
+  "x": 394,
+  "y": 240,
+  "area": "Gargoyle's Nest",
+  "data": [
+   476,
+   284,
+   0,
+   0
+  ],
+  "dest_x": 476,
+  "dest_y": 284,
+  "dest_area": "Gargoyle's Nest",
+  "check": "ok"
+ },
+ {
+  "item": 19296,
+  "template": 944,
+  "kind": "teleport",
+  "driver": 6,
+  "name": "Ladder GN10",
+  "x": 396,
+  "y": 233,
+  "area": "Gargoyle's Nest",
+  "data": [
+   438,
+   294,
+   0,
+   0
+  ],
+  "dest_x": 438,
+  "dest_y": 294,
+  "dest_area": "Gargoyle's Nest",
+  "check": "ok"
+ },
+ {
+  "item": 17896,
+  "template": 916,
+  "kind": "teleport",
+  "driver": 6,
+  "name": "Portal: floor tile 5",
+  "x": 397,
+  "y": 238,
+  "area": "Gargoyle's Nest",
+  "data": [
+   394,
+   242,
+   0,
+   0
+  ],
+  "dest_x": 394,
+  "dest_y": 242,
+  "dest_area": "Gargoyle's Nest",
+  "check": "ok"
+ },
+ {
+  "item": 22519,
+  "template": 947,
+  "kind": "teleport",
+  "driver": 6,
+  "name": "Ladder GN11",
+  "x": 401,
+  "y": 233,
+  "area": "Gargoyle's Nest",
+  "data": [
+   419,
+   276,
+   0,
+   0
+  ],
+  "dest_x": 419,
+  "dest_y": 276,
+  "dest_area": "Gargoyle's Nest",
+  "check": "ok"
+ },
+ {
+  "item": 19295,
+  "template": 915,
+  "kind": "teleport",
+  "driver": 6,
+  "name": "Ladder GN3",
+  "x": 401,
+  "y": 235,
+  "area": "Gargoyle's Nest",
+  "data": [
+   476,
+   284,
+   0,
+   0
+  ],
+  "dest_x": 476,
+  "dest_y": 284,
+  "dest_area": "Gargoyle's Nest",
+  "check": "ok"
+ },
+ {
+  "item": 10439,
+  "template": 911,
+  "kind": "teleport",
+  "driver": 6,
+  "name": "Ladder GN2",
+  "x": 401,
+  "y": 240,
+  "area": "Gargoyle's Nest",
+  "data": [
+   457,
+   259,
+   0,
+   0
+  ],
+  "dest_x": 457,
+  "dest_y": 259,
+  "dest_area": "Gargoyle's Nest",
+  "check": "ok"
+ },
+ {
+  "item": 1335,
+  "template": 912,
+  "kind": "teleport",
+  "driver": 6,
+  "name": "Portal: floor tile 3",
+  "x": 405,
+  "y": 237,
+  "area": "Gargoyle's Nest",
+  "data": [
+   401,
+   242,
+   0,
+   0
+  ],
+  "dest_x": 401,
+  "dest_y": 242,
+  "dest_area": "Gargoyle's Nest",
+  "check": "ok"
+ },
+ {
+  "item": 11888,
+  "template": 949,
+  "kind": "teleport",
+  "driver": 6,
+  "name": "Ladder GN12",
+  "x": 406,
+  "y": 233,
+  "area": "Gargoyle's Nest",
+  "data": [
+   431,
+   278,
+   0,
+   0
+  ],
+  "dest_x": 431,
+  "dest_y": 278,
+  "dest_area": "Gargoyle's Nest",
+  "check": "ok"
+ },
+ {
+  "item": 3285,
+  "template": 911,
+  "kind": "teleport",
+  "driver": 6,
+  "name": "Ladder GN2",
+  "x": 408,
+  "y": 235,
+  "area": "Gargoyle's Nest",
+  "data": [
+   457,
+   259,
+   0,
+   0
+  ],
+  "dest_x": 457,
+  "dest_y": 259,
+  "dest_area": "Gargoyle's Nest",
+  "check": "ok"
+ },
+ {
+  "item": 10165,
+  "template": 905,
+  "kind": "teleport",
+  "driver": 6,
+  "name": "Ladder GN1",
+  "x": 408,
+  "y": 240,
+  "area": "Gargoyle's Nest",
+  "data": [
+   449,
+   237,
+   0,
+   0
+  ],
+  "dest_x": 449,
+  "dest_y": 237,
+  "dest_area": "Gargoyle's Nest",
+  "check": "ok"
+ },
+ {
+  "item": 10421,
+  "template": 963,
+  "kind": "teleport",
+  "driver": 6,
+  "name": "Portal: floor tile 25",
+  "x": 411,
+  "y": 235,
+  "area": "Gargoyle's Nest",
+  "data": [
+   441,
+   232,
+   0,
+   0
+  ],
+  "dest_x": 441,
+  "dest_y": 232,
+  "dest_area": "Gargoyle's Nest",
+  "check": "ok"
+ },
+ {
+  "item": 18473,
+  "template": 961,
+  "kind": "teleport",
+  "driver": 6,
+  "name": "Portal: floor tile 24",
+  "x": 411,
+  "y": 244,
+  "area": "Gargoyle's Nest",
+  "data": [
+   435,
+   232,
+   0,
+   0
+  ],
+  "dest_x": 435,
+  "dest_y": 232,
+  "dest_area": "Gargoyle's Nest",
+  "check": "ok"
+ },
+ {
+  "item": 9956,
+  "template": 941,
+  "kind": "teleport",
+  "driver": 6,
+  "name": "Portal: floor tile 15",
+  "x": 411,
+  "y": 308,
+  "area": "Gargoyle's Nest",
+  "data": [
+   384,
+   233,
+   0,
+   0
+  ],
+  "dest_x": 384,
+  "dest_y": 233,
+  "dest_area": "Gargoyle's Nest",
+  "check": "ok"
+ },
+ {
+  "item": 10263,
+  "template": 951,
+  "kind": "teleport",
+  "driver": 6,
+  "name": "Ladder GN13",
+  "x": 412,
+  "y": 232,
+  "area": "Gargoyle's Nest",
+  "data": [
+   413,
+   285,
+   0,
+   0
+  ],
+  "dest_x": 413,
+  "dest_y": 285,
+  "dest_area": "Gargoyle's Nest",
+  "check": "ok"
+ },
+ {
+  "item": 9796,
+  "template": 958,
+  "kind": "teleport",
+  "driver": 6,
+  "name": "Portal: floor tile 23",
+  "x": 412,
+  "y": 253,
+  "area": "Gargoyle's Nest",
+  "data": [
+   429,
+   232,
+   0,
+   0
+  ],
+  "dest_x": 429,
+  "dest_y": 232,
+  "dest_area": "Gargoyle's Nest",
+  "check": "ok"
+ },
+ {
+  "item": 10214,
+  "template": 950,
+  "kind": "teleport",
+  "driver": 6,
+  "name": "Portal: floor tile 20",
+  "x": 413,
+  "y": 286,
+  "area": "Gargoyle's Nest",
+  "data": [
+   409,
+   232,
+   0,
+   0
+  ],
+  "dest_x": 409,
+  "dest_y": 232,
+  "dest_area": "Gargoyle's Nest",
+  "check": "ok"
+ },
+ {
+  "item": 2675,
+  "template": 954,
+  "kind": "teleport",
+  "driver": 6,
+  "name": "Ladder GN14",
+  "x": 415,
+  "y": 232,
+  "area": "Gargoyle's Nest",
+  "data": [
+   437,
+   267,
+   0,
+   0
+  ],
+  "dest_x": 437,
+  "dest_y": 267,
+  "dest_area": "Gargoyle's Nest",
+  "check": "ok"
+ },
+ {
+  "item": 9892,
+  "template": 955,
+  "kind": "teleport",
+  "driver": 6,
+  "name": "Portal: floor tile 22",
+  "x": 415,
+  "y": 265,
+  "area": "Gargoyle's Nest",
+  "data": [
+   423,
+   232,
+   0,
+   0
+  ],
+  "dest_x": 423,
+  "dest_y": 232,
+  "dest_area": "Gargoyle's Nest",
+  "check": "ok"
+ },
+ {
+  "item": 15801,
+  "template": 932,
+  "kind": "teleport",
+  "driver": 6,
+  "name": "Portal: floor tile 12",
+  "x": 415,
+  "y": 324,
+  "area": "Gargoyle's Nest",
+  "data": [
+   369,
+   233,
+   0,
+   0
+  ],
+  "dest_x": 369,
+  "dest_y": 233,
+  "dest_area": "Gargoyle's Nest",
+  "check": "ok"
+ },
+ {
+  "item": 15233,
+  "template": 972,
+  "kind": "teleport",
+  "driver": 6,
+  "name": "Portal: floor tile 28",
+  "x": 418,
+  "y": 251,
+  "area": "Gargoyle's Nest",
+  "data": [
+   459,
+   232,
+   0,
+   0
+  ],
+  "dest_x": 459,
+  "dest_y": 232,
+  "dest_area": "Gargoyle's Nest",
+  "check": "ok"
+ },
+ {
+  "item": 21977,
+  "template": 946,
+  "kind": "teleport",
+  "driver": 6,
+  "name": "Portal: floor tile 18",
+  "x": 419,
+  "y": 275,
+  "area": "Gargoyle's Nest",
+  "data": [
+   399,
+   233,
+   0,
+   0
+  ],
+  "dest_x": 399,
+  "dest_y": 233,
+  "dest_area": "Gargoyle's Nest",
+  "check": "ok"
+ },
+ {
+  "item": 6450,
+  "template": 974,
+  "kind": "teleport",
+  "driver": 6,
+  "name": "Portal: floor tile 29",
+  "x": 420,
+  "y": 260,
+  "area": "Gargoyle's Nest",
+  "data": [
+   465,
+   232,
+   0,
+   0
+  ],
+  "dest_x": 465,
+  "dest_y": 232,
+  "dest_area": "Gargoyle's Nest",
+  "check": "ok"
+ },
+ {
+  "item": 24128,
+  "template": 956,
+  "kind": "teleport",
+  "driver": 6,
+  "name": "Ladder GN15",
+  "x": 421,
+  "y": 232,
+  "area": "Gargoyle's Nest",
+  "data": [
+   415,
+   265,
+   0,
+   0
+  ],
+  "dest_x": 415,
+  "dest_y": 265,
+  "dest_area": "Gargoyle's Nest",
+  "check": "ok"
+ },
+ {
+  "item": 23944,
+  "template": 969,
+  "kind": "teleport",
+  "driver": 6,
+  "name": "Portal: floor tile 27",
+  "x": 422,
+  "y": 244,
+  "area": "Gargoyle's Nest",
+  "data": [
+   453,
+   232,
+   0,
+   0
+  ],
+  "dest_x": 453,
+  "dest_y": 232,
+  "dest_area": "Gargoyle's Nest",
+  "check": "ok"
+ },
+ {
+  "item": 6490,
+  "template": 966,
+  "kind": "teleport",
+  "driver": 6,
+  "name": "Portal: floor tile 26",
+  "x": 423,
+  "y": 237,
+  "area": "Gargoyle's Nest",
+  "data": [
+   447,
+   232,
+   0,
+   0
+  ],
+  "dest_x": 447,
+  "dest_y": 232,
+  "dest_area": "Gargoyle's Nest",
+  "check": "ok"
+ },
+ {
+  "item": 5729,
+  "template": 959,
+  "kind": "teleport",
+  "driver": 6,
+  "name": "Ladder GN16",
+  "x": 427,
+  "y": 232,
+  "area": "Gargoyle's Nest",
+  "data": [
+   412,
+   253,
+   0,
+   0
+  ],
+  "dest_x": 412,
+  "dest_y": 253,
+  "dest_area": "Gargoyle's Nest",
+  "check": "ok"
+ },
+ {
+  "item": 21186,
+  "template": 948,
+  "kind": "teleport",
+  "driver": 6,
+  "name": "Portal: floor tile 19",
+  "x": 430,
+  "y": 279,
+  "area": "Gargoyle's Nest",
+  "data": [
+   404,
+   233,
+   0,
+   0
+  ],
+  "dest_x": 404,
+  "dest_y": 233,
+  "dest_area": "Gargoyle's Nest",
+  "check": "ok"
+ },
+ {
+  "item": 13001,
+  "template": 962,
+  "kind": "teleport",
+  "driver": 6,
+  "name": "Ladder GN17",
+  "x": 433,
+  "y": 232,
+  "area": "Gargoyle's Nest",
+  "data": [
+   411,
+   244,
+   0,
+   0
+  ],
+  "dest_x": 411,
+  "dest_y": 244,
+  "dest_area": "Gargoyle's Nest",
+  "check": "ok"
+ },
+ {
+  "item": 7123,
+  "template": 953,
+  "kind": "teleport",
+  "driver": 6,
+  "name": "Portal: floor tile 21",
+  "x": 437,
+  "y": 267,
+  "area": "Gargoyle's Nest",
+  "data": [
+   417,
+   232,
+   0,
+   0
+  ],
+  "dest_x": 417,
+  "dest_y": 232,
+  "dest_area": "Gargoyle's Nest",
+  "check": "ok"
+ },
+ {
+  "item": 12377,
+  "template": 943,
+  "kind": "teleport",
+  "driver": 6,
+  "name": "Portal: floor tile 16",
+  "x": 438,
+  "y": 295,
+  "area": "Gargoyle's Nest",
+  "data": [
+   389,
+   233,
+   0,
+   0
+  ],
+  "dest_x": 389,
+  "dest_y": 233,
+  "dest_area": "Gargoyle's Nest",
+  "check": "ok"
+ },
+ {
+  "item": 12600,
+  "template": 964,
+  "kind": "teleport",
+  "driver": 6,
+  "name": "Ladder GN18",
+  "x": 439,
+  "y": 232,
+  "area": "Gargoyle's Nest",
+  "data": [
+   411,
+   235,
+   0,
+   0
+  ],
+  "dest_x": 411,
+  "dest_y": 235,
+  "dest_area": "Gargoyle's Nest",
+  "check": "ok"
+ },
+ {
+  "item": 20754,
+  "template": 977,
+  "kind": "teleport",
+  "driver": 6,
+  "name": "Portal: floor tile 30",
+  "x": 441,
+  "y": 258,
+  "area": "Gargoyle's Nest",
+  "data": [
+   471,
+   232,
+   0,
+   0
+  ],
+  "dest_x": 471,
+  "dest_y": 232,
+  "dest_area": "Gargoyle's Nest",
+  "check": "ok"
+ },
+ {
+  "item": 16643,
+  "template": 979,
+  "kind": "teleport",
+  "driver": 6,
+  "name": "Portal: floor tile 31",
+  "x": 443,
+  "y": 235,
+  "area": "Gargoyle's Nest",
+  "data": [
+   477,
+   232,
+   0,
+   0
+  ],
+  "dest_x": 477,
+  "dest_y": 232,
+  "dest_area": "Gargoyle's Nest",
+  "check": "ok"
+ },
+ {
+  "item": 19353,
+  "template": 967,
+  "kind": "teleport",
+  "driver": 6,
+  "name": "Ladder GN19",
+  "x": 445,
+  "y": 232,
+  "area": "Gargoyle's Nest",
+  "data": [
+   423,
+   237,
+   0,
+   0
+  ],
+  "dest_x": 423,
+  "dest_y": 237,
+  "dest_area": "Gargoyle's Nest",
+  "check": "ok"
+ },
+ {
+  "item": 19065,
+  "template": 906,
+  "kind": "teleport",
+  "driver": 6,
+  "name": "Portal: floor tile 1",
+  "x": 448,
+  "y": 236,
+  "area": "Gargoyle's Nest",
+  "data": [
+   408,
+   242,
+   0,
+   0
+  ],
+  "dest_x": 408,
+  "dest_y": 242,
+  "dest_area": "Gargoyle's Nest",
+  "check": "ok"
+ },
+ {
+  "item": 7493,
+  "template": 970,
+  "kind": "teleport",
+  "driver": 6,
+  "name": "Ladder GN20",
+  "x": 451,
+  "y": 232,
+  "area": "Gargoyle's Nest",
+  "data": [
+   422,
+   244,
+   0,
+   0
+  ],
+  "dest_x": 422,
+  "dest_y": 244,
+  "dest_area": "Gargoyle's Nest",
+  "check": "ok"
+ },
+ {
+  "item": 6158,
+  "template": 924,
+  "kind": "teleport",
+  "driver": 6,
+  "name": "Portal: floor tile 9",
+  "x": 451,
+  "y": 306,
+  "area": "Gargoyle's Nest",
+  "data": [
+   380,
+   242,
+   0,
+   0
+  ],
+  "dest_x": 380,
+  "dest_y": 242,
+  "dest_area": "Gargoyle's Nest",
+  "check": "ok"
+ },
+ {
+  "item": 22840,
+  "template": 929,
+  "kind": "teleport",
+  "driver": 6,
+  "name": "Portal: floor tile 11",
+  "x": 453,
+  "y": 328,
+  "area": "Gargoyle's Nest",
+  "data": [
+   373,
+   237,
+   0,
+   0
+  ],
+  "dest_x": 373,
+  "dest_y": 237,
+  "dest_area": "Gargoyle's Nest",
+  "check": "ok"
+ },
+ {
+  "item": 23196,
+  "template": 973,
+  "kind": "teleport",
+  "driver": 6,
+  "name": "Ladder GN21",
+  "x": 457,
+  "y": 232,
+  "area": "Gargoyle's Nest",
+  "data": [
+   418,
+   251,
+   0,
+   0
+  ],
+  "dest_x": 418,
+  "dest_y": 251,
+  "dest_area": "Gargoyle's Nest",
+  "check": "ok"
+ },
+ {
+  "item": 6611,
+  "template": 910,
+  "kind": "teleport",
+  "driver": 6,
+  "name": "Portal: floor tile 2",
+  "x": 457,
+  "y": 260,
+  "area": "Gargoyle's Nest",
+  "data": [
+   408,
+   237,
+   0,
+   0
+  ],
+  "dest_x": 408,
+  "dest_y": 237,
+  "dest_area": "Gargoyle's Nest",
+  "check": "ok"
+ },
+ {
+  "item": 18231,
+  "template": 921,
+  "kind": "teleport",
+  "driver": 6,
+  "name": "Portal: floor tile 8",
+  "x": 462,
+  "y": 290,
+  "area": "Gargoyle's Nest",
+  "data": [
+   387,
+   237,
+   0,
+   0
+  ],
+  "dest_x": 387,
+  "dest_y": 237,
+  "dest_area": "Gargoyle's Nest",
+  "check": "ok"
+ },
+ {
+  "item": 10611,
+  "template": 975,
+  "kind": "teleport",
+  "driver": 6,
+  "name": "Ladder GN22",
+  "x": 463,
+  "y": 232,
+  "area": "Gargoyle's Nest",
+  "data": [
+   420,
+   260,
+   0,
+   0
+  ],
+  "dest_x": 420,
+  "dest_y": 260,
+  "dest_area": "Gargoyle's Nest",
+  "check": "ok"
+ },
+ {
+  "item": 7349,
+  "template": 926,
+  "kind": "teleport",
+  "driver": 6,
+  "name": "Portal: floor tile 9",
+  "x": 466,
+  "y": 321,
+  "area": "Gargoyle's Nest",
+  "data": [
+   380,
+   237,
+   0,
+   0
+  ],
+  "dest_x": 380,
+  "dest_y": 237,
+  "dest_area": "Gargoyle's Nest",
+  "check": "ok"
+ },
+ {
+  "item": 20421,
+  "template": 978,
+  "kind": "teleport",
+  "driver": 6,
+  "name": "Ladder GN23",
+  "x": 469,
+  "y": 232,
+  "area": "Gargoyle's Nest",
+  "data": [
+   441,
+   258,
+   0,
+   0
+  ],
+  "dest_x": 441,
+  "dest_y": 258,
+  "dest_area": "Gargoyle's Nest",
+  "check": "ok"
+ },
+ {
+  "item": 18518,
+  "template": 980,
+  "kind": "teleport",
+  "driver": 6,
+  "name": "Ladder GN24",
+  "x": 475,
+  "y": 232,
+  "area": "Gargoyle's Nest",
+  "data": [
+   443,
+   235,
+   0,
+   0
+  ],
+  "dest_x": 443,
+  "dest_y": 235,
+  "dest_area": "Gargoyle's Nest",
+  "check": "ok"
+ },
+ {
+  "item": 14677,
+  "template": 914,
+  "kind": "teleport",
+  "driver": 6,
+  "name": "Portal: floor tile 4",
+  "x": 476,
+  "y": 285,
+  "area": "Gargoyle's Nest",
+  "data": [
+   401,
+   237,
+   0,
+   0
+  ],
+  "dest_x": 401,
+  "dest_y": 237,
+  "dest_area": "Gargoyle's Nest",
+  "check": "ok"
+ },
+ {
+  "item": 15403,
+  "template": 918,
+  "kind": "teleport",
+  "driver": 6,
+  "name": "Portal: floor tile 7",
+  "x": 476,
+  "y": 308,
+  "area": "Gargoyle's Nest",
+  "data": [
+   387,
+   242,
+   0,
+   0
+  ],
+  "dest_x": 387,
+  "dest_y": 242,
+  "dest_area": "Gargoyle's Nest",
+  "check": "ok"
+ },
+ {
+  "item": 5841,
+  "template": 1120,
+  "kind": "ladder/hole",
+  "driver": 16,
+  "name": "Hole",
+  "x": 611,
+  "y": 539,
+  "area": "Haunted Castle",
+  "data": [
+   360,
+   -440,
+   0,
+   0
+  ],
+  "dest_x": 971,
+  "dest_y": 99,
+  "dest_area": "Underground I",
+  "check": "ok (next to it)"
+ },
+ {
+  "item": 14730,
+  "template": 1294,
+  "kind": "teleport",
+  "driver": 6,
+  "name": "Magic Portal",
+  "x": 385,
+  "y": 284,
+  "area": "Ice Pentagram Quest",
+  "data": [
+   322,
+   277,
+   0,
+   0
+  ],
+  "dest_x": 322,
+  "dest_y": 277,
+  "dest_area": "(unnamed)",
+  "check": "ok (next to it)"
+ },
+ {
+  "item": 1446,
+  "template": 1120,
+  "kind": "ladder/hole",
+  "driver": 16,
+  "name": "Hole",
+  "x": 548,
+  "y": 532,
+  "area": "Jamil's House",
+  "data": [
+   360,
+   -440,
+   0,
+   0
+  ],
+  "dest_x": 908,
+  "dest_y": 92,
+  "dest_area": "Underground I",
+  "check": "ok"
+ },
+ {
+  "item": 15214,
+  "template": 661,
+  "kind": "labyrinth exit",
+  "driver": 46,
+  "name": "Magic Portal",
+  "x": 35,
+  "y": 597,
+  "area": "Labyrinth, Final Entry",
+  "data": [
+   512,
+   512,
+   0,
+   0
+  ],
+  "dest_x": 512,
+  "dest_y": 512,
+  "dest_area": "Temple of Skua",
+  "check": "ok"
+ },
+ {
+  "item": 15401,
+  "template": 679,
+  "kind": "special portal (code)",
+  "driver": 36,
+  "name": "Magic Gate II",
+  "x": 33,
+  "y": 602,
+  "area": "Labyrinth, Final Entry",
+  "data": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "note": "destination in code"
+ },
+ {
+  "item": 14376,
+  "template": 684,
+  "kind": "Seyan'Du portal",
+  "driver": 45,
+  "name": "Magic Portal",
+  "x": 78,
+  "y": 601,
+  "area": "Labyrinth, Final Reward",
+  "data": [
+   512,
+   512,
+   0,
+   0
+  ],
+  "dest_x": 512,
+  "dest_y": 512,
+  "dest_area": "Temple of Skua",
+  "check": "ok"
+ },
+ {
+  "item": 15399,
+  "template": 680,
+  "kind": "special portal (code)",
+  "driver": 38,
+  "name": "Magic Gate II",
+  "x": 43,
+  "y": 602,
+  "area": "Labyrinth, Final Test",
+  "data": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "note": "destination in code"
+ },
+ {
+  "item": 23378,
+  "template": 1022,
+  "kind": "Lab 8 money shrine",
+  "driver": 64,
+  "name": "Shrine in lab 8 for portal",
+  "x": 51,
+  "y": 621,
+  "area": "Labyrinth, Forest Gorge",
+  "data": [
+   100000,
+   46,
+   621,
+   0
+  ],
+  "dest_x": 46,
+  "dest_y": 621,
+  "dest_area": "Labyrinth, Forest Gorge",
+  "check": "ok"
+ },
+ {
+  "item": 24811,
+  "template": 661,
+  "kind": "labyrinth exit",
+  "driver": 46,
+  "name": "Magic Portal",
+  "x": 113,
+  "y": 667,
+  "area": "Labyrinth, Forest Gorge",
+  "data": [
+   512,
+   512,
+   0,
+   0
+  ],
+  "dest_x": 512,
+  "dest_y": 512,
+  "dest_area": "Temple of Skua",
+  "check": "ok"
+ },
+ {
+  "item": 23638,
+  "template": 1032,
+  "kind": "step teleport",
+  "driver": 62,
+  "name": "Portal: floor trap 6",
+  "x": 21,
+  "y": 689,
+  "area": "Labyrinth, Forest Gorge",
+  "data": [
+   122,
+   692,
+   0,
+   0
+  ],
+  "dest_x": 122,
+  "dest_y": 692,
+  "dest_area": "Labyrinth, Forest Gorge",
+  "check": "ok"
+ },
+ {
+  "item": 23977,
+  "template": 1030,
+  "kind": "step teleport",
+  "driver": 62,
+  "name": "Portal: floor trap 5",
+  "x": 35,
+  "y": 651,
+  "area": "Labyrinth, Forest Gorge",
+  "data": [
+   116,
+   692,
+   0,
+   0
+  ],
+  "dest_x": 116,
+  "dest_y": 692,
+  "dest_area": "Labyrinth, Forest Gorge",
+  "check": "ok"
+ },
+ {
+  "item": 2915,
+  "template": 1038,
+  "kind": "step teleport",
+  "driver": 62,
+  "name": "Portal: floor trap 9",
+  "x": 38,
+  "y": 668,
+  "area": "Labyrinth, Forest Gorge",
+  "data": [
+   122,
+   705,
+   0,
+   0
+  ],
+  "dest_x": 122,
+  "dest_y": 705,
+  "dest_area": "Labyrinth, Forest Gorge",
+  "check": "ok"
+ },
+ {
+  "item": 23757,
+  "template": 1028,
+  "kind": "step teleport",
+  "driver": 62,
+  "name": "Portal: floor trap 4",
+  "x": 45,
+  "y": 615,
+  "area": "Labyrinth, Forest Gorge",
+  "data": [
+   116,
+   682,
+   0,
+   0
+  ],
+  "dest_x": 116,
+  "dest_y": 682,
+  "dest_area": "Labyrinth, Forest Gorge",
+  "check": "ok"
+ },
+ {
+  "item": 16806,
+  "template": 1034,
+  "kind": "step teleport",
+  "driver": 62,
+  "name": "Portal: floor trap 7",
+  "x": 54,
+  "y": 677,
+  "area": "Labyrinth, Forest Gorge",
+  "data": [
+   122,
+   700,
+   0,
+   0
+  ],
+  "dest_x": 122,
+  "dest_y": 700,
+  "dest_area": "Labyrinth, Forest Gorge",
+  "check": "ok"
+ },
+ {
+  "item": 20092,
+  "template": 1026,
+  "kind": "step teleport",
+  "driver": 62,
+  "name": "Portal: floor trap 3",
+  "x": 72,
+  "y": 624,
+  "area": "Labyrinth, Forest Gorge",
+  "data": [
+   122,
+   682,
+   0,
+   0
+  ],
+  "dest_x": 122,
+  "dest_y": 682,
+  "dest_area": "Labyrinth, Forest Gorge",
+  "check": "ok"
+ },
+ {
+  "item": 1076,
+  "template": 1036,
+  "kind": "step teleport",
+  "driver": 62,
+  "name": "Portal: floor trap 8",
+  "x": 91,
+  "y": 695,
+  "area": "Labyrinth, Forest Gorge",
+  "data": [
+   116,
+   700,
+   0,
+   0
+  ],
+  "dest_x": 116,
+  "dest_y": 700,
+  "dest_area": "Labyrinth, Forest Gorge",
+  "check": "ok"
+ },
+ {
+  "item": 17202,
+  "template": 1024,
+  "kind": "step teleport",
+  "driver": 62,
+  "name": "Portal: floor trap 2",
+  "x": 97,
+  "y": 628,
+  "area": "Labyrinth, Forest Gorge",
+  "data": [
+   122,
+   674,
+   0,
+   0
+  ],
+  "dest_x": 122,
+  "dest_y": 674,
+  "dest_area": "Labyrinth, Forest Gorge",
+  "check": "ok"
+ },
+ {
+  "item": 23476,
+  "template": 1014,
+  "kind": "step teleport",
+  "driver": 62,
+  "name": "Portal: floor trap 1",
+  "x": 104,
+  "y": 643,
+  "area": "Labyrinth, Forest Gorge",
+  "data": [
+   116,
+   674,
+   0,
+   0
+  ],
+  "dest_x": 116,
+  "dest_y": 674,
+  "dest_area": "Labyrinth, Forest Gorge",
+  "check": "ok"
+ },
+ {
+  "item": 18319,
+  "template": 1045,
+  "kind": "teleport",
+  "driver": 6,
+  "name": "Magic Portal",
+  "x": 46,
+  "y": 623,
+  "area": "Labyrinth, Forest Gorge",
+  "data": [
+   63,
+   720,
+   8,
+   126528
+  ],
+  "note": "lab-solved portal, destination in code"
+ },
+ {
+  "item": 2041,
+  "template": 1023,
+  "kind": "teleport",
+  "driver": 6,
+  "name": "Earth Wall, portal 1",
+  "x": 114,
+  "y": 675,
+  "area": "Labyrinth, Forest Gorge",
+  "data": [
+   103,
+   643,
+   0,
+   0
+  ],
+  "dest_x": 103,
+  "dest_y": 643,
+  "dest_area": "Labyrinth, Forest Gorge",
+  "check": "ok"
+ },
+ {
+  "item": 2810,
+  "template": 1029,
+  "kind": "teleport",
+  "driver": 6,
+  "name": "Earth Wall, portal 4",
+  "x": 115,
+  "y": 686,
+  "area": "Labyrinth, Forest Gorge",
+  "data": [
+   45,
+   616,
+   0,
+   0
+  ],
+  "dest_x": 45,
+  "dest_y": 616,
+  "dest_area": "Labyrinth, Forest Gorge",
+  "check": "ok"
+ },
+ {
+  "item": 493,
+  "template": 1037,
+  "kind": "teleport",
+  "driver": 6,
+  "name": "Earth Wall, portal 8",
+  "x": 116,
+  "y": 696,
+  "area": "Labyrinth, Forest Gorge",
+  "data": [
+   91,
+   694,
+   0,
+   0
+  ],
+  "dest_x": 91,
+  "dest_y": 694,
+  "dest_area": "Labyrinth, Forest Gorge",
+  "check": "ok"
+ },
+ {
+  "item": 913,
+  "template": 1031,
+  "kind": "teleport",
+  "driver": 6,
+  "name": "Earth Wall, portal 5",
+  "x": 118,
+  "y": 692,
+  "area": "Labyrinth, Forest Gorge",
+  "data": [
+   36,
+   651,
+   0,
+   0
+  ],
+  "dest_x": 36,
+  "dest_y": 651,
+  "dest_area": "Labyrinth, Forest Gorge",
+  "check": "ok"
+ },
+ {
+  "item": 23272,
+  "template": 1039,
+  "kind": "teleport",
+  "driver": 6,
+  "name": "Earth Wall, portal 9",
+  "x": 119,
+  "y": 703,
+  "area": "Labyrinth, Forest Gorge",
+  "data": [
+   38,
+   667,
+   0,
+   0
+  ],
+  "dest_x": 38,
+  "dest_y": 667,
+  "dest_area": "Labyrinth, Forest Gorge",
+  "check": "ok"
+ },
+ {
+  "item": 22690,
+  "template": 1033,
+  "kind": "teleport",
+  "driver": 6,
+  "name": "Earth Wall, portal 6",
+  "x": 120,
+  "y": 691,
+  "area": "Labyrinth, Forest Gorge",
+  "data": [
+   21,
+   688,
+   0,
+   0
+  ],
+  "dest_x": 21,
+  "dest_y": 688,
+  "dest_area": "Labyrinth, Forest Gorge",
+  "check": "ok"
+ },
+ {
+  "item": 23498,
+  "template": 1025,
+  "kind": "teleport",
+  "driver": 6,
+  "name": "Earth Wall, portal 2",
+  "x": 122,
+  "y": 677,
+  "area": "Labyrinth, Forest Gorge",
+  "data": [
+   97,
+   629,
+   0,
+   0
+  ],
+  "dest_x": 97,
+  "dest_y": 629,
+  "dest_area": "Labyrinth, Forest Gorge",
+  "check": "ok"
+ },
+ {
+  "item": 40,
+  "template": 1027,
+  "kind": "teleport",
+  "driver": 6,
+  "name": "Earth Wall, portal 3",
+  "x": 122,
+  "y": 678,
+  "area": "Labyrinth, Forest Gorge",
+  "data": [
+   72,
+   623,
+   0,
+   0
+  ],
+  "dest_x": 72,
+  "dest_y": 623,
+  "dest_area": "Labyrinth, Forest Gorge",
+  "check": "ok"
+ },
+ {
+  "item": 24147,
+  "template": 1035,
+  "kind": "teleport",
+  "driver": 6,
+  "name": "Earth Wall, portal 7",
+  "x": 122,
+  "y": 696,
+  "area": "Labyrinth, Forest Gorge",
+  "data": [
+   54,
+   676,
+   0,
+   0
+  ],
+  "dest_x": 54,
+  "dest_y": 676,
+  "dest_area": "Labyrinth, Forest Gorge",
+  "check": "ok"
+ },
+ {
+  "item": 15085,
+  "template": 661,
+  "kind": "labyrinth exit",
+  "driver": 46,
+  "name": "Magic Portal",
+  "x": 65,
+  "y": 54,
+  "area": "Labyrinth, Grolm Gorge",
+  "data": [
+   512,
+   512,
+   0,
+   0
+  ],
+  "dest_x": 512,
+  "dest_y": 512,
+  "dest_area": "Temple of Skua",
+  "check": "ok"
+ },
+ {
+  "item": 1153,
+  "template": 173,
+  "kind": "teleport",
+  "driver": 6,
+  "name": "Magic Portal",
+  "x": 60,
+  "y": 103,
+  "area": "Labyrinth, Grolm Gorge",
+  "data": [
+   94,
+   207,
+   1,
+   15128
+  ],
+  "note": "lab-solved portal, destination in code"
+ },
+ {
+  "item": 15151,
+  "template": 661,
+  "kind": "labyrinth exit",
+  "driver": 46,
+  "name": "Magic Portal",
+  "x": 36,
+  "y": 370,
+  "area": "Labyrinth, Knight Gorge",
+  "data": [
+   512,
+   512,
+   0,
+   0
+  ],
+  "dest_x": 512,
+  "dest_y": 512,
+  "dest_area": "Temple of Skua",
+  "check": "ok"
+ },
+ {
+  "item": 3584,
+  "template": 314,
+  "kind": "teleport",
+  "driver": 6,
+  "name": "Magic Portal",
+  "x": 45,
+  "y": 370,
+  "area": "Labyrinth, Knight Gorge",
+  "data": [
+   114,
+   390,
+   4,
+   62448
+  ],
+  "note": "lab-solved portal, destination in code"
+ },
+ {
+  "item": 308,
+  "template": 312,
+  "kind": "teleport",
+  "driver": 6,
+  "name": "Carpet",
+  "x": 61,
+  "y": 337,
+  "area": "Labyrinth, Knight Gorge",
+  "data": [
+   102,
+   364,
+   0,
+   0
+  ],
+  "dest_x": 102,
+  "dest_y": 364,
+  "dest_area": "Labyrinth, Knight Gorge",
+  "check": "ok (next to it)"
+ },
+ {
+  "item": 3591,
+  "template": 313,
+  "kind": "teleport",
+  "driver": 6,
+  "name": "Ladder",
+  "x": 102,
+  "y": 364,
+  "area": "Labyrinth, Knight Gorge",
+  "data": [
+   61,
+   337,
+   0,
+   0
+  ],
+  "dest_x": 61,
+  "dest_y": 337,
+  "dest_area": "Labyrinth, Knight Gorge",
+  "check": "ok"
+ },
+ {
+  "item": 15084,
+  "template": 661,
+  "kind": "labyrinth exit",
+  "driver": 46,
+  "name": "Magic Portal",
+  "x": 28,
+  "y": 495,
+  "area": "Labyrinth, Light&Dark Gorge",
+  "data": [
+   512,
+   512,
+   0,
+   0
+  ],
+  "dest_x": 512,
+  "dest_y": 512,
+  "dest_area": "Temple of Skua",
+  "check": "ok"
+ },
+ {
+  "item": 14666,
+  "template": 631,
+  "kind": "teleport",
+  "driver": 6,
+  "name": "Magic Portal",
+  "x": 18,
+  "y": 525,
+  "area": "Labyrinth, Light&Dark Gorge",
+  "data": [
+   24,
+   534,
+   6,
+   102418
+  ],
+  "note": "lab-solved portal, destination in code"
+ },
+ {
+  "item": 1238,
+  "template": 661,
+  "kind": "labyrinth exit",
+  "driver": 46,
+  "name": "Magic Portal",
+  "x": 93,
+  "y": 207,
+  "area": "Labyrinth, Lizard Gorge",
+  "data": [
+   512,
+   512,
+   0,
+   0
+  ],
+  "dest_x": 512,
+  "dest_y": 512,
+  "dest_area": "Temple of Skua",
+  "check": "ok"
+ },
+ {
+  "item": 2135,
+  "template": 24,
+  "kind": "teleport",
+  "driver": 6,
+  "name": "Magic Portal",
+  "x": 117,
+  "y": 207,
+  "area": "Labyrinth, Lizard Gorge",
+  "data": [
+   74,
+   240,
+   2,
+   36728
+  ],
+  "note": "lab-solved portal, destination in code"
+ },
+ {
+  "item": 26915,
+  "template": 661,
+  "kind": "labyrinth exit",
+  "driver": 46,
+  "name": "Magic Portal",
+  "x": 61,
+  "y": 723,
+  "area": "Labyrinth, Riddle Gorge",
+  "data": [
+   512,
+   512,
+   0,
+   0
+  ],
+  "dest_x": 512,
+  "dest_y": 512,
+  "dest_area": "Temple of Skua",
+  "check": "ok"
+ },
+ {
+  "item": 17777,
+  "template": 1099,
+  "kind": "teleport",
+  "driver": 6,
+  "name": "Magic Portal",
+  "x": 34,
+  "y": 809,
+  "area": "Labyrinth, Riddle Gorge",
+  "data": [
+   33,
+   597,
+   9,
+   130228
+  ],
+  "note": "lab-solved portal, destination in code"
+ },
+ {
+  "item": 15069,
+  "template": 661,
+  "kind": "labyrinth exit",
+  "driver": 46,
+  "name": "Magic Portal",
+  "x": 72,
+  "y": 240,
+  "area": "Labyrinth, Spellcaster Gorge",
+  "data": [
+   512,
+   512,
+   0,
+   0
+  ],
+  "dest_x": 512,
+  "dest_y": 512,
+  "dest_area": "Temple of Skua",
+  "check": "ok"
+ },
+ {
+  "item": 3474,
+  "template": 279,
+  "kind": "teleport",
+  "driver": 6,
+  "name": "Magic Portal",
+  "x": 93,
+  "y": 240,
+  "area": "Labyrinth, Spellcaster Gorge",
+  "data": [
+   37,
+   370,
+   3,
+   58448
+  ],
+  "note": "lab-solved portal, destination in code"
+ },
+ {
+  "item": 15152,
+  "template": 661,
+  "kind": "labyrinth exit",
+  "driver": 46,
+  "name": "Magic Portal",
+  "x": 116,
+  "y": 389,
+  "area": "Labyrinth, Undead Gorge",
+  "data": [
+   512,
+   512,
+   0,
+   0
+  ],
+  "dest_x": 512,
+  "dest_y": 512,
+  "dest_area": "Temple of Skua",
+  "check": "ok"
+ },
+ {
+  "item": 3621,
+  "template": 467,
+  "kind": "teleport",
+  "driver": 6,
+  "name": "Grave",
+  "x": 51,
+  "y": 437,
+  "area": "Labyrinth, Undead Gorge",
+  "data": [
+   52,
+   462,
+   0,
+   0
+  ],
+  "dest_x": 52,
+  "dest_y": 462,
+  "dest_area": "Labyrinth, Undead Gorge",
+  "check": "ok (next to it)"
+ },
+ {
+  "item": 9657,
+  "template": 469,
+  "kind": "teleport",
+  "driver": 6,
+  "name": "Ladder",
+  "x": 52,
+  "y": 462,
+  "area": "Labyrinth, Undead Gorge",
+  "data": [
+   52,
+   437,
+   0,
+   0
+  ],
+  "dest_x": 52,
+  "dest_y": 437,
+  "dest_area": "Labyrinth, Undead Gorge",
+  "check": "ok"
+ },
+ {
+  "item": 9755,
+  "template": 483,
+  "kind": "teleport",
+  "driver": 6,
+  "name": "Magic Portal",
+  "x": 103,
+  "y": 388,
+  "area": "Labyrinth, Undead Gorge",
+  "data": [
+   28,
+   493,
+   5,
+   95828
+  ],
+  "note": "lab-solved portal, destination in code"
+ },
+ {
+  "item": 14915,
+  "template": 661,
+  "kind": "labyrinth exit",
+  "driver": 46,
+  "name": "Magic Portal",
+  "x": 24,
+  "y": 532,
+  "area": "Labyrinth, Water Gorge",
+  "data": [
+   512,
+   512,
+   0,
+   0
+  ],
+  "dest_x": 512,
+  "dest_y": 512,
+  "dest_area": "Temple of Skua",
+  "check": "ok"
+ },
+ {
+  "item": 10102,
+  "template": 659,
+  "kind": "teleport",
+  "driver": 6,
+  "name": "Magic Portal",
+  "x": 18,
+  "y": 561,
+  "area": "Labyrinth, Water Gorge",
+  "data": [
+   118,
+   667,
+   7,
+   115918
+  ],
+  "note": "lab-solved portal, destination in code"
+ },
+ {
+  "item": 3055,
+  "template": 1120,
+  "kind": "ladder/hole",
+  "driver": 16,
+  "name": "Hole",
+  "x": 633,
+  "y": 596,
+  "area": "Memorial Park",
+  "data": [
+   360,
+   -440,
+   0,
+   0
+  ],
+  "dest_x": 993,
+  "dest_y": 156,
+  "dest_area": "Underground I",
+  "check": "ok (next to it)"
+ },
+ {
+  "item": 3675,
+  "template": 456,
+  "kind": "ladder/hole",
+  "driver": 16,
+  "name": "Hole",
+  "x": 469,
+  "y": 500,
+  "area": "Mine, 1st Level",
+  "data": [
+   360,
+   -440,
+   0,
+   0
+  ],
+  "dest_x": 829,
+  "dest_y": 60,
+  "dest_area": "Mine, 2nd Level",
+  "check": "ok"
+ },
+ {
+  "item": 7495,
+  "template": 587,
+  "kind": "special portal (code)",
+  "driver": 38,
+  "name": "Clan Pentagram",
+  "x": 469,
+  "y": 523,
+  "area": "Mine, 1st Level",
+  "data": [
+   0,
+   536012,
+   0,
+   0
+  ],
+  "note": "destination in code"
+ },
+ {
+  "item": 6219,
+  "template": 457,
+  "kind": "ladder/hole",
+  "driver": 16,
+  "name": "Ladder I",
+  "x": 828,
+  "y": 59,
+  "area": "Mine, 2nd Level",
+  "data": [
+   -360,
+   440,
+   0,
+   0
+  ],
+  "dest_x": 468,
+  "dest_y": 499,
+  "dest_area": "Mine, 1st Level",
+  "check": "ok"
+ },
+ {
+  "item": 3532,
+  "template": 440,
+  "kind": "ladder/hole",
+  "driver": 16,
+  "name": "Hole",
+  "x": 829,
+  "y": 58,
+  "area": "Mine, 2nd Level",
+  "data": [
+   -71,
+   0,
+   0,
+   0
+  ],
+  "dest_x": 758,
+  "dest_y": 58,
+  "dest_area": "Mine, 3rd Level",
+  "check": "ok (next to it)"
+ },
+ {
+  "item": 3726,
+  "template": 441,
+  "kind": "ladder/hole",
+  "driver": 16,
+  "name": "Ladder I",
+  "x": 758,
+  "y": 58,
+  "area": "Mine, 3rd Level",
+  "data": [
+   71,
+   0,
+   0,
+   0
+  ],
+  "dest_x": 829,
+  "dest_y": 58,
+  "dest_area": "Mine, 2nd Level",
+  "check": "ok (next to it)"
+ },
+ {
+  "item": 2342,
+  "template": 190,
+  "kind": "teleport",
+  "driver": 6,
+  "name": "Magic Portal",
+  "x": 160,
+  "y": 100,
+  "area": "Random Dungeon",
+  "data": [
+   512,
+   512,
+   0,
+   0
+  ],
+  "dest_x": 512,
+  "dest_y": 512,
+  "dest_area": "Temple of Skua",
+  "check": "ok"
+ },
+ {
+  "item": 11976,
+  "template": 190,
+  "kind": "teleport",
+  "driver": 6,
+  "name": "Magic Portal",
+  "x": 802,
+  "y": 168,
+  "area": "Staffers Corner",
+  "data": [
+   512,
+   512,
+   0,
+   0
+  ],
+  "dest_x": 512,
+  "dest_y": 512,
+  "dest_area": "Temple of Skua",
+  "check": "ok"
+ },
+ {
+  "item": 6800,
+  "template": 1120,
+  "kind": "ladder/hole",
+  "driver": 16,
+  "name": "Hole",
+  "x": 528,
+  "y": 465,
+  "area": "Steven's House",
+  "data": [
+   360,
+   -440,
+   0,
+   0
+  ],
+  "dest_x": 888,
+  "dest_y": 25,
+  "dest_area": "Underground I",
+  "check": "ok"
+ },
+ {
+  "item": 14203,
+  "template": 1120,
+  "kind": "ladder/hole",
+  "driver": 16,
+  "name": "Hole",
+  "x": 564,
+  "y": 542,
+  "area": "Temple of the Purple One",
+  "data": [
+   360,
+   -440,
+   0,
+   0
+  ],
+  "dest_x": 924,
+  "dest_y": 102,
+  "dest_area": "Underground I",
+  "check": "ok"
+ },
+ {
+  "item": 17097,
+  "template": 1101,
+  "kind": "teleport",
+  "driver": 6,
+  "name": "barrel (portal)",
+  "x": 21,
+  "y": 22,
+  "area": "Thieves House I",
+  "data": [
+   518,
+   549,
+   0,
+   0
+  ],
+  "dest_x": 518,
+  "dest_y": 549,
+  "dest_area": "Thieves House I",
+  "check": "ok"
+ },
+ {
+  "item": 15595,
+  "template": 1100,
+  "kind": "teleport",
+  "driver": 6,
+  "name": "barrel (portal)",
+  "x": 519,
+  "y": 550,
+  "area": "Thieves House I",
+  "data": [
+   22,
+   22,
+   0,
+   0
+  ],
+  "dest_x": 22,
+  "dest_y": 22,
+  "dest_area": "Thieves House I",
+  "check": "ok"
+ },
+ {
+  "item": 11627,
+  "template": 1120,
+  "kind": "ladder/hole",
+  "driver": 16,
+  "name": "Hole",
+  "x": 500,
+  "y": 530,
+  "area": "Thieves House II",
+  "data": [
+   360,
+   -440,
+   0,
+   0
+  ],
+  "dest_x": 860,
+  "dest_y": 90,
+  "dest_area": "Underground I",
+  "check": "ok (next to it)"
+ },
+ {
+  "item": 16716,
+  "template": 1194,
+  "kind": "ladder/hole",
+  "driver": 16,
+  "name": "Tower Ladder 1 to 2",
+  "x": 645,
+  "y": 248,
+  "area": "Tower I",
+  "data": [
+   188,
+   91,
+   0,
+   0
+  ],
+  "dest_x": 833,
+  "dest_y": 339,
+  "dest_area": "Tower II",
+  "check": "ok (next to it)"
+ },
+ {
+  "item": 12162,
+  "template": 1152,
+  "kind": "ladder/hole",
+  "driver": 16,
+  "name": "Tower Ladder",
+  "x": 824,
+  "y": 350,
+  "area": "Tower II",
+  "data": [
+   9,
+   6,
+   0,
+   0
+  ],
+  "dest_x": 833,
+  "dest_y": 356,
+  "dest_area": "Tower III",
+  "check": "ok (next to it)"
+ },
+ {
+  "item": 4706,
+  "template": 1195,
+  "kind": "ladder/hole",
+  "driver": 16,
+  "name": "Hole (tower level 2 to 1)",
+  "x": 833,
+  "y": 339,
+  "area": "Tower II",
+  "data": [
+   -188,
+   -91,
+   0,
+   0
+  ],
+  "dest_x": 645,
+  "dest_y": 248,
+  "dest_area": "Tower I",
+  "check": "ok (next to it)"
+ },
+ {
+  "item": 7630,
+  "template": 1160,
+  "kind": "ladder/hole",
+  "driver": 16,
+  "name": "Tower Ladder",
+  "x": 824,
+  "y": 365,
+  "area": "Tower III",
+  "data": [
+   9,
+   7,
+   0,
+   0
+  ],
+  "dest_x": 833,
+  "dest_y": 372,
+  "dest_area": "Tower IV",
+  "check": "ok (next to it)"
+ },
+ {
+  "item": 7303,
+  "template": 1153,
+  "kind": "ladder/hole",
+  "driver": 16,
+  "name": "Hole",
+  "x": 833,
+  "y": 356,
+  "area": "Tower III",
+  "data": [
+   -9,
+   -6,
+   0,
+   0
+  ],
+  "dest_x": 824,
+  "dest_y": 350,
+  "dest_area": "Tower II",
+  "check": "ok (next to it)"
+ },
+ {
+  "item": 5074,
+  "template": 1162,
+  "kind": "ladder/hole",
+  "driver": 16,
+  "name": "Tower Ladder",
+  "x": 824,
+  "y": 382,
+  "area": "Tower IV",
+  "data": [
+   10,
+   9,
+   0,
+   0
+  ],
+  "dest_x": 834,
+  "dest_y": 391,
+  "dest_area": "Tower V",
+  "check": "ok (next to it)"
+ },
+ {
+  "item": 5466,
+  "template": 1161,
+  "kind": "ladder/hole",
+  "driver": 16,
+  "name": "Hole",
+  "x": 833,
+  "y": 372,
+  "area": "Tower IV",
+  "data": [
+   -9,
+   -7,
+   0,
+   0
+  ],
+  "dest_x": 824,
+  "dest_y": 365,
+  "dest_area": "Tower III",
+  "check": "ok (next to it)"
+ },
+ {
+  "item": 3165,
+  "template": 1170,
+  "kind": "ladder/hole",
+  "driver": 16,
+  "name": "Tower Ladder",
+  "x": 856,
+  "y": 399,
+  "area": "Tower IX",
+  "data": [
+   11,
+   7,
+   0,
+   0
+  ],
+  "dest_x": 867,
+  "dest_y": 406,
+  "dest_area": "Tower X",
+  "check": "ok (next to it)"
+ },
+ {
+  "item": 6885,
+  "template": 1169,
+  "kind": "ladder/hole",
+  "driver": 16,
+  "name": "Hole",
+  "x": 866,
+  "y": 388,
+  "area": "Tower IX",
+  "data": [
+   -11,
+   -5,
+   0,
+   0
+  ],
+  "dest_x": 855,
+  "dest_y": 383,
+  "dest_area": "Tower VIII",
+  "check": "ok (next to it)"
+ },
+ {
+  "item": 1571,
+  "template": 1163,
+  "kind": "ladder/hole",
+  "driver": 16,
+  "name": "Hole",
+  "x": 834,
+  "y": 391,
+  "area": "Tower V",
+  "data": [
+   -10,
+   -9,
+   0,
+   0
+  ],
+  "dest_x": 824,
+  "dest_y": 382,
+  "dest_area": "Tower IV",
+  "check": "ok (next to it)"
+ },
+ {
+  "item": 2372,
+  "template": 1164,
+  "kind": "ladder/hole",
+  "driver": 16,
+  "name": "Tower Ladder",
+  "x": 834,
+  "y": 398,
+  "area": "Tower V",
+  "data": [
+   28,
+   -57,
+   0,
+   0
+  ],
+  "dest_x": 862,
+  "dest_y": 341,
+  "dest_area": "Tower VI",
+  "check": "ok (next to it)"
+ },
+ {
+  "item": 36,
+  "template": 1165,
+  "kind": "ladder/hole",
+  "driver": 16,
+  "name": "Hole",
+  "x": 862,
+  "y": 341,
+  "area": "Tower VI",
+  "data": [
+   -28,
+   57,
+   0,
+   0
+  ],
+  "dest_x": 834,
+  "dest_y": 398,
+  "dest_area": "Tower V",
+  "check": "ok (next to it)"
+ },
+ {
+  "item": 1577,
+  "template": 1203,
+  "kind": "ladder/hole",
+  "driver": 16,
+  "name": "Tower Ladder 6 to 7",
+  "x": 867,
+  "y": 350,
+  "area": "Tower VI",
+  "data": [
+   -1,
+   16,
+   0,
+   0
+  ],
+  "dest_x": 866,
+  "dest_y": 366,
+  "dest_area": "Tower VII",
+  "check": "ok (next to it)"
+ },
+ {
+  "item": 6777,
+  "template": 1166,
+  "kind": "ladder/hole",
+  "driver": 16,
+  "name": "Tower Ladder",
+  "x": 855,
+  "y": 367,
+  "area": "Tower VII",
+  "data": [
+   12,
+   16,
+   0,
+   0
+  ],
+  "dest_x": 867,
+  "dest_y": 383,
+  "dest_area": "Tower VIII",
+  "check": "ok (next to it)"
+ },
+ {
+  "item": 18398,
+  "template": 1204,
+  "kind": "ladder/hole",
+  "driver": 16,
+  "name": "Hole (tower level 7 to 6)",
+  "x": 866,
+  "y": 366,
+  "area": "Tower VII",
+  "data": [
+   1,
+   -16,
+   0,
+   0
+  ],
+  "dest_x": 867,
+  "dest_y": 350,
+  "dest_area": "Tower VI",
+  "check": "ok (next to it)"
+ },
+ {
+  "item": 12110,
+  "template": 1168,
+  "kind": "ladder/hole",
+  "driver": 16,
+  "name": "Tower Ladder",
+  "x": 855,
+  "y": 383,
+  "area": "Tower VIII",
+  "data": [
+   11,
+   5,
+   0,
+   0
+  ],
+  "dest_x": 866,
+  "dest_y": 388,
+  "dest_area": "Tower IX",
+  "check": "ok (next to it)"
+ },
+ {
+  "item": 2715,
+  "template": 1167,
+  "kind": "ladder/hole",
+  "driver": 16,
+  "name": "Hole",
+  "x": 867,
+  "y": 383,
+  "area": "Tower VIII",
+  "data": [
+   -12,
+   -16,
+   0,
+   0
+  ],
+  "dest_x": 855,
+  "dest_y": 367,
+  "dest_area": "Tower VII",
+  "check": "ok (next to it)"
+ },
+ {
+  "item": 4746,
+  "template": 1172,
+  "kind": "ladder/hole",
+  "driver": 16,
+  "name": "Tower Ladder",
+  "x": 855,
+  "y": 418,
+  "area": "Tower X",
+  "data": [
+   13,
+   5,
+   0,
+   0
+  ],
+  "dest_x": 868,
+  "dest_y": 423,
+  "dest_area": "Tower XI",
+  "check": "ok (next to it)"
+ },
+ {
+  "item": 1615,
+  "template": 1171,
+  "kind": "ladder/hole",
+  "driver": 16,
+  "name": "Hole",
+  "x": 867,
+  "y": 406,
+  "area": "Tower X",
+  "data": [
+   -11,
+   -7,
+   0,
+   0
+  ],
+  "dest_x": 856,
+  "dest_y": 399,
+  "dest_area": "Tower IX",
+  "check": "ok (next to it)"
+ },
+ {
+  "item": 7251,
+  "template": 1174,
+  "kind": "ladder/hole",
+  "driver": 16,
+  "name": "Tower Ladder",
+  "x": 856,
+  "y": 435,
+  "area": "Tower XI",
+  "data": [
+   4,
+   7,
+   0,
+   0
+  ],
+  "dest_x": 860,
+  "dest_y": 442,
+  "dest_area": "Tower XII",
+  "check": "ok (next to it)"
+ },
+ {
+  "item": 16052,
+  "template": 1173,
+  "kind": "ladder/hole",
+  "driver": 16,
+  "name": "Hole",
+  "x": 868,
+  "y": 423,
+  "area": "Tower XI",
+  "data": [
+   -13,
+   -5,
+   0,
+   0
+  ],
+  "dest_x": 855,
+  "dest_y": 418,
+  "dest_area": "Tower X",
+  "check": "ok (next to it)"
+ },
+ {
+  "item": 5222,
+  "template": 1175,
+  "kind": "ladder/hole",
+  "driver": 16,
+  "name": "Hole",
+  "x": 860,
+  "y": 442,
+  "area": "Tower XII",
+  "data": [
+   -4,
+   -7,
+   0,
+   0
+  ],
+  "dest_x": 856,
+  "dest_y": 435,
+  "dest_area": "Tower XI",
+  "check": "ok (next to it)"
+ },
+ {
+  "item": 6928,
+  "template": 1213,
+  "kind": "ladder/hole",
+  "driver": 16,
+  "name": "Tower Ladder 12 to 13",
+  "x": 860,
+  "y": 457,
+  "area": "Tower XII",
+  "data": [
+   -2,
+   9,
+   0,
+   0
+  ],
+  "dest_x": 858,
+  "dest_y": 466,
+  "dest_area": "Tower XIII",
+  "check": "ok (next to it)"
+ },
+ {
+  "item": 14431,
+  "template": 1215,
+  "kind": "ladder/hole",
+  "driver": 16,
+  "name": "Tower Ladder 13 to 14",
+  "x": 852,
+  "y": 476,
+  "area": "Tower XIII",
+  "data": [
+   5,
+   5,
+   0,
+   0
+  ],
+  "dest_x": 857,
+  "dest_y": 481,
+  "dest_area": "Tower XIV",
+  "check": "ok (next to it)"
+ },
+ {
+  "item": 13074,
+  "template": 1214,
+  "kind": "ladder/hole",
+  "driver": 16,
+  "name": "Hole (tower level 13 to 12)",
+  "x": 858,
+  "y": 466,
+  "area": "Tower XIII",
+  "data": [
+   2,
+   -9,
+   0,
+   0
+  ],
+  "dest_x": 860,
+  "dest_y": 457,
+  "dest_area": "Tower XII",
+  "check": "ok (next to it)"
+ },
+ {
+  "item": 7507,
+  "template": 1217,
+  "kind": "ladder/hole",
+  "driver": 16,
+  "name": "Tower Ladder 14 to 15",
+  "x": 850,
+  "y": 492,
+  "area": "Tower XIV",
+  "data": [
+   5,
+   11,
+   0,
+   0
+  ],
+  "dest_x": 855,
+  "dest_y": 503,
+  "dest_area": "Tower XV",
+  "check": "ok (next to it)"
+ },
+ {
+  "item": 8777,
+  "template": 1216,
+  "kind": "ladder/hole",
+  "driver": 16,
+  "name": "Hole (tower level 14 to 13)",
+  "x": 857,
+  "y": 481,
+  "area": "Tower XIV",
+  "data": [
+   -5,
+   -5,
+   0,
+   0
+  ],
+  "dest_x": 852,
+  "dest_y": 476,
+  "dest_area": "Tower XIII",
+  "check": "ok (next to it)"
+ },
+ {
+  "item": 16786,
+  "template": 1192,
+  "kind": "ladder/hole",
+  "driver": 16,
+  "name": "Hole (tower level 19 to 18)",
+  "x": 841,
+  "y": 618,
+  "area": "Tower XIX",
+  "data": [
+   0,
+   -8,
+   0,
+   0
+  ],
+  "dest_x": 841,
+  "dest_y": 610,
+  "dest_area": "Tower XVIII",
+  "check": "ok (next to it)"
+ },
+ {
+  "item": 18480,
+  "template": 1223,
+  "kind": "ladder/hole",
+  "driver": 16,
+  "name": "Tower Ladder 19 to 20",
+  "x": 856,
+  "y": 633,
+  "area": "Tower XIX",
+  "data": [
+   -8,
+   9,
+   0,
+   0
+  ],
+  "dest_x": 848,
+  "dest_y": 642,
+  "dest_area": "Tower XX",
+  "check": "ok (next to it)"
+ },
+ {
+  "item": 11453,
+  "template": 1219,
+  "kind": "ladder/hole",
+  "driver": 16,
+  "name": "Tower Ladder 15 to 16",
+  "x": 844,
+  "y": 519,
+  "area": "Tower XV",
+  "data": [
+   15,
+   7,
+   0,
+   0
+  ],
+  "dest_x": 859,
+  "dest_y": 526,
+  "dest_area": "Tower XVI",
+  "check": "ok (next to it)"
+ },
+ {
+  "item": 20139,
+  "template": 1218,
+  "kind": "ladder/hole",
+  "driver": 16,
+  "name": "Hole (tower level 15 to 14)",
+  "x": 855,
+  "y": 503,
+  "area": "Tower XV",
+  "data": [
+   -5,
+   -11,
+   0,
+   0
+  ],
+  "dest_x": 850,
+  "dest_y": 492,
+  "dest_area": "Tower XIV",
+  "check": "ok (next to it)"
+ },
+ {
+  "item": 20148,
+  "template": 1221,
+  "kind": "ladder/hole",
+  "driver": 16,
+  "name": "Tower Ladder 16 to 17",
+  "x": 845,
+  "y": 562,
+  "area": "Tower XVI",
+  "data": [
+   8,
+   10,
+   0,
+   0
+  ],
+  "dest_x": 853,
+  "dest_y": 572,
+  "dest_area": "Tower XVII",
+  "check": "ok (next to it)"
+ },
+ {
+  "item": 1917,
+  "template": 1220,
+  "kind": "ladder/hole",
+  "driver": 16,
+  "name": "Hole (tower level 16 to 15)",
+  "x": 859,
+  "y": 526,
+  "area": "Tower XVI",
+  "data": [
+   -15,
+   -7,
+   0,
+   0
+  ],
+  "dest_x": 844,
+  "dest_y": 519,
+  "dest_area": "Tower XV",
+  "check": "ok (next to it)"
+ },
+ {
+  "item": 3957,
+  "template": 1189,
+  "kind": "ladder/hole",
+  "driver": 16,
+  "name": "Tower Ladder 17 to 18",
+  "x": 841,
+  "y": 588,
+  "area": "Tower XVII",
+  "data": [
+   14,
+   7,
+   0,
+   0
+  ],
+  "dest_x": 855,
+  "dest_y": 595,
+  "dest_area": "Tower XVIII",
+  "check": "ok"
+ },
+ {
+  "item": 20014,
+  "template": 1222,
+  "kind": "ladder/hole",
+  "driver": 16,
+  "name": "Hole (tower level 17 to 16)",
+  "x": 853,
+  "y": 572,
+  "area": "Tower XVII",
+  "data": [
+   -8,
+   -10,
+   0,
+   0
+  ],
+  "dest_x": 845,
+  "dest_y": 562,
+  "dest_area": "Tower XVI",
+  "check": "ok (next to it)"
+ },
+ {
+  "item": 9336,
+  "template": 1191,
+  "kind": "ladder/hole",
+  "driver": 16,
+  "name": "Tower Ladder 18 to 19",
+  "x": 841,
+  "y": 610,
+  "area": "Tower XVIII",
+  "data": [
+   0,
+   8,
+   0,
+   0
+  ],
+  "dest_x": 841,
+  "dest_y": 618,
+  "dest_area": "Tower XIX",
+  "check": "ok (next to it)"
+ },
+ {
+  "item": 6552,
+  "template": 1190,
+  "kind": "ladder/hole",
+  "driver": 16,
+  "name": "Hole (tower level 18 to 17)",
+  "x": 855,
+  "y": 596,
+  "area": "Tower XVIII",
+  "data": [
+   -14,
+   -7,
+   0,
+   0
+  ],
+  "dest_x": 841,
+  "dest_y": 589,
+  "dest_area": "Tower XVII",
+  "check": "ok"
+ },
+ {
+  "item": 11662,
+  "template": 1224,
+  "kind": "ladder/hole",
+  "driver": 16,
+  "name": "Hole (tower level 20 to 19)",
+  "x": 848,
+  "y": 642,
+  "area": "Tower XX",
+  "data": [
+   8,
+   -9,
+   0,
+   0
+  ],
+  "dest_x": 856,
+  "dest_y": 633,
+  "dest_area": "Tower XIX",
+  "check": "ok (next to it)"
+ },
+ {
+  "item": 17507,
+  "template": 190,
+  "kind": "teleport",
+  "driver": 6,
+  "name": "Magic Portal",
+  "x": 840,
+  "y": 692,
+  "area": "Tower XX",
+  "data": [
+   512,
+   512,
+   0,
+   0
+  ],
+  "dest_x": 512,
+  "dest_y": 512,
+  "dest_area": "Temple of Skua",
+  "check": "ok"
+ },
+ {
+  "item": 8990,
+  "template": 1240,
+  "kind": "teleport",
+  "driver": 6,
+  "name": "Magic Portal",
+  "x": 845,
+  "y": 679,
+  "area": "Tower XX",
+  "data": [
+   840,
+   686,
+   0,
+   0
+  ],
+  "dest_x": 840,
+  "dest_y": 686,
+  "dest_area": "Tower XX",
+  "check": "ok"
+ },
+ {
+  "item": 10799,
+  "template": 1241,
+  "kind": "teleport",
+  "driver": 6,
+  "name": "Magic Portal",
+  "x": 848,
+  "y": 682,
+  "area": "Tower XX",
+  "data": [
+   848,
+   686,
+   0,
+   0
+  ],
+  "dest_x": 848,
+  "dest_y": 686,
+  "dest_area": "Tower XX",
+  "check": "ok"
+ },
+ {
+  "item": 17300,
+  "template": 190,
+  "kind": "teleport",
+  "driver": 6,
+  "name": "Magic Portal",
+  "x": 848,
+  "y": 692,
+  "area": "Tower XX",
+  "data": [
+   512,
+   512,
+   0,
+   0
+  ],
+  "dest_x": 512,
+  "dest_y": 512,
+  "dest_area": "Temple of Skua",
+  "check": "ok"
+ },
+ {
+  "item": 16100,
+  "template": 1242,
+  "kind": "teleport",
+  "driver": 6,
+  "name": "Magic Portal",
+  "x": 851,
+  "y": 679,
+  "area": "Tower XX",
+  "data": [
+   856,
+   686,
+   0,
+   0
+  ],
+  "dest_x": 856,
+  "dest_y": 686,
+  "dest_area": "Tower XX",
+  "check": "ok"
+ },
+ {
+  "item": 18856,
+  "template": 190,
+  "kind": "teleport",
+  "driver": 6,
+  "name": "Magic Portal",
+  "x": 856,
+  "y": 692,
+  "area": "Tower XX",
+  "data": [
+   512,
+   512,
+   0,
+   0
+  ],
+  "dest_x": 512,
+  "dest_y": 512,
+  "dest_area": "Temple of Skua",
+  "check": "ok"
+ },
+ {
+  "item": 2984,
+  "template": 246,
+  "kind": "ladder/hole",
+  "driver": 16,
+  "name": "Ladder I",
+  "x": 841,
+  "y": 1,
+  "area": "Underground I",
+  "data": [
+   -360,
+   440,
+   0,
+   0
+  ],
+  "dest_x": 481,
+  "dest_y": 441,
+  "dest_area": "Aston",
+  "check": "ok (next to it)"
+ },
+ {
+  "item": 12688,
+  "template": 246,
+  "kind": "ladder/hole",
+  "driver": 16,
+  "name": "Ladder I",
+  "x": 843,
+  "y": 152,
+  "area": "Underground I",
+  "data": [
+   -360,
+   440,
+   0,
+   0
+  ],
+  "dest_x": 483,
+  "dest_y": 592,
+  "dest_area": "Aston",
+  "check": "ok"
+ },
+ {
+  "item": 4283,
+  "template": 1264,
+  "kind": "ladder/hole",
+  "driver": 16,
+  "name": "Ladder (Outlaw Hideout Room 2)",
+  "x": 849,
+  "y": 126,
+  "area": "Underground I",
+  "data": [
+   -360,
+   440,
+   0,
+   0
+  ],
+  "dest_x": 489,
+  "dest_y": 566,
+  "dest_area": "Aston",
+  "check": "ok"
+ },
+ {
+  "item": 2427,
+  "template": 247,
+  "kind": "ladder/hole",
+  "driver": 16,
+  "name": "Ladder II",
+  "x": 860,
+  "y": 90,
+  "area": "Underground I",
+  "data": [
+   -360,
+   440,
+   0,
+   0
+  ],
+  "dest_x": 500,
+  "dest_y": 530,
+  "dest_area": "Thieves House II",
+  "check": "ok (next to it)"
+ },
+ {
+  "item": 2923,
+  "template": 247,
+  "kind": "ladder/hole",
+  "driver": 16,
+  "name": "Ladder II",
+  "x": 887,
+  "y": 25,
+  "area": "Underground I",
+  "data": [
+   -360,
+   440,
+   0,
+   0
+  ],
+  "dest_x": 527,
+  "dest_y": 465,
+  "dest_area": "Steven's House",
+  "check": "ok"
+ },
+ {
+  "item": 2728,
+  "template": 247,
+  "kind": "ladder/hole",
+  "driver": 16,
+  "name": "Ladder II",
+  "x": 908,
+  "y": 91,
+  "area": "Underground I",
+  "data": [
+   -360,
+   440,
+   0,
+   0
+  ],
+  "dest_x": 548,
+  "dest_y": 531,
+  "dest_area": "Jamil's House",
+  "check": "ok"
+ },
+ {
+  "item": 2691,
+  "template": 246,
+  "kind": "ladder/hole",
+  "driver": 16,
+  "name": "Ladder I",
+  "x": 924,
+  "y": 101,
+  "area": "Underground I",
+  "data": [
+   -360,
+   440,
+   0,
+   0
+  ],
+  "dest_x": 564,
+  "dest_y": 541,
+  "dest_area": "Temple of the Purple One",
+  "check": "ok"
+ },
+ {
+  "item": 13966,
+  "template": 820,
+  "kind": "ladder/hole",
+  "driver": 16,
+  "name": "Hole",
+  "x": 925,
+  "y": 101,
+  "area": "Underground I",
+  "data": [
+   0,
+   200,
+   0,
+   0
+  ],
+  "dest_x": 925,
+  "dest_y": 301,
+  "dest_area": "Underground II",
+  "check": "ok"
+ },
+ {
+  "item": 2958,
+  "template": 247,
+  "kind": "ladder/hole",
+  "driver": 16,
+  "name": "Ladder II",
+  "x": 945,
+  "y": 33,
+  "area": "Underground I",
+  "data": [
+   -360,
+   440,
+   0,
+   0
+  ],
+  "dest_x": 585,
+  "dest_y": 473,
+  "dest_area": "Aston",
+  "check": "ok (next to it)"
+ },
+ {
+  "item": 2928,
+  "template": 246,
+  "kind": "ladder/hole",
+  "driver": 16,
+  "name": "Ladder I",
+  "x": 971,
+  "y": 99,
+  "area": "Underground I",
+  "data": [
+   -360,
+   440,
+   0,
+   0
+  ],
+  "dest_x": 611,
+  "dest_y": 539,
+  "dest_area": "Haunted Castle",
+  "check": "ok (next to it)"
+ },
+ {
+  "item": 1530,
+  "template": 246,
+  "kind": "ladder/hole",
+  "driver": 16,
+  "name": "Ladder I",
+  "x": 993,
+  "y": 1,
+  "area": "Underground I",
+  "data": [
+   -360,
+   440,
+   0,
+   0
+  ],
+  "dest_x": 633,
+  "dest_y": 441,
+  "dest_area": "Aston",
+  "check": "ok (next to it)"
+ },
+ {
+  "item": 3064,
+  "template": 247,
+  "kind": "ladder/hole",
+  "driver": 16,
+  "name": "Ladder II",
+  "x": 993,
+  "y": 156,
+  "area": "Underground I",
+  "data": [
+   -360,
+   440,
+   0,
+   0
+  ],
+  "dest_x": 633,
+  "dest_y": 596,
+  "dest_area": "Memorial Park",
+  "check": "ok (next to it)"
+ },
+ {
+  "item": 11439,
+  "template": 1265,
+  "kind": "teleport",
+  "driver": 6,
+  "name": "Ladder (Outlaw hideout Room 1)",
+  "x": 849,
+  "y": 120,
+  "area": "Underground I",
+  "data": [
+   29,
+   89,
+   0,
+   0
+  ],
+  "dest_x": 29,
+  "dest_y": 89,
+  "dest_area": "(unnamed)",
+  "check": "ok"
+ },
+ {
+  "item": 10754,
+  "template": 819,
+  "kind": "ladder/hole",
+  "driver": 16,
+  "name": "Ladder I",
+  "x": 925,
+  "y": 302,
+  "area": "Underground II",
+  "data": [
+   0,
+   -200,
+   0,
+   0
+  ],
+  "dest_x": 925,
+  "dest_y": 102,
+  "dest_area": "Underground I",
+  "check": "ok"
+ }
+]

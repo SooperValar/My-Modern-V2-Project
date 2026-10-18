@@ -12,6 +12,8 @@
 | `client/` | The Windows client (`merc.exe`), ported from Borland C++/DirectDraw to Visual Studio/GDI |
 | `server/` | The Linux game server, fixed to build and run correctly as a 64-bit program (works fine under WSL) |
 | [`CHANGES.md`](CHANGES.md) | The full breakdown of every change and why it was needed |
+| `tools/world/` | Scripts that read the world data: minimap render, portal/teleport scan |
+| [`docs/world_links.md`](docs/world_links.md) | Every portal, teleporter and ladder: where it is, where it goes, plus coordinates hard-coded in the server |
 
 The commit history follows the work step by step: the untouched original source first, then each fix and feature as its own commit — so `git log` / the GitHub history doubles as a changelog.
 
