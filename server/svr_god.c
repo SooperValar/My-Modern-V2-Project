@@ -2629,3 +2629,53 @@ void god_shutup(int cn,int co)
 		ch[cn].name,ch[co].name,
 		(ch[co].flags&CF_SHUTUP) ? "on" : "off");
 }
+
+// #shrines <player>: mark all 20 shrines of Kwai as visited and bring the
+// player's Seyan'Du sword to its maximum weapon value (15+20*4=95).
+void god_shrines(int cn,int co)
+{
+	int n,in,found=0,bits=20;
+
+	if (co==0) { do_char_log(cn,0,"No such character.\n"); return; }
+	if (!IS_SANECHAR(co) || !IS_USEDCHAR(co)) { do_char_log(cn,0,"Bad character.\n"); return; }
+	if (!(ch[co].kindred&KIN_SEYAN_DU)) {
+		do_char_log(cn,0,"%s is not a Seyan'Du.\n",ch[co].name);
+		return;
+	}
+
+	ch[co].data[21]|=0x000fffff;	// one bit per shrine, 20 shrines
+
+	for (n=1; n<MAXITEM; n++) {
+		if (it[n].used!=USE_ACTIVE) continue;
+		if (it[n].driver!=40) continue;
+		if (it[n].data[0]!=co) continue;
+
+		it[n].weapon[0]=15+bits*4;
+		it[n].temp=0;
+		it[n].flags|=IF_UPDATE;
+		sprintf(it[n].description,"A huge, two-handed sword, engraved with runes and magic symbols. It bears the name %s.",ch[co].name);
+		found++;
+	}
+
+	if (!found) {	// no sword yet: hand out a new one, no luck cost
+		in=god_create_item(682);
+		if (!in) { do_char_log(cn,0,"Could not create the sword.\n"); return; }
+		it[in].data[0]=co;
+		it[in].weapon[0]=15+bits*4;
+		it[in].temp=0;
+		it[in].flags|=IF_UPDATE;
+		sprintf(it[in].description,"A huge, two-handed sword, engraved with runes and magic symbols. It bears the name %s.",ch[co].name);
+		if (!god_give_char(in,co)) {
+			it[in].used=USE_EMPTY;
+			do_char_log(cn,0,"%s's inventory is full.\n",ch[co].name);
+			return;
+		}
+		do_char_log(co,0,"Kwai, the great goddess of war, grants you a new blade.\n");
+	}
+
+	do_update_char(co);
+
+	do_char_log(co,1,"You have visited 20 of the 20 shrines of Kwai.\n");
+	if (cn!=co) do_char_log(cn,1,"%s has now visited all 20 shrines, sword at %d.\n",ch[co].name,15+bits*4);
+	chlog(cn,"IMP: #shrines for %s (%d)",ch[co].name,co);
+}

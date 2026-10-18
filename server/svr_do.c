@@ -706,6 +706,7 @@ void do_help(int cn,char *topic)
 		do_char_log(cn,3,"#raise <player> <exp>  give player exps.\n");
 		do_char_log(cn,3,"#respawn <temp-id>     make npcs id respawn.\n");
 		do_char_log(cn,3,"#shutup <player>       make unable to talk.\n");
+		do_char_log(cn,3,"#shrines <player>      all Kwai shrines, max sword.\n");
 		do_char_log(cn,3,"#slap <player>         slap in face.\n");
 		do_char_log(cn,3,"#sprite <player>       change a player's sprite.\n");
 		//do_char_log(cn,3,"#summon <name> [<rank> [<which>]]\n");
@@ -1653,6 +1654,7 @@ void do_command(int cn, char *ptr)
                 if (prefix(cmd,"seen"))                 { do_seen(cn, arg[1]); return; };
 		if (prefix(cmd,"send") && f_g)   	{ god_goto(cn,dbatoi(arg[1]),arg[2],arg[3]); return; }
                 if (prefix(cmd,"shutup") && f_gius)     { god_shutup(cn,dbatoi_self(cn,arg[1])); return; };
+                if (prefix(cmd,"shrines") && f_gi)      { god_shrines(cn,dbatoi_self(cn,arg[1])); return; };
                 if (prefix(cmd,"skill") && f_g)         { god_skill(cn,dbatoi_self(cn,arg[1]),skill_lookup(arg[2]),atoi(arg[3])); return; };
 		if (prefix(cmd,"skua"))          	{ do_become_skua(cn); return; };
                 if (prefix(cmd,"slap") && f_giu)        { god_slap(cn,dbatoi_self(cn,arg[1])); return; };

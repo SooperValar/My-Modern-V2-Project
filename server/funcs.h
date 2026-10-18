@@ -135,6 +135,7 @@ void god_lower_char(int cn,int co,int v);
 void god_donate_item(int in,int place);
 void god_gold_char(int cn,int co,int v,char *silver);
 void god_skill(int cn,int co,int n,int val);
+void god_shrines(int cn,int co);
 int god_save(int cn,int co);
 void god_luck(int cn,int co,int luck);
 void user_who(int cn);
