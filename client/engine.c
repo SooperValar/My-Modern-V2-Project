@@ -413,10 +413,33 @@ static void hud_rows(int x,int y,int n,int w)
 
 static void hud_scroll(int x,int y,int h,int pos,int maxpos)
 {
-	dd_putc(x+3,y+3,1,'^');
-	dd_putc(x+3,y+h-12,1,'v');
+	extern int hud_theme;
+	int o=(hud_theme==2) ? 1 : 0;	// clean theme: lines are 1 pixel in the middle of the old 2 pixel band
+
+	dd_putc(x+3+o+o,y+3,1,'^');
+	dd_putc(x+3+o,y+h-12,1,'v');
 	if (maxpos<1) maxpos=1;
-	dd_showbar(x+2,y+14+(pos*(h-40))/maxpos,8,10,(unsigned short)GREEN);
+	dd_showbar(x+2+o,y+14+(pos*(h-40))/maxpos,8,10,(unsigned short)GREEN);
+}
+
+// clean theme: equipment slot names as text, in the empty slots
+static void hud_equip_labels(void)
+{
+	extern int hud_theme;
+	static char *lab[12][2]={
+		{"Head",NULL},{"Back",NULL},{"Body",NULL},{"Arms",NULL},{"Neck",NULL},{"Belt",NULL},
+		{"Right","Hand"},{"Left","Hand"},{"Right","Ring"},{"Left","Ring"},{"Legs",NULL},{"Feet",NULL}};
+	static int wn[12]={WN_HEAD,WN_CLOAK,WN_BODY,WN_ARMS,WN_NECK,WN_BELT,WN_RHAND,WN_LHAND,WN_RRING,WN_LRING,WN_LEGS,WN_FEET};
+	int n,x,y,w;
+
+	if (hud_theme!=2) return;
+	for (n=0; n<12; n++) {
+		w=(show_look && !show_shop) ? look.worn[wn[n]] : pl.worn[wn[n]];
+		if (w) continue;
+		x=HE_X+2+(n%2)*35; y=HE_Y+2+(n/2)*35;	// cell interior 34x33
+		if (lab[n][1]) { ctext(x,34,y+8,1,lab[n][0]); ctext(x,34,y+18,1,lab[n][1]); }
+		else ctext(x,34,y+13,1,lab[n][0]);
+	}
 }
 
 void hud_draw_v2(int init,unsigned short *mapmem,int map_x,int map_y)
@@ -489,6 +512,7 @@ void hud_draw_v2(int init,unsigned short *mapmem,int map_x,int map_y)
 		// --- gold buttons, equipment, character panel: from the old HUD
 		dd_hud_from_legacy(HG_LX,HG_LY,HG_LW,HG_LH,HG_X,HG_Y);
 		dd_hud_from_legacy(HE_LX,HE_LY,HE_LW,HE_LH,HE_X,HE_Y);
+		hud_equip_labels();
 		dd_hud_from_legacy(HL_LX,HL_LY,HL_LW,HL_LH,HL_X,HL_Y);
 
 		// --- weapon / armor / experience / server load

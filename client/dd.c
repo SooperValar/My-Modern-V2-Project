@@ -2017,6 +2017,7 @@ static void hud_classify(void)
 		L=(30*r+59*g+11*b)/100;
 		if (abs(r-g)<=10 && b>=r-4 && b<=r+16 && L<60) hudcls[p]=HC_FILL;	// grey panel texture
 		else hudcls[p]=HC_KEEP;							// labels, icons
+		if (hudcls[p]==HC_KEEP && p%HUDW>=300 && p%HUDW<374 && p/HUDW<212) hudcls[p]=HC_FILL;	// equipment labels: drawn as text
 	}
 
 	// line segments: one per band of adjacent line rows / columns
@@ -2055,6 +2056,24 @@ static void hud_classify(void)
 	}
 	free(line);
 }
+
+/* exact border lines of the three old-HUD panels used every frame (legacy
+   coordinates; type 1 = horizontal: a=row, b0..b1 = columns; type 2 = vertical).
+   The detected lines are good enough for the rarely seen shop window, but
+   these panels get the precise grid. */
+static const short fixed_lines[][5]={
+	// gold buttons (219,176 83x84)
+	{1,176,218,303,2},{1,203,218,303,2},{1,231,218,303,2},{1,258,218,248,2},
+	{2,218,176,260,2},{2,246,176,260,2},{2,274,176,233,2},{2,301,176,233,2},
+	// equipment (300,0 74x212): 2 x 6 slots of 35
+	{1,0,300,374,2},{1,35,300,374,2},{1,70,300,374,2},{1,105,300,374,2},{1,140,300,374,2},{1,175,300,374,2},{1,210,300,374,2},
+	{2,301,0,212,2},{2,336,0,212,2},{2,371,0,212,2},
+	// character / look panel (372,0 128x204)
+	{1,0,372,499,2},{1,126,372,499,1},{1,133,372,499,1},{1,140,372,499,2},{1,147,372,499,1},{1,166,372,499,1},{1,185,372,499,2},{1,199,372,499,2},
+	{2,497,0,204,2},{2,410,185,201,1},
+};
+#define NFIXED	((int)(sizeof(fixed_lines)/sizeof(fixed_lines[0])))
+#define IN_FIXED(x,y)	(((x)>=217 && (x)<304 && (y)>=176 && (y)<262) || ((x)>=300 && (x)<500 && (y)<214))
 
 /* the vector list, rebuilt every frame together with the canvas */
 #define MAXVOP	8192
@@ -2456,14 +2475,26 @@ void dd_hud_from_legacy(int lx,int ly,int w,int h,int cx,int cy)
 			if (a0<a1 && b0<b1) vadd(VOP_FILL,a0+dx,b0+dy,a1-a0,b1-b0,HUD_RGB_PANEL);
 		}
 		for (n=0; n<nhseg; n++) {
-			if (hseg[n].a<ly || hseg[n].a>=ly+h) continue;
+			if (hseg[n].a<ly || hseg[n].a>=ly+h || IN_FIXED(hseg[n].b0,hseg[n].a)) continue;
 			a0=max(hseg[n].b0,lx); a1=min(hseg[n].b1,lx+w);
 			if (a0<a1) vadd(VOP_HLINE,a0+dx,hseg[n].a+dy,a1-a0,hseg[n].t,HUD_RGB_LINE);
 		}
 		for (n=0; n<nvseg; n++) {
-			if (vseg[n].a<lx || vseg[n].a>=lx+w) continue;
+			if (vseg[n].a<lx || vseg[n].a>=lx+w || IN_FIXED(vseg[n].a,vseg[n].b0)) continue;
 			b0=max(vseg[n].b0,ly); b1=min(vseg[n].b1,ly+h);
 			if (b0<b1) vadd(VOP_VLINE,vseg[n].a+dx,b0+dy,vseg[n].t,b1-b0,HUD_RGB_LINE);
+		}
+		for (n=0; n<NFIXED; n++) {
+			const short *f=fixed_lines[n];
+			if (f[0]==1) {
+				if (f[1]<ly || f[1]>=ly+h) continue;
+				a0=max(f[2],lx); a1=min(f[3],lx+w);
+				if (a0<a1) vadd(VOP_HLINE,a0+dx,f[1]+dy,a1-a0,f[4],HUD_RGB_LINE);
+			} else {
+				if (f[1]<lx || f[1]>=lx+w) continue;
+				b0=max(f[2],ly); b1=min(f[3],ly+h);
+				if (b0<b1) vadd(VOP_VLINE,f[1]+dx,b0+dy,f[4],b1-b0,HUD_RGB_LINE);
+			}
 		}
 	}
 	for (y=0; y<h; y++) {
@@ -2473,7 +2504,10 @@ void dd_hud_from_legacy(int lx,int ly,int w,int h,int cx,int cy)
 			p=(lx+x)+(ly+y)*HUDW;
 			v=shud.bits[(lx+x)+(ly+y)*shud.pitch];
 			if (v==0xF81F) continue;
-			if (hudbase && v!=hudbase[(lx+x)+(ly+y)*LEGACY_W]) cput(cx+x,cy+y,v);	// drawn this frame
+			if (hudbase && v!=hudbase[(lx+x)+(ly+y)*LEGACY_W]) {	// drawn this frame
+				if (hud_theme==2 && lx==300 && x<3) continue;		// old backpack scroll bar reaches in here
+				cput(cx+x,cy+y,v);
+			}
 			else if (hud_theme==2 && hudcls) { if (hudcls[p]==HC_KEEP) cput(cx+x,cy+y,v); }
 			else if (hudmask[p]==2) cput(cx+x,cy+y,v);
 		}
