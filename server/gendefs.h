@@ -12,7 +12,7 @@ All rights reserved.
 #define DATDIR          ".dat"
 
 #define VERSION         0x020E07
-#define MINVERSION      0x020F00
+#define MINVERSION      0x020F01
 
 // line-of-sight grid (was 40x40, center 20)
 #define VIS_W           64

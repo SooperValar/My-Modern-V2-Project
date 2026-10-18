@@ -2086,8 +2086,8 @@ static int tmp_see2(int frx,int fry,int tox,int toy)
         }
 }*/
 
-#define YSCUT	3	//3
-#define YECUT	1	//1
+#define YSCUT	2	//3
+#define YECUT	2	//1
 #define XSCUT	2	//2
 #define XECUT	2	//2
 
