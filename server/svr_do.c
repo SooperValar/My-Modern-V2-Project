@@ -3136,7 +3136,7 @@ void do_regenerate(int cn)
         for (n=0; n<20; n++) {
                 if ((in=ch[cn].spell[n])!=0) {
 //                      ch[cn].data[92]=TICKS*60;
-                        if (it[in].flags&IF_PERMSPELL) {
+                        if (in > 0 && in < MAXITEM && (it[in].flags&IF_PERMSPELL)) {
                                 if (it[in].hp[0]!=-1) ch[cn].a_hp+=it[in].hp[0];
                                 if (it[in].end[0]!=-1) ch[cn].a_end+=it[in].end[0];
                                 if (it[in].mana[0]!=-1) ch[cn].a_mana+=it[in].mana[0];
@@ -3158,7 +3158,7 @@ void do_regenerate(int cn)
                                         chlog(cn,"%s ran out due to lack of mana",it[in].name);
                                 }
                         } else {
-                                it[in].active--;
+                                if (in > 0 && in < MAXITEM) { it[in].active--; }
                                 if (it[in].active==TICKS*30) {
                                         if (ch[cn].flags&(CF_PLAYER|CF_USURP)) {
                                                 do_char_log(cn,0,"%s is about to run out.\n",it[in].name);
