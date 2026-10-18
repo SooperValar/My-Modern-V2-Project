@@ -30,7 +30,7 @@ struct area area[]={
         {539,525,       548,532,        "Jamil's House",                0},
         {545,536,       564,548,        "Temple of the Purple One",     1},
         {499,539,       528,550,        "Thieves House I",              1},
-        { 20, 20,        49, 69,        "Thieves House I",              1},
+        { 20, 20,        49, 69,        "Thieves Basement",             1},
         {499,525,       514,538,        "Thieves House II",             1},
         {532,439,       536,550,        "Temple Street",                2},
         {532,551,       578,555,        "Rose Street",                  2},

@@ -16,7 +16,7 @@ Shown by `/who`, by NPCs when asked where you are, and in server logs. A spot in
 | 6 | Jamil's House | 539,525 | 548,532 | "in Jamil's House" |
 | 7 | Temple of the Purple One | 545,536 | 564,548 | "in the Temple of the Purple One" |
 | 8 | Thieves House I | 499,539 | 528,550 | "in the Thieves House I" |
-| 9 | Thieves House I | 20,20 | 49,69 | "in the Thieves House I" |
+| 9 | Thieves Basement | 20,20 | 49,69 | "in the Thieves Basement" |
 | 10 | Thieves House II | 499,525 | 514,538 | "in the Thieves House II" |
 | 11 | Temple Street | 532,439 | 536,550 | "on Temple Street" |
 | 12 | Rose Street | 532,551 | 578,555 | "on Rose Street" |
