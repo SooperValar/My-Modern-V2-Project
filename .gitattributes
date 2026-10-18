@@ -1,0 +1,7 @@
+* text=auto
+*.lib binary
+*.LIB binary
+*.cur binary
+*.CUR binary
+*.ico binary
+*.ICO binary

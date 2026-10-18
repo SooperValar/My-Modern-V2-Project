@@ -1,0 +1,25 @@
+# game data (not part of the source; large)
+*.dat
+*.idx
+gfx/
+GFX/
+sfx/
+# builds
+*.exe
+client/*.obj
+client/obj/
+*.o
+*.a
+*.res
+*.cgi
+server/.obj/*
+!server/.obj/.gitkeep
+server/server
+server/respawn
+server/password
+server/makegod
+# per-user / private
+client/merc.dat
+client.ini
+client.log
+*.moa
