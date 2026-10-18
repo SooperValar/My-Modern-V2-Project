@@ -101,8 +101,16 @@ typedef struct dd_surface {
 
 typedef DDSURF *LPDIRECTDRAWSURFACE;
 
-static DDSURF s1,s2,so;
+static DDSURF s1,s2,so,shud;
 LPDIRECTDRAWSURFACE sur1=&s1,sur2=&s2,suro=&so;
+
+// BIGVIEW: s2 is the big screen (SCREEN_W x SCREEN_H) the world is drawn on,
+// shud is an 800x600 surface the original HUD code draws on. dd_target()
+// switches sur2/MAXX/MAXY/MODEX/MODEY between them, so all the old drawing
+// functions work unchanged on either.
+int cur_w=SCREEN_W,cur_h=SCREEN_H;
+int map_clip_top=0;		// world drawing clip (was 200: under the top HUD)
+static int hud_active=0;
 
 void win_present(unsigned short *bits,int w,int h);
 int win_show(void);
@@ -148,8 +156,11 @@ int dd_init(HWND hwnd,int x,int y)
 
 	DDERR="OK";
 
+	x=SCREEN_W; y=SCREEN_H;
+
 	MAXX=MAXX1=x;
 	MAXY=MAXY1=y;
+	cur_w=x; cur_h=y;
 
 	// we always work in RGB565 internally, the presenter converts as needed
 	RED=0xF800;
@@ -157,7 +168,7 @@ int dd_init(HWND hwnd,int x,int y)
 	BLUE=0x001F;
 	RGBM=0;
 
-	if (!alloc_surface(sur1,x,y) || !alloc_surface(sur2,x,y)) {
+	if (!alloc_surface(sur1,x,y) || !alloc_surface(sur2,x,y) || !alloc_surface(&shud,LEGACY_W,LEGACY_H+8)) {
 		DDERR="OUTOFMEMORY (frame buffer)";
 		return -1;
 	}
@@ -294,11 +305,12 @@ void dd_showbar(int xf,int yf,int xs,int ys,unsigned short col)
 // to ydst. Used to grow HUD panels by repeating one of their rows.
 void dd_copy_rows(int x1,int x2,int ysrc,int ydst,int h)
 {
-	unsigned short tmp[MODEX];
+	unsigned short tmp[4096];
 	int y,w;
 
 	if (x1<0) x1=0;
 	if (x2>MAXX) x2=MAXX;
+	if (x2-x1>4096) x2=x1+4096;
 	w=x2-x1;
 	if (w<=0) return;
 
@@ -352,10 +364,10 @@ int dd_copytile(int nr,int x,int y,LPDIRECTDRAWSURFACE sur,int mapcheck)
 		if (x+32>=MODEX) xe=x-MODEX+32;
 		if (y+32>=MODEY) ye=y-MODEY+32;
 	} else {
-		if (x<-31 || y<170 || x>=MODEX || y>=MODEY)	return 0;
+		if (x<-31 || y<map_clip_top-30 || x>=MODEX || y>=MODEY)	return 0;
 
 		if (x<0) { xs=-x; x=0; }
-		if (y<200) { ys=-y+200; y=200; }
+		if (y<map_clip_top) { ys=-y+map_clip_top; y=map_clip_top; }
 
 		if (x+32>=MODEX) xe=x-MODEX+32;
 		if (y+32>=MODEY) ye=y-MODEY+32;
@@ -388,7 +400,7 @@ void dd_alphaeffect_magic_1(int nr,int str,int xpos,int ypos,int xoff,int yoff)
 	int x,y,dstx,dsty,e;
 	int r,g,b,r1,g1,b1,e2;
 
-	rx=(xpos/2)+(ypos/2)-(2*16)+32+XPOS;
+	rx=(xpos/2)+(ypos/2)-(2*16)+32+XPOS-((TILEX-34)/2*32);
 	if (xpos<0 && (xpos&1))	rx--;
 	if (ypos<0 && (ypos&1))	rx--;
 	ry=(xpos/4)-(ypos/4)+YPOS-2*32;
@@ -404,7 +416,7 @@ void dd_alphaeffect_magic_1(int nr,int str,int xpos,int ypos,int xoff,int yoff)
 	dsty=ry;
 
 	for (y=0; y<64; y++) {
-		if (dsty+y<200 || dsty+y>=MODEY) continue;
+		if (dsty+y<map_clip_top || dsty+y>=MODEY) continue;
 		for (x=0; x<64; x++) {
 			if (dstx+x<0 || dstx+x>=MODEX) continue;
 
@@ -458,7 +470,7 @@ void dd_alphaeffect_magic_0(int nr,int str,int xpos,int ypos,int xoff,int yoff)
 	int x,y,dstx,dsty,e;
 	int r,g,b,r1,g1,b1,e2;
 
-	rx=(xpos/2)+(ypos/2)-(2*16)+32+XPOS;
+	rx=(xpos/2)+(ypos/2)-(2*16)+32+XPOS-((TILEX-34)/2*32);
 	if (xpos<0 && (xpos&1))	rx--;
 	if (ypos<0 && (ypos&1))	rx--;
 	ry=(xpos/4)-(ypos/4)+YPOS-2*32;
@@ -474,7 +486,7 @@ void dd_alphaeffect_magic_0(int nr,int str,int xpos,int ypos,int xoff,int yoff)
 	dsty=ry;
 
 	for (y=0; y<64; y++) {
-		if (dsty+y<200 || dsty+y>=MODEY) continue;
+		if (dsty+y<map_clip_top || dsty+y>=MODEY) continue;
 		for (x=0; x<64; x++) {
 			if (dstx+x<0 || dstx+x>=MODEX) continue;
 
@@ -1231,22 +1243,22 @@ void dd_savescreen(void)
 
 	lasttime=(int)time(NULL);
 
-	stride=((MODEX*3)+3)&~3;
-	mem=GlobalAlloc(GMEM_MOVEABLE,sizeof(BITMAPINFOHEADER)+stride*MODEY);
+	stride=((sur1->w*3)+3)&~3;
+	mem=GlobalAlloc(GMEM_MOVEABLE,sizeof(BITMAPINFOHEADER)+stride*sur1->h);
 	if (!mem) return;
 	bih=GlobalLock(mem);
 	memset(bih,0,sizeof(*bih));
 	bih->biSize=sizeof(*bih);
-	bih->biWidth=MODEX;
-	bih->biHeight=MODEY;
+	bih->biWidth=sur1->w;
+	bih->biHeight=sur1->h;
 	bih->biPlanes=1;
 	bih->biBitCount=24;
 	bih->biCompression=BI_RGB;
 	dst=(unsigned char*)(bih+1);
 
-	for (y=0; y<MODEY; y++) {
-		unsigned char *row=dst+(size_t)(MODEY-1-y)*stride;
-		for (x=0; x<MODEX; x++) {
+	for (y=0; y<sur1->h; y++) {
+		unsigned char *row=dst+(size_t)(sur1->h-1-y)*stride;
+		for (x=0; x<sur1->w; x++) {
 			v=sur1->bits[x+y*sur1->pitch];
 			row[x*3+0]=(unsigned char)((v&0x001F)<<3);
 			row[x*3+1]=(unsigned char)((v&0x07E0)>>3);
@@ -1307,7 +1319,7 @@ void dd_gputtext(int xpos,int ypos,int font,char *text,int xoff,int yoff)
 
 	len=strlen(text);
 
-	rx=(xpos/2)+(ypos/2)+32-((len*5)/2)+XPOS;
+	rx=(xpos/2)+(ypos/2)+32-((len*5)/2)+XPOS-((TILEX-34)/2*32);
 	if (xpos<0 && (xpos&1))	rx--;
 	if (ypos<0 && (ypos&1))	rx--;
 	ry=(xpos/4)-(ypos/4)+YPOS-64;
@@ -1669,7 +1681,7 @@ static unsigned char *shadowmap;
 
 void dd_shadow_clear(void)
 {
-	if (!shadowmap) shadowmap=calloc(MAXX,MAXY);
+	if (!shadowmap) shadowmap=calloc(SCREEN_W,SCREEN_H);
 	else memset(shadowmap,0,MAXX*MAXY);
 }
 
@@ -1828,3 +1840,422 @@ void dd_shadow(int nr,int xpos,int ypos,int xoff,int yoff)
 				
 	}
 */
+
+
+/* ===================================================================
+   BIGVIEW: HUD composition for the 1280x960 screen
+   ===================================================================
+
+   The original HUD is one 800x608 sprite (nr 1): panels, a blue background
+   and a diamond-shaped transparent hole (color key) the world shows through.
+   Here it is taken apart once:
+     hudmask: 0 = hole, 1 = blue background, 2 = panel pixel
+     hudreg : which screen corner a panel pixel is pinned to
+   Every frame the old HUD code draws into the 800x600 shud surface, then
+   dd_hud_compose() copies the panel pixels (with whatever text/items were
+   drawn on them) to their new place on the big screen. Anything drawn over
+   the hole/background (e.g. the shop window) is copied centered.
+*/
+
+#define HUDW	800
+#define HUDH	608
+
+#define REG_NONE	0
+#define REG_TOP		1	// top block, split between A (left) and B (right)
+#define REG_C		3	// minimap, bottom left
+#define REG_D		4	// compass, bottom center
+#define REG_E		5	// buttons, bottom right
+
+#define SPLIT_X		497	// chat panel's left border (columns 497/498 belong to both halves)
+
+static unsigned char *hudmask=NULL,*hudreg=NULL;
+static unsigned short *hudimg=NULL;
+static unsigned short *hudbase=NULL;	// the HUD as drawn this frame, before any text/items (brightness applied)
+
+static int is_bgcol(unsigned short v)
+{
+	return v!=0xF81F && (v>>11)==0 && ((v>>5)&63)<=10;
+}
+
+static int hud_prepare(void)
+{
+	int x,y,p,q,head,tail,nx,ny,k;
+	int *queue;
+	static const int dx[4]={1,-1,0,0},dy[4]={0,0,1,-1};
+
+	if (hudmask) return 1;
+
+	if (!sprtab[1].image) dd_load_sprite(1);
+	if (!sprtab[1].image || sprtab[1].xs*TILE!=HUDW || sprtab[1].ys*TILE<HUDH-8) return 0;
+	// own copy: the sprite cache may free sprite images at any time
+	hudimg=malloc(HUDW*HUDH*sizeof(unsigned short));
+	if (!hudimg) return 0;
+	memcpy(hudimg,sprtab[1].image,HUDW*HUDH*sizeof(unsigned short));
+
+	hudmask=calloc(HUDW*HUDH,1);
+	hudreg=calloc(HUDW*HUDH,1);
+	queue=malloc(HUDW*HUDH*sizeof(int));
+	if (!hudmask || !hudreg || !queue) { free(queue); return 0; }
+
+	// panel by default, hole where the sprite is transparent
+	for (p=0; p<HUDW*HUDH; p++) hudmask[p]=(hudimg[p]==0xF81F) ? 0 : 2;
+
+	// background = blue pixels connected to the hole
+	head=tail=0;
+	for (y=0; y<HUDH; y++) for (x=0; x<HUDW; x++) {
+		p=x+y*HUDW;
+		if (hudmask[p]!=2 || !is_bgcol(hudimg[p])) continue;
+		for (k=0; k<4; k++) {
+			nx=x+dx[k]; ny=y+dy[k];
+			if (nx<0 || ny<0 || nx>=HUDW || ny>=HUDH) continue;
+			if (hudmask[nx+ny*HUDW]==0) { hudmask[p]=1; queue[tail++]=p; break; }
+		}
+	}
+	while (head<tail) {
+		p=queue[head++]; x=p%HUDW; y=p/HUDW;
+		for (k=0; k<4; k++) {
+			nx=x+dx[k]; ny=y+dy[k];
+			if (nx<0 || ny<0 || nx>=HUDW || ny>=HUDH) continue;
+			q=nx+ny*HUDW;
+			if (hudmask[q]==2 && is_bgcol(hudimg[q])) { hudmask[q]=1; queue[tail++]=q; }
+		}
+	}
+
+	// the top block: panel pixels connected to the top left corner
+	head=tail=0;
+	if (hudmask[5+5*HUDW]==2) { hudreg[5+5*HUDW]=REG_TOP; queue[tail++]=5+5*HUDW; }
+	while (head<tail) {
+		p=queue[head++]; x=p%HUDW; y=p/HUDW;
+		for (k=0; k<4; k++) {
+			nx=x+dx[k]; ny=y+dy[k];
+			if (nx<0 || ny<0 || nx>=HUDW || ny>=HUDH) continue;
+			q=nx+ny*HUDW;
+			if (hudmask[q]==2 && !hudreg[q]) { hudreg[q]=REG_TOP; queue[tail++]=q; }
+		}
+	}
+	free(queue);
+
+	// the other panels by area; the small diamond markers stay REG_NONE
+	for (y=0; y<HUDH; y++) for (x=0; x<HUDW; x++) {
+		p=x+y*HUDW;
+		if (hudmask[p]!=2 || hudreg[p]) continue;
+		if (x<200 && y>=440) hudreg[p]=REG_C;
+		else if (x>=260 && x<345 && y>=550) hudreg[p]=REG_D;
+		else if (x>=600 && y>=490) hudreg[p]=REG_E;
+	}
+
+	return 1;
+}
+
+// screen offset of each HUD part (legacy -> big screen)
+#define OFF_RX	(SCREEN_W-LEGACY_W)
+#define OFF_BY	(SCREEN_H-LEGACY_H)
+#define OFF_CX	((SCREEN_W-LEGACY_W)/2)
+#define OFF_CY	((SCREEN_H-LEGACY_H)/2)
+
+#define LOOK_BOTTOM	201	// look panel's bottom border; below it columns 497/498 are only the chat's edge
+
+static int part_of(int reg,int x,int y,int which)
+{
+	// which: 1=A (top left) 2=B (top right) 3=C 4=D 5=E
+	switch (which) {
+		case 1: return reg==REG_TOP && (x<SPLIT_X || (x<=SPLIT_X+1 && y<=LOOK_BOTTOM));
+		case 2: return reg==REG_TOP && x>=SPLIT_X;
+		default: return reg==which;
+	}
+}
+
+static void part_off(int which,int *ox,int *oy)
+{
+	switch (which) {
+		case 1: *ox=0; *oy=0; break;
+		case 2: *ox=OFF_RX; *oy=0; break;
+		case 3: *ox=0; *oy=OFF_BY; break;
+		case 4: *ox=OFF_CX; *oy=OFF_BY; break;
+		case 5: *ox=OFF_RX; *oy=OFF_BY; break;
+		default: *ox=OFF_CX; *oy=OFF_CY; break;	// overlays drawn over the hole
+	}
+}
+
+/* -------------------------------------------------------------------
+   HUD canvas (v2): the new HUD is drawn in "HUD units" on a canvas the size
+   of the window divided by the HUD scale (1.5). The presenter scales it up
+   and lays it over the world. Color key = transparent.
+   ------------------------------------------------------------------- */
+static DDSURF shc;
+int hud_cw=0,hud_ch=0;
+
+int dd_hud_canvas(int w,int h)
+{
+	if (w<200) w=200;
+	if (h<150) h=150;
+	if (shc.bits && shc.w==w && shc.h==h) return 1;
+	free(shc.bits);
+	shc.bits=NULL;
+	if (!alloc_surface(&shc,w,h)) return 0;
+	hud_cw=w; hud_ch=h;
+	return 1;
+}
+
+unsigned short *dd_hud_canvas_bits(int *w,int *h,int *pitch)
+{
+	*w=shc.w; *h=shc.h; *pitch=shc.pitch;
+	return shc.bits;
+}
+
+// switch drawing between the big screen (0), the legacy HUD surface (1)
+// and the HUD canvas (2)
+void dd_target(int hud)
+{
+	hud_active=hud;
+	if (hud==2) {
+		sur2=&shc;
+		MAXX=shc.pitch; MAXY=shc.h;
+		cur_w=shc.w; cur_h=shc.h;
+	} else if (hud) {
+		sur2=&shud;
+		MAXX=LEGACY_W; MAXY=LEGACY_H;
+		cur_w=LEGACY_W; cur_h=LEGACY_H;
+	} else {
+		sur2=&s2;
+		MAXX=SCREEN_W; MAXY=SCREEN_H;
+		cur_w=SCREEN_W; cur_h=SCREEN_H;
+	}
+}
+
+// start a HUD frame: clear the legacy surface to the color key
+void dd_hud_begin(void)
+{
+	int n;
+	unsigned short *p=shud.bits;
+
+	dd_target(1);
+	for (n=0; n<shud.pitch*shud.h; n++) p[n]=0xF81F;
+}
+
+// call right after the HUD picture itself has been drawn: remembers it, so
+// anything drawn afterwards over the background/hole can be told apart
+void dd_hud_snapshot(void)
+{
+	int y;
+
+	if (!hudbase) hudbase=malloc(LEGACY_W*LEGACY_H*sizeof(unsigned short));
+	if (!hudbase) return;
+	for (y=0; y<LEGACY_H; y++) memcpy(hudbase+y*LEGACY_W,shud.bits+y*shud.pitch,LEGACY_W*sizeof(unsigned short));
+}
+
+// copy the HUD to the big screen
+void dd_hud_compose(void)
+{
+	int x,y,p,w,ox,oy,sx,sy;
+	unsigned short v,*src=shud.bits,*dst=s2.bits;
+
+	if (!hud_prepare()) return;
+
+	for (y=0; y<LEGACY_H; y++) {
+		for (x=0; x<LEGACY_W; x++) {
+			p=x+y*HUDW;
+			v=src[x+y*shud.pitch];
+			if (v==0xF81F) continue;
+
+			if (hudmask[p]==2) {
+				for (w=1; w<=5; w++) {
+					if (!part_of(hudreg[p],x,y,w)) continue;
+					part_off(w,&ox,&oy);
+					sx=x+ox; sy=y+oy;
+					if (sx>=0 && sy>=0 && sx<SCREEN_W && sy<SCREEN_H) dst[sx+sy*s2.pitch]=v;
+				}
+			} else if (hudbase && v!=hudbase[x+y*LEGACY_W]) {	// something drawn over the hole/background
+				sx=x+OFF_CX; sy=y+OFF_CY;
+				if (sx>=0 && sy>=0 && sx<SCREEN_W && sy<SCREEN_H) dst[sx+sy*s2.pitch]=v;
+			}
+		}
+	}
+}
+
+// translate a big screen position to legacy HUD coordinates.
+// returns 1 if the position is on a HUD panel (or an overlay like the shop
+// when overlay!=0), 0 if it is on the world.
+int hud_from_screen(int sx,int sy,int *lx,int *ly,int overlay)
+{
+	int w,ox,oy,x,y,p;
+
+	if (!hud_prepare()) { *lx=sx; *ly=sy; return 0; }
+
+	for (w=1; w<=5; w++) {
+		part_off(w,&ox,&oy);
+		x=sx-ox; y=sy-oy;
+		if (x<0 || y<0 || x>=LEGACY_W || y>=LEGACY_H) continue;
+		p=x+y*HUDW;
+		if (hudmask[p]==2 && part_of(hudreg[p],x,y,w)) { *lx=x; *ly=y; return 1; }
+	}
+	if (overlay) {
+		x=sx-OFF_CX; y=sy-OFF_CY;
+		if (x>=0 && y>=0 && x<LEGACY_W && y<LEGACY_H) {
+			p=x+y*HUDW;
+			if (hudmask[p]!=2 && hudbase && shud.bits[x+y*shud.pitch]!=0xF81F && shud.bits[x+y*shud.pitch]!=hudbase[x+y*LEGACY_W]) {
+				*lx=x; *ly=y; return 1;
+			}
+		}
+	}
+	*lx=sx; *ly=sy;
+	return 0;
+}
+
+// fill the big screen with the HUD's blue background texture (mirrored tiles)
+void dd_fill_background(void)
+{
+	int x,y,tx,ty;
+	unsigned short *dst=s2.bits,*src;
+	const int PX=132,PY=504,PS=80;	// an 80x80 patch of pure background
+	int stride;
+
+	if (!hud_prepare()) { memset(dst,0,(size_t)s2.pitch*s2.h*2); return; }
+
+	// use last frame's HUD (brightness applied) if we have it
+	if (hudbase) { src=hudbase; stride=LEGACY_W; }
+	else { src=hudimg; stride=HUDW; }
+
+	for (y=0; y<SCREEN_H; y++) {
+		ty=y%(PS*2); if (ty>=PS) ty=PS*2-1-ty;
+		for (x=0; x<SCREEN_W; x++) {
+			tx=x%(PS*2); if (tx>=PS) tx=PS*2-1-tx;
+			dst[x+y*s2.pitch]=src[(PX+tx)+(PY+ty)*stride];
+		}
+	}
+}
+
+// fixed view edge: everything outside the diamond (center cx,cy, half sizes
+// hw,hh) is covered with the background again. Like the hole in the old HUD
+// picture, this keeps the edge still while the world scrolls under it.
+void dd_mask_view(int cx,int cy,int hw,int hh)
+{
+	int x,y,ty,tx,w,x0,x1;
+	unsigned short *dst=s2.bits,*src;
+	const int PX=132,PY=504,PS=80;
+	int stride;
+
+	if (!hud_prepare()) return;
+	if (hudbase) { src=hudbase; stride=LEGACY_W; }
+	else { src=hudimg; stride=HUDW; }
+
+	for (y=0; y<SCREEN_H; y++) {
+		ty=y%(PS*2); if (ty>=PS) ty=PS*2-1-ty;
+		w=hw-(abs(y-cy)*hw)/hh;		// half width of the diamond on this row
+		if (w<0) { x0=x1=SCREEN_W; }	// whole row outside
+		else { x0=cx-w; x1=cx+w; }
+		for (x=0; x<SCREEN_W; x++) {
+			if (x>=x0 && x<x1) { x=x1-1; continue; }
+			tx=x%(PS*2); if (tx>=PS) tx=PS*2-1-tx;
+			dst[x+y*s2.pitch]=src[(PX+tx)+(PY+ty)*stride];
+		}
+	}
+}
+
+// draw one of the HUD's small diamond markers centered at sx,sy (big screen)
+void dd_draw_marker(int cx,int cy)
+{
+	const int MX=150,MY=308,MW=29,MH=14;	// marker graphic in the HUD sprite
+	int x,y,sx,sy,p;
+
+	if (!hud_prepare()) return;
+
+	for (y=0; y<MH; y++) for (x=0; x<MW; x++) {
+		p=(MX+x)+(MY+y)*HUDW;
+		if (hudmask[p]!=2 || hudreg[p]!=REG_NONE) continue;
+		sx=cx-MW/2+x; sy=cy-MH/2+y;
+		if (sx>=0 && sy>=0 && sx<SCREEN_W && sy<SCREEN_H) s2.bits[sx+sy*s2.pitch]=hudimg[p];
+	}
+}
+
+
+/* ---- HUD canvas drawing helpers (all in HUD units, on the canvas) ---- */
+
+void dd_canvas_clear(void)
+{
+	int n;
+	for (n=0; n<shc.pitch*shc.h; n++) shc.bits[n]=0xF81F;
+}
+
+static void cput(int x,int y,unsigned short v)
+{
+	if (x<0 || y<0 || x>=shc.w || y>=shc.h || v==0xF81F) return;
+	shc.bits[x+y*shc.pitch]=v;
+}
+
+// red panel texture (taken from the inside of the original chat panel)
+void dd_hud_red(int x0,int y0,int w,int h)
+{
+	int x,y;
+	if (!hud_prepare()) return;
+	for (y=0; y<h; y++) for (x=0; x<w; x++)
+		cput(x0+x,y0+y,hudimg[(520+(x%260))+(12+(y%200))*HUDW]);
+}
+
+// 2 pixel gold border lines, pattern taken from the original borders
+void dd_hud_hline(int x0,int y,int w)
+{
+	int i;
+	if (!hud_prepare()) return;
+	for (i=0; i<w; i++) {
+		cput(x0+i,y,hudimg[(640+(i%150))+239*HUDW]);
+		cput(x0+i,y+1,hudimg[(640+(i%150))+240*HUDW]);
+	}
+}
+
+void dd_hud_vline(int x,int y0,int h)
+{
+	int i;
+	if (!hud_prepare()) return;
+	for (i=0; i<h; i++) {
+		cput(x,y0+i,hudimg[497+(10+(i%180))*HUDW]);
+		cput(x+1,y0+i,hudimg[498+(10+(i%180))*HUDW]);
+	}
+}
+
+void dd_hud_panel(int x,int y,int w,int h)
+{
+	dd_hud_red(x,y,w,h);
+	dd_hud_hline(x,y,w);
+	dd_hud_hline(x,y+h-2,w);
+	dd_hud_vline(x,y,h);
+	dd_hud_vline(x+w-2,y,h);
+}
+
+void dd_hud_fill(int x0,int y0,int w,int h,unsigned short col)
+{
+	int x,y;
+	for (y=0; y<h; y++) for (x=0; x<w; x++) cput(x0+x,y0+y,col);
+}
+
+// copy a piece of the legacy 800x600 HUD (as drawn this frame) onto the
+// canvas: its panel pixels plus anything drawn over hole/background there
+void dd_hud_from_legacy(int lx,int ly,int w,int h,int cx,int cy)
+{
+	int x,y,p;
+	unsigned short v;
+
+	if (!hud_prepare()) return;
+	for (y=0; y<h; y++) {
+		if (ly+y<0 || ly+y>=LEGACY_H) continue;
+		for (x=0; x<w; x++) {
+			if (lx+x<0 || lx+x>=LEGACY_W) continue;
+			p=(lx+x)+(ly+y)*HUDW;
+			v=shud.bits[(lx+x)+(ly+y)*shud.pitch];
+			if (v==0xF81F) continue;
+			if (hudmask[p]==2 || (hudbase && v!=hudbase[(lx+x)+(ly+y)*LEGACY_W])) cput(cx+x,cy+y,v);
+		}
+	}
+}
+
+// minimap: (2*n x 2*n tiles) from the 1024x1024 map memory, zoom pixels per tile
+void dd_hud_minimap(unsigned short *src,int xo,int yo,int x0,int y0,int n,int zoom)
+{
+	int x,y,zx,zy;
+	unsigned short v;
+
+	for (y=0; y<n; y++) for (x=0; x<n; x++) {
+		v=src[(y+yo)*1024+x+xo];
+		for (zy=0; zy<zoom; zy++) for (zx=0; zx<zoom; zx++) cput(x0+x*zoom+zx,y0+y*zoom+zy,v ? v : 0x0001);
+	}
+}

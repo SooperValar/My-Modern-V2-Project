@@ -1,17 +1,28 @@
-#define VERSION 0x020E06
+#define VERSION 0x020F01	// 2.15.01: 1280x960 / 44x44 symmetric view + v2 HUD, needs the matching server
 
 #define MAXSPRITE 2000+(32*1024)
 
-#define MODEX			800
-#define MODEY			600
+// The HUD code works in the original 800x600 coordinates ("legacy"). The
+// world is drawn on a bigger screen. MODEX/MODEY are the size of whatever
+// surface is currently being drawn to (see dd_target() in dd.c).
+#define LEGACY_W		800
+#define LEGACY_H		600
+#define SCREEN_W		1280
+#define SCREEN_H		960
+
+extern int cur_w,cur_h;
+#define MODEX			cur_w
+#define MODEY			cur_h
 
 //#define DB_WINDOWED
 
 #define MAPX			TILEX
 #define MAPY			TILEY
 
-#define YPOS			440
-#define XPOS			0
+// world origin on the big screen (440 / 0 on the original 800x600 screen).
+// +16/-52: centers the (symmetric, 40x40 tile) view on the 1280x960 screen
+#define YPOS			(440+(SCREEN_H-LEGACY_H)/2-52)
+#define XPOS			((SCREEN_W-LEGACY_W)/2+16)
 
 #define MS_MOVE		    0
 #define MS_LB_DOWN	    1

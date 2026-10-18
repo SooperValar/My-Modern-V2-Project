@@ -8,6 +8,7 @@
 #include "dd.h"
 #include "common.h"
 #include "inter.h"
+#include "hud.h"
 
 int init_done=0;
 int frame=0;
@@ -294,10 +295,12 @@ unsigned char   inv_block[20]={0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 extern int inv_object;			// object carried with the mouse cursor
 extern int mouse_x,mouse_y;	// current mouse coordinates
 
-#define XS	49
-#define LL	22
-#define XLL (22*10)
-static char logtext[XLL][60];
+// chat log (v2 HUD: 64 characters per line, 30 lines visible)
+#define XS	HCH_COLS	// wrap width
+#define LL	HCH_LINES	// visible lines
+#define XLL (LL*10)		// lines kept
+#define LW	80		// line buffer width
+static char logtext[XLL][LW];
 static char logfont[XLL];
 
 #define MAXTS            20
@@ -305,6 +308,13 @@ static char logfont[XLL];
 int load=0;
 
 void dd_copy_rows(int x1,int x2,int ysrc,int ydst,int h);
+void dd_target(int hud);
+void dd_hud_begin(void);
+void dd_hud_compose(void);
+void dd_hud_snapshot(void);
+void dd_fill_background(void);
+void dd_draw_marker(int cx,int cy);
+void dd_mask_view(int cx,int cy,int hw,int hh);
 
 // QoL: one line of the stats/skills panel: name, base value in blue (font 3)
 // at the right end of the name column, modified value in yellow where it
@@ -319,6 +329,248 @@ static void stat_line(int y,const char *name,int base,int total)
 	dd_xputtext(5,y,1,"%s",buf);
 	dd_xputtext(90,y,3,"%3d",base);
 	dd_xputtext(113,y,1,"%3d",total);
+}
+
+/* ===================================================================
+   v2 HUD: drawn on the HUD canvas (see hud.h for the layout)
+   =================================================================== */
+
+void dd_target(int hud);
+void dd_canvas_clear(void);
+void dd_hud_panel(int x,int y,int w,int h);
+void dd_hud_hline(int x0,int y,int w);
+void dd_hud_vline(int x,int y0,int h);
+void dd_hud_fill(int x0,int y0,int w,int h,unsigned short col);
+void dd_hud_from_legacy(int lx,int ly,int w,int h,int cx,int cy);
+void dd_hud_minimap(unsigned short *src,int xo,int yo,int x0,int y0,int n,int zoom);
+
+extern int mouse_cx,mouse_cy;		// mouse position on the HUD canvas (inter.c)
+extern int hud_mouse_on_canvas;
+
+static void rtext(int xr,int y,int font,char *format,...)
+{
+	va_list args;
+	char buf[256];
+
+	va_start(args,format);
+	vsprintf(buf,format,args);
+	va_end(args);
+	dd_puttext(xr-6*(int)strlen(buf),y,font,buf);
+}
+
+static void ctext(int x,int w,int y,int font,char *text)
+{
+	dd_puttext(x+(w-6*(int)strlen(text))/2,y,font,text);
+}
+
+// short label for a skill button (64 units = 10 characters)
+static void button_label(int n,char *out)
+{
+	extern struct skilltab _skilltab[];
+	static const char *abbr[][2]={
+		{"Magic Shield","Magic Shld"},{"Ghost Companion","Ghost Comp"},{"Guardian Angel","Guardian"},
+		{"Enhance Weapon","Enhance"},{"Hand to Hand","Hand2Hand"},{"Lock-Picking","Lockpick"},
+		{"Surround Hit","Surround"},{"Dispel Magic","Dispel"},{"Sense Magic","SenseMagic"},{NULL,NULL}};
+	int sk=pdata.xbutton[n].skill_nr,i;
+	const char *name;
+
+	if (sk<0 || sk>=50) { strcpy(out,pdata.xbutton[n].name[0] ? pdata.xbutton[n].name : "-"); return; }
+	name=_skilltab[sk].name;
+	for (i=0; abbr[i][0]; i++) if (!strcmp(abbr[i][0],name)) { strcpy(out,abbr[i][1]); return; }
+	strncpy(out,name,10); out[10]=0;
+}
+
+// one row of the stats panel
+static void hud_stat_row(int x,int y,const char *name,int base,int total,int can_raise,int raised,int cost)
+{
+	char buf[20];
+
+	if (strlen(name)>16) { memcpy(buf,name,16); buf[16]=0; }
+	else strcpy(buf,name);
+
+	dd_puttext(x+6,y+3,1,buf);
+	rtext(x+HC_TOT-5,y+3,3,"%d",base);
+	rtext(x+HC_PLUS-5,y+3,1,"%d",total);
+	if (can_raise) dd_putc(x+HC_PLUS+3,y+3,1,'+');
+	if (raised) dd_putc(x+HC_MINUS+3,y+3,1,'-');
+	if (cost!=HIGH_VAL) rtext(x+HC_END-5,y+3,1,"%d",cost);
+}
+
+static void hud_cols(int x,int y,int h)
+{
+	dd_hud_vline(x+HC_BASE-2,y,h);
+	dd_hud_vline(x+HC_TOT-2,y,h);
+	dd_hud_vline(x+HC_PLUS-2,y,h);
+	dd_hud_vline(x+HC_MINUS-2,y,h);
+	dd_hud_vline(x+HC_COST-2,y,h);
+}
+
+static void hud_rows(int x,int y,int n,int w)
+{
+	int i;
+	for (i=1; i<n; i++) dd_hud_hline(x,y+i*HUD_ROW,w);
+}
+
+static void hud_scroll(int x,int y,int h,int pos,int maxpos)
+{
+	dd_putc(x+3,y+3,1,'^');
+	dd_putc(x+3,y+h-12,1,'v');
+	if (maxpos<1) maxpos=1;
+	dd_showbar(x+2,y+14+(pos*(h-40))/maxpos,8,10,(unsigned short)GREEN);
+}
+
+void hud_draw_v2(int init,unsigned short *mapmem,int map_x,int map_y)
+{
+	int n,m,x,y,r,c,pts,rows;
+	char buf[80];
+
+	dd_target(2);
+	dd_canvas_clear();
+
+	if (init) {
+		pts=pl.points-stat_points_used;
+
+		// --- stats: attributes and hp/end/mana
+		x=HS_X; y=HS_Y;
+		dd_hud_panel(x,y,HC_END,HS_H1);
+		hud_cols(x,y,HS_H1);
+		hud_rows(x,y,8,HC_END);
+		for (n=0; n<5; n++)
+			hud_stat_row(x,y+n*HUD_ROW,at_name[n],pl.attrib[n][0]+stat_raised[n],pl.attrib[n][5]+stat_raised[n],
+				attrib_needed(n,pl.attrib[n][0]+stat_raised[n])<=pts,stat_raised[n]>0,attrib_needed(n,pl.attrib[n][0]+stat_raised[n]));
+		hud_stat_row(x,y+5*HUD_ROW,"Hitpoints",pl.hp[0]+stat_raised[5],pl.hp[5]+stat_raised[5],
+			hp_needed(pl.hp[0]+stat_raised[5])<=pts,stat_raised[5]>0,hp_needed(pl.hp[0]+stat_raised[5]));
+		hud_stat_row(x,y+6*HUD_ROW,"Endurance",pl.end[0]+stat_raised[6],pl.end[5]+stat_raised[6],
+			end_needed(pl.end[0]+stat_raised[6])<=pts,stat_raised[6]>0,end_needed(pl.end[0]+stat_raised[6]));
+		hud_stat_row(x,y+7*HUD_ROW,"Mana",pl.mana[0]+stat_raised[7],pl.mana[5]+stat_raised[7],
+			mana_needed(pl.mana[0]+stat_raised[7])<=pts,stat_raised[7]>0,mana_needed(pl.mana[0]+stat_raised[7]));
+
+		// --- stats: skills (10 visible) with scroll column
+		y=HS_Y2;
+		dd_hud_panel(x,y,HC_END+HC_SCR,HS_H2);
+		hud_cols(x,y,HS_H2);
+		dd_hud_vline(x+HC_END-2,y,HS_H2);
+		hud_rows(x,y,10,HC_END);
+		for (n=0; n<10; n++) {
+			m=skilltab[n+skill_pos].nr;
+			if (!pl.skill[m][0]) { dd_puttext(x+6,y+n*HUD_ROW+3,1,"unused"); continue; }
+			hud_stat_row(x,y+n*HUD_ROW,skilltab[n+skill_pos].name,pl.skill[m][0]+stat_raised[n+8+skill_pos],pl.skill[m][5]+stat_raised[n+8+skill_pos],
+				skill_needed(m,pl.skill[m][0]+stat_raised[n+8+skill_pos])<=pts,stat_raised[n+8+skill_pos]>0,
+				skill_needed(m,pl.skill[m][0]+stat_raised[n+8+skill_pos]));
+		}
+		hud_scroll(x+HC_END-1,y,HS_H2,skill_pos,40);
+
+		// --- update (left of it stays empty)
+		dd_hud_panel(x+HC_TOT-2,HS_Y3,HC_END-HC_TOT+2,HS_H3);
+		dd_hud_vline(x+HC_COST-2,HS_Y3,HS_H3);
+		dd_puttext(x+HC_TOT+4,HS_Y3+4,1,"Update");
+		rtext(x+HC_END-5,HS_Y3+4,1,"%d",pts);
+
+		// --- current / max
+		dd_hud_panel(x,HS_Y4,HS_W4,HS_H4);
+		dd_hud_vline(x+102,HS_Y4,HS_H4);
+		dd_hud_vline(x+142,HS_Y4,HS_H4);
+		hud_rows(x,HS_Y4,3,HS_W4);
+		dd_puttext(x+6,HS_Y4+3,1,"Hitpoints"); rtext(x+138,HS_Y4+3,1,"%d",pl.a_hp); rtext(x+178,HS_Y4+3,1,"%d",pl.hp[5]);
+		dd_puttext(x+6,HS_Y4+HUD_ROW+3,1,"Endurance"); rtext(x+138,HS_Y4+HUD_ROW+3,1,"%d",pl.a_end); rtext(x+178,HS_Y4+HUD_ROW+3,1,"%d",pl.end[5]);
+		dd_puttext(x+6,HS_Y4+2*HUD_ROW+3,1,"Mana"); rtext(x+138,HS_Y4+2*HUD_ROW+3,1,"%d",pl.a_mana); rtext(x+178,HS_Y4+2*HUD_ROW+3,1,"%d",pl.mana[5]);
+
+		// --- backpack 4x5
+		dd_hud_panel(HB_X,HB_Y,HB_W,HB_H);
+		for (c=1; c<=HB_COLS; c++) dd_hud_vline(HB_X+c*HB_SLOT,HB_Y,HB_H);
+		for (r=1; r<HB_ROWS; r++) dd_hud_hline(HB_X,HB_Y+r*HB_SLOT,HB_COLS*HB_SLOT+2);
+		for (n=0; n<HB_VISIBLE; n++) {
+			if (!pl.item[n+inv_pos]) continue;
+			copyspritex(pl.item[n+inv_pos],HB_X+2+(n%HB_COLS)*HB_SLOT,HB_Y+2+(n/HB_COLS)*HB_SLOT,
+				(hightlight==HL_BACKPACK && hightlight_sub==n+(signed)inv_pos) ? 16 : 0);
+		}
+		hud_scroll(HB_X+HB_COLS*HB_SLOT+1,HB_Y,HB_H,inv_pos,HB_MAXPOS);
+
+		// --- gold buttons, equipment, character panel: from the old HUD
+		dd_hud_from_legacy(HG_LX,HG_LY,HG_LW,HG_LH,HG_X,HG_Y);
+		dd_hud_from_legacy(HE_LX,HE_LY,HE_LW,HE_LH,HE_X,HE_Y);
+		dd_hud_from_legacy(HL_LX,HL_LY,HL_LW,HL_LH,HL_X,HL_Y);
+
+		// --- weapon / armor / experience / server load
+		rows=load ? 4 : 3;
+		dd_hud_panel(HQ_X,HQ_Y,HQ_W,rows*HUD_ROW+2);
+		dd_hud_vline(HQ_X+110,HQ_Y,rows*HUD_ROW+2);
+		hud_rows(HQ_X,HQ_Y,rows,HQ_W);
+		dd_puttext(HQ_X+6,HQ_Y+3,1,"Weapon value"); rtext(HQ_X+HQ_W-6,HQ_Y+3,1,"%d",pl.weapon);
+		dd_puttext(HQ_X+6,HQ_Y+HUD_ROW+3,1,"Armor value"); rtext(HQ_X+HQ_W-6,HQ_Y+HUD_ROW+3,1,"%d",pl.armor);
+		dd_puttext(HQ_X+6,HQ_Y+2*HUD_ROW+3,1,"Experience"); rtext(HQ_X+HQ_W-6,HQ_Y+2*HUD_ROW+3,1,"%d",pl.points_tot);
+		if (load) { dd_puttext(HQ_X+6,HQ_Y+3*HUD_ROW+3,1,"Server Load"); rtext(HQ_X+HQ_W-6,HQ_Y+3*HUD_ROW+3,1,"%d%%",load); }
+
+		// --- skill buttons and mode buttons
+		{
+			static const char *modes[12]={"Fast","Normal","Slow","Health","","Hide","Names","","","","","Exit"};
+			int box,y0;
+			for (box=0; box<2; box++) {
+				y0=box ? HK_Y2 : HK_Y1;
+				dd_hud_panel(HK_X,y0,HK_W,HK_BH);
+				for (c=1; c<4; c++) dd_hud_vline(HK_X+c*HK_BW,y0,HK_BH);
+				for (r=1; r<3; r++) dd_hud_hline(HK_X,y0+1+r*15,HK_W);
+				for (n=0; n<12; n++) {
+					c=n%4; r=n/4;
+					if (box==0) button_label(n,buf);
+					else strcpy(buf,modes[n]);
+					if (buf[0]) ctext(HK_X+c*HK_BW,HK_BW,y0+2+r*15+3,1,buf);
+				}
+			}
+			// active modes: red frames
+			#define MODEBOX(c,r) dd_showbox(HK_X+(c)*HK_BW+3,HK_Y2+2+(r)*15+1,HK_BW-6,12,(unsigned short)RED)
+			if (pl.mode==2) MODEBOX(0,0);
+			else if (pl.mode==1) MODEBOX(1,0);
+			else if (pl.mode==0) MODEBOX(2,0);
+			if (pdata.show_proz) MODEBOX(3,0);
+			if (pdata.hide) MODEBOX(1,1);
+			if (pdata.show_names) MODEBOX(2,1);
+		}
+
+		// --- minimap
+		dd_hud_panel(HM_X,HM_Y,HM_SIZE,HM_SIZE);
+		dd_hud_fill(HM_X+3,HM_Y+3,HM_SIZE-6,HM_SIZE-6,0);
+		if (mapmem) {
+			int mx0=map_x-HM_TILES/2,my0=map_y-HM_TILES/2;
+			if (mx0<0) mx0=0;
+			if (mx0>1024-HM_TILES) mx0=1024-HM_TILES;
+			if (my0<0) my0=0;
+			if (my0>1024-HM_TILES) my0=1024-HM_TILES;
+			dd_hud_minimap(mapmem,my0,mx0,HM_X+3,HM_Y+3,HM_TILES,HM_ZOOM);
+		}
+
+		// --- shop window (centered)
+		if (show_shop) dd_hud_from_legacy(HSH_LX,HSH_LY,HSH_LW,HSH_LH,HSH_X,HSH_Y);
+	}
+
+	// --- chat
+	dd_hud_panel(HCH_X,HCH_Y,HCH_W,HCH_H);
+	for (y=0; y<LL; y++)
+		dd_puttext(HCH_X+6,HCH_Y+4+y*10,logfont[LL-y-1+logstart],logtext[LL-y-1+logstart]);
+	dd_hud_hline(HCH_X,HCH_Y+HCH_H-18,HCH_W);
+	{
+		int vis=HCH_COLS-2;
+		input[in_len]=0;
+		if (cur_pos-view_pos>vis-3) view_pos=cur_pos-(vis-3);
+		if (cur_pos-5<view_pos) view_pos=max(0,cur_pos-5);
+		memcpy(buf,input+view_pos,vis);
+		buf[vis]=0;
+		dd_puttext(HCH_X+6,HCH_Y+HCH_H-13,1,buf);
+		dd_putc(HCH_X+6+6*(cur_pos-view_pos),HCH_Y+HCH_H-13,1,127);
+	}
+
+	// --- compass (click its arms to auto-walk)
+	dd_hud_from_legacy(HCP_LX,HCP_LY,HCP_LW,HCP_LH,HCP_X,HCP_Y);
+
+	// --- item on the mouse cursor
+	if (init && pl.citem) {
+		if (cursor_type==CT_DROP || cursor_type==CT_SWAP || cursor_type==CT_USE)
+			copyspritex(pl.citem,mouse_cx-16,mouse_cy-16,16);
+		else
+			copyspritex(pl.citem,mouse_cx-16,mouse_cy-16,0);
+	}
+
+	dd_target(0);
 }
 
 void eng_display_win(int plr_sprite,int init)
@@ -383,11 +635,7 @@ void eng_display_win(int plr_sprite,int init)
 		// down one row, then repeat the Experience row's background (y 267-280,
 		// divider line + background) in its old place. Done before any text
 		// is drawn so only the background gets copied.
-		if (load) {
-			dd_copy_rows(640,MODEX,281,295,2);
-			dd_copy_rows(640,MODEX,267,281,14);
-			dd_xputtext(646,285,1,"Server Load    %9d%%",load);
-		}
+		// (weapon/armor/exp/load are drawn by hud_draw_v2 now)
 
 		dd_xputtext(646,243,1,"Weapon value   %10d",pl.weapon);
 		dd_xputtext(646,257,1,"Armor value    %10d",pl.armor);
@@ -438,18 +686,7 @@ void eng_display_win(int plr_sprite,int init)
 	if (logtimer) logtimer--;
 	else logstart=0;
 
-	for (y=0; y<LL; y++) {
-		dd_puttext(500,4+y*10,logfont[LL-y-1+logstart],logtext[LL-y-1+logstart]);
-	}
-
-	input[in_len]=0;
-	if (cur_pos-view_pos>45) view_pos=cur_pos-45;
-	if (cur_pos-5<view_pos)	view_pos=max(0,cur_pos-5);
-	memcpy(buf,input+view_pos,48);
-	buf[48]=0;
-
-	dd_puttext(500,9+10*LL,1,buf);
-	dd_putc(500+6*(cur_pos-view_pos),9+10*LL,1,127);
+	// (chat is drawn by hud_draw_v2 now)
 
 	if (init) {
 		if (show_shop) show_look=0;
@@ -701,6 +938,11 @@ void display_floortile(int tile,int light,int x,int y,int xoff,int yoff,int mx,i
     copysprite(tile,light,x,y,xoff,yoff);
 }
 
+static int minimap_x=512,minimap_y=512;
+int walkmark_x[4]={-1000,-1000,-1000,-1000},walkmark_y[4]={-1000,-1000,-1000,-1000};
+void mouse_rehover(void);
+void hud_draw_v2(int init,unsigned short *mapmem,int map_x,int map_y);
+
 void eng_display(int init)	// optimize me!!!!!
 {
 	int x,y,m,plr_sprite=0,tmp,mapx,mapy,selected_visible=0,alpha,alphastr;
@@ -716,8 +958,12 @@ void eng_display(int init)	// optimize me!!!!!
 	// check if we're visible. If not, just leave.
 	if (!dd_isvisible()) return;
 
-	mouse(mx,my,0);
+	mouse_rehover();
 	set_game_cursor(cursor[cursor_type]);
+
+	// BIGVIEW: world goes onto the big screen, over the blue background
+	dd_target(0);
+	dd_fill_background();
 
 	// *******
 	// * map *
@@ -731,9 +977,11 @@ void eng_display(int init)	// optimize me!!!!!
 
 		mapx=map[(TILEX/2)+(TILEY/2)*MAPX].x;
 		mapy=map[(TILEX/2)+(TILEY/2)*MAPX].y;
+		minimap_x=mapx; minimap_y=mapy;
 
 		for (y=TILEY-1; y>=0; y--) {
 			for (x=0; x<TILEX; x++) {
+				if (!IN_VIEW(x,y)) continue;	// never sent by the server
 				// background
 				m=x+y*MAPX;
 
@@ -758,6 +1006,7 @@ void eng_display(int init)	// optimize me!!!!!
 
 		for (y=TILEY-1; y>=0; y--) {
 			for (x=0; x<TILEX; x++) {
+				if (!IN_VIEW(x,y)) continue;
 
 				m=x+y*MAPX;
 
@@ -890,6 +1139,7 @@ void eng_display(int init)	// optimize me!!!!!
 	} else {
 		for (y=TILEY-1; y>=0; y--) {
 			for (x=0; x<TILEX; x++) {
+				if (!IN_VIEW(x,y)) continue;
 				// background
 				copysprite(SPR_EMPTY,0,x*32,y*32,-176,0);
 			}
@@ -898,7 +1148,32 @@ void eng_display(int init)	// optimize me!!!!!
 
 	if (!selected_visible) selected_char=0;
 
+	// fixed view edge, one tile inside the area the server sends (ground of
+	// tiles 2..41 spans x 0..1280, y 240..880 on the 1280x960 world screen)
+	if (init) dd_mask_view(640,560,640-32,320-16);
+
+	// auto-walk markers: just outside the middle of each edge of the view
+	if (init) {
+		int k,c=TILEX/2,a=(TILEX-34)/2*32,tx,ty;
+		for (k=0; k<4; k++) {
+			switch (k) {
+				case 0:  tx=(VIEW_CUT-1)*32+16;      ty=c*32+16; break;	// -x: N
+				case 1:  tx=c*32+16;                 ty=(VIEW_CUT-1)*32+16; break;	// -y: W
+				case 2:  tx=(TILEX-VIEW_CUT)*32+16;  ty=c*32+16; break;	// +x: S
+				default: tx=c*32+16;                 ty=(TILEY-VIEW_CUT)*32+16; break;	// +y: E
+			}
+			walkmark_x[k]=(tx+ty)/2-160+XPOS-a;
+			walkmark_y[k]=(tx-ty)/4-8+YPOS;
+			dd_draw_marker(walkmark_x[k],walkmark_y[k]);
+		}
+	}
+
+	// the original HUD code still draws on its own 800x600 surface: the
+	// equipment, character panel, gold buttons, shop and compass are taken
+	// from there by hud_draw_v2()
+	dd_hud_begin();
 	copyspritex(1,0,0,0);
+	dd_hud_snapshot();
 
 	if (init) {
 		xmap[mapy+mapx*1024]=0xffff;
@@ -916,16 +1191,9 @@ void eng_display(int init)	// optimize me!!!!!
 
 	eng_display_win(plr_sprite,init);
 
-	// ********************
-	// display cursors etc.
-	// ********************
-
-	if (init && pl.citem) {
-		if (cursor_type==CT_DROP || cursor_type==CT_SWAP || cursor_type==CT_USE)
-			copyspritex(pl.citem,mouse_x-16,mouse_y-16,16);
-		else
-			copyspritex(pl.citem,mouse_x-16,mouse_y-16,0);
-	}
+	// v2 HUD on its own canvas (scaled and laid over the world when presenting)
+	if (hud_cw) hud_draw_v2(init,init ? xmap : NULL,minimap_x,minimap_y);
+	dd_target(0);
 }
 
 // DISPLAY: TEXT OUTPUT
@@ -936,7 +1204,7 @@ void tlog(char *text,char font)
 	static int flag=0;
 
 	if (!flag) {
-		for (n=0; n<XLL*60; n++) {
+		for (n=0; n<XLL*LW; n++) {
 			logtext[0][n]=0;
 		}
 		for (n=0; n<XLL; n++) {
@@ -949,11 +1217,11 @@ void tlog(char *text,char font)
 
 	while (panic++<XLL) {
 		do_msg();
-		memmove(logtext[1],logtext[0],XLL*60-60);
+		memmove(logtext[1],logtext[0],XLL*LW-LW);
 		memmove(&logfont[1],&logfont[0],XLL-1);
-		memcpy(logtext[0],text,min(60-1,strlen(text)+1));
+		memcpy(logtext[0],text,min(LW-1,strlen(text)+1));
 		logfont[0]=font;
-		logtext[0][60-1]=0;
+		logtext[0][LW-1]=0;
 		if (strlen(text)<XS-1) return;
 		for (n=XS-1; n>0; n--) if (logtext[0][n]==' ') break;
 		if (n!=0) {
@@ -1822,10 +2090,10 @@ void engine(void)
 
 		if (xmove && xtimer<1) {
 			switch (xmove) {
-				case  1:     cmds(CL_CMD_MOVE,map[10+TILEX*17].x,map[10+TILEX*17].y); break;
-				case  3:     cmds(CL_CMD_MOVE,map[24+TILEX*17].x,map[24+TILEX*17].y); break;
-				case  2:     cmds(CL_CMD_MOVE,map[17+TILEX*10].x,map[17+TILEX*10].y); break;
-				case  4:     cmds(CL_CMD_MOVE,map[17+TILEX*24].x,map[17+TILEX*24].y); break;
+				case  1:     cmds(CL_CMD_MOVE,map[(TILEX/2-7)+TILEX*(TILEY/2)].x,map[(TILEX/2-7)+TILEX*(TILEY/2)].y); break;
+				case  3:     cmds(CL_CMD_MOVE,map[(TILEX/2+7)+TILEX*(TILEY/2)].x,map[(TILEX/2+7)+TILEX*(TILEY/2)].y); break;
+				case  2:     cmds(CL_CMD_MOVE,map[(TILEX/2)+TILEX*(TILEY/2-7)].x,map[(TILEX/2)+TILEX*(TILEY/2-7)].y); break;
+				case  4:     cmds(CL_CMD_MOVE,map[(TILEX/2)+TILEX*(TILEY/2+7)].x,map[(TILEX/2)+TILEX*(TILEY/2+7)].y); break;
 			}
 			xtimer=4;
 		}

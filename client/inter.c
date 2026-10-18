@@ -1,6 +1,7 @@
 #include <windows.h>
 #include "common.h"
 #include "inter.h"
+#include "hud.h"
 
 extern int init_done;
 extern unsigned int inv_pos,skill_pos;
@@ -852,24 +853,26 @@ void mouse_mapbox(int x,int y,int state)
 	mx=2*y+x-(YPOS*2)-XPOS+((TILEX-34)/2*32);
 	my=x-2*y+(YPOS*2)-XPOS+((TILEX-34)/2*32);;
 
-        if (mx<3*32+12 || mx>(TILEX-7)*32+20 || my<7*32+12 || my>(TILEY-3)*32+20) {
-		if (state==MS_LB_UP) {
-			mx/=32; my/=32;
-		  
-			if (my==17 && (mx==2 || mx==3)) xmove=1;
-			if (mx==17 && (my==6 || my==7)) xmove=2;
-			if (my==17 && (mx==27 || mx==28)) xmove=3;
-			if (mx==17 && (my==31 || my==32)) xmove=4;
+	// auto-walk markers (x,y here are world coordinates, before the shift above)
+	{
+		int k,wx=x-(176-16),wy=y-8;
+		for (k=0; k<4; k++) {
+			if (abs(wx-walkmark_x[k])<16 && abs(wy-walkmark_y[k])<9) {
+				if (state==MS_LB_UP) xmove=k+1;	// 1=N 2=W 3=S 4=E, as before
+				return;
+			}
 		}
-		return;
 	}
+
+	// the whole view is clickable
+        if (mx<2*32 || mx>=(TILEX-2)*32 || my<2*32 || my>=(TILEY-2)*32) return;
 
 	mx=mx/32;
 	my=my/32;
 
         tile_x=-1; tile_y=-1; tile_type=-1;
-	if (mx<3 || mx>TILEX-7) return;
-	if (my<7 || my>TILEY-3) return;
+	if (mx<2 || mx>TILEX-3) return;
+	if (my<2 || my>TILEY-3) return;
 
 	m=mx+my*TILEX;
 
@@ -1061,18 +1064,175 @@ int mouse_shop(int x,int y,int mode)
 }
 
 
-void mouse(int x,int y,int state)
+/* ===================================================================
+   v2 HUD mouse handling (canvas coordinates, layout from hud.h).
+   Where a panel works like the old one, the position is translated to the
+   old 800x600 coordinates and the original handler does the work.
+   =================================================================== */
+
+int mouse_cx=0,mouse_cy=0;	// mouse on the HUD canvas
+
+static void hud_button(int nr,int state)
+{
+	hightlight=HL_BUTTONBOX;
+	hightlight_sub=nr;
+	cursor_type=CT_NONE;
+	if (state==MS_LB_UP) button_command(nr);
+	if (state==MS_RB_UP) button_help(nr);
+}
+
+static void hud_backpack(int nr,int mode)
+{
+	int keys=0;
+
+	if (GetAsyncKeyState(VK_SHIFT)&0x8000) keys|=1;
+	if (GetAsyncKeyState(VK_CONTROL)&0x8000) keys|=2;
+
+	nr+=inv_pos;
+	if (keys==1) {
+		if (mode==MS_LB_UP) cmd3(CL_CMD_INV,0,nr,selected_char);
+		else if (mode==MS_RB_UP) cmd3(CL_CMD_INV_LOOK,nr,0,selected_char);
+		if (pl.item[nr]) cursor_type=pl.citem ? CT_SWAP : CT_TAKE;
+		else cursor_type=pl.citem ? CT_DROP : CT_NONE;
+	} else if (keys==0) {
+		if (mode==MS_LB_UP) cmd3(CL_CMD_INV,6,nr,selected_char);
+		else if (mode==MS_RB_UP) cmd3(CL_CMD_INV_LOOK,nr,0,selected_char);
+		cursor_type=pl.item[nr] ? CT_USE : CT_NONE;
+	} else cursor_type=CT_NONE;
+	hightlight=HL_BACKPACK;
+	hightlight_sub=nr;
+}
+
+// returns 1 if (x,y) is on a panel (even if nothing happens there)
+int hud_mouse(int x,int y,int state)
+{
+	int n,c,r,lrow;
+
+	// shop window (on top of everything)
+	if (show_shop && in_rect(x,y,HSH_X,HSH_Y,HSH_LW,HSH_LH)) {
+		mouse_shop(x-HSH_X+HSH_LX,y-HSH_Y+HSH_LY,state);
+		return 1;
+	}
+
+	// gold buttons, equipment, character panel: old handlers
+	if (in_rect(x,y,HG_X,HG_Y,HG_LW,HG_LH)) { mouse_inventory(x-HG_X+HG_LX,y-HG_Y+HG_LY,state); return 1; }
+	if (in_rect(x,y,HE_X,HE_Y,HE_LW,HE_LH)) { mouse_inventory(x-HE_X+HE_LX,y-HE_Y+HE_LY,state); return 1; }
+	if (in_rect(x,y,HL_X,HL_Y,HL_LW,HL_LH)) { mouse_inventory(x-HL_X+HL_LX,y-HL_Y+HL_LY,state); return 1; }
+
+	// backpack 4x5 + scroll column
+	if (in_rect(x,y,HB_X,HB_Y,HB_W,HB_H)) {
+		if (x>=HB_X+HB_COLS*HB_SLOT) {
+			if (state==MS_LB_UP) {
+				if (y<HB_Y+HB_H/2) inv_pos=(inv_pos>=HB_COLS) ? inv_pos-HB_COLS : 0;
+				else inv_pos=(inv_pos+HB_COLS<=HB_MAXPOS) ? inv_pos+HB_COLS : HB_MAXPOS;
+			}
+			return 1;
+		}
+		c=(x-HB_X-1)/HB_SLOT; r=(y-HB_Y-1)/HB_SLOT;
+		if (c<0) c=0;
+		if (c>=HB_COLS) c=HB_COLS-1;
+		if (r<0) r=0;
+		if (r>=HB_ROWS) r=HB_ROWS-1;
+		hud_backpack(c+r*HB_COLS,state);
+		return 1;
+	}
+
+	// stats: attributes/hp/end/mana (rows 0-7) and skills (rows 8-17)
+	lrow=-1;
+	if (in_rect(x,y,HS_X,HS_Y,HC_END,HS_H1)) lrow=(y-HS_Y)/HUD_ROW;
+	else if (in_rect(x,y,HS_X,HS_Y2,HC_END+HC_SCR,HS_H2)) {
+		if (x>=HS_X+HC_END-2) {		// skill scroll column
+			if (y<HS_Y2+HS_H2/2) hud_button(14,state);
+			else hud_button(15,state);
+			return 1;
+		}
+		n=(y-HS_Y2)/HUD_ROW;
+		if (n>9) n=9;
+		if (x<HS_X+HC_BASE-2) {		// skill name: right click = description/assign, left click = use
+			mouse_statbox2(50,114+n*14+7,state);
+			return 1;
+		}
+		lrow=8+n;
+	}
+	if (lrow>=0) {
+		if (lrow>17) lrow=17;
+		if (x>=HS_X+HC_PLUS-2 && x<HS_X+HC_MINUS-2) mouse_statbox(139,2+lrow*14+7,state);		// raise
+		else if (x>=HS_X+HC_MINUS-2 && x<HS_X+HC_COST-2) mouse_statbox(151,2+lrow*14+7,state);	// lower
+		return 1;
+	}
+
+	// update
+	if (in_rect(x,y,HS_X+HC_TOT-2,HS_Y3,HC_END-HC_TOT+2,HS_H3)) { mouse_statbox(130,260,state); return 1; }
+	if (in_rect(x,y,HS_X,HS_Y4,HS_W4,HS_H4)) return 1;
+
+	// skill buttons / mode buttons
+	if (in_rect(x,y,HK_X,HK_Y1,HK_W,HK_BH) || in_rect(x,y,HK_X,HK_Y2,HK_W,HK_BH)) {
+		int y0=in_rect(x,y,HK_X,HK_Y1,HK_W,HK_BH) ? HK_Y1 : HK_Y2;
+		c=(x-HK_X)/HK_BW; r=(y-y0-2)/15;
+		if (c<0) c=0;
+		if (c>3) c=3;
+		if (r<0) r=0;
+		if (r>2) r=2;
+		if (y0==HK_Y1) hud_button(16+r*4+c,state);
+		else hud_button(r*4+c,state);
+		return 1;
+	}
+
+	// compass: click an arm to walk far in that direction
+	if (in_rect(x,y,HCP_X,HCP_Y,HCP_LW,HCP_LH)) {
+		if (state==MS_LB_UP) {
+			int left=(x<HCP_X+HCP_LW/2),top=(y<HCP_Y+HCP_LH/2);
+			if (left && top) xmove=1;		// N
+			else if (!left && top) xmove=4;		// E
+			else if (left) xmove=2;			// W
+			else xmove=3;				// S
+		}
+		return 1;
+	}
+
+	// chat, weapon/armor/exp, minimap: nothing to click
+	if (in_rect(x,y,HCH_X,HCH_Y,HCH_W,HCH_H)) return 1;
+	if (in_rect(x,y,HQ_X,HQ_Y,HQ_W,4*HUD_ROW+2)) return 1;
+	if (in_rect(x,y,HM_X,HM_Y,HM_SIZE,HM_SIZE)) return 1;
+
+	return 0;
+}
+
+// called by the window code: on_hud says whether the mouse is over a HUD
+// pixel; cx,cy = canvas position, gx,gy = world (1280x960) position
+void mouse2(int on_hud,int cx,int cy,int gx,int gy,int state)
 {
 	if (!init_done) return;
 
 	hightlight=0;
 	cursor_type=CT_NONE;
 
-	mouse_x=x; mouse_y=y;
-	if (mouse_inventory(x,y,state)) ;
-	else if (mouse_shop(x,y,state)) ;
-	else if (mouse_buttonbox(x,y,state)) ;
-	else if (mouse_statbox(x,y,state)) ;
-	else if (mouse_statbox2(x,y,state)) ;
-	else mouse_mapbox(x,y,state);
+	mouse_cx=cx; mouse_cy=cy;
+	mouse_x=gx; mouse_y=gy;
+
+	if (on_hud && hud_mouse(cx,cy,state)) return;
+	mouse_mapbox(gx,gy,state);
+}
+
+// mouse wheel over the HUD: lines>0 = wheel up
+void hud_wheel(int x,int y,int lines)
+{
+	extern int logstart,logtimer;
+
+	if (in_rect(x,y,HCH_X,HCH_Y,HCH_W,HCH_H)) {
+		logstart+=lines*3;
+		if (logstart>HCH_LINES*10-HCH_LINES) logstart=HCH_LINES*10-HCH_LINES;
+		if (logstart<0) logstart=0;
+		logtimer=TICKS*30;
+	} else if (in_rect(x,y,HS_X,HS_Y2,HC_END+HC_SCR,HS_H2)) {
+		int pos=(int)skill_pos-lines*2;
+		if (pos<0) pos=0;
+		if (pos>40) pos=40;
+		skill_pos=pos;
+	} else if (in_rect(x,y,HB_X,HB_Y,HB_W,HB_H)) {
+		int pos=(int)inv_pos-lines*HB_COLS;
+		if (pos<0) pos=0;
+		if (pos>HB_MAXPOS) pos=HB_MAXPOS;
+		inv_pos=pos;
+	}
 }

@@ -11,8 +11,8 @@
 //#define DOCONVERT	// enable sprite packer
 
 
-#define TILEX			34
-#define TILEY			34
+#define TILEX			44	// was 34; must match the server
+#define TILEY			44
 
 #define TICKS			18
 

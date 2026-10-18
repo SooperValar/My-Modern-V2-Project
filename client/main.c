@@ -13,6 +13,7 @@
 #include "dd.h"
 #include "common.h"
 #include "inter.h"
+#include "hud.h"
 
 extern int RED,GREEN,BLUE,RGBM,MAXXOVER;
 extern char *DDERR;
@@ -208,37 +209,161 @@ extern int alphapix,fullpix;
 // ---------------------------------------------------------------------------
 
 int fullscreen=0;
-static RECT dst_rect={0,0,MODEX,MODEY};	// where the game image is drawn in the client area
+static RECT dst_rect={0,0,SCREEN_W,SCREEN_H};	// where the game image is drawn in the client area
 static WINDOWPLACEMENT win_place={sizeof(WINDOWPLACEMENT)};
 static int win_shown=0;
 static int smooth_scale=1;
 
+int dd_hud_canvas(int w,int h);
+unsigned short *dd_hud_canvas_bits(int *w,int *h,int *pitch);
+void mouse2(int on_hud,int cx,int cy,int gx,int gy,int state);
+void hud_wheel(int x,int y,int lines);
+
+static int client_w=0,client_h=0;
+
+// world zoom: show a centered part of the 1280x960 world, scaled up.
+// client.ini [display] zoom=115 means 115%.
+static int world_zoom=115;
+static int crop_x=0,crop_y=0,crop_w=SCREEN_W,crop_h=SCREEN_H;
+
+static void calc_crop(void)
+{
+	int cy;
+
+	if (world_zoom<100) world_zoom=100;
+	if (world_zoom>200) world_zoom=200;
+	crop_w=SCREEN_W*100/world_zoom;
+	crop_h=SCREEN_H*100/world_zoom;
+	crop_x=(SCREEN_W-crop_w)/2;
+	cy=460;				// shows the world lower in the window (the top HUD is taller)
+	crop_y=cy-crop_h/2;
+	if (crop_y<0) crop_y=0;
+	if (crop_y+crop_h>SCREEN_H) crop_y=SCREEN_H-crop_h;
+}
+
 static void calc_dst_rect(void)
 {
 	RECT cr;
-	int cw,ch,dw,dh,scale;
+	int cw,ch,dw,dh;
 
 	GetClientRect(desk_hwnd,&cr);
 	cw=cr.right-cr.left;
 	ch=cr.bottom-cr.top;
-	if (cw<1 || ch<1) { SetRect(&dst_rect,0,0,MODEX,MODEY); return; }
+	if (cw<1 || ch<1) { SetRect(&dst_rect,0,0,SCREEN_W,SCREEN_H); return; }
+	client_w=cw; client_h=ch;
 
-	// keep the 4:3 aspect ratio, prefer pixel-exact integer scaling
-	scale=min(cw/MODEX,ch/MODEY);
-	if (scale>=1 && (cw-scale*MODEX<MODEX/4 || ch-scale*MODEY<MODEY/4)) {
-		dw=scale*MODEX;
-		dh=scale*MODEY;
-	} else if (cw*MODEY>ch*MODEX) {
+	calc_crop();
+
+	// world: as large as possible, 4:3
+	if (cw*SCREEN_H>ch*SCREEN_W) {
 		dh=ch;
-		dw=ch*MODEX/MODEY;
+		dw=ch*SCREEN_W/SCREEN_H;
 	} else {
 		dw=cw;
-		dh=cw*MODEY/MODEX;
+		dh=cw*SCREEN_H/SCREEN_W;
 	}
 	dst_rect.left=(cw-dw)/2;
 	dst_rect.top=(ch-dh)/2;
 	dst_rect.right=dst_rect.left+dw;
 	dst_rect.bottom=dst_rect.top+dh;
+
+	// HUD canvas covers the whole window at 1/1.5 size
+	dd_hud_canvas((cw*100+HUD_SCALE_X100-1)/HUD_SCALE_X100,(ch*100+HUD_SCALE_X100-1)/HUD_SCALE_X100);
+}
+
+// back buffer the frame is assembled in (32 bit, window size)
+static HDC bb_dc=NULL;
+static HBITMAP bb_bmp=NULL,bb_old=NULL;
+static unsigned int *bb_bits=NULL;
+static int bb_w=0,bb_h=0;
+
+// per column/row: first canvas pixel and its weight (0..256) for the 1.5x filter
+static int *sx_i=NULL,*sx_w=NULL,*sy_i=NULL,*sy_w=NULL;
+
+static int backbuffer(HDC dc,int w,int h)
+{
+	BITMAPINFO bi;
+	int n;
+	double a,e,f;
+
+	if (bb_dc && bb_w==w && bb_h==h) return 1;
+
+	if (bb_dc) { SelectObject(bb_dc,bb_old); DeleteObject(bb_bmp); DeleteDC(bb_dc); bb_dc=NULL; }
+
+	memset(&bi,0,sizeof(bi));
+	bi.bmiHeader.biSize=sizeof(BITMAPINFOHEADER);
+	bi.bmiHeader.biWidth=w;
+	bi.bmiHeader.biHeight=-h;
+	bi.bmiHeader.biPlanes=1;
+	bi.bmiHeader.biBitCount=32;
+	bi.bmiHeader.biCompression=BI_RGB;
+
+	bb_dc=CreateCompatibleDC(dc);
+	if (!bb_dc) return 0;
+	bb_bmp=CreateDIBSection(dc,&bi,DIB_RGB_COLORS,(void**)&bb_bits,NULL,0);
+	if (!bb_bmp) { DeleteDC(bb_dc); bb_dc=NULL; return 0; }
+	bb_old=SelectObject(bb_dc,bb_bmp);
+	bb_w=w; bb_h=h;
+
+	// area filter tables: output pixel X covers canvas [X/s,(X+1)/s), s=1.5
+	free(sx_i); free(sx_w); free(sy_i); free(sy_w);
+	sx_i=malloc(w*sizeof(int)); sx_w=malloc(w*sizeof(int));
+	sy_i=malloc(h*sizeof(int)); sy_w=malloc(h*sizeof(int));
+	f=100.0/HUD_SCALE_X100;
+	for (n=0; n<w; n++) {
+		a=n*f; e=(n+1)*f;
+		sx_i[n]=(int)a;
+		sx_w[n]=(e<=sx_i[n]+1) ? 256 : (int)(256*((sx_i[n]+1)-a)/(e-a));
+	}
+	for (n=0; n<h; n++) {
+		a=n*f; e=(n+1)*f;
+		sy_i[n]=(int)a;
+		sy_w[n]=(e<=sy_i[n]+1) ? 256 : (int)(256*((sy_i[n]+1)-a)/(e-a));
+	}
+	return 1;
+}
+
+// lay the HUD canvas (565, color key = transparent) over the back buffer
+static void blend_hud(void)
+{
+	unsigned short *src,*r0,*r1,v;
+	int sw,sh,sp,X,Y,x0,x1,y1,wx,wy,w[4],k,a;
+	unsigned int *d,c,acc_r,acc_g,acc_b;
+	unsigned short smp[4];
+
+	src=dd_hud_canvas_bits(&sw,&sh,&sp);
+	if (!src || !sx_i) return;
+
+	for (Y=0; Y<bb_h; Y++) {
+		if (sy_i[Y]>=sh) break;
+		r0=src+sy_i[Y]*sp;
+		y1=sy_i[Y]+1; if (y1>=sh) y1=sh-1;
+		r1=src+y1*sp;
+		wy=sy_w[Y];
+		d=bb_bits+Y*bb_w;
+		for (X=0; X<bb_w; X++) {
+			x0=sx_i[X]; if (x0>=sw) break;
+			x1=x0+1; if (x1>=sw) x1=sw-1;
+			smp[0]=r0[x0]; smp[1]=r0[x1]; smp[2]=r1[x0]; smp[3]=r1[x1];
+			if (smp[0]==0xF81F && smp[1]==0xF81F && smp[2]==0xF81F && smp[3]==0xF81F) continue;
+			wx=sx_w[X];
+			w[0]=wx*wy; w[1]=(256-wx)*wy; w[2]=wx*(256-wy); w[3]=(256-wx)*(256-wy);
+			acc_r=acc_g=acc_b=0; a=0;
+			for (k=0; k<4; k++) {
+				if (!w[k] || (v=smp[k])==0xF81F) continue;
+				acc_r+=((v>>11)<<3)*w[k];
+				acc_g+=(((v>>5)&63)<<2)*w[k];
+				acc_b+=((v&31)<<3)*w[k];
+				a+=w[k];
+			}
+			if (!a) continue;
+			c=d[X];
+			acc_r+=((c>>16)&255)*(65536-a);
+			acc_g+=((c>>8)&255)*(65536-a);
+			acc_b+=(c&255)*(65536-a);
+			d[X]=((acc_r>>16)<<16)|((acc_g>>16)<<8)|(acc_b>>16);
+		}
+	}
 }
 
 void win_present(unsigned short *bits,int w,int h)
@@ -250,9 +375,15 @@ void win_present(unsigned short *bits,int w,int h)
 	HDC dc;
 	RECT cr;
 	int dw,dh;
-	HBRUSH black;
 
 	if (!desk_hwnd || !win_shown) return;
+
+	GetClientRect(desk_hwnd,&cr);
+	if (cr.right<1 || cr.bottom<1) return;
+
+	dc=GetDC(desk_hwnd);
+	if (!dc) return;
+	if (!backbuffer(dc,cr.right,cr.bottom)) { ReleaseDC(desk_hwnd,dc); return; }
 
 	memset(&bmi,0,sizeof(bmi));
 	bmi.h.biSize=sizeof(BITMAPINFOHEADER);
@@ -265,31 +396,27 @@ void win_present(unsigned short *bits,int w,int h)
 	bmi.masks[1]=0x07E0;
 	bmi.masks[2]=0x001F;
 
-	dc=GetDC(desk_hwnd);
-	if (!dc) return;
-
 	dw=dst_rect.right-dst_rect.left;
 	dh=dst_rect.bottom-dst_rect.top;
 
-	// black borders around the image
-	GetClientRect(desk_hwnd,&cr);
-	black=GetStockObject(BLACK_BRUSH);
-	if (dst_rect.left>0) { RECT r={0,0,dst_rect.left,cr.bottom}; FillRect(dc,&r,black); }
-	if (dst_rect.right<cr.right) { RECT r={dst_rect.right,0,cr.right,cr.bottom}; FillRect(dc,&r,black); }
-	if (dst_rect.top>0) { RECT r={dst_rect.left,0,dst_rect.right,dst_rect.top}; FillRect(dc,&r,black); }
-	if (dst_rect.bottom<cr.bottom) { RECT r={dst_rect.left,dst_rect.bottom,dst_rect.right,cr.bottom}; FillRect(dc,&r,black); }
+	// world
+	PatBlt(bb_dc,0,0,bb_w,bb_h,BLACKNESS);
+	if (smooth_scale && (dw%crop_w || dh%crop_h)) {
+		SetStretchBltMode(bb_dc,HALFTONE);
+		SetBrushOrgEx(bb_dc,0,0,NULL);
+	} else SetStretchBltMode(bb_dc,COLORONCOLOR);
+	bmi.h.biHeight=-crop_h;		// rows from crop_y on; row stride stays w
+	StretchDIBits(bb_dc,dst_rect.left,dst_rect.top,dw,dh,crop_x,0,crop_w,crop_h,bits+crop_y*w,(BITMAPINFO*)&bmi,DIB_RGB_COLORS,SRCCOPY);
+	GdiFlush();
 
-	if (smooth_scale && (dw%w || dh%h)) {
-		SetStretchBltMode(dc,HALFTONE);
-		SetBrushOrgEx(dc,0,0,NULL);
-	} else SetStretchBltMode(dc,COLORONCOLOR);
+	// HUD on top
+	blend_hud();
 
-	StretchDIBits(dc,dst_rect.left,dst_rect.top,dw,dh,0,0,w,h,bits,(BITMAPINFO*)&bmi,DIB_RGB_COLORS,SRCCOPY);
-
+	BitBlt(dc,0,0,bb_w,bb_h,bb_dc,0,0,SRCCOPY);
 	ReleaseDC(desk_hwnd,dc);
 }
 
-// translate window client coordinates into 800x600 game coordinates
+// translate window client coordinates into world (1280x960) coordinates
 static void map_mouse(LPARAM lParam,int *x,int *y)
 {
 	int cx=GET_X_LPARAM(lParam),cy=GET_Y_LPARAM(lParam);
@@ -297,13 +424,49 @@ static void map_mouse(LPARAM lParam,int *x,int *y)
 
 	if (dw<1 || dh<1) { *x=cx; *y=cy; return; }
 
-	*x=(cx-dst_rect.left)*MODEX/dw;
-	*y=(cy-dst_rect.top)*MODEY/dh;
+	*x=crop_x+(cx-dst_rect.left)*crop_w/dw;
+	*y=crop_y+(cy-dst_rect.top)*crop_h/dh;
 
 	if (*x<0) *x=0;
-	if (*x>MODEX-1) *x=MODEX-1;
+	if (*x>SCREEN_W-1) *x=SCREEN_W-1;
 	if (*y<0) *y=0;
-	if (*y>MODEY-1) *y=MODEY-1;
+	if (*y>SCREEN_H-1) *y=SCREEN_H-1;
+}
+
+// is there HUD under this window position? (canvas coordinates returned)
+static int hud_at(int wx,int wy,int *cx,int *cy)
+{
+	unsigned short *src;
+	int sw,sh,sp;
+
+	*cx=wx*100/HUD_SCALE_X100;
+	*cy=wy*100/HUD_SCALE_X100;
+	src=dd_hud_canvas_bits(&sw,&sh,&sp);
+	if (!src || *cx<0 || *cy<0 || *cx>=sw || *cy>=sh) return 0;
+	return src[*cx+*cy*sp]!=0xF81F;
+}
+
+static int last_wx=-1,last_wy=-1;
+
+static void on_mouse(LPARAM lParam,int state)
+{
+	int cx,cy,on;
+
+	last_wx=GET_X_LPARAM(lParam);
+	last_wy=GET_Y_LPARAM(lParam);
+	map_mouse(lParam,&mx,&my);
+	on=hud_at(last_wx,last_wy,&cx,&cy);
+	mouse2(on,cx,cy,mx,my,state);
+}
+
+// re-evaluate the hover state every frame (the HUD changes under the mouse)
+void mouse_rehover(void)
+{
+	int cx,cy,on;
+
+	if (last_wx<0) return;
+	on=hud_at(last_wx,last_wy,&cx,&cy);
+	mouse2(on,cx,cy,mx,my,0);
 }
 
 static void set_fullscreen(int on)
@@ -342,12 +505,28 @@ static void load_display_settings(void)
 	if (fullscreen==-1) fullscreen=0;	// -w on command line
 	else if (!fullscreen) fullscreen=GetPrivateProfileInt("display","fullscreen",0,ini_file);
 	smooth_scale=GetPrivateProfileInt("display","smooth",1,ini_file);
+	world_zoom=GetPrivateProfileInt("display","zoom",115,ini_file);
 }
 
 static void save_display_settings(void)
 {
+	WINDOWPLACEMENT wp={sizeof(wp)};
+	char buf[32];
+
+	// window position: from before fullscreen if we are fullscreen now
+	if (fullscreen) wp=win_place;
+	else GetWindowPlacement(desk_hwnd,&wp);
+	if (win_shown && wp.rcNormalPosition.right>wp.rcNormalPosition.left) {
+		sprintf(buf,"%ld",wp.rcNormalPosition.left); WritePrivateProfileString("window_v2","left",buf,ini_file);
+		sprintf(buf,"%ld",wp.rcNormalPosition.top); WritePrivateProfileString("window_v2","top",buf,ini_file);
+		sprintf(buf,"%ld",wp.rcNormalPosition.right); WritePrivateProfileString("window_v2","right",buf,ini_file);
+		sprintf(buf,"%ld",wp.rcNormalPosition.bottom); WritePrivateProfileString("window_v2","bottom",buf,ini_file);
+		WritePrivateProfileString("window_v2","maximized",wp.showCmd==SW_SHOWMAXIMIZED ? "1" : "0",ini_file);
+	}
+
 	WritePrivateProfileString("display","fullscreen",fullscreen ? "1" : "0",ini_file);
 	WritePrivateProfileString("display","smooth",smooth_scale ? "1" : "0",ini_file);
+	sprintf(buf,"%d",world_zoom); WritePrivateProfileString("display","zoom",buf,ini_file);
 }
 
 // called by dd_init(): size and show the game window
@@ -358,13 +537,18 @@ int win_show(void)
 
 	SystemParametersInfo(SPI_GETWORKAREA,0,&wa,0);
 
-	// largest integer scale that fits on the desktop
-	for (scale=4; scale>1; scale--) {
-		SetRect(&r,0,0,MODEX*scale,MODEY*scale);
-		AdjustWindowRect(&r,WS_OVERLAPPEDWINDOW,FALSE);
-		if (r.right-r.left<=wa.right-wa.left && r.bottom-r.top<=wa.bottom-wa.top) break;
+	// as large as fits on the desktop (4:3), a little margin around it
+	{
+		RECT fr={0,0,400,300};
+		int fw,fh,ch,cw;
+		AdjustWindowRect(&fr,WS_OVERLAPPEDWINDOW,FALSE);
+		fw=(fr.right-fr.left)-400; fh=(fr.bottom-fr.top)-300;
+		ch=((wa.bottom-wa.top)-fh)*96/100;
+		cw=ch*4/3;
+		if (cw>((wa.right-wa.left)-fw)*96/100) { cw=((wa.right-wa.left)-fw)*96/100; ch=cw*3/4; }
+		SetRect(&r,0,0,cw,ch);
 	}
-	SetRect(&r,0,0,MODEX*scale,MODEY*scale);
+	(void)scale;
 	AdjustWindowRect(&r,WS_OVERLAPPEDWINDOW,FALSE);
 
 	fullscreen=0;
@@ -372,6 +556,21 @@ int win_show(void)
 		     wa.left+((wa.right-wa.left)-(r.right-r.left))/2,
 		     wa.top+((wa.bottom-wa.top)-(r.bottom-r.top))/2,
 		     r.right-r.left,r.bottom-r.top,SWP_NOZORDER);
+	{	// QoL: restore the last window position and size
+		RECT sr;
+		int max;
+		sr.left=GetPrivateProfileInt("window_v2","left",-32000,ini_file);
+		sr.top=GetPrivateProfileInt("window_v2","top",-32000,ini_file);
+		sr.right=GetPrivateProfileInt("window_v2","right",-32000,ini_file);
+		sr.bottom=GetPrivateProfileInt("window_v2","bottom",-32000,ini_file);
+		max=GetPrivateProfileInt("window_v2","maximized",0,ini_file);
+		if (sr.left!=-32000 && sr.right-sr.left>=200 && sr.bottom-sr.top>=150 && MonitorFromRect(&sr,MONITOR_DEFAULTTONULL)) {
+			WINDOWPLACEMENT wp={sizeof(wp)};
+			wp.showCmd=max ? SW_SHOWMAXIMIZED : SW_SHOWNORMAL;
+			wp.rcNormalPosition=sr;
+			SetWindowPlacement(desk_hwnd,&wp);
+		}
+	}
 	ShowWindow(desk_hwnd,SW_SHOW);
 	win_shown=1;
 	calc_dst_rect();
@@ -610,7 +809,7 @@ LRESULT CALLBACK MainWndProc(HWND hWnd, UINT message,WPARAM wParam, LPARAM lPara
 
 		case WM_GETMINMAXINFO:
 			{
-				RECT r={0,0,MODEX/2,MODEY/2};
+				RECT r={0,0,LEGACY_W/2,LEGACY_H/2};
 				AdjustWindowRect(&r,WS_OVERLAPPEDWINDOW,FALSE);
 				((MINMAXINFO*)lParam)->ptMinTrackSize.x=r.right-r.left;
 				((MINMAXINFO*)lParam)->ptMinTrackSize.y=r.bottom-r.top;
@@ -631,25 +830,23 @@ LRESULT CALLBACK MainWndProc(HWND hWnd, UINT message,WPARAM wParam, LPARAM lPara
 			break;
 
 		case WM_DESTROY:
+			save_display_settings();
 			quit=1;
 			PostQuitMessage(0);
 			break;
 
 		case WM_MOUSEMOVE:
-			map_mouse(lParam,&mx,&my);
-			mouse(mx,my,MS_MOVE);
+			on_mouse(lParam,MS_MOVE);
 			break;
 
 		case WM_LBUTTONDOWN:
 			SetCapture(hWnd);
-			map_mouse(lParam,&mx,&my);
-			mouse(mx,my,MS_LB_DOWN);
+			on_mouse(lParam,MS_LB_DOWN);
 			break;
 
 		case WM_LBUTTONUP:
 			ReleaseCapture();
-			map_mouse(lParam,&mx,&my);
-			mouse(mx,my,MS_LB_UP);
+			on_mouse(lParam,MS_LB_UP);
 			break;
 
 		case WM_MOUSEWHEEL:	// QoL: mouse wheel scrolls the chat while hovering over it
@@ -662,40 +859,22 @@ LRESULT CALLBACK MainWndProc(HWND hWnd, UINT message,WPARAM wParam, LPARAM lPara
 				pt.x=GET_X_LPARAM(lParam);
 				pt.y=GET_Y_LPARAM(lParam);
 				ScreenToClient(hWnd,&pt);
-				map_mouse(MAKELPARAM(pt.x,pt.y),&gx,&gy);
 
 				wheel_acc+=GET_WHEEL_DELTA_WPARAM(wParam);
 				lines=wheel_acc/WHEEL_DELTA;	// notches, + = wheel up
 				wheel_acc%=WHEEL_DELTA;		// keep remainder (smooth-scrolling wheels/touchpads)
 				if (!lines) break;
 
-				if (gx>=CHAT_X1 && gy<=CHAT_Y2) {		// chat
-					logstart+=lines*CHAT_WHEEL_LINES;
-					if (logstart>CHAT_MAXSCROLL) logstart=CHAT_MAXSCROLL;
-					if (logstart<0) logstart=0;
-					logtimer=TICKS*30;	// return to the newest lines after 30s, like PgUp/PgDn
-				} else if (gx<SKILL_X2 && gy>=SKILL_Y1 && gy<=SKILL_Y2) {	// skill list
-					int pos=(int)skill_pos-lines*2;		// 2 entries per notch, like the arrows
-					if (pos<0) pos=0;
-					if (pos>40) pos=40;
-					skill_pos=pos;
-				} else if (gx>=INV_X1 && gx<INV_X2 && gy<=INV_Y2) {	// backpack
-					int pos=(int)inv_pos-lines*2;		// one row per notch, like the arrows
-					if (pos<0) pos=0;
-					if (pos>30) pos=30;
-					inv_pos=pos;
-				}
+				if (hud_at(pt.x,pt.y,&gx,&gy)) hud_wheel(gx,gy,lines);
 			}
 			break;
 
 		case WM_RBUTTONDOWN:
-			map_mouse(lParam,&mx,&my);
-			mouse(mx,my,MS_RB_DOWN);
+			on_mouse(lParam,MS_RB_DOWN);
 			break;
 
 		case WM_RBUTTONUP:
-			map_mouse(lParam,&mx,&my);
-			mouse(mx,my,MS_RB_UP);
+			on_mouse(lParam,MS_RB_UP);
 			break;
 
 		default:
@@ -736,7 +915,7 @@ HWND InitWindow(HINSTANCE hInstance,int nCmdShow)
 
 	// created hidden; dd_init() -> win_show() sizes and shows it after login
 	desk_hwnd=hWnd=CreateWindowEx(0,"DDCWin",buf,WS_OVERLAPPEDWINDOW,
-				     CW_USEDEFAULT,CW_USEDEFAULT,MODEX,MODEY,
+				     CW_USEDEFAULT,CW_USEDEFAULT,LEGACY_W,LEGACY_H,
 				     NULL,NULL,hInstance,NULL);
 
 	return hWnd;
@@ -858,7 +1037,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 
 	init_sound(hwnd);
 
-	if ((tmp=dd_init(hwnd,MODEX,MODEY))!=0) {
+	if ((tmp=dd_init(hwnd,SCREEN_W,SCREEN_H))!=0) {
 
 		sprintf(buf,"|DDERROR=%d",-tmp);
 		say(buf);
