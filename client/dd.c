@@ -13,6 +13,7 @@
 #include "common.h"
 #include "inter.h"
 #include "pngdec.h"
+#include "hud.h"
 
 int tricky_flag=0;
 
@@ -814,10 +815,11 @@ void *conv_load(int nr,int *xs,int *ys);
 
 extern char path[];
 
-// HUD colour theme. 0 = original red marble / gold, 1 = deep grey / tan.
+// HUD colour theme. 0 = original red marble / gold, 1 = deep grey / tan,
+// 2 = clean: flat grey panels and crisp tan lines drawn at full resolution.
 // Applied to the HUD picture (sprite 1) when it is loaded, so every piece of
 // the HUD that comes from it (panels, borders, legacy panels) follows.
-int hud_theme=1;
+int hud_theme=2;
 
 static void hud_theme_apply(unsigned short *p,int xs,int ys)
 {
@@ -892,7 +894,7 @@ void dd_load_sprite(int nr)
 	sprtab[nr].alphacnt=(unsigned short)alphacnt;
 	sprtab[nr].xs=(unsigned char)(xs/TILE);
 	sprtab[nr].ys=(unsigned char)(ys/TILE);
-	if (nr==1 && hud_theme==1) hud_theme_apply(optr,xs,ys);
+	if (nr==1 && hud_theme>=1) hud_theme_apply(optr,xs,ys);
 	sprtab[nr].avgcol=avgcolor(optr,xs,ys);
 
 	sprtab[nr].cache=xcalloc(MAXEFFECT*sizeof(short),sprtab[nr].xs*sprtab[nr].ys);
@@ -1916,6 +1918,171 @@ static int is_bgcol(unsigned short v)
 	return v!=0xF81F && (v>>11)==0 && ((v>>5)&63)<=10;
 }
 
+/* ---- clean HUD (hud_theme 2) ----------------------------------------------
+ * Panels are not drawn from the old texture any more. The canvas only gets the
+ * content (text, items, labels); panel fills and border lines go into a small
+ * list of "vector" operations that the presenter draws at full window
+ * resolution in 24 bit colour: fills under the canvas, lines on top.
+ * For the panels copied from the old HUD picture, the picture is classified
+ * once: panel area (becomes a fill), border lines (become crisp lines) and
+ * everything else (labels, icons: copied as before).
+ */
+#define HC_NONE	0
+#define HC_FILL	1
+#define HC_KEEP	2
+#define HC_LINE	3
+
+static unsigned char *hudcls=NULL;
+struct lseg { short a,b0,b1,t; };	// a = first row (h) / column (v) of the band, b0..b1 = extent, t = band thickness
+static struct lseg *hseg=NULL,*vseg=NULL;
+static int nhseg=0,nvseg=0;
+struct frect { short x,y,w,h; };
+static struct frect *frects=NULL;
+static int nfrect=0;
+
+static void rgb8(unsigned short v,int *r,int *g,int *b)
+{
+	*r=((v>>11)&31)*255/31; *g=((v>>5)&63)*255/63; *b=(v&31)*255/31;
+}
+
+static unsigned char *warmmap=NULL;
+
+static int is_warm(int x,int y)
+{
+	if (x<0 || y<0 || x>=HUDW || y>=HUDH) return 0;
+	return warmmap[x+y*HUDW];
+}
+
+static int frac_warm_row(int y,int x0,int x1)
+{
+	int x,n=0;
+	for (x=x0; x<x1; x++) n+=is_warm(x,y);
+	return n*100/(x1-x0);
+}
+
+static int frac_warm_col(int x,int y0,int y1)
+{
+	int y,n=0;
+	for (y=y0; y<y1; y++) n+=is_warm(x,y);
+	return n*100/(y1-y0);
+}
+
+static void hud_classify(void)
+{
+	int x,y,p,x0,x1,y0,y1,last,r,g,b,L,k;
+	unsigned char *line;
+
+	hudcls=calloc(HUDW*HUDH,1);
+	line=calloc(HUDW*HUDH,1);
+	warmmap=calloc(HUDW*HUDH,1);
+	hseg=malloc(sizeof(struct lseg)*4096); vseg=malloc(sizeof(struct lseg)*4096);
+	frects=malloc(sizeof(struct frect)*8192);
+	if (!hudcls || !line || !warmmap || !hseg || !vseg || !frects) { free(line); free(hudcls); hudcls=NULL; return; }
+
+	for (p=0; p<HUDW*HUDH; p++) {
+		if (hudmask[p]!=2) continue;
+		rgb8(hudimg[p],&r,&g,&b);
+		warmmap[p]=(r>b+6 && r+g>40);
+	}
+
+	// border lines: long thin runs of gold (gaps of up to 2 pixels allowed)
+	for (y=0; y<HUDH; y++) {
+		for (x=0; x<HUDW; ) {
+			if (!is_warm(x,y)) { x++; continue; }
+			x0=x; last=x;
+			while (x<HUDW && (is_warm(x,y) || x-last<=2)) { if (is_warm(x,y)) last=x; x++; }
+			x1=last+1; x=x1;
+			if (x1-x0<12) continue;
+			if (frac_warm_row(y-2,x0,x1)<30 && frac_warm_row(y+2,x0,x1)<30)
+				for (k=x0; k<x1; k++) line[k+y*HUDW]|=1;
+		}
+	}
+	for (x=0; x<HUDW; x++) {
+		for (y=0; y<HUDH; ) {
+			if (!is_warm(x,y)) { y++; continue; }
+			y0=y; last=y;
+			while (y<HUDH && (is_warm(x,y) || y-last<=2)) { if (is_warm(x,y)) last=y; y++; }
+			y1=last+1; y=y1;
+			if (y1-y0<12) continue;
+			if (frac_warm_col(x-2,y0,y1)<30 && frac_warm_col(x+2,y0,y1)<30)
+				for (k=y0; k<y1; k++) line[x+k*HUDW]|=2;
+		}
+	}
+
+	// classes
+	for (p=0; p<HUDW*HUDH; p++) {
+		if (hudmask[p]!=2) continue;
+		if (line[p]) { hudcls[p]=HC_LINE; continue; }
+		rgb8(hudimg[p],&r,&g,&b);
+		L=(30*r+59*g+11*b)/100;
+		if (abs(r-g)<=10 && b>=r-4 && b<=r+16 && L<60) hudcls[p]=HC_FILL;	// grey panel texture
+		else hudcls[p]=HC_KEEP;							// labels, icons
+	}
+
+	// line segments: one per band of adjacent line rows / columns
+	for (y=0; y<HUDH; y++) {
+		for (x=0; x<HUDW; ) {
+			if (!(line[x+y*HUDW]&1) || (y>0 && (line[x+(y-1)*HUDW]&1))) { x++; continue; }
+			x0=x;
+			while (x<HUDW && (line[x+y*HUDW]&1) && !(y>0 && (line[x+(y-1)*HUDW]&1))) x++;
+			for (k=1; y+k<HUDH && (line[x0+(y+k)*HUDW]&1); k++) ;
+			if (nhseg<4096) { hseg[nhseg].a=y; hseg[nhseg].b0=x0; hseg[nhseg].b1=x; hseg[nhseg].t=k; nhseg++; }
+		}
+	}
+	for (x=0; x<HUDW; x++) {
+		for (y=0; y<HUDH; ) {
+			if (!(line[x+y*HUDW]&2) || (x>0 && (line[x-1+y*HUDW]&2))) { y++; continue; }
+			y0=y;
+			while (y<HUDH && (line[x+y*HUDW]&2) && !(x>0 && (line[x-1+y*HUDW]&2))) y++;
+			for (k=1; x+k<HUDW && (line[x+k+y0*HUDW]&2); k++) ;
+			if (nvseg<4096) { vseg[nvseg].a=x; vseg[nvseg].b0=y0; vseg[nvseg].b1=y; vseg[nvseg].t=k; nvseg++; }
+		}
+	}
+
+	// panel area as rectangles: row runs, merged downwards while the span is the same
+	for (y=0; y<HUDH; y++) {
+		for (x=0; x<HUDW; ) {
+			if (hudmask[x+y*HUDW]!=2) { x++; continue; }
+			x0=x;
+			while (x<HUDW && hudmask[x+y*HUDW]==2) x++;
+			for (k=nfrect-1; k>=0; k--) {
+				if (frects[k].y+frects[k].h<y) { k=-1; break; }
+				if (frects[k].y+frects[k].h==y && frects[k].x==x0 && frects[k].w==x-x0) break;
+			}
+			if (k>=0) frects[k].h++;
+			else if (nfrect<8192) { frects[nfrect].x=x0; frects[nfrect].y=y; frects[nfrect].w=x-x0; frects[nfrect].h=1; nfrect++; }
+		}
+	}
+	free(line);
+}
+
+/* the vector list, rebuilt every frame together with the canvas */
+#define MAXVOP	8192
+static struct hud_vop vops[MAXVOP];
+static int nvop=0;
+
+static void vadd(int type,int x,int y,int w,int h,unsigned int rgb)
+{
+	if (nvop>=MAXVOP || w<=0 || h<=0) return;
+	vops[nvop].type=type; vops[nvop].x=x; vops[nvop].y=y; vops[nvop].w=w; vops[nvop].h=h; vops[nvop].rgb=rgb;
+	nvop++;
+}
+
+int dd_hud_vops(struct hud_vop **p)
+{
+	*p=vops;
+	return nvop;
+}
+
+// is canvas point x,y on a panel fill?
+int dd_hud_vhit(int x,int y)
+{
+	int n;
+	for (n=0; n<nvop; n++)
+		if (vops[n].type==VOP_FILL && x>=vops[n].x && y>=vops[n].y && x<vops[n].x+vops[n].w && y<vops[n].y+vops[n].h) return 1;
+	return 0;
+}
+
 static int hud_prepare(void)
 {
 	int x,y,p,q,head,tail,nx,ny,k;
@@ -1982,6 +2149,7 @@ static int hud_prepare(void)
 		else if (x>=260 && x<345 && y>=550) hudreg[p]=REG_D;
 		else if (x>=600 && y>=490) hudreg[p]=REG_E;
 	}
+	if (hud_theme==2) hud_classify();
 
 	return 1;
 }
@@ -2213,6 +2381,7 @@ void dd_draw_marker(int cx,int cy)
 void dd_canvas_clear(void)
 {
 	int n;
+	nvop=0;
 	for (n=0; n<shc.pitch*shc.h; n++) shc.bits[n]=0xF81F;
 }
 
@@ -2226,6 +2395,7 @@ static void cput(int x,int y,unsigned short v)
 void dd_hud_red(int x0,int y0,int w,int h)
 {
 	int x,y;
+	if (hud_theme==2) { vadd(VOP_FILL,x0,y0,w,h,HUD_RGB_PANEL); return; }
 	if (!hud_prepare()) return;
 	for (y=0; y<h; y++) for (x=0; x<w; x++)
 		cput(x0+x,y0+y,hudimg[(520+(x%260))+(12+(y%200))*HUDW]);
@@ -2235,6 +2405,7 @@ void dd_hud_red(int x0,int y0,int w,int h)
 void dd_hud_hline(int x0,int y,int w)
 {
 	int i;
+	if (hud_theme==2) { vadd(VOP_HLINE,x0,y,w,2,HUD_RGB_LINE); return; }
 	if (!hud_prepare()) return;
 	for (i=0; i<w; i++) {
 		cput(x0+i,y,hudimg[(640+(i%150))+239*HUDW]);
@@ -2245,6 +2416,7 @@ void dd_hud_hline(int x0,int y,int w)
 void dd_hud_vline(int x,int y0,int h)
 {
 	int i;
+	if (hud_theme==2) { vadd(VOP_VLINE,x,y0,2,h,HUD_RGB_LINE); return; }
 	if (!hud_prepare()) return;
 	for (i=0; i<h; i++) {
 		cput(x,y0+i,hudimg[497+(10+(i%180))*HUDW]);
@@ -2275,6 +2447,25 @@ void dd_hud_from_legacy(int lx,int ly,int w,int h,int cx,int cy)
 	unsigned short v;
 
 	if (!hud_prepare()) return;
+	if (hud_theme==2 && hudcls) {
+		int n,a0,a1,b0,b1,dx=cx-lx,dy=cy-ly;
+		// panel fills, clipped to the piece
+		for (n=0; n<nfrect; n++) {
+			a0=max(frects[n].x,lx); a1=min(frects[n].x+frects[n].w,lx+w);
+			b0=max(frects[n].y,ly); b1=min(frects[n].y+frects[n].h,ly+h);
+			if (a0<a1 && b0<b1) vadd(VOP_FILL,a0+dx,b0+dy,a1-a0,b1-b0,HUD_RGB_PANEL);
+		}
+		for (n=0; n<nhseg; n++) {
+			if (hseg[n].a<ly || hseg[n].a>=ly+h) continue;
+			a0=max(hseg[n].b0,lx); a1=min(hseg[n].b1,lx+w);
+			if (a0<a1) vadd(VOP_HLINE,a0+dx,hseg[n].a+dy,a1-a0,hseg[n].t,HUD_RGB_LINE);
+		}
+		for (n=0; n<nvseg; n++) {
+			if (vseg[n].a<lx || vseg[n].a>=lx+w) continue;
+			b0=max(vseg[n].b0,ly); b1=min(vseg[n].b1,ly+h);
+			if (b0<b1) vadd(VOP_VLINE,vseg[n].a+dx,b0+dy,vseg[n].t,b1-b0,HUD_RGB_LINE);
+		}
+	}
 	for (y=0; y<h; y++) {
 		if (ly+y<0 || ly+y>=LEGACY_H) continue;
 		for (x=0; x<w; x++) {
@@ -2282,7 +2473,9 @@ void dd_hud_from_legacy(int lx,int ly,int w,int h,int cx,int cy)
 			p=(lx+x)+(ly+y)*HUDW;
 			v=shud.bits[(lx+x)+(ly+y)*shud.pitch];
 			if (v==0xF81F) continue;
-			if (hudmask[p]==2 || (hudbase && v!=hudbase[(lx+x)+(ly+y)*LEGACY_W])) cput(cx+x,cy+y,v);
+			if (hudbase && v!=hudbase[(lx+x)+(ly+y)*LEGACY_W]) cput(cx+x,cy+y,v);	// drawn this frame
+			else if (hud_theme==2 && hudcls) { if (hudcls[p]==HC_KEEP) cput(cx+x,cy+y,v); }
+			else if (hudmask[p]==2) cput(cx+x,cy+y,v);
 		}
 	}
 }

@@ -124,4 +124,17 @@ extern int walkmark_x[4],walkmark_y[4];	// auto-walk markers, world coordinates
 
 static int in_rect(int x,int y,int rx,int ry,int rw,int rh) { return x>=rx && y>=ry && x<rx+rw && y<ry+rh; }
 
+
+// clean theme (hud_theme 2): panel fills and border lines drawn by the
+// presenter at full window resolution (canvas units, see dd.c)
+#define HUD_RGB_PANEL	0x1F1F22	// deep grey
+#define HUD_RGB_LINE	0x7E6F48	// tan
+#define VOP_FILL	0
+#define VOP_HLINE	1	// a band of h canvas rows starting at y, drawn as one crisp line
+#define VOP_VLINE	2	// a band of w canvas columns starting at x
+struct hud_vop { short x,y,w,h; unsigned char type; unsigned int rgb; };
+int dd_hud_vops(struct hud_vop **p);
+int dd_hud_vhit(int x,int y);
+extern int hud_theme;
+
 #endif

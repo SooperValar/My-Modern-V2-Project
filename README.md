@@ -96,7 +96,7 @@ merc.exe -h 127.0.0.1 -p 5555
 fullscreen=0   ; Alt+Enter toggles it in game
 smooth=1       ; smooth scaling of the frame to the window
 zoom=115       ; world zoom in percent (100 = no zoom)
-hud_theme=1    ; 1 = deep grey / tan HUD, 0 = original red / gold
+hud_theme=2    ; 2 = clean grey (flat panels, crisp lines), 1 = recoloured grey, 0 = original red / gold
 ```
 
 The client speaks protocol version **2.15.1** (`0x020F01`); the server's `MINVERSION` matches, so old 800×600 clients are refused by the modified server.

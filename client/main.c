@@ -324,6 +324,39 @@ static int backbuffer(HDC dc,int w,int h)
 	return 1;
 }
 
+// clean theme: panel fills / border lines at full resolution (canvas units -> window pixels)
+#define CW2W(c)	((c)*HUD_SCALE_X100/100)
+
+static void fill_rect(int x0,int y0,int x1,int y1,unsigned int rgb)
+{
+	int x,y;
+	unsigned int *d;
+	if (x0<0) x0=0;
+	if (y0<0) y0=0;
+	if (x1>bb_w) x1=bb_w;
+	if (y1>bb_h) y1=bb_h;
+	for (y=y0; y<y1; y++) { d=bb_bits+y*bb_w; for (x=x0; x<x1; x++) d[x]=rgb; }
+}
+
+static void draw_vops(int lines)
+{
+	struct hud_vop *v;
+	int n,cnt,a,b;
+
+	cnt=dd_hud_vops(&v);
+	for (n=0; n<cnt; n++,v++) {
+		if (!lines && v->type==VOP_FILL)
+			fill_rect(CW2W(v->x),CW2W(v->y),CW2W(v->x+v->w),CW2W(v->y+v->h),v->rgb);
+		else if (lines && v->type==VOP_HLINE) {
+			a=CW2W(v->y); b=CW2W(v->y+v->h); a=(a+b-1)/2;
+			fill_rect(CW2W(v->x),a,CW2W(v->x+v->w),a+1,v->rgb);
+		} else if (lines && v->type==VOP_VLINE) {
+			a=CW2W(v->x); b=CW2W(v->x+v->w); a=(a+b-1)/2;
+			fill_rect(a,CW2W(v->y),a+1,CW2W(v->y+v->h),v->rgb);
+		}
+	}
+}
+
 // lay the HUD canvas (565, color key = transparent) over the back buffer
 static void blend_hud(void)
 {
@@ -410,8 +443,10 @@ void win_present(unsigned short *bits,int w,int h)
 	StretchDIBits(bb_dc,dst_rect.left,dst_rect.top,dw,dh,crop_x,0,crop_w,crop_h,bits+crop_y*w,(BITMAPINFO*)&bmi,DIB_RGB_COLORS,SRCCOPY);
 	GdiFlush();
 
-	// HUD on top
+	// HUD on top: panel fills, canvas content, border lines
+	draw_vops(0);
 	blend_hud();
+	draw_vops(1);
 
 	BitBlt(dc,0,0,bb_w,bb_h,bb_dc,0,0,SRCCOPY);
 	ReleaseDC(desk_hwnd,dc);
@@ -444,7 +479,7 @@ static int hud_at(int wx,int wy,int *cx,int *cy)
 	*cy=wy*100/HUD_SCALE_X100;
 	src=dd_hud_canvas_bits(&sw,&sh,&sp);
 	if (!src || *cx<0 || *cy<0 || *cx>=sw || *cy>=sh) return 0;
-	return src[*cx+*cy*sp]!=0xF81F;
+	return src[*cx+*cy*sp]!=0xF81F || dd_hud_vhit(*cx,*cy);
 }
 
 static int last_wx=-1,last_wy=-1;
@@ -507,7 +542,7 @@ static void load_display_settings(void)
 	else if (!fullscreen) fullscreen=GetPrivateProfileInt("display","fullscreen",0,ini_file);
 	smooth_scale=GetPrivateProfileInt("display","smooth",1,ini_file);
 	world_zoom=GetPrivateProfileInt("display","zoom",115,ini_file);
-	hud_theme=GetPrivateProfileInt("display","hud_theme",1,ini_file);
+	hud_theme=GetPrivateProfileInt("display","hud_theme",2,ini_file);
 }
 
 static void save_display_settings(void)
