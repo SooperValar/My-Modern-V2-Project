@@ -689,7 +689,7 @@ int main(int argc,char *args[])
 		if (argc!=2) exit(1);
 	}
 
-        see=malloc(sizeof(struct see_map)*MAXCHARS);
+        see=calloc(MAXCHARS,sizeof(struct see_map));
         if (see==NULL) {
                 xlog("Memory low!");
                 exit(1);

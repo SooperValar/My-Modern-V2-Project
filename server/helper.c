@@ -25,13 +25,13 @@ All rights reserved.
 //static char visi[40*40];
 
 static char *visi;
-static char _visi[40*40];
+static char _visi[VIS_W*VIS_W];
 static int ox=0,oy=0;
 static char ismonster=0;
 
 static inline void add_vis(int x,int y,int v)
 {
-        if (!visi[(x-ox+20)+(y-oy+20)*40]) visi[(x-ox+20)+(y-oy+20)*40]=v;
+        if (!visi[(x-ox+VIS_C)+(y-oy+VIS_C)*VIS_W]) visi[(x-ox+VIS_C)+(y-oy+VIS_C)*VIS_W]=v;
 }
 
 static inline int check_map_see(int x,int y)
@@ -68,17 +68,17 @@ static inline int close_vis_see(int x,int y,int v)
 {
         if (!check_map_see(x,y)) return 0;
 
-        x=x-ox+20;
-        y=y-oy+20;
+        x=x-ox+VIS_C;
+        y=y-oy+VIS_C;
 
-        if (visi[(x+1)+(y)*40]==v) return 1;
-        if (visi[(x-1)+(y)*40]==v) return 1;
-        if (visi[(x)+(y+1)*40]==v) return 1;
-        if (visi[(x)+(y-1)*40]==v) return 1;
-        if (visi[(x+1)+(y+1)*40]==v) return 1;
-        if (visi[(x+1)+(y-1)*40]==v) return 1;
-        if (visi[(x-1)+(y+1)*40]==v) return 1;
-        if (visi[(x-1)+(y-1)*40]==v) return 1;
+        if (visi[(x+1)+(y)*VIS_W]==v) return 1;
+        if (visi[(x-1)+(y)*VIS_W]==v) return 1;
+        if (visi[(x)+(y+1)*VIS_W]==v) return 1;
+        if (visi[(x)+(y-1)*VIS_W]==v) return 1;
+        if (visi[(x+1)+(y+1)*VIS_W]==v) return 1;
+        if (visi[(x+1)+(y-1)*VIS_W]==v) return 1;
+        if (visi[(x-1)+(y+1)*VIS_W]==v) return 1;
+        if (visi[(x-1)+(y-1)*VIS_W]==v) return 1;
 
         return 0;
 }
@@ -87,17 +87,17 @@ static inline int close_vis_go(int x,int y,int v)
 {
         if (!check_map_go(x,y)) return 0;
 
-        x=x-ox+20;
-        y=y-oy+20;
+        x=x-ox+VIS_C;
+        y=y-oy+VIS_C;
 
-        if (visi[(x+1)+(y)*40]==v) return 1;
-        if (visi[(x-1)+(y)*40]==v) return 1;
-        if (visi[(x)+(y+1)*40]==v) return 1;
-        if (visi[(x)+(y-1)*40]==v) return 1;
-        if (visi[(x+1)+(y+1)*40]==v) return 1;
-        if (visi[(x+1)+(y-1)*40]==v) return 1;
-        if (visi[(x-1)+(y+1)*40]==v) return 1;
-        if (visi[(x-1)+(y-1)*40]==v) return 1;
+        if (visi[(x+1)+(y)*VIS_W]==v) return 1;
+        if (visi[(x-1)+(y)*VIS_W]==v) return 1;
+        if (visi[(x)+(y+1)*VIS_W]==v) return 1;
+        if (visi[(x)+(y-1)*VIS_W]==v) return 1;
+        if (visi[(x+1)+(y+1)*VIS_W]==v) return 1;
+        if (visi[(x+1)+(y-1)*VIS_W]==v) return 1;
+        if (visi[(x-1)+(y+1)*VIS_W]==v) return 1;
+        if (visi[(x-1)+(y-1)*VIS_W]==v) return 1;
 
         return 0;
 }
@@ -106,17 +106,17 @@ static inline int check_vis(int x,int y)
 {
         int best=99;
 
-        x=x-ox+20;
-        y=y-oy+20;
+        x=x-ox+VIS_C;
+        y=y-oy+VIS_C;
 
-        if (visi[(x+1)+(y+0)*40] && visi[(x+1)+(y+0)*40]<best) best=visi[(x+1)+(y+0)*40];
-        if (visi[(x-1)+(y+0)*40] && visi[(x-1)+(y+0)*40]<best) best=visi[(x-1)+(y+0)*40];
-        if (visi[(x+0)+(y+1)*40] && visi[(x+0)+(y+1)*40]<best) best=visi[(x+0)+(y+1)*40];
-        if (visi[(x+0)+(y-1)*40] && visi[(x+0)+(y-1)*40]<best) best=visi[(x+0)+(y-1)*40];
-        if (visi[(x+1)+(y+1)*40] && visi[(x+1)+(y+1)*40]<best) best=visi[(x+1)+(y+1)*40];
-        if (visi[(x+1)+(y-1)*40] && visi[(x+1)+(y-1)*40]<best) best=visi[(x+1)+(y-1)*40];
-        if (visi[(x-1)+(y+1)*40] && visi[(x-1)+(y+1)*40]<best) best=visi[(x-1)+(y+1)*40];
-        if (visi[(x-1)+(y-1)*40] && visi[(x-1)+(y-1)*40]<best) best=visi[(x-1)+(y-1)*40];
+        if (visi[(x+1)+(y+0)*VIS_W] && visi[(x+1)+(y+0)*VIS_W]<best) best=visi[(x+1)+(y+0)*VIS_W];
+        if (visi[(x-1)+(y+0)*VIS_W] && visi[(x-1)+(y+0)*VIS_W]<best) best=visi[(x-1)+(y+0)*VIS_W];
+        if (visi[(x+0)+(y+1)*VIS_W] && visi[(x+0)+(y+1)*VIS_W]<best) best=visi[(x+0)+(y+1)*VIS_W];
+        if (visi[(x+0)+(y-1)*VIS_W] && visi[(x+0)+(y-1)*VIS_W]<best) best=visi[(x+0)+(y-1)*VIS_W];
+        if (visi[(x+1)+(y+1)*VIS_W] && visi[(x+1)+(y+1)*VIS_W]<best) best=visi[(x+1)+(y+1)*VIS_W];
+        if (visi[(x+1)+(y-1)*VIS_W] && visi[(x+1)+(y-1)*VIS_W]<best) best=visi[(x+1)+(y-1)*VIS_W];
+        if (visi[(x-1)+(y+1)*VIS_W] && visi[(x-1)+(y+1)*VIS_W]<best) best=visi[(x-1)+(y+1)*VIS_W];
+        if (visi[(x-1)+(y-1)*VIS_W] && visi[(x-1)+(y-1)*VIS_W]<best) best=visi[(x-1)+(y-1)*VIS_W];
 
         if (best==99) return 0;
         else return best;
@@ -126,7 +126,7 @@ static void can_map_see(int _fx,int _fy,int maxdist)
 {
         int xc,yc,x,y,dist;
 
-        bzero(visi,sizeof(char)*40*40);
+        bzero(visi,sizeof(char)*VIS_W*VIS_W);
 
         ox=_fx; oy=_fy;
         xc=_fx; yc=_fy;
@@ -149,7 +149,7 @@ static void can_map_go(int _fx,int _fy,int maxdist)
 {
         int xc,yc,x,y,dist;
 
-        bzero(visi,sizeof(char)*40*40);
+        bzero(visi,sizeof(char)*VIS_W*VIS_W);
 
         ox=_fx; oy=_fy;
         xc=_fx; yc=_fy;
@@ -172,8 +172,8 @@ void reset_go(int xc,int yc)
 {
         int x,y,cn;
 
-        for (y=max(0,yc-18); y<min(MAPY-1,yc+18); y++)
-                for (x=max(0,xc-18); x<min(MAPX-1,xc+18); x++)
+        for (y=max(0,yc-(VIS_PLR_RADIUS+4)); y<min(MAPY-1,yc+(VIS_PLR_RADIUS+4)); y++)
+                for (x=max(0,xc-(VIS_PLR_RADIUS+4)); x<min(MAPX-1,xc+(VIS_PLR_RADIUS+4)); x++)
                         if ((cn=map[x+y*MAPX].ch)!=0) see[cn].x=see[cn].y=0;
 
         ox=oy=0;
@@ -189,12 +189,13 @@ int can_see(int cn,int _fx,int _fy,int tx,int ty,int maxdist)
 
         if (cn) {
                 visi=see[cn].vis;
-                if (_fx!=see[cn].x || _fy!=see[cn].y) {
+                if (_fx!=see[cn].x || _fy!=see[cn].y || maxdist>see[cn].md) {
                         if ((ch[cn].kindred&KIN_MONSTER) && !(ch[cn].flags&(CF_USURP|CF_THRALL))) ismonster=1;
                         else ismonster=0;
                         can_map_see(_fx,_fy,maxdist);
                         see[cn].x=_fx;
                         see[cn].y=_fy;
+                        see[cn].md=maxdist;
                         see_miss++;
                 } else {
                         see_hit++;

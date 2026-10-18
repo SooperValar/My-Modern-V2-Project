@@ -630,7 +630,8 @@ struct s_skilltab
 struct see_map
 {
         int x,y;
-        char vis[40*40];
+        int md;                 // radius the map was computed with
+        char vis[VIS_W*VIS_W];
 };
 
 extern struct s_skilltab skilltab[MAXSKILL];

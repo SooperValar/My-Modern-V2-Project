@@ -12,7 +12,12 @@ All rights reserved.
 #define DATDIR          ".dat"
 
 #define VERSION         0x020E07
-#define MINVERSION      0x020E06
+#define MINVERSION      0x020F00
+
+// line-of-sight grid (was 40x40, center 20)
+#define VIS_W           64
+#define VIS_C           32
+#define VIS_PLR_RADIUS  22      // display sight radius for players (was 16)
 
 #define TICKS                   18
 #define TICK                    (1000000/TICKS)

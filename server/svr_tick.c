@@ -2108,11 +2108,11 @@ void plr_getmap_complete(int nr)
         xe=ch[cn].x+(TILEX/2)-XECUT;
 
         // trigger recomputation of visibility map
-        can_see(cn,ch[cn].x,ch[cn].y,ch[cn].x+1,ch[cn].y+1,16);
+        can_see(cn,ch[cn].x,ch[cn].y,ch[cn].x+1,ch[cn].y+1,VIS_PLR_RADIUS);
 
 	// check if visibility changed
-        if (player[nr].vx!=see[cn].x || player[nr].vy!=see[cn].y || mcmp(player[nr].visi,see[cn].vis,40*40)) {
-            	mcpy(player[nr].visi,see[cn].vis,40*40);
+        if (player[nr].vx!=see[cn].x || player[nr].vy!=see[cn].y || mcmp(player[nr].visi,see[cn].vis,VIS_W*VIS_W)) {
+            	mcpy(player[nr].visi,see[cn].vis,VIS_W*VIS_W);
             	player[nr].vx=see[cn].x;
             	player[nr].vy=see[cn].y;
             	do_all=1;
@@ -2174,17 +2174,17 @@ void plr_getmap_complete(int nr)
 
 			if (IS_BUILDING(cn)) { smap[n].flags2=(unsigned int)map[m].flags; } else smap[n].flags2=0;
 
-			tmp=(x-ch[cn].x+20)+(y-ch[cn].y+20)*40;
+			tmp=(x-ch[cn].x+VIS_C)+(y-ch[cn].y+VIS_C)*VIS_W;
 
 			if (see[cn].vis[tmp+0+0] ||
-			    see[cn].vis[tmp+0+40] ||
-			    see[cn].vis[tmp+0-40] ||
+			    see[cn].vis[tmp+0+VIS_W] ||
+			    see[cn].vis[tmp+0-VIS_W] ||
 			    see[cn].vis[tmp+1+0] ||
-			    see[cn].vis[tmp+1+40] ||
-			    see[cn].vis[tmp+1-40] ||
+			    see[cn].vis[tmp+1+VIS_W] ||
+			    see[cn].vis[tmp+1-VIS_W] ||
 			    see[cn].vis[tmp-1+0] ||
-			    see[cn].vis[tmp-1+40] ||
-			    see[cn].vis[tmp-1-40]) visible=1;
+			    see[cn].vis[tmp-1+VIS_W] ||
+			    see[cn].vis[tmp-1-VIS_W]) visible=1;
 			else visible=0;
 
 			if (!visible) smap[n].flags|=INVIS;
@@ -2289,11 +2289,11 @@ void plr_getmap_fast(int nr)
         xe=ch[cn].x+(TILEX/2)-XECUTF;
 
         // trigger recomputation of visibility map
-        can_see(cn,ch[cn].x,ch[cn].y,ch[cn].x+1,ch[cn].y+1,16);
+        can_see(cn,ch[cn].x,ch[cn].y,ch[cn].x+1,ch[cn].y+1,VIS_PLR_RADIUS);
 
 	// check if visibility changed
-        if (player[nr].vx!=see[cn].x || player[nr].vy!=see[cn].y || mcmp(player[nr].visi,see[cn].vis,40*40)) {
-            	mcpy(player[nr].visi,see[cn].vis,40*40);
+        if (player[nr].vx!=see[cn].x || player[nr].vy!=see[cn].y || mcmp(player[nr].visi,see[cn].vis,VIS_W*VIS_W)) {
+            	mcpy(player[nr].visi,see[cn].vis,VIS_W*VIS_W);
             	player[nr].vx=see[cn].x;
             	player[nr].vy=see[cn].y;
             	do_all=1;
@@ -2353,17 +2353,17 @@ void plr_getmap_fast(int nr)
 
 			if (IS_BUILDING(cn)) { smap[n].flags2=(unsigned int)map[m].flags; }
 
-			tmp=(x-ch[cn].x+20)+(y-ch[cn].y+20)*40;
+			tmp=(x-ch[cn].x+VIS_C)+(y-ch[cn].y+VIS_C)*VIS_W;
 
 			if (see[cn].vis[tmp+0+0] ||
-			    see[cn].vis[tmp+0+40] ||
-			    see[cn].vis[tmp+0-40] ||
+			    see[cn].vis[tmp+0+VIS_W] ||
+			    see[cn].vis[tmp+0-VIS_W] ||
 			    see[cn].vis[tmp+1+0] ||
-			    see[cn].vis[tmp+1+40] ||
-			    see[cn].vis[tmp+1-40] ||
+			    see[cn].vis[tmp+1+VIS_W] ||
+			    see[cn].vis[tmp+1-VIS_W] ||
 			    see[cn].vis[tmp-1+0] ||
-			    see[cn].vis[tmp-1+40] ||
-			    see[cn].vis[tmp-1-40]) visible=1;
+			    see[cn].vis[tmp-1+VIS_W] ||
+			    see[cn].vis[tmp-1-VIS_W]) visible=1;
 			else visible=0;
 
 			if (!visible)smap[n].flags|=INVIS;

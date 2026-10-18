@@ -8,8 +8,8 @@ All rights reserved.
 
 #include <zlib.h>
 
-#define TILEX			34
-#define TILEY			34
+#define TILEX			44
+#define TILEY			44
 
 #define INJURED		(1u<<0)
 #define INJURED1	(1u<<1)
@@ -377,7 +377,7 @@ struct player
 	
 	// copy of visibility map for comparision
 	int vx,vy;
-	char visi[40*40];
+	char visi[VIS_W*VIS_W];
 	
 	char input[128];
 
