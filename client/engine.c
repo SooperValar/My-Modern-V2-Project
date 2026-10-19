@@ -152,6 +152,8 @@ int ttime=0,xtime=0;
 int ctick=0;
 
 int do_exit=0;
+unsigned int exit_time=0;	// GetTickCount() when the server logged us out
+#define EXIT_DELAY	8000	// close the window by itself after this many ms
 
 int xoff=0,yoff=0;
 
@@ -576,7 +578,14 @@ void hud_draw_v2(int init,unsigned short *mapmem,int map_x,int map_y)
 		dd_hud_panel(HK_X,HK_Y2,HK_W,HK_BH);
 		for (c=1; c<4; c++) dd_hud_vline(HK_X+c*HK_BW,HK_Y2,HK_BH);
 		for (r=1; r<3; r++) dd_hud_hline(HK_X,HK_Y2+1+r*15,HK_W);
-		ctext(HK_X+3*HK_BW,HK_BW,HK_Y2+2+2*15+3,1,"Exit");
+		{
+			int left=0;
+			char ebuf[20];
+			if (exit_time) left=(int)(EXIT_DELAY-(GetTickCount()-exit_time)+999)/1000;
+			if (left<0) left=0;
+			sprintf(ebuf,"Exit (%d)",left);
+			ctext(HK_X+3*HK_BW,HK_BW,HK_Y2+2+2*15+3,1,ebuf);
+		}
 	}
 
 	// --- chat
@@ -2143,7 +2152,11 @@ void engine(void)
 
 		tmp=tick_do();
         if (tmp) init=1;
-		if (do_exit) init=0;
+		if (do_exit) {
+			init=0;
+			if (!exit_time) exit_time=GetTickCount();
+			else if (GetTickCount()-exit_time>EXIT_DELAY) quit=1;	// closes by itself, or earlier with Exit
+		}
 
 		do_msg();
 
