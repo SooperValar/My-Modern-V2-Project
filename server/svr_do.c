@@ -3352,11 +3352,11 @@ void really_update_char(int cn)
         }
 
         if (armor<0) armor=0;
-        if (armor>250) armor=250;
+        if (armor>9999) armor=9999;	// was 250
         ch[cn].armor=armor;
 
         if (weapon<0) weapon=0;
-        if (weapon>250) weapon=250;
+        if (weapon>9999) weapon=9999;	// was 250
         ch[cn].weapon=weapon;
 
         if (gethit<0) gethit=0;
