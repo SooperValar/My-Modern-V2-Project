@@ -647,13 +647,14 @@ void do_help(int cn,char *topic)
 	do_char_log(cn,1,"#ignore <player>       ignore that player.\n");
 	do_char_log(cn,1,"#iignore <player>      ignore normal talk too.\n");
 	do_char_log(cn,1,"#lag <seconds>         lag control.\n");
+	do_char_log(cn,1,"#moddedarmor           of the Lion, Snake, ...\n");
 	do_char_log(cn,1,"#noshout               you won't hear shouts.\n");
 	do_char_log(cn,1,"#notell                you won't hear tells.\n");
 	do_char_log(cn,1,"#seen <player>         when last seen here?.\n");
 	do_char_log(cn,1,"#shout <text>          to all players.\n");
 	do_char_log(cn,1,"#skua                  leave purple.\n");
 	do_char_log(cn,1,"#sort <order>          sort inventory.\n");
-	do_char_log(cn,1,"#specarmor             magic helmet/armor names.\n");
+	do_char_log(cn,1,"#specialarmor          unique armor (Fire, Ice..).\n");
 	do_char_log(cn,1,"#spellignore           don't attack if spelled.\n");
 	do_char_log(cn,1,"#tell <player> <text>  tells player text.\n");
 	do_char_log(cn,1,"#wave                  you'll wave.\n");
@@ -1474,7 +1475,7 @@ void do_become_skua(int cn)
 }
 
 /* ---- information commands: #armor #weapon #sword #dagger #twohand #axe
- *      #specialw #belt #specarmor
+ *      #specialw #belt #specialarmor #moddedarmor
  * The numbers are read from the item templates (it_temp), so the tables stay
  * correct if a template is changed. The chat is 64 characters wide.
  */
@@ -1515,11 +1516,8 @@ void do_info_armor(int cn)
 	do_char_log(cn,1," \n");
 	do_char_log(cn,2,"* Helmet, cloak, armor, sleeves, leggings and boots of a tier all give the same armor value.\n");
 	do_char_log(cn,1," \n");
-	do_char_log(cn,1,"Special sets (every piece needs 30 in all attributes):\n");
-	do_char_log(cn,1," Fire  AV %d each, needs %d HP/End/Mana, %d Stealth\n",it_temp[624].armor[0],it_temp[624].hp[2],it_temp[624].skill[SK_STEALTH][0]);
-	do_char_log(cn,1," Ice   AV %d each, needs %d HP/End/Mana, %d Stealth\n",it_temp[1273].armor[0],it_temp[1273].hp[2],it_temp[1273].skill[SK_STEALTH][0]);
-	do_char_log(cn,1," Ice Cloak  AV %d, +%d Magic Shield, Resist, Immunity\n",it_temp[909].armor[0],it_temp[909].skill[SK_MSHIELD][0]);
-	do_char_log(cn,2,"* #specarmor lists the bonuses of magic helmets and armor.\n");
+	do_char_log(cn,2,"* #specialarmor lists unique armor (Fire, Ice, ...).\n");
+	do_char_log(cn,2,"* #moddedarmor lists the magic names (of the Lion, ...).\n");
 }
 
 static void info_weapon_table(int cn,char *what,char *skill,int sk,int *t,int cnt)
@@ -1700,7 +1698,80 @@ void do_info_belt(int cn)
 	}
 }
 
-void do_info_specarmor(int cn)
+// one numbered note with everything an item gives (attributes, hp/end/mana, skills)
+static void info_gives_all(int t,char *out)
+{
+	int k,first=1;
+	char tmp[60];
+
+	out[0]=0;
+	for (k=0; k<5; k++) if (it_temp[t].attrib[k][0]) { sprintf(tmp,"%s%s %+d",first ? "" : ", ",info_attr[k],it_temp[t].attrib[k][0]); strcat(out,tmp); first=0; }
+	if (it_temp[t].hp[0]) { sprintf(tmp,"%sHitpoints %+d",first ? "" : ", ",it_temp[t].hp[0]); strcat(out,tmp); first=0; }
+	if (it_temp[t].end[0]) { sprintf(tmp,"%sEndurance %+d",first ? "" : ", ",it_temp[t].end[0]); strcat(out,tmp); first=0; }
+	if (it_temp[t].mana[0]) { sprintf(tmp,"%sMana %+d",first ? "" : ", ",it_temp[t].mana[0]); strcat(out,tmp); first=0; }
+	// the weapon skills often come as a group
+	for (k=0; k<7; k++) if (it_temp[t].skill[k][0]!=it_temp[t].skill[0][0] || !it_temp[t].skill[0][0]) break;
+	if (k==7) { sprintf(tmp,"%sall weapon skills %+d",first ? "" : ", ",it_temp[t].skill[0][0]); strcat(out,tmp); first=0; k=7; }
+	else k=0;
+	for (; k<MAXSKILL && k<50; k++) if (it_temp[t].skill[k][0] && skilltab[k].name[0]) {
+		sprintf(tmp,"%s%s %+d",first ? "" : ", ",skilltab[k].name,it_temp[t].skill[k][0]); strcat(out,tmp); first=0;
+	}
+}
+
+static void info_armor_needs(int t,char *out)
+{
+	int k,all=1;
+	char tmp[40];
+
+	out[0]=0;
+	for (k=1; k<5; k++) if (it_temp[t].attrib[k][2]!=it_temp[t].attrib[0][2]) all=0;
+	if (all && it_temp[t].attrib[0][2]>1) sprintf(out,"all %d",it_temp[t].attrib[0][2]);
+	else for (k=0; k<5; k++) if (it_temp[t].attrib[k][2]>1) { sprintf(tmp,"%s%s %d",out[0] ? " " : "",info_at2[k],it_temp[t].attrib[k][2]); strcat(out,tmp); }
+	if (it_temp[t].hp[2] && it_temp[t].hp[2]==it_temp[t].end[2] && it_temp[t].hp[2]==it_temp[t].mana[2]) {
+		sprintf(tmp,"%sHEM %d",out[0] ? ", " : "",it_temp[t].hp[2]); strcat(out,tmp);
+	} else {
+		if (it_temp[t].hp[2]) { sprintf(tmp,"%sHP %d",out[0] ? ", " : "",it_temp[t].hp[2]); strcat(out,tmp); }
+		if (it_temp[t].end[2]) { sprintf(tmp,"%sEN %d",out[0] ? ", " : "",it_temp[t].end[2]); strcat(out,tmp); }
+		if (it_temp[t].mana[2]) { sprintf(tmp,"%sMA %d",out[0] ? ", " : "",it_temp[t].mana[2]); strcat(out,tmp); }
+	}
+	if (!out[0]) strcpy(out,"-");
+}
+
+void do_info_specialarmor(int cn)
+{
+	// a set is listed once (its body armor), with the number of pieces
+	static struct { int t; char *name; char *slot; } a[]={
+		{624,"Fire set (6 pieces)","each"},
+		{1273,"Ice set (5 pieces)","each"},
+		{909,"Ice Cloak","cloak"},
+		{772,"Ti. Armor of Ankh","body"},
+		{907,"Winged Boots","feet"},
+		{263,"Helm of Shadows","head"},
+		{169,"Grolm Crown","head"},
+		{1243,"Cap of Math Genius","head"},
+	};
+	int n,note=0;
+	char needs[80],gives[400],mark[4];
+	char notes[8][420];
+
+	do_char_log(cn,1,"Now listing special armor:\n");
+	do_char_log(cn,1," \n");
+	do_char_log(cn,1," Armor                 | Slot  | AV | Needs\n");
+	do_char_log(cn,1,"-----------------------+-------+----+-------------------\n");
+	for (n=0; n<(int)(sizeof(a)/sizeof(a[0])); n++) {
+		if (it_temp[a[n].t].used==USE_EMPTY) continue;
+		info_armor_needs(a[n].t,needs);
+		info_gives_all(a[n].t,gives);
+		mark[0]=0;
+		if (gives[0] && note<8) { sprintf(notes[note],"%d) %s: %s.",note+1,a[n].name,gives); note++; sprintf(mark,"%d",note); }
+		do_char_log(cn,1," %-19s %1s | %-5s | %2d | %s\n",a[n].name,mark,a[n].slot,it_temp[a[n].t].armor[0],needs);
+	}
+	do_char_log(cn,1," \n");
+	for (n=0; n<note; n++) do_char_log(cn,2,"%s\n",notes[n]);
+	do_char_log(cn,2,"* Needs: \"all 30\" = 30 in every attribute, HEM = Hitpoints, Endurance and Mana.\n");
+}
+
+void do_info_moddedarmor(int cn)
 {
 	do_char_log(cn,1,"Magic helmets and armor:\n");
 	do_char_log(cn,1," \n");
@@ -1869,6 +1940,7 @@ void do_command(int cn, char *ptr)
                 if (prefix(cmd,"mirror") && f_giu)	{ god_mirror(cn,arg[1],arg[2]); return; };
                 if (prefix(cmd,"mailpas") && f_g)       { break; };
                 if (prefix(cmd,"mailpass") && f_g)      { god_mail_pass(cn,dbatoi(arg[1])); return; }
+                if (prefix(cmd,"moddedarmor"))          { do_info_moddedarmor(cn); return; };
                 break;
         case 'n':
                 if (prefix(cmd,"noshout") && !f_m)      { do_noshout(cn); return; };
@@ -1927,7 +1999,7 @@ void do_command(int cn, char *ptr)
                 if (prefix(cmd,"summon") && f_g)        { god_summon(cn,arg[1],arg[2],arg[3]); return; };
                 if (prefix(cmd,"sword"))                { do_info_sword(cn); return; };
                 if (prefix(cmd,"specialw"))             { do_info_specialw(cn); return; };
-                if (prefix(cmd,"specarmor"))            { do_info_specarmor(cn); return; };
+                if (prefix(cmd,"specialarmor"))         { do_info_specialarmor(cn); return; };
                 break;
         case 't':
                 if (prefix(cmd,"tell"))            	{ do_tell(cn,arg[1],args[1]); return; };
