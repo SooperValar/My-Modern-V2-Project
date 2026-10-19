@@ -1163,7 +1163,7 @@ int hud_mouse(int x,int y,int state)
 	}
 
 	// update
-	if (in_rect(x,y,HS_X+HC_TOT-2,HS_Y3,HC_END-HC_TOT+2,HS_H3)) { mouse_statbox(130,260,state); return 1; }
+	if (in_rect(x,y,HS_X+HU_X,HS_Y3,HU_W,HS_H3)) { mouse_statbox(130,260,state); return 1; }
 	if (in_rect(x,y,HS_X,HS_Y4,HS_W4,HS_H4)) return 1;
 
 	// skill buttons / mode buttons

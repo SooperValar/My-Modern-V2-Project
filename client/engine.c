@@ -521,9 +521,9 @@ void hud_draw_v2(int init,unsigned short *mapmem,int map_x,int map_y)
 		hud_scroll(x+HC_END-1,y,HS_H2,skill_pos,40);
 
 		// --- update (left of it stays empty)
-		dd_hud_panel(x+HC_TOT-2,HS_Y3,HC_END-HC_TOT+2,HS_H3);
-		dd_hud_vline(x+HC_COST-2,HS_Y3,HS_H3);
-		dd_puttext(x+HC_TOT+4,HS_Y3+4,1,"Update");
+		dd_hud_panel(x+HU_X,HS_Y3,HU_W,HS_H3);
+		dd_hud_vline(x+HU_DIV,HS_Y3,HS_H3);
+		dd_puttext(x+HU_X+6,HS_Y3+4,1,"Update");
 		rtext(x+HC_END-5,HS_Y3+4,1,"%s",commas(pts,buf));
 
 		// --- current / max
