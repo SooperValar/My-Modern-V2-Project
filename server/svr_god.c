@@ -1691,6 +1691,9 @@ void god_build_cmd(int cn,char *arg)
 			do_char_log(cn,3,"#build <page>       go to that page\n");
 			do_char_log(cn,3,"#build next | prev  next / previous page\n");
 			do_char_log(cn,3,"#build end          stop, get your backpack back\n");
+			do_char_log(cn,3,"#undo               undo your last placement or area\n");
+			do_char_log(cn,3,"#tile               what is on the tile under the mouse\n");
+			do_char_log(cn,3,"#light              recompute lighting everywhere\n");
 			do_char_log(cn,3," \n");
 			do_char_log(cn,3,"Shift+click a piece: place one at a time. Right-click a piece: area mode, click two corners to fill.\n");
 			do_char_log(cn,3," \n");
@@ -1703,7 +1706,7 @@ void god_build_cmd(int cn,char *arg)
 	if (!strcasecmp(arg,"prev")) { god_build_equip(cn,ch[cn].data[CHD_BUILDPAGE]-1); return; }
 	if (isdigit(*arg)) { god_build_equip(cn,atoi(arg)); return; }
 	bp_collect();
-	do_char_log(cn,3,"You are on build page %d of %d. #build <page>, #build next, #build prev, #build end to stop.\n",ch[cn].data[CHD_BUILDPAGE],bp_pages()-1);
+	do_char_log(cn,3,"You are on build page %d of %d. #build <page>, #build next, #build prev, #build end to stop. #undo, #tile.\n",ch[cn].data[CHD_BUILDPAGE],bp_pages()-1);
 }
 
 void god_build(int cn,int x)

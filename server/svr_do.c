@@ -746,12 +746,20 @@ void do_help(int cn,char *topic)
 		do_char_log(cn,3,"#tavern                 log off quickly.\n");
 		do_char_log(cn,3," \n");
 	}
+	if (ch[cn].flags&(CF_CREATOR)) {
+		do_char_log(cn,3,"Builder Commands:\n");
+		do_char_log(cn,3," \n");
+		do_char_log(cn,3,"#build                  start build mode (explains the pages).\n");
+		do_char_log(cn,3,"#build <page>|next|prev go to a build page.\n");
+		do_char_log(cn,3,"#build end              stop building.\n");
+		do_char_log(cn,3,"#undo                   undo last build action.\n");
+		do_char_log(cn,3,"#tile [x y]             what is on a tile (mouse).\n");
+		do_char_log(cn,3,"#light                  recompute all lighting.\n");
+		do_char_log(cn,3," \n");
+	}
 	if (ch[cn].flags&(CF_GREATERGOD)) {
 		do_char_log(cn,3,"Greater God Commands:\n");
 		do_char_log(cn,3," \n");
-		do_char_log(cn,3,"#build [page|next|prev|end] build pages.\n");
-		do_char_log(cn,3,"#undo                   undo last build action.\n");
-		do_char_log(cn,3,"#tile [x y]             what is on a tile.\n");
                 do_char_log(cn,3,"#creator <player>       make player a Creator.\n");
                 do_char_log(cn,3,"#greatergod <player>    make player a G-God.\n");
                 do_char_log(cn,3,"#lookinv <player>       look for items.\n");
@@ -2289,7 +2297,7 @@ void do_command(int cn, char *ptr)
                 if (prefix(cmd,"temple") && f_giu)      { god_goto(cn,cn,"800","800"); return; };
                 if (prefix(cmd,"thrall") && f_giu)      { god_thrall(cn,arg[1],arg[2]); return; };
 		if (prefix(cmd,"time"))      		{ show_time(cn); return; };
-                if (!strcmp(cmd,"tile") && f_g)         { do_tile(cn,arg[1],arg[2]); return; };
+                if (!strcmp(cmd,"tile") && (f_g || f_c))         { do_tile(cn,arg[1],arg[2]); return; };
                 if (prefix(cmd,"tinfo") && f_g)         { god_tinfo(cn,atoi(arg[1])); return; };
                 if (prefix(cmd,"top") && f_g)           { god_top(cn); return; };		
                 if (prefix(cmd,"twohand"))              { do_info_twohand(cn); return; };
