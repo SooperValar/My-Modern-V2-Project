@@ -559,7 +559,7 @@ void hud_draw_v2(int init,unsigned short *mapmem,int map_x,int map_y)
 		hud_rows(HQ_X,HQ_Y,rows,HQ_W);
 		dd_puttext(HQ_X+6,HQ_Y+3,1,"Weapon value"); rtext(HQ_X+HQ_W-6,HQ_Y+3,1,"%d",pl.weapon);
 		dd_puttext(HQ_X+6,HQ_Y+HUD_ROW+3,1,"Armor value"); rtext(HQ_X+HQ_W-6,HQ_Y+HUD_ROW+3,1,"%d",pl.armor);
-		dd_puttext(HQ_X+6,HQ_Y+2*HUD_ROW+3,1,"Experience"); rtext(HQ_X+HQ_W-6,HQ_Y+2*HUD_ROW+3,1,"%d",pl.points_tot);
+		dd_puttext(HQ_X+6,HQ_Y+2*HUD_ROW+3,1,"Experience"); rtext(HQ_X+HQ_W-6,HQ_Y+2*HUD_ROW+3,1,"%s",commas(pl.points_tot,buf));
 		if (load) { dd_puttext(HQ_X+6,HQ_Y+3*HUD_ROW+3,1,"Server Load"); rtext(HQ_X+HQ_W-6,HQ_Y+3*HUD_ROW+3,1,"%d%%",load); }
 
 		// --- skill buttons and mode buttons
