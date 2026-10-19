@@ -29,7 +29,7 @@ void dd_showbar(int xf,int yf,int xs,int ys,unsigned short col);
 void copyspritex(int nr,int xpos,int ypos,int effect);
 void copyspritex_fit(int nr,int xpos,int ypos,int box,int effect);
 void dd_lowhp_glow(int xpos,int ypos,int xoff,int yoff,int pct,int limit);
-int lowhp_pct=25;	// client.ini [display] lowhp=, 0 = off
+int lowhp_hp=0;		// #lowhp <hp>: glow below this many hitpoints, 0 = off (client.ini [display] lowhp_hp)
 void dd_showbox(int xf,int yf,int xs,int ys,unsigned short col);
 void dd_alphaeffect_magic(int nr,int str,int xpos,int ypos,int xoff,int yoff);
 int get_avgcol(int nr);
@@ -1197,8 +1197,8 @@ void eng_display(int init)	// optimize me!!!!!
 				if (map[m].flags&INFRARED) tmp|=256;
 				if (map[m].flags&UWATER) tmp|=512;
 
-				if (x==TILEX/2 && y==TILEY/2 && map[m].obj2 && lowhp_pct && pl.hp[5]>0 && pl.a_hp>0 && pl.a_hp*100<pl.hp[5]*lowhp_pct)
-					dd_lowhp_glow(x*32,y*32,xoff+map[m].obj_xoff,yoff+map[m].obj_yoff,pl.a_hp*100/pl.hp[5],lowhp_pct);
+				if (x==TILEX/2 && y==TILEY/2 && map[m].obj2 && lowhp_hp && pl.a_hp>0 && pl.a_hp<lowhp_hp)
+					dd_lowhp_glow(x*32,y*32,xoff+map[m].obj_xoff,yoff+map[m].obj_yoff,pl.a_hp,lowhp_hp);
 				if (do_shadow) dd_shadow(map[m].obj2,x*32,y*32,xoff+map[m].obj_xoff,yoff+map[m].obj_yoff+4);
 				copysprite(map[m].obj2,map[m].light|tmp,x*32,y*32,xoff+map[m].obj_xoff,yoff+map[m].obj_yoff);				
 

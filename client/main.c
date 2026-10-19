@@ -552,7 +552,7 @@ static void load_display_settings(void)
 	else if (!fullscreen) fullscreen=GetPrivateProfileInt("display","fullscreen",0,ini_file);
 	smooth_scale=GetPrivateProfileInt("display","smooth",1,ini_file);
 	world_zoom=GetPrivateProfileInt("display","zoom",115,ini_file);
-	{ extern int lowhp_pct; lowhp_pct=GetPrivateProfileInt("display","lowhp",25,ini_file); if (lowhp_pct<0 || lowhp_pct>90) lowhp_pct=25; }
+	{ extern int lowhp_hp; lowhp_hp=GetPrivateProfileInt("display","lowhp_hp",0,ini_file); if (lowhp_hp<0) lowhp_hp=0; }
 	hud_theme=GetPrivateProfileInt("display","hud_theme",2,ini_file);
 }
 
@@ -821,6 +821,28 @@ LRESULT CALLBACK MainWndProc(HWND hWnd, UINT message,WPARAM wParam, LPARAM lPara
 					hist_nr=0;
 
 					add_words();
+
+					// #lowhp [hp]: handled here, not sent to the server
+					if ((input[0]=='/' || input[0]=='#') && !_strnicmp(input+1,"lowhp",5) && (input[6]==0 || input[6]==' ')) {
+						extern int lowhp_hp;
+						char *a=input+6;
+						while (*a==' ') a++;
+						if (!*a || !isdigit((unsigned char)*a)) {
+							xlog(1,"Low HP warning: a red glow under your character when your hitpoints drop below a number.");
+							xlog(1,"Please do /lowhp ## where ## is the hitpoints to trigger at. /lowhp 0 turns it off.");
+							if (lowhp_hp) xlog(2,"It is on now: below %d hitpoints.",lowhp_hp);
+							else xlog(2,"It is off now.");
+						} else {
+							char nb[16];
+							lowhp_hp=atoi(a);
+							if (lowhp_hp<0) lowhp_hp=0;
+							sprintf(nb,"%d",lowhp_hp);
+							WritePrivateProfileString("display","lowhp_hp",nb,ini_file);
+							if (lowhp_hp) xlog(2,"Low HP warning on: below %d hitpoints.",lowhp_hp);
+							else xlog(2,"Low HP warning off.");
+						}
+						break;
+					}
 
 					// #tile / /tile with no coordinates: use the map tile under the mouse
 					if ((!_stricmp(input,"/tile") || !_stricmp(input,"#tile")) && tile_x>=0 && tile_y>=0 && map) {
