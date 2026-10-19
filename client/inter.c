@@ -1139,6 +1139,7 @@ int hud_mouse(int x,int y,int state)
 
 	// stats: attributes/hp/end/mana (rows 0-7) and skills (rows 8-17)
 	lrow=-1;
+	if (in_rect(x,y,HS_X,HS_YH,HC_END,HS_HH-2)) return 1;	// header row
 	if (in_rect(x,y,HS_X,HS_Y,HC_END,HS_H1)) lrow=(y-HS_Y)/HUD_ROW;
 	else if (in_rect(x,y,HS_X,HS_Y2,HC_END+HC_SCR,HS_H2)) {
 		if (x>=HS_X+HC_END-2) {		// skill scroll column

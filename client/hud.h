@@ -25,9 +25,12 @@
 
 // stats panel blocks
 #define HS_X		0
-#define HS_Y		0
-#define HS_H1		(8*HUD_ROW+2)			// attributes + hp/end/mana
-#define HS_Y2		(HS_Y+HS_H1-2)			// skills block
+#define HS_YH		0				// header row: "Attribute / Skill  Base  Mod ... Cost"
+#define HS_HH		(HUD_ROW+2)
+#define HS_Y		(HS_YH+HS_HH-2)			// attributes + hp/end/mana
+#define HS_H1		(8*HUD_ROW+2)
+#define HS_GAP		5				// space between attributes and skills
+#define HS_Y2		(HS_Y+HS_H1+HS_GAP)		// skills block
 #define HS_H2		(10*HUD_ROW+2)
 #define HS_Y3		(HS_Y2+HS_H2-2)			// update row
 #define HS_H3		(HUD_ROW+2)
@@ -129,6 +132,7 @@ static int in_rect(int x,int y,int rx,int ry,int rw,int rh) { return x>=rx && y>
 // presenter at full window resolution (canvas units, see dd.c)
 #define HUD_RGB_PANEL	0x1F1F22	// deep grey
 #define HUD_RGB_LINE	0x7E6F48	// tan
+#define HUD_RGB_BOX	0x2C2C30	// scroll buttons, a shade lighter than the panels
 #define VOP_FILL	0
 #define VOP_HLINE	1	// a band of h canvas rows starting at y, drawn as one crisp line
 #define VOP_VLINE	2	// a band of w canvas columns starting at x
@@ -138,6 +142,7 @@ struct hud_vop { short x,y,w,h; unsigned char type; unsigned int rgb; };
 int dd_hud_vops(struct hud_vop **p);
 int dd_hud_vhit(int x,int y);
 void dd_hud_vtri(int x,int y,int w,int h,int down);
+void dd_hud_vfill(int x,int y,int w,int h,unsigned int rgb);
 extern int hud_theme;
 
 #endif

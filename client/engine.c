@@ -383,6 +383,23 @@ static void button_label(int n,char *out)
 }
 
 // one row of the stats panel
+// 8100 -> "8,100"
+static char *commas(int v,char *out)
+{
+	char tmp[20];
+	int n,len,k=0;
+
+	sprintf(tmp,"%d",v<0 ? -v : v);
+	len=(int)strlen(tmp);
+	if (v<0) out[k++]='-';
+	for (n=0; n<len; n++) {
+		if (n && (len-n)%3==0) out[k++]=',';
+		out[k++]=tmp[n];
+	}
+	out[k]=0;
+	return out;
+}
+
 static void hud_stat_row(int x,int y,const char *name,int base,int total,int can_raise,int raised,int cost)
 {
 	char buf[20];
@@ -393,9 +410,9 @@ static void hud_stat_row(int x,int y,const char *name,int base,int total,int can
 	dd_puttext(x+6,y+3,1,buf);
 	rtext(x+HC_TOT-5,y+3,3,"%d",base);
 	rtext(x+HC_PLUS-5,y+3,1,"%d",total);
-	if (can_raise) dd_putc(x+HC_PLUS+3,y+3,1,'+');
-	if (raised) dd_putc(x+HC_MINUS+3,y+3,1,'-');
-	if (cost!=HIGH_VAL) rtext(x+HC_END-5,y+3,1,"%d",cost);
+	if (can_raise) dd_putc(x+HC_PLUS+3,y+3,2,'+');		// green
+	if (raised) dd_putc(x+HC_MINUS+3,y+3,0,'-');		// red
+	if (cost!=HIGH_VAL) rtext(x+HC_END-5,y+3,1,"%s",commas(cost,buf));
 }
 
 static void hud_cols(int x,int y,int h)
@@ -418,7 +435,11 @@ static void hud_scroll(int x,int y,int h,int pos,int maxpos)
 	extern int hud_theme;
 	int o=(hud_theme==2) ? 1 : 0;	// clean theme: lines are 1 pixel in the middle of the old 2 pixel band
 
-	if (o) {	// clean theme: uniform triangles, drawn at full resolution
+	if (o) {	// clean theme: arrow buttons in their own boxes, uniform triangles
+		dd_hud_vfill(x+1,y+1,13,12,HUD_RGB_BOX);
+		dd_hud_hline(x,y+12,14);
+		dd_hud_vfill(x+1,y+h-14,13,12,HUD_RGB_BOX);
+		dd_hud_hline(x,y+h-15,14);
 		dd_hud_vtri(x+3,y+4,8,5,0);
 		dd_hud_vtri(x+3,y+h-10,8,5,1);
 	} else {
@@ -460,8 +481,17 @@ void hud_draw_v2(int init,unsigned short *mapmem,int map_x,int map_y)
 	if (init) {
 		pts=pl.points-stat_points_used;
 
+		// --- header row
+		x=HS_X;
+		dd_hud_panel(x,HS_YH,HC_END,HS_HH);
+		hud_cols(x,HS_YH,HS_HH);
+		dd_puttext(x+6,HS_YH+3,1,"Attribute/Skill");
+		rtext(x+HC_TOT-5,HS_YH+3,3,"Base");
+		rtext(x+HC_PLUS-5,HS_YH+3,1,"Mod");
+		rtext(x+HC_END-5,HS_YH+3,1,"Cost");
+
 		// --- stats: attributes and hp/end/mana
-		x=HS_X; y=HS_Y;
+		y=HS_Y;
 		dd_hud_panel(x,y,HC_END,HS_H1);
 		hud_cols(x,y,HS_H1);
 		hud_rows(x,y,8,HC_END);
@@ -494,7 +524,7 @@ void hud_draw_v2(int init,unsigned short *mapmem,int map_x,int map_y)
 		dd_hud_panel(x+HC_TOT-2,HS_Y3,HC_END-HC_TOT+2,HS_H3);
 		dd_hud_vline(x+HC_COST-2,HS_Y3,HS_H3);
 		dd_puttext(x+HC_TOT+4,HS_Y3+4,1,"Update");
-		rtext(x+HC_END-5,HS_Y3+4,1,"%d",pts);
+		rtext(x+HC_END-5,HS_Y3+4,1,"%s",commas(pts,buf));
 
 		// --- current / max
 		dd_hud_panel(x,HS_Y4,HS_W4,HS_H4);
