@@ -3543,8 +3543,15 @@ int step_portal_arena(int cn,int in)
         if (flag) {
                 do_char_log(cn,1,"A winner! You gain one arena-rank!\n");
                 ch[cn].data[22]++;
-                ch[cn].data[23]=1;
+                // (the original also wrote data[23] here, which is the player's
+                // "kills below own rank" counter - removed)
                 return 1;
+        }
+
+        // lost a fight here recently (see do_char_killed): wait a bit
+        if (ch[cn].data[CHD_ARENALOCK]>globs->ticker) {
+                do_char_log(cn,1,"You should try again after becoming stronger.\n");
+                return -1;
         }
 
         nr=ch[cn].data[22];
@@ -3574,8 +3581,14 @@ int step_portal_arena(int cn,int in)
         }
 
         co=pop_create_char(nr,0);
+        if (!co) {
+                do_char_log(cn,1,"Please tell the gods that the arena isn't working.\n");
+                return -1;
+        }
         if (!god_drop_char_fuzzy(co,it[in].data[0]%MAPX,it[in].data[0]/MAPX)) {
                 do_char_log(cn,1,"Please tell the gods that the arena isn't working.\n");
+                god_destroy_items(co);          // the original left this character lying around
+                ch[co].used=USE_EMPTY;
                 return -1;
         }
 
@@ -3583,8 +3596,6 @@ int step_portal_arena(int cn,int in)
 
         in=god_create_item(687);
         god_give_char(in,co);
-
-        ch[cn].data[23]=0;
 
         return 1;
 }

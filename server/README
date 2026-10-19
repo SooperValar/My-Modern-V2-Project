@@ -64,6 +64,7 @@ usage of data for players:
 70:	number of fire points
 71:     number of says/tells/looks/lights
 72:     bad word score
+79:     arena of rank: no new challenge before this tick (CHD_ARENALOCK)
 
 80-89:	seen logging in from these class C nets
 

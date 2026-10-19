@@ -2276,6 +2276,15 @@ void do_char_killed(int cn,int co)
         mf=map[ch[co].x+ch[co].y*MAPX].flags;
         if (cn) mf&=map[ch[cn].x+ch[cn].y*MAPX].flags;
 
+        // the arena of rank (step_portal_arena): a player beaten by his arena
+        // opponent dies an arena death (keeps everything), but may not
+        // challenge again for 5 minutes
+        if (cn && (ch[co].flags&CF_PLAYER) && ch[cn].temp>=364 && ch[cn].temp<=381) {
+                mf|=MF_ARENA;
+                ch[co].data[CHD_ARENALOCK]=globs->ticker+TICKS*60*5;
+                do_char_log(co,1,"You lost the arena fight. You keep all your items, but you may not challenge the arena again for 5 minutes.\n");
+        }
+
         // hack for grolms:
         if (ch[co].temp>=364 && ch[co].temp<=374) {
                 do_area_sound(co,0,ch[co].x,ch[co].y,17);
