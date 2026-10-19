@@ -3315,17 +3315,17 @@ void really_update_char(int cn)
 
         hp=(int)ch[cn].hp[0]+(int)ch[cn].hp[1]+hp;
         if (hp<10) hp=10;
-        if (hp>999) hp=999;
+        if (hp>9999) hp=9999;	// was 999
         ch[cn].hp[5]=hp;
 
         end=(int)ch[cn].end[0]+(int)ch[cn].end[1]+end;
         if (end<10) end=10;
-        if (end>999) end=999;
+        if (end>9999) end=9999;	// was 999
         ch[cn].end[5]=end;
 
         mana=(int)ch[cn].mana[0]+(int)ch[cn].mana[1]+mana;
         if (mana<10) mana=10;
-        if (mana>999) mana=999;
+        if (mana>9999) mana=9999;	// was 999
         ch[cn].mana[5]=mana;
 
         if (ch[cn].flags&(CF_PLAYER)) {
