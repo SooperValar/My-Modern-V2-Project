@@ -1268,6 +1268,40 @@ void copyspritex(int nr,int xpos,int ypos,int effect)
 	if (sprtab[nr].alpha) display_alpha(sprtab[nr].alpha,sprtab[nr].alphacnt,xpos,ypos,effect);
 }
 
+// draw a sprite shrunk to fit a box of box x box pixels (for big pieces in
+// the backpack, e.g. walls and trees in build mode); small sprites as usual
+void copyspritex_fit(int nr,int xpos,int ypos,int box,int effect)
+{
+	int w,h,dw,dh,x,y,sx,sy,ox,oy;
+	unsigned short *dst,v;
+
+	if (nr==0) return;
+	if (!sprtab[nr].image) dd_load_sprite(nr);
+	if (!sprtab[nr].image) return;
+	if (sprtab[nr].xs<=1 && sprtab[nr].ys<=1) { copyspritex(nr,xpos,ypos,effect); return; }
+
+	w=sprtab[nr].xs*32; h=sprtab[nr].ys*32;
+	sprtab[nr].ticker=current_tick;
+	if (w>=h) { dw=box; dh=h*box/w; } else { dh=box; dw=w*box/h; }
+	if (dw<1 || dh<1) return;
+	ox=xpos+(box-dw)/2; oy=ypos+(box-dh);		// centred, standing on the bottom of the box
+
+	dst=dd_get_ptr(sur2);
+	if (!dst) return;
+	for (y=0; y<dh; y++) {
+		if (oy+y<0 || oy+y>=MAXY) continue;
+		sy=y*h/dh;
+		for (x=0; x<dw; x++) {
+			if (ox+x<0 || ox+x>=MAXX) continue;
+			sx=x*w/dw;
+			v=sprtab[nr].image[sx+sy*w];
+			if (v==0xF81F) continue;
+			if (effect&16) v=(unsigned short)(((v>>1)&0x7BEF)+0x39E7);	// highlighted
+			dst[(ox+x)+(oy+y)*MAXX]=v;
+		}
+	}
+}
+
 void dd_savescreen(void)
 {
 	static int lasttime=0;

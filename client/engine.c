@@ -27,6 +27,7 @@ void copysprite(int nr,int effect,int x,int y,int xoff,int yoff);
 void dd_flip(void);
 void dd_showbar(int xf,int yf,int xs,int ys,unsigned short col);
 void copyspritex(int nr,int xpos,int ypos,int effect);
+void copyspritex_fit(int nr,int xpos,int ypos,int box,int effect);
 void dd_showbox(int xf,int yf,int xs,int ys,unsigned short col);
 void dd_alphaeffect_magic(int nr,int str,int xpos,int ypos,int xoff,int yoff);
 int get_avgcol(int nr);
@@ -541,7 +542,7 @@ void hud_draw_v2(int init,unsigned short *mapmem,int map_x,int map_y)
 		for (r=1; r<HB_ROWS; r++) dd_hud_hline(HB_X,HB_Y+r*HB_SLOT,HB_COLS*HB_SLOT+2);
 		for (n=0; n<HB_VISIBLE; n++) {
 			if (!pl.item[n+inv_pos]) continue;
-			copyspritex(pl.item[n+inv_pos],HB_X+2+(n%HB_COLS)*HB_SLOT,HB_Y+2+(n/HB_COLS)*HB_SLOT,
+			copyspritex_fit(pl.item[n+inv_pos],HB_X+2+(n%HB_COLS)*HB_SLOT,HB_Y+2+(n/HB_COLS)*HB_SLOT,32,
 				(hightlight==HL_BACKPACK && hightlight_sub==n+(signed)inv_pos) ? 16 : 0);
 		}
 		hud_scroll(HB_X+HB_COLS*HB_SLOT+1,HB_Y,HB_H,inv_pos,HB_MAXPOS);
