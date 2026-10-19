@@ -1300,6 +1300,7 @@ void copyspritex_fit(int nr,int xpos,int ypos,int box,int effect)
 			dst[(ox+x)+(oy+y)*MAXX]=v;
 		}
 	}
+	dd_release_ptr(sur2);
 }
 
 void dd_savescreen(void)
