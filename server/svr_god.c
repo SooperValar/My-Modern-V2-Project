@@ -1577,15 +1577,29 @@ void god_build_equip(int cn, int x)
 
                 if (x<1) x=1;
 
-        /* fill inventory with other stuff upward from last item */
+        /* fill inventory with other stuff upward from last item.
+           Not for the ground/flag sets 0-3: they used to get templates 1, 2, 3..
+           appended, i.e. almost the same list in every mode. Templates that look
+           the same as one already listed (same name and picture) are skipped. */
+		if (x>=4) {
                 for (n=x; n<MAXTITEM && m<40; n++) {
+                        int k,dup;
                         if (it_temp[n].used==USE_EMPTY) continue;
                         if (it_temp[n].flags&IF_TAKE) continue;
                         if (it_temp[n].driver==25 && it_temp[n].data[3]==0) continue;
                         if (it_temp[n].driver==22) continue;
+                        for (dup=0,k=0; k<m; k++) {
+                                int t=ch[cn].item[k];
+                                if (t<=0 || (t&0x60000000) || t>=MAXTITEM) continue;
+                                if (it_temp[t].sprite[0]==it_temp[n].sprite[0] && !strcmp(it_temp[t].name,it_temp[n].name)) { dup=1; break; }
+                        }
+                        if (dup) continue;
                         ch[cn].item[m]=n;
                         m++;
                 }
+		do_char_log(cn,3,"Templates from %d to %d. #build %d for the next ones.\n",x,n-1,n);
+		}
+		while (m<40) ch[cn].item[m++]=0;	// nothing left over from the previous mode
 
         chlog(cn,"Now in build mode %d",x);
         do_char_log(cn, 3, "Build mode %d\n", x);
