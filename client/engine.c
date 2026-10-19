@@ -676,8 +676,9 @@ void eng_display_win(int plr_sprite,int init)
 		if (pdata.show_names) dd_showbox(704,569,45,12,(unsigned short)(RED));
 		if (pdata.hide)	      dd_showbox(656,569,45,12,(unsigned short)(RED));
 
-		// inventory
-		for (n=0; n<10; n++) {
+		// inventory (the new HUD draws its own backpack; drawing it here too
+		// lets big build-mode pieces spill into the gold buttons it copies)
+		for (n=0; n<10 && !hud_cw; n++) {
 			if (pl.item[n+inv_pos]) {
 				if (hightlight==HL_BACKPACK && hightlight_sub==n+(signed)inv_pos)
 					copyspritex(pl.item[n+inv_pos],220+(n%2)*35,2+(n/2)*35,16);
