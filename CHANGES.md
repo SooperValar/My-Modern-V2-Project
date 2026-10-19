@@ -148,6 +148,7 @@ New player commands (also with `/`): `#armor`, `#weapon`, `#sword`, `#dagger`, `
 - Armor and weapon value cap raised from 250 to 9999. Skills and spells keep their original limits.
 - A huge sapphire on a silver ring now gives the correct "too powerful" message (a 499 → 489 typo).
 - Spell slots are bounds-checked against `MAXITEM`.
+- Female Templars raised Heal at cost class 7 while male Templars paid 3 (a template data error). Every Templar and Arch-Templar now gets the cheap rate, applied automatically to existing characters.
 
 ### Tools
 - **`tools/claude-sync.sh`** syncs the server between Ubuntu (WSL) and the Windows copy: `send` (Ubuntu → Windows, keeps any newer Windows files), `get` (changed source files Windows → Ubuntu, with a backup, then `make server`), and `get-world` (world `.dat` files, server stopped).

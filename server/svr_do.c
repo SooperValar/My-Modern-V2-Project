@@ -3348,6 +3348,9 @@ void really_update_char(int cn)
                 }
         }
 
+        // Heal cost fix: the female Templar template had Heal at cost class 7, males 3
+        if ((ch[cn].kindred&(KIN_TEMPLAR|KIN_ARCHTEMPLAR)) && ch[cn].skill[SK_HEAL][3]==7) ch[cn].skill[SK_HEAL][3]=3;
+
         for (z=0; z<50; z++) {
                 skill[z]=(int)ch[cn].skill[z][0]+(int)ch[cn].skill[z][1]+skill[z];
 
