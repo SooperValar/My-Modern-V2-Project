@@ -649,6 +649,7 @@ void do_help(int cn,char *topic)
 	do_char_log(cn,1,"#lag <seconds>         lag control.\n");
 	do_char_log(cn,1,"#moddedarmor           of the Lion, Snake, ...\n");
 	do_char_log(cn,1,"#noshout               you won't hear shouts.\n");
+	do_char_log(cn,1,"#rings                 all rings and gems.\n");
 	do_char_log(cn,1,"#notell                you won't hear tells.\n");
 	do_char_log(cn,1,"#seen <player>         when last seen here?.\n");
 	do_char_log(cn,1,"#shout <text>          to all players.\n");
@@ -1475,7 +1476,7 @@ void do_become_skua(int cn)
 }
 
 /* ---- information commands: #armor #weapon #sword #dagger #twohand #axe
- *      #specialw #belt #specialarmor #moddedarmor
+ *      #specialw #belt #specialarmor #moddedarmor #rings
  * The numbers are read from the item templates (it_temp), so the tables stay
  * correct if a template is changed. The chat is 64 characters wide.
  */
@@ -1771,6 +1772,70 @@ void do_info_specialarmor(int cn)
 	do_char_log(cn,2,"* Needs: \"all 30\" = 30 in every attribute, HEM = Hitpoints, Endurance and Mana.\n");
 }
 
+// ring bonus as text: "WI +3", "all +2", "-" ; v = attrib[x][0] or [1]
+static void info_ringbonus(int t,int act,char *out)
+{
+	int k,all=1,v;
+	char tmp[20];
+
+	out[0]=0;
+	v=it_temp[t].attrib[0][act];
+	for (k=1; k<5; k++) if (it_temp[t].attrib[k][act]!=v) all=0;
+	if (all && v) { sprintf(out,"all %+d",v); return; }
+	for (k=0; k<5; k++) if (it_temp[t].attrib[k][act]) { sprintf(tmp,"%s%s %+d",out[0] ? " " : "",info_at2[k],it_temp[t].attrib[k][act]); strcat(out,tmp); }
+	if (!out[0]) strcpy(out,"-");
+}
+
+void do_info_rings(int cn)
+{
+	// plain ring + stone -> ring (see build_ring() in use_driver.c)
+	static char *stone[3]={"Ruby","Emerald","Sapphire"};
+	static char *size[4]={"Small","Medium","Big","Huge"};
+	static int gold[3][4]={{362,363,364,490},{365,366,367,491},{368,369,370,492}};
+	static int silver[3][4]={{348,349,350,0},{351,352,353,0},{354,355,356,0}};
+	int s,z,tg,ts;
+	char name[30],sv[30],gv[40],tmp[30],rank[8];
+
+	do_char_log(cn,1,"Now listing rings:\n");
+	do_char_log(cn,1," \n");
+	do_char_log(cn,1," Stone           | Rank | Silver ring  | Golden ring\n");
+	do_char_log(cn,1,"-----------------+------+--------------+-------------------\n");
+	for (s=0; s<3; s++) {
+		for (z=0; z<4; z++) {
+			tg=gold[s][z]; ts=silver[s][z];
+			if (it_temp[tg].used==USE_EMPTY) continue;
+			sprintf(name,"%s %s",size[z],stone[s]);
+
+			if (ts && it_temp[ts].used!=USE_EMPTY) { info_ringbonus(ts,1,tmp); sprintf(sv,"%s *",tmp); }
+			else strcpy(sv,"  (no)");
+
+			info_ringbonus(tg,0,gv);
+			if ((it_temp[tg].flags&IF_USEACTIVATE) && it_temp[tg].attrib[0][1]+it_temp[tg].attrib[1][1]+it_temp[tg].attrib[2][1]+it_temp[tg].attrib[3][1]+it_temp[tg].attrib[4][1]) {
+				info_ringbonus(tg,1,tmp);
+				strcat(gv," / "); strcat(gv,tmp); strcat(gv," *");
+			}
+
+			if (it_temp[tg].min_rank>0) {
+				char *p=who_rank_name[(int)it_temp[tg].min_rank];
+				while (*p==' ') p++;
+				sprintf(rank,"%.5s",p);
+				if (rank[strlen(rank)-1]==' ') rank[strlen(rank)-1]=0;
+			} else strcpy(rank,"-");
+
+			do_char_log(cn,1," %-15s | %-4s | %-12s | %s\n",name,rank,sv,gv);
+		}
+		if (s<2) do_char_log(cn,1,"                 |      |              |\n");
+	}
+	do_char_log(cn,1," \n");
+	if (it_temp[1201].used!=USE_EMPTY)
+		do_char_log(cn,1,"The Ring of the Prophets (needs %s): +%d to 14 spells, +%d while used *.\n",
+			rank_name[(int)it_temp[1201].min_rank],it_temp[1201].skill[SK_MSHIELD][0],it_temp[1201].skill[SK_MSHIELD][1]);
+	do_char_log(cn,1," \n");
+	do_char_log(cn,2,"* Only while the ring is used (switched on), and it wears out while on. Golden rings work all the time; the Huge ones give the second value while used.\n");
+	do_char_log(cn,2,"* To make a ring, use a plain Silver or Golden Ring while holding the stone. Huge stones only fit golden rings.\n");
+	do_char_log(cn,2,"* Cpl = Corporal, MSg = Master Sergeant, SgM = Sergeant Major.\n");
+}
+
 void do_info_moddedarmor(int cn)
 {
 	do_char_log(cn,1,"Magic helmets and armor:\n");
@@ -1974,6 +2039,7 @@ void do_command(int cn, char *ptr)
                 if (prefix(cmd,"raise") && f_giu)       { god_raise_char(cn,dbatoi_self(cn,arg[1]),atoi(arg[2])); return; };
                 if (prefix(cmd,"recall") && f_giu)      { god_goto(cn,cn,"512","512"); return; };
                 if (prefix(cmd,"respawn") && f_giu)     { do_respawn(cn,atoi(arg[1])); return; };
+                if (prefix(cmd,"rings"))                { do_info_rings(cn); return; };
                 break;
         case 's':
                 if (prefix(cmd,"s"))                    { break; };
