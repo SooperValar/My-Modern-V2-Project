@@ -105,6 +105,9 @@ A new HUD drawn on its own canvas (window size ÷ 1.5) and composited over the w
 - **Experience** total is shown with commas.
 - **Backpack**: big pieces (walls, trees and other build-mode objects) are shrunk to fit their slot instead of spilling over neighbours. The old 800×600 backpack is no longer drawn under the new HUD, which had leaked big pieces into the gold buttons.
 - **Fixed skills** (known, but with a maximum of 1, like a Templar's Meditate) sit at the bottom of the skill list in red, with no raise button or cost.
+- **Buff timers**: a small panel between the character panel and the chat lists every spell on you with the time left (m:ss, or h:mm:ss). Harmful spells (curse, stun, warcry) are red, and a buff's time turns red in its last 30 seconds. The server sends a new 20-byte `SV_SPELLTIME` packet (74) with each spell update; the client counts down between updates. The panel is hidden when the window is too narrow for it.
+- **Low hitpoints**: below 25% HP a soft red glow pulses on the ground under your character, a little stronger the lower you go. `lowhp=` in `client.ini` `[display]` sets the percentage (0 turns it off).
+- **Hotkeys**: Ctrl+1 to Ctrl+9, Ctrl+0, Ctrl+- and Ctrl+= fire skill buttons 1-12 (left to right, top to bottom), next to the original Shift/Ctrl+F1-F12.
 - **Logging out**: the window stays open with an **Exit** button and an 8-second countdown, then closes by itself; Exit closes it sooner. The connection is closed quietly after the server's logout message.
 
 The original 800×600 HUD code still runs in the background (it owns the game state the panels read). Only its presentation is replaced.

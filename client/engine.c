@@ -28,6 +28,8 @@ void dd_flip(void);
 void dd_showbar(int xf,int yf,int xs,int ys,unsigned short col);
 void copyspritex(int nr,int xpos,int ypos,int effect);
 void copyspritex_fit(int nr,int xpos,int ypos,int box,int effect);
+void dd_lowhp_glow(int xpos,int ypos,int xoff,int yoff,int pct,int limit);
+int lowhp_pct=25;	// client.ini [display] lowhp=, 0 = off
 void dd_showbox(int xf,int yf,int xs,int ys,unsigned short col);
 void dd_alphaeffect_magic(int nr,int str,int xpos,int ypos,int xoff,int yoff);
 int get_avgcol(int nr);
@@ -441,6 +443,41 @@ static void hud_rows(int x,int y,int n,int w)
 	for (i=1; i<n; i++) dd_hud_hline(x,y+i*HUD_ROW,w);
 }
 
+static void hud_buffs(void)
+{
+	int n,cnt=0,x,w,y,left,font,idx[20];
+	unsigned int now=GetTickCount();
+	char tb[16],nb[16];
+
+	x=HL_X+HL_LW+2;
+	w=HCH_X-2-x;
+	if (w>170) { x+=(w-170)/2; w=170; }	// centered in a wide gap
+	if (w<90) return;			// window too narrow
+
+	for (n=0; n<20; n++) {
+		if (!pl.spell[n] || !buff[n].name[0]) continue;
+		left=(int)buff[n].secs-(int)((now-buff[n].at)/1000);
+		if (left<0) left=0;
+		idx[cnt++]=n;
+	}
+	if (!cnt) return;
+
+	y=0;
+	dd_hud_panel(x,y,w,cnt*HUD_ROW+2);
+	hud_rows(x,y,cnt,w);
+	for (n=0; n<cnt; n++) {
+		int s=idx[n];
+		left=(int)buff[s].secs-(int)((now-buff[s].at)/1000);
+		if (left<0) left=0;
+		if (left>=3600) sprintf(tb,"%d:%02d:%02d",left/3600,left/60%60,left%60);
+		else sprintf(tb,"%d:%02d",left/60,left%60);
+		font=(buff[s].flags&1) ? 0 : 1;	// harmful in red
+		strncpy(nb,buff[s].name,15); nb[(w-50)/6<15 ? (w-50)/6 : 15]=0;
+		dd_puttext(x+6,y+n*HUD_ROW+3,font,nb);
+		rtext(x+w-6,y+n*HUD_ROW+3,(left<30 && !(buff[s].flags&1)) ? 0 : font,"%s",tb);	// about to run out: red
+	}
+}
+
 static void hud_scroll(int x,int y,int h,int pos,int maxpos)
 {
 	extern int hud_theme;
@@ -580,6 +617,9 @@ void hud_draw_v2(int init,unsigned short *mapmem,int map_x,int map_y)
 		dd_puttext(HQ_X+6,HQ_Y+HUD_ROW+3,1,"Armor value"); rtext(HQ_X+HQ_W-6,HQ_Y+HUD_ROW+3,1,"%d",pl.armor);
 		dd_puttext(HQ_X+6,HQ_Y+2*HUD_ROW+3,1,"Experience"); rtext(HQ_X+HQ_W-6,HQ_Y+2*HUD_ROW+3,1,"%s",commas(pl.points_tot,buf));
 		if (load) { dd_puttext(HQ_X+6,HQ_Y+3*HUD_ROW+3,1,"Server Load"); rtext(HQ_X+HQ_W-6,HQ_Y+3*HUD_ROW+3,1,"%d%%",load); }
+
+		// --- buff timers, in the gap between the character panel and the chat
+		hud_buffs();
 
 		// --- skill buttons and mode buttons
 		{
@@ -1157,6 +1197,8 @@ void eng_display(int init)	// optimize me!!!!!
 				if (map[m].flags&INFRARED) tmp|=256;
 				if (map[m].flags&UWATER) tmp|=512;
 
+				if (x==TILEX/2 && y==TILEY/2 && map[m].obj2 && lowhp_pct && pl.hp[5]>0 && pl.a_hp>0 && pl.a_hp*100<pl.hp[5]*lowhp_pct)
+					dd_lowhp_glow(x*32,y*32,xoff+map[m].obj_xoff,yoff+map[m].obj_yoff,pl.a_hp*100/pl.hp[5],lowhp_pct);
 				if (do_shadow) dd_shadow(map[m].obj2,x*32,y*32,xoff+map[m].obj_xoff,yoff+map[m].obj_yoff+4);
 				copysprite(map[m].obj2,map[m].light|tmp,x*32,y*32,xoff+map[m].obj_xoff,yoff+map[m].obj_yoff);				
 

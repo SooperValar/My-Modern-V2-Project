@@ -1755,6 +1755,52 @@ void dd_invalidate_alpha(void)
 
 static unsigned char *shadowmap;
 
+/* low hitpoints: a soft red glow on the ground under our character, slowly
+ * pulsing, a little stronger the lower the hitpoints are. */
+void dd_lowhp_glow(int xpos,int ypos,int xoff,int yoff,int pct,int limit)
+{
+	int rx,ry,cx,cy,x,y,r,g,b,a,amax;
+	unsigned short *dst,v;
+	double d,ph;
+	const int RX=30,RY=15;
+
+	rx=(xpos/2)+(ypos/2)-16+32+XPOS-((TILEX-34)/2*32);
+	if (xpos<0 && (xpos&1)) rx--;
+	if (ypos<0 && (ypos&1)) rx--;
+	ry=(xpos/4)-(ypos/4)+YPOS-32;
+	if (xpos<0 && (xpos&3)) ry--;
+	if (ypos<0 && (ypos&3)) ry++;
+	cx=rx+xoff+16;
+	cy=ry+yoff+32-8;	// middle of the floor diamond
+
+	// strength: 35..90 (of 256) depending on how low, pulsing over ~1.6 seconds
+	amax=35+55*(limit-pct)/max(1,limit);
+	ph=0.65+0.35*sin(GetTickCount()/1600.0*6.2832);
+	amax=(int)(amax*ph);
+
+	dst=dd_get_ptr(sur2);
+	if (!dst) return;
+	for (y=cy-RY; y<=cy+RY; y++) {
+		if (y<0 || y>=MAXY) continue;
+		for (x=cx-RX; x<=cx+RX; x++) {
+			if (x<0 || x>=MAXX) continue;
+			d=((double)(x-cx)*(x-cx))/(RX*RX)+((double)(y-cy)*(y-cy))/(RY*RY);
+			if (d>=1.0) continue;
+			a=(int)(amax*(1.0-d)*(1.0-d));
+			if (a<=0) continue;
+			v=dst[x+y*MAXX];
+			if (RGBM==0) { r=v>>11; g=(v>>5)&63; b=v&31; }
+			else { r=(v>>10)&31; g=((v>>5)&31)<<1; b=v&31; }
+			r+=((31-r)*a)>>8;
+			g-=(g*a)>>9;
+			b-=(b*a)>>9;
+			if (RGBM==0) dst[x+y*MAXX]=(unsigned short)((r<<11)|(g<<5)|b);
+			else dst[x+y*MAXX]=(unsigned short)((r<<10)|((g>>1)<<5)|b);
+		}
+	}
+	dd_release_ptr(sur2);
+}
+
 void dd_shadow_clear(void)
 {
 	if (!shadowmap) shadowmap=calloc(SCREEN_W,SCREEN_H);

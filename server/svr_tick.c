@@ -1657,6 +1657,18 @@ void plr_change(int nr)
 					cpl->active[n]=0;
 				}
 				xsend(nr,buf,9);
+
+				// time left, for the client's buff timers
+				buf[0]=SV_SPELLTIME;
+				buf[1]=(unsigned char)n;
+				memset(buf+2,0,18);
+				if (in) {
+					int left=it[in].active/TICKS, t=it[in].temp;
+					*(unsigned short*)(buf+2)=(unsigned short)min(65535,max(0,left));
+					buf[4]=(t==SK_CURSE || t==SK_STUN || t==SK_WARCRY || t==SK_WARCRY2) ? 1 : 0;
+					strncpy((char*)buf+5,it[in].name,15);
+				}
+				xsend(nr,buf,20);
 			}
 		}
 	

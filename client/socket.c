@@ -12,6 +12,7 @@
 struct z_stream_s zs;
 
 #include "common.h"
+#include "hud.h"
 #include "inter.h"
 #include "merc.rh"
 #include "dd.h"
@@ -524,6 +525,21 @@ void sv_setchar_spell(unsigned char *buf)
 	pl.active[n]=*(short int*)(buf+7);
 }
 
+// remaining time of the spell in slot n (for the buff timers)
+struct buffinfo buff[20];
+
+int sv_spelltime(unsigned char *buf)
+{
+	int n=buf[1];
+
+	if (n<0 || n>19) return 20;
+	buff[n].secs=*(unsigned short*)(buf+2);
+	buff[n].flags=buf[4];
+	memcpy(buff[n].name,buf+5,15); buff[n].name[15]=0;
+	buff[n].at=GetTickCount();
+	return 20;
+}
+
 void sv_setchar_obj(unsigned char *buf)
 {
 	DEBUG("SV SETCHAR OBJ");
@@ -968,6 +984,7 @@ int sv_cmd(unsigned char *buf)
 
 		case  	SV_UNIQUE:             	sv_unique(buf); return 9;
 		case 	SV_IGNORE:		return sv_ignore(buf);
+		case	SV_SPELLTIME:		return sv_spelltime(buf);
 
 		default: 			xlog(0,"Unknown SV: %d",buf[0]); dbg_log("unknown server command %d",buf[0]); return -1;
 	}

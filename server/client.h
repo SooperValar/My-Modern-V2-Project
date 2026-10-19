@@ -231,6 +231,7 @@ struct cplayer
 #define SV_SETCHAR_DIR		71
 #define SV_UNIQUE		72
 #define SV_IGNORE		73
+#define SV_SPELLTIME		74	// slot, seconds left, flags, name: 20 bytes
 
 #define SV_SETMAP		128	// 128-255 are used !!!
 

@@ -552,6 +552,7 @@ static void load_display_settings(void)
 	else if (!fullscreen) fullscreen=GetPrivateProfileInt("display","fullscreen",0,ini_file);
 	smooth_scale=GetPrivateProfileInt("display","smooth",1,ini_file);
 	world_zoom=GetPrivateProfileInt("display","zoom",115,ini_file);
+	{ extern int lowhp_pct; lowhp_pct=GetPrivateProfileInt("display","lowhp",25,ini_file); if (lowhp_pct<0 || lowhp_pct>90) lowhp_pct=25; }
 	hud_theme=GetPrivateProfileInt("display","hud_theme",2,ini_file);
 }
 
@@ -666,6 +667,15 @@ LRESULT CALLBACK MainWndProc(HWND hWnd, UINT message,WPARAM wParam, LPARAM lPara
 			if (wParam==VK_F4 && (GetKeyState(VK_MENU)&0x8000)) { cmd_exit(); break; }
 			/* fall through: F10 arrives as a system key */
 		case WM_KEYDOWN:
+			// Ctrl+1..9, 0, -, = : skill buttons 1-12 (left to right, top to bottom)
+			if ((keys&2) && !(keys&1)) {
+				int b=-1;
+				if (wParam>='1' && wParam<='9') b=(int)wParam-'1';
+				else if (wParam=='0') b=9;
+				else if (wParam==VK_OEM_MINUS) b=10;
+				else if (wParam==VK_OEM_PLUS) b=11;
+				if (b>=0) { if (!(lParam&(1<<30))) button_command(16+b); break; }
+			}
 			switch ((int)wParam) {
 				case    27:         cmd(CL_CMD_RESET,0,0); show_shop=0; noshop=QSIZE*12; xmove=0; break;	//ESC
 				case    'p':            if (keys) button_command(16);

@@ -149,3 +149,13 @@ void dd_hud_vfill(int x,int y,int w,int h,unsigned int rgb);
 extern int hud_theme;
 
 #endif
+
+// buff timers (between the character panel and the chat)
+struct buffinfo {
+	unsigned short secs;	// seconds left when received
+	unsigned char flags;	// 1 = harmful
+	char name[16];
+	unsigned int at;	// GetTickCount() when received
+};
+extern struct buffinfo buff[20];
+
