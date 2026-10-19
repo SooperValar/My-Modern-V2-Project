@@ -1567,7 +1567,7 @@ int build_ring(int cn,int in)
                         case    347:    r=356; break; // big saphire
                         case    487:
                         case    488:
-                        case    499:    do_char_log(cn,0,"This stone is too powerful for a silver ring.\n");
+                        case    489:    do_char_log(cn,0,"This stone is too powerful for a silver ring.\n");	// was 499 (typo): huge sapphire
                         default:        return 0;
                 }
         } else return 0;
