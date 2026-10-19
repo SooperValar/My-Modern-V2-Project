@@ -1678,8 +1678,23 @@ void god_build_cmd(int cn,char *arg)
 		if (!strcasecmp(arg,"end")) { do_char_log(cn,0,"You are not building.\n"); return; }
 		page=isdigit(*arg) ? atoi(arg) : 0;
 		if (god_build_start(cn)) {
+			int fp,pages;
+			bp_collect();
+			fp=bp_floorpages(); pages=bp_pages();
+			do_char_log(cn,3," \n");
+			do_char_log(cn,3,"Build mode. Your backpack is put away until you stop.\n");
+			do_char_log(cn,3,"  Page 0          zones and flags\n");
+			do_char_log(cn,3,"  Pages 1-%-2d      floors\n",fp);
+			do_char_log(cn,3,"  Pages %d-%-2d     objects\n",fp+1,pages-1);
+			do_char_log(cn,3," \n");
+			do_char_log(cn,3,"#build              show which page you're on\n");
+			do_char_log(cn,3,"#build <page>       go to that page\n");
+			do_char_log(cn,3,"#build next | prev  next / previous page\n");
+			do_char_log(cn,3,"#build end          stop, get your backpack back\n");
+			do_char_log(cn,3," \n");
+			do_char_log(cn,3,"Shift+click a piece: place one at a time. Right-click a piece: area mode, click two corners to fill.\n");
+			do_char_log(cn,3," \n");
 			god_build_equip(cn,page);
-			do_char_log(cn,3,"#build <page>, #build next, #build prev, #build end to stop.\n");
 		}
 		return;
 	}
