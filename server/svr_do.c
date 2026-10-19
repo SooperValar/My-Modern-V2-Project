@@ -1600,27 +1600,63 @@ static void info_gives(int t,char *out)
 	if (it_temp[t].mana[0]) { sprintf(buf,"%sMana %+d",out[0] ? ", " : "",it_temp[t].mana[0]); strcat(out,buf); }
 }
 
+static void info_n(char *out,int v)	// requirement as text, '.' if there is none
+{
+	if (v>1) sprintf(out,"%d",v);
+	else strcpy(out,".");
+}
+
 void do_info_specialw(int cn)
 {
 	static int t[]={116,129,136,442,503,813,167,1202,682};
-	int n;
-	char needs[200],gives[200];
+	static char *sn[7]={"Hand to Hand","Karate","Dagger","Sword","Axe","Staff","Two-Handed"};
+	int n,k,sk,note=0,tn;
+	char name[60],*p,typ[8],buf[200],tmp[100],mark[4],wv[12],ag[8],st[8],sv[8];
+	char notes[9][220];
 
 	do_char_log(cn,1,"Now listing special weapons:\n");
 	do_char_log(cn,1," \n");
+	do_char_log(cn,1," Weapon              | Type  | AGL STR Skill |    WV\n");
+	do_char_log(cn,1,"---------------------+-------+---------------+-------\n");
 	for (n=0; n<(int)(sizeof(t)/sizeof(int)); n++) {
-		if (it_temp[t[n]].used==USE_EMPTY) continue;
-		if (t[n]==682) {
-			do_char_log(cn,1,"%-30s WV %d-%d\n",it_temp[t[n]].name,it_temp[t[n]].weapon[0],it_temp[t[n]].weapon[0]+80);
-			do_char_log(cn,2,"   Seyan'Du only. +4 WV for each of the 20 shrines of Kwai visited.\n");
-			continue;
-		}
-		do_char_log(cn,1,"%-30s WV %d%s\n",it_temp[t[n]].name,it_temp[t[n]].weapon[0],(it_temp[t[n]].placement&PL_TWOHAND) ? "  (two hands)" : "");
-		info_needs(t[n],needs);
-		do_char_log(cn,1,"   needs %s\n",needs);
-		info_gives(t[n],gives);
-		if (gives[0]) do_char_log(cn,2,"   gives %s\n",gives);
+		tn=t[n];
+		if (it_temp[tn].used==USE_EMPTY) continue;
+
+		// short name
+		strcpy(name,it_temp[tn].name);
+		if (!strncmp(name,"The ",4)) memmove(name,name+4,strlen(name+4)+1);
+		if ((p=strstr(name," Two-Handed Sword"))) strcpy(p," 2-Hander");
+		if (!strcmp(name,"Sword of Seyan'Du")) strcpy(name,"Seyan'Du Sword");
+		name[17]=0;
+
+		// weapon type and the skill it uses
+		if (it_temp[tn].flags&IF_WP_TWOHAND) { strcpy(typ,"2Hand"); sk=SK_TWOHAND; }
+		else if (it_temp[tn].flags&IF_WP_STAFF) { strcpy(typ,"Staff"); sk=SK_STAFF; }
+		else if (it_temp[tn].flags&IF_WP_AXE) { strcpy(typ,"Axe"); sk=SK_AXE; }
+		else if (it_temp[tn].flags&IF_WP_DAGGER) { strcpy(typ,"Dagger"); sk=SK_DAGGER; }
+		else { strcpy(typ,"Sword"); sk=SK_SWORD; }
+
+		// what does not fit the grid goes into a numbered note under it
+		buf[0]=0;
+		for (k=0; k<5; k++) if (k!=AT_AGIL && k!=AT_STREN && it_temp[tn].attrib[k][2]>1) { sprintf(tmp,"%s%s %d",buf[0] ? ", " : "Also needs ",info_attr[k],it_temp[tn].attrib[k][2]); strcat(buf,tmp); }
+		for (k=0; k<7; k++) if (k!=sk && it_temp[tn].skill[k][2]>1) { sprintf(tmp,"%s%s %d",buf[0] ? ", " : "Also needs ",sn[k],it_temp[tn].skill[k][2]); strcat(buf,tmp); }
+		if (it_temp[tn].min_rank>0) { sprintf(tmp,"%srank %s",buf[0] ? ", " : "Also needs ",rank_name[(int)it_temp[tn].min_rank]); strcat(buf,tmp); }
+		info_gives(tn,tmp);
+		if (tmp[0]) { strcat(buf,buf[0] ? ". Gives " : "Gives "); strcat(buf,tmp); }
+		if (tn==682) strcpy(buf,"Seyan'Du only. +4 WV for each of the 20 shrines of Kwai visited");
+		mark[0]=0;
+		if (buf[0] && note<9) { sprintf(notes[note],"%d) %s.",note+1,buf); note++; sprintf(mark,"%d",note); }
+
+		if (tn==682) sprintf(wv,"%d-%d",it_temp[tn].weapon[0],it_temp[tn].weapon[0]+80);
+		else sprintf(wv,"%d",it_temp[tn].weapon[0]);
+		info_n(ag,it_temp[tn].attrib[AT_AGIL][2]);
+		info_n(st,it_temp[tn].attrib[AT_STREN][2]);
+		info_n(sv,it_temp[tn].skill[sk][2]);
+
+		do_char_log(cn,1," %-17s %1s | %-5s | %3s %3s %4s  | %5s\n",name,mark,typ,ag,st,sv,wv);
 	}
+	do_char_log(cn,1," \n");
+	for (n=0; n<note; n++) do_char_log(cn,2,"%s\n",notes[n]);
 }
 
 void do_info_weapon(int cn)
