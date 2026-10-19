@@ -744,7 +744,7 @@ void do_help(int cn,char *topic)
 	if (ch[cn].flags&(CF_GREATERGOD)) {
 		do_char_log(cn,3,"Greater God Commands:\n");
 		do_char_log(cn,3," \n");
-		do_char_log(cn,3,"#build <template>       build mode.\n");
+		do_char_log(cn,3,"#build [page|next|prev|end] build pages.\n");
                 do_char_log(cn,3,"#creator <player>       make player a Creator.\n");
                 do_char_log(cn,3,"#greatergod <player>    make player a G-God.\n");
                 do_char_log(cn,3,"#lookinv <player>       look for items.\n");
@@ -1914,7 +1914,7 @@ void do_command(int cn, char *ptr)
                 if (prefix(cmd,"bow") && !f_sh)  /*!*/  { ch[cn].misc_action=DR_BOW; return; };
                 if (prefix(cmd,"balance") && !f_m)      { do_balance(cn); return; }
 		if (prefix(cmd,"black") && f_g)		{ god_set_flag(cn,dbatoi(arg[1]),CF_BLACK); return; }
-                if (prefix(cmd,"build") && f_c)         { god_build(cn,atoi(arg[1])); return; }
+                if (prefix(cmd,"build") && f_c)         { god_build_cmd(cn,arg[1]); return; }
                 if (prefix(cmd,"belt"))                 { do_info_belt(cn); return; };
                 break;
         case 'c':

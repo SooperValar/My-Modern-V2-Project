@@ -296,6 +296,7 @@ extern unsigned int mapmarker;
 #define CHD_TALKATIVE   71
 #define CHD_ENEMY1ST    80
 #define CHD_ENEMYZZZ    91
+#define CHD_BUILDPAGE   74      // players: current build page (NPCs use 74 for their ghost timer)
 #define CHD_ARENALOCK   79      // players: no arena of rank fight before this tick (NPCs use 79 for patrol rest)
 
 #define RANKS           24

@@ -1318,291 +1318,377 @@ void god_build_stop(int cn)
 	do_update_char(cn);
 }
 
-void god_build_equip(int cn, int x)
+/* the original hand-made build sets (kept as data for the build pages) */
+static void build_set(unsigned int *BI,int x)
 {
         int n,m;
 
                 m=0;
         switch (x) {
         case 0:
-                        ch[cn].item[m++]=0x40000000|MF_MOVEBLOCK;
-                        ch[cn].item[m++]=0x40000000|MF_SIGHTBLOCK;
-                        ch[cn].item[m++]=0x40000000|MF_INDOORS;
-                        ch[cn].item[m++]=0x40000000|MF_ARENA;
-                        ch[cn].item[m++]=0x40000000|MF_NOMONST;
-                        ch[cn].item[m++]=0x40000000|MF_BANK;
-                        ch[cn].item[m++]=0x40000000|MF_TAVERN;
-                        ch[cn].item[m++]=0x40000000|MF_NOMAGIC;
-                        ch[cn].item[m++]=0x40000000|MF_DEATHTRAP;
-                        ch[cn].item[m++]=0x40000000|MF_UWATER;
-                        ch[cn].item[m++]=0x40000000|MF_NOLAG;
-                        ch[cn].item[m++]=0x40000000|MF_NOFIGHT;
-                        ch[cn].item[m++]=0x40000000|MF_NOEXPIRE;
+                        BI[m++]=0x40000000|MF_MOVEBLOCK;
+                        BI[m++]=0x40000000|MF_SIGHTBLOCK;
+                        BI[m++]=0x40000000|MF_INDOORS;
+                        BI[m++]=0x40000000|MF_ARENA;
+                        BI[m++]=0x40000000|MF_NOMONST;
+                        BI[m++]=0x40000000|MF_BANK;
+                        BI[m++]=0x40000000|MF_TAVERN;
+                        BI[m++]=0x40000000|MF_NOMAGIC;
+                        BI[m++]=0x40000000|MF_DEATHTRAP;
+                        BI[m++]=0x40000000|MF_UWATER;
+                        BI[m++]=0x40000000|MF_NOLAG;
+                        BI[m++]=0x40000000|MF_NOFIGHT;
+                        BI[m++]=0x40000000|MF_NOEXPIRE;
 
-                        ch[cn].item[m++]=0x20000000|SPR_TUNDRA_GROUND;
-                        ch[cn].item[m++]=0x20000000|SPR_DESERT_GROUND;
-                        ch[cn].item[m++]=0x20000000|SPR_GROUND1;
-                        ch[cn].item[m++]=0x20000000|SPR_WOOD_GROUND;
-                        ch[cn].item[m++]=0x20000000|SPR_TAVERN_GROUND;
-                        ch[cn].item[m++]=0x20000000|SPR_STONE_GROUND1;
-                        ch[cn].item[m++]=0x20000000|SPR_STONE_GROUND2;
-                        ch[cn].item[m++]=0x20000000|1100;
-                        ch[cn].item[m++]=0x20000000|1099;
-                        ch[cn].item[m++]=0x20000000|1109;
-                        ch[cn].item[m++]=0x20000000|1118;
-                        ch[cn].item[m++]=0x20000000|1141;
-                        ch[cn].item[m++]=0x20000000|1158;
-                        ch[cn].item[m++]=0x20000000|1145;
-                        ch[cn].item[m++]=0x20000000|1014;
-                        ch[cn].item[m++]=0x20000000|1003;
-                        ch[cn].item[m++]=0x20000000|1005;
-                        ch[cn].item[m++]=0x20000000|1006;
-                        ch[cn].item[m++]=0x20000000|1007;
-                        ch[cn].item[m++]=0x20000000|402;
-                        ch[cn].item[m++]=0x20000000|500;
-                        ch[cn].item[m++]=0x20000000|558;
-                        ch[cn].item[m++]=0x20000000|596;
+                        BI[m++]=0x20000000|SPR_TUNDRA_GROUND;
+                        BI[m++]=0x20000000|SPR_DESERT_GROUND;
+                        BI[m++]=0x20000000|SPR_GROUND1;
+                        BI[m++]=0x20000000|SPR_WOOD_GROUND;
+                        BI[m++]=0x20000000|SPR_TAVERN_GROUND;
+                        BI[m++]=0x20000000|SPR_STONE_GROUND1;
+                        BI[m++]=0x20000000|SPR_STONE_GROUND2;
+                        BI[m++]=0x20000000|1100;
+                        BI[m++]=0x20000000|1099;
+                        BI[m++]=0x20000000|1109;
+                        BI[m++]=0x20000000|1118;
+                        BI[m++]=0x20000000|1141;
+                        BI[m++]=0x20000000|1158;
+                        BI[m++]=0x20000000|1145;
+                        BI[m++]=0x20000000|1014;
+                        BI[m++]=0x20000000|1003;
+                        BI[m++]=0x20000000|1005;
+                        BI[m++]=0x20000000|1006;
+                        BI[m++]=0x20000000|1007;
+                        BI[m++]=0x20000000|402;
+                        BI[m++]=0x20000000|500;
+                        BI[m++]=0x20000000|558;
+                        BI[m++]=0x20000000|596;
                 break;
         case 1:
-                        ch[cn].item[m++]=0x20000000|520;
-                        ch[cn].item[m++]=0x20000000|521;
-                        ch[cn].item[m++]=0x20000000|522;
-                        ch[cn].item[m++]=0x20000000|523;
-                        ch[cn].item[m++]=0x20000000|524;
-                        ch[cn].item[m++]=0x20000000|525;
-                        ch[cn].item[m++]=0x20000000|526;
-                        ch[cn].item[m++]=0x20000000|527;
-                        ch[cn].item[m++]=0x20000000|528;
-                        ch[cn].item[m++]=0x20000000|529;
-                        ch[cn].item[m++]=0x20000000|530;
-                        ch[cn].item[m++]=0x20000000|531;
-                        ch[cn].item[m++]=0x20000000|532;
-                        ch[cn].item[m++]=0x20000000|533;
-                        ch[cn].item[m++]=0x20000000|534;
-                        ch[cn].item[m++]=0x20000000|535;
-                        ch[cn].item[m++]=0x20000000|536;
-                        ch[cn].item[m++]=0x20000000|537;
-                        ch[cn].item[m++]=0x20000000|538;
-                        ch[cn].item[m++]=0x20000000|539;
-                        ch[cn].item[m++]=0x20000000|540;
-                        ch[cn].item[m++]=0x20000000|541;
+                        BI[m++]=0x20000000|520;
+                        BI[m++]=0x20000000|521;
+                        BI[m++]=0x20000000|522;
+                        BI[m++]=0x20000000|523;
+                        BI[m++]=0x20000000|524;
+                        BI[m++]=0x20000000|525;
+                        BI[m++]=0x20000000|526;
+                        BI[m++]=0x20000000|527;
+                        BI[m++]=0x20000000|528;
+                        BI[m++]=0x20000000|529;
+                        BI[m++]=0x20000000|530;
+                        BI[m++]=0x20000000|531;
+                        BI[m++]=0x20000000|532;
+                        BI[m++]=0x20000000|533;
+                        BI[m++]=0x20000000|534;
+                        BI[m++]=0x20000000|535;
+                        BI[m++]=0x20000000|536;
+                        BI[m++]=0x20000000|537;
+                        BI[m++]=0x20000000|538;
+                        BI[m++]=0x20000000|539;
+                        BI[m++]=0x20000000|540;
+                        BI[m++]=0x20000000|541;
                 break;
         case 2:
-                        ch[cn].item[m++]=0x20000000|542;
-                        ch[cn].item[m++]=0x20000000|543;
-                        ch[cn].item[m++]=0x20000000|544;
-                        ch[cn].item[m++]=0x20000000|545;
-                        ch[cn].item[m++]=0x20000000|546;
-                        ch[cn].item[m++]=0x20000000|547;
-                        ch[cn].item[m++]=0x20000000|548;
-                        ch[cn].item[m++]=0x20000000|549;
-                        ch[cn].item[m++]=0x20000000|550;
-                        ch[cn].item[m++]=0x20000000|551;
-                        ch[cn].item[m++]=0x20000000|552;
-                        ch[cn].item[m++]=0x20000000|553;
-                        ch[cn].item[m++]=0x20000000|554;
+                        BI[m++]=0x20000000|542;
+                        BI[m++]=0x20000000|543;
+                        BI[m++]=0x20000000|544;
+                        BI[m++]=0x20000000|545;
+                        BI[m++]=0x20000000|546;
+                        BI[m++]=0x20000000|547;
+                        BI[m++]=0x20000000|548;
+                        BI[m++]=0x20000000|549;
+                        BI[m++]=0x20000000|550;
+                        BI[m++]=0x20000000|551;
+                        BI[m++]=0x20000000|552;
+                        BI[m++]=0x20000000|553;
+                        BI[m++]=0x20000000|554;
                 break;
         case 3:
-                        ch[cn].item[m++]=0x20000000|130;
-                        ch[cn].item[m++]=0x20000000|131;
-                        ch[cn].item[m++]=0x20000000|132;
-                        ch[cn].item[m++]=0x20000000|133;
-                        ch[cn].item[m++]=0x20000000|134;
-                        ch[cn].item[m++]=0x20000000|135;
-                        ch[cn].item[m++]=0x20000000|136;
-                        ch[cn].item[m++]=0x20000000|137;
-                        ch[cn].item[m++]=0x20000000|138;
-                        ch[cn].item[m++]=0x20000000|139;
-                        ch[cn].item[m++]=0x20000000|140;
-                        ch[cn].item[m++]=0x20000000|141;
-                        ch[cn].item[m++]=0x20000000|142;
-                        ch[cn].item[m++]=0x20000000|143;
-                        ch[cn].item[m++]=0x20000000|144;
-                        ch[cn].item[m++]=0x20000000|145;
+                        BI[m++]=0x20000000|130;
+                        BI[m++]=0x20000000|131;
+                        BI[m++]=0x20000000|132;
+                        BI[m++]=0x20000000|133;
+                        BI[m++]=0x20000000|134;
+                        BI[m++]=0x20000000|135;
+                        BI[m++]=0x20000000|136;
+                        BI[m++]=0x20000000|137;
+                        BI[m++]=0x20000000|138;
+                        BI[m++]=0x20000000|139;
+                        BI[m++]=0x20000000|140;
+                        BI[m++]=0x20000000|141;
+                        BI[m++]=0x20000000|142;
+                        BI[m++]=0x20000000|143;
+                        BI[m++]=0x20000000|144;
+                        BI[m++]=0x20000000|145;
                 break;
         case 4:
-                        ch[cn].item[m++]=0x20000000|170;
-                        ch[cn].item[m++]=0x20000000|171;
-                        ch[cn].item[m++]=0x20000000|172;
-                        ch[cn].item[m++]=0x20000000|173;
-                        ch[cn].item[m++]=0x20000000|174;
-                        ch[cn].item[m++]=0x20000000|175;
+                        BI[m++]=0x20000000|170;
+                        BI[m++]=0x20000000|171;
+                        BI[m++]=0x20000000|172;
+                        BI[m++]=0x20000000|173;
+                        BI[m++]=0x20000000|174;
+                        BI[m++]=0x20000000|175;
                 break;
         case 331:
-                        ch[cn].item[m++]=0x40000000|MF_INDOORS;
-                        ch[cn].item[m++]=0x20000000|116;
-                        ch[cn].item[m++]=0x20000000|117;
-                        ch[cn].item[m++]=0x20000000|118;
+                        BI[m++]=0x40000000|MF_INDOORS;
+                        BI[m++]=0x20000000|116;
+                        BI[m++]=0x20000000|117;
+                        BI[m++]=0x20000000|118;
 
-                        ch[cn].item[m++]=0x20000000|704;
-                        /*ch[cn].item[m++]=0x20000000|705;
-                        ch[cn].item[m++]=0x20000000|706;
-                        ch[cn].item[m++]=0x20000000|707;
-                        ch[cn].item[m++]=0x20000000|708;
-                        ch[cn].item[m++]=0x20000000|709;
-                        ch[cn].item[m++]=0x20000000|710;
-                        ch[cn].item[m++]=0x20000000|711;
-                        ch[cn].item[m++]=0x20000000|712;
-                        ch[cn].item[m++]=0x20000000|713;
-                        ch[cn].item[m++]=0x20000000|714;
-                        ch[cn].item[m++]=0x20000000|715;
-                        ch[cn].item[m++]=0x20000000|716;
-                        ch[cn].item[m++]=0x20000000|717;
-                        ch[cn].item[m++]=0x20000000|718;
-                        ch[cn].item[m++]=0x20000000|719;
-                        ch[cn].item[m++]=0x20000000|720;
-                        ch[cn].item[m++]=0x20000000|721;
-                        ch[cn].item[m++]=0x20000000|722;
-                        ch[cn].item[m++]=0x20000000|723;
-                        ch[cn].item[m++]=0x20000000|724;
-                        ch[cn].item[m++]=0x20000000|725;
-                        ch[cn].item[m++]=0x20000000|726;
-                        ch[cn].item[m++]=0x20000000|727;
-                        ch[cn].item[m++]=0x20000000|728;*/
+                        BI[m++]=0x20000000|704;
+                        /*BI[m++]=0x20000000|705;
+                        BI[m++]=0x20000000|706;
+                        BI[m++]=0x20000000|707;
+                        BI[m++]=0x20000000|708;
+                        BI[m++]=0x20000000|709;
+                        BI[m++]=0x20000000|710;
+                        BI[m++]=0x20000000|711;
+                        BI[m++]=0x20000000|712;
+                        BI[m++]=0x20000000|713;
+                        BI[m++]=0x20000000|714;
+                        BI[m++]=0x20000000|715;
+                        BI[m++]=0x20000000|716;
+                        BI[m++]=0x20000000|717;
+                        BI[m++]=0x20000000|718;
+                        BI[m++]=0x20000000|719;
+                        BI[m++]=0x20000000|720;
+                        BI[m++]=0x20000000|721;
+                        BI[m++]=0x20000000|722;
+                        BI[m++]=0x20000000|723;
+                        BI[m++]=0x20000000|724;
+                        BI[m++]=0x20000000|725;
+                        BI[m++]=0x20000000|726;
+                        BI[m++]=0x20000000|727;
+                        BI[m++]=0x20000000|728;*/
                 break;
         case 700:       // black stronghold
-                ch[cn].item[m++]=0x40000000|MF_INDOORS;
-                ch[cn].item[m++]=0x20000000|950;
-                ch[cn].item[m++]=0x20000000|959;
-                ch[cn].item[m++]=0x20000000|16652;
-                ch[cn].item[m++]=0x20000000|16653;
-                ch[cn].item[m++]=0x20000000|16654;
-                ch[cn].item[m++]=0x20000000|16655;
+                BI[m++]=0x40000000|MF_INDOORS;
+                BI[m++]=0x20000000|950;
+                BI[m++]=0x20000000|959;
+                BI[m++]=0x20000000|16652;
+                BI[m++]=0x20000000|16653;
+                BI[m++]=0x20000000|16654;
+                BI[m++]=0x20000000|16655;
                 break;
         case 701:
                 for (n=0; n<40; n++)
-                        ch[cn].item[m++]=0x20000000|(n+16430);
+                        BI[m++]=0x20000000|(n+16430);
                 break;
         case 702:
                 for (n=40; n<78; n++)
-                        ch[cn].item[m++]=0x20000000|(n+16430);
+                        BI[m++]=0x20000000|(n+16430);
                 break;
         case 703:
                 for (n=16584; n<16599; n++)
-                        ch[cn].item[m++]=0x20000000|n;
+                        BI[m++]=0x20000000|n;
                 break;
         case 704:
                 for (n=985; n<989; n++)
-                        ch[cn].item[m++]=0x20000000|n;
+                        BI[m++]=0x20000000|n;
                 break;
         case 705:
-                ch[cn].item[m++]=0x20000000|1118;
-                ch[cn].item[m++]=0x20000000|989;
+                BI[m++]=0x20000000|1118;
+                BI[m++]=0x20000000|989;
                 for (n=16634; n<16642; n++)
-                        ch[cn].item[m++]=0x20000000|n;
+                        BI[m++]=0x20000000|n;
                 break;
         case 819:
-                ch[cn].item[m++]=0x40000000|MF_INDOORS;
-                ch[cn].item[m++]=0x20000000|16728;
+                BI[m++]=0x40000000|MF_INDOORS;
+                BI[m++]=0x20000000|16728;
                 break;
         case 900:       // graveyard quest
-                ch[cn].item[m++]=0x20000000|16933; // lost souls tile
-                ch[cn].item[m++]=0x20000000|16934; // grave
-                ch[cn].item[m++]=0x20000000|16937; // grave, other dir
+                BI[m++]=0x20000000|16933; // lost souls tile
+                BI[m++]=0x20000000|16934; // grave
+                BI[m++]=0x20000000|16937; // grave, other dir
                 break;
         case 1000:
-                        ch[cn].item[m++]=0x40000000|MF_INDOORS;
-                        ch[cn].item[m++]=0x20000000|1014;
-                        ch[cn].item[m++]=0x20000000|704;
-                        //ch[cn].item[m++]=150;
-                        //ch[cn].item[m++]=171;
-                        //ch[cn].item[m++]=152;
-                        //ch[cn].item[m++]=153;
-                        //ch[cn].item[m++]=154;
-                        //ch[cn].item[m++]=155;
-                        //ch[cn].item[m++]=156;
-                        //ch[cn].item[m++]=157;
-                        //ch[cn].item[m++]=520;
-                        //ch[cn].item[m++]=521;
-                        //ch[cn].item[m++]=504;
-                        //ch[cn].item[m++]=505;
-                        //ch[cn].item[m++]=506;
-                        //ch[cn].item[m++]=507;
-                        ch[cn].item[m++]=508;
-                        ch[cn].item[m++]=509;
-                        ch[cn].item[m++]=510;
-                        ch[cn].item[m++]=511;
-                        ch[cn].item[m++]=512;
-                        ch[cn].item[m++]=513;
-                        ch[cn].item[m++]=514;
-                        ch[cn].item[m++]=515;
-                        ch[cn].item[m++]=516;
-                        ch[cn].item[m++]=517;
-                        ch[cn].item[m++]=518;
-                        ch[cn].item[m++]=519;
-                        ch[cn].item[m++]=522;
+                        BI[m++]=0x40000000|MF_INDOORS;
+                        BI[m++]=0x20000000|1014;
+                        BI[m++]=0x20000000|704;
+                        //BI[m++]=150;
+                        //BI[m++]=171;
+                        //BI[m++]=152;
+                        //BI[m++]=153;
+                        //BI[m++]=154;
+                        //BI[m++]=155;
+                        //BI[m++]=156;
+                        //BI[m++]=157;
+                        //BI[m++]=520;
+                        //BI[m++]=521;
+                        //BI[m++]=504;
+                        //BI[m++]=505;
+                        //BI[m++]=506;
+                        //BI[m++]=507;
+                        BI[m++]=508;
+                        BI[m++]=509;
+                        BI[m++]=510;
+                        BI[m++]=511;
+                        BI[m++]=512;
+                        BI[m++]=513;
+                        BI[m++]=514;
+                        BI[m++]=515;
+                        BI[m++]=516;
+                        BI[m++]=517;
+                        BI[m++]=518;
+                        BI[m++]=519;
+                        BI[m++]=522;
                 break;
         case 1001:
-                        ch[cn].item[m++]=0x40000000|MF_INDOORS;
-                        ch[cn].item[m++]=0x20000000|1118;
-                        ch[cn].item[m++]=16;
-                        ch[cn].item[m++]=17;
-                        ch[cn].item[m++]=45;
-                        ch[cn].item[m++]=47;
-                        ch[cn].item[m++]=19;
-                        ch[cn].item[m++]=20;
-                        ch[cn].item[m++]=48;
-                        ch[cn].item[m++]=49;
-                        ch[cn].item[m++]=606;
-                        ch[cn].item[m++]=607;
-                        ch[cn].item[m++]=608;
-                        ch[cn].item[m++]=609;
-                        ch[cn].item[m++]=611;
+                        BI[m++]=0x40000000|MF_INDOORS;
+                        BI[m++]=0x20000000|1118;
+                        BI[m++]=16;
+                        BI[m++]=17;
+                        BI[m++]=45;
+                        BI[m++]=47;
+                        BI[m++]=19;
+                        BI[m++]=20;
+                        BI[m++]=48;
+                        BI[m++]=49;
+                        BI[m++]=606;
+                        BI[m++]=607;
+                        BI[m++]=608;
+                        BI[m++]=609;
+                        BI[m++]=611;
                 break;
         case 1002:   // ice penta
-                        ch[cn].item[m++]=0x40000000|MF_INDOORS;
-                        ch[cn].item[m++]=0x20000000|16670;
-                        ch[cn].item[m++]=800;
-                        ch[cn].item[m++]=801;
-                        ch[cn].item[m++]=802;
-                        ch[cn].item[m++]=803;
-                        ch[cn].item[m++]=804;
-                        ch[cn].item[m++]=805;
-                        ch[cn].item[m++]=806;
-                        ch[cn].item[m++]=807;
-                        ch[cn].item[m++]=808;
-                        ch[cn].item[m++]=809;
-                        ch[cn].item[m++]=810;
-                        ch[cn].item[m++]=811;
-                        ch[cn].item[m++]=812;
+                        BI[m++]=0x40000000|MF_INDOORS;
+                        BI[m++]=0x20000000|16670;
+                        BI[m++]=800;
+                        BI[m++]=801;
+                        BI[m++]=802;
+                        BI[m++]=803;
+                        BI[m++]=804;
+                        BI[m++]=805;
+                        BI[m++]=806;
+                        BI[m++]=807;
+                        BI[m++]=808;
+                        BI[m++]=809;
+                        BI[m++]=810;
+                        BI[m++]=811;
+                        BI[m++]=812;
 			break;
-	case	1003:	ch[cn].item[m++]=0x20000000|16980;
+	case	1003:	BI[m++]=0x20000000|16980;
 			break;
-	case 	1140:	ch[cn].item[m++]=0x20000000|17064;
-			ch[cn].item[m++]=0x20000000|17065;
-			ch[cn].item[m++]=0x20000000|17066;
-			ch[cn].item[m++]=0x20000000|17067;
+	case 	1140:	BI[m++]=0x20000000|17064;
+			BI[m++]=0x20000000|17065;
+			BI[m++]=0x20000000|17066;
+			BI[m++]=0x20000000|17067;
 			break;
                 }
 
-                if (x<1) x=1;
+}
 
-        /* fill inventory with other stuff upward from last item.
-           Not for the ground/flag sets 0-3: they used to get templates 1, 2, 3..
-           appended, i.e. almost the same list in every mode. Templates that look
-           the same as one already listed (same name and picture) are skipped. */
-		if (x>=4) {
-                for (n=x; n<MAXTITEM && m<40; n++) {
-                        int k,dup;
-                        if (it_temp[n].used==USE_EMPTY) continue;
-                        if (it_temp[n].flags&IF_TAKE) continue;
-                        if (it_temp[n].driver==25 && it_temp[n].data[3]==0) continue;
-                        if (it_temp[n].driver==22) continue;
-                        for (dup=0,k=0; k<m; k++) {
-                                int t=ch[cn].item[k];
-                                if (t<=0 || (t&0x60000000) || t>=MAXTITEM) continue;
-                                if (it_temp[t].sprite[0]==it_temp[n].sprite[0] && !strcmp(it_temp[t].name,it_temp[n].name)) { dup=1; break; }
-                        }
-                        if (dup) continue;
-                        ch[cn].item[m]=n;
-                        m++;
-                }
-		do_char_log(cn,3,"Templates from %d to %d. #build %d for the next ones.\n",x,n-1,n);
+/* ---- build pages --------------------------------------------------------
+ * #build             start building (page 0) / show where you are
+ * #build <page>      go to that page
+ * #build next|prev   next / previous page
+ * #build end         stop building
+ * Page 0 holds the zone flags, then come the floor pages, then the object
+ * pages (every placeable template, look-alikes skipped). All lists are
+ * collected once from the original build sets and the item templates.
+ */
+int god_build_start(int cn);
+void god_build_stop(int cn);
+static unsigned int *bp_flag=NULL,*bp_floor=NULL,*bp_obj=NULL;
+static int bp_nflag=0,bp_nfloor=0,bp_nobj=0;
+
+static int bp_has(unsigned int *list,int n,unsigned int v)
+{
+	int k;
+	for (k=0; k<n; k++) if (list[k]==v) return 1;
+	return 0;
+}
+
+static void bp_collect(void)
+{
+	static int sets[]={0,1,2,3,4,331,700,701,702,703,704,705,819,900,1000,1001,1002,1003,1140};
+	unsigned int tmp[40],v;
+	int s,k,n,t,dup;
+
+	if (bp_flag) return;
+	bp_flag=calloc(64,sizeof(unsigned int));
+	bp_floor=calloc(1024,sizeof(unsigned int));
+	bp_obj=calloc(MAXTITEM,sizeof(unsigned int));
+	if (!bp_flag || !bp_floor || !bp_obj) return;
+
+	// flags and floors from the hand-made sets, in their order
+	for (s=0; s<(int)(sizeof(sets)/sizeof(int)); s++) {
+		memset(tmp,0,sizeof(tmp));
+		build_set(tmp,sets[s]);
+		for (k=0; k<40; k++) {
+			v=tmp[k];
+			if (!v) continue;
+			if (v&0x40000000) { if (bp_nflag<64 && !bp_has(bp_flag,bp_nflag,v)) bp_flag[bp_nflag++]=v; }
+			else if (v&0x20000000) { if (bp_nfloor<1024 && !bp_has(bp_floor,bp_nfloor,v)) bp_floor[bp_nfloor++]=v; }
+			else if (v<MAXTITEM && !bp_has(bp_obj,bp_nobj,v)) bp_obj[bp_nobj++]=v;
 		}
-		while (m<40) ch[cn].item[m++]=0;	// nothing left over from the previous mode
+	}
+	// then every other placeable template, look-alikes skipped
+	for (n=1; n<MAXTITEM; n++) {
+		if (it_temp[n].used==USE_EMPTY) continue;
+		if (it_temp[n].flags&IF_TAKE) continue;
+		if (it_temp[n].driver==25 && it_temp[n].data[3]==0) continue;
+		if (it_temp[n].driver==22) continue;
+		for (dup=0,k=0; k<bp_nobj; k++) {
+			t=bp_obj[k];
+			if (t==n || (it_temp[t].sprite[0]==it_temp[n].sprite[0] && !strcmp(it_temp[t].name,it_temp[n].name))) { dup=1; break; }
+		}
+		if (!dup) bp_obj[bp_nobj++]=n;
+	}
+}
 
-        chlog(cn,"Now in build mode %d",x);
-        do_char_log(cn, 3, "Build mode %d\n", x);
+static int bp_floorpages(void) { return (bp_nfloor+39)/40; }
+static int bp_pages(void) { return 1+bp_floorpages()+(bp_nobj+39)/40; }
+
+void god_build_equip(int cn, int x)
+{
+	int m,k,fp,op,pages;
+
+	bp_collect();
+	if (!bp_flag) return;
+	pages=bp_pages();
+	if (x<0) x=0;
+	if (x>=pages) x=pages-1;
+
+	for (m=0; m<40; m++) ch[cn].item[m]=0;
+	fp=bp_floorpages();
+	m=0;
+	if (x==0) {
+		for (k=0; k<bp_nflag && m<40; k++) ch[cn].item[m++]=bp_flag[k];
+		do_char_log(cn,3,"Build page 0 of %d: zones and flags. Drop one on a tile to switch it on or off.\n",pages-1);
+	} else if (x<=fp) {
+		for (k=(x-1)*40; k<bp_nfloor && m<40; k++) ch[cn].item[m++]=bp_floor[k];
+		do_char_log(cn,3,"Build page %d of %d: floors (%d of %d).\n",x,pages-1,x,fp);
+	} else {
+		op=x-fp;
+		for (k=(op-1)*40; k<bp_nobj && m<40; k++) ch[cn].item[m++]=bp_obj[k];
+		do_char_log(cn,3,"Build page %d of %d: objects (%d of %d).\n",x,pages-1,op,pages-1-fp);
+	}
+	ch[cn].data[CHD_BUILDPAGE]=x;
+	chlog(cn,"Now on build page %d",x);
+	do_update_char(cn);
+}
+
+// the #build command
+void god_build_cmd(int cn,char *arg)
+{
+	int page;
+
+	if (!IS_BUILDING(cn)) {
+		if (!strcasecmp(arg,"end")) { do_char_log(cn,0,"You are not building.\n"); return; }
+		page=isdigit(*arg) ? atoi(arg) : 0;
+		if (god_build_start(cn)) {
+			god_build_equip(cn,page);
+			do_char_log(cn,3,"#build <page>, #build next, #build prev, #build end to stop.\n");
+		}
+		return;
+	}
+	if (!strcasecmp(arg,"end") || !strcasecmp(arg,"stop")) { god_build_stop(cn); return; }
+	if (!strcasecmp(arg,"next")) { god_build_equip(cn,ch[cn].data[CHD_BUILDPAGE]+1); return; }
+	if (!strcasecmp(arg,"prev")) { god_build_equip(cn,ch[cn].data[CHD_BUILDPAGE]-1); return; }
+	if (isdigit(*arg)) { god_build_equip(cn,atoi(arg)); return; }
+	bp_collect();
+	do_char_log(cn,3,"You are on build page %d of %d. #build <page>, #build next, #build prev, #build end to stop.\n",ch[cn].data[CHD_BUILDPAGE],bp_pages()-1);
 }
 
 void god_build(int cn,int x)

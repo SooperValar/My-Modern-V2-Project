@@ -124,6 +124,7 @@ void god_mirror(int cn, char *spec1, char *spec2); //ML 7.11. ff
 int god_remove_item(int cn,int nr);
 void god_tavern(int cn);
 void god_build(int cn,int x);
+void god_build_cmd(int cn,char *arg);
 void god_set_flag(int cn,int co,unsigned long long flag);
 void god_erase(int cn,int co,int insist);
 int god_cmp_item2tmp(int in,int tmp);
