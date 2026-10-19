@@ -515,6 +515,7 @@ struct character
 #define IF_IDENTIFIED   (1ull<<37)      // item has been identified
 #define IF_NOEXPIRE     (1ull<<38)      // dont expire item
 #define IF_SOULSTONE	(1ull<<39)	// item was enhanced by a soulstone
+#define IF_NEEDIDENT	(1ull<<40)	// tooltip hides its powers until identified (for unique late-game items)
 
 #define IF_WEAPON       (IF_WP_SWORD|IF_WP_DAGGER|IF_WP_AXE|IF_WP_STAFF|IF_WP_TWOHAND)
 #define IF_SELLABLE     (IF_WEAPON|IF_MISC|IF_MAGIC|IF_ARMOR)

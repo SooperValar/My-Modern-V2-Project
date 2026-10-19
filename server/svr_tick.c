@@ -7,6 +7,7 @@ All rights reserved.
 **************************************************************************/
 
 #include <stdio.h>
+#include <stdarg.h>
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
@@ -605,6 +606,159 @@ void plr_cmd_look(int nr,int autoflag)
         else do_look_char(cn,co,0,autoflag,0);
 }
 
+extern char *at_name[];
+int barter(int cn,int opr,int flag);
+int do_item_value(int in);
+
+/* ---- item tooltips ---------------------------------------------------------
+ * The client asks about one item (backpack slot, worn slot or a slot in the
+ * shop / grave it has open) and gets the lines of a small info window back:
+ * SV_ITEMINFO packets of 64 bytes: where, slot, line, font, 60 chars of text;
+ * line 255 ends the list.
+ */
+static void tip_line(int nr,int where,int slot,int *line,int font,char *format,...)
+{
+	unsigned char buf[64];
+	va_list args;
+	char tmp[200];
+
+	if (*line>=40) return;
+	va_start(args,format);
+	vsnprintf(tmp,sizeof(tmp),format,args);
+	va_end(args);
+
+	memset(buf,0,64);
+	buf[0]=SV_ITEMINFO; buf[1]=where; buf[2]=slot; buf[3]=*line; buf[4]=font;
+	strncpy((char*)buf+5,tmp,58);
+	xsend(nr,buf,64);
+	(*line)++;
+}
+
+static char *tip_money(int v,char *buf)
+{
+	if (v%100) sprintf(buf,"%dG %dS",v/100,v%100);
+	else sprintf(buf,"%dG",v/100);
+	return buf;
+}
+
+void plr_cmd_iteminfo(int nr)
+{
+	int cn,co,where,slot,in=0,line=0,n,act,ok,first,flag,shown;
+	unsigned char end[64];
+	char buf[80],b2[40],*s,*d;
+
+	cn=player[nr].usnr;
+	where=player[nr].inbuf[1];
+	slot=*(unsigned short*)(player[nr].inbuf+2);
+	co=*(unsigned int*)(player[nr].inbuf+4);
+	if (cn<1 || cn>=MAXCHARS) return;
+
+	if (where==0 && slot<40) in=ch[cn].item[slot];
+	else if (where==1 && slot<20) in=ch[cn].worn[slot];
+	else if (where==2 && co>0 && co<MAXCHARS && (ch[co].flags&(CF_MERCHANT|CF_BODY))) {
+		if ((ch[co].flags&CF_BODY) && abs(ch[cn].x-ch[co].x)+abs(ch[cn].y-ch[co].y)>1) in=0;
+		else if (!(ch[co].flags&CF_BODY) && !do_char_can_see(cn,co)) in=0;
+		else if (slot<40) in=ch[co].item[slot];
+		else if (slot<60 && (ch[co].flags&CF_BODY)) in=ch[co].worn[slot-40];
+	}
+	if (in&0x80000000) in=0;
+
+	if (in>0 && in<MAXITEM && it[in].used!=USE_EMPTY) {
+		act=it[in].active ? 1 : 0;
+		tip_line(nr,where,slot,&line,1,"%s",it[in].name);
+
+		if ((it[in].flags&IF_NEEDIDENT) && !(it[in].flags&IF_IDENTIFIED)) {
+			tip_line(nr,where,slot,&line,0,"Unidentified. Cast Identify on it");
+			tip_line(nr,where,slot,&line,0,"to learn its powers.");
+		} else {
+			if (it[in].weapon[act]) tip_line(nr,where,slot,&line,1,"Weapon value %d",it[in].weapon[act]);
+			if (it[in].armor[act]) tip_line(nr,where,slot,&line,1,"Armor value %d",it[in].armor[act]);
+			for (n=0; n<5; n++) if (it[in].attrib[n][act]) tip_line(nr,where,slot,&line,2,"%+d %s",it[in].attrib[n][act],at_name[n]);
+			if (it[in].hp[act]>0) tip_line(nr,where,slot,&line,2,"%+d Hitpoints",it[in].hp[act]);
+			if (it[in].end[act]>0) tip_line(nr,where,slot,&line,2,"%+d Endurance",it[in].end[act]);
+			if (it[in].mana[act]>0) tip_line(nr,where,slot,&line,2,"%+d Mana",it[in].mana[act]);
+			for (n=0; n<50; n++) if (it[in].skill[n][act]) tip_line(nr,where,slot,&line,2,"%+d %s",it[in].skill[n][act],skilltab[n].name);
+			if (it[in].light[act]>0) tip_line(nr,where,slot,&line,1,"Light %d",it[in].light[act]);
+			if (it[in].gethit_dam[act]) tip_line(nr,where,slot,&line,2,"Damages attackers: %d",it[in].gethit_dam[act]);
+			if ((it[in].flags&IF_USEACTIVATE) && !act) {	// what it does when turned on
+				for (n=0,shown=0; n<5; n++) if (it[in].attrib[n][1]) { if (!shown++) tip_line(nr,where,slot,&line,1,"When active:"); tip_line(nr,where,slot,&line,2," %+d %s",it[in].attrib[n][1],at_name[n]); }
+				if (it[in].armor[1]>it[in].armor[0]) { if (!shown++) tip_line(nr,where,slot,&line,1,"When active:"); tip_line(nr,where,slot,&line,2," Armor value %d",it[in].armor[1]); }
+				if (it[in].light[1]>0) { if (!shown++) tip_line(nr,where,slot,&line,1,"When active:"); tip_line(nr,where,slot,&line,2," Light %d",it[in].light[1]); }
+			}
+		}
+
+		// requirements, red when not met (base values, like wearing it checks)
+		first=1;
+		for (n=0; n<5; n++) {
+			if (it[in].attrib[n][2]<=1) continue;
+			if (first) { tip_line(nr,where,slot,&line,1,"Needs:"); first=0; }
+			ok=ch[cn].attrib[n][0]>=it[in].attrib[n][2];
+			tip_line(nr,where,slot,&line,ok ? 1 : 0," %s %d%s",at_name[n],it[in].attrib[n][2],ok ? "" : " (too low)");
+		}
+		for (n=0; n<50; n++) {
+			if (!it[in].skill[n][2]) continue;
+			if (first) { tip_line(nr,where,slot,&line,1,"Needs:"); first=0; }
+			ok=ch[cn].skill[n][0] && ch[cn].skill[n][0]>=it[in].skill[n][2];
+			tip_line(nr,where,slot,&line,ok ? 1 : 0," %s %d%s",skilltab[n].name,it[in].skill[n][2],
+				!ch[cn].skill[n][0] ? " (not known)" : (ok ? "" : " (too low)"));
+		}
+		if (it[in].hp[2]) { if (first) { tip_line(nr,where,slot,&line,1,"Needs:"); first=0; } ok=ch[cn].hp[0]>=it[in].hp[2]; tip_line(nr,where,slot,&line,ok ? 1 : 0," Hitpoints %d%s",it[in].hp[2],ok ? "" : " (too low)"); }
+		if (it[in].end[2]) { if (first) { tip_line(nr,where,slot,&line,1,"Needs:"); first=0; } ok=ch[cn].end[0]>=it[in].end[2]; tip_line(nr,where,slot,&line,ok ? 1 : 0," Endurance %d%s",it[in].end[2],ok ? "" : " (too low)"); }
+		if (it[in].mana[2]) { if (first) { tip_line(nr,where,slot,&line,1,"Needs:"); first=0; } ok=ch[cn].mana[0]>=it[in].mana[2]; tip_line(nr,where,slot,&line,ok ? 1 : 0," Mana %d%s",it[in].mana[2],ok ? "" : " (too low)"); }
+		if (it[in].min_rank>0) {
+			if (first) { tip_line(nr,where,slot,&line,1,"Needs:"); first=0; }
+			ok=points2rank(ch[cn].points_tot)>=it[in].min_rank;
+			tip_line(nr,where,slot,&line,ok ? 1 : 0," Rank %s%s",rank_name[(int)it[in].min_rank],ok ? "" : " (too low)");
+		}
+		if (it[in].driver==40) tip_line(nr,where,slot,&line,(ch[cn].kindred&KIN_SEYAN_DU) ? 1 : 0," Seyan'Du only");
+		if (it[in].driver==39) tip_line(nr,where,slot,&line,(ch[cn].kindred&KIN_PURPLE) ? 1 : 0," Followers of the Purple One only");
+		if (it[in].driver==18) tip_line(nr,where,slot,&line,(ch[cn].kindred&KIN_PURPLE) ? 0 : 1," Not for followers of the Purple One");
+
+		// condition
+		if (it[in].max_age[act] || it[in].max_damage) {
+			static char *cond[5]={"Condition: perfect","Condition: signs of age","Condition: fairly old","Condition: old","Condition: very old and battered"};
+			n=it[in].damage_state; if (n<0) n=0; if (n>4) n=4;
+			tip_line(nr,where,slot,&line,n>=3 ? 0 : 1,"%s",cond[n]);
+		}
+
+		// value: the price here depends on Bartering
+		if (where==2 && (ch[co].flags&CF_MERCHANT)) {
+			tip_line(nr,where,slot,&line,3,"Price: %s",tip_money(barter(cn,do_item_value(in),1),b2));
+		} else {
+			if (it[in].value>0) tip_line(nr,where,slot,&line,3,"Base value: %s",tip_money(it[in].value,b2));
+			if (co>0 && co<MAXCHARS && (ch[co].flags&CF_MERCHANT) && do_char_can_see(cn,co)) {
+				int in2=ch[co].data[0];
+				flag=0;
+				if ((it[in].flags&IF_ARMOR) && (it_temp[in2].flags&IF_ARMOR)) flag=1;
+				if ((it[in].flags&IF_WEAPON) && (it_temp[in2].flags&IF_WEAPON)) flag=1;
+				if ((it[in].flags&IF_MAGIC) && (it_temp[in2].flags&IF_MAGIC)) flag=1;
+				if ((it[in].flags&IF_MISC) && (it_temp[in2].flags&IF_MISC)) flag=1;
+				if (flag) tip_line(nr,where,slot,&line,3,"%s pays: %s",ch[co].name,tip_money(barter(cn,do_item_value(in),0),b2));
+				else tip_line(nr,where,slot,&line,3,"%s doesn't buy these.",ch[co].name);
+			}
+		}
+
+		// description, wrapped at about 36 characters, at most 3 lines
+		s=it[in].description;
+		for (n=0; n<3 && *s; n++) {
+			while (*s==' ') s++;
+			d=buf;
+			while (*s && d-buf<36) *d++=*s++;
+			if (*s && *s!=' ') {	// back up to the last space
+				char *sp=d; while (sp>buf && sp[-1]!=' ') sp--;
+				if (sp>buf+10) { s-=d-sp; d=sp; }
+			}
+			*d=0;
+			if (n==2 && *s) strcpy(d>buf+33 ? buf+33 : d,"...");
+			if (buf[0]) tip_line(nr,where,slot,&line,1,"%s",buf);
+		}
+	}
+
+	memset(end,0,64);
+	end[0]=SV_ITEMINFO; end[1]=where; end[2]=slot; end[3]=255; end[4]=line;
+	xsend(nr,end,64);
+}
+
 void plr_cmd_shop(int nr)
 {
         int cn,co,n;
@@ -951,6 +1105,7 @@ void plr_cmd(int nr)
         switch(player[nr].inbuf[0]) {
 
                 case CL_CMD_SHOP:       plr_cmd_shop(nr); break;
+                case CL_CMD_ITEMINFO:   plr_cmd_iteminfo(nr); break;
                 default:                plog(nr,"Unknown CL: %d",player[nr].inbuf[0]); break;
         }
 }

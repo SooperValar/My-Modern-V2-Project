@@ -2185,6 +2185,28 @@ void dd_hud_vtri(int x,int y,int w,int h,int down)
 }
 
 // is canvas point x,y on a panel fill?
+// take the lines and arrows of other panels out of a rectangle (a tooltip
+// drawn on top of them); lines crossing it are split around it
+void dd_hud_vclip(int rx,int ry,int rw,int rh)
+{
+	int n,cnt=nvop;
+	struct hud_vop v;
+
+	for (n=0; n<cnt; n++) {
+		v=vops[n];
+		if (v.type==VOP_FILL) continue;
+		if (v.x>=rx+rw || v.y>=ry+rh || v.x+v.w<=rx || v.y+v.h<=ry) continue;	// outside
+		vops[n].w=0;	// remove, then add the pieces outside
+		if (v.type==VOP_HLINE) {
+			if (v.x<rx) vadd(VOP_HLINE,v.x,v.y,rx-v.x,v.h,v.rgb);
+			if (v.x+v.w>rx+rw) vadd(VOP_HLINE,rx+rw,v.y,v.x+v.w-(rx+rw),v.h,v.rgb);
+		} else if (v.type==VOP_VLINE) {
+			if (v.y<ry) vadd(VOP_VLINE,v.x,v.y,v.w,ry-v.y,v.rgb);
+			if (v.y+v.h>ry+rh) vadd(VOP_VLINE,v.x,ry+rh,v.w,v.y+v.h-(ry+rh),v.rgb);
+		}
+	}
+}
+
 int dd_hud_vhit(int x,int y)
 {
 	int n;

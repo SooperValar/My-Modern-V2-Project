@@ -540,6 +540,22 @@ int sv_spelltime(unsigned char *buf)
 	return 20;
 }
 
+struct tipinfo tip;
+
+int sv_iteminfo(unsigned char *buf)
+{
+	int l=buf[3];
+
+	if (tip.state!=1 || buf[1]!=tip.where || buf[2]!=(tip.slot&255)) return 64;	// an old answer
+	if (l==255) { tip.state=2; return 64; }
+	if (l<TIP_LINES) {
+		memcpy(tip.text[l],buf+5,58); tip.text[l][58]=0;
+		tip.font[l]=buf[4];
+		if (l+1>tip.lines) tip.lines=l+1;
+	}
+	return 64;
+}
+
 void sv_setchar_obj(unsigned char *buf)
 {
 	DEBUG("SV SETCHAR OBJ");
@@ -985,6 +1001,7 @@ int sv_cmd(unsigned char *buf)
 		case  	SV_UNIQUE:             	sv_unique(buf); return 9;
 		case 	SV_IGNORE:		return sv_ignore(buf);
 		case	SV_SPELLTIME:		return sv_spelltime(buf);
+		case	SV_ITEMINFO:		return sv_iteminfo(buf);
 
 		default: 			xlog(0,"Unknown SV: %d",buf[0]); dbg_log("unknown server command %d",buf[0]); return -1;
 	}

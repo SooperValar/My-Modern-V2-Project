@@ -153,6 +153,7 @@ struct cplayer
 #define CL_CMD_EXIT			31
 #define CL_CMD_UNIQUE			32
 #define CL_PASSWD			33
+#define CL_CMD_ITEMINFO			34	// where, slot, shop char: ask for an item tooltip
 
 #define CL_CMD_CTICK			255
 
@@ -232,6 +233,7 @@ struct cplayer
 #define SV_UNIQUE		72
 #define SV_IGNORE		73
 #define SV_SPELLTIME		74	// slot, seconds left, flags, name: 20 bytes
+#define SV_ITEMINFO		75	// one line of an item tooltip: 64 bytes
 
 #define SV_SETMAP		128	// 128-255 are used !!!
 

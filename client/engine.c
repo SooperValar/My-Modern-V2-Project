@@ -443,6 +443,63 @@ static void hud_rows(int x,int y,int n,int w)
 	for (i=1; i<n; i++) dd_hud_hline(x,y+i*HUD_ROW,w);
 }
 
+/* item tooltips: after resting the mouse ~0.35s on an item in the backpack,
+ * equipment or an open shop/grave, ask the server about it and show the
+ * answer next to the mouse */
+static void hud_tooltip(void)
+{
+	static int last_where=-1,last_slot=-1,last_sprite=0;
+	static unsigned int since=0;
+	extern int hightlight,hightlight_sub;
+	int where=-1,slot=0,sprite=0,co=0,n,w,h,x,y,len;
+	unsigned int now=GetTickCount();
+	unsigned short col;
+
+	if (hightlight==HL_BACKPACK && hightlight_sub>=0 && hightlight_sub<40) { where=0; slot=hightlight_sub; sprite=pl.item[slot]; }
+	else if (hightlight==HL_EQUIPMENT && hightlight_sub>=0 && hightlight_sub<20) { where=1; slot=hightlight_sub; sprite=pl.worn[slot]; }
+	else if (hightlight==HL_SHOP && show_shop && hightlight_sub>=0 && hightlight_sub<62) { where=2; slot=hightlight_sub; sprite=shop.item[slot]; }
+	if (show_shop) co=shop.nr;
+	if (where<0 || !sprite) { last_where=-1; return; }
+
+	if (where!=last_where || slot!=last_slot || sprite!=last_sprite) {
+		last_where=where; last_slot=slot; last_sprite=sprite; since=now;
+		return;
+	}
+	if (now-since<350) return;
+
+	// ask (again) if we have nothing for this item, or it's more than 5 seconds old
+	if (tip.where!=where || tip.slot!=slot || tip.sprite!=sprite || tip.co!=co || tip.state==0 ||
+	    (tip.state==2 && now-tip.at>5000) || (tip.state==1 && now-tip.at>3000)) {
+		unsigned char buf[16];
+		memset(buf,0,16);
+		buf[0]=CL_CMD_ITEMINFO; buf[1]=(unsigned char)where;
+		*(unsigned short*)(buf+2)=(unsigned short)slot;
+		*(unsigned int*)(buf+4)=co;
+		xsend(buf);
+		if (tip.state!=2 || tip.where!=where || tip.slot!=slot || tip.sprite!=sprite) tip.lines=0;	// keep showing a refresh of the same item
+		tip.where=where; tip.slot=slot; tip.sprite=sprite; tip.co=co; tip.state=1; tip.at=now;
+	}
+	if (!tip.lines) return;
+
+	// size and place: right of and below the mouse, kept on the canvas
+	for (n=0,len=0; n<tip.lines; n++) if ((int)strlen(tip.text[n])>len) len=strlen(tip.text[n]);
+	w=len*6+14; h=tip.lines*10+10;
+	x=mouse_cx+18; y=mouse_cy+14;
+	if (x+w>hud_cw-2) x=mouse_cx-12-w;
+	if (y+h>hud_ch-2) y=hud_ch-2-h;
+	if (x<2) x=2;
+	if (y<2) y=2;
+
+	dd_hud_vclip(x,y,w,h);
+	col=(unsigned short)((((HUD_RGB_PANEL>>16)&255)>>3)<<11 | (((HUD_RGB_PANEL>>8)&255)>>2)<<5 | ((HUD_RGB_PANEL&255)>>3));
+	dd_hud_fill(x,y,w,h,col);
+	dd_hud_hline(x,y,w);
+	dd_hud_hline(x,y+h-2,w);
+	dd_hud_vline(x,y,h);
+	dd_hud_vline(x+w-2,y,h);
+	for (n=0; n<tip.lines; n++) dd_puttext(x+7,y+5+n*10,tip.font[n],tip.text[n]);
+}
+
 static void hud_buffs(void)
 {
 	int n,cnt=0,x,w,y,left,font,idx[20];
@@ -695,6 +752,9 @@ void hud_draw_v2(int init,unsigned short *mapmem,int map_x,int map_y)
 
 	// --- compass (click its arms to auto-walk)
 	dd_hud_from_legacy(HCP_LX,HCP_LY,HCP_LW,HCP_LH,HCP_X,HCP_Y);
+
+	// --- item tooltip
+	if (init) hud_tooltip();
 
 	// --- item on the mouse cursor
 	if (init && pl.citem) {

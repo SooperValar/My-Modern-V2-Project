@@ -159,3 +159,16 @@ struct buffinfo {
 };
 extern struct buffinfo buff[20];
 
+// item tooltips: lines come from the server (SV_ITEMINFO)
+#define TIP_LINES	40
+struct tipinfo {
+	int where,slot,sprite,co;	// what it describes
+	int state;			// 0 empty, 1 asked, 2 complete
+	unsigned int at;		// GetTickCount() when asked
+	int lines;
+	char text[TIP_LINES][60];
+	unsigned char font[TIP_LINES];
+};
+extern struct tipinfo tip;
+void dd_hud_vclip(int x,int y,int w,int h);
+
