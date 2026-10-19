@@ -65,7 +65,13 @@ void build_drop(int x,int y,int in)
 	if (x<0 || x>=MAPX || y<0 || y>=MAPY) return;
 
 	if (in&0x40000000) {
-		map[x+y*MAPX].flags^=in&0xfffffff;
+		if (in&(MF_INDOORS|MF_SIGHTBLOCK)) {
+			// indoor tiles keep a stored amount of daylight: recompute it
+			// around here, or a newly roofed area stays dark (or bright)
+			remove_lights(x,y);
+			map[x+y*MAPX].flags^=in&0xfffffff;
+			add_lights(x,y);
+		} else map[x+y*MAPX].flags^=in&0xfffffff;
 		return;
 	}
 	if (in&0x20000000) {
