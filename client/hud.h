@@ -132,9 +132,12 @@ static int in_rect(int x,int y,int rx,int ry,int rw,int rh) { return x>=rx && y>
 #define VOP_FILL	0
 #define VOP_HLINE	1	// a band of h canvas rows starting at y, drawn as one crisp line
 #define VOP_VLINE	2	// a band of w canvas columns starting at x
+#define VOP_TRIUP	3	// filled triangle pointing up, in the box x,y,w,h
+#define VOP_TRIDOWN	4	// filled triangle pointing down
 struct hud_vop { short x,y,w,h; unsigned char type; unsigned int rgb; };
 int dd_hud_vops(struct hud_vop **p);
 int dd_hud_vhit(int x,int y);
+void dd_hud_vtri(int x,int y,int w,int h,int down);
 extern int hud_theme;
 
 #endif

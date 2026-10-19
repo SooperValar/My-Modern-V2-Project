@@ -2093,6 +2093,11 @@ int dd_hud_vops(struct hud_vop **p)
 	return nvop;
 }
 
+void dd_hud_vtri(int x,int y,int w,int h,int down)
+{
+	vadd(down ? VOP_TRIDOWN : VOP_TRIUP,x,y,w,h,HUD_RGB_LINE);
+}
+
 // is canvas point x,y on a panel fill?
 int dd_hud_vhit(int x,int y)
 {

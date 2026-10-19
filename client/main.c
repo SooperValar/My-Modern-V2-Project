@@ -353,6 +353,15 @@ static void draw_vops(int lines)
 		} else if (lines && v->type==VOP_VLINE) {
 			a=CW2W(v->x); b=CW2W(v->x+v->w); a=(a+b-1)/2;
 			fill_rect(a,CW2W(v->y),a+1,CW2W(v->y+v->h),v->rgb);
+		} else if (lines && (v->type==VOP_TRIUP || v->type==VOP_TRIDOWN)) {
+			int x0=CW2W(v->x),x1=CW2W(v->x+v->w),y0=CW2W(v->y),y1=CW2W(v->y+v->h),r,hw,c2,k;
+			c2=x0+x1;	// twice the centre
+			for (r=y0; r<y1; r++) {
+				k=(v->type==VOP_TRIUP) ? r-y0+1 : y1-r;		// rows from the tip
+				hw=k*(x1-x0)/(y1-y0);				// full width at this row
+				if (hw<1) hw=1;
+				fill_rect((c2-hw)/2,r,(c2+hw+1)/2,r+1,v->rgb);
+			}
 		}
 	}
 }

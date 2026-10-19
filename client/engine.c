@@ -416,8 +416,13 @@ static void hud_scroll(int x,int y,int h,int pos,int maxpos)
 	extern int hud_theme;
 	int o=(hud_theme==2) ? 1 : 0;	// clean theme: lines are 1 pixel in the middle of the old 2 pixel band
 
-	dd_putc(x+3+o+o,y+3,1,'^');
-	dd_putc(x+3+o,y+h-12,1,'v');
+	if (o) {	// clean theme: uniform triangles, drawn at full resolution
+		dd_hud_vtri(x+3,y+4,8,5,0);
+		dd_hud_vtri(x+3,y+h-10,8,5,1);
+	} else {
+		dd_putc(x+3,y+3,1,'^');
+		dd_putc(x+3,y+h-12,1,'v');
+	}
 	if (maxpos<1) maxpos=1;
 	dd_showbar(x+2+o,y+14+(pos*(h-40))/maxpos,8,10,(unsigned short)GREEN);
 }
