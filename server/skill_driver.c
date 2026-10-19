@@ -1179,26 +1179,17 @@ void skill_blast(int cn)
         fx_add_effect(7,0,ch[cn].x,ch[cn].y,0);
 }
 
-void skill_repair(int cn)
+/* repair the item in hand: 1 success, 0 failed (item damaged or destroyed),
+ * -1 not damaged, -2 too difficult, -3 too exhausted. No messages. */
+int repair_citem(int cn)
 {
         int in,chan,die,in2;
 
-        if ((in=ch[cn].citem)==0) {
-                do_char_log(cn,0,"Repair. Repair what?\n");
-                return;
-        }
-        if (it[in].damage_state==0) {
-                do_char_log(cn,0,"That isn't damaged.\n");
-                return;
-        }
-        if (it[in].power>ch[cn].skill[SK_REPAIR][5] || (it[in].flags&IF_NOREPAIR)) {
-                do_char_log(cn,0,"That's too difficult for you.\n");
-                return;
-        }
-        if (ch[cn].a_end<it[in].power*1000) {
-                do_char_log(cn,0,"You're too exhausted to repair that.\n");
-                return;
-        }
+        in=ch[cn].citem;
+        if (!in || (in&0x80000000)) return -1;
+        if (it[in].damage_state==0) return -1;
+        if (it[in].power>ch[cn].skill[SK_REPAIR][5] || (it[in].flags&IF_NOREPAIR)) return -2;
+        if (ch[cn].a_end<it[in].power*1000) return -3;
         ch[cn].a_end-=it[in].power*1000;
 
         if (it[in].power) chan=ch[cn].skill[SK_REPAIR][5]*15/it[in].power;
@@ -1208,24 +1199,35 @@ void skill_repair(int cn)
 
         die=RANDOM(20);
 
+        chlog(cn,"Cast Repair");
         if (die<=chan) {
                 in2=god_create_item(it[in].temp);
-                if (!in2) {
-                        do_char_log(cn,0,"You failed.\n");
-                        return;
-                }
+                if (!in2) return 0;
                 it[in].used=USE_EMPTY;
                 ch[cn].citem=in2;
                 it[in2].carried=cn;
-                do_char_log(cn,1,"Success!\n");
-        } else {
-                do_char_log(cn,0,"You failed.\n");
-                item_damage_citem(cn,1000000);  // make sure it reaches the next state
-                if (die-chan>3) item_damage_citem(cn,1000000);
-                if (die-chan>6) item_damage_citem(cn,1000000);
+                return 1;
         }
-        chlog(cn,"Cast Repair");
+        item_damage_citem(cn,1000000);  // make sure it reaches the next state
+        if (die-chan>3) item_damage_citem(cn,1000000);
+        if (die-chan>6) item_damage_citem(cn,1000000);
+        return 0;
+}
 
+void skill_repair(int cn)
+{
+        int r;
+
+        if (ch[cn].citem==0) {
+                do_char_log(cn,0,"Repair. Repair what?\n");
+                return;
+        }
+        r=repair_citem(cn);
+        if (r==-1) do_char_log(cn,0,"That isn't damaged.\n");
+        else if (r==-2) do_char_log(cn,0,"That's too difficult for you.\n");
+        else if (r==-3) do_char_log(cn,0,"You're too exhausted to repair that.\n");
+        else if (r==1) do_char_log(cn,1,"Success!\n");
+        else do_char_log(cn,0,"You failed.\n");
 }
 
 void skill_recall(int cn)

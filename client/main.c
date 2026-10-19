@@ -145,6 +145,7 @@ int dlg_col,dlg_fcol;
 
 extern int blockcnt,blocktot,blockgc;
 int mx=0,my=0;
+extern int tile_x,tile_y;
 
 void say(char *input)
 {
@@ -810,6 +811,12 @@ LRESULT CALLBACK MainWndProc(HWND hWnd, UINT message,WPARAM wParam, LPARAM lPara
 					hist_nr=0;
 
 					add_words();
+
+					// #tile / /tile with no coordinates: use the map tile under the mouse
+					if ((!_stricmp(input,"/tile") || !_stricmp(input,"#tile")) && tile_x>=0 && tile_y>=0 && map) {
+						int tm=tile_x+tile_y*TILEX;
+						sprintf(input+5," %d %d",map[tm].x,map[tm].y);
+					}
 
 					say(input);
 

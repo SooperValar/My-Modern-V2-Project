@@ -154,3 +154,16 @@ New player commands (also with `/`): `#armor`, `#weapon`, `#sword`, `#dagger`, `
 
 ### Tools
 - **`tools/claude-sync.sh`** syncs the server between Ubuntu (WSL) and the Windows copy: `send` (Ubuntu → Windows, keeps any newer Windows files), `get` (changed source files Windows → Ubuntu, with a backup, then `make server`), and `get-world` (world `.dat` files, server stopped).
+
+---
+
+## 10. Player and builder commands
+
+All also work with `/`, and the player ones are listed in `#help`.
+
+- **`#quest`**: every skill teacher, read live from the NPC templates: which skill (adjusted for your class, so Templars see Immunity and Surround Hit), who teaches it and where, and the teacher's own hint about the item. Skills you already know are marked; teachers of skills your class can't learn are counted, not listed.
+- **`#exp`**: experience this session and in total, each with exp per hour, unspent points, and how much is left to the next rank.
+- **`#played`**: time played this session and in total, and the character's creation date.
+- **`#repair` / `#repairinv`**: use the Repair skill on every damaged worn item or backpack item. The first use warns that a failed repair can damage or destroy an item; repeating the command within 30 seconds goes ahead. The Repair skill code was split into `repair_citem()` so the single-item skill and these commands share it.
+- **`#tile [x y]`** (gods): floor and object sprite, item, flags, light and character on a tile. Typed without coordinates, the client fills in the tile under the mouse.
+- **`#undo`** (builders): undoes the last build action (one click, one removal or one whole area), repeatable; about 20,000 tile changes are remembered. Items removed by the action are re-created from their template.

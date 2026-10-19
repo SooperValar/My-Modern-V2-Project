@@ -34,7 +34,7 @@ static char intro_msg4[]={"Use #help (or /help) to get a listing of the text com
 static inline unsigned int _mcmp(unsigned char *a,unsigned char *b,unsigned int len)
 {
 	// align a
-	while (len>0 && ((unsigned long)(a)&3)) {
+	while (len>0 && ((int)(a)&3)) {
 		if (*a!=*b) return 1;
 		a++; b++; len--;
 	}
@@ -60,7 +60,7 @@ static inline unsigned int mcmp(void *a,void *b,unsigned int len)
 static inline void *_fdiff(unsigned char *a,unsigned char *b,unsigned int len)
 {
 	// align a
-	while (len>0 && ((unsigned long)(a)&3)) {
+	while (len>0 && ((int)(a)&3)) {
 		if (*a!=*b) return a;
 		a++; b++; len--;
 	}
@@ -89,7 +89,7 @@ static inline void *fdiff(void *a,void *b,unsigned int len)
 static inline unsigned int _mcpy(unsigned char *a,unsigned char *b,unsigned int len)
 {
 	// align a
-	while (len>0 && ((unsigned long)(a)&3)) {
+	while (len>0 && ((int)(a)&3)) {
 		*a=*b;
 		a++; b++; len--;
 	}
@@ -485,6 +485,7 @@ void plr_cmd_drop(int nr)
                         do_char_log(cn,3,"Area: %d,%d - %d,%d\n",
                                 xs,ys,xe,ye);
 
+                        build_undo_begin(cn);
                         for (x=xs; x<=xe; x++)
                                 for (y=ys; y<=ye; y++)
                                         build_drop(x,y,ch[cn].citem);
@@ -496,6 +497,7 @@ void plr_cmd_drop(int nr)
                         ch[cn].misc_target2=y;
                         do_char_log(cn,3,"Areastart: %d,%d\n",x,y);
                 } else if (ch[cn].misc_action==DR_SINGLEBUILD) {
+                        build_undo_begin(cn);
                         build_drop(x,y,ch[cn].citem);
                 }
                 return;
@@ -539,6 +541,7 @@ void plr_cmd_pickup(int nr)
         cn=player[nr].usnr;
 
         if (IS_BUILDING(cn)) {
+                build_undo_begin(cn);
                 build_remove(x,y);
                 return;
         }
@@ -1156,6 +1159,7 @@ void plr_login(int nr)
         ch[cn].addr=player[nr].addr;
 	char_add_net(cn,ch[cn].addr);
         ch[cn].current_online_time=0;
+        sess_points[cn]=ch[cn].points_tot;	// for #exp
 
         player[nr].cpl.mode = -1; // "impossible" client default will force change
 

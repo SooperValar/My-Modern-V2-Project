@@ -639,6 +639,7 @@ void do_help(int cn,char *topic)
 	do_char_log(cn,1,"#armor                 armor tiers and sets.\n");
 	do_char_log(cn,1,"#belt                  all belts.\n");
 	do_char_log(cn,1,"#bow                   you'll bow.\n");
+	do_char_log(cn,1,"#exp                   experience and exp/hour.\n");
 	do_char_log(cn,1,"#fightback             toggle auto-figtback.\n");
 	do_char_log(cn,1,"#follow <player>|self  you'll follow player.\n");
 	do_char_log(cn,1,"#gold <amount>         get X gold coins.\n");
@@ -649,6 +650,10 @@ void do_help(int cn,char *topic)
 	do_char_log(cn,1,"#lag <seconds>         lag control.\n");
 	do_char_log(cn,1,"#moddedarmor           of the Lion, Snake, ...\n");
 	do_char_log(cn,1,"#noshout               you won't hear shouts.\n");
+	do_char_log(cn,1,"#played                time played, created.\n");
+	do_char_log(cn,1,"#quest                 skill teachers.\n");
+	do_char_log(cn,1,"#repair                repair all worn gear.\n");
+	do_char_log(cn,1,"#repairinv             repair backpack gear.\n");
 	do_char_log(cn,1,"#rings                 all rings and gems.\n");
 	do_char_log(cn,1,"#notell                you won't hear tells.\n");
 	do_char_log(cn,1,"#seen <player>         when last seen here?.\n");
@@ -745,6 +750,8 @@ void do_help(int cn,char *topic)
 		do_char_log(cn,3,"Greater God Commands:\n");
 		do_char_log(cn,3," \n");
 		do_char_log(cn,3,"#build [page|next|prev|end] build pages.\n");
+		do_char_log(cn,3,"#undo                   undo last build action.\n");
+		do_char_log(cn,3,"#tile [x y]             what is on a tile.\n");
                 do_char_log(cn,3,"#creator <player>       make player a Creator.\n");
                 do_char_log(cn,3,"#greatergod <player>    make player a G-God.\n");
                 do_char_log(cn,3,"#lookinv <player>       look for items.\n");
@@ -1858,6 +1865,208 @@ void do_info_moddedarmor(int cn)
 	do_char_log(cn,2,"* 1 in 8 are \"Godly\" (double bonus), 1 in 8 are \"Shining\" (normal bonus, and the item gives light).\n");
 }
 
+
+/* ---- #exp, #played, #quest, #repair, #repairinv, #tile, #undo ------------ */
+
+int sess_points[MAXCHARS];	// points_tot at login, set in svr_tick.c
+
+static char *qol_num(int v,char *buf)	// 1234567 -> "1,234,567"
+{
+	char tmp[20];
+	int n,l,o=0;
+
+	sprintf(tmp,"%d",v<0 ? -v : v);
+	l=strlen(tmp);
+	if (v<0) buf[o++]='-';
+	for (n=0; n<l; n++) {
+		if (n && (l-n)%3==0) buf[o++]=',';
+		buf[o++]=tmp[n];
+	}
+	buf[o]=0;
+	return buf;
+}
+
+static char *qol_dur(unsigned int s,char *buf)	// seconds -> "2d 3h 14m"
+{
+	unsigned int d=s/86400,h=s/3600%24,m=s/60%60;
+
+	if (d) sprintf(buf,"%ud %uh %um",d,h,m);
+	else if (h) sprintf(buf,"%uh %um",h,m);
+	else sprintf(buf,"%um %us",m,s%60);
+	return buf;
+}
+
+void do_exp(int cn)
+{
+	int tot,sess,rank,next,lo,hi,mid;
+	unsigned int ss,ts;
+	char a[20],b[20],c[20];
+
+	tot=ch[cn].points_tot;
+	sess=tot-sess_points[cn];
+	if (sess<0) sess=0;
+	ss=time(NULL)-ch[cn].login_date; if (ss<1) ss=1;
+	ts=ch[cn].total_online_time/TICKS; if (ts<1) ts=1;
+
+	do_char_log(cn,1,"Experience:\n");
+	do_char_log(cn,1," This session: %s in %s (%s per hour)\n",qol_num(sess,a),qol_dur(ss,b),qol_num((int)((long long)sess*3600/ss),c));
+	do_char_log(cn,1," Total:        %s in %s (%s per hour)\n",qol_num(tot,a),qol_dur(ts,b),qol_num((int)((long long)tot*3600/ts),c));
+	do_char_log(cn,1," Not spent yet: %s\n",qol_num(ch[cn].points,a));
+
+	rank=points2rank(tot);
+	if (rank<RANKS-1) {
+		lo=tot; hi=0x7fffffff;	// first value with a higher rank
+		while (lo<hi) { mid=lo+(hi-lo)/2; if (points2rank(mid)>rank) hi=mid; else lo=mid+1; }
+		next=lo;
+		if (points2rank(next)>rank)
+			do_char_log(cn,2," Rank: %s. %s more to %s.\n",rank_name[rank],qol_num(next-tot,a),rank_name[points2rank(next)]);
+		else do_char_log(cn,2," Rank: %s.\n",rank_name[rank]);
+	} else do_char_log(cn,2," Rank: %s.\n",rank_name[rank]);
+}
+
+void do_played(int cn)
+{
+	char a[30],b[60];
+	time_t t;
+	struct tm *tm;
+	int days;
+
+	do_char_log(cn,1,"Time played:\n");
+	do_char_log(cn,1," This session: %s\n",qol_dur(time(NULL)-ch[cn].login_date,a));
+	do_char_log(cn,1," Total:        %s\n",qol_dur(ch[cn].total_online_time/TICKS,a));
+	if (ch[cn].creation_date>0) {
+		t=ch[cn].creation_date;
+		tm=localtime(&t);
+		strftime(b,sizeof(b),"%B %d, %Y",tm);
+		days=(time(NULL)-ch[cn].creation_date)/86400;
+		do_char_log(cn,2," Created %s (%d day%s ago).\n",b,days,days==1 ? "" : "s");
+	}
+}
+
+/* skill a teacher gives this character (same rules as the teacher code in driver.c) */
+static int quest_skill(int cn,int nr)
+{
+	if (nr==19 && (ch[cn].kindred&(KIN_TEMPLAR|KIN_ARCHTEMPLAR))) return 32;
+	if (nr==20 && (ch[cn].kindred&(KIN_TEMPLAR|KIN_ARCHTEMPLAR))) return 33;
+	if (nr==19 && (ch[cn].kindred&KIN_SEYAN_DU) && ch[cn].skill[19][0]) return 32;
+	if (nr==20 && (ch[cn].kindred&KIN_SEYAN_DU) && ch[cn].skill[20][0]) return 33;
+	return nr;
+}
+
+void do_quest(int cn)
+{
+	int n,nr,w,cnt=0,skip=0,known;
+	char hint[300],*s,*d,*area;
+
+	do_char_log(cn,1,"Skill teachers (bring them the item and they teach you the skill):\n");
+	do_char_log(cn,1," \n");
+	for (n=1; n<MAXTCHARS; n++) {
+		if (ch_temp[n].used==USE_EMPTY || !ch_temp[n].data[50] || !ch_temp[n].data[49]) continue;
+		nr=quest_skill(cn,ch_temp[n].data[50]);
+		if (nr<0 || nr>=50) continue;
+		if (!ch[cn].skill[nr][2]) { skip++; continue; }	// not for this class
+		w=ch_temp[n].data[49];
+		known=ch[cn].skill[nr][0]!=0;
+		area=get_area_m(ch_temp[n].x,ch_temp[n].y,1);
+		cnt++;
+		do_char_log(cn,known ? 3 : 1,"%2d. %s can be learned from %s%s%s.%s\n",cnt,skilltab[nr].name,ch_temp[n].name,
+			area[0] ? " " : "",area,known ? " (learned)" : "");
+		if (known) continue;
+
+		// the teacher's own words, if he has some (they usually say where the item is)
+		s=ch_temp[n].text[2];
+		if (s[0] && s[0]!='#') {
+			for (d=hint; *s && d<hint+250; s++) {
+				if (s[0]=='%' && s[1]=='s') { strcpy(d,ch[cn].name); d+=strlen(d); s++; }
+				else if (s[0]=='%') { *d++='%'; *d++='%'; }
+				else *d++=*s;
+			}
+			*d=0;
+			do_char_log(cn,2,"    \"%s\"\n",hint);
+		} else if (w>0 && w<MAXTITEM) do_char_log(cn,2,"    Bring: %s.\n",it_temp[w].name);
+	}
+	if (!cnt) do_char_log(cn,1,"None found.\n");
+	if (skip) do_char_log(cn,1," \n%d more teacher%s teach skills your class can't learn.\n",skip,skip==1 ? "" : "s");
+}
+
+/* #repair (worn gear) and #repairinv (backpack): the Repair skill on every damaged item */
+void do_repair_all(int cn,int inv)
+{
+	static int confirm_tick[MAXCHARS],confirm_mode[MAXCHARS];
+	int n,in,old,res,cnt=0,ok=0,cnt_n,now;
+	char name[60];
+
+	if (!ch[cn].skill[SK_REPAIR][0]) { do_char_log(cn,0,"You don't know how to repair.\n"); return; }
+
+	cnt_n=inv ? 40 : 20;
+	for (n=0; n<cnt_n; n++) {
+		in=(int)(inv ? ch[cn].item[n] : ch[cn].worn[n]);
+		if (in>0 && in<MAXITEM && !(in&0x80000000) && it[in].damage_state) cnt++;
+	}
+	if (!cnt) { do_char_log(cn,1,"Nothing %s needs repairing.\n",inv ? "in your backpack" : "you wear"); return; }
+
+	if (confirm_mode[cn]!=inv+1 || globs->ticker-confirm_tick[cn]>TICKS*30) {
+		confirm_mode[cn]=inv+1;
+		confirm_tick[cn]=globs->ticker;
+		do_char_log(cn,0,"%d damaged item%s. Warning: a failed repair damages an item further and can destroy it. Type #%s again within 30 seconds to go ahead.\n",
+			cnt,cnt==1 ? "" : "s",inv ? "repairinv" : "repair");
+		return;
+	}
+	confirm_mode[cn]=0;
+
+	for (n=0; n<cnt_n; n++) {
+		in=(int)(inv ? ch[cn].item[n] : ch[cn].worn[n]);
+		if (in<=0 || in>=MAXITEM || (in&0x80000000) || !it[in].damage_state) continue;
+		strncpy(name,it[in].name,59); name[59]=0;
+
+		old=ch[cn].citem;	// the repair code works on the item in hand
+		ch[cn].citem=in;
+		res=repair_citem(cn);
+		now=ch[cn].citem;
+		if (inv) ch[cn].item[n]=now; else ch[cn].worn[n]=now;
+		ch[cn].citem=old;
+
+		if (res==1) { do_char_log(cn,2,"Repaired %s.\n",name); ok++; }
+		else if (res==0) {
+			if (now) do_char_log(cn,0,"Failed to repair %s; it got worse.\n",name);
+			else do_char_log(cn,0,"Failed to repair %s; it was destroyed.\n",name);
+		}
+		else if (res==-2) do_char_log(cn,1,"%s is too difficult for you.\n",name);
+		else if (res==-3) { do_char_log(cn,0,"You're too exhausted to repair any more.\n"); break; }
+	}
+	do_char_log(cn,1,"Repaired %d of %d.\n",ok,cnt);
+	do_update_char(cn);
+}
+
+/* #tile [x y]: what is on a map tile (the client fills in the tile under the mouse) */
+void do_tile(int cn,char *ax,char *ay)
+{
+	static struct { unsigned long long f; char *name; } fl[]={
+		{MF_MOVEBLOCK,"move block"},{MF_SIGHTBLOCK,"sight block"},{MF_INDOORS,"indoors"},
+		{MF_UWATER,"under water"},{MF_NOLAG,"no lag"},{MF_NOMONST,"no monsters"},{MF_BANK,"bank"},
+		{MF_TAVERN,"tavern"},{MF_NOMAGIC,"no magic"},{MF_DEATHTRAP,"death trap"},{MF_ARENA,"arena"},
+		{MF_NOEXPIRE,"no expire"},{MF_NOFIGHT,"no fight"}};
+	int x,y,m,n,in,co;
+	char buf[300],*area;
+
+	if (ax && ax[0] && ay && ay[0]) { x=atoi(ax); y=atoi(ay); }
+	else { x=ch[cn].x; y=ch[cn].y; }
+	if (x<0 || x>=MAPX || y<0 || y>=MAPY) { do_char_log(cn,0,"That's outside the map.\n"); return; }
+	m=x+y*MAPX;
+
+	area=get_area_m(x,y,0);
+	do_char_log(cn,1,"Tile %d,%d%s%s%s\n",x,y,area[0] ? " (" : "",area,area[0] ? ")" : "");
+	do_char_log(cn,1," Floor sprite %d, object sprite %d\n",map[m].sprite,map[m].fsprite);
+	if ((in=map[m].it)) do_char_log(cn,1," Item: %s (item %d, template %d, sprite %d)\n",it[in].name,in,it[in].temp,it[in].sprite[it[in].active ? 1 : 0]);
+	buf[0]=0;
+	for (n=0; n<(int)(sizeof(fl)/sizeof(fl[0])); n++)
+		if (map[m].flags&fl[n].f) { if (buf[0]) strcat(buf,", "); strcat(buf,fl[n].name); }
+	do_char_log(cn,1," Flags: %s\n",buf[0] ? buf : "none");
+	do_char_log(cn,1," Light: %d, daylight %d%%\n",map[m].light,map[m].dlight);
+	if ((co=map[m].ch)) do_char_log(cn,1," Character: %s (%d, template %d)\n",ch[co].name,co,ch[co].temp);
+}
+
+
 void do_command(int cn, char *ptr)
 {
         int n,m;
@@ -1937,6 +2146,7 @@ void do_command(int cn, char *ptr)
 		if (prefix(cmd,"emote"))                { do_emote(cn,args[0]); return; }
                 if (prefix(cmd,"enemy") && f_giu)       { do_enemy(cn,arg[1],arg[2]); return; }
                 if (prefix(cmd,"enter") && f_gi)        { do_enter(cn); return; }
+                if (prefix(cmd,"exp") && f_p)           { do_exp(cn); return; };
                 if (prefix(cmd,"exit") && f_u)          { god_exit_usurp(cn); return; };
                 if (prefix(cmd,"eras") && f_g)  /*!*/   { break; };
                 if (prefix(cmd,"erase") && f_g) /*!*/   { god_erase(cn,dbatoi(arg[1]),0); return; };
@@ -2019,6 +2229,7 @@ void do_command(int cn, char *ptr)
                 if (prefix(cmd,"npclist") && f_giu)     { do_npclist(cn,args[0]); return; };
                 break;
         case 'p':
+                if (prefix(cmd,"played") && f_p)        { do_played(cn); return; };
                 if (prefix(cmd,"passwor") && f_g)       { break; };
                 if (prefix(cmd,"password") && f_g)      { god_change_pass(cn,dbatoi(arg[1]),arg[2]); return; };
 		if (prefix(cmd,"password"))      	{ god_change_pass(cn,cn,arg[1]); return; };
@@ -2033,6 +2244,9 @@ void do_command(int cn, char *ptr)
 		if (prefix(cmd,"pktcnt") && f_g) 	{ pkt_list(); return; };
 		if (prefix(cmd,"pktcl") && f_g) 	{ cl_list(); return; };
                 break;
+        case 'q':
+                if (prefix(cmd,"quest") && f_p)         { do_quest(cn); return; };
+                break;
         case 'r':
                 if (prefix(cmd,"rac"))                  { break; };
                 if (prefix(cmd,"rais"))                 { break; };
@@ -2040,6 +2254,8 @@ void do_command(int cn, char *ptr)
                 if (prefix(cmd,"recall") && f_giu)      { god_goto(cn,cn,"512","512"); return; };
                 if (prefix(cmd,"respawn") && f_giu)     { do_respawn(cn,atoi(arg[1])); return; };
                 if (prefix(cmd,"rings"))                { do_info_rings(cn); return; };
+                if (!strcmp(cmd,"repair") && f_p)       { do_repair_all(cn,0); return; };
+                if (!strcmp(cmd,"repairinv") && f_p)    { do_repair_all(cn,1); return; };
                 break;
         case 's':
                 if (prefix(cmd,"s"))                    { break; };
@@ -2073,12 +2289,14 @@ void do_command(int cn, char *ptr)
                 if (prefix(cmd,"temple") && f_giu)      { god_goto(cn,cn,"800","800"); return; };
                 if (prefix(cmd,"thrall") && f_giu)      { god_thrall(cn,arg[1],arg[2]); return; };
 		if (prefix(cmd,"time"))      		{ show_time(cn); return; };
+                if (!strcmp(cmd,"tile") && f_g)         { do_tile(cn,arg[1],arg[2]); return; };
                 if (prefix(cmd,"tinfo") && f_g)         { god_tinfo(cn,atoi(arg[1])); return; };
                 if (prefix(cmd,"top") && f_g)           { god_top(cn); return; };		
                 if (prefix(cmd,"twohand"))              { do_info_twohand(cn); return; };
                 break;
         case 'u':
                 if (prefix(cmd,"u"))                    { break; };
+                if (!strcmp(cmd,"undo") && f_c)         { build_undo(cn); return; };
                 if (prefix(cmd,"unique") && f_g)        { god_unique(cn); return; };
                 if (prefix(cmd,"usurp") && f_giu)       { god_usurp(cn,dbatoi(arg[1])); return; };
                 break;
