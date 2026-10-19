@@ -570,6 +570,13 @@ void hud_draw_v2(int init,unsigned short *mapmem,int map_x,int map_y)
 
 		// --- shop window (centered)
 		if (show_shop) dd_hud_from_legacy(HSH_LX,HSH_LY,HSH_LW,HSH_LH,HSH_X,HSH_Y);
+	} else if (do_exit) {
+		// logged out (e.g. walked into a tavern): keep the Exit button, like the
+		// original, so the player can read the reason in the chat and then leave
+		dd_hud_panel(HK_X,HK_Y2,HK_W,HK_BH);
+		for (c=1; c<4; c++) dd_hud_vline(HK_X+c*HK_BW,HK_Y2,HK_BH);
+		for (r=1; r<3; r++) dd_hud_hline(HK_X,HK_Y2+1+r*15,HK_W);
+		ctext(HK_X+3*HK_BW,HK_BW,HK_Y2+2+2*15+3,1,"Exit");
 	}
 
 	// --- chat

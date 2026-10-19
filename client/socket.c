@@ -90,9 +90,19 @@ int xrecv(int sock,char *buf,int len,int flags)
         return size;
 }
 
+static int sock_closed=0;	// PORT: connection gone after a regular logout
+
 void so_error(char *err)
 {
 	char buf[250];
+
+	// PORT: after the server sent its exit message, a dropped connection is
+	// expected. Keep the window open (like the original) so the player can
+	// read the reason and leave with the Exit button.
+	if (do_exit) {
+		if (!sock_closed) { closesocket(sock); sock_closed=1; dbg_log("connection closed after exit (%s)",err); }
+		return;
+	}
 
 	dd_deinit();
 
@@ -1012,10 +1022,12 @@ void xsend(unsigned char *buf)
 {
 	int len=0,ret;
 
+	if (do_exit) return;	// logged out: nothing more to say to the server
+
 	while (len<16) {
 		ret=send(sock,buf+len,16-len,0);
         if (ret<0) {
-			 if (!non_critical_socket_error()) so_error("transmit buffer overflow");
+			 if (!non_critical_socket_error()) { so_error("transmit buffer overflow"); return; }
 			 do_msg();
 			 continue;
 		}
@@ -1048,6 +1060,8 @@ int game_loop(void)
 	}
 #endif
         
+	if (sock_closed) return 0;
+
 	while (1) {
 #ifdef TRANS
 		ret=recv(sock,tickbuf+ticksize,min(TRANS-tmpsize,TSIZE-ticksize),0);
@@ -1066,7 +1080,7 @@ int game_loop(void)
                 if (ticksize>=tickstart+2) {
 			tmp=*(unsigned short*)(tickbuf+tickstart);
 			tmp&=0x7fff;
-			if (tmp<2) so_error("transmission corrupt");
+			if (tmp<2) { so_error("transmission corrupt"); break; }
 			tickstart+=tmp;
 			t_size++;
 		} else break;	        
