@@ -636,6 +636,8 @@ void do_help(int cn,char *topic)
 	do_char_log(cn,1," \n");
 	do_char_log(cn,1,"#afk <message>         away from keyboard.\n");
 	do_char_log(cn,1,"#allow <player>        to access your grave.\n");
+	do_char_log(cn,1,"#armor                 armor tiers and sets.\n");
+	do_char_log(cn,1,"#belt                  all belts.\n");
 	do_char_log(cn,1,"#bow                   you'll bow.\n");
 	do_char_log(cn,1,"#fightback             toggle auto-figtback.\n");
 	do_char_log(cn,1,"#follow <player>|self  you'll follow player.\n");
@@ -651,9 +653,11 @@ void do_help(int cn,char *topic)
 	do_char_log(cn,1,"#shout <text>          to all players.\n");
 	do_char_log(cn,1,"#skua                  leave purple.\n");
 	do_char_log(cn,1,"#sort <order>          sort inventory.\n");
+	do_char_log(cn,1,"#specarmor             magic helmet/armor names.\n");
 	do_char_log(cn,1,"#spellignore           don't attack if spelled.\n");
 	do_char_log(cn,1,"#tell <player> <text>  tells player text.\n");
 	do_char_log(cn,1,"#wave                  you'll wave.\n");
+	do_char_log(cn,1,"#weapon                weapon lists (#sword..).\n");
 	do_char_log(cn,1,"#who                   see who's online.\n");
 	do_char_log(cn,1," \n");
 
@@ -1469,6 +1473,219 @@ void do_become_skua(int cn)
 	}
 }
 
+/* ---- information commands: #armor #weapon #sword #dagger #twohand #axe
+ *      #specialw #belt #specarmor
+ * The numbers are read from the item templates (it_temp), so the tables stay
+ * correct if a template is changed. The chat is 64 characters wide.
+ */
+static char *info_attr[5]={"Braveness","Willpower","Intuition","Agility","Strength"};
+static char *info_at2[5]={"BR","WI","IN","AG","ST"};
+
+static void info_tier(int t,char *out)	// first word of the template name ("Bronze Sword" -> "Bronze")
+{
+	int n;
+	for (n=0; it_temp[t].name[n] && it_temp[t].name[n]!=' ' && n<15; n++) out[n]=it_temp[t].name[n];
+	out[n]=0;
+}
+
+static void info_num(char *out,int v)	// right aligned 3 wide, '.' for 0
+{
+	if (v) sprintf(out,"%3d",v);
+	else strcpy(out,"  .");
+}
+
+void do_info_armor(int cn)
+{
+	static int tiers[]={42,53,59,65,71,982,76,95};	// body armor of each tier
+	int n,t;
+	char tier[16];
+
+	do_char_log(cn,1,"Now listing armor:\n");
+	do_char_log(cn,1," \n");
+	do_char_log(cn,1," Armor     |  Needs   | AV per | Full set\n");
+	do_char_log(cn,1," Tier      | AGL  STR |  piece |   (x6)\n");
+	do_char_log(cn,1,"-----------+----------+--------+---------\n");
+	for (n=0; n<(int)(sizeof(tiers)/sizeof(int)); n++) {
+		t=tiers[n];
+		if (it_temp[t].used==USE_EMPTY) continue;
+		info_tier(t,tier);
+		do_char_log(cn,1," %-9s | %3d  %3d |   %3d  |   %3d\n",tier,
+			it_temp[t].attrib[AT_AGIL][2],it_temp[t].attrib[AT_STREN][2],it_temp[t].armor[0],it_temp[t].armor[0]*6);
+	}
+	do_char_log(cn,1," \n");
+	do_char_log(cn,2,"* Helmet, cloak, armor, sleeves, leggings and boots of a tier all give the same armor value.\n");
+	do_char_log(cn,1," \n");
+	do_char_log(cn,1,"Special sets (every piece needs 30 in all attributes):\n");
+	do_char_log(cn,1," Fire  AV %d each, needs %d HP/End/Mana, %d Stealth\n",it_temp[624].armor[0],it_temp[624].hp[2],it_temp[624].skill[SK_STEALTH][0]);
+	do_char_log(cn,1," Ice   AV %d each, needs %d HP/End/Mana, %d Stealth\n",it_temp[1273].armor[0],it_temp[1273].hp[2],it_temp[1273].skill[SK_STEALTH][0]);
+	do_char_log(cn,1," Ice Cloak  AV %d, +%d Magic Shield, Resist, Immunity\n",it_temp[909].armor[0],it_temp[909].skill[SK_MSHIELD][0]);
+	do_char_log(cn,2,"* #specarmor lists the bonuses of magic helmets and armor.\n");
+}
+
+static void info_weapon_table(int cn,char *what,char *skill,int sk,int *t,int cnt)
+{
+	int n;
+	char tier[16];
+
+	do_char_log(cn,1,"Now listing %s:\n",what);
+	do_char_log(cn,1," \n");
+	do_char_log(cn,1," Weapon    |     Needs:          | Gives\n");
+	do_char_log(cn,1," Tier      |  AGL   STR  %-6s | WV\n",skill);
+	do_char_log(cn,1,"-----------+---------------------+------\n");
+	for (n=0; n<cnt; n++) {
+		if (it_temp[t[n]].used==USE_EMPTY) continue;
+		info_tier(t[n],tier);
+		do_char_log(cn,1," %-9s |  %3d   %3d  %4d   | %3d\n",tier,
+			it_temp[t[n]].attrib[AT_AGIL][2],it_temp[t[n]].attrib[AT_STREN][2],
+			it_temp[t[n]].skill[sk][2],it_temp[t[n]].weapon[0]);
+	}
+	do_char_log(cn,1," \n");
+}
+
+static void info_blessed(int cn)
+{
+	do_char_log(cn,2,"* Skua's, Purple One's, Kwai's and Gorn's versions need the same. Skua's and Purple One's give +5 WV and can be used once for their god's protection (more armor and resistance); Kwai's and Gorn's give +4 WV.\n");
+}
+
+void do_info_sword(int cn)
+{
+	static int t[]={31,32,33,34,524};
+	info_weapon_table(cn,"swords","Sword",SK_SWORD,t,5);
+	info_blessed(cn);
+}
+
+void do_info_dagger(int cn)
+{
+	static int t[]={27,28,29,30,523};
+	info_weapon_table(cn,"daggers","Dagger",SK_DAGGER,t,5);
+	info_blessed(cn);
+}
+
+void do_info_twohand(int cn)
+{
+	static int t[]={35,36,37,38,125};
+	info_weapon_table(cn,"two-handed swords","2Hand",SK_TWOHAND,t,5);
+	info_blessed(cn);
+	do_char_log(cn,2,"* Two-handed swords take both hands: no shield.\n");
+}
+
+void do_info_axe(int cn)
+{
+	static int t[]={501,158,502};
+	info_weapon_table(cn,"axes","Axe",SK_AXE,t,3);
+}
+
+// "needs" and "gives" text of a special item
+static void info_needs(int t,char *out)
+{
+	static char *sn[7]={"Hand to Hand","Karate","Dagger","Sword","Axe","Staff","Two-Handed"};
+	int n;
+	char buf[60];
+
+	out[0]=0;
+	for (n=0; n<5; n++) if (it_temp[t].attrib[n][2]>1) { sprintf(buf,"%s%s %d",out[0] ? ", " : "",info_attr[n],it_temp[t].attrib[n][2]); strcat(out,buf); }
+	for (n=0; n<7; n++) if (it_temp[t].skill[n][2]>1) { sprintf(buf,"%s%s %d",out[0] ? ", " : "",sn[n],it_temp[t].skill[n][2]); strcat(out,buf); }
+	if (it_temp[t].min_rank>0) { sprintf(buf,"%srank %s",out[0] ? ", " : "",rank_name[(int)it_temp[t].min_rank]); strcat(out,buf); }
+	if (!out[0]) strcpy(out,"nothing");
+}
+
+static void info_gives(int t,char *out)
+{
+	int n;
+	char buf[60];
+
+	out[0]=0;
+	for (n=0; n<5; n++) if (it_temp[t].attrib[n][0]) { sprintf(buf,"%s%s %+d",out[0] ? ", " : "",info_attr[n],it_temp[t].attrib[n][0]); strcat(out,buf); }
+	if (it_temp[t].hp[0]) { sprintf(buf,"%sHitpoints %+d",out[0] ? ", " : "",it_temp[t].hp[0]); strcat(out,buf); }
+	if (it_temp[t].mana[0]) { sprintf(buf,"%sMana %+d",out[0] ? ", " : "",it_temp[t].mana[0]); strcat(out,buf); }
+}
+
+void do_info_specialw(int cn)
+{
+	static int t[]={116,129,136,442,503,813,167,1202,682};
+	int n;
+	char needs[200],gives[200];
+
+	do_char_log(cn,1,"Now listing special weapons:\n");
+	do_char_log(cn,1," \n");
+	for (n=0; n<(int)(sizeof(t)/sizeof(int)); n++) {
+		if (it_temp[t[n]].used==USE_EMPTY) continue;
+		if (t[n]==682) {
+			do_char_log(cn,1,"%-30s WV %d-%d\n",it_temp[t[n]].name,it_temp[t[n]].weapon[0],it_temp[t[n]].weapon[0]+80);
+			do_char_log(cn,2,"   Seyan'Du only. +4 WV for each of the 20 shrines of Kwai visited.\n");
+			continue;
+		}
+		do_char_log(cn,1,"%-30s WV %d%s\n",it_temp[t[n]].name,it_temp[t[n]].weapon[0],(it_temp[t[n]].placement&PL_TWOHAND) ? "  (two hands)" : "");
+		info_needs(t[n],needs);
+		do_char_log(cn,1,"   needs %s\n",needs);
+		info_gives(t[n],gives);
+		if (gives[0]) do_char_log(cn,2,"   gives %s\n",gives);
+	}
+}
+
+void do_info_weapon(int cn)
+{
+	do_char_log(cn,1,"Weapon information. Use one of these:\n");
+	do_char_log(cn,1," \n");
+	do_char_log(cn,1,"#dagger                lists daggers\n");
+	do_char_log(cn,1,"#sword                 lists swords\n");
+	do_char_log(cn,1,"#twohand               lists two-handed swords\n");
+	do_char_log(cn,1,"#axe                   lists axes\n");
+	do_char_log(cn,1,"#specialw              lists special weapons\n");
+	do_char_log(cn,1," \n");
+	do_char_log(cn,2,"* Weapon value (WV) only counts if your skill for that weapon type is high enough.\n");
+}
+
+void do_info_belt(int cn)
+{
+	static int t[]={1106,113,777,778,779,780,781,782,193};
+	int n,m,k,sk,dup;
+	char name[24],a[5][4],h[3][4],need[30];
+
+	do_char_log(cn,1,"Now listing belts:\n");
+	do_char_log(cn,1," \n");
+	do_char_log(cn,1,"                   |        |     Gives:     |\n");
+	do_char_log(cn,1," Belt              | Needs  | BR WI IN AG ST | HP EN MA\n");
+	do_char_log(cn,1,"-------------------+--------+----------------+---------\n");
+	for (n=0; n<(int)(sizeof(t)/sizeof(int)); n++) {
+		if (it_temp[t[n]].used==USE_EMPTY) continue;
+		// "Leather Belt" twice: tell them apart
+		for (dup=0,m=0; m<(int)(sizeof(t)/sizeof(int)); m++) if (m!=n && !strcmp(it_temp[t[m]].name,it_temp[t[n]].name)) dup=(m<n) ? 2 : 1;
+		if (dup) sprintf(name,"%.12s %c",it_temp[t[n]].name,dup==1 ? 'A' : 'B');
+		else sprintf(name,"%.17s",it_temp[t[n]].name);
+		for (k=0; k<5; k++) info_num(a[k],it_temp[t[n]].attrib[k][0]);
+		info_num(h[0],it_temp[t[n]].hp[0]); info_num(h[1],it_temp[t[n]].end[0]); info_num(h[2],it_temp[t[n]].mana[0]);
+		need[0]=0;
+		for (k=0; k<5; k++) if (it_temp[t[n]].attrib[k][2]) sprintf(need,"%s %d",info_at2[k],it_temp[t[n]].attrib[k][2]);
+		if (it_temp[t[n]].hp[2]) sprintf(need,"HP %d",it_temp[t[n]].hp[2]);
+		do_char_log(cn,1," %-17s | %-6s |%s%s%s%s%s |%s%s%s\n",name,need,a[0],a[1],a[2],a[3],a[4],h[0],h[1],h[2]);
+		for (sk=0,m=0,k=0; k<50; k++) if (it_temp[t[n]].skill[k][0]) { if (!sk) m=it_temp[t[n]].skill[k][0]; sk++; }
+		if (sk) do_char_log(cn,2,"   %s: %+d to %d spells and skills\n",name,m,sk);
+	}
+}
+
+void do_info_specarmor(int cn)
+{
+	do_char_log(cn,1,"Magic helmets and armor:\n");
+	do_char_log(cn,1," \n");
+	do_char_log(cn,1,"Bronze, Steel, Golden, Emerald, Crystal and Titanium helmets and body armor found in chests always carry one of these:\n");
+	do_char_log(cn,1," \n");
+	{
+		static char *row[8][3]={
+			{"of the Lion","+4 Braveness","+8 Braveness"},{"of the Snake","+4 Willpower","+8 Willpower"},
+			{"of the Owl","+4 Intuition","+8 Intuition"},{"of the Weasel","+4 Agility","+8 Agility"},
+			{"of the Bear","+4 Strength","+8 Strength"},{"of Magic","+10 Mana","+20 Mana"},
+			{"of Life","+10 Hitpoints","+20 Hitpoints"},{"of Defence","+2 Armor value","+4 Armor value"}};
+		int n;
+		do_char_log(cn,1," Name           | Normal          | Godly\n");
+		do_char_log(cn,1,"----------------+-----------------+----------------\n");
+		for (n=0; n<8; n++) do_char_log(cn,1," %-14s | %-15s | %s\n",row[n][0],row[n][1],row[n][2]);
+	}
+	do_char_log(cn,1," \n");
+	do_char_log(cn,2,"* Each name has the same chance (1 in 8).\n");
+	do_char_log(cn,2,"* 1 in 8 are \"Godly\" (double bonus), 1 in 8 are \"Shining\" (normal bonus, and the item gives light).\n");
+}
+
 void do_command(int cn, char *ptr)
 {
         int n,m;
@@ -1518,12 +1735,15 @@ void do_command(int cn, char *ptr)
                 if (prefix(cmd,"allow") && f_p)         { do_allow(cn, dbatoi(arg[1])); return; };
                 if (prefix(cmd,"announce") && f_gius)   { do_announce(cn, cn, "%s\n", args[0]); return; }
                 if (prefix(cmd,"addban") && f_gi)       { god_add_ban(cn,dbatoi(arg[1])); return; };
+                if (prefix(cmd,"armor"))                { do_info_armor(cn); return; };
+                if (prefix(cmd,"axe"))                  { do_info_axe(cn); return; };
                 break;
         case 'b':
                 if (prefix(cmd,"bow") && !f_sh)  /*!*/  { ch[cn].misc_action=DR_BOW; return; };
                 if (prefix(cmd,"balance") && !f_m)      { do_balance(cn); return; }
 		if (prefix(cmd,"black") && f_g)		{ god_set_flag(cn,dbatoi(arg[1]),CF_BLACK); return; }
                 if (prefix(cmd,"build") && f_c)         { god_build(cn,atoi(arg[1])); return; }
+                if (prefix(cmd,"belt"))                 { do_info_belt(cn); return; };
                 break;
         case 'c':
 		if (prefix(cmd,"cap") && f_g)    	{ set_cap(cn,atoi(arg[1])); return; };
@@ -1538,6 +1758,7 @@ void do_command(int cn, char *ptr)
                 if (prefix(cmd,"depot") && !f_m)        { do_depot(cn); return; };
                 if (prefix(cmd,"delban") && f_giu)      { god_del_ban(cn,atoi(arg[1])); return; };
                 if (prefix(cmd,"diffi") && f_g)		{ extern int diffi; diffi=atoi(arg[1]); return; }
+                if (prefix(cmd,"dagger"))               { do_info_dagger(cn); return; };
                 break;
         case 'e':
                 if (prefix(cmd,"effect") && f_g)       	{ effectlist(cn); return; }
@@ -1668,6 +1889,9 @@ void do_command(int cn, char *ptr)
                 if (prefix(cmd,"staff") && f_g)         { god_set_flag(cn,dbatoi_self(cn,arg[1]),CF_STAFF); return; };
 		if (prefix(cmd,"steal") && f_gg)	{ do_steal_player(cn,arg[1],arg[2]); return; };
                 if (prefix(cmd,"summon") && f_g)        { god_summon(cn,arg[1],arg[2],arg[3]); return; };
+                if (prefix(cmd,"sword"))                { do_info_sword(cn); return; };
+                if (prefix(cmd,"specialw"))             { do_info_specialw(cn); return; };
+                if (prefix(cmd,"specarmor"))            { do_info_specarmor(cn); return; };
                 break;
         case 't':
                 if (prefix(cmd,"tell"))            	{ do_tell(cn,arg[1],args[1]); return; };
@@ -1677,6 +1901,7 @@ void do_command(int cn, char *ptr)
 		if (prefix(cmd,"time"))      		{ show_time(cn); return; };
                 if (prefix(cmd,"tinfo") && f_g)         { god_tinfo(cn,atoi(arg[1])); return; };
                 if (prefix(cmd,"top") && f_g)           { god_top(cn); return; };		
+                if (prefix(cmd,"twohand"))              { do_info_twohand(cn); return; };
                 break;
         case 'u':
                 if (prefix(cmd,"u"))                    { break; };
@@ -1689,6 +1914,7 @@ void do_command(int cn, char *ptr)
                 if (prefix(cmd,"wave") && !f_sh)        { ch[cn].misc_action=DR_WAVE; return; };
                 if (prefix(cmd,"withdraw") && !f_m)     { do_withdraw(cn,atoi(arg[1]),atoi(arg[2])); return; };
                 if (prefix(cmd,"write") && f_giu)       { do_create_note(cn,args[0]); return; };
+                if (prefix(cmd,"weapon"))               { do_info_weapon(cn); return; };
                 break;
         }
         do_char_log(cn,0,"Unknown command #%s\n",cmd);
