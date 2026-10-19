@@ -124,6 +124,12 @@ struct skilltab _skilltab[50]={
 	{48,   'Z',   "", "", {0,0,0,}},
 	{49,   'Z',   "", "", {0,0,0,}}};
 
+// a skill the character knows but can never raise (its maximum is 1)
+static int skill_fixed(int m)
+{
+	return pl.skill[m][0] && pl.skill[m][2]<=1;
+}
+
 int skill_cmp(const void *a,const void *b)
 {
 	const struct skilltab *c,*d;
@@ -138,6 +144,10 @@ int skill_cmp(const void *a,const void *b)
 
 	if (pl.skill[m1][0]==0 && pl.skill[m2][0]!=0) return 1;
 	if (pl.skill[m2][0]==0 && pl.skill[m1][0]!=0) return -1;
+
+	// fixed skills (known, but can never be raised: max 1, e.g. Meditate for Templars) go below the others
+	if (skill_fixed(m1) && !skill_fixed(m2)) return 1;
+	if (skill_fixed(m2) && !skill_fixed(m1)) return -1;
 
 	if (c->sortkey>d->sortkey) return 1;
 	if (c->sortkey<d->sortkey) return -1;
@@ -515,6 +525,14 @@ void hud_draw_v2(int init,unsigned short *mapmem,int map_x,int map_y)
 		for (n=0; n<10; n++) {
 			m=skilltab[n+skill_pos].nr;
 			if (!pl.skill[m][0]) { dd_puttext(x+6,y+n*HUD_ROW+3,1,"unused"); continue; }
+			if (skill_fixed(m)) {	// fixed skill: in red, no raise button or cost
+				char nb[20];
+				strncpy(nb,skilltab[n+skill_pos].name,16); nb[16]=0;
+				dd_puttext(x+6,y+n*HUD_ROW+3,0,nb);
+				rtext(x+HC_TOT-5,y+n*HUD_ROW+3,0,"%d",pl.skill[m][0]);
+				rtext(x+HC_PLUS-5,y+n*HUD_ROW+3,0,"%d",pl.skill[m][5]);
+				continue;
+			}
 			hud_stat_row(x,y+n*HUD_ROW,skilltab[n+skill_pos].name,pl.skill[m][0]+stat_raised[n+8+skill_pos],pl.skill[m][5]+stat_raised[n+8+skill_pos],
 				skill_needed(m,pl.skill[m][0]+stat_raised[n+8+skill_pos])<=pts,stat_raised[n+8+skill_pos]>0,
 				skill_needed(m,pl.skill[m][0]+stat_raised[n+8+skill_pos]));
