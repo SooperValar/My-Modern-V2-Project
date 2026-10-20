@@ -193,6 +193,6 @@ The world data held a nearly finished tenth labyrinth part (the "Mages of Time":
 
 - Lab 9's end portal and the labyrinth gate (after part 9) lead to Lab 10's inn; after part 10 the gate leads to the Final Test (`use_labyrinth`).
 - **All four mages matter**: Top (Flora), Middle (Friga), Bottom (Aestas) and the new **Sands of Time** (Casas, who carried a spare bottom before). Top, Middle and Bottom combine in any order into the new **Empty Hourglass**; with the sands it becomes the **Hourglass of Time**.
-- Using the Hourglass of Time (new item driver 70, only inside the gorge) takes you into the sealed end room and is used up. Lab 10's end portal marks part 10 solved and leads on to the Final Test.
+- The new **Portal of Time** (item driver 71) at the far end of Winter: the Hourglass of Time opens it for two minutes for everyone, so a group goes through together without waiting for the mages to respawn. It leads into the sealed end room, whose portal marks part 10 solved and leads on to the Final Test.
 - Hourglass sprites 18121-18128 drawn for it (`tools/sprites/draw_hourglass.py`), as PNGs in the client's `gfx` folder.
 - One-off data patch: `tools/world/lab10_open.c`.

@@ -4,7 +4,10 @@
  * - Lab 10's end portal (1299 + copies) leads on to the Final Test (33,597)
  * - the hourglass needs four pieces: Top (Flora), Middle (Friga), Bottom (Aestas)
  *   and the new Sands of Time (Casas); Top+Middle+Bottom make the new Empty
- *   Hourglass, + Sands = Hourglass of Time, which takes you into the end room
+ *   Hourglass, + Sands = Hourglass of Time
+ * - the new Portal of Time (template 1315) at the far end of Winter: the Hourglass
+ *   of Time opens it for two minutes for everyone (a group goes through together)
+ *   and it takes them into the sealed end room
  * Sprites 18121-18128 go in the client's gfx folder (tools/sprites/draw_hourglass.py).
  */
 #include <stdio.h>
@@ -20,6 +23,9 @@
 #define T_FULL 1290
 #define T_EMPTY 1313
 #define T_SAND 1314
+#define T_PORTAL 1315
+#define PORTAL_X 74
+#define PORTAL_Y 885
 
 static struct item ti[MAXTITEM];
 
@@ -67,8 +73,15 @@ int main(int argc,char **argv)
 	ti[T_SAND].sprite[0]=18127; combo(T_SAND,T_EMPTY,T_FULL,0,0);
 
 	strcpy(ti[T_FULL].name,"Hourglass of Time"); strcpy(ti[T_FULL].reference,"hourglass of time");
-	strcpy(ti[T_FULL].description,"The sand inside flows upwards. Use it to step through time.");
-	ti[T_FULL].driver=70; ti[T_FULL].flags|=IF_USE|IF_USESPECIAL; ti[T_FULL].sprite[0]=18126;
+	strcpy(ti[T_FULL].description,"The sand inside flows upwards. It is the key to the Portal of Time.");
+	ti[T_FULL].driver=0; ti[T_FULL].flags&=~(IF_USE|IF_USESPECIAL); ti[T_FULL].sprite[0]=18126;
+
+	if (ti[T_PORTAL].used) { printf("template %d already used\n",T_PORTAL); return 1; }
+	ti[T_PORTAL]=ti[1299]; ti[T_PORTAL].temp=T_PORTAL;
+	strcpy(ti[T_PORTAL].name,"Portal of Time"); strcpy(ti[T_PORTAL].reference,"portal of time");
+	strcpy(ti[T_PORTAL].description,"A dark portal, cold as winter. The Hourglass of Time could open it.");
+	memset(ti[T_PORTAL].data,0,sizeof(ti[T_PORTAL].data));
+	ti[T_PORTAL].driver=71;
 
 	fseek(f,0,SEEK_SET); fwrite(ti,sizeof(struct item),MAXTITEM,f); fclose(f);
 	printf("titem.dat patched\n");
@@ -96,6 +109,22 @@ int main(int argc,char **argv)
 			if ((it.temp>=T_TOP && it.temp<=T_FULL) || it.temp==T_SAND || it.temp==T_EMPTY) { sync(&it); changed=1; }
 			if (changed) { fseek(f,pos,SEEK_SET); fwrite(&it,sizeof(it),1,f); cnt++; }
 		}
+	}
+	// the Portal of Time in the world: a free item slot, on the map tile
+	{
+		struct map m; FILE *mf; char mfn[512]; long mpos;
+		sprintf(mfn,"%s/map.dat",argv[1]); mf=fopen(mfn,"r+b");
+		mpos=(long)(PORTAL_X+PORTAL_Y*MAPX)*sizeof(struct map);
+		fseek(mf,mpos,SEEK_SET); fread(&m,sizeof(m),1,mf);
+		if (m.it) printf("map tile %d,%d already has item %d - portal NOT placed\n",PORTAL_X,PORTAL_Y,m.it);
+		else {
+			for (n=1; n<MAXITEM; n++) { fseek(f,(long)n*sizeof(it),SEEK_SET); if (fread(&it,sizeof(it),1,f)!=1 || !it.used) break; }
+			it=ti[T_PORTAL]; it.used=USE_ACTIVE; it.x=PORTAL_X; it.y=PORTAL_Y; it.carried=0;
+			fseek(f,(long)n*sizeof(it),SEEK_SET); fwrite(&it,sizeof(it),1,f);
+			m.it=n; fseek(mf,mpos,SEEK_SET); fwrite(&m,sizeof(m),1,mf);
+			printf("Portal of Time placed as item %d at %d,%d\n",n,PORTAL_X,PORTAL_Y);
+		}
+		fclose(mf);
 	}
 	fclose(f);
 	printf("item.dat: %d item(s) updated\n",cnt);

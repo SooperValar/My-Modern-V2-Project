@@ -2341,20 +2341,30 @@ int use_rotate(int cn,int in)
 }
 
 /* CS, 991127: assemble lab8 key */
-/* Lab 10: the Hourglass of Time (all four pieces) takes you into the sealed
- * room with the end portal, and is used up */
-int use_time_hourglass(int cn,int in)
+/* Lab 10: the Portal of Time at the end of Winter. The Hourglass of Time
+ * (all four pieces) opens it for two minutes - for everyone, so a group goes
+ * through together - and it takes you into the sealed room with the end
+ * portal. data[5] = ticker when it closes again. */
+#define TIMEPORTAL_OPEN	(TICKS*120)
+
+int use_time_portal(int cn,int in)
 {
+        int n,in2,found=0;
+
         if (!cn) return 0;
-        if (!it[in].carried) { do_char_log(cn,0,"Pick it up first.\n"); return 0; }
-        if (ch[cn].x<40 || ch[cn].x>=125 || ch[cn].y<775 || ch[cn].y>=900) {
-                do_char_log(cn,0,"You turn the hourglass, but nothing happens. Its power seems bound to the Seasons Gorge.\n");
-                return 0;
+
+        if (it[in].data[5]<globs->ticker) {	// closed: is there an hourglass?
+                if ((in2=ch[cn].citem) && !(in2&0x80000000) && it[in2].temp==1290) found=1;
+                for (n=0; n<40 && !found; n++) if ((in2=ch[cn].item[n]) && it[in2].temp==1290) found=1;
+                if (!found) {
+                        do_char_log(cn,0,"The portal is dark and cold. Perhaps the Hourglass of Time could wake it.\n");
+                        return 0;
+                }
+                it[in].data[5]=globs->ticker+TIMEPORTAL_OPEN;
+                chlog(cn,"Opened the Portal of Time");
+                do_area_log(0,0,it[in].x,it[in].y,1,"%s turns the Hourglass of Time. The sand flows upwards and the portal flares open - for two minutes.\n",ch[cn].name);
         }
-        chlog(cn,"Used the Hourglass of Time");
-        god_take_from_char(in,cn);
-        it[in].used=USE_EMPTY;
-        do_char_log(cn,1,"You turn the hourglass. The sand flows upwards, and time and space bend around you...\n");
+
         fx_add_effect(6,0,ch[cn].x,ch[cn].y,0);
         god_transfer_char(cn,53,784);
         fx_add_effect(6,0,ch[cn].x,ch[cn].y,0);
@@ -2721,7 +2731,7 @@ void use_driver(int cn,int in,int carried)
                                 case 59:        ret=use_create_gold(cn,in); break;
                                 /* CS, 991127: assembling Lab 8 key */
                                 case 61:        ret=use_lab8_key(cn,in); break;
-                                case 70:        ret=use_time_hourglass(cn,in); break;
+                                case 71:        ret=use_time_portal(cn,in); break;
                                 /* CS, 991127: offering to shrines in Lab 8 */
                                 case 63:        ret=use_lab8_shrine(cn,in); break;
                                 /* CS, 991127: offering money to shrine in Lab 8 */
