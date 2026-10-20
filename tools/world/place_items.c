@@ -4,6 +4,7 @@
  *   newtemp <new> <copy-from> <name...>          new template = copy of another, with this name
  *   data <temp> <d0> <d1> <d2> <d3> <d4>         set a template's data[0..4]
  *   place <temp> <x> <y>                          put a copy of the template on that tile
+ *   remove <x> <y>                                take the item off that tile
  * Lines starting with # are comments.
  */
 #include <stdio.h>
@@ -42,6 +43,14 @@ int main(int argc,char **argv)
 			m.it=n;	// blocking comes from the item flags at run time, like the original items
 			fseek(mf,mpos,SEEK_SET); fwrite(&m,sizeof(m),1,mf);
 			printf("%s placed as item %d at %d,%d\n",ti[a].name,n,b,c); placed++;
+		} else if (sscanf(line,"remove %d %d",&b,&c)==2) {
+			long mpos=(long)(b+c*MAPX)*sizeof(struct map);
+			fseek(mf,mpos,SEEK_SET); fread(&m,sizeof(m),1,mf);
+			if (!m.it) { printf("line %d: no item at %d,%d\n",ln,b,c); continue; }
+			fseek(itf,(long)m.it*sizeof(it),SEEK_SET); fread(&it,sizeof(it),1,itf);
+			printf("%s (item %d) removed from %d,%d\n",it.name,m.it,b,c);
+			it.used=USE_EMPTY; fseek(itf,(long)m.it*sizeof(it),SEEK_SET); fwrite(&it,sizeof(it),1,itf);
+			m.it=0; fseek(mf,mpos,SEEK_SET); fwrite(&m,sizeof(m),1,mf);
 		} else printf("line %d not understood: %s",ln,line);
 	}
 	fseek(f,0,SEEK_SET); fwrite(ti,sizeof(struct item),MAXTITEM,f);
