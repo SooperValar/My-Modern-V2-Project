@@ -2196,7 +2196,7 @@ void dd_hud_vclip(int rx,int ry,int rw,int rh)
 		v=vops[n];
 		if (v.type==VOP_FILL) continue;
 		if (v.x>=rx+rw || v.y>=ry+rh || v.x+v.w<=rx || v.y+v.h<=ry) continue;	// outside
-		vops[n].w=0;	// remove, then add the pieces outside
+		vops[n].type=255;	// remove (no type draws it), then add the pieces outside
 		if (v.type==VOP_HLINE) {
 			if (v.x<rx) vadd(VOP_HLINE,v.x,v.y,rx-v.x,v.h,v.rgb);
 			if (v.x+v.w>rx+rw) vadd(VOP_HLINE,rx+rw,v.y,v.x+v.w-(rx+rw),v.h,v.rgb);
