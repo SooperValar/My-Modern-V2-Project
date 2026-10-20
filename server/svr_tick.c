@@ -616,13 +616,24 @@ int do_item_value(int in);
  * SV_ITEMINFO packets of 64 bytes: where, slot, line, font, 60 chars of text;
  * line 255 ends the list.
  */
+static int tip_div=0;	// a divider is wanted before the next line
+
+static void tip_sep(void) { tip_div=1; }
+
 static void tip_line(int nr,int where,int slot,int *line,int font,char *format,...)
 {
 	unsigned char buf[64];
 	va_list args;
 	char tmp[200];
 
-	if (*line>=40) return;
+	if (*line>=39) return;
+	if (tip_div && *line) {	// font 9, no text: the client draws a thin line
+		memset(buf,0,64);
+		buf[0]=SV_ITEMINFO; buf[1]=where; buf[2]=slot; buf[3]=*line; buf[4]=9;
+		xsend(nr,buf,64);
+		(*line)++;
+	}
+	tip_div=0;
 	va_start(args,format);
 	vsnprintf(tmp,sizeof(tmp),format,args);
 	va_end(args);
@@ -666,7 +677,9 @@ void plr_cmd_iteminfo(int nr)
 
 	if (in>0 && in<MAXITEM && it[in].used!=USE_EMPTY) {
 		act=it[in].active ? 1 : 0;
+		tip_div=0;
 		tip_line(nr,where,slot,&line,1,"%s",it[in].name);
+		tip_sep();
 
 		if ((it[in].flags&IF_NEEDIDENT) && !(it[in].flags&IF_IDENTIFIED)) {
 			tip_line(nr,where,slot,&line,0,"Unidentified. Cast Identify on it");
@@ -674,13 +687,16 @@ void plr_cmd_iteminfo(int nr)
 		} else {
 			if (it[in].weapon[act]) tip_line(nr,where,slot,&line,2,"Weapon value %d",it[in].weapon[act]);
 			if (it[in].armor[act]) tip_line(nr,where,slot,&line,2,"Armor value %d",it[in].armor[act]);
+			if (it[in].light[act]>0) tip_line(nr,where,slot,&line,2,"Light %d",it[in].light[act]);
+			if (it[in].gethit_dam[act]) tip_line(nr,where,slot,&line,2,"Damages attackers: %d",it[in].gethit_dam[act]);
+			tip_sep();
 			for (n=0; n<5; n++) if (it[in].attrib[n][act]) tip_line(nr,where,slot,&line,it[in].attrib[n][act]<0 ? 0 : 2,"%+d %s",it[in].attrib[n][act],at_name[n]);
 			if (it[in].hp[act]) tip_line(nr,where,slot,&line,it[in].hp[act]<0 ? 0 : 2,"%+d Hitpoints",it[in].hp[act]);
 			if (it[in].end[act]) tip_line(nr,where,slot,&line,it[in].end[act]<0 ? 0 : 2,"%+d Endurance",it[in].end[act]);
 			if (it[in].mana[act]) tip_line(nr,where,slot,&line,it[in].mana[act]<0 ? 0 : 2,"%+d Mana",it[in].mana[act]);
+			tip_sep();
 			for (n=0; n<50; n++) if (it[in].skill[n][act]) tip_line(nr,where,slot,&line,it[in].skill[n][act]<0 ? 0 : 2,"%+d %s",it[in].skill[n][act],skilltab[n].name);
-			if (it[in].light[act]>0) tip_line(nr,where,slot,&line,2,"Light %d",it[in].light[act]);
-			if (it[in].gethit_dam[act]) tip_line(nr,where,slot,&line,2,"Damages attackers: %d",it[in].gethit_dam[act]);
+			tip_sep();
 			if ((it[in].flags&IF_USEACTIVATE) && !act) {	// what it does when turned on
 				for (n=0,shown=0; n<5; n++) if (it[in].attrib[n][1]) { if (!shown++) tip_line(nr,where,slot,&line,1,"When active:"); tip_line(nr,where,slot,&line,it[in].attrib[n][1]<0 ? 0 : 2," %+d %s",it[in].attrib[n][1],at_name[n]); }
 				if (it[in].armor[1]>it[in].armor[0]) { if (!shown++) tip_line(nr,where,slot,&line,1,"When active:"); tip_line(nr,where,slot,&line,2," Armor value %d",it[in].armor[1]); }
@@ -689,6 +705,7 @@ void plr_cmd_iteminfo(int nr)
 		}
 
 		// requirements, red when not met (base values, like wearing it checks)
+		tip_sep();
 		first=1;
 		for (n=0; n<5; n++) {
 			if (it[in].attrib[n][2]<=1) continue;
@@ -715,7 +732,8 @@ void plr_cmd_iteminfo(int nr)
 		if (it[in].driver==39) tip_line(nr,where,slot,&line,(ch[cn].kindred&KIN_PURPLE) ? 1 : 0," Followers of the Purple One only");
 		if (it[in].driver==18) tip_line(nr,where,slot,&line,(ch[cn].kindred&KIN_PURPLE) ? 0 : 1," Not for followers of the Purple One");
 
-		// condition
+		// condition and value
+		tip_sep();
 		if (it[in].max_age[act] || it[in].max_damage) {
 			static char *cond[5]={"Condition: perfect","Condition: signs of age","Condition: fairly old","Condition: old","Condition: very old and battered"};
 			n=it[in].damage_state; if (n<0) n=0; if (n>4) n=4;
@@ -740,6 +758,7 @@ void plr_cmd_iteminfo(int nr)
 		}
 
 		// description, wrapped at about 36 characters, at most 3 lines
+		tip_sep();
 		s=it[in].description;
 		for (n=0; n<3 && *s; n++) {
 			while (*s==' ') s++;

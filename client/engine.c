@@ -451,7 +451,7 @@ static void hud_tooltip(void)
 	static int last_where=-1,last_slot=-1,last_sprite=0;
 	static unsigned int since=0;
 	extern int hightlight,hightlight_sub;
-	int where=-1,slot=0,sprite=0,co=0,n,w,h,x,y,len;
+	int where=-1,slot=0,sprite=0,co=0,n,w,h,x,y,len,ty;
 	unsigned int now=GetTickCount();
 	unsigned short col;
 
@@ -483,7 +483,8 @@ static void hud_tooltip(void)
 
 	// size and place: right of and below the mouse, kept on the canvas
 	for (n=0,len=0; n<tip.lines; n++) if ((int)strlen(tip.text[n])>len) len=strlen(tip.text[n]);
-	w=len*6+14; h=tip.lines*10+10;
+	w=len*6+14; h=10;
+	for (n=0; n<tip.lines; n++) h+=(tip.font[n]==9) ? 5 : 10;	// font 9 = divider
 	x=mouse_cx+18; y=mouse_cy+14;
 	if (x+w>hud_cw-2) x=mouse_cx-12-w;
 	if (y+h>hud_ch-2) y=hud_ch-2-h;
@@ -497,7 +498,11 @@ static void hud_tooltip(void)
 	dd_hud_hline(x,y+h-2,w);
 	dd_hud_vline(x,y,h);
 	dd_hud_vline(x+w-2,y,h);
-	for (n=0; n<tip.lines; n++) dd_puttext(x+7,y+5+n*10,tip.font[n],tip.text[n]);
+	for (n=0,ty=y+5; n<tip.lines; n++) {
+		if (tip.font[n]==9) { dd_hud_hline(x+5,ty+1,w-10); ty+=5; continue; }
+		dd_puttext(x+7,ty,tip.font[n],tip.text[n]);
+		ty+=10;
+	}
 }
 
 static void hud_buffs(void)
