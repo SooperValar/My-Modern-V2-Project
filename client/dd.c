@@ -2672,7 +2672,14 @@ void dd_hud_from_legacy(int lx,int ly,int w,int h,int cx,int cy)
 	int x,y,p;
 	unsigned short v;
 
+	int cx0=lx,cy0=ly,cx1=lx+w,cy1=ly+h;	// what may be copied
+
 	if (!hud_prepare()) return;
+	if (hud_theme==2) {	// the panels with fixed lines: only their inside, so no bits of the old border show
+		if (lx==219 && ly==176) { cx0=220; cy0=178; cx1=301; cy1=258; }
+		else if (lx==300 && ly==0) { cx0=303; cy0=2; cx1=371; cy1=210; }
+		else if (lx==372 && ly==0) { cx0=373; cy0=2; cx1=497; cy1=199; }
+	}
 	if (hud_theme==2 && hudcls) {
 		int n,a0,a1,b0,b1,dx=cx-lx,dy=cy-ly;
 		// panel fills, clipped to the piece; the three panels with fixed
@@ -2716,6 +2723,7 @@ void dd_hud_from_legacy(int lx,int ly,int w,int h,int cx,int cy)
 			p=(lx+x)+(ly+y)*HUDW;
 			v=shud.bits[(lx+x)+(ly+y)*shud.pitch];
 			if (v==0xF81F) continue;
+			if (lx+x<cx0 || lx+x>=cx1 || ly+y<cy0 || ly+y>=cy1) continue;	// outside the frame (fixed panels)
 			if (hudbase && v!=hudbase[(lx+x)+(ly+y)*LEGACY_W]) {	// drawn this frame
 				if (hud_theme==2 && lx==300 && x<3) continue;		// old backpack scroll bar reaches in here
 				cput(cx+x,cy+y,v);

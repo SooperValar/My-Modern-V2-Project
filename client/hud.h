@@ -34,9 +34,9 @@
 #define HS_H2		(10*HUD_ROW+2)
 #define HS_Y3		(HS_Y2+HS_H2-2)			// update row
 #define HS_H3		(HUD_ROW+2)
-#define HU_X		(HC_TOT-10)			// update button: "Update" | points (room for 999,999,999)
+#define HU_X		(HC_BASE-2)			// update button under Base and Mod, points under the rest
 #define HU_W		(HC_END-HU_X)
-#define HU_DIV		(HU_X+48)
+#define HU_DIV		(HC_PLUS-2)
 #define HS_Y4		(HS_Y3+HS_H3+4)			// current/max block
 #define HS_W4		(104+2*40)
 #define HS_H4		(3*HUD_ROW+2)

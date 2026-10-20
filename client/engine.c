@@ -641,7 +641,7 @@ void hud_draw_v2(int init,unsigned short *mapmem,int map_x,int map_y)
 		// --- update (left of it stays empty)
 		dd_hud_panel(x+HU_X,HS_Y3,HU_W,HS_H3);
 		dd_hud_vline(x+HU_DIV,HS_Y3,HS_H3);
-		dd_puttext(x+HU_X+6,HS_Y3+4,1,"Update");
+		ctext(x+HU_X,HU_DIV-HU_X,HS_Y3+4,1,"Update");
 		rtext(x+HC_END-5,HS_Y3+4,1,"%s",commas(pts,buf));
 
 		// --- current / max
