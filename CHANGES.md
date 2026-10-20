@@ -179,7 +179,7 @@ All also work with `/`, and the player ones are listed in `#help`.
 ## 11. Prestige and prestige looks
 
 - **Prestige** (`ch.data[CHD_PRESTIGE]`, slot 32, which only NPCs used, for lights) counts how often a character has prestiged: an arch class going back to the start of its class line (Arch-Templar to Templar, Seyan'Du stays Seyan'Du). What triggers it and what it gives are still to be decided.
-- **Prestige looks**: each character type uses 448 sprite numbers and the 576 after them are unused, so a recoloured copy fits right behind the original. Prestige 1+ Arch-Templars and Arch-Harakim use it (blue / red cape): sprite = template sprite + 448. Base classes and Seyan'Du keep their normal look for now. Any class change sets the look of the new class (`god_minor_racechange`), so a prestiged Templar who arches again gets the cape automatically.
+- **Prestige looks**: each character type uses 448 sprite numbers and the 576 after them are unused, so a recoloured copy fits right behind the original. Prestige 1+ Arch-Templars (blue cape), Arch-Harakim (red cape) and Seyan'Du (amber) use it: sprite = template sprite + 448. Base classes keep their normal look. Any class change sets the look of the new class (`god_minor_racechange`), so a prestiged Templar who arches again gets the cape automatically.
 - **`#prestige <player> [n]`** (gods): shows or sets the prestige level and updates the look.
 - The client already loads `gfx/NNNNN.png` before its packed files, so new sprites are just PNGs in the client's `gfx` folder.
 - `tools/sprites/export_sprites.py`: exports a character's frames from `gx00`/`pnglib` to PNGs (colour key made transparent), e.g. to give the V2 Sprite Recolor Tool the base Templar, Harakim and Mercenary.

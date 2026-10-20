@@ -2802,13 +2802,13 @@ void god_shrines(int cn,int co)
  * ch.data[CHD_PRESTIGE] counts how often a character has prestiged (gone from
  * an arch class back to the start of its class line; the rules for that are
  * still to be decided). The look follows from it: prestige 1+ Arch-Templars
- * and Arch-Harakim wear a recoloured set (blue / red cape), installed right
- * after the class's own 448 sprites (tools/sprites/install_variant.py), so
+ * and Arch-Harakim wear a recoloured set (blue / red cape), Seyan'Du amber, installed right
+ * after the class's own 448 sprites (Seyan'Du: amber) (tools/sprites/install_variant.py), so
  * the sprite is the template's + 448. Other classes keep their normal look.
  */
 int char_looktier(int cn)
 {
-	if (ch[cn].data[CHD_PRESTIGE]>=1 && (ch[cn].kindred&(KIN_ARCHTEMPLAR|KIN_ARCHHARAKIM))) return 1;
+	if (ch[cn].data[CHD_PRESTIGE]>=1 && (ch[cn].kindred&(KIN_ARCHTEMPLAR|KIN_ARCHHARAKIM|KIN_SEYAN_DU))) return 1;
 	return 0;
 }
 
