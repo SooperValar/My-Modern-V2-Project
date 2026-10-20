@@ -1412,6 +1412,61 @@ void dd_gputtext(int xpos,int ypos,int font,char *text,int xoff,int yoff)
 	}
 }
 
+/* ---- smooth HUD font ------------------------------------------------------
+ * With hud_font=1, text drawn on the HUD canvas is not drawn with the old
+ * 6x9 bitmap font: it is remembered here and drawn by the presenter with a
+ * real font at full window resolution, one character per 6-unit cell so all
+ * the layout stays as it was. hud_font=0 keeps the old font.
+ */
+int hud_font=1;
+
+#define MAXHTEXT	4096
+#define HTEXTPOOL	(256*1024)
+static struct htext htexts[MAXHTEXT];
+static int nhtext=0,htextpos=0;
+static char htextpool[HTEXTPOOL];
+
+static void htext_add(int x,int y,int font,const char *text,int len)
+{
+	if (nhtext>=MAXHTEXT || htextpos+len+1>HTEXTPOOL || len<=0) return;
+	htexts[nhtext].x=x; htexts[nhtext].y=y; htexts[nhtext].font=font;
+	htexts[nhtext].len=len; htexts[nhtext].off=htextpos;
+	memcpy(htextpool+htextpos,text,len); htextpool[htextpos+len]=0;
+	htextpos+=len+1;
+	nhtext++;
+}
+
+int dd_hud_texts(struct htext **p,char **pool)
+{
+	*p=htexts; *pool=htextpool;
+	return nhtext;
+}
+
+// the colour of bitmap font f, so the smooth font uses the same colours
+unsigned int dd_font_rgb(int f)
+{
+	static unsigned int rgb[4]={0,0,0,0};
+	int nr=700+f,n,r,g,b,cnt=0;
+	unsigned short v;
+	unsigned int sr=0,sg=0,sb=0;
+
+	if (f<0 || f>3) f=1;
+	if (rgb[f]) return rgb[f];
+	if (!sprtab[nr].image) dd_load_sprite(nr);
+	if (!sprtab[nr].image) return 0xFFFFFF;
+	for (n=0; n<576*9 && cnt<2000; n++) {	// average of the glyph pixels
+		v=sprtab[nr].image[576+n%576+(n/576)*576];
+		if (v==background) continue;
+		if (RGBM==0) { r=(v>>11)<<3; g=((v>>5)&63)<<2; b=(v&31)<<3; }
+		else { r=((v>>10)&31)<<3; g=((v>>5)&31)<<3; b=(v&31)<<3; }
+		if (r+g+b<120) continue;	// skip dark outline pixels
+		sr+=r; sg+=g; sb+=b; cnt++;
+	}
+	if (!cnt) return 0xFFFFFF;
+	rgb[f]=((sr/cnt)<<16)|((sg/cnt)<<8)|(sb/cnt)|0x01000000;
+	return rgb[f];
+}
+
 void dd_putc(int xpos,int ypos,char font,int c)
 {
 	unsigned short *fptr,*tptr;
@@ -1421,6 +1476,12 @@ void dd_putc(int xpos,int ypos,char font,int c)
 	c-=32;
 
 	if (font<0 || font>3) return;
+
+	if (hud_active==2 && hud_font) {
+		char ch=(char)(c+32);
+		if (c>0 && xpos>=0 && ypos>=0 && xpos+6<=MAXX && ypos+9<=MAXY) htext_add(xpos,ypos,font,&ch,1);
+		return;
+	}
 
 	nr=700+font;
 
@@ -1453,6 +1514,10 @@ void dd_putc(int xpos,int ypos,char font,int c)
 
 void dd_puttext(int x,int y,int font,char *text)
 {
+	if (hud_active==2 && hud_font && font>=0 && font<=3) {
+		if (x>=0 && y>=0 && y+9<=MAXY) htext_add(x,y,font,text,(int)strlen(text));
+		return;
+	}
 	while (*text) {
 		dd_putc(x,y,(char)font,*text);
 		text++; x+=6;
@@ -2192,6 +2257,12 @@ void dd_hud_vclip(int rx,int ry,int rw,int rh)
 	int n,cnt=nvop;
 	struct hud_vop v;
 
+	for (n=0; n<nhtext; n++) {	// text of other panels under it
+		int i;
+		if (htexts[n].y+9<=ry || htexts[n].y>=ry+rh) continue;
+		for (i=0; i<htexts[n].len; i++)
+			if (htexts[n].x+i*6+6>rx && htexts[n].x+i*6<rx+rw) htextpool[htexts[n].off+i]=' ';
+	}
 	for (n=0; n<cnt; n++) {
 		v=vops[n];
 		if (v.type==VOP_FILL) continue;
@@ -2514,6 +2585,7 @@ void dd_canvas_clear(void)
 {
 	int n;
 	nvop=0;
+	nhtext=0; htextpos=0;
 	for (n=0; n<shc.pitch*shc.h; n++) shc.bits[n]=0xF81F;
 }
 

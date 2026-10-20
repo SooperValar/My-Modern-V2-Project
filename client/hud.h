@@ -172,3 +172,9 @@ struct tipinfo {
 extern struct tipinfo tip;
 void dd_hud_vclip(int x,int y,int w,int h);
 
+// smooth HUD font: text remembered for the presenter (dd.c)
+struct htext { short x,y; unsigned char font; short len; int off; };
+int dd_hud_texts(struct htext **p,char **pool);
+unsigned int dd_font_rgb(int f);
+extern int hud_font;	// 1 = smooth font (default), 0 = the original bitmap font
+

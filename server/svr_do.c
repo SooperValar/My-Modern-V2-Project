@@ -648,6 +648,7 @@ void do_help(int cn,char *topic)
 	do_char_log(cn,1,"#ignore <player>       ignore that player.\n");
 	do_char_log(cn,1,"#iignore <player>      ignore normal talk too.\n");
 	do_char_log(cn,1,"#lag <seconds>         lag control.\n");
+	do_char_log(cn,1,"#hudfont smooth|classic  HUD text font.\n");
 	do_char_log(cn,1,"#lowhp <hp>            red glow below <hp>.\n");
 	do_char_log(cn,1,"#moddedarmor           of the Lion, Snake, ...\n");
 	do_char_log(cn,1,"#noshout               you won't hear shouts.\n");

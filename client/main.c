@@ -339,6 +339,41 @@ static void fill_rect(int x0,int y0,int x1,int y1,unsigned int rgb)
 	for (y=y0; y<y1; y++) { d=bb_bits+y*bb_w; for (x=x0; x<x1; x++) d[x]=rgb; }
 }
 
+// HUD text with a real font, at full window resolution, one character per
+// 6-unit cell (the layout was made for the 6x9 bitmap font)
+static HFONT hud_hfont=NULL;
+static char hud_fontface[64]="Consolas";
+
+static void draw_texts(void)
+{
+	struct htext *t;
+	char *pool;
+	int n,i,cnt,cell,dx[256],len;
+	unsigned int col,last=0xFFFFFFFF;
+	HFONT old;
+
+	cnt=dd_hud_texts(&t,&pool);
+	if (!cnt) return;
+	cell=CW2W(6);
+	if (!hud_hfont) {
+		hud_hfont=CreateFontA(-CW2W(9)-1,0,0,0,FW_NORMAL,0,0,0,DEFAULT_CHARSET,OUT_TT_PRECIS,CLIP_DEFAULT_PRECIS,
+			CLEARTYPE_QUALITY,FIXED_PITCH|FF_MODERN,hud_fontface);
+		if (!hud_hfont) return;
+	}
+	for (i=0; i<256; i++) dx[i]=cell;
+	old=SelectObject(bb_dc,hud_hfont);
+	SetBkMode(bb_dc,TRANSPARENT);
+	SetTextAlign(bb_dc,TA_TOP|TA_LEFT);
+	for (n=0; n<cnt; n++,t++) {
+		len=t->len; if (len>256) len=256;
+		col=dd_font_rgb(t->font)&0xFFFFFF;
+		if (col!=last) { SetTextColor(bb_dc,RGB((col>>16)&255,(col>>8)&255,col&255)); last=col; }
+		ExtTextOutA(bb_dc,CW2W(t->x),CW2W(t->y)-2,0,NULL,pool+t->off,len,dx);
+	}
+	SelectObject(bb_dc,old);
+	GdiFlush();
+}
+
 static void draw_vops(int lines)
 {
 	struct hud_vop *v;
@@ -457,6 +492,7 @@ void win_present(unsigned short *bits,int w,int h)
 	draw_vops(0);
 	blend_hud();
 	draw_vops(1);
+	draw_texts();
 
 	BitBlt(dc,0,0,bb_w,bb_h,bb_dc,0,0,SRCCOPY);
 	ReleaseDC(desk_hwnd,dc);
@@ -553,6 +589,8 @@ static void load_display_settings(void)
 	smooth_scale=GetPrivateProfileInt("display","smooth",1,ini_file);
 	world_zoom=GetPrivateProfileInt("display","zoom",115,ini_file);
 	{ extern int lowhp_hp; lowhp_hp=GetPrivateProfileInt("display","lowhp_hp",0,ini_file); if (lowhp_hp<0) lowhp_hp=0; }
+	hud_font=GetPrivateProfileInt("display","hud_font",1,ini_file)!=0;
+	GetPrivateProfileStringA("display","hud_fontface","Consolas",hud_fontface,sizeof(hud_fontface),ini_file);
 	hud_theme=GetPrivateProfileInt("display","hud_theme",2,ini_file);
 }
 
@@ -821,6 +859,22 @@ LRESULT CALLBACK MainWndProc(HWND hWnd, UINT message,WPARAM wParam, LPARAM lPara
 					hist_nr=0;
 
 					add_words();
+
+					// #hudfont [smooth|classic]: handled here, not sent to the server
+					if ((input[0]=='/' || input[0]=='#') && !_strnicmp(input+1,"hudfont",7) && (input[8]==0 || input[8]==' ')) {
+						char *a=input+8;
+						while (*a==' ') a++;
+						if (!_strnicmp(a,"smooth",6) || !strcmp(a,"1")) hud_font=1;
+						else if (!_strnicmp(a,"classic",7) || !strcmp(a,"0")) hud_font=0;
+						else {
+							xlog(1,"HUD font: /hudfont smooth (a sharp modern font) or /hudfont classic (the original pixel font).");
+							xlog(2,"Now: %s.",hud_font ? "smooth" : "classic");
+							break;
+						}
+						WritePrivateProfileString("display","hud_font",hud_font ? "1" : "0",ini_file);
+						xlog(2,"HUD font: %s.",hud_font ? "smooth" : "classic");
+						break;
+					}
 
 					// #lowhp [hp]: handled here, not sent to the server
 					if ((input[0]=='/' || input[0]=='#') && !_strnicmp(input+1,"lowhp",5) && (input[6]==0 || input[6]==' ')) {
