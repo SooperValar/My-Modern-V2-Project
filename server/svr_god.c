@@ -1696,6 +1696,7 @@ void god_build_cmd(int cn,char *arg)
 			do_char_log(cn,3,"#light              recompute lighting everywhere\n");
 			do_char_log(cn,3," \n");
 			do_char_log(cn,3,"Shift+click a piece: place one at a time. Right-click a piece: area mode, click two corners to fill.\n");
+			do_char_log(cn,3,"On the map: right-click places the piece, left-click removes the object/item on that tile (the floor stays). #undo puts it back.\n");
 			do_char_log(cn,3," \n");
 			god_build_equip(cn,page);
 		}
