@@ -2673,6 +2673,7 @@ void dd_hud_from_legacy(int lx,int ly,int w,int h,int cx,int cy)
 	unsigned short v;
 
 	int cx0=lx,cy0=ly,cx1=lx+w,cy1=ly+h;	// what may be copied
+	int fixedpiece=(lx==219 && ly==176) || (lx==300 && ly==0) || (lx==372 && ly==0);	// only its own fixed lines, none found in the old art
 
 	if (!hud_prepare()) return;
 	if (hud_theme==2) {	// the panels with fixed lines: only their inside, so no bits of the old border show
@@ -2694,12 +2695,12 @@ void dd_hud_from_legacy(int lx,int ly,int w,int h,int cx,int cy)
 			if (a0<a1 && b0<b1) vadd(VOP_FILL,a0+dx,b0+dy,a1-a0,b1-b0,HUD_RGB_PANEL);
 		}
 		for (n=0; n<nhseg; n++) {
-			if (hseg[n].a<ly || hseg[n].a>=ly+h || IN_FIXED(hseg[n].b0,hseg[n].a)) continue;
+			if (fixedpiece || hseg[n].a<ly || hseg[n].a>=ly+h || IN_FIXED(hseg[n].b0,hseg[n].a)) continue;
 			a0=max(hseg[n].b0,lx); a1=min(hseg[n].b1,lx+w);
 			if (a0<a1) vadd(VOP_HLINE,a0+dx,hseg[n].a+dy,a1-a0,hseg[n].t,HUD_RGB_LINE);
 		}
 		for (n=0; n<nvseg; n++) {
-			if (vseg[n].a<lx || vseg[n].a>=lx+w || IN_FIXED(vseg[n].a,vseg[n].b0)) continue;
+			if (fixedpiece || vseg[n].a<lx || vseg[n].a>=lx+w || IN_FIXED(vseg[n].a,vseg[n].b0)) continue;
 			b0=max(vseg[n].b0,ly); b1=min(vseg[n].b1,ly+h);
 			if (b0<b1) vadd(VOP_VLINE,vseg[n].a+dx,b0+dy,vseg[n].t,b1-b0,HUD_RGB_LINE);
 		}
