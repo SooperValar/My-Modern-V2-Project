@@ -2686,9 +2686,9 @@ void dd_hud_from_legacy(int lx,int ly,int w,int h,int cx,int cy)
 		// panel fills, clipped to the piece; the three panels with fixed
 		// lines are clipped to their frame, so no fill sticks out past it
 		int fx0=lx,fy0=ly,fx1=lx+w,fy1=ly+h;
-		if (lx==219 && ly==176) { fx0=219; fy0=176; fx1=303; fy1=260; }	// gold buttons
-		else if (lx==300 && ly==0) { fx0=301; fy0=0; fx1=373; fy1=212; }	// equipment
-		else if (lx==372 && ly==0) { fx0=372; fy0=0; fx1=499; fy1=201; }	// character / look panel
+		if (lx==219 && ly==176) { fx0=219; fy0=177; fx1=302; fy1=259; }	// gold buttons
+		else if (lx==300 && ly==0) { fx0=302; fy0=1; fx1=372; fy1=211; }	// equipment
+		else if (lx==372 && ly==0) { fx0=372; fy0=1; fx1=498; fy1=200; }	// character / look panel
 		for (n=0; n<nfrect; n++) {
 			a0=max(frects[n].x,fx0); a1=min(frects[n].x+frects[n].w,fx1);
 			b0=max(frects[n].y,fy0); b1=min(frects[n].y+frects[n].h,fy1);
@@ -2708,10 +2708,12 @@ void dd_hud_from_legacy(int lx,int ly,int w,int h,int cx,int cy)
 			const short *f=fixed_lines[n];
 			if (f[0]==1) {
 				if (f[1]<ly || f[1]>=ly+h) continue;
+				if (f[2]<lx-1 || f[3]>lx+w+1) continue;		// a line of another panel
 				a0=max(f[2],lx-1); a1=min(f[3],lx+w+1);	// may start/end on a border line just outside the piece
 				if (a0<a1) vadd(VOP_HLINE,a0+dx,f[1]+dy,a1-a0,f[4],HUD_RGB_LINE);
 			} else {
 				if (f[1]<lx || f[1]>=lx+w) continue;
+				if (f[2]<ly-1 || f[3]>ly+h+1) continue;		// a line of another panel
 				b0=max(f[2],ly); b1=min(f[3],ly+h);
 				if (b0<b1) vadd(VOP_VLINE,f[1]+dx,b0+dy,f[4],b1-b0,HUD_RGB_LINE);
 			}
