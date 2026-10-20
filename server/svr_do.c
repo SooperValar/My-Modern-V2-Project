@@ -4024,6 +4024,28 @@ int do_item_value(int in)
 }
 
 
+/* Door lock info for gods and builders (shift+right-click / look). */
+static void look_door_info(int cn,int in)
+{
+        int key=it[in].data[0],pick=it[in].data[2];
+
+        if (it[in].driver!=2 && it[in].driver!=20) return;
+
+        if (!key) { do_char_log(cn,2,"Door: no lock.\n"); return; }
+
+        do_char_log(cn,2,"Door: %s.\n",it[in].data[1] ? "locked" : (it[in].active ? "open" : "closed, not locked"));
+
+        if (key==65500) do_char_log(cn,2,"Key: none, opened by a script only.\n");
+        else if (key==65501 || key==65502) do_char_log(cn,2,"Key: Black Stronghold %s puzzle.\n",key==65501 ? "star" : "circle");
+        else if (key>65500) do_char_log(cn,2,"Key: special (%d).\n",key);
+        else if (key>0 && key<MAXTITEM) do_char_log(cn,2,"Key: %s (template %d)%s.\n",it_temp[key].name,key,it[in].data[3] ? ", used up" : "");
+        else do_char_log(cn,2,"Key: template %d.\n",key);
+
+        if (key>=65500) return;
+        if (!pick) do_char_log(cn,2,"Lock Picking: cannot be picked.\n");
+        else do_char_log(cn,2,"Lock Picking: %d needed (sure at %d), skill + lock pick bonus.\n",pick,pick+19);
+}
+
 void do_look_item(int cn,int in)
 {
         int n,in2,flag=0,act;
@@ -4057,6 +4079,8 @@ void do_look_item(int cn,int in)
                                 it[in].driver,it[in].data[0],it[in].data[1],it[in].data[2],it[in].data[3],it[in].data[4],
                                         it[in].data[5],it[in].data[6],it[in].data[7],it[in].data[8],it[in].data[9]);
                 }
+
+                if ((ch[cn].flags&CF_GOD) || IS_BUILDING(cn)) look_door_info(cn,in);
 
                 if (ch[cn].flags&CF_GOD) {
                         do_char_log(cn,2,"ID=%d, Temp=%d, Value: %dG %dS.\n",in,it[in].temp,it[in].value/100,it[in].value%100);
