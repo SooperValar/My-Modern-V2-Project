@@ -176,11 +176,11 @@ All also work with `/`, and the player ones are listed in `#help`.
 
 ---
 
-## 11. Appearance tiers (recoloured class sprites)
+## 11. Prestige and prestige looks
 
-- Each character type uses 448 sprite numbers, and the 576 after them are unused, so a full recoloured copy fits right behind the original. **Tier n** is the template's sprite + 448·n; the tier is simply the offset of the character's sprite from its template's, so nothing extra is stored. `LOOKTIER_MAX` is 1 for now (one copy fits).
-- **`#looktier <player> [n]`** (gods): shows or sets a character's tier; 0 is the original look. The player is told their appearance changed.
-- A class change (Arch-Templar, Warrior, ...) keeps the tier: the new template's sprite + the same offset.
+- **Prestige** (`ch.data[CHD_PRESTIGE]`, slot 32, which only NPCs used, for lights) counts how often a character has prestiged: an arch class going back to the start of its class line (Arch-Templar to Templar, Seyan'Du stays Seyan'Du). What triggers it and what it gives are still to be decided.
+- **Prestige looks**: each character type uses 448 sprite numbers and the 576 after them are unused, so a recoloured copy fits right behind the original. Prestige 1+ Arch-Templars and Arch-Harakim use it (blue / red cape): sprite = template sprite + 448. Base classes and Seyan'Du keep their normal look for now. Any class change sets the look of the new class (`god_minor_racechange`), so a prestiged Templar who arches again gets the cape automatically.
+- **`#prestige <player> [n]`** (gods): shows or sets the prestige level and updates the look.
 - The client already loads `gfx/NNNNN.png` before its packed files, so new sprites are just PNGs in the client's `gfx` folder.
 - `tools/sprites/export_sprites.py`: exports a character's frames from `gx00`/`pnglib` to PNGs (colour key made transparent), e.g. to give the V2 Sprite Recolor Tool the base Templar, Harakim and Mercenary.
-- `tools/sprites/install_variant.py`: copies a recoloured set into `gfx/` as tier n (sprite numbers + 448·n).
+- `tools/sprites/install_variant.py`: copies a recoloured set into `gfx/` right after the original (sprite numbers + 448).

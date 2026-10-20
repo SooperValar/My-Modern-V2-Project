@@ -2433,11 +2433,6 @@ void god_minor_racechange(int cn,int t) // note: cannot deal with values which a
 
         chlog(cn,"Changed into %s",ch_temp[t].name);
 
-        { // keep the appearance tier (#looktier) through the change
-                int tier=char_looktier(cn);
-                ch[cn].sprite=ch_temp[t].sprite+LOOKTIER_STEP*tier;
-        }
-
         ch[cn].hp[1]=ch_temp[t].hp[1];
         ch[cn].hp[2]=ch_temp[t].hp[2];
         ch[cn].hp[3]=ch_temp[t].hp[3];
@@ -2455,6 +2450,7 @@ void god_minor_racechange(int cn,int t) // note: cannot deal with values which a
         else ch[cn].kindred=ch_temp[t].kindred;
 
         ch[cn].temp=t;
+        ch[cn].sprite=ch_temp[t].sprite+LOOKTIER_STEP*char_looktier(cn);	// prestige look of the new class
         ch[cn].weapon_bonus=ch_temp[t].weapon_bonus;
         ch[cn].armor_bonus=ch_temp[t].armor_bonus;
         ch[cn].gethit_bonus=ch_temp[t].gethit_bonus;
@@ -2802,39 +2798,43 @@ void god_shrines(int cn,int co)
 	chlog(cn,"IMP: #shrines for %s (%d)",ch[co].name,co);
 }
 
-/* ---- appearance tiers ------------------------------------------------------
- * A tier is a recoloured copy of the character's sprites, installed right
- * after the original 448 frames (tools/sprites/install_variant.py): tier n
- * uses the template's sprite + 448*n. The tier is just the offset of the
- * character's sprite from its template's, so nothing else needs to be saved.
+/* ---- prestige and its looks ------------------------------------------------
+ * ch.data[CHD_PRESTIGE] counts how often a character has prestiged (gone from
+ * an arch class back to the start of its class line; the rules for that are
+ * still to be decided). The look follows from it: prestige 1+ Arch-Templars
+ * and Arch-Harakim wear a recoloured set (blue / red cape), installed right
+ * after the class's own 448 sprites (tools/sprites/install_variant.py), so
+ * the sprite is the template's + 448. Other classes keep their normal look.
  */
 int char_looktier(int cn)
 {
-	int t=ch[cn].temp,off;
-
-	if (t<1 || t>=MAXTCHARS || !ch_temp[t].sprite) return 0;
-	off=ch[cn].sprite-ch_temp[t].sprite;
-	if (off<=0 || off%LOOKTIER_STEP || off/LOOKTIER_STEP>LOOKTIER_MAX) return 0;
-	return off/LOOKTIER_STEP;
+	if (ch[cn].data[CHD_PRESTIGE]>=1 && (ch[cn].kindred&(KIN_ARCHTEMPLAR|KIN_ARCHHARAKIM))) return 1;
+	return 0;
 }
 
-void god_looktier(int cn,int co,char *arg)
+void char_apply_look(int cn)
 {
-	int t,tier;
+	int t=ch[cn].temp;
+
+	if (t<1 || t>=MAXTCHARS || !ch_temp[t].sprite) return;
+	ch[cn].sprite=ch_temp[t].sprite+LOOKTIER_STEP*char_looktier(cn);
+}
+
+void god_prestige(int cn,int co,char *arg)
+{
+	int p;
 
 	if (co==0 || !IS_SANECHAR(co) || !IS_USEDCHAR(co)) { do_char_log(cn,0,"No such character.\n"); return; }
-	t=ch[co].temp;
-	if (t<1 || t>=MAXTCHARS || !ch_temp[t].sprite) { do_char_log(cn,0,"%s has no template to take the look from.\n",ch[co].name); return; }
 	if (!arg || !*arg) {
-		do_char_log(cn,1,"%s has appearance tier %d (sprite %d). #looktier <player> <0-%d> changes it, 0 is the original.\n",
-			ch[co].name,char_looktier(co),ch[co].sprite,LOOKTIER_MAX);
+		do_char_log(cn,1,"%s is prestige %d. #prestige <player> <n> sets it (0 = none).\n",ch[co].name,ch[co].data[CHD_PRESTIGE]);
 		return;
 	}
-	tier=atoi(arg);
-	if (tier<0 || tier>LOOKTIER_MAX) { do_char_log(cn,0,"Tiers go from 0 (the original) to %d.\n",LOOKTIER_MAX); return; }
-	ch[co].sprite=ch_temp[t].sprite+LOOKTIER_STEP*tier;
+	p=atoi(arg);
+	if (p<0 || p>99) { do_char_log(cn,0,"Prestige goes from 0 to 99.\n"); return; }
+	ch[co].data[CHD_PRESTIGE]=p;
+	char_apply_look(co);
 	do_update_char(co);
-	chlog(cn,"IMP: set appearance tier of %s (%d) to %d",ch[co].name,co,tier);
-	do_char_log(cn,1,"%s now has appearance tier %d (sprite %d).\n",ch[co].name,tier,ch[co].sprite);
-	if (co!=cn) do_char_log(co,2,"Your appearance has changed.\n");
+	chlog(cn,"IMP: set prestige of %s (%d) to %d",ch[co].name,co,p);
+	do_char_log(cn,1,"%s is now prestige %d (sprite %d).\n",ch[co].name,p,ch[co].sprite);
+	if (co!=cn) do_char_log(co,2,"You are now prestige %d.\n",p);
 }

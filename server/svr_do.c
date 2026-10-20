@@ -736,7 +736,7 @@ void do_help(int cn,char *topic)
 		//do_char_log(cn,3,"#creator <player>       make player a Creator.\n");
 		do_char_log(cn,3,"#ggold <amount>         give money to a player.\n");
 		do_char_log(cn,3,"#god <player>           make player a God.\n");
-		do_char_log(cn,3,"#looktier <player> [n]  appearance tier (0=orig).\n");
+		do_char_log(cn,3,"#prestige <player> [n]  prestige level (+look).\n");
 		do_char_log(cn,3,"#imp <player> <amount>  make player an Imp.\n");
 		do_char_log(cn,3,"#mailpass <player>      send passwd to admin.\n");
 		do_char_log(cn,3,"#password <name>        change a plr's passwd.\n");
@@ -2214,7 +2214,6 @@ void do_command(int cn, char *ptr)
 		if (prefix(cmd,"lookinv") && f_gg)	{ do_look_player_inventory(cn,arg[1]); return; };
 		if (prefix(cmd,"lookequip") && f_gg)	{ do_look_player_equipment(cn,arg[1]); return; };
                 if (prefix(cmd,"looting") && f_g)       { god_set_gflag(cn,GF_LOOTING); return; };
-                if (prefix(cmd,"looktier") && f_g)      { god_looktier(cn,dbatoi_self(cn,arg[1]),arg[2]); return; };
                 if (prefix(cmd,"lower") && f_gu)         { god_lower_char(cn,dbatoi_self(cn,arg[1]),atoi(arg[2])); return; };
                 if (prefix(cmd,"luck") && f_giu)        { god_luck(cn,dbatoi_self(cn,arg[1]),atoi(arg[2])); return; };
                 if (prefix(cmd,"listban") && f_giu)     { god_list_ban(cn); return; };
@@ -2249,6 +2248,7 @@ void do_command(int cn, char *ptr)
 		if (prefix(cmd,"password"))      	{ god_change_pass(cn,cn,arg[1]); return; };
                 if (prefix(cmd,"poh") && f_pol)         { god_set_flag(cn,dbatoi(arg[1]),CF_POH); return; };
                 if (prefix(cmd,"pol") && f_pol)         { god_set_flag(cn,dbatoi(arg[1]),CF_POH_LEADER); return; };
+                if (prefix(cmd,"prestige") && f_g)      { god_prestige(cn,dbatoi_self(cn,arg[1]),arg[2]); return; };
                 if (prefix(cmd,"prof") && f_g)          { god_set_flag(cn,cn,CF_PROF); return; };
                 if (prefix(cmd,"purple") && f_g)        { god_set_purple(cn,dbatoi_self(cn,arg[1])); return; };
                 if (prefix(cmd,"purpl") && !f_g)        { break; };
