@@ -327,6 +327,7 @@ static int backbuffer(HDC dc,int w,int h)
 
 // clean theme: panel fills / border lines at full resolution (canvas units -> window pixels)
 #define CW2W(c)	((c)*HUD_SCALE_X100/100)
+#define BANDMID(a,t)	(((2*(a)+(t))*HUD_SCALE_X100)/200)	// window pixel at the middle of a band of t canvas units
 
 static void fill_rect(int x0,int y0,int x1,int y1,unsigned int rgb)
 {
@@ -384,11 +385,18 @@ static void draw_vops(int lines)
 		if (!lines && v->type==VOP_FILL)
 			fill_rect(CW2W(v->x),CW2W(v->y),CW2W(v->x+v->w),CW2W(v->y+v->h),v->rgb);
 		else if (lines && v->type==VOP_HLINE) {
-			a=CW2W(v->y); b=CW2W(v->y+v->h); a=(a+b-1)/2;
-			fill_rect(CW2W(v->x),a,CW2W(v->x+v->w),a+1,v->rgb);
+			// the row in the middle of the band; the ends stop on the middle
+			// column of the (2 unit) vertical lines they run between, so
+			// lines meet exactly instead of sticking out past each other
+			int x0=BANDMID(v->x,2),x1=BANDMID(v->x+v->w-2,2)+1;
+			a=BANDMID(v->y,v->h);
+			if (x1<=x0) { x0=CW2W(v->x); x1=CW2W(v->x+v->w); }
+			fill_rect(x0,a,x1,a+1,v->rgb);
 		} else if (lines && v->type==VOP_VLINE) {
-			a=CW2W(v->x); b=CW2W(v->x+v->w); a=(a+b-1)/2;
-			fill_rect(a,CW2W(v->y),a+1,CW2W(v->y+v->h),v->rgb);
+			int y0=BANDMID(v->y,2),y1=BANDMID(v->y+v->h-2,2)+1;
+			a=BANDMID(v->x,v->w);
+			if (y1<=y0) { y0=CW2W(v->y); y1=CW2W(v->y+v->h); }
+			fill_rect(a,y0,a+1,y1,v->rgb);
 		} else if (lines && (v->type==VOP_TRIUP || v->type==VOP_TRIDOWN)) {
 			int x0=CW2W(v->x),x1=CW2W(v->x+v->w),y0=CW2W(v->y),y1=CW2W(v->y+v->h),r,hw,c2,k;
 			c2=x0+x1;	// twice the centre
