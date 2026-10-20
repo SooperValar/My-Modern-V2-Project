@@ -711,22 +711,22 @@ void plr_cmd_iteminfo(int nr)
 			if (it[in].attrib[n][2]<=1) continue;
 			if (first) { tip_line(nr,where,slot,&line,1,"Needs:"); first=0; }
 			ok=ch[cn].attrib[n][0]>=it[in].attrib[n][2];
-			tip_line(nr,where,slot,&line,ok ? 1 : 0," %s %d%s",at_name[n],it[in].attrib[n][2],ok ? "" : " (too low)");
+			tip_line(nr,where,slot,&line,ok ? 1 : 0," %-14s %4d%s",at_name[n],it[in].attrib[n][2],ok ? "" : " (too low)");
 		}
 		for (n=0; n<50; n++) {
 			if (!it[in].skill[n][2]) continue;
 			if (first) { tip_line(nr,where,slot,&line,1,"Needs:"); first=0; }
 			ok=ch[cn].skill[n][0] && ch[cn].skill[n][0]>=it[in].skill[n][2];
-			tip_line(nr,where,slot,&line,ok ? 1 : 0," %s %d%s",skilltab[n].name,it[in].skill[n][2],
+			tip_line(nr,where,slot,&line,ok ? 1 : 0," %-14s %4d%s",skilltab[n].name,it[in].skill[n][2],
 				!ch[cn].skill[n][0] ? " (not known)" : (ok ? "" : " (too low)"));
 		}
-		if (it[in].hp[2]) { if (first) { tip_line(nr,where,slot,&line,1,"Needs:"); first=0; } ok=ch[cn].hp[0]>=it[in].hp[2]; tip_line(nr,where,slot,&line,ok ? 1 : 0," Hitpoints %d%s",it[in].hp[2],ok ? "" : " (too low)"); }
-		if (it[in].end[2]) { if (first) { tip_line(nr,where,slot,&line,1,"Needs:"); first=0; } ok=ch[cn].end[0]>=it[in].end[2]; tip_line(nr,where,slot,&line,ok ? 1 : 0," Endurance %d%s",it[in].end[2],ok ? "" : " (too low)"); }
-		if (it[in].mana[2]) { if (first) { tip_line(nr,where,slot,&line,1,"Needs:"); first=0; } ok=ch[cn].mana[0]>=it[in].mana[2]; tip_line(nr,where,slot,&line,ok ? 1 : 0," Mana %d%s",it[in].mana[2],ok ? "" : " (too low)"); }
+		if (it[in].hp[2]) { if (first) { tip_line(nr,where,slot,&line,1,"Needs:"); first=0; } ok=ch[cn].hp[0]>=it[in].hp[2]; tip_line(nr,where,slot,&line,ok ? 1 : 0," %-14s %4d%s","Hitpoints",it[in].hp[2],ok ? "" : " (too low)"); }
+		if (it[in].end[2]) { if (first) { tip_line(nr,where,slot,&line,1,"Needs:"); first=0; } ok=ch[cn].end[0]>=it[in].end[2]; tip_line(nr,where,slot,&line,ok ? 1 : 0," %-14s %4d%s","Endurance",it[in].end[2],ok ? "" : " (too low)"); }
+		if (it[in].mana[2]) { if (first) { tip_line(nr,where,slot,&line,1,"Needs:"); first=0; } ok=ch[cn].mana[0]>=it[in].mana[2]; tip_line(nr,where,slot,&line,ok ? 1 : 0," %-14s %4d%s","Mana",it[in].mana[2],ok ? "" : " (too low)"); }
 		if (it[in].min_rank>0) {
 			if (first) { tip_line(nr,where,slot,&line,1,"Needs:"); first=0; }
 			ok=points2rank(ch[cn].points_tot)>=it[in].min_rank;
-			tip_line(nr,where,slot,&line,ok ? 1 : 0," Rank %s%s",rank_name[(int)it[in].min_rank],ok ? "" : " (too low)");
+			tip_line(nr,where,slot,&line,ok ? 1 : 0," %-14s %s%s","Rank",rank_name[(int)it[in].min_rank],ok ? "" : " (too low)");
 		}
 		if (it[in].driver==40) tip_line(nr,where,slot,&line,(ch[cn].kindred&KIN_SEYAN_DU) ? 1 : 0," Seyan'Du only");
 		if (it[in].driver==39) tip_line(nr,where,slot,&line,(ch[cn].kindred&KIN_PURPLE) ? 1 : 0," Followers of the Purple One only");
