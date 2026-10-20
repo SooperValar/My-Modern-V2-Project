@@ -580,6 +580,89 @@ static void hud_equip_labels(void)
 	}
 }
 
+void dd_hud_hline1(int x0,int y,int w);
+void dd_hud_vline1(int x,int y0,int h);
+void dd_hud_vfill(int x,int y,int w,int h,unsigned int rgb);
+static int hud_plr_sprite;
+
+#define BAR_MAX		0x2A3F7A	// bars: maximum (blue), current (green; red for someone else)
+#define BAR_CUR		0x1E7A34
+#define BAR_OTHER	0x8E2A2A
+
+/* equipment panel, clean theme: the old layout (2 x 6 slots of 35), drawn
+ * here at full quality instead of copied from the old HUD picture */
+static void hud_equippanel(void)
+{
+	static int wntab[12]={WN_HEAD,WN_CLOAK,WN_BODY,WN_ARMS,WN_NECK,WN_BELT,WN_RHAND,WN_LHAND,WN_RRING,WN_LRING,WN_LEGS,WN_FEET};
+	int o=HE_X-HE_LX,n,k,spr,lookmode=(show_look && !show_shop);
+
+	dd_hud_panel(301+o,0,72,212);
+	dd_hud_vline(336+o,0,212);
+	for (k=1; k<6; k++) dd_hud_hline(301+o,k*35,72);
+
+	for (n=0; n<12; n++) {
+		spr=lookmode ? look.worn[wntab[n]] : pl.worn[wntab[n]];
+		if (spr) copyspritex(spr,303+o+(n%2)*35,2+(n/2)*35,(!lookmode && hightlight==HL_EQUIPMENT && hightlight_sub==wntab[n]) ? 16 : 0);
+		if (!lookmode && inv_block[wntab[n]]) copyspritex(4,303+o+(n%2)*35,2+(n/2)*35,0);
+	}
+}
+
+static void hud_bar(int x,int y,int w,unsigned int rgb)
+{
+	if (w>124) w=124;
+	if (w>0) dd_hud_vfill(x,y,w,6,rgb);
+}
+
+/* character / look panel, clean theme: spells, name, picture, rank badge,
+ * hitpoint/endurance/mana bars, name and rank, money */
+static void hud_charpanel(void)
+{
+	int o=HL_X-HL_LX,n,r,sprite;
+	char *name,*top=NULL,buf[40];
+
+	dd_hud_panel(371+o,0,128,201);
+	dd_hud_hline1(371+o,126,128);
+	dd_hud_hline1(371+o,133,128);
+	dd_hud_hline(371+o,140,128);
+	dd_hud_hline1(371+o,147,128);
+	dd_hud_hline1(371+o,166,128);
+	dd_hud_hline(371+o,185,128);
+	dd_hud_vline1(410+o,185,16);
+
+	for (n=0; n<20; n++)
+		if (pl.spell[n]) copyspritex(pl.spell[n],374+o+(n%5)*24,4+(n/5)*24,15-min(15,pl.active[n]));
+
+	if (show_shop) {
+		sprite=shop.sprite; name=shop.name; r=points2rank(shop.points);
+		top=selected_char ? lookup(selected_char,0) : pl.name;
+		hud_bar(373+o,127,pl.hp[5]>0 ? 62 : 0,BAR_MAX); hud_bar(373+o,127,pl.hp[5]>0 ? pl.a_hp*62/pl.hp[5] : 0,BAR_CUR);
+		hud_bar(373+o,134,pl.end[5]>0 ? 62 : 0,BAR_MAX); hud_bar(373+o,134,pl.end[5]>0 ? pl.a_end*62/pl.end[5] : 0,BAR_CUR);
+		hud_bar(373+o,141,pl.mana[5]>0 ? 62 : 0,BAR_MAX); hud_bar(373+o,141,pl.mana[5]>0 ? pl.a_mana*62/pl.mana[5] : 0,BAR_CUR);
+	} else if (show_look) {
+		sprite=look.sprite; name=look.name; r=points2rank(look.points);
+		if (pl.hp[5]) { hud_bar(373+o,127,look.hp*62/pl.hp[5],BAR_MAX); hud_bar(373+o,127,look.a_hp*62/pl.hp[5],BAR_OTHER); }
+		if (pl.end[5]) { hud_bar(373+o,134,look.end*62/pl.end[5],BAR_MAX); hud_bar(373+o,134,look.a_end*62/pl.end[5],BAR_OTHER); }
+		if (pl.mana[5]) { hud_bar(373+o,141,look.mana*62/pl.mana[5],BAR_MAX); hud_bar(373+o,141,look.a_mana*62/pl.mana[5],BAR_OTHER); }
+	} else {
+		sprite=hud_plr_sprite; name=pl.name; r=points2rank(pl.points_tot);
+		top=selected_char ? lookup(selected_char,0) : pl.name;
+		hud_bar(373+o,127,pl.hp[5]>0 ? 62 : 0,BAR_MAX); hud_bar(373+o,127,pl.hp[5]>0 ? pl.a_hp*62/pl.hp[5] : 0,BAR_CUR);
+		hud_bar(373+o,134,pl.end[5]>0 ? 62 : 0,BAR_MAX); hud_bar(373+o,134,pl.end[5]>0 ? pl.a_end*62/pl.end[5] : 0,BAR_CUR);
+		hud_bar(373+o,141,pl.mana[5]>0 ? 62 : 0,BAR_MAX); hud_bar(373+o,141,pl.mana[5]>0 ? pl.a_mana*62/pl.mana[5] : 0,BAR_CUR);
+	}
+	if (r<0) r=0;
+	if (r>23) r=23;
+	if (top) ctext(374+o,125,28,1,top);
+	if (sprite) copyspritex(sprite,402+o,32,0);
+	copyspritex(10+min(20,r),463+o,38,0);
+	ctext(374+o,125,152,1,name);
+	ctext(374+o,125,172,1,rank[r]);
+
+	dd_puttext(375+o,190,1,"Money");
+	sprintf(buf,"%dG %2dS",pl.gold/100,pl.gold%100);
+	rtext(495+o,190,1,"%s",buf);
+}
+
 void hud_draw_v2(int init,unsigned short *mapmem,int map_x,int map_y)
 {
 	int n,m,x,y,r,c,pts,rows;
@@ -664,11 +747,18 @@ void hud_draw_v2(int init,unsigned short *mapmem,int map_x,int map_y)
 		}
 		hud_scroll(HB_X+HB_COLS*HB_SLOT+1,HB_Y,HB_H,inv_pos,HB_MAXPOS);
 
-		// --- gold buttons, equipment, character panel: from the old HUD
+		// --- gold buttons from the old HUD; equipment and character panel
+		// drawn here in the clean theme, from the old HUD otherwise
 		dd_hud_from_legacy(HG_LX,HG_LY,HG_LW,HG_LH,HG_X,HG_Y);
-		dd_hud_from_legacy(HE_LX,HE_LY,HE_LW,HE_LH,HE_X,HE_Y);
-		hud_equip_labels();
-		dd_hud_from_legacy(HL_LX,HL_LY,HL_LW,HL_LH,HL_X,HL_Y);
+		if (hud_theme==2) {
+			hud_equippanel();
+			hud_equip_labels();
+			hud_charpanel();
+		} else {
+			dd_hud_from_legacy(HE_LX,HE_LY,HE_LW,HE_LH,HE_X,HE_Y);
+			hud_equip_labels();
+			dd_hud_from_legacy(HL_LX,HL_LY,HL_LW,HL_LH,HL_X,HL_Y);
+		}
 
 		// --- weapon / armor / experience / server load
 		rows=load ? 4 : 3;
@@ -772,6 +862,8 @@ void hud_draw_v2(int init,unsigned short *mapmem,int map_x,int map_y)
 	dd_target(0);
 }
 
+static int hud_plr_sprite=0;	// for the clean theme's character panel
+
 void eng_display_win(int plr_sprite,int init)
 {
 	int y,n,m;
@@ -788,6 +880,8 @@ void eng_display_win(int plr_sprite,int init)
 		0,0,
 		0,0};
 
+
+	hud_plr_sprite=plr_sprite;
 
 	if (init) {
 		reset_block();

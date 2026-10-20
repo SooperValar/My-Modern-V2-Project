@@ -2617,6 +2617,10 @@ void dd_hud_hline(int x0,int y,int w)
 	}
 }
 
+// thin (1 unit) lines, clean theme only
+void dd_hud_hline1(int x0,int y,int w) { if (hud_theme==2) vadd(VOP_HLINE,x0,y,w,1,HUD_RGB_LINE); }
+void dd_hud_vline1(int x,int y0,int h) { if (hud_theme==2) vadd(VOP_VLINE,x,y0,1,h,HUD_RGB_LINE); }
+
 void dd_hud_vline(int x,int y0,int h)
 {
 	int i;
