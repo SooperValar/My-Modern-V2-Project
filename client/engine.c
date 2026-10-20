@@ -607,6 +607,34 @@ static void hud_equippanel(void)
 	}
 }
 
+/* shop / grave window, clean theme: 8 x 8 grid of 35 (62 slots), a close
+ * box, and the sell / buy price lines; same places as the old window, so the
+ * mouse code still works */
+static void hud_shopwindow(void)
+{
+	int ox=HSH_X-HSH_LX,oy=HSH_Y-HSH_LY,n,k,x,y,w=300,h=314;
+	unsigned short col;
+
+	x=219+ox; y=260+oy;
+	// opaque on the canvas, so nothing under it shows through
+	dd_hud_vclip(x,y,w,h);
+	col=(unsigned short)((((HUD_RGB_PANEL>>16)&255)>>3)<<11 | (((HUD_RGB_PANEL>>8)&255)>>2)<<5 | ((HUD_RGB_PANEL&255)>>3));
+	dd_hud_fill(x,y,w,h,col);
+	dd_hud_panel(x,y,w,h);
+	for (k=1; k<=8; k++) dd_hud_vline(x+k*35,y,8*35+2);
+	for (k=1; k<=8; k++) dd_hud_hline(x,y+k*35,8*35+2);
+	dd_hud_hline(x+8*35,y+16,w-8*35);			// close box
+	ctext(x+8*35+2,w-8*35-4,y+4,0,"x");
+
+	for (n=0; n<62; n++) {
+		if (!shop.item[n]) continue;
+		copyspritex(shop.item[n],222+ox+(n%8)*35,262+oy+(n/8)*35,(hightlight==HL_SHOP && hightlight_sub==n) ? 16 : 0);
+		if (hightlight==HL_SHOP && hightlight_sub==n && shop.price[n])
+			dd_xputtext(x+6,y+8*35+6,1,"Sell: %dG %dS",shop.price[n]/100,shop.price[n]%100);
+	}
+	if (pl.citem && shop.pl_price) dd_xputtext(x+6,y+8*35+18,1,"Buy:  %dG %dS",shop.pl_price/100,shop.pl_price%100);
+}
+
 static void hud_bar(int x,int y,int w,unsigned int rgb)
 {
 	if (w>124) w=124;
@@ -812,7 +840,7 @@ void hud_draw_v2(int init,unsigned short *mapmem,int map_x,int map_y)
 		}
 
 		// --- shop window (centered)
-		if (show_shop) dd_hud_from_legacy(HSH_LX,HSH_LY,HSH_LW,HSH_LH,HSH_X,HSH_Y);
+		if (show_shop) { if (hud_theme==2) hud_shopwindow(); else dd_hud_from_legacy(HSH_LX,HSH_LY,HSH_LW,HSH_LH,HSH_X,HSH_Y); }
 	} else if (do_exit) {
 		// logged out (e.g. walked into a tavern): keep the Exit button, like the
 		// original, so the player can read the reason in the chat and then leave
