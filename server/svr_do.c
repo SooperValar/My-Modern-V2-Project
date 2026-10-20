@@ -2080,7 +2080,7 @@ void do_tile(int cn,char *ax,char *ay)
 void do_command(int cn, char *ptr)
 {
         int n,m;
-        int f_c, f_g, f_i, f_s, f_p, f_m, f_u, f_sh, f_gi, f_giu, f_gius, f_poh, f_pol,f_gg;
+        int f_c, f_g, f_i, f_s, f_p, f_m, f_u, f_sh, f_gi, f_giu, f_gius, f_poh, f_pol,f_gg,f_gu;
         char arg[10][40],*args[10];
         char *cmd;
 
@@ -2119,6 +2119,8 @@ void do_command(int cn, char *ptr)
         f_gius = f_giu || f_s;
         f_poh = (ch[cn].flags & CF_POH) !=0;
         f_pol = (ch[cn].flags & (CF_POH_LEADER|CF_GOD)) !=0;
+        // a god controlling a monster (#usurp) keeps the gold and exp commands
+        f_gu = f_g || (f_u && ch[cn].data[97]>0 && ch[cn].data[97]<MAXCHARS && (ch[ch[cn].data[97]].flags&CF_GOD));
 
         switch (cmd[0]) {
         case 'a':
@@ -2172,7 +2174,7 @@ void do_command(int cn, char *ptr)
 		if (prefix(cmd,"golden") && f_g)	{ god_set_flag(cn,dbatoi(arg[1]),CF_GOLDEN); return; }
                 if (prefix(cmd,"group") && !f_m)        { do_group(cn,arg[1]); return; }
                 if (prefix(cmd,"gargoyle") && f_gi)     { god_gargoyle(cn); return; }
-                if (prefix(cmd,"ggold") && f_g)         { god_gold_char(cn,dbatoi_self(cn,arg[1]),atoi(arg[2]),arg[3]); return; }
+                if (prefix(cmd,"ggold") && f_gu)         { god_gold_char(cn,dbatoi_self(cn,arg[1]),atoi(arg[2]),arg[3]); return; }
                 if (prefix(cmd,"give") && f_giu)        { do_god_give(cn,dbatoi(arg[1])); return; }
                 if (prefix(cmd,"goto") && f_giu) /*!*/  { god_goto(cn,cn,arg[1],arg[2]); return; }
                 if (prefix(cmd,"god") && f_g)           { god_set_flag(cn,dbatoi_self(cn,arg[1]),CF_GOD); return; }
@@ -2211,7 +2213,7 @@ void do_command(int cn, char *ptr)
 		if (prefix(cmd,"lookinv") && f_gg)	{ do_look_player_inventory(cn,arg[1]); return; };
 		if (prefix(cmd,"lookequip") && f_gg)	{ do_look_player_equipment(cn,arg[1]); return; };
                 if (prefix(cmd,"looting") && f_g)       { god_set_gflag(cn,GF_LOOTING); return; };
-                if (prefix(cmd,"lower") && f_g)         { god_lower_char(cn,dbatoi_self(cn,arg[1]),atoi(arg[2])); return; };
+                if (prefix(cmd,"lower") && f_gu)         { god_lower_char(cn,dbatoi_self(cn,arg[1]),atoi(arg[2])); return; };
                 if (prefix(cmd,"luck") && f_giu)        { god_luck(cn,dbatoi_self(cn,arg[1]),atoi(arg[2])); return; };
                 if (prefix(cmd,"listban") && f_giu)     { god_list_ban(cn); return; };
                 if (prefix(cmd,"listimps") && f_giu)    { god_implist(cn); return; };
