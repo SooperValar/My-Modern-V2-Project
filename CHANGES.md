@@ -202,4 +202,5 @@ The world data held a nearly finished tenth labyrinth part (the "Mages of Time":
 ### Labyrinth temple and Kwai shrines
 
 - Entering a labyrinth part through the gate saves the player's temple (`CHD_LABTEMPLE`, slot 33); inside, death and recall go to the start of that part as before. Leaving by the exit portal or solving the part gives the old temple back (Purple One's temple, staff temple, ...) instead of always Aston.
+- Lab items (keys, the Hourglass of Time, ...) now also vanish when a player ends up outside the labyrinth by recall, death or the god `#recall`, not only at the exit portal (`lab_left_check`). `#recall` also gives the old temple back.
 - Shrines of Kwai: 22 now (20 + Lab 10 + Lab 11, `SEYAN_SHRINES`), so a Seyan'Du sword goes up to 15 + 22×4 = 103 WV. `#shrines` and the messages follow the number.

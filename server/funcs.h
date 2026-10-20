@@ -128,6 +128,8 @@ void god_build_cmd(int cn,char *arg);
 int char_looktier(int cn);
 void lab_save_temple(int cn);
 int lab_restore_temple(int cn);
+void lab_strip_items(int cn);
+void lab_left_check(int cn);
 void char_apply_look(int cn);
 void god_prestige(int cn,int co,char *arg);
 void build_undo_begin(int cn);

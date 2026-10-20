@@ -2265,7 +2265,7 @@ void do_command(int cn, char *ptr)
                 if (prefix(cmd,"rac"))                  { break; };
                 if (prefix(cmd,"rais"))                 { break; };
                 if (prefix(cmd,"raise") && f_giu)       { god_raise_char(cn,dbatoi_self(cn,arg[1]),atoi(arg[2])); return; };
-                if (prefix(cmd,"recall") && f_giu)      { god_goto(cn,cn,"512","512"); return; };
+                if (prefix(cmd,"recall") && f_giu)      { lab_restore_temple(cn); god_goto(cn,cn,"512","512"); lab_left_check(cn); return; };
                 if (prefix(cmd,"respawn") && f_giu)     { do_respawn(cn,atoi(arg[1])); return; };
                 if (prefix(cmd,"rings"))                { do_info_rings(cn); return; };
                 if (!strcmp(cmd,"repair") && f_p)       { do_repair_all(cn,0); return; };
@@ -2695,6 +2695,7 @@ void do_char_killed(int cn,int co)
                 if (ch[co].x==ch[co].temple_x && ch[co].y==ch[co].temple_y)
                         god_transfer_char(co,ch[co].temple_x+4,ch[co].temple_y+4);
                 else god_transfer_char(co,ch[co].temple_x,ch[co].temple_y);
+                lab_left_check(co);
 
                 ch[co].a_hp=10000;              // come alive! (10hp)
                 ch[co].status=0;
@@ -3054,6 +3055,7 @@ int do_hurt(int cn,int co,int dam,int type)
                 fx_add_effect(6,0,ch[co].x,ch[co].y,0);
                 god_transfer_char(co,ch[co].temple_x,ch[co].temple_y);
                 fx_add_effect(6,0,ch[co].x,ch[co].y,0);
+                lab_left_check(co);
 
                 chlog(co,"Saved by the Gods (new luck=%d)",ch[co].luck);
                 ch[co].data[44]++;
@@ -3840,6 +3842,7 @@ void do_regenerate(int cn)
                                                         fx_add_effect(12,0,ch[cn].x,ch[cn].y,0);
                                                 }
                                         }
+                                        lab_left_check(cn);
                                         ch[cn].status=0; ch[cn].attack_cn=0; ch[cn].skill_nr=0; ch[cn].goto_x=0;
                                         ch[cn].use_nr=0; ch[cn].misc_action=0; ch[cn].dir=DX_DOWN;
 

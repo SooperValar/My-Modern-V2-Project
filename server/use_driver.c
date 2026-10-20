@@ -553,6 +553,41 @@ void lab_save_temple(int cn)
         if (!ch[cn].data[CHD_LABTEMPLE]) ch[cn].data[CHD_LABTEMPLE]=ch[cn].temple_x+ch[cn].temple_y*MAPX+1;
 }
 
+/* Removes all lab-only items (IF_LABYDESTROY) a player has on them. */
+void lab_strip_items(int cn)
+{
+        int n,in2;
+
+        if ((in2=ch[cn].citem) && !(in2&0x80000000) && (it[in2].flags&IF_LABYDESTROY)) {
+                ch[cn].citem=0; it[in2].used=USE_EMPTY;
+                do_char_log(cn,1,"Your %s vanished.\n",it[in2].reference);
+        }
+        for (n=0; n<40; n++) {
+                if ((in2=ch[cn].item[n]) && (it[in2].flags&IF_LABYDESTROY)) {
+                        ch[cn].item[n]=0; it[in2].used=USE_EMPTY;
+                        do_char_log(cn,1,"Your %s vanished.\n",it[in2].reference);
+                }
+        }
+        for (n=0; n<20; n++) {
+                if ((in2=ch[cn].worn[n]) && (it[in2].flags&IF_LABYDESTROY)) {
+                        ch[cn].worn[n]=0; it[in2].used=USE_EMPTY;
+                        do_char_log(cn,1,"Your %s vanished.\n",it[in2].reference);
+                }
+        }
+        do_update_char(cn);
+}
+
+/* Called after a player was moved to their temple (recall, death, #recall):
+ * if that temple is a city temple, they are out of the labyrinth, so their
+ * lab items go away like they do at the exit portal. */
+void lab_left_check(int cn)
+{
+        if (!IS_SANEPLAYER(cn)) return;
+        if (ch[cn].data[CHD_LABTEMPLE]) return;         // still inside a lab
+        if (ch[cn].temple_x!=512 && ch[cn].temple_x!=558 && ch[cn].temple_x!=813) return;
+        lab_strip_items(cn);
+}
+
 int lab_restore_temple(int cn)
 {
         int m=ch[cn].data[CHD_LABTEMPLE]-1;
