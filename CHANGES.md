@@ -195,4 +195,11 @@ The world data held a nearly finished tenth labyrinth part (the "Mages of Time":
 - **All four mages matter**: Top (Flora), Middle (Friga), Bottom (Aestas) and the new **Sands of Time** (Casas, who carried a spare bottom before). Top, Middle and Bottom combine in any order into the new **Empty Hourglass**; with the sands it becomes the **Hourglass of Time**.
 - The new **Portal of Time** (item driver 71) at the far end of Winter: the Hourglass of Time opens it for two minutes for everyone, so a group goes through together without waiting for the mages to respawn. It leads into the sealed end room, whose portal marks part 10 solved and leads on to the Final Test.
 - Hourglass sprites 18121-18128 drawn for it (`tools/sprites/draw_hourglass.py`), as PNGs in the client's `gfx` folder.
-- One-off data patch: `tools/world/lab10_open.c`.
+- Its labkeeper (the fight after the end portal) was missing too: part 10 now sends a Mage of Time (Friga, without her hourglass piece).
+- Three exploration points (45,000 exp, bits 15-17 of the third exploration word) and its shrine of Kwai (bit 20, the template was there but never placed).
+- One-off data patches: `tools/world/lab10_open.c`, and `tools/world/place_items.c` with `lab10_extras.txt` (a small tool that makes item templates and places items from a list).
+
+### Labyrinth temple and Kwai shrines
+
+- Entering a labyrinth part through the gate saves the player's temple (`CHD_LABTEMPLE`, slot 33); inside, death and recall go to the start of that part as before. Leaving by the exit portal or solving the part gives the old temple back (Purple One's temple, staff temple, ...) instead of always Aston.
+- Shrines of Kwai: 22 now (20 + Lab 10 + Lab 11, `SEYAN_SHRINES`), so a Seyan'Du sword goes up to 15 + 22×4 = 103 WV. `#shrines` and the messages follow the number.

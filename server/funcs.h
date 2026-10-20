@@ -126,6 +126,8 @@ void god_tavern(int cn);
 void god_build(int cn,int x);
 void god_build_cmd(int cn,char *arg);
 int char_looktier(int cn);
+void lab_save_temple(int cn);
+int lab_restore_temple(int cn);
 void char_apply_look(int cn);
 void god_prestige(int cn,int co,char *arg);
 void build_undo_begin(int cn);

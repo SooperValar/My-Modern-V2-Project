@@ -1,0 +1,13 @@
+# Lab 10 (Seasons Gorge): three exploration points and the shrine of Kwai
+# poles: bits 15-17 of the third exploration word, 45000 exp (Lab 9's give 40000)
+newtemp 1316 1096 Explotation Point 0/0/32768
+data 1316 0 0 32768 0 45000
+newtemp 1317 1096 Explotation Point 0/0/65536
+data 1317 0 0 65536 0 45000
+newtemp 1318 1096 Explotation Point 0/0/131072
+data 1318 0 0 131072 0 45000
+place 1316 67 844
+place 1317 93 852
+place 1318 52 883
+# shrine of Kwai (bit 20; the template was already there, never placed)
+place 1298 80 831

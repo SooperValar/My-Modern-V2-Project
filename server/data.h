@@ -298,6 +298,9 @@ extern unsigned int mapmarker;
 #define CHD_ENEMYZZZ    91
 #define CHD_BUILDPAGE   74      // players: current build page (NPCs use 74 for their ghost timer)
 #define CHD_PRESTIGE    32      // players: times prestiged (NPCs use 32-35 for lights)
+#define CHD_LABTEMPLE   33      // players: temple before entering the labyrinth, x+y*MAPX+1 (0 = none)
+#define SEYAN_SHRINES   22      // shrines of Kwai (bits in data[21]): 20 original + Lab 10 + Lab 11
+#define SEYAN_SHRINEBITS ((1u<<SEYAN_SHRINES)-1)
 #define LOOKTIER_STEP   448     // prestige look: a recoloured sprite set right after the original
 #define CHD_ARENALOCK   79      // players: no arena of rank fight before this tick (NPCs use 79 for patrol rest)
 

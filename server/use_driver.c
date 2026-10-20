@@ -539,8 +539,29 @@ void finish_laby_teleport(int cn,int nr,int exp)
         god_transfer_char(cn,512,512);
         fx_add_effect(6,0,ch[cn].x,ch[cn].y,0);
 
-        ch[cn].temple_x=ch[cn].tavern_x=ch[cn].x;
-        ch[cn].temple_y=ch[cn].tavern_y=ch[cn].y;
+        if (!lab_restore_temple(cn)) {
+                ch[cn].temple_x=ch[cn].tavern_x=ch[cn].x;
+                ch[cn].temple_y=ch[cn].tavern_y=ch[cn].y;
+        }
+}
+
+/* While in the labyrinth, a player's temple (death, recall) is the start of
+ * the part they're in. The temple from before is kept in CHD_LABTEMPLE and
+ * given back when they leave - by the exit portal or by solving the part. */
+void lab_save_temple(int cn)
+{
+        if (!ch[cn].data[CHD_LABTEMPLE]) ch[cn].data[CHD_LABTEMPLE]=ch[cn].temple_x+ch[cn].temple_y*MAPX+1;
+}
+
+int lab_restore_temple(int cn)
+{
+        int m=ch[cn].data[CHD_LABTEMPLE]-1;
+
+        if (m<0) return 0;
+        ch[cn].data[CHD_LABTEMPLE]=0;
+        ch[cn].temple_x=ch[cn].tavern_x=m%MAPX;
+        ch[cn].temple_y=ch[cn].tavern_y=m/MAPX;
+        return 1;
 }
 
 
@@ -712,6 +733,7 @@ int use_labyrinth(int cn,int in)
         }
 
         if (flag) {
+                lab_save_temple(cn);	// the temple to go back to when leaving
                 ch[cn].temple_x=ch[cn].tavern_x=ch[cn].x;
                 ch[cn].temple_y=ch[cn].tavern_y=ch[cn].y;
         }
@@ -2112,7 +2134,9 @@ int teleport3(int cn,int in)    // out of labyrinth
                 }
         }
 
-	if (ch[cn].kindred&KIN_PURPLE) {
+	if (lab_restore_temple(cn)) {
+		;	// back to the temple from before the labyrinth
+	} else if (ch[cn].kindred&KIN_PURPLE) {
 		ch[cn].temple_x=ch[cn].tavern_x=558;
         	ch[cn].temple_y=ch[cn].tavern_y=542;
 	} else if (ch[cn].flags&CF_STAFF) {
@@ -2178,7 +2202,7 @@ int use_seyan_shrine(int cn,int in)
                 if (ch[cn].data[21]&bit) bits++;
         }
 
-        do_char_log(cn,1,"You have visited %d of the 20 shrines of Kwai.\n",bits);
+        do_char_log(cn,1,"You have visited %d of the %d shrines of Kwai.\n",bits,SEYAN_SHRINES);
 
         it[in2].weapon[0]=15+bits*4;
         it[in2].flags|=IF_UPDATE;

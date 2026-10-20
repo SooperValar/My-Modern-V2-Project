@@ -1660,7 +1660,7 @@ void do_info_specialw(int cn)
 		if (it_temp[tn].min_rank>0) { sprintf(tmp,"%srank %s",buf[0] ? ", " : "Also needs ",rank_name[(int)it_temp[tn].min_rank]); strcat(buf,tmp); }
 		info_gives(tn,tmp);
 		if (tmp[0]) { strcat(buf,buf[0] ? ". Gives " : "Gives "); strcat(buf,tmp); }
-		if (tn==682) strcpy(buf,"Seyan'Du only. +4 WV for each of the 20 shrines of Kwai visited");
+		if (tn==682) sprintf(buf,"Seyan'Du only. +4 WV for each of the %d shrines of Kwai visited",SEYAN_SHRINES);
 		mark[0]=0;
 		if (buf[0] && note<9) { sprintf(notes[note],"%d) %s.",note+1,buf); note++; sprintf(mark,"%d",note); }
 

@@ -2748,11 +2748,11 @@ void god_shutup(int cn,int co)
 		(ch[co].flags&CF_SHUTUP) ? "on" : "off");
 }
 
-// #shrines <player>: mark all 20 shrines of Kwai as visited and bring the
+// #shrines <player>: mark all shrines of Kwai as visited and bring the
 // player's Seyan'Du sword to its maximum weapon value (15+20*4=95).
 void god_shrines(int cn,int co)
 {
-	int n,in,found=0,bits=20;
+	int n,in,found=0,bits=SEYAN_SHRINES;
 
 	if (co==0) { do_char_log(cn,0,"No such character.\n"); return; }
 	if (!IS_SANECHAR(co) || !IS_USEDCHAR(co)) { do_char_log(cn,0,"Bad character.\n"); return; }
@@ -2761,7 +2761,7 @@ void god_shrines(int cn,int co)
 		return;
 	}
 
-	ch[co].data[21]|=0x000fffff;	// one bit per shrine, 20 shrines
+	ch[co].data[21]|=SEYAN_SHRINEBITS;	// one bit per shrine
 
 	for (n=1; n<MAXITEM; n++) {
 		if (it[n].used!=USE_ACTIVE) continue;
@@ -2793,8 +2793,8 @@ void god_shrines(int cn,int co)
 
 	do_update_char(co);
 
-	do_char_log(co,1,"You have visited 20 of the 20 shrines of Kwai.\n");
-	if (cn!=co) do_char_log(cn,1,"%s has now visited all 20 shrines, sword at %d.\n",ch[co].name,15+bits*4);
+	do_char_log(co,1,"You have visited %d of the %d shrines of Kwai.\n",SEYAN_SHRINES,SEYAN_SHRINES);
+	if (cn!=co) do_char_log(cn,1,"%s has now visited all %d shrines, sword at %d.\n",ch[co].name,SEYAN_SHRINES,15+bits*4);
 	chlog(cn,"IMP: #shrines for %s (%d)",ch[co].name,co);
 }
 
