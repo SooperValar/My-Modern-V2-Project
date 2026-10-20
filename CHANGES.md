@@ -173,3 +173,14 @@ All also work with `/`, and the player ones are listed in `#help`.
 - **`#repair` / `#repairinv`**: use the Repair skill on every damaged worn item or backpack item. The first use warns that a failed repair can damage or destroy an item; repeating the command within 30 seconds goes ahead. The Repair skill code was split into `repair_citem()` so the single-item skill and these commands share it.
 - **`#tile [x y]`** (gods): floor and object sprite, item, flags, light and character on a tile. Typed without coordinates, the client fills in the tile under the mouse.
 - **`#undo`** (builders): undoes the last build action (one click, one removal or one whole area), repeatable; about 20,000 tile changes are remembered. Items removed by the action are re-created from their template.
+
+---
+
+## 11. Appearance tiers (recoloured class sprites)
+
+- Each character type uses 448 sprite numbers, and the 576 after them are unused, so a full recoloured copy fits right behind the original. **Tier n** is the template's sprite + 448·n; the tier is simply the offset of the character's sprite from its template's, so nothing extra is stored. `LOOKTIER_MAX` is 1 for now (one copy fits).
+- **`#looktier <player> [n]`** (gods): shows or sets a character's tier; 0 is the original look. The player is told their appearance changed.
+- A class change (Arch-Templar, Warrior, ...) keeps the tier: the new template's sprite + the same offset.
+- The client already loads `gfx/NNNNN.png` before its packed files, so new sprites are just PNGs in the client's `gfx` folder.
+- `tools/sprites/export_sprites.py`: exports a character's frames from `gx00`/`pnglib` to PNGs (colour key made transparent), e.g. to give the V2 Sprite Recolor Tool the base Templar, Harakim and Mercenary.
+- `tools/sprites/install_variant.py`: copies a recoloured set into `gfx/` as tier n (sprite numbers + 448·n).

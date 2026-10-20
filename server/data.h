@@ -297,6 +297,8 @@ extern unsigned int mapmarker;
 #define CHD_ENEMY1ST    80
 #define CHD_ENEMYZZZ    91
 #define CHD_BUILDPAGE   74      // players: current build page (NPCs use 74 for their ghost timer)
+#define LOOKTIER_STEP   448     // appearance tiers: a recoloured sprite set right after the original
+#define LOOKTIER_MAX    1       // tiers that fit before the next character's sprites
 #define CHD_ARENALOCK   79      // players: no arena of rank fight before this tick (NPCs use 79 for patrol rest)
 
 #define RANKS           24

@@ -125,6 +125,8 @@ int god_remove_item(int cn,int nr);
 void god_tavern(int cn);
 void god_build(int cn,int x);
 void god_build_cmd(int cn,char *arg);
+int char_looktier(int cn);
+void god_looktier(int cn,int co,char *arg);
 void build_undo_begin(int cn);
 void build_undo(int cn);
 int repair_citem(int cn);

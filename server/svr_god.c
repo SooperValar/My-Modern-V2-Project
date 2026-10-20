@@ -2433,6 +2433,11 @@ void god_minor_racechange(int cn,int t) // note: cannot deal with values which a
 
         chlog(cn,"Changed into %s",ch_temp[t].name);
 
+        { // keep the appearance tier (#looktier) through the change
+                int tier=char_looktier(cn);
+                ch[cn].sprite=ch_temp[t].sprite+LOOKTIER_STEP*tier;
+        }
+
         ch[cn].hp[1]=ch_temp[t].hp[1];
         ch[cn].hp[2]=ch_temp[t].hp[2];
         ch[cn].hp[3]=ch_temp[t].hp[3];
@@ -2445,7 +2450,6 @@ void god_minor_racechange(int cn,int t) // note: cannot deal with values which a
         ch[cn].mana[2]=ch_temp[t].mana[2];
         ch[cn].mana[3]=ch_temp[t].mana[3];
 
-        ch[cn].sprite=ch_temp[t].sprite;
 
         if (ch[cn].kindred&KIN_PURPLE) ch[cn].kindred=ch_temp[t].kindred|KIN_PURPLE;
         else ch[cn].kindred=ch_temp[t].kindred;
@@ -2796,4 +2800,41 @@ void god_shrines(int cn,int co)
 	do_char_log(co,1,"You have visited 20 of the 20 shrines of Kwai.\n");
 	if (cn!=co) do_char_log(cn,1,"%s has now visited all 20 shrines, sword at %d.\n",ch[co].name,15+bits*4);
 	chlog(cn,"IMP: #shrines for %s (%d)",ch[co].name,co);
+}
+
+/* ---- appearance tiers ------------------------------------------------------
+ * A tier is a recoloured copy of the character's sprites, installed right
+ * after the original 448 frames (tools/sprites/install_variant.py): tier n
+ * uses the template's sprite + 448*n. The tier is just the offset of the
+ * character's sprite from its template's, so nothing else needs to be saved.
+ */
+int char_looktier(int cn)
+{
+	int t=ch[cn].temp,off;
+
+	if (t<1 || t>=MAXTCHARS || !ch_temp[t].sprite) return 0;
+	off=ch[cn].sprite-ch_temp[t].sprite;
+	if (off<=0 || off%LOOKTIER_STEP || off/LOOKTIER_STEP>LOOKTIER_MAX) return 0;
+	return off/LOOKTIER_STEP;
+}
+
+void god_looktier(int cn,int co,char *arg)
+{
+	int t,tier;
+
+	if (co==0 || !IS_SANECHAR(co) || !IS_USEDCHAR(co)) { do_char_log(cn,0,"No such character.\n"); return; }
+	t=ch[co].temp;
+	if (t<1 || t>=MAXTCHARS || !ch_temp[t].sprite) { do_char_log(cn,0,"%s has no template to take the look from.\n",ch[co].name); return; }
+	if (!arg || !*arg) {
+		do_char_log(cn,1,"%s has appearance tier %d (sprite %d). #looktier <player> <0-%d> changes it, 0 is the original.\n",
+			ch[co].name,char_looktier(co),ch[co].sprite,LOOKTIER_MAX);
+		return;
+	}
+	tier=atoi(arg);
+	if (tier<0 || tier>LOOKTIER_MAX) { do_char_log(cn,0,"Tiers go from 0 (the original) to %d.\n",LOOKTIER_MAX); return; }
+	ch[co].sprite=ch_temp[t].sprite+LOOKTIER_STEP*tier;
+	do_update_char(co);
+	chlog(cn,"IMP: set appearance tier of %s (%d) to %d",ch[co].name,co,tier);
+	do_char_log(cn,1,"%s now has appearance tier %d (sprite %d).\n",ch[co].name,tier,ch[co].sprite);
+	if (co!=cn) do_char_log(co,2,"Your appearance has changed.\n");
 }
