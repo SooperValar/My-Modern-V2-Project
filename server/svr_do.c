@@ -2695,7 +2695,6 @@ void do_char_killed(int cn,int co)
                 if (ch[co].x==ch[co].temple_x && ch[co].y==ch[co].temple_y)
                         god_transfer_char(co,ch[co].temple_x+4,ch[co].temple_y+4);
                 else god_transfer_char(co,ch[co].temple_x,ch[co].temple_y);
-                lab_left_check(co);
 
                 ch[co].a_hp=10000;              // come alive! (10hp)
                 ch[co].status=0;
