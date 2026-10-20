@@ -1163,7 +1163,8 @@ int hud_mouse(int x,int y,int state)
 	}
 
 	// update
-	if (in_rect(x,y,HS_X+HU_X,HS_Y3,HU_W,HS_H3)) { mouse_statbox(130,260,state); return 1; }
+	if (in_rect(x,y,HS_X+HU_X,HS_Y3,HU_DIV-HU_X,HS_H3)) { mouse_statbox(130,260,state); return 1; }	// the button only
+	if (in_rect(x,y,HS_X+HU_X,HS_Y3,HU_W,HS_H3)) return 1;							// the points: nothing
 	if (in_rect(x,y,HS_X,HS_Y4,HS_W4,HS_H4)) return 1;
 
 	// skill buttons / mode buttons
