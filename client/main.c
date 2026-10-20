@@ -369,7 +369,7 @@ static void draw_texts(void)
 		len=t->len; if (len>256) len=256;
 		col=dd_font_rgb(t->font)&0xFFFFFF;
 		if (col!=last) { SetTextColor(bb_dc,RGB((col>>16)&255,(col>>8)&255,col&255)); last=col; }
-		ExtTextOutA(bb_dc,CW2W(t->x),CW2W(t->y)-2,0,NULL,pool+t->off,len,dx);
+		ExtTextOutA(bb_dc,CW2W(t->x),CW2W(t->y),0,NULL,pool+t->off,len,dx);	// centred in the rows
 	}
 	SelectObject(bb_dc,old);
 	GdiFlush();

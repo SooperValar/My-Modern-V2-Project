@@ -57,14 +57,14 @@
 #define HG_LY		176
 #define HG_LW		83
 #define HG_LH		84
-#define HG_X		HB_X
+#define HG_X		(HB_X+1)	// +1: its left border lands on the backpack's
 #define HG_Y		(HB_Y+HB_H-2)
 
 #define HE_LX		300	// equipment
 #define HE_LY		0
 #define HE_LW		74
 #define HE_LH		212
-#define HE_X		(HB_X+HB_W-2)
+#define HE_X		(HB_X+HB_W-3)	// -3: its left border lands on the backpack's right one
 #define HE_Y		0
 
 #define HL_LX		372	// character / look panel

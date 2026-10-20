@@ -2645,6 +2645,28 @@ void dd_hud_fill(int x0,int y0,int w,int h,unsigned short col)
 
 // copy a piece of the legacy 800x600 HUD (as drawn this frame) onto the
 // canvas: its panel pixels plus anything drawn over hole/background there
+// old-art pixels right next to a fixed line (bits of the old border that
+// weren't recognised as line) would show as little stubs: skip them
+static int near_fixed(int x,int y)
+{
+	static unsigned char *m=NULL;
+	int n,i,k;
+
+	if (!IN_FIXED(x,y) || !warmmap || !warmmap[x+y*HUDW]) return 0;
+	if (!m) {
+		m=calloc(HUDW*HUDH,1);
+		if (!m) return 0;
+		for (n=0; n<NFIXED; n++) {
+			const short *f=fixed_lines[n];
+			for (i=f[2]-2; i<f[3]+2; i++) for (k=f[1]-2; k<f[1]+f[4]+2; k++) {
+				if (f[0]==1) { if (i>=0 && i<HUDW && k>=0 && k<HUDH) m[i+k*HUDW]=1; }
+				else { if (k>=0 && k<HUDW && i>=0 && i<HUDH) m[k+i*HUDW]=1; }
+			}
+		}
+	}
+	return m[x+y*HUDW];
+}
+
 void dd_hud_from_legacy(int lx,int ly,int w,int h,int cx,int cy)
 {
 	int x,y,p;
@@ -2698,7 +2720,7 @@ void dd_hud_from_legacy(int lx,int ly,int w,int h,int cx,int cy)
 				if (hud_theme==2 && lx==300 && x<3) continue;		// old backpack scroll bar reaches in here
 				cput(cx+x,cy+y,v);
 			}
-			else if (hud_theme==2 && hudcls) { if (hudcls[p]==HC_KEEP) cput(cx+x,cy+y,v); }
+			else if (hud_theme==2 && hudcls) { if (hudcls[p]==HC_KEEP && !near_fixed(lx+x,ly+y)) cput(cx+x,cy+y,v); }
 			else if (hudmask[p]==2) cput(cx+x,cy+y,v);
 		}
 	}
