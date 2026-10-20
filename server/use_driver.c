@@ -699,7 +699,11 @@ int use_labyrinth(int cn,int in)
                                 flag=god_transfer_char(cn,63,720);
                                 fx_add_effect(6,0,ch[cn].x,ch[cn].y,0);
                                 break;
-                case    9:      fx_add_effect(6,0,ch[cn].x,ch[cn].y,0);
+                case    9:      fx_add_effect(6,0,ch[cn].x,ch[cn].y,0);	// Lab 10, the Seasons Gorge
+                                flag=god_transfer_char(cn,52,838);
+                                fx_add_effect(6,0,ch[cn].x,ch[cn].y,0);
+                                break;
+                case    10:     fx_add_effect(6,0,ch[cn].x,ch[cn].y,0);	// the Final Test
                                 flag=god_transfer_char(cn,33,597);
                                 fx_add_effect(6,0,ch[cn].x,ch[cn].y,0);
                                 break;
@@ -2337,6 +2341,26 @@ int use_rotate(int cn,int in)
 }
 
 /* CS, 991127: assemble lab8 key */
+/* Lab 10: the Hourglass of Time (all four pieces) takes you into the sealed
+ * room with the end portal, and is used up */
+int use_time_hourglass(int cn,int in)
+{
+        if (!cn) return 0;
+        if (!it[in].carried) { do_char_log(cn,0,"Pick it up first.\n"); return 0; }
+        if (ch[cn].x<40 || ch[cn].x>=125 || ch[cn].y<775 || ch[cn].y>=900) {
+                do_char_log(cn,0,"You turn the hourglass, but nothing happens. Its power seems bound to the Seasons Gorge.\n");
+                return 0;
+        }
+        chlog(cn,"Used the Hourglass of Time");
+        god_take_from_char(in,cn);
+        it[in].used=USE_EMPTY;
+        do_char_log(cn,1,"You turn the hourglass. The sand flows upwards, and time and space bend around you...\n");
+        fx_add_effect(6,0,ch[cn].x,ch[cn].y,0);
+        god_transfer_char(cn,53,784);
+        fx_add_effect(6,0,ch[cn].x,ch[cn].y,0);
+        return 1;
+}
+
 int use_lab8_key(int cn, int in)
 {
         // data[0] = matching key part
@@ -2697,6 +2721,7 @@ void use_driver(int cn,int in,int carried)
                                 case 59:        ret=use_create_gold(cn,in); break;
                                 /* CS, 991127: assembling Lab 8 key */
                                 case 61:        ret=use_lab8_key(cn,in); break;
+                                case 70:        ret=use_time_hourglass(cn,in); break;
                                 /* CS, 991127: offering to shrines in Lab 8 */
                                 case 63:        ret=use_lab8_shrine(cn,in); break;
                                 /* CS, 991127: offering money to shrine in Lab 8 */
