@@ -2212,11 +2212,11 @@ static const short fixed_lines[][5]={
 	{1,176,218,303,2},{1,203,218,303,2},{1,231,218,303,2},{1,258,218,248,2},
 	{2,218,176,260,2},{2,246,176,260,2},{2,274,176,233,2},{2,301,176,233,2},
 	// equipment (300,0 74x212): 2 x 6 slots of 35
-	{1,0,300,374,2},{1,35,300,374,2},{1,70,300,374,2},{1,105,300,374,2},{1,140,300,374,2},{1,175,300,374,2},{1,210,300,374,2},
+	{1,0,301,373,2},{1,35,301,373,2},{1,70,301,373,2},{1,105,301,373,2},{1,140,301,373,2},{1,175,301,373,2},{1,210,301,373,2},
 	{2,301,0,212,2},{2,336,0,212,2},{2,371,0,212,2},
 	// character / look panel (372,0 128x204)
-	{1,0,372,499,2},{1,126,372,499,1},{1,133,372,499,1},{1,140,372,499,2},{1,147,372,499,1},{1,166,372,499,1},{1,185,372,499,2},{1,199,372,499,2},
-	{2,497,0,204,2},{2,410,185,201,1},
+	{1,0,372,499,2},{1,126,372,497,1},{1,133,372,497,1},{1,140,372,499,2},{1,147,372,497,1},{1,166,372,497,1},{1,185,372,499,2},{1,199,372,499,2},
+	{2,497,0,201,2},{2,410,185,201,1},
 };
 #define NFIXED	((int)(sizeof(fixed_lines)/sizeof(fixed_lines[0])))
 #define IN_FIXED(x,y)	(((x)>=217 && (x)<304 && (y)>=176 && (y)<262) || ((x)>=300 && (x)<500 && (y)<214))
@@ -2653,10 +2653,15 @@ void dd_hud_from_legacy(int lx,int ly,int w,int h,int cx,int cy)
 	if (!hud_prepare()) return;
 	if (hud_theme==2 && hudcls) {
 		int n,a0,a1,b0,b1,dx=cx-lx,dy=cy-ly;
-		// panel fills, clipped to the piece
+		// panel fills, clipped to the piece; the three panels with fixed
+		// lines are clipped to their frame, so no fill sticks out past it
+		int fx0=lx,fy0=ly,fx1=lx+w,fy1=ly+h;
+		if (lx==219 && ly==176) { fx0=219; fy0=176; fx1=303; fy1=260; }	// gold buttons
+		else if (lx==300 && ly==0) { fx0=301; fy0=0; fx1=373; fy1=212; }	// equipment
+		else if (lx==372 && ly==0) { fx0=372; fy0=0; fx1=499; fy1=201; }	// character / look panel
 		for (n=0; n<nfrect; n++) {
-			a0=max(frects[n].x,lx); a1=min(frects[n].x+frects[n].w,lx+w);
-			b0=max(frects[n].y,ly); b1=min(frects[n].y+frects[n].h,ly+h);
+			a0=max(frects[n].x,fx0); a1=min(frects[n].x+frects[n].w,fx1);
+			b0=max(frects[n].y,fy0); b1=min(frects[n].y+frects[n].h,fy1);
 			if (a0<a1 && b0<b1) vadd(VOP_FILL,a0+dx,b0+dy,a1-a0,b1-b0,HUD_RGB_PANEL);
 		}
 		for (n=0; n<nhseg; n++) {
