@@ -2677,7 +2677,7 @@ void dd_hud_from_legacy(int lx,int ly,int w,int h,int cx,int cy)
 
 	if (!hud_prepare()) return;
 	if (hud_theme==2) {	// the panels with fixed lines: only their inside, so no bits of the old border show
-		if (lx==219 && ly==176) { cx0=220; cy0=178; cx1=301; cy1=258; }
+		if (lx==219 && ly==176) { cx0=220; cy0=178; cx1=300; cy1=258; }
 		else if (lx==300 && ly==0) { cx0=303; cy0=2; cx1=371; cy1=210; }
 		else if (lx==372 && ly==0) { cx0=373; cy0=2; cx1=497; cy1=199; }
 	}
@@ -2708,7 +2708,7 @@ void dd_hud_from_legacy(int lx,int ly,int w,int h,int cx,int cy)
 			const short *f=fixed_lines[n];
 			if (f[0]==1) {
 				if (f[1]<ly || f[1]>=ly+h) continue;
-				a0=max(f[2],lx-1); a1=min(f[3],lx+w);	// may start on the neighbour's border line
+				a0=max(f[2],lx-1); a1=min(f[3],lx+w+1);	// may start/end on a border line just outside the piece
 				if (a0<a1) vadd(VOP_HLINE,a0+dx,f[1]+dy,a1-a0,f[4],HUD_RGB_LINE);
 			} else {
 				if (f[1]<lx || f[1]>=lx+w) continue;
