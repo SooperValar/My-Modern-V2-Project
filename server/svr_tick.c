@@ -685,22 +685,22 @@ void plr_cmd_iteminfo(int nr)
 			tip_line(nr,where,slot,&line,0,"Unidentified. Cast Identify on it");
 			tip_line(nr,where,slot,&line,0,"to learn its powers.");
 		} else {
-			if (it[in].weapon[act]) tip_line(nr,where,slot,&line,2,"%+d WV",it[in].weapon[act]);
-			if (it[in].armor[act]) tip_line(nr,where,slot,&line,2,"%+d AV",it[in].armor[act]);
-			if (it[in].light[act]>0) tip_line(nr,where,slot,&line,2,"Light %d",it[in].light[act]);
-			if (it[in].gethit_dam[act]) tip_line(nr,where,slot,&line,2,"Damages attackers: %d",it[in].gethit_dam[act]);
+			if (it[in].weapon[act]) tip_line(nr,where,slot,&line,2,"%+5d WV",it[in].weapon[act]);
+			if (it[in].armor[act]) tip_line(nr,where,slot,&line,2,"%+5d AV",it[in].armor[act]);
+			if (it[in].light[act]>0) tip_line(nr,where,slot,&line,2,"%+5d Light",it[in].light[act]);
+			if (it[in].gethit_dam[act]) tip_line(nr,where,slot,&line,2,"%+5d Damage to attackers",it[in].gethit_dam[act]);
 			tip_sep();
-			for (n=0; n<5; n++) if (it[in].attrib[n][act]) tip_line(nr,where,slot,&line,it[in].attrib[n][act]<0 ? 0 : 2,"%+d %s",it[in].attrib[n][act],at_name[n]);
-			if (it[in].hp[act]) tip_line(nr,where,slot,&line,it[in].hp[act]<0 ? 0 : 2,"%+d Hitpoints",it[in].hp[act]);
-			if (it[in].end[act]) tip_line(nr,where,slot,&line,it[in].end[act]<0 ? 0 : 2,"%+d Endurance",it[in].end[act]);
-			if (it[in].mana[act]) tip_line(nr,where,slot,&line,it[in].mana[act]<0 ? 0 : 2,"%+d Mana",it[in].mana[act]);
+			for (n=0; n<5; n++) if (it[in].attrib[n][act]) tip_line(nr,where,slot,&line,it[in].attrib[n][act]<0 ? 0 : 2,"%+5d %s",it[in].attrib[n][act],at_name[n]);
+			if (it[in].hp[act]) tip_line(nr,where,slot,&line,it[in].hp[act]<0 ? 0 : 2,"%+5d Hitpoints",it[in].hp[act]);
+			if (it[in].end[act]) tip_line(nr,where,slot,&line,it[in].end[act]<0 ? 0 : 2,"%+5d Endurance",it[in].end[act]);
+			if (it[in].mana[act]) tip_line(nr,where,slot,&line,it[in].mana[act]<0 ? 0 : 2,"%+5d Mana",it[in].mana[act]);
 			tip_sep();
-			for (n=0; n<50; n++) if (it[in].skill[n][act]) tip_line(nr,where,slot,&line,it[in].skill[n][act]<0 ? 0 : 2,"%+d %s",it[in].skill[n][act],skilltab[n].name);
+			for (n=0; n<50; n++) if (it[in].skill[n][act]) tip_line(nr,where,slot,&line,it[in].skill[n][act]<0 ? 0 : 2,"%+5d %s",it[in].skill[n][act],skilltab[n].name);
 			tip_sep();
 			if ((it[in].flags&IF_USEACTIVATE) && !act) {	// what it does when turned on
-				for (n=0,shown=0; n<5; n++) if (it[in].attrib[n][1]) { if (!shown++) tip_line(nr,where,slot,&line,1,"When active:"); tip_line(nr,where,slot,&line,it[in].attrib[n][1]<0 ? 0 : 2," %+d %s",it[in].attrib[n][1],at_name[n]); }
-				if (it[in].armor[1]>it[in].armor[0]) { if (!shown++) tip_line(nr,where,slot,&line,1,"When active:"); tip_line(nr,where,slot,&line,2," %+d AV",it[in].armor[1]); }
-				if (it[in].light[1]>0) { if (!shown++) tip_line(nr,where,slot,&line,1,"When active:"); tip_line(nr,where,slot,&line,2," Light %d",it[in].light[1]); }
+				for (n=0,shown=0; n<5; n++) if (it[in].attrib[n][1]) { if (!shown++) tip_line(nr,where,slot,&line,1,"When active:"); tip_line(nr,where,slot,&line,it[in].attrib[n][1]<0 ? 0 : 2,"%+5d %s",it[in].attrib[n][1],at_name[n]); }
+				if (it[in].armor[1]>it[in].armor[0]) { if (!shown++) tip_line(nr,where,slot,&line,1,"When active:"); tip_line(nr,where,slot,&line,2,"%+5d AV",it[in].armor[1]); }
+				if (it[in].light[1]>0) { if (!shown++) tip_line(nr,where,slot,&line,1,"When active:"); tip_line(nr,where,slot,&line,2,"%+5d Light",it[in].light[1]); }
 			}
 		}
 
