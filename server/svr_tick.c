@@ -636,7 +636,8 @@ static void tip_line(int nr,int where,int slot,int *line,int font,char *format,.
 
 static char *tip_money(int v,char *buf)
 {
-	if (v%100) sprintf(buf,"%dG %dS",v/100,v%100);
+	if (v<100) sprintf(buf,"%dS",v);
+	else if (v%100) sprintf(buf,"%dG %dS",v/100,v%100);
 	else sprintf(buf,"%dG",v/100);
 	return buf;
 }
@@ -671,14 +672,14 @@ void plr_cmd_iteminfo(int nr)
 			tip_line(nr,where,slot,&line,0,"Unidentified. Cast Identify on it");
 			tip_line(nr,where,slot,&line,0,"to learn its powers.");
 		} else {
-			if (it[in].weapon[act]) tip_line(nr,where,slot,&line,1,"Weapon value %d",it[in].weapon[act]);
-			if (it[in].armor[act]) tip_line(nr,where,slot,&line,1,"Armor value %d",it[in].armor[act]);
+			if (it[in].weapon[act]) tip_line(nr,where,slot,&line,2,"Weapon value %d",it[in].weapon[act]);
+			if (it[in].armor[act]) tip_line(nr,where,slot,&line,2,"Armor value %d",it[in].armor[act]);
 			for (n=0; n<5; n++) if (it[in].attrib[n][act]) tip_line(nr,where,slot,&line,it[in].attrib[n][act]<0 ? 0 : 2,"%+d %s",it[in].attrib[n][act],at_name[n]);
 			if (it[in].hp[act]) tip_line(nr,where,slot,&line,it[in].hp[act]<0 ? 0 : 2,"%+d Hitpoints",it[in].hp[act]);
 			if (it[in].end[act]) tip_line(nr,where,slot,&line,it[in].end[act]<0 ? 0 : 2,"%+d Endurance",it[in].end[act]);
 			if (it[in].mana[act]) tip_line(nr,where,slot,&line,it[in].mana[act]<0 ? 0 : 2,"%+d Mana",it[in].mana[act]);
 			for (n=0; n<50; n++) if (it[in].skill[n][act]) tip_line(nr,where,slot,&line,it[in].skill[n][act]<0 ? 0 : 2,"%+d %s",it[in].skill[n][act],skilltab[n].name);
-			if (it[in].light[act]>0) tip_line(nr,where,slot,&line,1,"Light %d",it[in].light[act]);
+			if (it[in].light[act]>0) tip_line(nr,where,slot,&line,2,"Light %d",it[in].light[act]);
 			if (it[in].gethit_dam[act]) tip_line(nr,where,slot,&line,2,"Damages attackers: %d",it[in].gethit_dam[act]);
 			if ((it[in].flags&IF_USEACTIVATE) && !act) {	// what it does when turned on
 				for (n=0,shown=0; n<5; n++) if (it[in].attrib[n][1]) { if (!shown++) tip_line(nr,where,slot,&line,1,"When active:"); tip_line(nr,where,slot,&line,it[in].attrib[n][1]<0 ? 0 : 2," %+d %s",it[in].attrib[n][1],at_name[n]); }
