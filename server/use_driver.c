@@ -3349,6 +3349,23 @@ static int lab11_pages(int cn,int in)
         return 1;
 }
 
+/* Items with IF_NEARGLOW (Lab 11's chests, searchable shelves, exploration
+ * points) glow faintly while a player is close, so they can be found in the
+ * dark only by exploring. Called when a player steps on no-light ground; the
+ * glow goes out again in item_tick_expire() a few seconds after they leave. */
+void lab_glow_near(int cn)
+{
+        int x,y,in;
+
+        for (y=max(0,ch[cn].y-NEARGLOW_DIST); y<=min(MAPY-1,ch[cn].y+NEARGLOW_DIST); y++) {
+                for (x=max(0,ch[cn].x-NEARGLOW_DIST); x<=min(MAPX-1,ch[cn].x+NEARGLOW_DIST); x++) {
+                        if (!(in=map[x+y*MAPX].it) || !(it[in].flags&IF_NEARGLOW)) continue;
+                        if (!it[in].data[9]) do_add_light(x,y,NEARGLOW_LIGHT);
+                        it[in].data[9]=globs->ticker+TICKS*5;
+                }
+        }
+}
+
 int use_lab11(int cn,int in)
 {
         int in2;
@@ -3472,6 +3489,11 @@ void item_tick_expire(void)
                         if (it[in].driver==56) greenlingball(in);
 
                         if (it[in].flags&IF_EXPIREPROC) expire_driver(in);
+
+                        if ((it[in].flags&IF_NEARGLOW) && it[in].data[9] && globs->ticker>it[in].data[9]) {
+                                do_add_light(x,y,-NEARGLOW_LIGHT);
+                                it[in].data[9]=0;
+                        }
 
                         if (!(it[in].flags&IF_TAKE) && it[in].driver!=7) goto noexpire;
                         if ((map[m].flags&MF_NOEXPIRE) && it[in].driver!=7) goto noexpire;      // yuck!

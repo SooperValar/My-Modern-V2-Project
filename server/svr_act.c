@@ -54,6 +54,7 @@ void plr_map_set(int cn)        // set character to map and remove target charac
                 ch[cn].light=0;
                 if ((ch[cn].flags&CF_PLAYER) && ch[cn].frx>0 && !(map[ch[cn].frx+ch[cn].fry*MAPX].flags&MF_NOLIGHT))
                         do_char_log(cn,0,"You feel your light being suppressed.\n");
+                if (ch[cn].flags&CF_PLAYER) lab_glow_near(cn);
         } else if (ch[cn].frx>0 && (map[ch[cn].frx+ch[cn].fry*MAPX].flags&MF_NOLIGHT)) {
                 do_update_char(cn);
                 if (ch[cn].flags&CF_PLAYER) do_char_log(cn,1,"Your light returns.\n");

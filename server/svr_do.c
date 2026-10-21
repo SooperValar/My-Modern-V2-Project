@@ -3664,6 +3664,7 @@ void do_regenerate(int cn)
         if (ch[cn].flags&CF_NOMANAREG) nomana=1;
 
         if (map[ch[cn].x+ch[cn].y*MAPX].flags&MF_UWATER) uwater=1;
+        if ((ch[cn].flags&CF_PLAYER) && (map[ch[cn].x+ch[cn].y*MAPX].flags&MF_NOLIGHT) && (globs->ticker%TICKS)==0) lab_glow_near(cn);  // keep nearby glows on while standing still
 
         if (!ch[cn].stunned) {
 
