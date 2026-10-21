@@ -1238,22 +1238,6 @@ void god_tavern(int cn)
         plr_logout(cn,ch[cn].player,LO_TAVERN);
 }
 
-/* #logout: like #tavern, but the next login is at your temple, not here. */
-void god_logout(int cn)
-{
-        if (IS_USURP(cn)) {
-                do_char_log(cn,0,"Not with NPCs!\n");
-                return;
-        }
-        if (IS_BUILDING(cn)) {
-                god_build(cn,0);
-        }
-        ch[cn].tavern_x=ch[cn].temple_x;
-        ch[cn].tavern_y=ch[cn].temple_y;
-        chlog(cn,"Logged out (#logout)");
-        plr_logout(cn,ch[cn].player,LO_TAVERN);
-}
-
 int god_build_start(int cn)
 {
         int co, n, in;
