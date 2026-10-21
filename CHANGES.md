@@ -166,6 +166,7 @@ A new labyrinth part after Lab 10 (map 180,900 - 299,999). Its layout is an Exce
 - **Vault** (a small lit room off the Cistern) with the end portal: part 11 is solved after beating its labkeeper, the **Drowned Lord** (template 1200, `LAB11_KEEPER`), for 210,000 exp.
 - Three exploration points (50,000 exp, bits 18-20 of the third exploration word) - one in an Atrium alcove, one in a Library corner, one deep in the Cistern - and the shrine of Kwai in the Library (bit 21).
 - `area.c`: the area is named "Labyrinth, Sunken Dark".
+- The solid rock between the rooms is marked indoors as well; at first it was not, so daylight lit it and far-away walls showed up in the dark.
 
 #### Prestige and prestige looks
 

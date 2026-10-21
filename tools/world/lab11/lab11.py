@@ -328,7 +328,7 @@ def build(path, outdir):
             nb = [g[y+dy][x+dx] for dx in (-1, 0, 1) for dy in (-1, 0, 1) if 0 <= x+dx < W and 0 <= y+dy < H]
             if c == '#':
                 if any(n != '#' for n in nb): o('tile %d %d 1100 1214 %x' % (X, Y, FL_MB | FL_SB | FL_IN | FL_NOM))
-                else: o('tile %d %d 1008 0 %x' % (X, Y, FL_MB | FL_SB | FL_NOM))
+                else: o('tile %d %d 1008 0 %x' % (X, Y, FL_MB | FL_SB | FL_IN | FL_NOM))   # indoors too, or daylight lights the rock
             elif water(x, y):
                 fs = random.choice(SEAWEED) if c == '~' and random.random() < 0.04 else 0
                 o('tile %d %d 1008 %d %x' % (X, Y, fs, FL_IN | FL_UW | FL_NOM))
