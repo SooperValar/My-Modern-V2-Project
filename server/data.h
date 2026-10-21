@@ -299,7 +299,7 @@ extern unsigned int mapmarker;
 #define CHD_BUILDPAGE   74      // players: current build page (NPCs use 74 for their ghost timer)
 #define CHD_PRESTIGE    32      // players: times prestiged (NPCs use 32-35 for lights)
 #define CHD_LABTEMPLE   33      // players: temple before entering the labyrinth, x+y*MAPX+1 (0 = none)
-#define LAB11_X         184     // Lab 11 (the Sunken Dark): arrival in the entry hall
+#define LAB11_X         185     // Lab 11 (the Sunken Dark): arrival in the entry hall
 #define LAB11_Y         949
 #define LAB11_KEEPER    1200    // its labkeeper template (the Drowned Lord)
 #define SEYAN_SHRINES   22      // shrines of Kwai (bits in data[21]): 20 original + Lab 10 + Lab 11
