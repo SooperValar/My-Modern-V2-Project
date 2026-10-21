@@ -136,8 +136,8 @@ int main(int argc,char **argv)
 					fseek(mf,mpos,SEEK_SET); fread(&m,sizeof(m),1,mf);
 					if (m.ch==(unsigned)n) { m.ch=0; fseek(mf,mpos,SEEK_SET); fwrite(&m,sizeof(m),1,mf); }
 				}
-				for (k=0; k<60+1; k++) {	/* backpack, worn, cursor item */
-					unsigned int in2= k<40 ? cc.item[k] : (k<60 ? cc.worn[k-40] : cc.citem);
+				for (k=0; k<80+1; k++) {	/* backpack, worn, spells, cursor item */
+					unsigned int in2= k<40 ? cc.item[k] : (k<60 ? cc.worn[k-40] : (k<80 ? cc.spell[k-60] : cc.citem));
 					if (!in2 || (in2&0x80000000) || in2>=MAXITEM) continue;
 					fseek(itf,(long)in2*sizeof(it),SEEK_SET); fread(&it,sizeof(it),1,itf);
 					it.used=USE_EMPTY; fseek(itf,(long)in2*sizeof(it),SEEK_SET); fwrite(&it,sizeof(it),1,itf);
