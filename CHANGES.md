@@ -175,6 +175,9 @@ The world data held a nearly finished tenth labyrinth part (the "Mages of Time":
 - Armor and weapon value cap raised from 250 to 9999. Skills and spells keep their original limits.
 - Templar and Arch-Templar templates (3, 77, 544, 549) start with **Meditate fixed at 1** (maximum 1, so it can't be raised). Its real value still grows with Intuition and Willpower, which gives Templars a little mana regeneration. One-off patch: `tools/world/templar_meditate.c`.
 
+- **Merchant stock**: a merchant keeps in stock his sale list (`data[0..9]`, at most 10 items) plus everything in his template's backpack, up to 40 (`update_shop`). For every original merchant the two were the same items, so nothing changes for them; it lets a lab merchant carry whole armor tiers.
+- **Lab 10 merchants**: weapons Steel to Crystal (as before), armor Steel, Golden and Emerald (was Golden only).
+
 ### Fixes
 
 - Lab items (keys, the Hourglass of Time, ...) now also vanish when a player ends up outside the labyrinth by recall, being saved by the gods or the god `#recall`, not only at the exit portal (`lab_left_check`). Death is unchanged: items drop into the grave and stay in the lab. `#recall` also gives the old temple back.
@@ -202,6 +205,7 @@ Unchanged except for the version number and the larger view: `merc.dat`, `.moa` 
 
 - New character data slots: `CHD_PRESTIGE` (32) and `CHD_LABTEMPLE` (33), used only by NPCs for lights before. New item flag `IF_NEEDIDENT` (bit 40).
 - One-off world patches live in `tools/world/`: `lab10_open.c`, `place_items.c` with `lab10_extras.txt` and `lab10_pole_move.txt`, `templar_meditate.c`, `movetowers.py`.
+- `tools/world/merchant_stock.c`: sets a merchant template's stock (`merchant_stock <.dat dir> <template> <item templates...>`).
 
 ## Server-side view changes
 

@@ -1758,16 +1758,27 @@ void npc_driver_low(int cn)
 
 void update_shop(int cn)
 {
-        int n,m,x,z,in,temp;
-        int sale[10];
+        int n,m,x,z,in,temp,cnt,tmp;
+        int sale[40];
 
-        for (n=0; n<10; n++) sale[n]=ch[cn].data[n];
+        /* What the merchant keeps in stock: the sale list in data[0..9], plus
+         * every item in his template's backpack. For the original merchants
+         * those are the same items; the template lets one stock up to 40. */
+        for (n=cnt=0; n<10; n++) if (ch[cn].data[n]) sale[cnt++]=ch[cn].data[n];
+        if ((tmp=ch[cn].temp)>0 && tmp<MAXTCHARS) {
+                for (n=0; n<40 && cnt<40; n++) {
+                        if (!(temp=ch_temp[tmp].item[n])) continue;
+                        for (z=0; z<cnt; z++) if (sale[z]==temp) break;
+                        if (z==cnt) sale[cnt++]=temp;
+                }
+        }
+        for (n=cnt; n<40; n++) sale[n]=0;
 
         // check if we have free space (at least 10)
         do_sort(cn,"v");
         for (n=m=x=0; n<40; n++) if (!(in=ch[cn].item[n])) m++; else {
-                for (z=0; z<10; z++) if (it[in].temp==sale[z]) { sale[z]=0; break; }
-                if (z==10) x=n;
+                for (z=0; z<cnt; z++) if (it[in].temp==sale[z]) { sale[z]=0; break; }
+                if (z==cnt) x=n;
         }
         if (m<2 && ch[cn].item[x]) {
 		in=ch[cn].item[x];
@@ -1781,7 +1792,7 @@ void update_shop(int cn)
         }
 
         // check if our store is complete
-        for (n=0; n<10; n++) {
+        for (n=0; n<cnt; n++) {
                 temp=sale[n];
                 if (!temp) continue;
                 in=god_create_item(temp);
