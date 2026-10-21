@@ -386,6 +386,15 @@ def build(path, outdir):
             if c in ('L1', 'L2', 'L3', 'L4'): tmp = T_LECT+lect[(x, y)]
             if c in ('S1', 'S2', 'S3', 'S4'): tmp = T_SHELFB+shelf[(x, y)]
             if tmp: items.append('place %d %d %d' % (tmp, X, Y))
+    # the flooded sections are no-light ground: a player's own light (Light spell, torches) does not shine there,
+    # only the braziers, bowls and candles do. The entry hall, the vault and the shrine room are exempt.
+    FL_NOLIGHT = 0x400
+    for i, line in enumerate(out):
+        if not line.startswith('tile '): continue
+        _, X, Y, sp, fs, fl = line.split()
+        x, y = int(X)-OX, int(Y)-OY
+        if g[y][x] != '#' and any(inrect(x, y, s[3]) for s in SECTIONS) and g[y][x] not in ('SW', 'SF', 'SC', 'SD'):
+            out[i] = 'tile %s %s %s %s %x' % (X, Y, sp, fs, int(fl, 16) | FL_NOLIGHT)
     out += items
     out += ['movenpc %d' % t for t in (C_BAR, C_WEAP, C_ARM)]
     out += ['killnpc %d' % t for t in range(C_MON, 1260)]   # monsters are made fresh by "server pop" (their kinds and places may have changed)   # the inn NPCs walk to their (new) places

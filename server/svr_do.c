@@ -2055,7 +2055,7 @@ void do_tile(int cn,char *ax,char *ay)
 	static struct { unsigned long long f; char *name; } fl[]={
 		{MF_MOVEBLOCK,"move block"},{MF_SIGHTBLOCK,"sight block"},{MF_INDOORS,"indoors"},
 		{MF_UWATER,"under water"},{MF_NOLAG,"no lag"},{MF_NOMONST,"no monsters"},{MF_BANK,"bank"},
-		{MF_TAVERN,"tavern"},{MF_NOMAGIC,"no magic"},{MF_DEATHTRAP,"death trap"},{MF_ARENA,"arena"},
+		{MF_TAVERN,"tavern"},{MF_NOMAGIC,"no magic"},{MF_DEATHTRAP,"death trap"},{MF_NOLIGHT,"no light"},{MF_ARENA,"arena"},
 		{MF_NOEXPIRE,"no expire"},{MF_NOFIGHT,"no fight"}};
 	int x,y,m,n,in,co;
 	char buf[300],*area;
@@ -3611,6 +3611,7 @@ void really_update_char(int cn)
         light-=sublight;
         if (light<0) light=0;
         if (light>250) light=250;
+        if (map[ch[cn].x+ch[cn].y*MAPX].flags&MF_NOLIGHT) light=0;      // Lab 11's dark water
         ch[cn].light=light;
 
         n=10;

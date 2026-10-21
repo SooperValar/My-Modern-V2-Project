@@ -49,6 +49,10 @@ void plr_map_set(int cn)        // set character to map and remove target charac
 
         m=ch[cn].x+ch[cn].y*MAPX;
 
+        // no-light ground: the character's own light goes out while on it, and comes back when leaving it
+        if (map[m].flags&MF_NOLIGHT) ch[cn].light=0;
+        else if (ch[cn].frx>0 && (map[ch[cn].frx+ch[cn].fry*MAPX].flags&MF_NOLIGHT)) do_update_char(cn);
+
         if (!(ch[cn].flags&CF_BODY)) {
 
                 if ((in=map[m].it)!=0 && (it[in].flags&IF_STEPACTION)) {

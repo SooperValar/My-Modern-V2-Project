@@ -106,6 +106,7 @@ struct global
 #define MF_TAVERN       (1ULL<<7)
 #define MF_NOMAGIC      (1ULL<<8)
 #define MF_DEATHTRAP    (1ULL<<9)
+#define MF_NOLIGHT      (1ULL<<10)      // a character's own light (Light spell, torches) does not shine here
 
 #define MF_ARENA        (1ULL<<11)
 
