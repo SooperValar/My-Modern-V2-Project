@@ -746,6 +746,7 @@ void do_help(int cn,char *topic)
 		do_char_log(cn,3,"#send <player> <target> teleport player to target.\n");
 		do_char_log(cn,3,"#staff <player>         make a player staffer.\n");
 		do_char_log(cn,3,"#summon <name> [<rank> [<which>]]\n");
+		do_char_log(cn,3,"#logout                 log off here, log back in at your temple.\n");
 		do_char_log(cn,3,"#tavern                 log off quickly.\n");
 		do_char_log(cn,3," \n");
 	}
@@ -2209,6 +2210,7 @@ void do_command(int cn, char *ptr)
                 if (prefix(cmd,"lag") && !f_m)          { do_lag(cn,atoi(arg[1])); return; };
                 if (prefix(cmd,"leave") && f_gi)        { do_leave(cn); return; }
                 if (prefix(cmd,"light") && f_c)         { init_lights(); return; };
+                if (!strcmp(cmd,"logout") && f_g && !f_m){ god_logout(cn); return; };
                 if (prefix(cmd,"look") && f_gius)       { do_look_char(cn,dbatoi_self(cn,arg[1]),1,0,0); return; };
                 if (prefix(cmd,"lookdepot") && f_gg)	{ do_look_player_depot(cn,arg[1]); return; };
 		if (prefix(cmd,"lookinv") && f_gg)	{ do_look_player_inventory(cn,arg[1]); return; };

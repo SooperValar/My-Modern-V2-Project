@@ -119,6 +119,7 @@ The original 800×600 HUD code still runs in the background (it owns the game st
 
 - **`#shrines <player>`** (imp and above, listed in the imp `#help`): marks all 20 shrines of Kwai as visited and sets the player's Seyan'Du sword to its maximum weapon value (95). If they don't have the sword yet, they get a new one.
 - **`#prestige <player> [n]`** (gods): shows or sets the prestige level and updates the look.
+- **`#logout`** (gods): log off anywhere, like stepping into a tavern; the next login is at your temple instead of where you were (`#tavern` still logs you back in on the spot).
 - **`#recall`** (gods) also gives back the temple a player had before entering the labyrinth, and takes away lab items.
 
 ## Commands
