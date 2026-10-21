@@ -10,6 +10,8 @@
  *   it <temp> d <i> <value>                        data[i]
  *   it <temp> status <s0> <s1>                     animation (client): 0/1 still, 16 = 4-frame loop, ...
  *   place <temp> <x> <y>                           put a copy of the item template there
+ *   clear <x0> <y0> <x1> <y1>                      remove every item lying in that rectangle
+ *   movenpc <temp>                                 move the living NPC(s) of that template to its spawn position
  *   settemp <x> <y> <temp>                         fix the template number of the item on that tile
  *   ch <temp> copy <from>                          new character template = copy of another
  *   ch <temp> name|ref|desc <text...>
@@ -90,6 +92,41 @@ int main(int argc,char **argv)
 			m.it=n;
 			fseek(mf,mpos,SEEK_SET); fwrite(&m,sizeof(m),1,mf);
 			placed++;
+
+		} else if (sscanf(line,"clear %d %d %d %d",&a,&b,&c,&d)==4) {
+			int x,y,cnt=0;
+			for (y=b; y<=d; y++) for (x=a; x<=c; x++) {
+				long mpos=(long)(x+y*MAPX)*sizeof(struct map);
+				fseek(mf,mpos,SEEK_SET); fread(&m,sizeof(m),1,mf);
+				if (!m.it) continue;
+				fseek(itf,(long)m.it*sizeof(it),SEEK_SET); fread(&it,sizeof(it),1,itf);
+				it.used=USE_EMPTY; fseek(itf,(long)m.it*sizeof(it),SEEK_SET); fwrite(&it,sizeof(it),1,itf);
+				m.it=0; fseek(mf,mpos,SEEK_SET); fwrite(&m,sizeof(m),1,mf); cnt++;
+			}
+			printf("cleared %d item(s) from %d,%d - %d,%d\n",cnt,a,b,c,d);
+
+		} else if (sscanf(line,"movenpc %d",&a)==1) {
+			static struct character cc; FILE *cf; long mpos; int nx,ny;
+			if (!sane_ch(a,ln)) continue;
+			nx=tc[a].x; ny=tc[a].y;
+			sprintf(fn,"%s/char.dat",argv[1]); if (!(cf=fopen(fn,"r+b"))) { perror(fn); continue; }
+			for (n=1; n<MAXCHARS; n++) {
+				fseek(cf,(long)n*sizeof(cc),SEEK_SET); if (fread(&cc,sizeof(cc),1,cf)!=1) break;
+				if (cc.used!=USE_ACTIVE || cc.temp!=a || (cc.flags&(CF_PLAYER|CF_BODY))) continue;
+				if (cc.x>0 && cc.y>0) {
+					mpos=(long)(cc.x+cc.y*MAPX)*sizeof(struct map);
+					fseek(mf,mpos,SEEK_SET); fread(&m,sizeof(m),1,mf);
+					if (m.ch==(unsigned)n) { m.ch=0; fseek(mf,mpos,SEEK_SET); fwrite(&m,sizeof(m),1,mf); }
+				}
+				mpos=(long)(nx+ny*MAPX)*sizeof(struct map);
+				fseek(mf,mpos,SEEK_SET); fread(&m,sizeof(m),1,mf);
+				if (m.ch) { printf("line %d: %d,%d is taken, %s not moved\n",ln,nx,ny,cc.name); continue; }
+				m.ch=n; fseek(mf,mpos,SEEK_SET); fwrite(&m,sizeof(m),1,mf);
+				printf("%s (%d) moved from %d,%d to %d,%d\n",cc.name,n,cc.x,cc.y,nx,ny);
+				cc.x=cc.tox=nx; cc.y=cc.toy=ny; cc.data[29]=tc[a].data[29];
+				fseek(cf,(long)n*sizeof(cc),SEEK_SET); fwrite(&cc,sizeof(cc),1,cf);
+			}
+			fclose(cf);
 
 		} else if (sscanf(line,"settemp %d %d %d",&a,&b,&c)==3) {
 			long mpos=(long)(a+b*MAPX)*sizeof(struct map);
