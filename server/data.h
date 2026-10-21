@@ -302,6 +302,9 @@ extern unsigned int mapmarker;
 #define LAB11_X         185     // Lab 11 (the Sunken Dark): arrival in the entry hall
 #define LAB11_Y         949
 #define LAB11_KEEPER    1200    // its labkeeper template (the Drowned Lord)
+#define LAB11_TEMPS_FROM 1200   // its character templates
+#define LAB11_TEMPS_TO  1259
+#define LAB11_UNDEAD_REGEN 220  // their undead regenerate 220/1000 hp a tick (about 4 hp/s) instead of 650
 #define SEYAN_SHRINES   22      // shrines of Kwai (bits in data[21]): 20 original + Lab 10 + Lab 11
 #define SEYAN_SHRINEBITS ((1u<<SEYAN_SHRINES)-1)
 #define LOOKTIER_STEP   448     // prestige look: a recoloured sprite set right after the original

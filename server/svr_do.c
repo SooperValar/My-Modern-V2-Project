@@ -3753,7 +3753,10 @@ void do_regenerate(int cn)
                 }
         }
 
-        if (ch[cn].flags&CF_UNDEAD) { ch[cn].a_hp+=650; hp=1; gothp+=650; }
+        if (ch[cn].flags&CF_UNDEAD) {   // Lab 11's undead regenerate less than the usual 650
+                int reg=(ch[cn].temp>=LAB11_TEMPS_FROM && ch[cn].temp<=LAB11_TEMPS_TO) ? LAB11_UNDEAD_REGEN : 650;
+                ch[cn].a_hp+=reg; hp=1; gothp+=reg;
+        }
 
         if ((in=ch[cn].worn[WN_NECK]) && it[in].temp==768) { // amulet of ankh
                 if (ch[cn].skill[SK_REGEN][0]) ch[cn].a_hp+=ch[cn].skill[SK_REGEN][5]*moonmult/60;

@@ -30,6 +30,22 @@
 
 static struct item ti[MAXTITEM];
 static struct character tc[MAXTCHARS];
+static char touched[MAXTCHARS];
+
+/* experience value of a template, as reset_char() works it out */
+static int template_points(struct character *t)
+{
+	int z,m,pts=0;
+	for (z=0; z<5; z++) for (m=10; m<t->attrib[z][0]; m++) pts+=m*m*m*3/20;
+	for (m=50; m<t->hp[0]; m++) pts+=m*3;
+	for (m=50; m<t->end[0]; m++) pts+=m*2/2;
+	for (m=50; m<t->mana[0]; m++) pts+=m*3;
+	for (z=0; z<50; z++) {
+		if (z==SK_PERCEPT || z==SK_STEALTH || z==SK_LOCK) continue;
+		for (m=1; m<t->skill[z][0]; m++) { int v=m*m*m*2/40; pts+= v>m ? v : m; }
+	}
+	return pts;
+}
 
 static int sane_it(int n,int ln) { if (n<1 || n>=MAXTITEM) { printf("line %d: bad item template %d\n",ln,n); return 0; } return 1; }
 static int sane_ch(int n,int ln) { if (n<1 || n>=MAXTCHARS) { printf("line %d: bad char template %d\n",ln,n); return 0; } return 1; }
@@ -139,6 +155,7 @@ int main(int argc,char **argv)
 		} else if (sscanf(line,"ch %d %63s %n",&a,word,&off)==2) {
 			struct character *t=&tc[a];
 			if (!sane_ch(a,ln)) continue;
+			touched[a]=1;
 			strncpy(text,line+off,sizeof(text)-1);
 			if (!strcmp(word,"copy")) { b=atoi(text); if (!sane_ch(b,ln)) continue;
 				if (tc[a].used) printf("line %d: char template %d was used (%s), overwritten\n",ln,a,tc[a].name);
@@ -162,6 +179,7 @@ int main(int argc,char **argv)
 
 		} else printf("line %d not understood: %s\n",ln,line);
 	}
+	for (n=1; n<MAXTCHARS; n++) if (touched[n] && tc[n].used) tc[n].points_tot=template_points(&tc[n]);
 	fseek(tif,0,SEEK_SET); fwrite(ti,sizeof(struct item),MAXTITEM,tif);
 	fseek(tcf,0,SEEK_SET); fwrite(tc,sizeof(struct character),MAXTCHARS,tcf);
 	fclose(tif); fclose(tcf); fclose(itf); fclose(mf); fclose(sf);
