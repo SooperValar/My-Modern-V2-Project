@@ -15,6 +15,7 @@ Codes (not case-sensitive):
   E1-E3 exploration points        Q  shrine of Kwai   H  offering shrine
   X  entry/exit portal   A  arrival (where the lab gate drops you)        V  end portal (vault)
   BAR barkeeper   MW weapon merchant   MA armor merchant
+  SW/SF/SC/SD  the standard shrine-of-Kwai room: red brick walls, floor, black candles, Seyan'Du door
 Objects that stand in the water (|, s, S, E, Q) sit on water when two or more of their four
 neighbours are water, otherwise on dry floor."""
 import json, random, sys, os
@@ -51,6 +52,10 @@ CODES = {   # code: (meaning, fill colour, text colour)
     'E2': ('exploration point 2', '00FFFF', '000000'),
     'E3': ('exploration point 3', '00FFFF', '000000'),
     'Q': ('shrine of Kwai', 'FFFFFF', '000000'),
+    'SD': ("shrine room: Seyan'Du door (only Seyan'Du open it)", '9B30FF', 'FFFFFF'),
+    'SW': ('shrine room: red brick wall', '8B2A1E', 'FFFFFF'),
+    'SF': ('shrine room: floor', 'B07060', '000000'),
+    'SC': ('shrine room: black candle', '503050', 'FFFFFF'),
     'H': ('offering shrine', 'F0DC3C', '000000'),
     'X': ('entry/exit portal', '3C50FF', 'FFFFFF'),
     'A': ('arrival (the lab gate drops you here)', 'FF3C3C', 'FFFFFF'),
@@ -212,7 +217,7 @@ def build(path, outdir):
     print('arrival at %d,%d (server/data.h LAB11_X/LAB11_Y must say the same)' % (OX+ax, OY+ay))
 
     # ---- reachability and the longest swim on the best path
-    walk = {'.', '~', 'e', 'A', 'T', 'E1', 'E2', 'E3', 'Q', 'D1', 'D2', 'D3', 'D4'}
+    walk = {'.', '~', 'e', 'A', 'T', 'E1', 'E2', 'E3', 'Q', 'D1', 'D2', 'D3', 'D4', 'SF', 'SD'}
 
     def swim(start, goals, gates_open):
         best = {}; dq = deque([(start, 0, 0)]); worst = None
@@ -335,6 +340,10 @@ def build(path, outdir):
             elif water(x, y):
                 fs = random.choice(SEAWEED) if c == '~' and random.random() < 0.04 else 0
                 o('tile %d %d 1008 %d %x' % (X, Y, fs, FL_IN | FL_UW | FL_NOM))
+            elif c == 'SW':
+                o('tile %d %d 1100 556 %x' % (X, Y, FL_MB | FL_SB | FL_IN | FL_NOM))
+            elif c in ('SF', 'SC', 'SD'):
+                o('tile %d %d 558 0 %x' % (X, Y, FL_IN | FL_NOM))
             elif c == 'ct':
                 o('tile %d %d 558 176 %x' % (X, Y, FL_IN | FL_NOM | FL_MB))
             elif c in hall or (c == 'C' and any(n in hall for n in nb)):
@@ -343,7 +352,7 @@ def build(path, outdir):
                 nom = c[0] in 'DLV' or any(n in hall for n in nb)
                 o('tile %d %d 1100 0 %x' % (X, Y, FL_IN | (FL_NOM if nom else 0)))
             tmp = {'B': T_BRAZ, 'C': 741, 'V': T_PORTAL, 'X': 661, 'H': 603, 'Q': T_SHRINE,
-                   'E1': T_POLE, 'E2': T_POLE+1, 'E3': T_POLE+2}.get(c)
+                   'E1': T_POLE, 'E2': T_POLE+1, 'E3': T_POLE+2, 'SD': 559, 'SC': 296}.get(c)
             if c == 's': tmp = T_SHELFE2+random.randrange(4)
             if c in ('D1', 'D2', 'D3', 'D4'): tmp = T_GATE
             if c == '|': tmp = random.choice((1053, 1054, 1058, 1059))
