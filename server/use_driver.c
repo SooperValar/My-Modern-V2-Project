@@ -3301,6 +3301,54 @@ static void lab11_gate(int in,int open)
         do_area_sound(0,0,it[gate].x,it[gate].y,10);
 }
 
+/* torn pages of the Cistern's tome: data[1] is a bit mask of the pages an
+ * item holds, data[2] the mask of a whole tome, data[3] the tome's template.
+ * Use one page while holding another and they go together; all of them make
+ * the tome. */
+static int lab11_pages(int cn,int in)
+{
+        int in2=ch[cn].citem,n,mask,cnt,b;
+
+        if (!it[in].carried) {
+                do_char_log(cn,0,"Pick it up first.\n");
+                return 0;
+        }
+        if (!in2 || (in2&0x80000000) || it[in2].driver!=72 || it[in2].data[0]!=4) {
+                for (b=it[in].data[1],cnt=0; b; b>>=1) cnt+=b&1;
+                do_char_log(cn,1,"Torn pages of a drowned tome - %d of %d. Hold another page and use this one to put them together.\n",
+                        cnt,it[in].data[2]==15 ? 4 : 0);
+                return 0;
+        }
+        if (it[in].data[1]&it[in2].data[1]) {
+                do_char_log(cn,0,"Those are the same pages.\n");
+                return 0;
+        }
+        mask=it[in].data[1]|it[in2].data[1];
+        ch[cn].citem=0; it[in2].used=USE_EMPTY;
+
+        if (mask==(int)it[in].data[2]) {
+                int t=it[in].data[3],in3;
+
+                for (n=0; n<40; n++) if (ch[cn].item[n]==in) break;
+                if (n<40 && t>0 && t<MAXTITEM && (in3=god_create_item(t))) {
+                        it[in].used=USE_EMPTY;
+                        it[in3].carried=cn;
+                        ch[cn].item[n]=in3;
+                        do_char_log(cn,0,"The last page slips into place. The tome is whole again, and its pages begin to glow.\n");
+                        chlog(cn,"Lab 11: put the torn tome together");
+                        do_update_char(cn);
+                        return 1;
+                }
+        }
+        it[in].data[1]=mask;
+        for (b=mask,cnt=0; b; b>>=1) cnt+=b&1;
+        sprintf(it[in].name,"Torn Pages (%d of 4)",cnt);
+        it[in].flags|=IF_UPDATE;
+        do_char_log(cn,1,"You put the pages together - %d of 4.\n",cnt);
+        do_update_char(cn);
+        return 1;
+}
+
 int use_lab11(int cn,int in)
 {
         int in2;
@@ -3340,6 +3388,14 @@ int use_lab11(int cn,int in)
                         return 0;
 
                 case 3: do_char_log(cn,1,"The gate won't move. The water behind it has to go first.\n");
+                        return 0;
+
+                case 4: return lab11_pages(cn,in);
+
+                case 5: do_char_log(cn,1,"All that is left are a few scraps of paper - the tome was torn apart. Perhaps its pages can still be found somewhere in the cistern.\n");
+                        return 0;
+
+                case 6: do_char_log(cn,1,"Only silt and rotten wood.\n");
                         return 0;
         }
         return 0;
