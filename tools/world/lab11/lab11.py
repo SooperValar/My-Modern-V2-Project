@@ -209,7 +209,7 @@ o('it %d flags 611' % T_GATE); o('it %d dur 0' % T_GATE)
 for j, v in enumerate((3, 0, 0, 0, 0, 0, 0, 0, 0, 0)): o('it %d d %d %d' % (T_GATE, j, v))
 o('it %d copy 741' % T_BRAZ); o('it %d name Brazier' % T_BRAZ); o('it %d ref the brazier' % T_BRAZ)
 o('it %d desc A cold brazier, still holding a little dry coal.' % T_BRAZ)
-o('it %d spr 18129 16510' % T_BRAZ); o('it %d flags 400211' % T_BRAZ); o('it %d light 0 175' % T_BRAZ); o('it %d dur %d' % (T_BRAZ, TICKS*300))
+o('it %d spr 18129 16510' % T_BRAZ); o('it %d status 0 16' % T_BRAZ); o('it %d flags 400211' % T_BRAZ); o('it %d light 0 175' % T_BRAZ); o('it %d dur %d' % (T_BRAZ, TICKS*300))
 o('it %d copy 1299' % T_PORTAL); o('it %d name Magic Portal (Lab 11 End)' % T_PORTAL)
 for j, v in enumerate((33, 597, 11, 210000)): o('it %d d %d %d' % (T_PORTAL, j, v))
 
