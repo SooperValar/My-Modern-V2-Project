@@ -92,6 +92,7 @@ struct area area[]={
         { 15,704,        66,724,        "Labyrinth, Riddle Gorge",      1},
         { 15,724,        48,804,        "Labyrinth, Riddle Gorge",      1},
         { 15,804,        37,812,        "Labyrinth, Riddle Gorge",      1},
+        {180,900,       299,999,        "Labyrinth, Sunken Dark",       1},
         {210,300,       410,600,        "Pentagram Quest",              1},
         {330,246,       408,299,        "Ice Pentagram Quest",          1},
 

@@ -759,7 +759,11 @@ int use_labyrinth(int cn,int in)
                                 flag=god_transfer_char(cn,52,838);
                                 fx_add_effect(6,0,ch[cn].x,ch[cn].y,0);
                                 break;
-                case    10:     fx_add_effect(6,0,ch[cn].x,ch[cn].y,0);	// the Final Test
+                case    10:     fx_add_effect(6,0,ch[cn].x,ch[cn].y,0);	// Lab 11, the Sunken Dark
+                                flag=god_transfer_char(cn,LAB11_X,LAB11_Y);
+                                fx_add_effect(6,0,ch[cn].x,ch[cn].y,0);
+                                break;
+                case    11:     fx_add_effect(6,0,ch[cn].x,ch[cn].y,0);	// the Final Test
                                 flag=god_transfer_char(cn,33,597);
                                 fx_add_effect(6,0,ch[cn].x,ch[cn].y,0);
                                 break;
@@ -2791,6 +2795,7 @@ void use_driver(int cn,int in,int carried)
                                 /* CS, 991127: assembling Lab 8 key */
                                 case 61:        ret=use_lab8_key(cn,in); break;
                                 case 71:        ret=use_time_portal(cn,in); break;
+                                case 72:        ret=use_lab11(cn,in); break;
                                 /* CS, 991127: offering to shrines in Lab 8 */
                                 case 63:        ret=use_lab8_shrine(cn,in); break;
                                 /* CS, 991127: offering money to shrine in Lab 8 */
@@ -3238,10 +3243,139 @@ void expire_blood_penta(int in)
         }
 }
 
+
+/* ---- Lab 11, the Sunken Dark (item driver 72) -------------------------------
+ * data[0] is the kind of item:
+ *   1 lectern: data[1] book template, data[2] gate (x+y*MAPX), data[3..6] the
+ *     flooded section x0,y0,x1,y1, data[7] how long it stays drained (ticks),
+ *     data[8] refill time (set while drained), data[9] warning given.
+ *     Laying the book on it drains the section (underwater floor tiles lose
+ *     MF_UWATER) and opens the gate; when the time is up the water comes back,
+ *     the gate shuts and the lectern is empty again (IF_EXPIREPROC).
+ *   2 bookshelf without the book (only rotten pages)
+ *   3 gate, opened only by its lectern
+ */
+#define LAB11_WATER     1008    // the underwater floor sprite that drains and floods
+
+static void lab11_tell(int in,char *text)
+{
+        int x,y,cn;
+
+        for (y=it[in].data[4]; y<=it[in].data[6]; y++)
+                for (x=it[in].data[3]; x<=it[in].data[5]; x++)
+                        if ((cn=map[x+y*MAPX].ch) && (ch[cn].flags&CF_PLAYER)) do_char_log(cn,0,"%s",text);
+        if ((cn=map[it[in].x+it[in].y*MAPX].ch) && (ch[cn].flags&CF_PLAYER)) do_char_log(cn,0,"%s",text);
+}
+
+static void lab11_water(int in,int flood)
+{
+        int x,y,m;
+
+        for (y=it[in].data[4]; y<=it[in].data[6]; y++) {
+                for (x=it[in].data[3]; x<=it[in].data[5]; x++) {
+                        m=x+y*MAPX;
+                        if (map[m].sprite!=LAB11_WATER) continue;
+                        if (flood) map[m].flags|=MF_UWATER;
+                        else map[m].flags&=~MF_UWATER;
+                }
+        }
+}
+
+static void lab11_gate(int in,int open)
+{
+        int gate,m=it[in].data[2];
+
+        if (m<=0 || m>=MAPX*MAPY || !(gate=map[m].it) || it[gate].driver!=72 || it[gate].data[0]!=3) return;
+
+        reset_go(it[gate].x,it[gate].y);
+        remove_lights(it[gate].x,it[gate].y);
+        if (open) {
+                it[gate].flags&=~(IF_MOVEBLOCK|IF_SIGHTBLOCK);
+                it[gate].active=0xffffffff;
+        } else {
+                it[gate].flags|=it_temp[it[gate].temp].flags&(IF_MOVEBLOCK|IF_SIGHTBLOCK);
+                it[gate].active=0;
+        }
+        reset_go(it[gate].x,it[gate].y);
+        add_lights(it[gate].x,it[gate].y);
+        do_area_sound(0,0,it[gate].x,it[gate].y,10);
+}
+
+int use_lab11(int cn,int in)
+{
+        int in2;
+
+        if (!cn) return 0;
+
+        switch(it[in].data[0]) {
+                case 1: if (it[in].data[8]) {
+                                do_char_log(cn,1,"A book already lies open on the lectern. The water is held back - for now.\n");
+                                return 0;
+                        }
+                        if ((in2=ch[cn].citem) && !(in2&0x80000000) && it[in2].temp==it[in].data[1]) {
+                                ch[cn].citem=0;
+                        } else {
+                                int n;
+
+                                for (n=0; n<40; n++) if ((in2=ch[cn].item[n]) && it[in2].temp==it[in].data[1]) break;
+                                if (n==40) {
+                                        do_char_log(cn,1,"An empty lectern, its wood swollen with water. Something was read from it once.\n");
+                                        return 0;
+                                }
+                                ch[cn].item[n]=0;
+                        }
+                        it[in2].used=USE_EMPTY;
+
+                        it[in].active=0xffffffff;
+                        it[in].data[8]=globs->ticker+it[in].data[7];
+                        it[in].data[9]=0;
+                        lab11_water(in,0);
+                        lab11_gate(in,1);
+                        chlog(cn,"Lab 11: drained a section with %s",it[in].name);
+                        do_char_log(cn,0,"You lay the book on the lectern. The pages glow, and with a deep gurgle the water drains away. A gate grinds open.\n");
+                        lab11_tell(in,"With a deep gurgle, the water drains away.\n");
+                        return 1;
+
+                case 2: do_char_log(cn,1,"Nothing but rotten, waterlogged pages.\n");
+                        return 0;
+
+                case 3: do_char_log(cn,1,"The gate won't move. The water behind it has to go first.\n");
+                        return 0;
+        }
+        return 0;
+}
+
+void lab11_expire(int in)
+{
+        int gate,m;
+
+        if (it[in].data[0]!=1 || !it[in].data[8]) return;
+
+        if (!it[in].data[9] && globs->ticker+TICKS*60>it[in].data[8]) {
+                it[in].data[9]=1;
+                lab11_tell(in,"The walls groan. Water is seeping back in - get out of the low parts soon!\n");
+        }
+        if (globs->ticker<it[in].data[8]) return;
+
+        m=it[in].data[2];
+        if (m>0 && m<MAPX*MAPY && (gate=map[m].it) && (map[m].ch || map[m].to_ch)) {
+                it[in].data[8]=globs->ticker+TICKS*5;      // someone stands in the gate
+                return;
+        }
+
+        lab11_water(in,1);
+        lab11_gate(in,0);
+        it[in].data[8]=0;
+        it[in].data[9]=0;
+        it[in].active=0;
+        lab11_tell(in,"The water rushes back in and the gate slams shut!\n");
+}
+
 void expire_driver(int in)
 {
         switch(it[in].driver) {
                 case    49:     expire_blood_penta(in); break;
+                case    72:     lab11_expire(in); break;
                 default:        xlog("unknown expire driver %d for item %s (%d)\n",
                                         it[in].driver,it[in].name,in);
                                 break;

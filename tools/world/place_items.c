@@ -38,7 +38,7 @@ int main(int argc,char **argv)
 			fseek(mf,mpos,SEEK_SET); fread(&m,sizeof(m),1,mf);
 			if (m.it) { printf("line %d: tile %d,%d already has item %d, skipped\n",ln,b,c,m.it); continue; }
 			for (n=1; n<MAXITEM; n++) { fseek(itf,(long)n*sizeof(it),SEEK_SET); if (fread(&it,sizeof(it),1,itf)!=1 || !it.used) break; }
-			it=ti[a]; it.used=USE_ACTIVE; it.x=b; it.y=c; it.carried=0;
+			it=ti[a]; it.used=USE_ACTIVE; it.temp=a; it.x=b; it.y=c; it.carried=0;
 			fseek(itf,(long)n*sizeof(it),SEEK_SET); fwrite(&it,sizeof(it),1,itf);
 			m.it=n;	// blocking comes from the item flags at run time, like the original items
 			fseek(mf,mpos,SEEK_SET); fwrite(&m,sizeof(m),1,mf);

@@ -154,6 +154,19 @@ The world data held a nearly finished tenth labyrinth part (the "Mages of Time":
 - Three exploration points (45,000 exp, bits 15-17 of the third exploration word) and its shrine of Kwai (bit 20, the template was there but never placed).
 - One-off data patches: `tools/world/lab10_open.c`, and `tools/world/place_items.c` with `lab10_extras.txt` (a small tool that makes item templates and places items from a list).
 
+#### Lab 11, the Sunken Dark
+
+A new labyrinth part after Lab 10 (map 180,900 - 299,999, built by `tools/world/lab11/lab11.py`). The labyrinth gate after part 10 now leads here (`use_labyrinth`), and after part 11 to the Final Test.
+
+- **Entry hall**: an inn with a tavern backroom (log out there), a barkeeper, a weapon merchant (Steel, Golden, Crystal and Titanium daggers, swords and two-handers) and an armor merchant (Steel, Golden, Emerald and Crystal), the exit portal and an offering shrine. Lit, no monsters.
+- **Four flooded, dark sections**: the Atrium, the Library, the Crypt and the Cistern. Each hides a *Drowned Tome* in one of its bookshelves (the others hold only rotten pages). Laying the tome on the section's lectern (in hand or from the backpack) drains the water and opens the gate to the next section. **After 10 minutes the water comes back**: a warning a minute before, then the gate shuts (it waits while someone stands in it) and the lectern is empty again, so the next player or group does the puzzle too. New item driver 72 (`use_lab11`, refill through `IF_EXPIREPROC`): lecterns, empty shelves and gates.
+- Swimming is underwater (hitpoints drain); dry islands break the swims up, the longest required one is about 20 tiles.
+- **Braziers** start cold: using one lights it for five minutes. New unlit brazier sprite 18129 (`tools/sprites/draw_brazier_unlit.py`). Lit bowls mark the landings, the entry and the vault.
+- **Monsters** a step above Lab 10, on the islands only (the water is no-monster ground): Drowned Sailors, Gargoyle Archivists, Crypt Lords, Drowned Knights, Sea Golems and Marsh Shamans (templates 1210-1232, all see in the dark).
+- **Vault** with the end portal: part 11 is solved after beating its labkeeper, the **Drowned Lord** (template 1200, `LAB11_KEEPER`), for 210,000 exp.
+- Three exploration points (50,000 exp, bits 18-20 of the third exploration word) - one in an Atrium alcove, one in a Library corner, one deep in the Cistern - and the shrine of Kwai in the Library (bit 21).
+- `area.c`: the area is named "Labyrinth, Sunken Dark".
+
 #### Prestige and prestige looks
 
 - **Prestige** (`ch.data[CHD_PRESTIGE]`, slot 32, which only NPCs used, for lights) counts how often a character has prestiged: an arch class going back to the start of its class line (Arch-Templar to Templar, Seyan'Du stays Seyan'Du). What triggers it and what it gives are still to be decided.
@@ -205,6 +218,7 @@ Unchanged except for the version number and the larger view: `merc.dat`, `.moa` 
 
 - New character data slots: `CHD_PRESTIGE` (32) and `CHD_LABTEMPLE` (33), used only by NPCs for lights before. New item flag `IF_NEEDIDENT` (bit 40).
 - One-off world patches live in `tools/world/`: `lab10_open.c`, `place_items.c` with `lab10_extras.txt` and `lab10_pole_move.txt`, `templar_meditate.c`, `movetowers.py`.
+- `tools/world/build_lab.c`: builds an area from a spec file (map tiles, item and character templates, placed items); afterwards `server pop` creates the new NPCs and `server light` the lighting. `place_items.c` and `build_lab.c` now give placed items their template number (Lab 10's shrine of Kwai had been placed with 0; fixed in the data).
 - `tools/world/merchant_stock.c`: sets a merchant template's stock (`merchant_stock <.dat dir> <template> <item templates...>`).
 
 ## Server-side view changes

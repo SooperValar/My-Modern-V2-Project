@@ -129,6 +129,8 @@ int char_looktier(int cn);
 void lab_save_temple(int cn);
 int lab_restore_temple(int cn);
 void lab_strip_items(int cn);
+int use_lab11(int cn,int in);
+void lab11_expire(int in);
 void lab_left_check(int cn);
 void char_apply_look(int cn);
 void god_prestige(int cn,int co,char *arg);
