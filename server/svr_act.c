@@ -50,8 +50,14 @@ void plr_map_set(int cn)        // set character to map and remove target charac
         m=ch[cn].x+ch[cn].y*MAPX;
 
         // no-light ground: the character's own light goes out while on it, and comes back when leaving it
-        if (map[m].flags&MF_NOLIGHT) ch[cn].light=0;
-        else if (ch[cn].frx>0 && (map[ch[cn].frx+ch[cn].fry*MAPX].flags&MF_NOLIGHT)) do_update_char(cn);
+        if (map[m].flags&MF_NOLIGHT) {
+                ch[cn].light=0;
+                if ((ch[cn].flags&CF_PLAYER) && ch[cn].frx>0 && !(map[ch[cn].frx+ch[cn].fry*MAPX].flags&MF_NOLIGHT))
+                        do_char_log(cn,0,"You feel your light being suppressed.\n");
+        } else if (ch[cn].frx>0 && (map[ch[cn].frx+ch[cn].fry*MAPX].flags&MF_NOLIGHT)) {
+                do_update_char(cn);
+                if (ch[cn].flags&CF_PLAYER) do_char_log(cn,1,"Your light returns.\n");
+        }
 
         if (!(ch[cn].flags&CF_BODY)) {
 
