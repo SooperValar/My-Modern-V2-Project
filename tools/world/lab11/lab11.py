@@ -387,7 +387,8 @@ def build(path, outdir):
             if c in ('S1', 'S2', 'S3', 'S4'): tmp = T_SHELFB+shelf[(x, y)]
             if tmp: items.append('place %d %d %d' % (tmp, X, Y))
     out += items
-    out += ['movenpc %d' % t for t in (C_BAR, C_WEAP, C_ARM)]   # the inn NPCs walk to their (new) places
+    out += ['movenpc %d' % t for t in (C_BAR, C_WEAP, C_ARM)]
+    out += ['killnpc %d' % t for t in range(C_MON, 1260)]   # monsters are made fresh by "server pop" (their kinds and places may have changed)   # the inn NPCs walk to their (new) places
     open(os.path.join(outdir, 'lab11.spec'), 'w').write('\n'.join(out)+'\n')
     print('spec lines:', len(out), 'items:', len(items))
 

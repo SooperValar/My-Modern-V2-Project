@@ -12,6 +12,7 @@
  *   it <temp> status <s0> <s1>                     animation (client): 0/1 still, 16 = 4-frame loop, ...
  *   place <temp> <x> <y>                           put a copy of the item template there
  *   clear <x0> <y0> <x1> <y1>                      remove every item lying in that rectangle
+ *   killnpc <temp>                                 remove the living NPC(s) of that template ("server pop" makes new ones)
  *   movenpc <temp>                                 move the living NPC(s) of that template to its spawn position
  *   settemp <x> <y> <temp>                         fix the template number of the item on that tile
  *   ch <temp> copy <from>                          new character template = copy of another
@@ -122,6 +123,30 @@ int main(int argc,char **argv)
 				m.it=0; fseek(mf,mpos,SEEK_SET); fwrite(&m,sizeof(m),1,mf); cnt++;
 			}
 			printf("cleared %d item(s) from %d,%d - %d,%d\n",cnt,a,b,c,d);
+
+		} else if (sscanf(line,"killnpc %d",&a)==1) {
+			static struct character cc; FILE *cf; long mpos; int k;
+			if (!sane_ch(a,ln)) continue;
+			sprintf(fn,"%s/char.dat",argv[1]); if (!(cf=fopen(fn,"r+b"))) { perror(fn); continue; }
+			for (n=1; n<MAXCHARS; n++) {
+				fseek(cf,(long)n*sizeof(cc),SEEK_SET); if (fread(&cc,sizeof(cc),1,cf)!=1) break;
+				if (!cc.used || cc.temp!=a || (cc.flags&CF_PLAYER)) continue;
+				if (cc.x>0 && cc.y>0) {
+					mpos=(long)(cc.x+cc.y*MAPX)*sizeof(struct map);
+					fseek(mf,mpos,SEEK_SET); fread(&m,sizeof(m),1,mf);
+					if (m.ch==(unsigned)n) { m.ch=0; fseek(mf,mpos,SEEK_SET); fwrite(&m,sizeof(m),1,mf); }
+				}
+				for (k=0; k<60+1; k++) {	/* backpack, worn, cursor item */
+					unsigned int in2= k<40 ? cc.item[k] : (k<60 ? cc.worn[k-40] : cc.citem);
+					if (!in2 || (in2&0x80000000) || in2>=MAXITEM) continue;
+					fseek(itf,(long)in2*sizeof(it),SEEK_SET); fread(&it,sizeof(it),1,itf);
+					it.used=USE_EMPTY; fseek(itf,(long)in2*sizeof(it),SEEK_SET); fwrite(&it,sizeof(it),1,itf);
+				}
+				cc.used=USE_EMPTY;
+				fseek(cf,(long)n*sizeof(cc),SEEK_SET); fwrite(&cc,sizeof(cc),1,cf);
+				printf("%s (%d) at %d,%d removed\n",cc.name,n,cc.x,cc.y);
+			}
+			fclose(cf);
 
 		} else if (sscanf(line,"movenpc %d",&a)==1) {
 			static struct character cc; FILE *cf; long mpos; int nx,ny;
