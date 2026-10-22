@@ -402,6 +402,7 @@ def build(path, outdir):
     for i in range(4): base[T_CHESTP+i] = 0x400611
     base[T_CHESTE] = 0x611; base[T_SHELFE] = 0x613
     base[T_BRAZ] = 0x400211          # cold braziers too, so players can find them to light them
+    o('it %d d 8 5' % T_BRAZ)          # braziers show from 5 tiles away, the rest from 3
     for j in range(4): base[T_SHELFE2+j] = 0x613
     for t, f in sorted(base.items()): o('it %d flags %x' % (t, f | NEARGLOW))
     out += items

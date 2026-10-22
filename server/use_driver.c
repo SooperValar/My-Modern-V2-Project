@@ -3357,9 +3357,12 @@ void lab_glow_near(int cn)
 {
         int x,y,in;
 
-        for (y=max(0,ch[cn].y-NEARGLOW_DIST); y<=min(MAPY-1,ch[cn].y+NEARGLOW_DIST); y++) {
-                for (x=max(0,ch[cn].x-NEARGLOW_DIST); x<=min(MAPX-1,ch[cn].x+NEARGLOW_DIST); x++) {
+        for (y=max(0,ch[cn].y-NEARGLOW_MAXDIST); y<=min(MAPY-1,ch[cn].y+NEARGLOW_MAXDIST); y++) {
+                for (x=max(0,ch[cn].x-NEARGLOW_MAXDIST); x<=min(MAPX-1,ch[cn].x+NEARGLOW_MAXDIST); x++) {
+                        int d;
                         if (!(in=map[x+y*MAPX].it) || !(it[in].flags&IF_NEARGLOW)) continue;
+                        d=(it[in].data[8]>0 && it[in].data[8]<=NEARGLOW_MAXDIST) ? (int)it[in].data[8] : NEARGLOW_DIST;  // data[8]: own distance
+                        if (abs(x-ch[cn].x)>d || abs(y-ch[cn].y)>d) continue;
                         if (!it[in].data[9]) do_add_light(x,y,NEARGLOW_LIGHT);
                         it[in].data[9]=globs->ticker+TICKS*5;
                 }

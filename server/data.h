@@ -529,7 +529,8 @@ struct character
 #define IF_SOULSTONE	(1ull<<39)	// item was enhanced by a soulstone
 #define IF_NEEDIDENT	(1ull<<40)	// tooltip hides its powers until identified (for unique late-game items)
 #define IF_NEARGLOW	(1ull<<41)	// glows faintly (data[9] = until when) while a player is within NEARGLOW_DIST on no-light ground
-#define NEARGLOW_DIST   3
+#define NEARGLOW_DIST   3       // default distance; an item's data[8] can set its own (up to NEARGLOW_MAXDIST)
+#define NEARGLOW_MAXDIST 8
 #define NEARGLOW_LIGHT  20
 
 #define IF_WEAPON       (IF_WP_SWORD|IF_WP_DAGGER|IF_WP_AXE|IF_WP_STAFF|IF_WP_TWOHAND)
