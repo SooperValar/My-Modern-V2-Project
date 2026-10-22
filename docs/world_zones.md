@@ -103,66 +103,67 @@ Shown by `/who`, by NPCs when asked where you are, and in server logs. A spot in
 | 93 | Fall | 89,848 | 117,887 | "in Fall" |
 | 94 | Fall | 103,888 | 112,894 | "in Fall" |
 | 95 | Winter | 50,849 | 88,887 | "in Winter" |
-| 96 | Spider Underground | 212,50 | 305,104 | "in the Spider Underground" |
-| 97 | Ghost Underground | 210,120 | 270,162 | "in the Ghost Underground" |
-| 98 | Pentagram Quest | 210,300 | 410,600 | "in the Pentagram Quest" |
-| 99 | Ice Pentagram Quest | 368,246 | 408,299 | "in the Ice Pentagram Quest" |
-| 100 | Ice Pentagram Quest | 330,264 | 367,299 | "in the Ice Pentagram Quest" |
-| 101 | Underwater Pentagram Quest | 265,225 | 367,263 | "in the Underwater Pentagram Quest" |
-| 102 | Underwater Pentagram Quest | 265,264 | 329,293 | "in the Underwater Pentagram Quest" |
-| 103 | Underwater Pentagram Quest | 265,294 | 320,300 | "in the Underwater Pentagram Quest" |
-| 104 | Underground II | 822,176 | 1020,333 | "in the Underground II" |
-| 105 | Elysium | 792,796 | 813,811 | "in the Elysium" |
-| 106 | Gargoyle's Nest | 367,227 | 410,244 | "in the Gargoyle's Nest" |
-| 107 | Gargoyle's Nest | 410,227 | 480,329 | "in the Gargoyle's Nest" |
-| 108 | Aston | 1,1 | 20,20 | "in Aston" |
-| 109 | Astonian Inn | 622,466 | 629,477 | "in the Astonian Inn" |
-| 110 | Astonian Inn | 630,466 | 633,481 | "in the Astonian Inn" |
-| 111 | Astonian Inn | 61,122 | 65,131 | "in the Astonian Inn" |
-| 112 | Astonian Inn | 53,118 | 60,124 | "in the Astonian Inn" |
-| 113 | Astonian Inn | 36,106 | 52,141 | "in the Astonian Inn" |
-| 114 | Astonian Inn | 29,137 | 38,144 | "in the Astonian Inn" |
-| 115 | Memorial Park | 578,566 | 633,596 | "in the Memorial Park" |
-| 116 | Staffers Corner | 820,158 | 851,161 | "in the Staffers Corner" |
-| 117 | Staffers Corner | 807,151 | 819,168 | "in the Staffers Corner" |
-| 118 | Staffers Corner | 793,146 | 805,156 | "in the Staffers Corner" |
-| 119 | Staffers Corner | 799,158 | 805,168 | "in the Staffers Corner" |
-| 120 | Staffers Corner | 794,163 | 798,165 | "in the Staffers Corner" |
-| 121 | Tower I | 632,240 | 647,257 | "in the Tower I" |
-| 122 | Tower II | 822,337 | 837,352 | "in the Tower II" |
-| 123 | Tower III | 824,360 | 839,373 | "in the Tower III" |
-| 124 | Tower IV | 823,380 | 838,395 | "in the Tower IV" |
-| 125 | Tower V | 822,401 | 837,416 | "in the Tower V" |
-| 126 | Tower VI | 822,420 | 838,435 | "in the Tower VI" |
-| 127 | Tower VII | 844,337 | 860,350 | "in the Tower VII" |
-| 128 | Tower VIII | 844,354 | 860,368 | "in the Tower VIII" |
-| 129 | Tower IX | 845,374 | 861,389 | "in the Tower IX" |
-| 130 | Tower X | 844,395 | 860,411 | "in the Tower X" |
-| 131 | Tower XI | 844,415 | 860,430 | "in the Tower XI" |
-| 132 | Tower XII | 867,337 | 885,356 | "in the Tower XII" |
-| 133 | Tower XIII | 865,361 | 882,376 | "in the Tower XIII" |
-| 134 | Tower XIV | 865,380 | 883,396 | "in the Tower XIV" |
-| 135 | Tower XV | 870,400 | 886,424 | "in the Tower XV" |
-| 136 | Tower XV | 865,416 | 869,424 | "in the Tower XV" |
-| 137 | Tower XVI | 892,337 | 916,359 | "in the Tower XVI" |
-| 138 | Tower XVI | 892,360 | 908,378 | "in the Tower XVI" |
-| 139 | Tower XVII | 892,386 | 911,406 | "in the Tower XVII" |
-| 140 | Tower XVIII | 890,410 | 909,429 | "in the Tower XVIII" |
-| 141 | Tower XIX | 921,337 | 940,356 | "in the Tower XIX" |
-| 142 | Tower XX | 926,360 | 940,378 | "in the Tower XX" |
-| 143 | Tower XX | 924,379 | 942,404 | "in the Tower XX" |
-| 144 | Tower XX | 921,405 | 945,415 | "in the Tower XX" |
-| 145 | Pentagram Quest | 411,436 | 476,456 | "in the Pentagram Quest" |
-| 146 | Aston Hall | 597,600 | 619,619 | "in Aston Hall" |
-| 147 | Lizard Temple Shrine | 529,198 | 537,204 | "in the Lizard Temple Shrine" |
-| 148 | Ice Pents Shrine | 321,294 | 327,300 | "in the Ice Pents Shrine" |
-| 149 | Lizard Temple Shrine | 529,198 | 537,204 | "in the Lizard Temple Shrine" |
-| 150 | Aston Hall | 577,597 | 596,628 | "in the Aston Hall" |
-| 151 | Aston Hall | 597,620 | 619,628 | "in the Aston Hall" |
-| 152 | Aston Hall | 620,597 | 633,628 | "in the Aston Hall" |
-| 153 | Aston Hall | 597,597 | 619,599 | "in the Aston Hall" |
-| 154 | Underground I | 836,151 | 846,154 | "in the Underground I" |
-| 155 | Black Stronghold | 479,360 | 479,363 | "in the Black Stronghold" |
-| 156 | Astonian Inn | 634,466 | 639,477 | "in the Astonian Inn" |
-| 157 | Aston | 532,406 | 536,406 | "in Aston" |
-| 158 | Pentagram Quest | 469,457 | 473,459 | "in the Pentagram Quest" |
+| 96 | Shrine of Change | 79,841 | 85,846 | "in the Shrine of Change" |
+| 97 | Spider Underground | 212,50 | 305,104 | "in the Spider Underground" |
+| 98 | Ghost Underground | 210,120 | 270,162 | "in the Ghost Underground" |
+| 99 | Pentagram Quest | 210,300 | 410,600 | "in the Pentagram Quest" |
+| 100 | Ice Pentagram Quest | 368,246 | 408,299 | "in the Ice Pentagram Quest" |
+| 101 | Ice Pentagram Quest | 330,264 | 367,299 | "in the Ice Pentagram Quest" |
+| 102 | Underwater Pentagram Quest | 265,225 | 367,263 | "in the Underwater Pentagram Quest" |
+| 103 | Underwater Pentagram Quest | 265,264 | 329,293 | "in the Underwater Pentagram Quest" |
+| 104 | Underwater Pentagram Quest | 265,294 | 320,300 | "in the Underwater Pentagram Quest" |
+| 105 | Underground II | 822,176 | 1020,333 | "in the Underground II" |
+| 106 | Elysium | 792,796 | 813,811 | "in the Elysium" |
+| 107 | Gargoyle's Nest | 367,227 | 410,244 | "in the Gargoyle's Nest" |
+| 108 | Gargoyle's Nest | 410,227 | 480,329 | "in the Gargoyle's Nest" |
+| 109 | Aston | 1,1 | 20,20 | "in Aston" |
+| 110 | Astonian Inn | 622,466 | 629,477 | "in the Astonian Inn" |
+| 111 | Astonian Inn | 630,466 | 633,481 | "in the Astonian Inn" |
+| 112 | Astonian Inn | 61,122 | 65,131 | "in the Astonian Inn" |
+| 113 | Astonian Inn | 53,118 | 60,124 | "in the Astonian Inn" |
+| 114 | Astonian Inn | 36,106 | 52,141 | "in the Astonian Inn" |
+| 115 | Astonian Inn | 29,137 | 38,144 | "in the Astonian Inn" |
+| 116 | Memorial Park | 578,566 | 633,596 | "in the Memorial Park" |
+| 117 | Staffers Corner | 820,158 | 851,161 | "in the Staffers Corner" |
+| 118 | Staffers Corner | 807,151 | 819,168 | "in the Staffers Corner" |
+| 119 | Staffers Corner | 793,146 | 805,156 | "in the Staffers Corner" |
+| 120 | Staffers Corner | 799,158 | 805,168 | "in the Staffers Corner" |
+| 121 | Staffers Corner | 794,163 | 798,165 | "in the Staffers Corner" |
+| 122 | Tower I | 632,240 | 647,257 | "in the Tower I" |
+| 123 | Tower II | 822,337 | 837,352 | "in the Tower II" |
+| 124 | Tower III | 824,360 | 839,373 | "in the Tower III" |
+| 125 | Tower IV | 823,380 | 838,395 | "in the Tower IV" |
+| 126 | Tower V | 822,401 | 837,416 | "in the Tower V" |
+| 127 | Tower VI | 822,420 | 838,435 | "in the Tower VI" |
+| 128 | Tower VII | 844,337 | 860,350 | "in the Tower VII" |
+| 129 | Tower VIII | 844,354 | 860,368 | "in the Tower VIII" |
+| 130 | Tower IX | 845,374 | 861,389 | "in the Tower IX" |
+| 131 | Tower X | 844,395 | 860,411 | "in the Tower X" |
+| 132 | Tower XI | 844,415 | 860,430 | "in the Tower XI" |
+| 133 | Tower XII | 867,337 | 885,356 | "in the Tower XII" |
+| 134 | Tower XIII | 865,361 | 882,376 | "in the Tower XIII" |
+| 135 | Tower XIV | 865,380 | 883,396 | "in the Tower XIV" |
+| 136 | Tower XV | 870,400 | 886,424 | "in the Tower XV" |
+| 137 | Tower XV | 865,416 | 869,424 | "in the Tower XV" |
+| 138 | Tower XVI | 892,337 | 916,359 | "in the Tower XVI" |
+| 139 | Tower XVI | 892,360 | 908,378 | "in the Tower XVI" |
+| 140 | Tower XVII | 892,386 | 911,406 | "in the Tower XVII" |
+| 141 | Tower XVIII | 890,410 | 909,429 | "in the Tower XVIII" |
+| 142 | Tower XIX | 921,337 | 940,356 | "in the Tower XIX" |
+| 143 | Tower XX | 926,360 | 940,378 | "in the Tower XX" |
+| 144 | Tower XX | 924,379 | 942,404 | "in the Tower XX" |
+| 145 | Tower XX | 921,405 | 945,415 | "in the Tower XX" |
+| 146 | Pentagram Quest | 411,436 | 476,456 | "in the Pentagram Quest" |
+| 147 | Aston Hall | 597,600 | 619,619 | "in Aston Hall" |
+| 148 | Lizard Temple Shrine | 529,198 | 537,204 | "in the Lizard Temple Shrine" |
+| 149 | Ice Pents Shrine | 321,294 | 327,300 | "in the Ice Pents Shrine" |
+| 150 | Lizard Temple Shrine | 529,198 | 537,204 | "in the Lizard Temple Shrine" |
+| 151 | Aston Hall | 577,597 | 596,628 | "in the Aston Hall" |
+| 152 | Aston Hall | 597,620 | 619,628 | "in the Aston Hall" |
+| 153 | Aston Hall | 620,597 | 633,628 | "in the Aston Hall" |
+| 154 | Aston Hall | 597,597 | 619,599 | "in the Aston Hall" |
+| 155 | Underground I | 836,151 | 846,154 | "in the Underground I" |
+| 156 | Black Stronghold | 479,360 | 479,363 | "in the Black Stronghold" |
+| 157 | Astonian Inn | 634,466 | 639,477 | "in the Astonian Inn" |
+| 158 | Aston | 532,406 | 536,406 | "in Aston" |
+| 159 | Pentagram Quest | 469,457 | 473,459 | "in the Pentagram Quest" |
