@@ -59,7 +59,7 @@ struct area area[]={
         {550,424,       557,431,        "Leopold's House",              0},
         {521,450,       528,459,        "Serena's House",               0},
         {540,456,       564,474,        "Magic Maze",                   1},
-        {512,465,       528,471,        "Steven's House",               0},
+        {520,464,       529,472,        "Steven's House",               0},     // the house only, not the arena north of it
         {519,477,       527,484,        "Golden Armor Shop",            1},
         {537,434,       616,438,        "New Street",                   2},
         {559,442,       565,448,        "Gordon's House",               0},

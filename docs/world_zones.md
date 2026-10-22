@@ -45,7 +45,7 @@ Shown by `/who`, by NPCs when asked where you are, and in server logs. A spot in
 | 35 | Leopold's House | 550,424 | 557,431 | "in Leopold's House" |
 | 36 | Serena's House | 521,450 | 528,459 | "in Serena's House" |
 | 37 | Magic Maze | 540,456 | 564,474 | "in the Magic Maze" |
-| 38 | Steven's House | 512,465 | 528,471 | "in Steven's House" |
+| 38 | Steven's House | 520,464 | 529,472 | "in Steven's House" |
 | 39 | Golden Armor Shop | 519,477 | 527,484 | "in the Golden Armor Shop" |
 | 40 | New Street | 537,434 | 616,438 | "on New Street" |
 | 41 | Gordon's House | 559,442 | 565,448 | "in Gordon's House" |
