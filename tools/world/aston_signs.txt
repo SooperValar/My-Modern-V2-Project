@@ -1,0 +1,9 @@
+# Aston street signs (apply with build_lab): Arena Street (new) where it meets Merchant's Way,
+# and Merchant's Way north of Temple Street. Signs stand in pairs on both sides of a street.
+it 1363 copy 240
+it 1363 name Sign (Arena Street)
+it 1363 desc Arena Street
+place 1363 483 490
+place 1363 489 490
+place 496 531 490
+place 496 531 496

@@ -32,8 +32,8 @@ struct area area[]={
         {499,539,       528,550,        "Thieves House I",              1},
         { 20, 20,        49, 69,        "Thieves Basement",              1},
         {499,525,       514,538,        "Thieves House II",             1},
-        {532,439,       536,550,        "Temple Street",                2},
-        {532,551,       578,555,        "Rose Street",                  2},
+        {532,399,       536,568,        "Temple Street",                2},     // the whole stretch, town gate to the Gorn Clan Hall
+        {537,551,       578,555,        "Rose Street",                  2},
         {538,559,       575,588,        "Cursed Tomb",                  1},
         {574,496,       578,550,        "Castle Way",                   2},
         {588,530,       623,554,        "Haunted Castle",               1},
@@ -49,6 +49,9 @@ struct area area[]={
         {540,479,       553,487,        "Weapon Shop",                  1},
         {507,482,       514,487,        "Tavern of the Blue Ogre",      1},
         {515,436,       522,444,        "Bank",                         1},
+        {493,479,       503,486,        "Bank",                         1},     // across from the Temple of Skua
+        {484,442,       488,490,        "Arena Street",                 2},
+        {489,442,       508,446,        "Arena Street",                 2},
         {540,442,       546,451,        "Cirrus' House",                0},
         {521,450,       528,459,        "Serena's House",               0},
         {540,456,       564,474,        "Magic Maze",                   1},
@@ -61,6 +64,7 @@ struct area area[]={
         {614,434,       618,495,        "South End",                    2},
         {590,467,       610,488,        "Skeleton Lord",                3},
         {537,491,       613,495,        "Merchant's Way",               2},
+        {464,491,       531,495,        "Merchant's Way",               2},     // north of Temple Street, up to the mines
         {593,498,       601,505,        "Ingrid's House",               0},
         {501,400,       526,432,        "Abandoned Kwai Clan Hall",     1},
         {500,558,       525,590,        "Abandoned Gorn Clan Hall",     1},
