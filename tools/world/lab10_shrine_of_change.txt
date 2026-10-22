@@ -1,53 +1,68 @@
 # Lab 10: a Shrine of Change (arch for every class, same as the one at the Final Test entry)
-# in a small room in the garden past the merchants: doorway in the west wall (toward the merchants),
-# shrine against the east wall. Apply with build_lab; then 'server light'.
+# in a small room in the garden past the merchants, built like the merchant rooms (walls 1200,
+# stone floor 1100). Doorway toward the rest of Spring, shrine on the far wall, and a path from
+# Spring's main path to the door. Apply with build_lab; then 'server light'.
 clear 79 841 85 846
-tile 79 841 1100 556 27
-tile 80 841 1100 556 27
-tile 81 841 1100 556 27
-tile 82 841 1100 556 27
-tile 83 841 1100 556 27
-tile 84 841 1100 556 27
-tile 85 841 1100 556 27
-tile 79 842 1100 556 27
-tile 80 842 558 0 24
-tile 81 842 558 0 24
-tile 82 842 558 0 24
-tile 83 842 558 0 24
-tile 84 842 558 0 24
-tile 85 842 1100 556 27
-tile 79 843 558 0 24
-tile 80 843 558 0 24
-tile 81 843 558 0 24
-tile 82 843 558 0 24
-tile 83 843 558 0 24
-tile 84 843 558 0 24
-tile 85 843 1100 556 27
-tile 79 844 1100 556 27
-tile 80 844 558 0 24
-tile 81 844 558 0 24
-tile 82 844 558 0 24
-tile 83 844 558 0 24
-tile 84 844 558 0 24
-tile 85 844 1100 556 27
-tile 79 845 1100 556 27
-tile 80 845 558 0 24
-tile 81 845 558 0 24
-tile 82 845 558 0 24
-tile 83 845 558 0 24
-tile 84 845 558 0 24
-tile 85 845 1100 556 27
-tile 79 846 1100 556 27
-tile 80 846 1100 556 27
-tile 81 846 1100 556 27
-tile 82 846 1100 556 27
-tile 83 846 1100 556 27
-tile 84 846 1100 556 27
-tile 85 846 1100 556 27
-place 816 84 843
-place 268 84 842
+tile 79 841 551 1200 23
+tile 80 841 554 1200 23
+tile 81 841 1100 0 24
+tile 82 841 1100 0 24
+tile 83 841 554 1200 23
+tile 84 841 551 1200 23
+tile 85 841 552 1200 23
+tile 79 842 554 1200 23
+tile 80 842 1100 0 24
+tile 81 842 1100 0 24
+tile 82 842 1100 0 24
+tile 83 842 1100 0 24
+tile 84 842 1100 0 24
+tile 85 842 554 1200 23
+tile 79 843 553 1200 23
+tile 80 843 1100 0 24
+tile 81 843 1100 0 24
+tile 82 843 1100 0 24
+tile 83 843 1100 0 24
+tile 84 843 1100 0 24
+tile 85 843 552 1200 23
+tile 79 844 551 1200 23
+tile 80 844 1100 0 24
+tile 81 844 1100 0 24
+tile 82 844 1100 0 24
+tile 83 844 1100 0 24
+tile 84 844 1100 0 24
+tile 85 844 554 1200 23
+tile 79 845 553 1200 23
+tile 80 845 1100 0 24
+tile 81 845 1100 0 24
+tile 82 845 1100 0 24
+tile 83 845 1100 0 24
+tile 84 845 1100 0 24
+tile 85 845 551 1200 23
+tile 79 846 552 1200 23
+tile 80 846 553 1200 23
+tile 81 846 551 1200 23
+tile 82 846 554 1200 23
+tile 83 846 552 1200 23
+tile 84 846 553 1200 23
+tile 85 846 554 1200 23
+tile 77 838 548 0 20
+tile 77 839 546 0 20
+tile 78 838 546 0 20
+tile 78 839 549 0 20
+tile 79 838 544 0 20
+tile 79 839 546 0 20
+tile 80 838 547 0 20
+tile 80 839 544 0 20
+tile 81 838 549 0 20
+tile 81 839 545 0 20
+tile 82 838 549 0 20
+tile 82 839 548 0 20
+tile 81 840 542 0 20
+tile 82 840 542 0 20
+place 816 82 845
+place 268 80 845
 place 268 84 845
-place 817 81 842
-place 818 82 842
-place 814 81 845
-place 815 82 845
+place 817 80 843
+place 818 80 844
+place 814 84 843
+place 815 84 844
