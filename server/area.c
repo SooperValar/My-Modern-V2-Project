@@ -121,6 +121,7 @@ struct area area[]={
         { 89,848,       117,887,        "Fall",                         0},
         {103,888,       112,894,        "Fall",                         0},
         { 50,849,        88,887,        "Winter",                       0},
+        { 79,841,        85,846,        "Shrine of Change",             1},
         {212, 50,       305,104,        "Spider Underground",           1},
         {210,120,       270,162,        "Ghost Underground",            1},
         {210,300,       410,600,        "Pentagram Quest",              1},

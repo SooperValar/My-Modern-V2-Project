@@ -1,0 +1,52 @@
+# Lab 10: a Shrine of Change (arch for every class, same as the one at the Final Test entry)
+# in a small room in the garden past the merchants. Apply with build_lab; then 'server light'.
+clear 79 841 85 846
+tile 79 841 1100 556 27
+tile 80 841 1100 556 27
+tile 81 841 1100 556 27
+tile 82 841 558 0 24
+tile 83 841 1100 556 27
+tile 84 841 1100 556 27
+tile 85 841 1100 556 27
+tile 79 842 1100 556 27
+tile 80 842 558 0 24
+tile 81 842 558 0 24
+tile 82 842 558 0 24
+tile 83 842 558 0 24
+tile 84 842 558 0 24
+tile 85 842 1100 556 27
+tile 79 843 1100 556 27
+tile 80 843 558 0 24
+tile 81 843 558 0 24
+tile 82 843 558 0 24
+tile 83 843 558 0 24
+tile 84 843 558 0 24
+tile 85 843 1100 556 27
+tile 79 844 1100 556 27
+tile 80 844 558 0 24
+tile 81 844 558 0 24
+tile 82 844 558 0 24
+tile 83 844 558 0 24
+tile 84 844 558 0 24
+tile 85 844 1100 556 27
+tile 79 845 1100 556 27
+tile 80 845 558 0 24
+tile 81 845 558 0 24
+tile 82 845 558 0 24
+tile 83 845 558 0 24
+tile 84 845 558 0 24
+tile 85 845 1100 556 27
+tile 79 846 1100 556 27
+tile 80 846 1100 556 27
+tile 81 846 1100 556 27
+tile 82 846 1100 556 27
+tile 83 846 1100 556 27
+tile 84 846 1100 556 27
+tile 85 846 1100 556 27
+place 816 82 845
+place 268 80 845
+place 268 84 845
+place 817 80 842
+place 818 80 843
+place 814 84 842
+place 815 84 843
