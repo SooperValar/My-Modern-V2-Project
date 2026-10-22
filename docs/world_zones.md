@@ -103,7 +103,7 @@ Shown by `/who`, by NPCs when asked where you are, and in server logs. A spot in
 | 93 | Fall | 89,848 | 117,887 | "in Fall" |
 | 94 | Fall | 103,888 | 112,894 | "in Fall" |
 | 95 | Winter | 50,849 | 88,887 | "in Winter" |
-| 96 | Shrine of Change | 79,841 | 85,846 | "in the Shrine of Change" |
+| 96 | Shrine of Change | 76,842 | 82,847 | "in the Shrine of Change" |
 | 97 | Spider Underground | 212,50 | 305,104 | "in the Spider Underground" |
 | 98 | Ghost Underground | 210,120 | 270,162 | "in the Ghost Underground" |
 | 99 | Pentagram Quest | 210,300 | 410,600 | "in the Pentagram Quest" |
