@@ -56,6 +56,7 @@ struct area area[]={
         {540,442,       546,451,        "Cirrus' House",                0},
         {621,440,       627,446,        "Gunther's House",              0},
         {621,481,       628,487,        "Robin's House",                0},
+        {607,423,       613,431,        "Syleia's House",               0},     // just south of the Dungeon of Doors
         {539,411,       546,417,        "Garna's Shop",                 0},
         {539,424,       547,431,        "Manfred's House",              0},
         {548,411,       557,422,        "Barracks",                     1},
