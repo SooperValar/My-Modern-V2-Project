@@ -45,7 +45,8 @@ struct area area[]={
         {569,468,       582,487,        "Damor's Magic Shop",           0},
         {558,481,       567,487,        "Brunhild's Shop",              0},
         {555,499,       563,504,        "Sirjan's House",               0},
-        {541,499,       549,503,        "Cloth Armor Shop",             1},
+        {540,498,       550,504,        "Crystal Armor Shop",           1},     // Geoffrey; was labelled Cloth Armor Shop
+        {540,507,       550,517,        "Cloth Armor Shop",             1},     // Ruth, across from the Temple of Skua
         {540,479,       553,487,        "Weapon Shop",                  1},
         {507,482,       514,487,        "Tavern of the Blue Ogre",      1},
         {515,436,       522,444,        "Bank",                         1},
@@ -53,6 +54,8 @@ struct area area[]={
         {484,442,       488,490,        "Arena Street",                 2},
         {489,442,       508,446,        "Arena Street",                 2},
         {540,442,       546,451,        "Cirrus' House",                0},
+        {621,440,       627,446,        "Gunther's House",              0},
+        {621,481,       628,487,        "Robin's House",                0},
         {539,411,       546,417,        "Garna's Shop",                 0},
         {539,424,       547,431,        "Manfred's House",              0},
         {548,411,       557,422,        "Barracks",                     1},
