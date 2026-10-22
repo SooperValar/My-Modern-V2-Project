@@ -395,12 +395,13 @@ def build(path, outdir):
         x, y = int(X)-OX, int(Y)-OY
         if g[y][x] != '#' and any(inrect(x, y, s[3]) for s in SECTIONS) and g[y][x] not in ('SW', 'SF', 'SC', 'SD'):
             out[i] = 'tile %s %s %s %s %x' % (X, Y, sp, fs, int(fl, 16) | FL_NOLIGHT)
-    # chests, searchable shelves and exploration points glow faintly while a player is near (IF_NEARGLOW)
+    # chests, searchable shelves, exploration points and braziers glow faintly while a player is near (IF_NEARGLOW)
     NEARGLOW = 1 << 41
     base = {T_POLE: 0x611, T_POLE+1: 0x611, T_POLE+2: 0x611}
     for i in range(4): base[T_SHELFB+i] = 0x400613 if i < 3 else 0x613
     for i in range(4): base[T_CHESTP+i] = 0x400611
     base[T_CHESTE] = 0x611; base[T_SHELFE] = 0x613
+    base[T_BRAZ] = 0x400211          # cold braziers too, so players can find them to light them
     for j in range(4): base[T_SHELFE2+j] = 0x613
     for t, f in sorted(base.items()): o('it %d flags %x' % (t, f | NEARGLOW))
     out += items
