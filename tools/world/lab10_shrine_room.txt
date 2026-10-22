@@ -1,0 +1,4 @@
+# Lab 10: the shrine of Kwai goes into the shrine room that was already there (south of Fall,
+# Seyan'Du door at 108,888, black candles at 106,892 and 110,892) instead of the open floor
+remove 80 831
+place 1298 108 892
