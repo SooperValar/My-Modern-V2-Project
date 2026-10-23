@@ -4420,6 +4420,10 @@ void do_look_char(int cn,int co,int godflag,int autoflag,int lootflag)
         else p=do_char_can_see(cn,co);
         if (!p) return;
 
+        // a merchant restocks whenever his shop is opened, not only after a trade
+        // (do_shop_char already did it when lootflag is set)
+        if ((ch[co].flags&CF_MERCHANT) && !autoflag && !lootflag) update_shop(co);
+
         if (!autoflag && !(ch[co].flags&CF_MERCHANT) && !(ch[co].flags&CF_BODY)) {
 		if ((ch[cn].flags&CF_PLAYER) && !autoflag) {
 			ch[cn].data[71]+=CNTSAY;

@@ -222,6 +222,7 @@ A new labyrinth part after Lab 10 (map 180,900 - 299,999). Its layout is an Exce
 - Templar and Arch-Templar templates (3, 77, 544, 549) start with **Meditate fixed at 1** (maximum 1, so it can't be raised). Its real value still grows with Intuition and Willpower, which gives Templars a little mana regeneration. One-off patch: `tools/world/templar_meditate.c`.
 
 - **Merchant stock**: a merchant keeps in stock his sale list (`data[0..9]`, at most 10 items) plus everything in his template's backpack, up to 40 (`update_shop`). For every original merchant the two were the same items, so nothing changes for them; it lets a lab merchant carry whole armor tiers.
+- **Merchants restock when their shop is opened** (`do_look_char`), not only after a trade, so stock added to a merchant shows up right away.
 - **Lab 10 merchants**: weapons Steel to Crystal (as before), armor Steel, Golden and Emerald (was Golden only).
 
 ### Fixes
