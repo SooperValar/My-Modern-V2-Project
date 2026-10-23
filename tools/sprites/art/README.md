@@ -16,3 +16,11 @@ Prompt tips that worked: ask for a "pre-rendered 3D isometric game asset, late-1
 like Diablo / Ultima Online props, bold chunky details that stay readable at a very small
 size, one light from the upper left, no shadow, the object filling the image, and a flat
 plain background; put "pixel art, 8-bit, retro sprite, cartoon, outlines" in the negative prompt.
+
+## Draft: two-handed axes (`axe2h_painted/`)
+
+The generator returned a black silhouette of a double-bit axe (`axe_silhouette_source.png`).
+`axe_paint.py` uses it as a stencil and paints the five metals of the two-handed swords onto
+it (colours taken from sprites 1505, 1465, 1490, 1485 and 1655): bronze, steel, gold, crystal,
+titanium. Kept as a fallback while a rendered version is tried; not in the client yet.
+(`axe_paint.py` expects `mask.npy`, the silhouette's largest dark shape as a boolean array.)
