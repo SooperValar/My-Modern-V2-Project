@@ -1,0 +1,83 @@
+# Two-handed axes: hit harder than two-handed swords, attack slower (AXE2H_SLOW).
+# Skill: Two-Handed Axe (36). Flags = the sword's flags + IF_WP_AXE (0x40000).
+
+it 1364 copy 35
+it 1364 name Bronze Two-Handed Axe
+it 1364 ref bronze two-handed axe
+it 1364 desc A huge, heavy two-handed axe made of bronze.
+it 1364 spr 18145 0
+it 1364 flags 20140014
+it 1364 wv 15
+it 1364 value 100
+it 1364 atreq 3 8
+it 1364 atreq 4 15
+it 1364 skreq 6 0
+it 1364 skreq 36 1
+
+it 1365 copy 36
+it 1365 name Steel Two-Handed Axe
+it 1365 ref steel two-handed axe
+it 1365 desc A huge, heavy two-handed axe made of steel.
+it 1365 spr 18150 0
+it 1365 flags 140014
+it 1365 wv 30
+it 1365 value 500
+it 1365 atreq 3 16
+it 1365 atreq 4 30
+it 1365 skreq 6 0
+it 1365 skreq 36 15
+
+it 1366 copy 37
+it 1366 name Golden Two-Handed Axe
+it 1366 ref golden two-handed axe
+it 1366 desc A huge, heavy two-handed axe made of gold.
+it 1366 spr 18155 0
+it 1366 flags 140014
+it 1366 wv 45
+it 1366 value 2500
+it 1366 atreq 3 26
+it 1366 atreq 4 48
+it 1366 skreq 6 0
+it 1366 skreq 36 30
+
+it 1367 copy 38
+it 1367 name Crystal Two-Handed Axe
+it 1367 ref crystal two-handed axe
+it 1367 desc A huge, heavy two-handed axe made of crystal.
+it 1367 spr 18160 0
+it 1367 flags 140014
+it 1367 wv 60
+it 1367 value 12500
+it 1367 atreq 3 36
+it 1367 atreq 4 68
+it 1367 skreq 6 0
+it 1367 skreq 36 45
+
+it 1368 copy 125
+it 1368 name Titanium Two-Handed Axe
+it 1368 ref titanium two-handed axe
+it 1368 desc A huge, heavy two-handed axe. It's made of titanium, the material of the gods.
+it 1368 spr 18165 0
+it 1368 flags 1140094
+it 1368 wv 90
+it 1368 value 62500
+it 1368 atreq 3 45
+it 1368 atreq 4 82
+it 1368 skreq 6 0
+it 1368 skreq 36 60
+
+# merchants: the matching axe tier next to every two-handed sword they sell
+ch 26 items 27 28 29 31 32 33 35 36 37 1364 1365 1366
+ch 27 items 30 34 38 1367
+ch 116 items 28 32 36 158 1365
+ch 160 items 28 32 36 29 33 37 1365 1366
+ch 294 items 28 32 36 29 33 37 1365 1366
+ch 302 items 28 32 36 29 33 37 1365 1366
+ch 338 items 28 32 36 29 33 37 1365 1366
+ch 419 items 28 32 36 29 33 37 30 34 38 1365 1366 1367
+ch 465 items 28 32 36 29 33 37 30 34 38 1365 1366 1367
+ch 493 items 29 30 523 33 34 524 37 38 125 1366 1367 1368
+ch 834 items 28 32 36 29 33 37 30 34 38 1365 1366 1367
+ch 902 items 28 32 36 29 33 37 30 34 38 1365 1366 1367
+ch 1091 items 28 32 36 29 33 37 30 34 38 1365 1366 1367
+ch 1202 items 28 32 36 29 33 37 30 34 38 523 524 125 1365 1366 1367 1368

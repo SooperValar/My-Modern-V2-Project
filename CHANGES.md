@@ -127,7 +127,7 @@ All also work with `/`, and the player ones are listed in `#help`.
 
 ### Information
 
-New player commands (also with `/`): `#armor`, `#weapon`, `#sword`, `#dagger`, `#twohand`, `#axe`, `#specialw`, `#belt`, `#specialarmor`, `#moddedarmor` and `#rings`. They print tables of requirements and bonuses, read live from the item templates so they stay accurate if an item is changed. `#specialarmor` lists the unique armor (Fire and Ice sets, Ice Cloak, Titanium Armor of Ankh, Winged Boots, Helm of Shadows, Grolm Crown, Cap of the Math Genius); `#moddedarmor` lists the magic suffixes (of the Lion, Snake, Owl, Weasel, Bear, Magic, Life, Defence) that chest helmets and armor can carry, with their normal and Godly values. All are listed in `#help`.
+New player commands (also with `/`): `#armor`, `#weapon`, `#sword`, `#dagger`, `#twohand`, `#axe`, `#axe2h`, `#specialw`, `#belt`, `#specialarmor`, `#moddedarmor` and `#rings`. They print tables of requirements and bonuses, read live from the item templates so they stay accurate if an item is changed. `#specialarmor` lists the unique armor (Fire and Ice sets, Ice Cloak, Titanium Armor of Ankh, Winged Boots, Helm of Shadows, Grolm Crown, Cap of the Math Genius); `#moddedarmor` lists the magic suffixes (of the Lion, Snake, Owl, Weasel, Bear, Magic, Life, Defence) that chest helmets and armor can carry, with their normal and Godly values. All are listed in `#help`.
 
 - **`#quest`**: every skill teacher, read live from the NPC templates: which skill (adjusted for your class, so Templars see Immunity and Surround Hit), who teaches it and where, and the teacher's own hint about the item. Skills you already know are marked; teachers of skills your class can't learn are counted, not listed.
 - **`#exp`**: experience this session and in total, each with exp per hour, unspent points, and how much is left to the next rank.
@@ -181,6 +181,24 @@ A new labyrinth part after Lab 10 (map 180,900 - 299,999). Its layout is an Exce
 
 - Reopened and fixed (`use_driver.c`). Losing a fight there counts as an **arena death**: you keep your items, and you're locked out for 5 minutes with "You should try again after becoming stronger." (`CHD_ARENALOCK`).
 - Rewards that can't be handed out are cleaned up properly instead of being left behind.
+
+#### Two-handed axes
+
+- New skill **Two-Handed Axe** (skill 36, `SK_AXE2H`; Agility/Strength/Strength like Two-Handed). Every class that has Two-Handed has it too, with the same maximum and cost, and knows it from the start (at 4, like Two-Handed). Existing characters get it automatically (`really_update_char`); it keeps following Two-Handed when a character arches.
+- Five new weapons, item templates 1364-1368 (`tools/world/axe2h.txt`), sprites 18145-18165 with their worn states. A weapon flagged both axe and two-handed uses the Two-Handed Axe skill (`get_fight_skill`).
+
+  | Axe | WV | Needs AGL / STR / Two-Handed Axe | Value | (2H sword WV, AGL / STR) |
+  |---|---|---|---|---|
+  | Bronze | 15 | 8 / 15 / 1 | 100 | 12, 10 / 12 |
+  | Steel | 30 | 16 / 30 / 15 | 500 | 24, 20 / 24 |
+  | Golden | 45 | 26 / 48 / 30 | 2500 | 36, 30 / 40 |
+  | Crystal | 60 | 36 / 68 / 45 | 12500 | 48, 40 / 60 |
+  | Titanium | 90 | 45 / 82 / 60 | 62500 | 72, 50 / 75 |
+
+- **Slower attacks**: while attacking with a two-handed axe, a character acts `AXE2H_SLOW` (3) speed steps slower (`ch_act_speed` in `svr_act.c`), about 15-25% fewer swings. Walking and everything else keep the normal speed. The client gets the same speed, so the swing animation matches.
+- Sold next to the two-handed swords: every merchant that sells a two-handed sword tier now also sells the axe of that tier (Karl in Aston, Gertrud, the outpost and lab merchants).
+- `#axe2h` lists them (in `#weapon` too); `#specialw` and the "needs" text know the new skill.
+- `build_lab` spec: new `it <t> wv`, `atreq` and `skreq` commands.
 
 ### Changes
 
@@ -260,5 +278,5 @@ Unchanged except for the version number and the larger view: `merc.dat`, `.moa` 
 - The client already loads `gfx/NNNNN.png` before its packed files, so new sprites are just PNGs in the client's `gfx` folder.
 - `tools/sprites/export_sprites.py`: exports a character's frames from `gx00`/`pnglib` to PNGs (colour key made transparent), e.g. to give the V2 Sprite Recolor Tool the base Templar, Harakim and Mercenary.
 - New sprites from generated art (`tools/sprites/art/`, made with `tools/sprites/shrink_art.py`): **18140** an open parchment scroll and **18141** a weathered open book, ready for new items. The script cuts out the background, shrinks the object to sprite size and rounds the colours to the client's 16-bit palette.
-- **Two-handed axe sprites** (`tools/sprites/art/axe2h/`): a double-bit axe in bronze (18145), steel (18150), gold (18155), crystal (18160) and titanium (18165), each but titanium followed by four damage states like the two-handed swords (rust, patina, tarnish, clouding, chipped edges). Made from a generated steel axe by `axe2h_build.py`; no item uses them yet.
+- **Two-handed axe sprites** (`tools/sprites/art/axe2h/`): a double-bit axe in bronze (18145), steel (18150), gold (18155), crystal (18160) and titanium (18165), each but titanium followed by four damage states like the two-handed swords (rust, patina, tarnish, clouding, chipped edges). Made from a generated steel axe by `axe2h_build.py`; used by the two-handed axes (see Gameplay).
 - `tools/sprites/install_variant.py`: copies a recoloured set into `gfx/` right after the original (sprite numbers + 448).

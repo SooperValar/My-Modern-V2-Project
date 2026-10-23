@@ -2411,7 +2411,7 @@ void plr_getmap_complete(int nr)
 				else smap[n].ch_sprite=ch[co].sprite_override;
 				smap[n].ch_status=ch[co].status;
 				smap[n].ch_status2=ch[co].status2;
-				smap[n].ch_speed=ch[co].speed;
+				smap[n].ch_speed=ch_act_speed(co);
 				smap[n].ch_nr=co;
 				smap[n].ch_id=(unsigned short)char_id(co);
 				if (tmp<=75 && ch[co].hp[5]>0) smap[n].ch_proz=((ch[co].a_hp+5)/10)/ch[co].hp[5];
@@ -2585,7 +2585,7 @@ void plr_getmap_fast(int nr)
 				else smap[n].ch_sprite=ch[co].sprite_override;
 				smap[n].ch_status=ch[co].status;
 				smap[n].ch_status2=ch[co].status2;
-				smap[n].ch_speed=ch[co].speed;
+				smap[n].ch_speed=ch_act_speed(co);
 				smap[n].ch_nr=co;
 				smap[n].ch_id=(unsigned short)char_id(co);
 				if (tmp<=75 && ch[co].hp[5]>0) smap[n].ch_proz=((ch[co].a_hp+5)/10)/ch[co].hp[5];

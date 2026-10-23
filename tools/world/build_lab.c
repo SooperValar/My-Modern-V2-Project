@@ -8,6 +8,7 @@
  *   it <temp> name|ref|desc <text...>
  *   it <temp> spr <s0> <s1> | flags <hex> | light <l0> <l1> | dur <ticks> | value <v>
  *   it <temp> d <i> <value>                        data[i]
+ *   it <temp> wv <v> | atreq <attrib 0-4> <v> | skreq <skill> <v>   weapon value and requirements
  *   it <temp> driver <n>                           item driver
  *   it <temp> status <s0> <s1>                     animation (client): 0/1 still, 16 = 4-frame loop, ...
  *   place <temp> <x> <y>                           put a copy of the item template there
@@ -95,6 +96,9 @@ int main(int argc,char **argv)
 			else if (!strcmp(word,"driver")) ti[a].driver=atoi(text);
 			else if (!strcmp(word,"dur")) ti[a].duration=atoi(text);
 			else if (!strcmp(word,"value")) ti[a].value=atoi(text);
+			else if (!strcmp(word,"wv")) ti[a].weapon[0]=atoi(text);
+			else if (!strcmp(word,"atreq") && sscanf(text,"%d %d",&i,&b)==2 && i>=0 && i<5) ti[a].attrib[i][2]=b;
+			else if (!strcmp(word,"skreq") && sscanf(text,"%d %d",&i,&b)==2 && i>=0 && i<MAXSKILL) ti[a].skill[i][2]=b;
 			else if (!strcmp(word,"d") && sscanf(text,"%d %d",&i,&b)==2 && i>=0 && i<10) ti[a].data[i]=b;
 			else printf("line %d not understood: %s\n",ln,line);
 

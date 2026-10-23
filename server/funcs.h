@@ -61,6 +61,7 @@ void plr_reset_status(int cn);
 void player_exit(int nr);
 void xsend(int nr,unsigned char *buf,int len);
 void plr_act(int nr);
+int ch_act_speed(int cn);
 void driver(int cn);
 void driver_msg(int cn,int type,int dat1,int dat2,int dat3,int dat4);
 int ch_base_status(int n);

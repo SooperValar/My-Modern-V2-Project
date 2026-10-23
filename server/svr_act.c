@@ -1101,9 +1101,26 @@ unsigned char speedtab[20][20]=
         {0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0}       //1
 };
 
+/* speed used for the current action: a two-handed axe makes attacks
+ * AXE2H_SLOW steps slower (walking and everything else stay the same).
+ * svr_tick.c sends the same value to the client so the animation matches. */
+int ch_act_speed(int cn)
+{
+        int s=ch[cn].speed,in;
+
+        if (ch[cn].status>=160 && ch[cn].status<=191 &&
+            (ch[cn].status2==0 || ch[cn].status2==5 || ch[cn].status2==6) &&
+            (in=ch[cn].worn[WN_RHAND])!=0 && IS_SANEITEM(in) &&
+            (it[in].flags&(IF_WP_AXE|IF_WP_TWOHAND))==(IF_WP_AXE|IF_WP_TWOHAND)) {
+                s+=AXE2H_SLOW;
+                if (s>19) s=19;
+        }
+        return s;
+}
+
 static inline int speedo(int n)
 {
-        return speedtab[ch[n].speed][ctick];
+        return speedtab[ch_act_speed(n)][ctick];
 }
 
 void plr_act(int cn)

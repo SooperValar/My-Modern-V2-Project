@@ -277,6 +277,9 @@ extern unsigned int mapmarker;
 #define SK_CONCEN	34
 #define SK_WARCRY	35
 #define SK_WARCRY2	(SK_WARCRY+100)
+#define SK_AXE2H	36	// two-handed axes (items with IF_WP_AXE and IF_WP_TWOHAND)
+#define AXE2H_SLOW	3	// a two-handed axe attacks this many speed steps slower (speedtab rows)
+#define AXE2H_T_BRONZE	1364	// item templates 1364-1368: Bronze, Steel, Golden, Crystal, Titanium Two-Handed Axe
 
 /* ch.data[] definitions */
 /* (this list is growing very slowly;
