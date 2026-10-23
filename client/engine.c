@@ -1232,6 +1232,19 @@ int autohide(int x,int y)
 	return 1;
 }
 
+/* Hide mode (F6) draws the low version of a high object, sprite+1 (walls have
+ * their low block there). The trees' sprite+1 is the same tree again, so they
+ * have their own stumps: 18190 + the tree's place in this list. */
+static int hide_sprite(int spr)
+{
+	static const unsigned short tree[]={320,356,358,360,362,880,882,884,1112,1114,1116,1238,1240};
+	int n;
+
+	for (n=0; n<(int)(sizeof(tree)/sizeof(tree[0])); n++)
+		if (spr==tree[n] || spr==tree[n]+1) return 18190+n;
+	return spr+1;
+}
+
 int facing(int x,int y,int dir)
 {
 	if (dir==1 && x==TILEX/2+1 && y==TILEY/2) return 1;
@@ -1367,7 +1380,7 @@ void eng_display(int init)	// optimize me!!!!!
 					}					
 
 				} else if (map[m].obj1) {					
-					copysprite(map[m].obj1+1,map[m].light|tmp,x*32,y*32,xoff,yoff);					
+					copysprite(hide_sprite(map[m].obj1),map[m].light|tmp,x*32,y*32,xoff,yoff);					
 				}
 
 				if (map[m].obj1 && map[m].x<1024 && map[m].y<1024) {

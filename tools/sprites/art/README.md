@@ -55,3 +55,16 @@ and the writing thickened so a few strokes survive at 32x32. Every combination o
 has a sprite, the pieces kept in their place on the page, so the item shows the page coming
 back together: page mask 1..14 (bit 0 = page 1) uses 18170+mask-1. Mask 15 is the whole
 tome, which has its own item. `preview.png` shows all 14.
+
+## Tree stumps for Hide mode - 18190-18202
+
+`stumps/stumps.py` cuts each tree down to a short stump with a pale cut face, on the same
+canvas as the tree so it lines up. Hide mode (F6) draws a high object's sprite+1, which is
+the low block for walls but the same tree again for trees; the client (`hide_sprite` in
+`engine.c`) sends these trees to their stump instead:
+
+| Tree | 320 | 356 | 358 | 360 | 362 | 880 | 882 | 884 | 1112 | 1114 | 1116 | 1238 | 1240 |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| Stump | 18190 | 18191 | 18192 | 18193 | 18194 | 18195 | 18196 | 18197 | 18198 | 18199 | 18200 | 18201 | 18202 |
+
+These are every tree used on the map. A new tree sprite needs a stump and an entry in that list.
