@@ -3341,6 +3341,7 @@ static int lab11_pages(int cn,int in)
                 }
         }
         it[in].data[1]=mask;
+        if (mask>0 && mask<15) it[in].sprite[0]=LAB11_PAGE_SPR+mask-1;	// the pieces held, fitted together
         for (b=mask,cnt=0; b; b>>=1) cnt+=b&1;
         sprintf(it[in].name,"Torn Pages (%d of 4)",cnt);
         it[in].flags|=IF_UPDATE;

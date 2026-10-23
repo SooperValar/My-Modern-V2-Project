@@ -1,0 +1,6 @@
+# Lab 11 torn pages: their own sprites (tools/sprites/art/pages). Page i uses 18170+(1<<i)-1;
+# joined pieces get 18170+mask-1 from the server (lab11_pages). lab11.py writes the same.
+it 1354 spr 18170 18170
+it 1355 spr 18171 18171
+it 1356 spr 18173 18173
+it 1357 spr 18177 18177

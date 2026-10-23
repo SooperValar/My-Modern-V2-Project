@@ -309,6 +309,7 @@ extern unsigned int mapmarker;
 #define LAB11_TEMPS_FROM 1200   // its character templates
 #define LAB11_TEMPS_TO  1259
 #define LAB11_UNDEAD_REGEN 220  // their undead regenerate 220/1000 hp a tick (about 4 hp/s) instead of 650
+#define LAB11_PAGE_SPR	18170	// torn page sprites: 18170+mask-1 for page masks 1..14 (bit 0 = page 1)
 #define SEYAN_SHRINES   22      // shrines of Kwai (bits in data[21]): 20 original + Lab 10 + Lab 11
 #define SEYAN_SHRINEBITS ((1u<<SEYAN_SHRINES)-1)
 #define LOOKTIER_STEP   448     // prestige look: a recoloured sprite set right after the original

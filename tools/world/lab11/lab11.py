@@ -292,7 +292,7 @@ def build(path, outdir):
         t = T_PAGE+i
         o('it %d copy 1061' % t); o('it %d name Torn Pages (1 of 4)' % t); o('it %d ref torn pages' % t)
         o('it %d desc Soaked pages torn from a drowned tome. Use one while holding another to put them together.' % t)
-        o('it %d spr 16854 16854' % t); o('it %d flags 4c0005614' % t); o('it %d driver 72' % t)
+        o('it %d spr %d %d' % (t, 18170+(1 << i)-1, 18170+(1 << i)-1)); o('it %d flags 4c0005614' % t); o('it %d driver 72' % t)
         for j, v in enumerate((4, 1 << i, 15, T_BOOK+3)): o('it %d d %d %d' % (t, j, v))
         c = T_CHESTP+i
         o('it %d copy 605' % c); o('it %d name Sunken Chest' % c); o('it %d ref the chest' % c)

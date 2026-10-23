@@ -46,3 +46,12 @@ haft gets grimy. Titanium items do not age, so titanium has only its perfect spr
 | Titanium | 18165 | - |
 
 The earlier drafts (`axe2h_painted/`, painted on a silhouette) are kept for reference.
+
+## Torn pages (Lab 11) - 18170-18183
+
+`pages/`: one generated photo of an old water-stained page (`source_page.png`), torn by
+`pages_build.py` into four pieces along two ragged lines, with pale fibres on the torn edges
+and the writing thickened so a few strokes survive at 32x32. Every combination of pieces
+has a sprite, the pieces kept in their place on the page, so the item shows the page coming
+back together: page mask 1..14 (bit 0 = page 1) uses 18170+mask-1. Mask 15 is the whole
+tome, which has its own item. `preview.png` shows all 14.
