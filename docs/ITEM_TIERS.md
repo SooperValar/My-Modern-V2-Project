@@ -35,13 +35,47 @@ special armors that are in the game now.
   - **Upgrade: an upgrade stone.** Two soulstones of a similar level go into a **container** (new item, gets its own generated sprite) and come out as one upgrade stone, the way flowers go into a flask to make a potion. Using it on an item raises it one tier (Magic -> Rare -> Epic) and adds a bonus. Legendary can't be reached this way.
   - Decided against: needing a soulstone to identify or awaken Epic and Legendary items.
 
-## Open questions
+## Open questions (suggested answer in brackets)
 
-- Drop rates: to be decided.
-- How close "matching" and "similar level" are (same rank, within 1-2 ranks, ...), and whether a higher stone can raise an item's level when used on it.
-- The container: its name and how players get it. Idea: as a gold sink, multi-use containers sold for more money. Sprite prompt to be written.
+Stones
+1. Reroll: does the stone have to be exactly the item's level? [yes, exactly]
+2. Container: how close must the two stones be, and what level is the upgrade stone? [same level; the upgrade stone has that level]
+3. Reroll: keeps the tier and the number of bonuses, only rolls which bonuses and how strong? [yes] Can Magic items be rerolled? [yes] Legendary? [no]
+4. Rare -> Epic: the upgrade adds a bonus; does it also add the Epic special effect? [yes]
+5. Highest item level: stones stop a little above 20. [item levels 1-20]
+
+Bonuses
+6. The bonus pool: the same for helmets and body armor, or different? [different leanings: helmets mind (Intuition, Willpower, mana, spell skills), body armor body (Strength, Agility, hitpoints, armor)]
+7. How strong a bonus is per item level and per tier (the formula). [I draft numbers to look at]
+8. The Epic special effects. [short list to pick from: resistance, regeneration, mana regeneration, light, ...]
+9. Rare names: generated names ("Stormcrest Helm") or the base name with a suffix ("Steel Helmet of the Wolf")? [suffix names, easier to read]
+
+Drops
+10. Drop rates. [to be decided]
+11. Which monsters drop tiered armor and how the item level is set. [any monster can; item level from the monster's rank, Strong monsters roll a better tier]
+12. Shops sell only Common. [yes]
+13. The Legendary list and their new numbers. [go through the current special armors one by one]
+
+Item level and requirements
+14. The rank requirement is added to the metal's normal requirements (Strength, Agility). [yes, both apply]
+
+Wear and repair
+15. Can tiered items be repaired and do they wear out? Soulstone items today can't be repaired. [they wear and can be repaired like normal armor]
+
+How it shows
+16. The glow: none on Common; from Magic up? [yes] Where: backpack, worn slots, shop and grave windows, on the ground? [all of them]
+17. Tooltip shows the tier, item level and required rank. [yes]
+
+Container
+18. Name, where to get it, how many uses, price. [a cheap single-use one in shops, pricier multi-use ones as a gold sink]
+
+Later
+- Weapons, the other armor pieces, rings.
+- Upgrade stones on each other: suggestion, they don't combine.
+
+Decided
 - Stone on stone stays: using a soulstone on another merges them into a higher-level stone, as now.
-- Upgrade stones on each other: undecided. Suggestion: they don't combine (only plain soulstones merge), so there is one clear way to each kind of stone.
+- No old items or players to convert: there are none in the game yet.
 
 ## How soulstones work now (for reference)
 
@@ -49,7 +83,3 @@ special armors that are in the game now.
 - Stone on stone: the first stone gains a random part (0-100%) of the second one's experience, the second is used up.
 - Stone on equipment: random bonuses with a total strength of the stone's level, and the item then needs that rank to wear (`soultrans_equipment`).
 - Suggestion: keep this rank scale for the tiers too. Item level, soulstone level and the rank needed to wear the item are then the same number, which is easy to understand ("a level 12 helm needs rank 12 and a level 12 stone").
-- The bonus pool per tier and its numbers; the Epic special effects.
-- The glow: whether Common has none and Magic already glows; where it shows (inventory, shop and grave windows, on the ground).
-- No old items or players to convert: there are none in the game yet.
-- Later: weapons, the other armor pieces, rings.
