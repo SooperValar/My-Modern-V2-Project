@@ -69,6 +69,10 @@ How it shows
 Container
 18. Name, where to get it, how many uses, price. [a cheap single-use one in shops, pricier multi-use ones as a gold sink]
 
+Side notes (to come back to)
+- **Class-aware rolls**: a skill bonus the character's class doesn't have (Concentrate on a Templar) wastes a bonus slot. Options: the class of the character who rerolls or upgrades decides which skills can roll, or such a bonus simply does nothing for that class (as a skill the character doesn't know does now).
+- **Rank to reroll or upgrade**: the character may need the rank of the gear he rerolls or upgrades.
+
 Later
 - Weapons, the other armor pieces, rings.
 - Upgrade stones on each other: suggestion, they don't combine.
