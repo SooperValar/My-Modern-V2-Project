@@ -8,6 +8,7 @@ In order:
 Later (ideas, not decided):
 
 - Prestige: what triggers it and what it gives (the Final Test's Shrine of Change will be used).
+- Unused recolors of the exploration point post: green 1012, blue 1019/1020, purple 1144 (gold 1090 is the exploration point). Nothing uses them yet; maybe for prestige (e.g. points or markers only prestiged characters can use).
 - Swimming skill: a river south of Aston and a flooded mine quest like Lab 11 (without the darkness).
 - Lab 11's third merchant.
 - Undead regeneration and underwater damage balance, after more testing.
