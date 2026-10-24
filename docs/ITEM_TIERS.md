@@ -13,7 +13,9 @@ special armors that are in the game now.
 | Epic | Purple | 3-4 stronger bonuses and one special effect (resistance, regeneration, light, ...) |
 | Legendary | Orange | Hand-designed named pieces; the current special armors (Fire and Ice sets, Titanium Armor of Ankh, Helm of Shadows, Grolm Crown, ...) move here and get rebalanced. Drop only |
 
-- **Bonus strength is not tied to the metal.** Harakim and Arch-Harakim wear steel for their whole career, so a Rare steel helm has to be able to be as good as a Rare crystal one. Proposal: every tiered item has an **item level** (from where it dropped, or from the soulstones used on it) that sets how strong its bonuses roll; the metal only sets the armor value and the requirements.
+- **Bonus strength is not tied to the metal.** Harakim and Arch-Harakim wear steel for their whole career, so a Rare steel helm has to be able to be as good as a Rare crystal one. Every tiered item has an **item level** (from where it dropped, or from the soulstones used on it) that sets how strong its bonuses roll; the metal only sets the armor value and its normal requirements.
+- **Rank requirement** from the item level, so a strong steel item can't be handed to a low-ranked character (like soulstone items need the stone's rank now).
+- Tiers overlap: a high-level Magic item may beat a low-level Epic one when the level gap is wide enough.
 - Tier and bonuses live on the item itself (like today's modded and soulstone items), so no new templates are needed for Magic to Epic.
 
 ## How it shows
@@ -27,15 +29,17 @@ special armors that are in the game now.
 - **Random drops** (main source). Better tiers deeper in the world.
 - **Strong monsters** (the ones that drop soulstones) roll better tiers (wanted, details open).
 - **Soulstones**:
-  - **Reroll: 1 soulstone.** The item's bonuses roll again.
-  - **Upgrade: 2 soulstones.** The item goes up one tier (Magic -> Rare -> Epic) and gains a bonus. Legendary can't be reached this way. How exactly is open (see below).
+  - The stone's level has to match the item's level, much like now.
+  - **Reroll: a soulstone.** The item's bonuses roll again.
+  - **Upgrade: an upgrade stone.** Two soulstones of a similar level go into a **container** (new item, gets its own generated sprite) and come out as one upgrade stone, the way flowers go into a flask to make a potion. Using it on an item raises it one tier (Magic -> Rare -> Epic) and adds a bonus. Legendary can't be reached this way.
   - Decided against: needing a soulstone to identify or awaken Epic and Legendary items.
 
 ## Open questions
 
 - Drop rates: to be decided.
-- What the soulstone's rank does. Proposal: it sets the item level of the new roll (so a high-rank stone can make a steel helm strong), capped so a tier can't be pushed past what it's meant to be.
-- How the upgrade works with 2 stones: put both in at once (e.g. combine the two first into one "double" stone, or hold one and use it on an item that already has one stone set in it), and whether both stones need a minimum rank for the target tier.
+- How close "matching" and "similar level" are (same rank, within 1-2 ranks, ...), and whether a higher stone can raise an item's level when used on it.
+- The container: its name, where players get it (shop, drop, quest), whether it is used up.
+- Stone on stone: today using a soulstone on another merges them into a higher rank. Keep that next to the container, or drop it.
 - The bonus pool per tier and its numbers; the Epic special effects.
 - The glow: whether Common has none and Magic already glows; where it shows (inventory, shop and grave windows, on the ground).
 - No old items or players to convert: there are none in the game yet.
