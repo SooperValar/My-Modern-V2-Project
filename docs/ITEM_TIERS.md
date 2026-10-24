@@ -153,7 +153,7 @@ Skill suffixes: mostly the skill's own name ("of Resistance", "of Bless", "of St
 3. **A reroll does not change the Epic special effect.** It gets its own way to be rerolled. Suggestion: an upgrade stone used on an Epic (which can't be upgraded further) rerolls its effect.
 4. **An upgrade keeps** the main attribute and the skills, re-splits the bigger budget over them and adds one new skill.
 5. **Selling price**: the metal's normal price x the tier step (x1, x2, x3, x5).
-6. **Legendaries are unique, hand-designed items.** A soulstone does nothing to them ("This item is too powerful to change."). They exist **only for the main cap metals: steel, emerald and titanium**.
+6. **Legendaries are unique, hand-designed items.** A soulstone does nothing to them ("This item is too powerful to change."). They exist **only for the main cap metals: steel, emerald and titanium**, and **all of them are late game** (high item levels; e.g. a steel Legendary for Harakim, not an early-game steel item). So the 1% Legendary drop chance only applies to late-game monsters; earlier, that roll falls to Epic.
 7. **Weapons: soulstones are blocked on weapons for now.** Weapons get the tier system later; whether with the same bonuses or their own set is open.
 8. **The glow is a look only**, no light.
 9. **Tiered items can be dropped, given and traded** like any other item.
