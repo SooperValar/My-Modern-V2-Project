@@ -120,7 +120,14 @@ Word list (liked; prefix words decided):
 | Braveness | Brave |
 | A spread over all four (Mercenary) | Balanced |
 
-The Balanced category is called **Mercenary** (alternative: Adventurer), e.g. **"Strong Mercenary Armor of Stealth"**; with the spread over all four attributes: "Balanced Steel Mercenary Armor of Stealth".
+The Balanced category is called **Mercenary** (alternative: Adventurer), e.g. **"Strong Steel Mercenary Armor of Stealth"**; with the spread over all four attributes: "Balanced Steel Mercenary Armor of Stealth".
+
+**The metal always stays in the name.** Order: prefix, metal, category, piece, suffix.
+
+Catch: an item's name holds at most 39 characters (`char name[40]` in the item data). Many full names are longer: "Balanced Crystal Mercenary Helmet of Ghost Companion" is 52, "Strong Titanium Fighter Armor of Resistance" 43. Options:
+1. The item keeps a short stored name, and the server builds the full name from the item's tier data wherever it is shown (tooltip, look, shop). No change to the data files. (suggestion)
+2. Make the name field longer: every item and template in the data files must be converted.
+3. Shorter words (e.g. "Merc", "Helm", suffixes like "of Ghosts").
 
 Skill suffixes: mostly the skill's own name ("of Resistance", "of Bless", "of Stealth"), with a nicer word where the name reads badly (Repair -> "of Mending", Lock-Picking -> "of Picking", Two-Handed Axe -> "of Cleaving", Surround Hit -> "of Sweeping", ...). To go through together.
 
