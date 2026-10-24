@@ -146,6 +146,20 @@ Skill suffixes: mostly the skill's own name ("of Resistance", "of Bless", "of St
 - **Soul Crucible**: the container's name. Sprite: a block with a glowing hole at the top and a soulstone symbol on the side, 2-3 sprites for its state (empty, one stone, full). Available at all ranks. **Three ranks**: Lesser Soul Crucible (stones up to level 7, cheap), Soul Crucible (up to 14), Greater Soul Crucible (up to 20, expensive). Same base sprite, **a different glow color per rank**, each with empty / half / full states.
 - Come back to: Epic effects, Legendaries, the skill suffix words, the bonus values (after the samples).
 
+## Decisions, round 4 (small ones)
+
+1. **A skill rolls at most once per item**, to keep items varied.
+2. **Attributes**: the category's two main attributes are equally likely (Strength or Agility, Intuition or Willpower). An Epic's secondary: **70% the other main attribute, 30% Braveness**. (Braveness-main items keep the usual main attribute as the secondary.)
+3. **A reroll does not change the Epic special effect.** It gets its own way to be rerolled. Suggestion: an upgrade stone used on an Epic (which can't be upgraded further) rerolls its effect.
+4. **An upgrade keeps** the main attribute and the skills, re-splits the bigger budget over them and adds one new skill.
+5. **Selling price**: the metal's normal price x the tier step (x1, x2, x3, x5).
+6. **Legendaries are unique, hand-designed items.** A soulstone does nothing to them ("This item is too powerful to change."). They exist **only for the main cap metals: steel, emerald and titanium**.
+7. **Weapons: soulstones are blocked on weapons for now.** Weapons get the tier system later; whether with the same bonuses or their own set is open.
+8. **The glow is a look only**, no light.
+9. **Tiered items can be dropped, given and traded** like any other item.
+10. **Messages**: reroll "The soulstone sinks into the armor. Its powers shift."; upgrade "The armor's glow intensifies for a moment. Afterward, you feel it has become more powerful."
+11. **Soul Crucible prices (first idea)**: Lesser 25-75 gold, Soul Crucible 150-300 gold, Greater 500-600 gold but probably higher. For scale: a titanium two-handed sword sells for 500 gold (50,000 silver). Suggestion for the Greater: about 1,500 gold.
+
 ## Epic special effect ideas (for 8)
 
 - **Regeneration**: faster hitpoint regeneration.
