@@ -79,30 +79,36 @@ The soulstone's way of rolling is kept and changed: the item level is a budget o
 | Fighter | Strength or Agility | Braveness | Hand to Hand, Dagger, Sword, Two-Handed, Two-Handed Axe, Surround Hit, Warcry, Resistance, Immunity, Regenerate, Rest |
 | Mage | Intuition or Willpower | Braveness | Bless, Enhance Weapon, Protection, Magic Shield, Heal, Blast, Curse, Stun, Ghost Companion, Dispel Magic, Dagger, Resistance, Concentrate, Meditate |
 | Balanced | Any of the four, or a spread over all four | Braveness | Any from the Fighter and Mage lists, and Stealth |
-| Utility | open | open | Perception, Lock-Picking, Bartering, Repair, Light, Identify, Sense Magic, Swimming |
+| Utility | none (skills only) | none | Perception, Lock-Picking, Bartering, Repair, Light, Identify, Sense Magic, Swimming |
 
 - Left out for now, because they have no real use in the game yet: Karate, Staff, Axe, and Recall.
 
 ### Hitpoints, endurance and mana (flat, outside the budget)
 
-Every item with bonuses also gets hitpoints, endurance and mana by its category, tier and item level. They don't use budget points.
+Every item with bonuses also gets hitpoints, endurance and mana by its category, tier and item level. They don't use budget points. The scale runs from Magic to Legendary:
 
-| Per item level | Hitpoints | Endurance | Mana |
-|---|---|---|---|
-| Fighter, Magic | 3 | 2 | 1 |
-| Mage, Magic | 1 | 2 | 3 |
-| Fighter, Epic | 6 | 4 | 2 |
-| Mage, Epic | 2 | 4 | 6 |
+| Per item level | Magic | Rare | Epic | Legendary |
+|---|---|---|---|---|
+| Fighter (hp/end/mana) | 3/2/1 | ? | ? | 15/10/5 |
+| Mage | 1/2/3 | ? | ? | 5/10/15 |
+| Balanced | 2/2/2 | ? | ? | 10/10/10 |
+| Utility (half of Balanced) | 1/1/1 | ? | ? | 5/5/5 |
 
-So a level 20 Epic Fighter helm gives +120 hitpoints, +80 endurance, +40 mana.
+Open: the two middle steps. Legendary is 5x Magic. Suggestion: 1x / 2x / 3x / 5x (Fighter Rare 6/4/2, Epic 9/6/3); that replaces the earlier Epic 6/4/2. Or keep Epic at 2x: 1x / 1.5x / 2x / 5x (a big jump to Legendary).
 
-Open: Rare (suggestion: halfway, Fighter 4.5/3/1.5 rounded per item), Balanced (suggestion: 2/2/2 at Magic, 4/4/4 at Epic), Utility (suggestion: 1/1/1 or none), Legendary (with the Legendary talk). Check against real characters' hitpoints and mana at each rank when we do the numbers (question 7); two items stack.
+Example: a level 20 Legendary Fighter piece gives +300 hitpoints, +200 endurance, +100 mana; a helmet and body armor together twice that. To check against real characters' hitpoints and mana per rank when we do the numbers (question 7).
+
+### Utility items
+
+No attributes, only skills: their whole budget goes into the utility skills, so those roll higher. They still get the small hitpoints/endurance/mana above.
 
 ### Names
 
 The name tells what the item does: a prefix from a skill bonus, the category, and a suffix from the main attribute, e.g. **"Resistant Steel Fighter Armor of the Bear"** (Resistance, Fighter, Strength). Long, but readable. Magic items: the suffix only (plus the category). Rare and up: prefix and suffix.
 
-Open: the word list (a prefix for each skill, a suffix for each attribute), and what a Utility item's main attribute is (if any).
+Utility example: **"Mending Steel Armor of Utility"** (Repair; the category as the suffix, since there is no attribute to name).
+
+Open: the word list; and whether attributes or skills give the prefix or the suffix (not decided yet).
 
 ## Epic special effect ideas (for 8)
 
