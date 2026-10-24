@@ -67,26 +67,42 @@ How it shows
 Container
 18. From chests and/or bought from Damor; price open. Multi-use containers held back for now.
 
-## Bonus framework (proposed, built on the soulstone system)
+## Bonus framework (built on the soulstone system)
 
-The soulstone's way of rolling is kept and changed: the item level is a budget of points that is spent on bonuses.
+The soulstone's way of rolling is kept and changed: the item level is a budget of points that is spent on bonuses (attributes and skills).
 
 - **No extra requirements.** Bonuses never raise an item's requirements. An item only needs its metal's normal requirements and the rank of its item level.
-- **Every item with bonuses gets a category** when it is made: **Fighter, Balanced or Mage**. The category decides which bonuses can roll; the tier decides how many.
+- **Every item with bonuses gets a category** when it is made. The category decides which bonuses can roll; the tier decides how many. Odds when an item is made: **Fighter 30%, Balanced 30%, Mage 30%, Utility 10%.** A reroll keeps the category.
 
 | Category | Main attribute | Small extra | Skills that can roll |
 |---|---|---|---|
-| Fighter | Strength or Agility | Braveness | Hand to Hand, Karate, Dagger, Sword, Axe, Two-Handed, Two-Handed Axe, Surround Hit, Warcry, Resistance, Immunity, Regenerate, Rest |
-| Mage | Intuition or Willpower | Braveness | Bless, Enhance Weapon, Protection, Magic Shield, Heal, Blast, Curse, Stun, Ghost Companion, Dispel Magic, Dagger, Staff, Resistance, Concentrate, Meditate |
-| Balanced | Any of the four, or a spread over all four | Braveness | Any from both lists |
+| Fighter | Strength or Agility | Braveness | Hand to Hand, Dagger, Sword, Two-Handed, Two-Handed Axe, Surround Hit, Warcry, Resistance, Immunity, Regenerate, Rest |
+| Mage | Intuition or Willpower | Braveness | Bless, Enhance Weapon, Protection, Magic Shield, Heal, Blast, Curse, Stun, Ghost Companion, Dispel Magic, Dagger, Resistance, Concentrate, Meditate |
+| Balanced | Any of the four, or a spread over all four | Braveness | Any from the Fighter and Mage lists, and Stealth |
+| Utility | open | open | Perception, Lock-Picking, Bartering, Repair, Light, Identify, Sense Magic, Swimming |
 
-Open in the framework:
-- Hitpoints, mana and armor value: which categories can roll them (proposal: hitpoints and armor for Fighter, mana for Mage, all three for Balanced).
-- Utility skills (Stealth, Perception, Lock-Picking, Bartering, Repair, Light, Recall, Identify, Sense Magic, Swimming): none, or Balanced only.
-- Category odds when an item drops (proposal: equal thirds).
-- A reroll keeps the category (proposal: yes; it makes rerolling a way to improve an item, not to change what it is).
-- The tooltip shows the category (proposal: yes).
-- The category answers the side note on class-aware rolls: a Fighter item can never roll Concentrate.
+- Left out for now, because they have no real use in the game yet: Karate, Staff, Axe, and Recall.
+
+### Hitpoints, endurance and mana (flat, outside the budget)
+
+Every item with bonuses also gets hitpoints, endurance and mana by its category, tier and item level. They don't use budget points.
+
+| Per item level | Hitpoints | Endurance | Mana |
+|---|---|---|---|
+| Fighter, Magic | 3 | 2 | 1 |
+| Mage, Magic | 1 | 2 | 3 |
+| Fighter, Epic | 6 | 4 | 2 |
+| Mage, Epic | 2 | 4 | 6 |
+
+So a level 20 Epic Fighter helm gives +120 hitpoints, +80 endurance, +40 mana.
+
+Open: Rare (suggestion: halfway, Fighter 4.5/3/1.5 rounded per item), Balanced (suggestion: 2/2/2 at Magic, 4/4/4 at Epic), Utility (suggestion: 1/1/1 or none), Legendary (with the Legendary talk). Check against real characters' hitpoints and mana at each rank when we do the numbers (question 7); two items stack.
+
+### Names
+
+The name tells what the item does: a prefix from a skill bonus, the category, and a suffix from the main attribute, e.g. **"Resistant Steel Fighter Armor of the Bear"** (Resistance, Fighter, Strength). Long, but readable. Magic items: the suffix only (plus the category). Rare and up: prefix and suffix.
+
+Open: the word list (a prefix for each skill, a suffix for each attribute), and what a Utility item's main attribute is (if any).
 
 ## Epic special effect ideas (for 8)
 
