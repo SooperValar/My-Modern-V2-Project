@@ -72,16 +72,16 @@ Container
 The soulstone's way of rolling is kept and changed: the item level is a budget of points that is spent on bonuses (attributes and skills).
 
 - **No extra requirements.** Bonuses never raise an item's requirements. An item only needs its metal's normal requirements and the rank of its item level.
-- **Every item with bonuses gets a category** when it is made. The category decides which bonuses can roll; the tier decides how many. Odds when an item is made: **Fighter 30%, Balanced 30%, Mage 30%, Utility 10%.** A reroll keeps the category.
+- **Every item with bonuses gets a category** when it is made. The category decides which bonuses can roll; the tier decides how many. Odds when an item is made: **Fighter 30%, Mercenary 30%, Mage 30%, Utility 10%.** A reroll keeps the category.
 
 | Category | Main attribute | Small extra | Skills that can roll |
 |---|---|---|---|
 | Fighter | Strength or Agility | Braveness | Hand to Hand, Dagger, Sword, Two-Handed, Two-Handed Axe, Surround Hit, Warcry, Resistance, Immunity, Regenerate, Rest |
 | Mage | Intuition or Willpower | Braveness | Bless, Enhance Weapon, Protection, Magic Shield, Heal, Blast, Curse, Stun, Ghost Companion, Dispel Magic, Dagger, Resistance, Concentrate, Meditate |
-| Balanced | Any of the four, or a spread over all four | Braveness | Any from the Fighter and Mage lists, and Stealth |
+| Mercenary | Any of the four, or a spread over all four | Braveness | Any from the Fighter and Mage lists, and Stealth |
 | Utility | none (skills only) | none | Perception, Lock-Picking, Bartering, Repair, Light, Identify, Sense Magic, Swimming |
 
-- **Braveness as the main attribute**: in Fighter, Mage and Balanced there is a small chance (suggestion: 10%) that Braveness becomes the main attribute and the category's usual main attribute the secondary one (e.g. a Fighter item with Braveness first, Strength second). Named by the main one: "Brave Steel Fighter Armor of ...".
+- **Braveness as the main attribute**: in Fighter, Mage and Mercenary there is a small chance (**10%**) that Braveness becomes the main attribute and the category's usual main attribute the secondary one (e.g. a Fighter item with Braveness first, Strength second). Named by the main one: "Brave Steel Fighter Armor of ...".
 - Left out for now, because they have no real use in the game yet: Karate, Staff, Axe, and Recall.
 
 ### Hitpoints, endurance and mana (flat, outside the budget)
@@ -92,8 +92,8 @@ Every item with bonuses also gets hitpoints, endurance and mana by its category,
 |---|---|---|---|---|
 | Fighter | 1.5/1/0.5 | 3/2/1 | 4.5/3/1.5 | 7.5/5/2.5 |
 | Mage | 0.5/1/1.5 | 1/2/3 | 1.5/3/4.5 | 2.5/5/7.5 |
-| Balanced | 1/1/1 | 2/2/2 | 3/3/3 | 5/5/5 |
-| Utility (half of Balanced) | 0.5/0.5/0.5 | 1/1/1 | 1.5/1.5/1.5 | 2.5/2.5/2.5 |
+| Mercenary | 1/1/1 | 2/2/2 | 3/3/3 | 5/5/5 |
+| Utility (half of Mercenary) | 0.5/0.5/0.5 | 1/1/1 | 1.5/1.5/1.5 | 2.5/2.5/2.5 |
 
 Example: a level 20 Legendary Fighter piece gives +150 hitpoints, +100 endurance, +50 mana; a helmet and body armor together +300/+200/+100. To check against real characters' hitpoints and mana per rank when we do the numbers (question 7).
 
@@ -118,9 +118,9 @@ Word list (liked; prefix words decided):
 | Intuition | Wise |
 | Willpower | Willful |
 | Braveness | Brave |
-| A spread over all four (Balanced) | Balanced |
+| A spread over all four (Mercenary) | Balanced |
 
-Open: a Balanced item with the spread would read "Balanced Steel Balanced Armor"; suggestion: then the category word is left out ("Balanced Steel Armor of Stealth").
+The Balanced category is called **Mercenary** (alternative: Adventurer), e.g. **"Strong Mercenary Armor of Stealth"**; with the spread over all four attributes: "Balanced Steel Mercenary Armor of Stealth".
 
 Skill suffixes: mostly the skill's own name ("of Resistance", "of Bless", "of Stealth"), with a nicer word where the name reads badly (Repair -> "of Mending", Lock-Picking -> "of Picking", Two-Handed Axe -> "of Cleaving", Surround Hit -> "of Sweeping", ...). To go through together.
 
