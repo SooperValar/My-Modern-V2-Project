@@ -81,6 +81,7 @@ The soulstone's way of rolling is kept and changed: the item level is a budget o
 | Balanced | Any of the four, or a spread over all four | Braveness | Any from the Fighter and Mage lists, and Stealth |
 | Utility | none (skills only) | none | Perception, Lock-Picking, Bartering, Repair, Light, Identify, Sense Magic, Swimming |
 
+- **Braveness as the main attribute**: in Fighter, Mage and Balanced there is a small chance (suggestion: 10%) that Braveness becomes the main attribute and the category's usual main attribute the secondary one (e.g. a Fighter item with Braveness first, Strength second). Named by the main one: "Brave Steel Fighter Armor of ...".
 - Left out for now, because they have no real use in the game yet: Karate, Staff, Axe, and Recall.
 
 ### Hitpoints, endurance and mana (flat, outside the budget)
@@ -108,7 +109,7 @@ No attributes, only skills: their whole budget goes into the utility skills, so 
 - Magic (one bonus): only the prefix or only the suffix, e.g. "Strong Steel Fighter Armor" or "Steel Mage Helmet of Bless".
 - Utility (no attributes): the suffix only, e.g. **"Steel Utility Armor of Mending"** (Repair).
 
-Word list (draft):
+Word list (liked; prefix words decided):
 
 | Attribute | Prefix |
 |---|---|
@@ -117,7 +118,9 @@ Word list (draft):
 | Intuition | Wise |
 | Willpower | Willful |
 | Braveness | Brave |
-| A spread over all four (Balanced) | Even |
+| A spread over all four (Balanced) | Balanced |
+
+Open: a Balanced item with the spread would read "Balanced Steel Balanced Armor"; suggestion: then the category word is left out ("Balanced Steel Armor of Stealth").
 
 Skill suffixes: mostly the skill's own name ("of Resistance", "of Bless", "of Stealth"), with a nicer word where the name reads badly (Repair -> "of Mending", Lock-Picking -> "of Picking", Two-Handed Axe -> "of Cleaving", Surround Hit -> "of Sweeping", ...). To go through together.
 
