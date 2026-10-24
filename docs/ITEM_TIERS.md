@@ -130,6 +130,22 @@ The Balanced category is called **Mercenary** (alternative: Adventurer), e.g. **
 
 Skill suffixes: mostly the skill's own name ("of Resistance", "of Bless", "of Stealth"), with a nicer word where the name reads badly (Repair -> "of Mending", Lock-Picking -> "of Picking", Two-Handed Axe -> "of Cleaving", Surround Hit -> "of Sweeping", ...). To go through together.
 
+## Decisions, round 3
+
+- **Bonuses per tier (draft, see `docs/ITEM_SAMPLES.md`)**: Magic 1 bonus (the main attribute or one skill); Rare main attribute + 1-2 skills; Epic main attribute + a secondary + 2 skills; Utility skills only (1 / 2-3 / 3-4). The main attribute takes about half the budget. **Budget = item level x tier (Magic 1, Rare 2, Epic 3)**, matching the even steps. 1 point = +1/2 attribute or +1 skill (the soulstone's values), to be judged from the samples.
+- **A soulstone on a Common item** makes it Magic with a random category. Tiered armor also drops from monsters (below); soulstones are not the only way in.
+- **No wear**: tiered items never wear out (can change later).
+- **Tooltip**: full name in the tier color; tier, category, item level, required rank; the bonuses; armor value and requirements.
+- **Strong monsters stay in the pentagrams only**, to keep people going there.
+- **Drops (starting numbers)**: 1 in 100 kills drops tiered armor, 1 in 5 for Strong monsters; tier odds 70% Magic, 22% Rare, 7% Epic, 1% Legendary. Item level = the monster's rank +-1.
+- **Metal follows the item level**: bronze and steel low, gold and crystal in the middle, titanium late; **steel can drop at any level**.
+- Chests that give "of the Lion" style armor today give Magic items instead.
+- **Glow**: subtle at every tier, never obnoxious (several pieces on the ground). **Grave glow** is built at the same time.
+- Separate pools for helmets and body armor: **not needed**, the categories cover it.
+- Rank to reroll or upgrade: **not needed for now**, maybe after release.
+- **Soul Crucible**: the container's name. Sprite: a block with a glowing hole at the top and a soulstone symbol on the side, 2-3 sprites for its state (empty, one stone, full). Available at all ranks. Open: one crucible for everyone, or ranked crucibles (a cheap one for low stone levels, an expensive one for high levels).
+- Come back to: Epic effects, Legendaries, the skill suffix words, the bonus values (after the samples).
+
 ## Epic special effect ideas (for 8)
 
 - **Regeneration**: faster hitpoint regeneration.
