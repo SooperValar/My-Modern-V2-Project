@@ -35,39 +35,50 @@ special armors that are in the game now.
   - **Upgrade: an upgrade stone.** Two soulstones of a similar level go into a **container** (new item, gets its own generated sprite) and come out as one upgrade stone, the way flowers go into a flask to make a potion. Using it on an item raises it one tier (Magic -> Rare -> Epic) and adds a bonus. Legendary can't be reached this way.
   - Decided against: needing a soulstone to identify or awaken Epic and Legendary items.
 
-## Open questions (suggested answer in brackets)
+## Answers so far (numbers are the questions as first asked)
 
 Stones
-1. Reroll: does the stone have to be exactly the item's level? [yes, exactly]
-2. Container: how close must the two stones be, and what level is the upgrade stone? [same level; the upgrade stone has that level]
-3. Reroll: keeps the tier and the number of bonuses, only rolls which bonuses and how strong? [yes] Can Magic items be rerolled? [yes] Legendary? [no]
-4. Rare -> Epic: the upgrade adds a bonus; does it also add the Epic special effect? [yes]
-5. Highest item level: stones stop a little above 20. [item levels 1-20]
+1. A reroll stone must be exactly the item's level. **Decided.**
+2. Container: two stones of the same level make an upgrade stone of that level; or, if the two differ, the result has the lower level, with a warning before combining. **Decided (either; leaning to allow different levels with the warning).**
+3. A reroll keeps the tier and the number of bonuses; Magic items can be rerolled, Legendary can't. **Decided.**
+4. Rare -> Epic also adds the Epic special effect. **Decided.**
+5. Item levels 1-20. **Decided.**
 
 Bonuses
-6. The bonus pool: the same for helmets and body armor, or different? [different leanings: helmets mind (Intuition, Willpower, mana, spell skills), body armor body (Strength, Agility, hitpoints, armor)]
-7. How strong a bonus is per item level and per tier (the formula). [I draft numbers to look at]
-8. The Epic special effects. [short list to pick from: resistance, regeneration, mana regeneration, light, ...]
-9. Rare names: generated names ("Stormcrest Helm") or the base name with a suffix ("Steel Helmet of the Wolf")? [suffix names, easier to read]
+6. Separate bonus pools for helmets and body armor are wanted, but they should not lean toward classes (helmet = caster, body = fighter). **Come back to.**
+7. Bonus strength per level and tier. **Come back to, needs its own focused session.**
+8. Epic special effects: ideas listed below. **To pick from.**
+9. Names: Magic gets a suffix, Rare a prefix and a suffix, and the name must come from the bonuses the item really has (without limiting which bonuses can roll). Idea: after rolling, the strongest bonus names the suffix ("of the Bear" = Strength) and the second one the prefix; a third bonus is unnamed. **Decided in principle.**
 
 Drops
-10. Drop rates. [to be decided]
-11. Which monsters drop tiered armor and how the item level is set. [any monster can; item level from the monster's rank, Strong monsters roll a better tier]
-12. Shops sell only Common. [yes]
-13. The Legendary list and their new numbers. [go through the current special armors one by one]
+10. Start by looking at how often Strong monsters appear. **Next.** (Found: only pentagram-quest enemies can become Strong, 1 in 25.)
+11. Any monster can drop tiered armor, item level from the monster's rank, Strong monsters roll a better tier. **Decided.** (Found: every Strong monster carries a soulstone.)
+12. Shops sell only Common. **Decided.** Maybe later Damor's shop sells some random Magic gear.
+13. Legendary items: **longer conversation later.** Idea: each one changes an aspect of a skill.
 
-Item level and requirements
-14. The rank requirement is added to the metal's normal requirements (Strength, Agility). [yes, both apply]
-
-Wear and repair
-15. Can tiered items be repaired and do they wear out? Soulstone items today can't be repaired. [they wear and can be repaired like normal armor]
+Requirements and wear
+14. Both the rank requirement and the metal's normal requirements apply. **Decided.**
+15. Wear: leaning toward **no wear** (nothing to repair). Today's modded armor already takes no damage from fighting (max_damage 0); it still has the normal age limit.
 
 How it shows
-16. The glow: none on Common; from Magic up? [yes] Where: backpack, worn slots, shop and grave windows, on the ground? [all of them]
-17. Tooltip shows the tier, item level and required rank. [yes]
+16. No glow on Common; Magic and up glow, everywhere items show. **Decided.**
+17. The tooltip shows tier, item level and required rank. **Decided.**
 
 Container
-18. Name, where to get it, how many uses, price. [a cheap single-use one in shops, pricier multi-use ones as a gold sink]
+18. From chests and/or bought from Damor; price open. Multi-use containers held back for now.
+
+## Epic special effect ideas (for 8)
+
+- **Regeneration**: faster hitpoint regeneration.
+- **Clarity**: faster mana regeneration.
+- **Stamina**: faster endurance regeneration.
+- **Warding**: shorter curse and stun on the wearer.
+- **Light**: the item gives light (the old "Shining" prefix did this).
+- **Night sight**: see in the dark (infravision).
+- **Water breathing**: no underwater damage (ties in with Lab 11 and the planned flooded mine).
+- **Thorns**: part of melee damage taken goes back to the attacker (new code).
+- **Thrift**: spells cost a little less mana (like Concentrate, but for everyone).
+- **Wisdom**: a little more experience from kills.
 
 Side notes (to come back to)
 - **Class-aware rolls**: a skill bonus the character's class doesn't have (Concentrate on a Templar) wastes a bonus slot. Options: the class of the character who rerolls or upgrades decides which skills can roll, or such a bonus simply does nothing for that class (as a skill the character doesn't know does now).
