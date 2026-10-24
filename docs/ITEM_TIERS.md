@@ -38,8 +38,16 @@ special armors that are in the game now.
 
 - Drop rates: to be decided.
 - How close "matching" and "similar level" are (same rank, within 1-2 ranks, ...), and whether a higher stone can raise an item's level when used on it.
-- The container: its name, where players get it (shop, drop, quest), whether it is used up.
-- Stone on stone: today using a soulstone on another merges them into a higher rank. Keep that next to the container, or drop it.
+- The container: its name and how players get it. Idea: as a gold sink, multi-use containers sold for more money. Sprite prompt to be written.
+- Stone on stone stays: using a soulstone on another merges them into a higher-level stone, as now.
+- Upgrade stones on each other: undecided. Suggestion: they don't combine (only plain soulstones merge), so there is one clear way to each kind of stone.
+
+## How soulstones work now (for reference)
+
+- A "Strong" monster (randomly boosted when it spawns) carries a soulstone holding 10-15% of that monster's experience. The stone's **level is the character rank that this much experience would give** (same scale as ranks; "That's as high as they go" above 20). So it comes from the monster, not from the player who finds it.
+- Stone on stone: the first stone gains a random part (0-100%) of the second one's experience, the second is used up.
+- Stone on equipment: random bonuses with a total strength of the stone's level, and the item then needs that rank to wear (`soultrans_equipment`).
+- Suggestion: keep this rank scale for the tiers too. Item level, soulstone level and the rank needed to wear the item are then the same number, which is easy to understand ("a level 12 helm needs rank 12 and a level 12 stone").
 - The bonus pool per tier and its numbers; the Epic special effects.
 - The glow: whether Common has none and Magic already glows; where it shows (inventory, shop and grave windows, on the ground).
 - No old items or players to convert: there are none in the game yet.
