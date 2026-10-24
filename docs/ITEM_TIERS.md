@@ -67,6 +67,27 @@ How it shows
 Container
 18. From chests and/or bought from Damor; price open. Multi-use containers held back for now.
 
+## Bonus framework (proposed, built on the soulstone system)
+
+The soulstone's way of rolling is kept and changed: the item level is a budget of points that is spent on bonuses.
+
+- **No extra requirements.** Bonuses never raise an item's requirements. An item only needs its metal's normal requirements and the rank of its item level.
+- **Every item with bonuses gets a category** when it is made: **Fighter, Balanced or Mage**. The category decides which bonuses can roll; the tier decides how many.
+
+| Category | Main attribute | Small extra | Skills that can roll |
+|---|---|---|---|
+| Fighter | Strength or Agility | Braveness | Hand to Hand, Karate, Dagger, Sword, Axe, Two-Handed, Two-Handed Axe, Surround Hit, Warcry, Resistance, Immunity, Regenerate, Rest |
+| Mage | Intuition or Willpower | Braveness | Bless, Enhance Weapon, Protection, Magic Shield, Heal, Blast, Curse, Stun, Ghost Companion, Dispel Magic, Dagger, Staff, Resistance, Concentrate, Meditate |
+| Balanced | Any of the four, or a spread over all four | Braveness | Any from both lists |
+
+Open in the framework:
+- Hitpoints, mana and armor value: which categories can roll them (proposal: hitpoints and armor for Fighter, mana for Mage, all three for Balanced).
+- Utility skills (Stealth, Perception, Lock-Picking, Bartering, Repair, Light, Recall, Identify, Sense Magic, Swimming): none, or Balanced only.
+- Category odds when an item drops (proposal: equal thirds).
+- A reroll keeps the category (proposal: yes; it makes rerolling a way to improve an item, not to change what it is).
+- The tooltip shows the category (proposal: yes).
+- The category answers the side note on class-aware rolls: a Fighter item can never roll Concentrate.
+
 ## Epic special effect ideas (for 8)
 
 - **Regeneration**: faster hitpoint regeneration.
