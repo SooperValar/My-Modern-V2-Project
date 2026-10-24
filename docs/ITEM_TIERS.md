@@ -85,18 +85,16 @@ The soulstone's way of rolling is kept and changed: the item level is a budget o
 
 ### Hitpoints, endurance and mana (flat, outside the budget)
 
-Every item with bonuses also gets hitpoints, endurance and mana by its category, tier and item level. They don't use budget points. The scale runs from Magic to Legendary:
+Every item with bonuses also gets hitpoints, endurance and mana by its category, tier and item level. They don't use budget points. **Even steps: Magic 1x, Rare 2x, Epic 3x, Legendary 5x, on a halved base** (a helmet and body armor stack, so each piece gives half). The value per level can be a fraction; the item gets level x value, rounded down.
 
-| Per item level | Magic | Rare | Epic | Legendary |
+| Per item level (hp/end/mana) | Magic | Rare | Epic | Legendary |
 |---|---|---|---|---|
-| Fighter (hp/end/mana) | 3/2/1 | ? | ? | 15/10/5 |
-| Mage | 1/2/3 | ? | ? | 5/10/15 |
-| Balanced | 2/2/2 | ? | ? | 10/10/10 |
-| Utility (half of Balanced) | 1/1/1 | ? | ? | 5/5/5 |
+| Fighter | 1.5/1/0.5 | 3/2/1 | 4.5/3/1.5 | 7.5/5/2.5 |
+| Mage | 0.5/1/1.5 | 1/2/3 | 1.5/3/4.5 | 2.5/5/7.5 |
+| Balanced | 1/1/1 | 2/2/2 | 3/3/3 | 5/5/5 |
+| Utility (half of Balanced) | 0.5/0.5/0.5 | 1/1/1 | 1.5/1.5/1.5 | 2.5/2.5/2.5 |
 
-Open: the two middle steps. Legendary is 5x Magic. Suggestion: 1x / 2x / 3x / 5x (Fighter Rare 6/4/2, Epic 9/6/3); that replaces the earlier Epic 6/4/2. Or keep Epic at 2x: 1x / 1.5x / 2x / 5x (a big jump to Legendary).
-
-Example: a level 20 Legendary Fighter piece gives +300 hitpoints, +200 endurance, +100 mana; a helmet and body armor together twice that. To check against real characters' hitpoints and mana per rank when we do the numbers (question 7).
+Example: a level 20 Legendary Fighter piece gives +150 hitpoints, +100 endurance, +50 mana; a helmet and body armor together +300/+200/+100. To check against real characters' hitpoints and mana per rank when we do the numbers (question 7).
 
 ### Utility items
 
@@ -104,11 +102,24 @@ No attributes, only skills: their whole budget goes into the utility skills, so 
 
 ### Names
 
-The name tells what the item does: a prefix from a skill bonus, the category, and a suffix from the main attribute, e.g. **"Resistant Steel Fighter Armor of the Bear"** (Resistance, Fighter, Strength). Long, but readable. Magic items: the suffix only (plus the category). Rare and up: prefix and suffix.
+**The attribute gives the prefix, the skill gives the suffix**, with the metal and the category in between:
 
-Utility example: **"Mending Steel Armor of Utility"** (Repair; the category as the suffix, since there is no attribute to name).
+- Rare and up: **"Strong Steel Fighter Armor of Resistance"** (Strength, Fighter, Resistance). The strongest attribute bonus and the strongest skill bonus name the item; further bonuses are unnamed.
+- Magic (one bonus): only the prefix or only the suffix, e.g. "Strong Steel Fighter Armor" or "Steel Mage Helmet of Bless".
+- Utility (no attributes): the suffix only, e.g. **"Steel Utility Armor of Mending"** (Repair).
 
-Open: the word list; and whether attributes or skills give the prefix or the suffix (not decided yet).
+Word list (draft):
+
+| Attribute | Prefix |
+|---|---|
+| Strength | Strong |
+| Agility | Nimble |
+| Intuition | Wise |
+| Willpower | Willful |
+| Braveness | Brave |
+| A spread over all four (Balanced) | Even |
+
+Skill suffixes: mostly the skill's own name ("of Resistance", "of Bless", "of Stealth"), with a nicer word where the name reads badly (Repair -> "of Mending", Lock-Picking -> "of Picking", Two-Handed Axe -> "of Cleaving", Surround Hit -> "of Sweeping", ...). To go through together.
 
 ## Epic special effect ideas (for 8)
 
