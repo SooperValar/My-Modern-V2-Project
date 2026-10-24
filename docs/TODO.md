@@ -8,7 +8,7 @@ In order:
 3. **Item tiers** for helmets and body armor (Common/Magic/Rare/Epic/Legendary, white/blue/yellow/purple/orange, random drops, soulstone upgrade and reroll): see `docs/ITEM_TIERS.md`.
 
 4. **Pentagram enemies leave no grave** unless they carry something besides their weapon.
-5. **Pentagram solve balance**: look at how the solve count works (now: players online + three random 0-19, so about 28 + players online; 54 right after a server start; every active pentagram in the world counts) and make it work for a solo player as well as for groups.
+5. **Pentagram solve balance**: look at how the solve count works (now: players online + three random 0-19, so about 28 + players online; 54 right after a server start; every active pentagram in the world counts) and make it work for a solo player as well as for groups. **Base it on the players actually doing pentagrams** (e.g. those in the pentagram area or who activated one recently), not everyone online; usually 1-5 people.
 
 Later (ideas, not decided):
 

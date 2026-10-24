@@ -5,8 +5,9 @@
 Rules used (current draft):
 - budget = item level x tier multiplier (Magic 1, Rare 2, Epic 3)
 - Magic: 1 bonus (the main attribute or one skill); Rare: main attribute + 1-2 skills;
-  Epic: main attribute + secondary + 2 skills. Utility: skills only (1 / 2-3 / 3-4).
-- the main attribute takes about half the budget, the rest is split randomly
+  Epic: main attribute + secondary + 3 skills. Utility: skills only (1 / 2-3 / 4).
+- the main attribute takes about half the budget, the rest is split randomly,
+  every other bonus getting at least 20% of that rest
 - 1 point = +1/2 attribute (rounded up) or +1 skill
 - 10% of Fighter/Mage/Mercenary items have Braveness as main, the usual one secondary (Rare and up)
 - hitpoints/endurance/mana per item level (halved even steps), rounded down
@@ -34,18 +35,20 @@ def metal(lv):
     return R.choice(opts)
 
 def split(total, n):
-    """n random parts of total, each at least 1 when possible"""
+    """n random parts of total; every part gets at least 20% of total (at least 1)"""
     if n == 0: return []
-    cuts = sorted(R.randint(0, total) for _ in range(n-1))
-    parts = [b-a for a, b in zip([0]+cuts, cuts+[total])]
-    return [max(1, p) for p in parts] if total >= n else [1]*n
+    mn = max(1, total // 5)
+    if mn * n > total: mn = max(1, total // n)
+    free = total - mn * n
+    cuts = sorted(R.randint(0, free) for _ in range(n-1))
+    return [mn + b - a for a, b in zip([0]+cuts, cuts+[free])]
 
 def roll(lv, tier, cat, piece):
     budget = lv * MUL[tier]
     attrs, skills = {}, {}
     pool = {'Fighter':FIGHT,'Mage':MAGE,'Mercenary':MERC,'Utility':UTIL}[cat]
     if cat == 'Utility':
-        n = {'Magic':1,'Rare':R.randint(2,3),'Epic':R.randint(3,4)}[tier]
+        n = {'Magic':1,'Rare':R.randint(2,3),'Epic':4}[tier]
         for s, p in zip(R.sample(pool, n), split(budget, n)): skills[s] = p
         main = None
     else:
@@ -59,7 +62,7 @@ def roll(lv, tier, cat, piece):
         else:
             mp = (budget+1)//2; rest = budget-mp
             attrs[main] = mp
-            nsk = R.randint(1,2) if tier == 'Rare' else 2
+            nsk = R.randint(1,2) if tier == 'Rare' else 3
             parts = []
             if tier == 'Epic':
                 if not second:
