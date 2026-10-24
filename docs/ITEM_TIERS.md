@@ -31,6 +31,7 @@ special armors that are in the game now.
 - **Soulstones**:
   - The stone's level has to match the item's level, much like now.
   - **Reroll: a soulstone.** The item's bonuses roll again.
+  - **Level rule: an upgrade needs a stone one level above the item** (a level 13 upgrade stone for a level 12 item, and so on). A reroll uses a stone of the item's own level. Suggestion: the upgrade also raises the item to the stone's level (so the item then needs rank 13).
   - **Upgrade: an upgrade stone.** Two soulstones of a similar level go into a **container** (new item, gets its own generated sprite) and come out as one upgrade stone, the way flowers go into a flask to make a potion. Using it on an item raises it one tier (Magic -> Rare -> Epic) and adds a bonus. Legendary can't be reached this way.
   - Decided against: needing a soulstone to identify or awaken Epic and Legendary items.
 
