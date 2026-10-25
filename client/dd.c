@@ -1871,6 +1871,74 @@ void dd_lowhp_glow(int xpos,int ypos,int xoff,int yoff,int pct,int limit)
 	dd_release_ptr(sur2);
 }
 
+/* item tiers: a faint outline in the tier colour around a sprite (1-2 pixels
+ * outside its edge). glow: 1 Magic, 2 Rare, 3 Epic, 4 Legendary, 5 grave/body
+ * holding items. sx,sy: the sprite's top left on the screen. */
+static void glow_core(int nr,int sx,int sy,int glow,int light)
+{
+	static const int col[6][3]={{0,0,0},{90,150,255},{255,220,60},{190,110,255},{255,150,40},{225,225,225}};
+	static const int amax_t[6]={0,110,110,120,130,70};
+	int w,h,x,y,dx,dy,d,dmin,a,r,g,b,cr,cg,cb,amax;
+	unsigned short *src,*dst,v;
+
+	if (glow<1 || glow>5 || !nr) return;
+	if (!sprtab[nr].image) dd_load_sprite(nr);
+	if (!sprtab[nr].image) return;
+	w=sprtab[nr].xs*32; h=sprtab[nr].ys*32; src=sprtab[nr].image;
+	cr=col[glow][0]>>3; cg=col[glow][1]>>2; cb=col[glow][2]>>3; amax=amax_t[glow];
+	if (light>0) amax=amax*LEFFECT/(light*light+LEFFECT);	// as dark as the tile it lies on
+	if (amax<8) return;
+
+	dst=dd_get_ptr(sur2);
+	if (!dst) return;
+	for (y=-2; y<h+2; y++) {
+		if (sy+y<0 || sy+y>=MAXY) continue;
+		for (x=-2; x<w+2; x++) {
+			if (sx+x<0 || sx+x>=MAXX) continue;
+			if (x>=0 && y>=0 && x<w && y<h && src[x+y*w]!=(RED|BLUE)) continue;	// inside the sprite
+			dmin=9;
+			for (dy=-2; dy<=2; dy++) for (dx=-2; dx<=2; dx++) {
+				int px=x+dx,py=y+dy;
+				if (px<0 || py<0 || px>=w || py>=h) continue;
+				if (src[px+py*w]==(RED|BLUE)) continue;
+				d=dx*dx+dy*dy;
+				if (d<dmin) dmin=d;
+			}
+			if (dmin>4) continue;
+			a=(dmin<=2) ? amax : amax/3;	// close: full, a bit further: faint
+			v=dst[(sx+x)+(sy+y)*MAXX];
+			if (RGBM==0) { r=v>>11; g=(v>>5)&63; b=v&31; }
+			else { r=(v>>10)&31; g=((v>>5)&31)<<1; b=v&31; }
+			r+=((cr-r)*a)>>8; g+=((cg-g)*a)>>8; b+=((cb-b)*a)>>8;
+			if (RGBM==0) dst[(sx+x)+(sy+y)*MAXX]=(unsigned short)((r<<11)|(g<<5)|b);
+			else dst[(sx+x)+(sy+y)*MAXX]=(unsigned short)((r<<10)|((g>>1)<<5)|b);
+		}
+	}
+	dd_release_ptr(sur2);
+}
+
+void dd_glow_screen(int nr,int xpos,int ypos,int glow)		// at copyspritex() coordinates
+{
+	glow_core(nr,xpos,ypos,glow,0);
+}
+
+void dd_glow_world(int nr,int xpos,int ypos,int xoff,int yoff,int glow,int light)	// at copysprite() coordinates
+{
+	int rx,ry,xs,ys;
+
+	if (!nr) return;
+	if (!sprtab[nr].image) dd_load_sprite(nr);
+	if (!sprtab[nr].image) return;
+	xs=sprtab[nr].xs; ys=sprtab[nr].ys;
+	rx=(xpos/2)+(ypos/2)-(xs*16)+32+XPOS-((TILEX-34)/2*32);
+	if (xpos<0 && (xpos&1))	rx--;
+	if (ypos<0 && (ypos&1))	rx--;
+	ry=(xpos/4)-(ypos/4)+YPOS-ys*32;
+	if (xpos<0 && (xpos&3))	ry--;
+	if (ypos<0 && (ypos&3))	ry++;
+	glow_core(nr,rx+xoff,ry+yoff,glow,light);
+}
+
 void dd_shadow_clear(void)
 {
 	if (!shadowmap) shadowmap=calloc(SCREEN_W,SCREEN_H);

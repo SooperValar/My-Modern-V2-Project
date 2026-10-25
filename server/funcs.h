@@ -86,6 +86,8 @@ void tier_regen(int cn,int standing,int moonmult,int nohp,int noend,int nomana);
 int tier_ward(int co,int duration);
 int tier_lasting(int cn,int duration);
 int tier_enlightened(int cn,int p);
+int tier_item_glow(int in);
+int tier_tile_glow(int in,int cn);
 void driver(int cn);
 void driver_msg(int cn,int type,int dat1,int dat2,int dat3,int dat4);
 int ch_base_status(int n);

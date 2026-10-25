@@ -29,6 +29,9 @@ void dd_showbar(int xf,int yf,int xs,int ys,unsigned short col);
 void copyspritex(int nr,int xpos,int ypos,int effect);
 void copyspritex_fit(int nr,int xpos,int ypos,int box,int effect);
 void dd_lowhp_glow(int xpos,int ypos,int xoff,int yoff,int pct,int limit);
+void dd_glow_screen(int nr,int xpos,int ypos,int glow);
+void dd_glow_world(int nr,int xpos,int ypos,int xoff,int yoff,int glow,int light);
+unsigned char inv_tier[60],shop_tier[62];	// item tiers for the glow (SV_TIERS): backpack 0-39, worn 40-59; shop/grave slots
 int lowhp_hp=0;		// #lowhp <hp>: glow below this many hitpoints, 0 = off (client.ini [display] lowhp_hp)
 void dd_showbox(int xf,int yf,int xs,int ys,unsigned short col);
 void dd_alphaeffect_magic(int nr,int str,int xpos,int ypos,int xoff,int yoff);
@@ -602,6 +605,7 @@ static void hud_equippanel(void)
 
 	for (n=0; n<12; n++) {
 		spr=lookmode ? look.worn[wntab[n]] : pl.worn[wntab[n]];
+		if (spr && !lookmode) dd_glow_screen(spr,303+o+(n%2)*35,2+(n/2)*35,inv_tier[40+wntab[n]]);
 		if (spr) copyspritex(spr,303+o+(n%2)*35,2+(n/2)*35,(!lookmode && hightlight==HL_EQUIPMENT && hightlight_sub==wntab[n]) ? 16 : 0);
 		if (!lookmode && inv_block[wntab[n]]) copyspritex(4,303+o+(n%2)*35,2+(n/2)*35,0);
 	}
@@ -628,6 +632,7 @@ static void hud_shopwindow(void)
 
 	for (n=0; n<62; n++) {
 		if (!shop.item[n]) continue;
+		dd_glow_screen(shop.item[n],222+ox+(n%8)*35,262+oy+(n/8)*35,shop_tier[n]);
 		copyspritex(shop.item[n],222+ox+(n%8)*35,262+oy+(n/8)*35,(hightlight==HL_SHOP && hightlight_sub==n) ? 16 : 0);
 		if (hightlight==HL_SHOP && hightlight_sub==n && shop.price[n])
 			dd_xputtext(x+6,y+8*35+6,1,"Sell: %dG %dS",shop.price[n]/100,shop.price[n]%100);
@@ -770,6 +775,7 @@ void hud_draw_v2(int init,unsigned short *mapmem,int map_x,int map_y)
 		for (r=1; r<HB_ROWS; r++) dd_hud_hline(HB_X,HB_Y+r*HB_SLOT,HB_COLS*HB_SLOT+2);
 		for (n=0; n<HB_VISIBLE; n++) {
 			if (!pl.item[n+inv_pos]) continue;
+			if (n+inv_pos<40) dd_glow_screen(pl.item[n+inv_pos],HB_X+2+(n%HB_COLS)*HB_SLOT,HB_Y+2+(n/HB_COLS)*HB_SLOT,inv_tier[n+inv_pos]);
 			copyspritex_fit(pl.item[n+inv_pos],HB_X+2+(n%HB_COLS)*HB_SLOT,HB_Y+2+(n/HB_COLS)*HB_SLOT,32,
 				(hightlight==HL_BACKPACK && hightlight_sub==n+(signed)inv_pos) ? 16 : 0);
 		}
@@ -925,6 +931,7 @@ void eng_display_win(int plr_sprite,int init)
 		// lets big build-mode pieces spill into the gold buttons it copies)
 		for (n=0; n<10 && !hud_cw; n++) {
 			if (pl.item[n+inv_pos]) {
+				if (n+inv_pos<40) dd_glow_screen(pl.item[n+inv_pos],220+(n%2)*35,2+(n/2)*35,inv_tier[n+inv_pos]);
 				if (hightlight==HL_BACKPACK && hightlight_sub==n+(signed)inv_pos)
 					copyspritex(pl.item[n+inv_pos],220+(n%2)*35,2+(n/2)*35,16);
 				else
@@ -1015,6 +1022,7 @@ void eng_display_win(int plr_sprite,int init)
 		if (!show_look) {
 			for (n=0; n<12; n++) {
 				if (pl.worn[wntab[n]]) {
+					dd_glow_screen(pl.worn[wntab[n]],303+(n%2)*35,2+(n/2)*35,inv_tier[40+wntab[n]]);
 					if (hightlight==HL_EQUIPMENT && hightlight_sub==wntab[n])
 						copyspritex(pl.worn[wntab[n]],303+(n%2)*35,2+(n/2)*35,16);
 					else
@@ -1105,6 +1113,7 @@ void eng_display_win(int plr_sprite,int init)
 			copyspritex(92,220,260,0);
 			for (n=0; n<62; n++) {
 				if (!shop.item[n]) continue;
+				dd_glow_screen(shop.item[n],222+(n%8)*35,262+(n/8)*35,shop_tier[n]);
 				if (hightlight==HL_SHOP && hightlight_sub==n) {
 					copyspritex(shop.item[n],222+(n%8)*35,262+(n/8)*35,16);
 					if (shop.price[n]) dd_xputtext(225,549,1,"Sell: %dG %dS",shop.price[n]/100,shop.price[n]%100);
@@ -1353,6 +1362,7 @@ void eng_display(int init)	// optimize me!!!!!
 
 				// object
                                 if (pdata.hide==0 || (map[m].flags&ISITEM) || autohide(x,y)) {
+					if (map[m].glow&7) dd_glow_world(map[m].obj1,x*32,y*32,xoff,yoff,map[m].glow&7,map[m].light);	// item tier / grave glow
 					int tmp2;
 
 					if (map[m].obj1>16335 && map[m].obj1<16422 && map[m].obj1!=16357 &&
@@ -1400,6 +1410,7 @@ void eng_display(int init)	// optimize me!!!!!
 				if (x==TILEX/2 && y==TILEY/2 && map[m].obj2 && lowhp_hp && pl.a_hp>0 && pl.a_hp<lowhp_hp)
 					dd_lowhp_glow(x*32,y*32,xoff+map[m].obj_xoff,yoff+map[m].obj_yoff,pl.a_hp,lowhp_hp);
 				if (do_shadow) dd_shadow(map[m].obj2,x*32,y*32,xoff+map[m].obj_xoff,yoff+map[m].obj_yoff+4);
+				if ((map[m].glow&8) && map[m].obj2) dd_glow_world(map[m].obj2,x*32,y*32,xoff+map[m].obj_xoff,yoff+map[m].obj_yoff,5,map[m].light);	// a body holding items
 				copysprite(map[m].obj2,map[m].light|tmp,x*32,y*32,xoff+map[m].obj_xoff,yoff+map[m].obj_yoff);				
 
 				if (pl.attack_cn && pl.attack_cn==map[m].ch_nr)

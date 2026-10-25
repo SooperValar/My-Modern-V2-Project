@@ -202,6 +202,12 @@ The design is in `docs/ITEM_TIERS.md`. This first part builds the core:
 - `tools/design/item_tier_samples.py` prints sample rolls (the same rules, for looking at numbers).
 - Build: `tier.c` is a new file, so the Makefile changed; `claude-sync.sh get` now copies the Makefile too.
 
+#### Item tiers, part 4 (the glow)
+
+- **Tiered items glow**: a faint outline, 1-2 pixels around the sprite, in the tier colour (Magic blue, Rare yellow, Epic purple, Legendary orange). Everywhere they show: on the ground, in the backpack, in the worn slots, and in shop and grave windows. Subtle by design; on the ground it is as dark as the tile, so it doesn't light up dark places.
+- **Graves glow** faint grey-white while they still hold something (items or gold): the grave stone of a player's body, and the body of a monster. Empty ones don't, so you can tell at a glance whether there is anything left - but not what.
+- Protocol: two new server messages (the client must be updated): `SV_TILEGLOW` (76: map tile, glow) and `SV_TIERS` (77: the tiers of the backpack and worn slots, or of the open shop / grave). The glow of a map tile is a new field in `struct cmap` on both sides; it scrolls with the map. Server: `tier_item_glow`, `tier_tile_glow` (`tier.c`); client: `dd_glow_screen`, `dd_glow_world` (`dd.c`).
+
 #### Item tiers, part 3 (the Epic effects work)
 
 All eight Epic special effects now do what their tooltip says (`tier.c`). The strength grows with the item level (1 to 20). Wearing two pieces with the same effect doesn't add up: the best one counts.

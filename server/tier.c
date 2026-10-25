@@ -769,3 +769,42 @@ int tier_enlightened(int cn,int p)
 	if (!lv || p<=0) return p;
 	return p+max(1,p*tier_effect_pct(lv,1,5)/100);
 }
+
+/* ======================================================================
+ * Part 4: the glow (the client draws a faint outline in the tier colour)
+ * ====================================================================== */
+
+/* the glow of one item: its tier 1-4, 0 none */
+int tier_item_glow(int in)
+{
+	if (!IS_SANEITEM(in) || it[in].used==USE_EMPTY) return 0;
+	if (IT_TIER(in)>=TIER_MAGIC && IT_TIER(in)<=TIER_LEGEND) return IT_TIER(in);
+	return 0;
+}
+
+static int body_has_items(int co)
+{
+	int n;
+
+	if (!IS_SANECHAR(co) || !(ch[co].flags&CF_BODY)) return 0;
+	if (ch[co].gold) return 1;
+	if (ch[co].citem && !(ch[co].citem&0x80000000)) return 1;
+	for (n=0; n<40; n++) if (ch[co].item[n]) return 1;
+	for (n=0; n<20; n++) if (ch[co].worn[n]) return 1;
+	return 0;
+}
+
+/* the glow of a map tile for the client: the item's tier (1-4), 5 for a grave
+ * that still holds something, +8 when the character there is a body that
+ * still holds something */
+int tier_tile_glow(int in,int cn)
+{
+	int g=0;
+
+	if (in) {
+		g=tier_item_glow(in);
+		if (!g && IS_SANEITEM(in) && it[in].driver==7 && body_has_items(it[in].data[0])) g=5;
+	}
+	if (cn && body_has_items(cn)) g|=8;
+	return g;
+}

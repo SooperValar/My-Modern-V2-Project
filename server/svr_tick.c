@@ -1816,6 +1816,15 @@ void plr_change(int nr)
 			}
 		}
 	
+		{	// item tiers of the backpack and worn items, for the glow (tier.c)
+			unsigned char tb[64]; int k,diff=0;
+			memset(tb,0,64); tb[0]=SV_TIERS; tb[1]=0;
+			for (k=0; k<40; k++) tb[2+k]=tier_item_glow(ch[cn].item[k]);
+			for (k=0; k<20; k++) tb[42+k]=tier_item_glow(ch[cn].worn[k]);
+			for (k=0; k<60; k++) if (tb[2+k]!=cpl->tiers[k]) { diff=1; cpl->tiers[k]=tb[2+k]; }
+			if (diff) xsend(nr,tb,64);
+		}
+
 		for (n=0; n<20; n++) {
 			if (cpl->spell[n]!=(in=ch[cn].spell[n]) ||
 			    (cpl->active[n]!=it[in].active*16/max(1,it[in].duration)) || (it[in].flags&IF_UPDATE)) {
@@ -2087,6 +2096,11 @@ void plr_change(int nr)
 			xsend(nr,buf,p);	
 			lastn=n;
 		}
+		if (cmap[n].glow!=smap[n].glow) {	// item tier / grave glow (tier.c)
+			unsigned char gb[4];
+			gb[0]=SV_TILEGLOW; *(unsigned short*)(gb+1)=(unsigned short)n; gb[3]=smap[n].glow;
+			xsend(nr,gb,4);
+		}
                 mcpy(&cmap[n],&smap[n],sizeof(struct cmap));
 
 		n++;				// done with this field
@@ -2162,6 +2176,7 @@ inline int check_dlightm(int m)
 
 static void inline empty_field(struct cmap *smap,int n)
 {
+	smap[n].glow=0;
 	smap[n].ba_sprite=SPR_EMPTY;
         smap[n].flags=0;
         smap[n].flags2=0;
@@ -2451,6 +2466,7 @@ void plr_getmap_complete(int nr)
 				smap[n].it_sprite=0;
 				smap[n].it_status=0;
 			}
+			smap[n].glow=tier_tile_glow((smap[n].it_sprite && !map[m].fsprite) ? map[m].it : 0,smap[n].ch_nr);
 			// --- Begin of Item -----
                 }
         }
@@ -2625,6 +2641,7 @@ void plr_getmap_fast(int nr)
 				smap[n].it_status=0;
 
 			}
+			smap[n].glow=tier_tile_glow((smap[n].it_sprite && !map[m].fsprite) ? map[m].it : 0,smap[n].ch_nr);
                 }
         }
         player[nr].vx=see[cn].x;

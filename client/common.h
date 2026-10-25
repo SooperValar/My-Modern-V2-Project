@@ -113,6 +113,8 @@ struct cmap {
 	short int it_sprite;			// basic sprite of item
 	unsigned char it_status;	// for items with animation (burning torches etc)
 
+	unsigned char glow;		// item tiers (SV_TILEGLOW): 1-4 the item's tier, 5 a grave holding items; +8 a body holding items
+
 	// for local computation -- client only:
 	int back;	// background
 	int obj1;	// item
@@ -290,6 +292,8 @@ struct cplayer {
 #define SV_IGNORE		73
 #define SV_SPELLTIME		74	// slot, seconds left, flags, name (20 bytes)
 #define SV_ITEMINFO		75	// one line of an item tooltip (64 bytes)
+#define SV_TILEGLOW		76	// map tile (short), glow (4 bytes)
+#define SV_TIERS		77	// kind (0 backpack+worn, 1 shop/grave), 62 tiers (64 bytes)
 
 #define SV_SETMAP	128
 

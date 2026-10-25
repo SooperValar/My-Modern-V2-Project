@@ -4579,6 +4579,16 @@ void do_look_char(int cn,int co,int godflag,int autoflag,int lootflag)
         xsend(nr,buf,16);
 
         if ((ch[co].flags&(CF_MERCHANT|CF_BODY)) && !autoflag) {
+                {	// item tiers of the shop / grave slots, for the glow (tier.c)
+                        unsigned char tb[64];
+                        memset(tb,0,64); tb[0]=SV_TIERS; tb[1]=1;
+                        for (m=0; m<40; m++) tb[2+m]=tier_item_glow(ch[co].item[m]);
+                        if (ch[co].flags&CF_BODY) {
+                                for (m=0; m<20; m++) tb[42+m]=tier_item_glow(ch[co].worn[m]);
+                                tb[62]=tier_item_glow(ch[co].citem);
+                        }
+                        xsend(nr,tb,64);
+                }
                 for (n=0; n<40; n+=2) {
                         buf[0]=SV_LOOK6;
                         buf[1]=n;
