@@ -174,6 +174,11 @@ Skill suffixes: mostly the skill's own name ("of Resistance", "of Bless", "of St
 
 - **In the pocket: "Blessed" double roll.** About 1 in 20 items would roll with double budget and a special prefix: a rare jackpot find, especially early. Concern: at end game everyone could end up with Blessed gear. If it is added, **a reroll removes the Blessed status**, so it stays a lucky find, not something to farm.
 
+## Decisions, round 6 (late game)
+
+- **Late game starts at rank 16, Major General** (Lieutenant General, 17, was the other candidate). From there gear lasts a long time, so players have time to farm the perfect pieces.
+- **Legendaries have item levels 16-20** (need rank 16+). Only monsters of rank 16 and up can roll Legendary; below that the 1% Legendary roll becomes Epic. A Legendary drops at the monster's rank, capped at 20.
+
 ## Epic special effect ideas (for 8)
 
 - **Regeneration**: faster hitpoint regeneration.
