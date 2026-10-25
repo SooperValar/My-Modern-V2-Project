@@ -62,6 +62,19 @@ void player_exit(int nr);
 void xsend(int nr,unsigned char *buf,int len);
 void plr_act(int nr);
 int ch_act_speed(int cn);
+
+// tier.c: item tiers for helmets and body armor
+char *tier_name(int in);
+int tier_create(int temp,int tier,int cat,int level);
+int tier_upgrade(int in);
+int tier_reroll(int in);
+int tier_pick_template(int level,int helm);
+void tier_kill_drop(int cn,int co);
+int tier_chest_item(int temp);
+int tier_font(int in);
+void tier_tip_lines(int in,char *l1,char *l2);
+int tier_effect_pct(int level,int lo,int hi);
+void god_tier_item(int cn,char *a1,char *a2,char *a3,char *a4);
 void driver(int cn);
 void driver_msg(int cn,int type,int dat1,int dat2,int dat3,int dat4);
 int ch_base_status(int n);

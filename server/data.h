@@ -537,6 +537,36 @@ struct character
 #define NEARGLOW_MAXDIST 8
 #define NEARGLOW_LIGHT  20
 
+/* Item tiers (docs/ITEM_TIERS.md, tier.c): Magic, Rare, Epic, Legendary armor.
+ * Kept in the item's spare future3[] fields (zero in every old item). */
+#define IT_TIER(in)	(it[in].future3[0])	// 0 none, 1 Magic, 2 Rare, 3 Epic, 4 Legendary
+#define IT_TCAT(in)	(it[in].future3[1])	// 1 Fighter, 2 Mercenary, 3 Mage, 4 Utility
+#define IT_TLEVEL(in)	(it[in].future3[2])	// item level 1-20 (= rank needed)
+#define IT_TEFFECT(in)	(it[in].future3[3])	// Epic special effect (TE_*)
+#define IT_TPREFIX(in)	(it[in].future3[4])	// attribute giving the name's prefix: AT_* + 1, 6 = spread, 0 none
+#define IT_TSUFFIX(in)	(it[in].future3[5])	// skill giving the name's suffix: SK_* + 1, 0 none
+#define IT_TBASE(in)	(it[in].future3[6])	// the plain template it was made from
+
+#define TIER_MAGIC	1
+#define TIER_RARE	2
+#define TIER_EPIC	3
+#define TIER_LEGEND	4
+
+#define TCAT_FIGHTER	1
+#define TCAT_MERC	2
+#define TCAT_MAGE	3
+#define TCAT_UTILITY	4
+
+#define TE_REGEN	1	// hitpoints regenerate while active too, and faster
+#define TE_CLARITY	2	// the same for mana
+#define TE_STAMINA	3	// the same for endurance
+#define TE_THORNS	4	// melee attackers take damage
+#define TE_LIGHT	5	// gives light
+#define TE_WARDING	6	// curses and stuns wear off sooner
+#define TE_LASTING	7	// helpful spells cast last longer
+#define TE_ENLIGHT	8	// more experience from kills
+#define TE_MAX		8
+
 #define IF_WEAPON       (IF_WP_SWORD|IF_WP_DAGGER|IF_WP_AXE|IF_WP_STAFF|IF_WP_TWOHAND)
 #define IF_SELLABLE     (IF_WEAPON|IF_MISC|IF_MAGIC|IF_ARMOR)
 

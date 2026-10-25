@@ -30,7 +30,7 @@ send)
 	;;
 get)
 	n=0
-	for f in "$WIN"/*.c "$WIN"/*.h; do
+	for f in "$WIN"/*.c "$WIN"/*.h "$WIN"/Makefile; do
 		b=$(basename "$f")
 		if [ ! -f "$b" ] || ! cmp -s "$f" "$b"; then
 			mkdir -p "$BK"; [ -f "$b" ] && cp -p "$b" "$BK/"

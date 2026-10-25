@@ -11,7 +11,7 @@ OBJS=.obj/server.o .obj/svr_disk.o .obj/svr_tick.o .obj/svr_act.o \
 .obj/driver_etc.o .obj/driver_generic.o .obj/populate.o \
 .obj/helper.o .obj/skill.o .obj/skill_driver.o .obj/talk.o \
 .obj/area.o .obj/path.o .obj/stunrun.o .obj/cityattack.o \
-.obj/npc_malte.o .obj/lab9.o .obj/rdtsc.o .obj/ccp_driver.o 
+.obj/npc_malte.o .obj/lab9.o .obj/rdtsc.o .obj/ccp_driver.o .obj/tier.o 
 
 SHEADER=client.h data.h funcs.h gendefs.h globals.h server.h driver.h \
 lab9.h
@@ -35,6 +35,9 @@ password: password.c $(SHEADER)
 
 .obj/server.o:		server.c $(SHEADER)
 	$(CC) $(CFLAGS) -o .obj/server.o -c server.c
+
+.obj/tier.o:		tier.c $(SHEADER)
+	$(CC) $(CFLAGS) -o .obj/tier.o -c tier.c
 
 .obj/helper.o:		helper.c $(SHEADER)
 	$(CC) $(CFLAGS) -o .obj/helper.o -c helper.c

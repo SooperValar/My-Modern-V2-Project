@@ -216,7 +216,7 @@ int use_create_item3(int cn,int in)
                 case 94:
                 case 95:
                 case 981:
-                case 982:       in2=create_special_item(n); break;
+                case 982:       in2=tier_chest_item(n); break;	// a Magic piece (was "of the Lion" armor)
 
                 default:        in2=god_create_item(n); break;
         }

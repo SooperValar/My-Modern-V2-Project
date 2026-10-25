@@ -1,4 +1,6 @@
-# Item tiers (design, not built yet)
+# Item tiers (design; part 1 built)
+
+Build parts: **1. core** (tiers, rolls, names, tooltip colors, drops, chests, `#tier`) - built. **2. soulstones** (Common -> Magic, reroll, Soul Crucibles and upgrade stones, block weapons, Damor). **3. Epic effects** in the game (regeneration while active, Warding, Lasting, Enlightened). **4. glow** (items and graves). **5. Legendaries**.
 
 A slight overhaul, starting with **helmets and body armor**. It expands and replaces the
 special armors that are in the game now.

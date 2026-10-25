@@ -1446,11 +1446,15 @@ int dd_hud_texts(struct htext **p,char **pool)
 unsigned int dd_font_rgb(int f)
 {
 	static unsigned int rgb[4]={0,0,0,0};
-	int nr=700+f,n,r,g,b,cnt=0;
+	// item tier colors (server tooltips): 10 Common, 11 Magic, 12 Rare, 13 Epic, 14 Legendary
+	static const unsigned int tier_rgb[5]={0xE6E6E6,0x5A96FF,0xFFDC3C,0xBE6EFF,0xFF9628};
+	int nr,n,r,g,b,cnt=0;
 	unsigned short v;
 	unsigned int sr=0,sg=0,sb=0;
 
+	if (f>=10 && f<=14) return tier_rgb[f-10]|0x01000000;
 	if (f<0 || f>3) f=1;
+	nr=700+f;
 	if (rgb[f]) return rgb[f];
 	if (!sprtab[nr].image) dd_load_sprite(nr);
 	if (!sprtab[nr].image) return 0xFFFFFF;
@@ -1514,10 +1518,11 @@ void dd_putc(int xpos,int ypos,char font,int c)
 
 void dd_puttext(int x,int y,int font,char *text)
 {
-	if (hud_active==2 && hud_font && font>=0 && font<=3) {
+	if (hud_active==2 && hud_font && ((font>=0 && font<=3) || (font>=10 && font<=14))) {
 		if (x>=0 && y>=0 && y+9<=MAXY) htext_add(x,y,font,text,(int)strlen(text));
 		return;
 	}
+	if (font>=10 && font<=14) font=(font==10) ? 1 : (font==11 ? 3 : (font==12 ? 1 : (font==13 ? 3 : 0)));	// bitmap font: nearest of its four
 	while (*text) {
 		dd_putc(x,y,(char)font,*text);
 		text++; x+=6;

@@ -2315,6 +2315,7 @@ void do_command(int cn, char *ptr)
                 if (prefix(cmd,"thrall") && f_giu)      { god_thrall(cn,arg[1],arg[2]); return; };
 		if (prefix(cmd,"time"))      		{ show_time(cn); return; };
                 if (!strcmp(cmd,"tile") && (f_g || f_c))         { do_tile(cn,arg[1],arg[2]); return; };
+                if (!strcmp(cmd,"tier") && f_g)         { god_tier_item(cn,arg[1],arg[2],arg[3],arg[4]); return; };
                 if (prefix(cmd,"tinfo") && f_g)         { god_tinfo(cn,atoi(arg[1])); return; };
                 if (prefix(cmd,"top") && f_g)           { god_top(cn); return; };		
                 if (prefix(cmd,"twohand"))              { do_info_twohand(cn); return; };
@@ -2787,6 +2788,7 @@ void do_char_killed(int cn,int co)
 
                         } else player_exit(ch[co].player);
                 }
+                tier_kill_drop(cn,co);	// maybe a Magic / Rare / Epic helmet or armor
                 chlog(co,"new npc body");
 		if (ch[co].flags&CF_RESPAWN) ch[co].flags=CF_BODY|CF_RESPAWN;
                 else ch[co].flags=CF_BODY;

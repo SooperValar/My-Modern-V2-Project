@@ -182,6 +182,25 @@ A new labyrinth part after Lab 10 (map 180,900 - 299,999). Its layout is an Exce
 - Reopened and fixed (`use_driver.c`). Losing a fight there counts as an **arena death**: you keep your items, and you're locked out for 5 minutes with "You should try again after becoming stronger." (`CHD_ARENALOCK`).
 - Rewards that can't be handed out are cleaned up properly instead of being left behind.
 
+#### Item tiers, part 1 (helmets and body armor)
+
+The design is in `docs/ITEM_TIERS.md`. This first part builds the core:
+
+- **Magic (blue), Rare (yellow) and Epic (purple) helmets and body armor** (`tier.c`). A tiered item is a plain piece of armor with rolled bonuses, kept in the item's spare `future3[]` fields (`IT_TIER`, `IT_TCAT`, `IT_TLEVEL`, ...; zero in every old item).
+  - **Item level 1-20** = the rank needed to wear it. Budget = max(level, 8) x tier step (Magic 1, Rare 2, Epic 3); a point is +1 skill or +1/2 attribute.
+  - **Category** Fighter / Mercenary / Mage / Utility (30/30/30/10) decides the bonuses: the main attribute (Strength or Agility, Intuition or Willpower, any of four or a spread, none for Utility; 10% Braveness first) and skills from the category's list. Magic: one bonus; Rare: main attribute + 1-2 skills; Epic: main + secondary + 3 skills; Utility: skills only (1 / 2-3 / 4). Every bonus but the main one gets at least 20% of the rest; a skill rolls at most once.
+  - **Hitpoints, endurance and mana** per item level by category (Fighter 1.5/1/0.5, Mercenary 1/1/1, Mage 0.5/1/1.5, Utility 0.5/0.5/0.5) x tier step.
+  - **Epic special effect** (weighted by category): Regeneration, Clarity, Stamina, Thorns, Light, Warding, Lasting, Enlightened. Thorns and Light work already (they use the items' existing gethit damage and light); the others show in the tooltip and get their game effect in a later part.
+  - The metal follows the item level (bronze 1-6, steel any level, gold 5-14, emerald 9-17, crystal 11-20, titanium 16-20). No wear. Price = the plain piece's price x tier step.
+  - **Names**: the full name is built when shown ("Strong Steel Fighter Armor of Resistance": attribute prefix, metal, category, piece, the strongest skill as suffix); the stored name is a short form ("Strong Steel Fighter Armor of Resist") because names hold 39 characters.
+- **Drops**: a monster killed by a player (or his companion) drops a tiered piece 1 time in 100, a Strong monster 1 in 5 (and rolls its tier twice, keeping the better). Item level = the monster's rank +-1. Tier odds 70% Magic, 22% Rare, 8% Epic (the 1% Legendary goes to Epic until Legendaries exist).
+- **Treasure chests** that gave "of the Lion" style armor give a Magic piece of that metal instead (item level from the metal: bronze 3, steel 6, gold 9, emerald 12, crystal 15, titanium 18, +-1).
+- **Tooltip**: the name in the tier color, then "Rare Fighter, item level 12"; the Epic effect under the bonuses. The client has five new tooltip colors (Common white, Magic blue, Rare yellow, Epic purple, Legendary orange); plain armor shows its name in white.
+- **God command** `#tier <1-3> <level> [f|m|c|u] [h|a]` makes one for testing.
+- Upgrade and reroll are in the code (`tier_upgrade`, `tier_reroll`) for the soulstones in a later part.
+- `tools/design/item_tier_samples.py` prints sample rolls (the same rules, for looking at numbers).
+- Build: `tier.c` is a new file, so the Makefile changed; `claude-sync.sh get` now copies the Makefile too.
+
 #### Two-handed axes
 
 - New skill **Two-Handed Axe** (skill 36, `SK_AXE2H`; Agility/Strength/Strength like Two-Handed). Every class that has Two-Handed has it too, with the same maximum and cost, and knows it from the start (at 4, like Two-Handed). Existing characters get it automatically (`really_update_char`); it keeps following Two-Handed when a character arches.
