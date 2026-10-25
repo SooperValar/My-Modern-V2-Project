@@ -191,13 +191,13 @@ Every Epic gets one. Left out: **Night sight** (it is the reward of the four-pot
 | **Thorns** | Melee attackers take damage back | items' existing "gethit damage" |
 | **Light** | The wearer gives off light | items' light |
 | **Warding** | Curses and stuns on the wearer wear off sooner | spell timers (new) |
-| **Lasting** | Spells the wearer casts last longer | spell durations (new) |
-| **Growth** or **Enlightened** (to pick) | More experience from kills only, at most +5% | experience code (new) |
+| **Lasting** | Helpful spells the wearer casts last longer: **Bless, Enhance Weapon, Protection, Light** (not Magic Shield, whose duration is its strength; not Curse or Stun). **+20% at low item levels to +50% at level 20**: the 10-minute buffs last 12 to 15 minutes, Light 36 to 45 | spell durations (new) |
+| **Enlightened** | More experience from kills only, at most +5% | experience code (new) |
 
 - **Category: weighted odds, no hard limits** (decided): e.g. Thorns twice as likely on Fighter items, Clarity and Lasting twice as likely on Mage items.
 - **Regeneration while active: 10% of the standing rate at low item levels up to 30% at level 20** (to start), plus faster regeneration when standing.
 - Clarity: every class already has Meditate (Templars fixed at 1, so they only get the base mana regeneration); Clarity simply works for everyone.
-- Open: the other strength numbers per item level (suggestions: regeneration when standing +1% to +5%, Thorns 1 to level/2 damage per hit, Warding -5% to -25%, Lasting +5% to +15%, experience +1% to +5%).
+- Open: the other strength numbers per item level (suggestions: regeneration when standing +1% to +5%, Thorns 1 to level/2 damage per hit, Warding -5% to -25%, experience +1% to +5%).
 
 ## How soulstones work now (for reference)
 
