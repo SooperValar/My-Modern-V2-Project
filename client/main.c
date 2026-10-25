@@ -149,6 +149,10 @@ extern int tile_x,tile_y;
 
 void say(char *input)
 {
+	extern int noshop;
+	// #godshop opens a shop window from afar: let it open even right after a shop was closed
+	if ((input[0]=='/' || input[0]=='#') && !_strnicmp(input+1,"godshop",7)) noshop=0;
+
 	int n;
 	char buf[16];
 	buf[0]=CL_CMD_INPUT1;

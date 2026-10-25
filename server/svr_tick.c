@@ -669,7 +669,7 @@ void plr_cmd_iteminfo(int nr)
 	else if (where==1 && slot<20) in=ch[cn].worn[slot];
 	else if (where==2 && co>0 && co<MAXCHARS && (ch[co].flags&(CF_MERCHANT|CF_BODY))) {
 		if ((ch[co].flags&CF_BODY) && abs(ch[cn].x-ch[co].x)+abs(ch[cn].y-ch[co].y)>1) in=0;
-		else if (!(ch[co].flags&CF_BODY) && !do_char_can_see(cn,co)) in=0;
+		else if (!(ch[co].flags&CF_BODY) && !do_char_can_see(cn,co) && !(godshop_cat(co) && (ch[cn].flags&CF_GOD))) in=0;	// #godshop: from afar
 		else if (slot<40) in=ch[co].item[slot];
 		else if (slot<60 && (ch[co].flags&CF_BODY)) in=ch[co].worn[slot-40];
 	}

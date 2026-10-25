@@ -81,9 +81,15 @@ void godshop_fill(int cn,int co)
 {
 	int n,in,list[MAXTITEM],cnt,page=*gs_page(cn),cat=godshop_cat(co)-1;
 
-	for (n=0; n<40; n++) if ((in=ch[co].item[n])) { it[in].used=USE_EMPTY; ch[co].item[n]=0; }
 	if (cat<0) return;
+	// the client asks again every second while the window is open: keep the page
+	// if it is already this viewer's (data[8] viewer, data[9] page+1)
+	if (gs_allowed(cn) && ch[co].data[8]==cn && ch[co].data[9]==page+1) return;
+
+	for (n=0; n<40; n++) if ((in=ch[co].item[n])) { it[in].used=USE_EMPTY; ch[co].item[n]=0; }
+	ch[co].data[8]=ch[co].data[9]=0;
 	if (!gs_allowed(cn)) { do_sayx(co,"I only serve the gods and their helpers, %s.",ch[cn].name); return; }
+	ch[co].data[8]=cn; ch[co].data[9]=page+1;
 
 	cnt=gs_list(cat,list);
 	if (page*GODSHOP_PER_PAGE>=cnt) page=*gs_page(cn)=0;

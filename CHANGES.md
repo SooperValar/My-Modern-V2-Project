@@ -218,6 +218,7 @@ Every item template a player can carry, free, for gods and their helpers (`godsh
 - **Nine merchants in Elysium** (character templates 1180-1188, immortal): Armsmaster, Beltmaker, Armorer, Amulet Keeper, Ringmaker, Keymaster, Alchemist, Questkeeper, Curator. They serve gods and imps standing next to them; anyone else is turned away ("I only serve the gods and their helpers"). For now they stand in a row in Elysium (795-803, 805) until the Elysium layout is done (`tools/world/godshop_merchants.txt`).
 - **`#godshop <category>`** (gods only) opens a category's shop from anywhere; `#godshop` alone lists the categories with their counts.
 - **Logged**: every item taken goes into the character's log and the server log (`GODSHOP: <name> took <item> (t=<template>, <category>)`, with `[imp]` for imps), so imps' use can be checked later.
+- Fixes: `#godshop` opened only once (the client keeps a closed shop shut for a few seconds so late updates don't reopen it; typing `#godshop` now lifts that), and tooltips didn't show in a shop opened from afar (allowed for gods). The client asks to look again every second while a shop is open; a gods' merchant now keeps the viewer's page instead of making all its items again each time.
 - The gods' merchants don't buy anything. A shop page is filled for each viewer when they look (so tooltips work); taking an item uses the viewer's own page, so two gods browsing at once don't get each other's items.
 
 #### Item tiers, part 4 (the glow)
