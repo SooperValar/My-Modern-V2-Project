@@ -74,6 +74,7 @@ int tier_chest_item(int temp);
 int tier_font(int in);
 void tier_tip_lines(int in,char *l1,char *l2);
 int tier_tip_effect(int in,char lines[4][60]);
+void item_marks(int in,unsigned char *letter,unsigned char *number);
 int tier_effect_pct(int level,int lo,int hi);
 void god_tier_item(int cn,char *a1,char *a2,char *a3,char *a4);
 int tier_soulstone(int cn,int in,int in2);

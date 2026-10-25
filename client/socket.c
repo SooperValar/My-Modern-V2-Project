@@ -1003,6 +1003,7 @@ int sv_cmd(unsigned char *buf)
 		case	SV_SPELLTIME:		return sv_spelltime(buf);
 		case	SV_ITEMINFO:		return sv_iteminfo(buf);
 		case	SV_TILEGLOW:		{ int t=*(unsigned short*)(buf+1); if (t<TILEX*TILEY) map[t].glow=buf[3]; } return 4;
+		case	SV_ITEMMARKS:		{ extern unsigned char inv_mark[124],shop_mark[124]; if (buf[1]==0) memcpy(inv_mark,buf+2,124); else memcpy(shop_mark,buf+2,124); } return 126;
 		case	SV_TIERS:		{ extern unsigned char inv_tier[60],shop_tier[62]; if (buf[1]==0) memcpy(inv_tier,buf+2,60); else memcpy(shop_tier,buf+2,62); } return 64;
 
 		default: 			xlog(0,"Unknown SV: %d",buf[0]); dbg_log("unknown server command %d",buf[0]); return -1;

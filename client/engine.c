@@ -32,6 +32,17 @@ void dd_lowhp_glow(int xpos,int ypos,int xoff,int yoff,int pct,int limit);
 void dd_glow_screen(int nr,int xpos,int ypos,int glow);
 void dd_glow_world(int nr,int xpos,int ypos,int xoff,int yoff,int glow,int light);
 unsigned char inv_tier[60],shop_tier[62];	// item tiers for the glow (SV_TIERS): backpack 0-39, worn 40-59; shop/grave slots
+unsigned char inv_mark[124],shop_mark[124];	// item marks (SV_ITEMMARKS): per slot a letter and a number (255 none)
+
+void dd_puttext(int x,int y,int font,char *text);
+size_t strlen(const char *s);
+// small text on an item: a letter top left, a number top right (spell scrolls: god, charges)
+static void item_mark(int x,int y,unsigned char *m)
+{
+	char b[8];
+	if (m[0]) { b[0]=m[0]; b[1]=0; dd_puttext(x+1,y,1,b); }
+	if (m[1]!=255) { sprintf(b,"%d",m[1]); dd_puttext(x+32-(int)strlen(b)*6-1,y,2,b); }
+}
 int lowhp_hp=0;		// #lowhp <hp>: glow below this many hitpoints, 0 = off (client.ini [display] lowhp_hp)
 void dd_showbox(int xf,int yf,int xs,int ys,unsigned short col);
 void dd_alphaeffect_magic(int nr,int str,int xpos,int ypos,int xoff,int yoff);
@@ -607,6 +618,7 @@ static void hud_equippanel(void)
 		spr=lookmode ? look.worn[wntab[n]] : pl.worn[wntab[n]];
 		if (spr && !lookmode) dd_glow_screen(spr,303+o+(n%2)*35,2+(n/2)*35,inv_tier[40+wntab[n]]);
 		if (spr) copyspritex(spr,303+o+(n%2)*35,2+(n/2)*35,(!lookmode && hightlight==HL_EQUIPMENT && hightlight_sub==wntab[n]) ? 16 : 0);
+		if (spr && !lookmode) item_mark(303+o+(n%2)*35,2+(n/2)*35,inv_mark+(40+wntab[n])*2);
 		if (!lookmode && inv_block[wntab[n]]) copyspritex(4,303+o+(n%2)*35,2+(n/2)*35,0);
 	}
 }
@@ -634,6 +646,7 @@ static void hud_shopwindow(void)
 		if (!shop.item[n]) continue;
 		dd_glow_screen(shop.item[n],222+ox+(n%8)*35,262+oy+(n/8)*35,shop_tier[n]);
 		copyspritex(shop.item[n],222+ox+(n%8)*35,262+oy+(n/8)*35,(hightlight==HL_SHOP && hightlight_sub==n) ? 16 : 0);
+		item_mark(222+ox+(n%8)*35,262+oy+(n/8)*35,shop_mark+n*2);
 		if (hightlight==HL_SHOP && hightlight_sub==n && shop.price[n])
 			dd_xputtext(x+6,y+8*35+6,1,"Sell: %dG %dS",shop.price[n]/100,shop.price[n]%100);
 	}
@@ -778,6 +791,7 @@ void hud_draw_v2(int init,unsigned short *mapmem,int map_x,int map_y)
 			if (n+inv_pos<40) dd_glow_screen(pl.item[n+inv_pos],HB_X+2+(n%HB_COLS)*HB_SLOT,HB_Y+2+(n/HB_COLS)*HB_SLOT,inv_tier[n+inv_pos]);
 			copyspritex_fit(pl.item[n+inv_pos],HB_X+2+(n%HB_COLS)*HB_SLOT,HB_Y+2+(n/HB_COLS)*HB_SLOT,32,
 				(hightlight==HL_BACKPACK && hightlight_sub==n+(signed)inv_pos) ? 16 : 0);
+			if (n+inv_pos<40) item_mark(HB_X+2+(n%HB_COLS)*HB_SLOT,HB_Y+2+(n/HB_COLS)*HB_SLOT,inv_mark+(n+inv_pos)*2);
 		}
 		hud_scroll(HB_X+HB_COLS*HB_SLOT+1,HB_Y,HB_H,inv_pos,HB_MAXPOS);
 

@@ -100,6 +100,7 @@ struct cplayer
 	// items worn
 	int worn[20];
 	unsigned char tiers[60];	// item tiers of item[] and worn[] sent last (SV_TIERS)
+	unsigned char marks[120];	// item marks of item[] and worn[] sent last (SV_ITEMMARKS)
 	int worn_p[20];
 
 	int spell[20];
@@ -239,6 +240,7 @@ struct cplayer
 #define SV_ITEMINFO		75	// one line of an item tooltip: 64 bytes
 #define SV_TILEGLOW		76	// map tile n (short), glow: 4 bytes
 #define SV_TIERS		77	// kind (0 backpack 0-39 + worn 40-59, 1 shop/grave 0-61), 62 tiers: 64 bytes
+#define SV_ITEMMARKS		78	// kind (as SV_TIERS), 62 x (letter, number; 255 = no number): 126 bytes
 
 #define SV_SETMAP		128	// 128-255 are used !!!
 

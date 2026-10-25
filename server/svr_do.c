@@ -4603,6 +4603,17 @@ void do_look_char(int cn,int co,int godflag,int autoflag,int lootflag)
                         }
                         xsend(nr,tb,64);
                 }
+                {	// item marks (spell scroll letter and charges) of the shop / grave slots (tier.c)
+                        unsigned char mb[126];
+                        memset(mb,0,126); mb[0]=SV_ITEMMARKS; mb[1]=1;
+                        for (m=0; m<62; m++) mb[3+m*2]=255;
+                        for (m=0; m<40; m++) item_marks(ch[co].item[m],mb+2+m*2,mb+3+m*2);
+                        if (ch[co].flags&CF_BODY) {
+                                for (m=0; m<20; m++) item_marks(ch[co].worn[m],mb+82+m*2,mb+83+m*2);
+                                item_marks(ch[co].citem,mb+122,mb+123);
+                        }
+                        xsend(nr,mb,126);
+                }
                 for (n=0; n<40; n+=2) {
                         buf[0]=SV_LOOK6;
                         buf[1]=n;

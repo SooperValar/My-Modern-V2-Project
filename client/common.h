@@ -294,6 +294,7 @@ struct cplayer {
 #define SV_ITEMINFO		75	// one line of an item tooltip (64 bytes)
 #define SV_TILEGLOW		76	// map tile (short), glow (4 bytes)
 #define SV_TIERS		77	// kind (0 backpack+worn, 1 shop/grave), 62 tiers (64 bytes)
+#define SV_ITEMMARKS		78	// kind, 62 x (letter, number; 255 none) (126 bytes)
 
 #define SV_SETMAP	128
 

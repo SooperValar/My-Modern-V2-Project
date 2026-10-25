@@ -1828,6 +1828,15 @@ void plr_change(int nr)
 			for (k=0; k<60; k++) if (tb[2+k]!=cpl->tiers[k]) { diff=1; cpl->tiers[k]=tb[2+k]; }
 			if (diff) xsend(nr,tb,64);
 		}
+		{	// item marks (spell scroll letter and charges) of the backpack and worn items (tier.c)
+			unsigned char mb[126]; int k,diff=0;
+			memset(mb,0,126); mb[0]=SV_ITEMMARKS; mb[1]=0;
+			for (k=0; k<62; k++) mb[3+k*2]=255;
+			for (k=0; k<40; k++) item_marks(ch[cn].item[k],mb+2+k*2,mb+3+k*2);
+			for (k=0; k<20; k++) item_marks(ch[cn].worn[k],mb+82+k*2,mb+83+k*2);
+			for (k=0; k<120; k++) if (mb[2+k]!=cpl->marks[k]) { diff=1; cpl->marks[k]=mb[2+k]; }
+			if (diff) xsend(nr,mb,126);
+		}
 
 		for (n=0; n<20; n++) {
 			if (cpl->spell[n]!=(in=ch[cn].spell[n]) ||

@@ -847,3 +847,21 @@ int tier_tile_glow(int in,int cn)
 	if (cn && body_has_items(cn)) g|=8;
 	return g;
 }
+
+/* ======================================================================
+ * Item marks: small text the client draws on an item in the backpack, worn
+ * slots and shop/grave windows. Spell scrolls: the god's initial top left
+ * (Ankh A, Ishtar I, Skua S, the plain "Spell of" none), charges top right.
+ * ====================================================================== */
+void item_marks(int in,unsigned char *letter,unsigned char *number)
+{
+	*letter=0; *number=255;		// 255: no number
+	if (!IS_SANEITEM(in) || it[in].used==USE_EMPTY) return;
+	if (it[in].driver==48) {	// spell scroll: data[1] power, data[2] charges
+		int p=it[in].data[1];
+		if (p>=300) *letter='S';
+		else if (p>=150) *letter='I';
+		else if (p>=75) *letter='A';
+		*number=(unsigned char)min(254,(int)it[in].data[2]);
+	}
+}
