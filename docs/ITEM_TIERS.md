@@ -192,10 +192,12 @@ Every Epic gets one. Left out: **Night sight** (it is the reward of the four-pot
 | **Light** | The wearer gives off light | items' light |
 | **Warding** | Curses and stuns on the wearer wear off sooner | spell timers (new) |
 | **Lasting** | Spells the wearer casts last longer | spell durations (new) |
-| **(name open)** | More experience from kills only, at most +5% | experience code (new) |
+| **Growth** or **Enlightened** (to pick) | More experience from kills only, at most +5% | experience code (new) |
 
-- Category: no hard limits, so everyone has options; suggestion: weighted odds, e.g. Thorns twice as likely on Fighter items, Clarity and Lasting twice as likely on Mage items.
-- Open: the strength numbers per item level; for the regeneration three, how much regenerates while active (suggestion: 20% of the standing rate at low levels up to 50% at level 20) and whether Clarity gives mana regeneration without Meditate; the name for the experience effect (ideas: Insight, Seasoned, Veteran, Tutelage, Fortune).
+- **Category: weighted odds, no hard limits** (decided): e.g. Thorns twice as likely on Fighter items, Clarity and Lasting twice as likely on Mage items.
+- **Regeneration while active: 10% of the standing rate at low item levels up to 30% at level 20** (to start), plus faster regeneration when standing.
+- Clarity: every class already has Meditate (Templars fixed at 1, so they only get the base mana regeneration); Clarity simply works for everyone.
+- Open: the other strength numbers per item level (suggestions: regeneration when standing +1% to +5%, Thorns 1 to level/2 damage per hit, Warding -5% to -25%, Lasting +5% to +15%, experience +1% to +5%).
 
 ## How soulstones work now (for reference)
 
