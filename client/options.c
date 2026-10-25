@@ -103,7 +103,9 @@ void load_options(void)
 {
 	int n,handle,flag=0;
 
-	handle=open("merc.dat",O_RDONLY|O_BINARY);
+	extern char opt_file[];
+
+	handle=open(opt_file,O_RDONLY|O_BINARY);
 	if (handle!=-1) {
 		if (read(handle,history,sizeof(history))!=sizeof(history)) flag=1;
 		if (read(handle,hist_len,sizeof(hist_len))!=sizeof(hist_len)) flag=1;
@@ -138,7 +140,9 @@ void save_options(void)
 {
 	int handle;
 
-	handle=open("merc.dat",O_WRONLY|O_BINARY|O_CREAT|O_TRUNC,0666);
+	extern char opt_file[];
+
+	handle=open(opt_file,O_WRONLY|O_BINARY|O_CREAT|O_TRUNC,0666);
 	if (handle!=-1) {
 		write(handle,history,sizeof(history));
 		write(handle,hist_len,sizeof(hist_len));

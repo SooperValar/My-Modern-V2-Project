@@ -39,6 +39,11 @@ The original `merc.exe` would connect and log in, then close instantly or sit on
 - Load/Save character dialogs use the standard `OPENFILENAME` struct.
 - `build.bat`: finds Visual Studio with `vswhere`, builds a static-CRT 32-bit exe with no DLL dependencies.
 
+### Two clients at once (testing)
+
+- `-m` lets a second client run at the same time (normally only one may run). `-o <file>` gives a client its own options / login file instead of `merc.dat`, so two clients don't share or overwrite each other's character.
+- `play2.bat` starts the second client: `merc.exe -h 127.0.0.1 -p 5555 -m -o merc2.dat`. Start the first one as usual (`play.bat`), then `play2.bat`, and log in a different character there. The server allows several connections from one computer already.
+
 ### Diagnostics
 - `crash.c`: unhandled-exception filter (code + faulting offset in `merc.exe`), invalid-parameter, abort and pure-call handlers. Everything goes to `client.log`.
 - New `-h <host>` option (the server address used to be compiled in), plus `-p`, `-d`, `-f`, `-w`.

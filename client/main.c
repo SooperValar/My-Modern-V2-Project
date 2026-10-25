@@ -1069,6 +1069,9 @@ HWND InitWindow(HINSTANCE hInstance,int nCmdShow)
 	return hWnd;
 }
 
+int multi_ok=0;			// -m
+char opt_file[128]="merc.dat";	// -o
+
 int parse_cmd(char *s)
 {
 	int n;
@@ -1097,6 +1100,14 @@ int parse_cmd(char *s)
 			} else if (tolower(*s)=='w') {	// PORT: -w start windowed
 				s++;
 				fullscreen=-1;
+			} else if (tolower(*s)=='m') {	// -m: allow a second client at the same time (testing)
+				s++;
+				multi_ok=1;
+			} else if (tolower(*s)=='o') {	// -o <file>: the options / login file (default merc.dat)
+				s++;
+				while (isspace(*s)) s++;
+				n=0; while (n<120 && *s && !isspace(*s)) opt_file[n++]=*s++;
+				opt_file[n]=0;
 			} else if (tolower(*s)=='p') {
 				s++;
 				while (isspace(*s)) s++;
@@ -1162,12 +1173,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 	srand((unsigned)GetTickCount());
 
 	if (parse_cmd(lpCmdLine)<0) {
-		MessageBox(0,"Usage: merc.exe [-h server] [-p port] [-d datadir] [-f|-w] [-t]","Command line",MB_OK|MB_ICONINFORMATION);
+		MessageBox(0,"Usage: merc.exe [-h server] [-p port] [-d datadir] [-f|-w] [-t] [-m] [-o optionsfile]","Command line",MB_OK|MB_ICONINFORMATION);
 	}
 	load_display_settings();
 
 	mutex=CreateMutex(NULL,0,"MOAB");
-	if (mutex==NULL || (GetLastError()==ERROR_ALREADY_EXISTS && strcmp(host_addr,"192.168.42.1"))) {
+	if (mutex==NULL || (GetLastError()==ERROR_ALREADY_EXISTS && strcmp(host_addr,"192.168.42.1") && !multi_ok)) {
 		MessageBox(0,"Another instance of "MNAME" is already running.","Error",MB_OK|MB_ICONSTOP);
 		return 0;
 	}
