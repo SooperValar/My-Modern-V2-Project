@@ -689,7 +689,7 @@ void plr_cmd_iteminfo(int nr)
 			if (it[in].weapon[act]) tip_line(nr,where,slot,&line,2,"%+5d WV",it[in].weapon[act]);
 			if (it[in].armor[act]) tip_line(nr,where,slot,&line,2,"%+5d AV",it[in].armor[act]);
 			if (it[in].light[act]>0) tip_line(nr,where,slot,&line,2,"%+5d Light",it[in].light[act]);
-			if (it[in].gethit_dam[act]) tip_line(nr,where,slot,&line,2,"%+5d Damage to attackers",it[in].gethit_dam[act]);
+			if (it[in].gethit_dam[act]) tip_line(nr,where,slot,&line,2," 1-%d Damage to attackers",it[in].gethit_dam[act]);	// do_hurt: RANDOM(d)+1
 			tip_sep();
 			for (n=0; n<5; n++) if (it[in].attrib[n][act]) tip_line(nr,where,slot,&line,it[in].attrib[n][act]<0 ? 0 : 2,"%+5d %s",it[in].attrib[n][act],at_name[n]);
 			if (it[in].hp[act]) tip_line(nr,where,slot,&line,it[in].hp[act]<0 ? 0 : 2,"%+5d Hitpoints",it[in].hp[act]);

@@ -238,7 +238,6 @@ static void tier_roll(int in,int keep)
 
 	// effects that work through existing item values
 	if (tier>=TIER_EPIC) {
-		if (IT_TEFFECT(in)==TE_THORNS) it[in].gethit_dam[0]+=max(1,level/2);
 		if (IT_TEFFECT(in)==TE_LIGHT) it[in].light[0]+=8+level;
 	}
 }
@@ -285,7 +284,7 @@ static void tier_set_names(int in)
 	strncpy(it[in].reference,buf,39); it[in].reference[39]=0;
 	it[in].reference[0]=tolower(it[in].reference[0]);
 
-	snprintf(buf,sizeof(buf),"A %s %s, item level %d.",tier_word[IT_TIER(in)],tier_name(in),IT_TLEVEL(in));
+	snprintf(buf,sizeof(buf),"%s %s %s, item level %d.",IT_TIER(in)==TIER_EPIC ? "An" : "A",tier_word[IT_TIER(in)],tier_name(in),IT_TLEVEL(in));
 	strncpy(it[in].description,buf,199); it[in].description[199]=0;
 }
 
@@ -683,11 +682,9 @@ static void tier_new_effect(int in)
 	int old=IT_TEFFECT(in),lv=IT_TLEVEL(in),e,tries=0;
 
 	do e=roll_effect(IT_TCAT(in)); while (e==old && ++tries<20);
-	if (old==TE_THORNS) it[in].gethit_dam[0]-=max(1,lv/2);
 	if (old==TE_LIGHT) it[in].light[0]-=8+lv;
 	IT_TEFFECT(in)=e;
-	if (e==TE_THORNS) it[in].gethit_dam[0]+=max(1,lv/2);
-	if (e==TE_LIGHT) it[in].light[0]+=8+lv;
+	if (e==TE_LIGHT) it[in].light[0]+=8+lv;	// Light: on the item (light doesn't add up anyway, the brightest counts)
 	it[in].flags|=IF_UPDATE;
 }
 
@@ -778,6 +775,14 @@ void tier_regen(int cn,int standing,int moonmult,int nohp,int noend,int nomana)
 		rate=moonmult+(ch[cn].skill[SK_MEDIT][0] ? ch[cn].skill[SK_MEDIT][5]*moonmult/30 : 0);
 		ch[cn].a_mana+=pct_of(rate,tier_effect_pct(lv,standing ? 1 : 10,standing ? 5 : 30));
 	}
+}
+
+/* Thorns: damage to melee attackers, 1..(level/2); added in really_update_char()
+ * from the best piece (not stored on the item, so two pieces don't add up) */
+int tier_thorns(int cn)
+{
+	int lv=tier_char_effect(cn,TE_THORNS);
+	return lv ? max(1,lv/2) : 0;
 }
 
 /* Warding: a curse or stun on co lasts 5..25% shorter */

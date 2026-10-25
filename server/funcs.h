@@ -87,6 +87,7 @@ void tier_regen(int cn,int standing,int moonmult,int nohp,int noend,int nomana);
 int tier_ward(int co,int duration);
 int tier_lasting(int cn,int duration);
 int tier_enlightened(int cn,int p);
+int tier_thorns(int cn);
 int tier_item_glow(int in);
 int tier_tile_glow(int in,int cn);
 void driver(int cn);

@@ -3538,6 +3538,7 @@ void really_update_char(int cn)
         armor+=ch[cn].armor_bonus;
         weapon+=ch[cn].weapon_bonus;
         gethit+=ch[cn].gethit_bonus;
+        gethit+=tier_thorns(cn);	// Epic effect Thorns, the best piece only (tier.c)
         light+=ch[cn].light_bonus;
 
         if (!(ch[cn].flags&CF_NOMAGIC)) {

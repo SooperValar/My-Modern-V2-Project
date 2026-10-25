@@ -222,7 +222,8 @@ All eight Epic special effects now do what their tooltip says (`tier.c`). The st
 - **Warding**: a Curse or Stun on the wearer lasts 5-25% shorter (`spell_curse`, `spell_stun`).
 - **Lasting**: Bless, Enhance Weapon and Protection cast by the wearer last 20-50% longer (10 minutes become 12-15), Light the same (30 minutes become 36-45). Not Magic Shield, Curse or Stun.
 - **Enlightened**: experience from kills +1-5% (only kill experience, not quests or pentagrams).
-- Thorns and Light already worked in part 1.
+- **Thorns** is no longer stored on the item (it was, as "gethit damage", which adds up): the wearer gets 1-(level/2) damage to melee attackers from the best Thorns piece only (`tier_thorns`, added in `really_update_char`). **Light** stays on the item; light doesn't add up anyway (the brightest counts).
+- Tooltips: each effect shows its name in purple and a short explanation; "Damage to attackers" on any item now reads "1-N" (the damage is random up to N).
 
 #### Item tiers, part 2 (soulstones, Soul Crucibles, upgrade stones)
 
