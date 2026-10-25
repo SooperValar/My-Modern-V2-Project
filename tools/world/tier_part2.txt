@@ -45,3 +45,5 @@ ch 72 d 0 1369
 ch 72 d 1 1370
 ch 72 d 2 1371
 ch 72 items 1369 1370 1371
+# the living Damor gets the merchant flag by respawning ("server pop" afterwards)
+killnpc 72
