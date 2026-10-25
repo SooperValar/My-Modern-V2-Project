@@ -2,7 +2,7 @@ all: server cgi/info.cgi respawn password cgi/acct.cgi
 
 CC=gcc
 DEBUG=-g
-CFLAGS=-Wall -Wshadow -Winline -Wno-pointer-sign -O3 $(DEBUG) -fno-strict-aliasing
+CFLAGS=-Wall -Wshadow -Winline -Wno-pointer-sign -O3 $(DEBUG) -fno-strict-aliasing -fpermissive	# -fpermissive: newer gcc (14+) makes old-style C (implicit int, ...) an error
 LDFLAGS=-O $(DEBUG) -lm -lz -lcrypt
 
 OBJS=.obj/server.o .obj/svr_disk.o .obj/svr_tick.o .obj/svr_act.o \
