@@ -111,7 +111,6 @@ struct skilltab _skilltab[50]={
 	{35,    'G',    "Warcry",       "Frighten all enemies in hearing distance.",    {AT_BRAVE,AT_BRAVE,AT_STREN}},
 	{36,    'C',    "Two-Handed Axe", "Fighting with two-handed axes.",            {AT_AGIL,AT_STREN,AT_STREN}},
 
-	{36,   'Z',   "", "", {0,0,0,}},
 	{37,   'Z',   "", "", {0,0,0,}},
 	{38,   'Z',   "", "", {0,0,0,}},
 	{39,   'Z',   "", "", {0,0,0,}},

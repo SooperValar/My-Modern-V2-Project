@@ -216,6 +216,7 @@ The design is in `docs/ITEM_TIERS.md`. This first part builds the core:
 
 - **Slower attacks**: while attacking with a two-handed axe, a character acts `AXE2H_SLOW` (3) speed steps slower (`ch_act_speed` in `svr_act.c`), about 15-25% fewer swings. Walking and everything else keep the normal speed. The client gets the same speed, so the swing animation matches.
 - Sold next to the two-handed swords: every merchant that sells a two-handed sword tier now also sells the axe of that tier (Karl in Aston, Gertrud, the outpost and lab merchants).
+- Client fix: the skill list showed Two-Handed Axe a second time as a blank row (the old placeholder for skill 36 was still in the client's table).
 - `#axe2h` lists them (in `#weapon` too); `#specialw` and the "needs" text know the new skill.
 - `build_lab` spec: new `it <t> wv`, `atreq` and `skreq` commands.
 
