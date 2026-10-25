@@ -160,6 +160,20 @@ Skill suffixes: mostly the skill's own name ("of Resistance", "of Bless", "of St
 10. **Messages**: reroll "The soulstone sinks into the armor. Its powers shift."; upgrade "The armor's glow intensifies for a moment. Afterward, you feel it has become more powerful."
 11. **Soul Crucible prices (first idea)**: Lesser 25-75 gold, Soul Crucible 150-300 gold, Greater 500-600 gold but probably higher. For scale: a titanium two-handed sword sells for 500 gold (50,000 silver). Suggestion for the Greater: about 1,500 gold.
 
+## Decisions, round 5 (the bonus numbers)
+
+- **Overall strength stays as drafted**: an Epic around rank 18 is about as strong as today's best unique armor (Cap of the Math Genius: +12 Willpower, +12 Intuition, +25 Identify, +25 Sense Magic). Legendaries get hand-set numbers, not the 5x formula.
+- **Point values stay the soulstone's**: 1 point = +1 skill or +1/2 attribute. Can be reworked later.
+- **Minimum budget 8**: budget = max(item level, 8) x tier step. A Magic item gives at least +4 (today's normal modded armor) from rank 1; Magic items grow from level 9 and reach the old Godly +8 around level 16.
+
+  | Main attribute on a Magic item | Rank 3 | Rank 8 | Rank 13 | Rank 18 |
+  |---|---|---|---|---|
+  | Old modded (7 in 8) | +4 | +4 | +4 | +4 |
+  | Old Godly (1 in 8, any rank, even bronze) | +8 | +8 | +8 | +8 |
+  | New Magic | +4 | +4 | +7 | +9 |
+
+- **In the pocket: "Blessed" double roll.** About 1 in 20 items would roll with double budget and a special prefix: a rare jackpot find, especially early. Concern: at end game everyone could end up with Blessed gear. If it is added, **a reroll removes the Blessed status**, so it stays a lucky find, not something to farm.
+
 ## Epic special effect ideas (for 8)
 
 - **Regeneration**: faster hitpoint regeneration.
