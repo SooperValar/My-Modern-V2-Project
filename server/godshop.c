@@ -18,7 +18,7 @@
 
 #include "server.h"
 
-static char *gs_name[GODSHOP_CATS]={"weapons","offhand","armors","amulets","rings","keys","potions","quest","misc"};
+static char *gs_name[GODSHOP_CATS]={"weapons","belts","armors","amulets","rings","keys","potions","quest","misc"};
 
 static int is_quest_temp(int t)		// an item some NPC asks for, or a labyrinth item
 {
@@ -37,9 +37,9 @@ static int gs_category(int t)
 	if (!x->used || !x->name[0] || !(x->flags&IF_TAKE)) return -1;
 	if (x->flags&(IF_SPELL|IF_MONEY)) return -1;
 	if (t>=GODSHOP_ARROW_TEMP && t<=GODSHOP_ARROW_TEMP+1) return -1;
-	if (x->placement&PL_SHIELD) return 1;		// left hand: torches, candles
-	if ((x->flags&IF_WEAPON) || (x->placement&(PL_WEAPON|PL_TWOHAND))) return 0;
-	if (x->placement&(PL_HEAD|PL_BODY|PL_ARMS|PL_BELT|PL_LEGS|PL_FEET|PL_CLOAK)) return 2;
+	if ((x->flags&IF_WEAPON) || (x->placement&(PL_WEAPON|PL_TWOHAND|PL_SHIELD))) return 0;	// also torches and candles (left hand)
+	if (x->placement&PL_BELT) return 1;
+	if (x->placement&(PL_HEAD|PL_BODY|PL_ARMS|PL_LEGS|PL_FEET|PL_CLOAK)) return 2;
 	if (x->placement&PL_NECK) return 3;
 	if ((x->placement&PL_RING) && x->driver!=68) return 4;
 	if (strstr(x->name,"Key") || strstr(x->name,"key")) return 5;

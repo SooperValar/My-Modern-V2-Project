@@ -578,7 +578,7 @@ struct character
 #define TIER_UPSTONE_TEMP	1372	// upgrade stone
 
 // godshop.c: the gods' merchants in Elysium are character templates GODSHOP_TEMP + category
-#define GODSHOP_TEMP		1180	// 1180-1188: weapons, offhand, armors, amulets, rings, keys, potions, quest, misc
+#define GODSHOP_TEMP		1180	// 1180-1188: weapons, belts, armors, amulets, rings, keys, potions, quest, misc
 #define GODSHOP_CATS		9
 #define GODSHOP_PER_PAGE	38	// slots 38 / 39: previous / next page
 #define GODSHOP_ARROW_TEMP	1374	// 1374 "Previous page", 1375 "Next page"

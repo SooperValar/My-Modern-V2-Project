@@ -34,9 +34,9 @@ ch 1180 items 0
 ch 1180 setflags 1
 ch 1180 text 2 The gods' weapons, %s. Take what you need.
 ch 1181 copy 1203
-ch 1181 name Shieldwarden
-ch 1181 ref the shieldwarden
-ch 1181 desc A merchant of the gods. Sells offhand items: torches and candles to gods and their helpers, free.
+ch 1181 name Beltmaker
+ch 1181 ref the beltmaker
+ch 1181 desc A merchant of the gods. Sells belts to gods and their helpers, free.
 ch 1181 pos 796 805
 ch 1181 d 0 0
 ch 1181 d 1 0
@@ -50,7 +50,7 @@ ch 1181 d 8 0
 ch 1181 d 9 0
 ch 1181 items 0
 ch 1181 setflags 1
-ch 1181 text 2 The gods' offhand items, %s. Take what you need.
+ch 1181 text 2 The gods' belts, %s. Take what you need.
 ch 1182 copy 1203
 ch 1182 name Armorer
 ch 1182 ref the armorer
@@ -177,3 +177,5 @@ ch 1188 d 9 0
 ch 1188 items 0
 ch 1188 setflags 1
 ch 1188 text 2 The gods' everything else, %s. Take what you need.
+# changed: the offhand merchant became the Beltmaker; respawn him with the new name
+killnpc 1181
