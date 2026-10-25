@@ -39,7 +39,7 @@ static int gs_category(int t)
 	if (x->flags&IF_UNIQUE) return -1;	// unique items stay unique: god weapons, Fire/Ice sets, Math caps, Helm of Shadows...
 	if (t==169) return -1;			// the Grolm Crown (always unique, but has no unique flag)
 	if (t>=GODSHOP_ARROW_TEMP && t<=GODSHOP_ARROW_TEMP+1) return -1;
-	if (strstr(x->name,"Scroll")) return 9;
+	if (strstr(x->name,"Scroll") || x->driver==48) return 9;	// also the spell scrolls (Spell of Bless, Bless of Skua...)
 	if (x->flags&IF_USEDESTROY) return 6;	// potions, flowers, drinks (some ales are held in the hand)
 	if (x->driver==68 || x->driver==73 || x->driver==74) return 8;	// soulstones, crucibles, upgrade stones
 	if ((x->flags&IF_WEAPON) || (x->placement&(PL_WEAPON|PL_TWOHAND|PL_SHIELD))) return 0;	// also torches and candles (left hand)
@@ -84,16 +84,18 @@ static int *gs_page(int cn)
 void godshop_fill(int cn,int co)
 {
 	int n,in,list[MAXTITEM],cnt,page=*gs_page(cn),cat=godshop_cat(co)-1;
+	static int boot=0;	// a new number each server start: a page saved before a restart is never kept
 
 	if (cat<0) return;
+	if (!boot) boot=1+RANDOM(1000000);
 	// the client asks again every second while the window is open: keep the page
-	// if it is already this viewer's (data[8] viewer, data[9] page+1)
-	if (gs_allowed(cn) && ch[co].data[8]==cn && ch[co].data[9]==page+1) return;
+	// if it is already this viewer's (data[7] boot, data[8] viewer, data[9] page+1)
+	if (gs_allowed(cn) && ch[co].data[7]==boot && ch[co].data[8]==cn && ch[co].data[9]==page+1) return;
 
 	for (n=0; n<40; n++) if ((in=ch[co].item[n])) { it[in].used=USE_EMPTY; ch[co].item[n]=0; }
 	ch[co].data[8]=ch[co].data[9]=0;
 	if (!gs_allowed(cn)) { do_sayx(co,"I only serve the gods and their helpers, %s.",ch[cn].name); return; }
-	ch[co].data[8]=cn; ch[co].data[9]=page+1;
+	ch[co].data[7]=boot; ch[co].data[8]=cn; ch[co].data[9]=page+1;
 
 	cnt=gs_list(cat,list);
 	if (page*GODSHOP_PER_PAGE>=cnt) page=*gs_page(cn)=0;
