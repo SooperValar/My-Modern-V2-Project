@@ -1871,13 +1871,14 @@ void dd_lowhp_glow(int xpos,int ypos,int xoff,int yoff,int pct,int limit)
 	dd_release_ptr(sur2);
 }
 
-/* item tiers: a faint outline in the tier colour around a sprite (1-2 pixels
+/* item tiers: a thin outline in the tier colour around a sprite (one pixel
  * outside its edge). glow: 1 Magic, 2 Rare, 3 Epic, 4 Legendary, 5 grave/body
  * holding items. sx,sy: the sprite's top left on the screen. */
 static void glow_core(int nr,int sx,int sy,int glow,int light)
 {
-	static const int col[6][3]={{0,0,0},{90,150,255},{255,220,60},{190,110,255},{255,150,40},{225,225,225}};
-	static const int amax_t[6]={0,110,110,120,130,70};
+	// strong, clearly different hues; the outline is only one pixel wide, so it stays subtle
+	static const int col[6][3]={{0,0,0},{40,120,255},{255,215,0},{175,60,255},{255,120,0},{210,210,210}};
+	static const int amax_t[6]={0,150,150,160,170,90};
 	int w,h,x,y,dx,dy,d,dmin,a,r,g,b,cr,cg,cb,amax;
 	unsigned short *src,*dst,v;
 
@@ -1891,23 +1892,25 @@ static void glow_core(int nr,int sx,int sy,int glow,int light)
 
 	dst=dd_get_ptr(sur2);
 	if (!dst) return;
-	for (y=-2; y<h+2; y++) {
+	for (y=-1; y<h+1; y++) {
 		if (sy+y<0 || sy+y>=MAXY) continue;
-		for (x=-2; x<w+2; x++) {
+		for (x=-1; x<w+1; x++) {
 			if (sx+x<0 || sx+x>=MAXX) continue;
 			if (x>=0 && y>=0 && x<w && y<h && src[x+y*w]!=(RED|BLUE)) continue;	// inside the sprite
 			dmin=9;
-			for (dy=-2; dy<=2; dy++) for (dx=-2; dx<=2; dx++) {
+			for (dy=-1; dy<=1; dy++) for (dx=-1; dx<=1; dx++) {
 				int px=x+dx,py=y+dy;
 				if (px<0 || py<0 || px>=w || py>=h) continue;
 				if (src[px+py*w]==(RED|BLUE)) continue;
 				d=dx*dx+dy*dy;
 				if (d<dmin) dmin=d;
 			}
-			if (dmin>4) continue;
-			a=(dmin<=2) ? amax : amax/3;	// close: full, a bit further: faint
+			if (dmin>2) continue;
+			a=(dmin==1) ? amax : amax*2/3;	// the pixel next to the edge; corners a little fainter
 			v=dst[(sx+x)+(sy+y)*MAXX];
-			if (RGBM==0) { r=v>>11; g=(v>>5)&63; b=v&31; }
+			if (v==(RED|BLUE)) {	// clean theme: the panel under it is drawn later by the presenter
+				r=0x1F>>3; g=0x1F>>2; b=0x22>>3;
+			} else if (RGBM==0) { r=v>>11; g=(v>>5)&63; b=v&31; }
 			else { r=(v>>10)&31; g=((v>>5)&31)<<1; b=v&31; }
 			r+=((cr-r)*a)>>8; g+=((cg-g)*a)>>8; b+=((cb-b)*a)>>8;
 			if (RGBM==0) dst[(sx+x)+(sy+y)*MAXX]=(unsigned short)((r<<11)|(g<<5)|b);

@@ -204,7 +204,7 @@ The design is in `docs/ITEM_TIERS.md`. This first part builds the core:
 
 #### Item tiers, part 4 (the glow)
 
-- **Tiered items glow**: a faint outline, 1-2 pixels around the sprite, in the tier colour (Magic blue, Rare yellow, Epic purple, Legendary orange). Everywhere they show: on the ground, in the backpack, in the worn slots, and in shop and grave windows. Subtle by design; on the ground it is as dark as the tile, so it doesn't light up dark places.
+- **Tiered items glow**: a thin outline, one pixel around the sprite, in a strong tier colour (Magic blue, Rare gold, Epic purple, Legendary orange). In the clean HUD the panels behind items are drawn by the presenter (the framebuffer holds the transparent key colour there); the outline is blended with the panel colour, not the key, which had turned every colour pink. Everywhere they show: on the ground, in the backpack, in the worn slots, and in shop and grave windows. Subtle by design; on the ground it is as dark as the tile, so it doesn't light up dark places.
 - **Graves glow** faint grey-white while they still hold something (items or gold): the grave stone of a player's body, and the body of a monster. Empty ones don't, so you can tell at a glance whether there is anything left - but not what.
 - Protocol: two new server messages (the client must be updated): `SV_TILEGLOW` (76: map tile, glow) and `SV_TIERS` (77: the tiers of the backpack and worn slots, or of the open shop / grave). The glow of a map tile is a new field in `struct cmap` on both sides; it scrolls with the map. Server: `tier_item_glow`, `tier_tile_glow` (`tier.c`); client: `dd_glow_screen`, `dd_glow_world` (`dd.c`).
 
