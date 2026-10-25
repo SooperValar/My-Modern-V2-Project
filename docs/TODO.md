@@ -10,6 +10,8 @@ In order:
 4. **Pentagram enemies leave no grave** unless they carry something besides their weapon.
 5. **Pentagram solve balance**: look at how the solve count works (now: players online + three random 0-19, so about 28 + players online; 54 right after a server start; every active pentagram in the world counts) and make it work for a solo player as well as for groups. **Base it on the players actually doing pentagrams** (e.g. those in the pentagram area or who activated one recently), not everyone online; usually 1-5 people.
 
+6. **Equipment compare**: when hovering an item, show how it compares to what is worn in that slot (e.g. a second tooltip with the worn piece, or +/- differences in green and red).
+
 Later (ideas, not decided):
 
 - Prestige: what triggers it and what it gives (the Final Test's Shrine of Change will be used).
