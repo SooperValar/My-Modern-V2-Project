@@ -697,7 +697,11 @@ void plr_cmd_iteminfo(int nr)
 			if (it[in].mana[act]) tip_line(nr,where,slot,&line,it[in].mana[act]<0 ? 0 : 2,"%+5d Mana",it[in].mana[act]);
 			tip_sep();
 			for (n=0; n<50; n++) if (it[in].skill[n][act]) tip_line(nr,where,slot,&line,it[in].skill[n][act]<0 ? 0 : 2,"%+5d %s",it[in].skill[n][act],skilltab[n].name);
-			if (IT_TIER(in) && IT_TEFFECT(in)) { char t1[80],t2[80]; tier_tip_lines(in,t1,t2); tip_sep(); tip_line(nr,where,slot,&line,13,"%s",t2); }
+			if (IT_TIER(in) && IT_TEFFECT(in)) {	// the Epic effect: its name in purple, then what it does
+				char el[4][60]; int k,cnt=tier_tip_effect(in,el);
+				if (cnt) tip_sep();
+				for (k=0; k<cnt; k++) tip_line(nr,where,slot,&line,k ? 2 : 13,"%s",el[k]);
+			}
 			tip_sep();
 			if ((it[in].flags&IF_USEACTIVATE) && !act) {	// what it does when turned on
 				for (n=0,shown=0; n<5; n++) if (it[in].attrib[n][1]) { if (!shown++) tip_line(nr,where,slot,&line,1,"When active:"); tip_line(nr,where,slot,&line,it[in].attrib[n][1]<0 ? 0 : 2,"%+5d %s",it[in].attrib[n][1],at_name[n]); }

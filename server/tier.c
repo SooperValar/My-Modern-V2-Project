@@ -442,21 +442,55 @@ int tier_font(int in)	// tooltip font for the name: 10 Common ... 14 Legendary
 /* the extra tooltip lines of a tiered item */
 void tier_tip_lines(int in,char *l1,char *l2)
 {
-	int lv=IT_TLEVEL(in);
-
 	l1[0]=l2[0]=0;
 	if (!IT_TIER(in)) return;
-	sprintf(l1,"%s %s, item level %d",tier_word[IT_TIER(in)],cat_word[IT_TCAT(in)],lv);
+	sprintf(l1,"%s %s, item level %d",tier_word[IT_TIER(in)],cat_word[IT_TCAT(in)],IT_TLEVEL(in));
+}
+
+/* the Epic effect for the tooltip: its name, then up to 3 short lines (at
+ * most about 36 characters, like the description). Returns the number of lines. */
+int tier_tip_effect(int in,char lines[4][60])
+{
+	int lv=IT_TLEVEL(in),act=tier_effect_pct(lv,10,30),rest=tier_effect_pct(lv,1,5);
+	char *what=NULL;
+
+	if (!IT_TIER(in) || !IT_TEFFECT(in)) return 0;
 	switch(IT_TEFFECT(in)) {
-		case TE_REGEN:	 sprintf(l2,"Regeneration: hp also while active (%d%%)",tier_effect_pct(lv,10,30)); break;
-		case TE_CLARITY: sprintf(l2,"Clarity: mana also while active (%d%%)",tier_effect_pct(lv,10,30)); break;
-		case TE_STAMINA: sprintf(l2,"Stamina: endurance also while active (%d%%)",tier_effect_pct(lv,10,30)); break;
-		case TE_THORNS:	 sprintf(l2,"Thorns: hurts melee attackers"); break;
-		case TE_LIGHT:	 sprintf(l2,"Light: shines in the dark"); break;
-		case TE_WARDING: sprintf(l2,"Warding: curses and stuns -%d%%",tier_effect_pct(lv,5,25)); break;
-		case TE_LASTING: sprintf(l2,"Lasting: your blessings last +%d%%",tier_effect_pct(lv,20,50)); break;
-		case TE_ENLIGHT: sprintf(l2,"Enlightened: +%d%% experience from kills",tier_effect_pct(lv,1,5)); break;
+		case TE_REGEN:		what="Hitpoints"; strcpy(lines[0],"Effect: Regeneration"); break;
+		case TE_CLARITY:	what="Mana"; strcpy(lines[0],"Effect: Clarity"); break;
+		case TE_STAMINA:	what="Endurance"; strcpy(lines[0],"Effect: Stamina"); break;
 	}
+	if (what) {
+		sprintf(lines[1],"%s keep regenerating while",what);
+		sprintf(lines[2],"moving or fighting (%d%% of normal),",act);
+		sprintf(lines[3],"and %d%% faster while resting.",rest);
+		return 4;
+	}
+	switch(IT_TEFFECT(in)) {
+		case TE_THORNS:
+			strcpy(lines[0],"Effect: Thorns");
+			sprintf(lines[1],"Melee attackers take 1-%d damage.",max(1,lv/2));
+			return 2;
+		case TE_LIGHT:
+			strcpy(lines[0],"Effect: Light");
+			strcpy(lines[1],"You give off light.");
+			return 2;
+		case TE_WARDING:
+			strcpy(lines[0],"Effect: Warding");
+			strcpy(lines[1],"Curses and stuns on you");
+			sprintf(lines[2],"wear off %d%% sooner.",tier_effect_pct(lv,5,25));
+			return 3;
+		case TE_LASTING:
+			strcpy(lines[0],"Effect: Lasting");
+			strcpy(lines[1],"Your Bless, Enhance Weapon,");
+			sprintf(lines[2],"Protection and Light last %d%% longer.",tier_effect_pct(lv,20,50));
+			return 3;
+		case TE_ENLIGHT:
+			strcpy(lines[0],"Effect: Enlightened");
+			sprintf(lines[1],"%d%% more experience from kills.",tier_effect_pct(lv,1,5));
+			return 2;
+	}
+	return 0;
 }
 
 /* ---- god command: #tier <tier 1-3> <level 1-20> [f|m|c|u] [h|a] ---- */
