@@ -196,6 +196,7 @@ Every Epic gets one. Left out: **Night sight** (it is the reward of the four-pot
 | **Lasting** | Helpful spells the wearer casts last longer: **Bless, Enhance Weapon, Protection, Light** (not Magic Shield, whose duration is its strength; not Curse or Stun). **+20% at low item levels to +50% at level 20**: the 10-minute buffs last 12 to 15 minutes, Light 36 to 45 | spell durations (new) |
 | **Enlightened** | More experience from kills only, at most +5% | experience code (new) |
 
+- **Effects don't stack** (decided for now): with two pieces carrying the same effect, the best one counts. Thorns might be allowed to stack later, depending on how fast it hurts enemies in testing (`tier_thorns` in `tier.c`).
 - **Category: weighted odds, no hard limits** (decided): e.g. Thorns twice as likely on Fighter items, Clarity and Lasting twice as likely on Mage items.
 - **Regeneration while active: 10% of the standing rate at low item levels up to 30% at level 20** (to start), plus faster regeneration when standing.
 - Clarity: every class already has Meditate (Templars fixed at 1, so they only get the base mana regeneration); Clarity simply works for everyone.
