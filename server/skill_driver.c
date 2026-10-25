@@ -232,7 +232,7 @@ int spell_light(int cn,int co,int power)
         it[in].flags|=IF_SPELL;
         it[in].light[1]=min(250,power*4);
         it[in].sprite[1]=85;
-        it[in].duration=it[in].active=18*60*30;
+        it[in].duration=it[in].active=tier_lasting(cn,18*60*30);	// Lasting (tier.c)
         it[in].temp=SK_LIGHT;
         it[in].power=power;
 
@@ -325,7 +325,7 @@ int spell_protect(int cn,int co,int power)
         it[in].flags|=IF_SPELL;
         it[in].armor[1]=power/4+4;
         it[in].sprite[1]=86;
-        it[in].duration=it[in].active=18*60*10;
+        it[in].duration=it[in].active=tier_lasting(cn,18*60*10);	// Lasting (tier.c)
         it[in].temp=SK_PROTECT;
         it[in].power=power;
 
@@ -412,7 +412,7 @@ int spell_enhance(int cn,int co,int power)
         it[in].flags|=IF_SPELL;
         it[in].weapon[1]=power/4+4;
         it[in].sprite[1]=87;
-        it[in].duration=it[in].active=18*60*10;
+        it[in].duration=it[in].active=tier_lasting(cn,18*60*10);	// Lasting (tier.c)
         it[in].temp=SK_ENHANCE;
         it[in].power=power;
 
@@ -498,7 +498,7 @@ int spell_bless(int cn,int co,int power)
         for (n=0; n<5; n++)
                 it[in].attrib[n][1]=power/5+3;
         it[in].sprite[1]=88;
-        it[in].duration=it[in].active=18*60*10;
+        it[in].duration=it[in].active=tier_lasting(cn,18*60*10);	// Lasting (tier.c)
         it[in].temp=SK_BLESS;
         it[in].power=power;
 
@@ -746,7 +746,7 @@ int spell_curse(int cn,int co,int power)
         for (n=0; n<5; n++)
                 it[in].attrib[n][1]=-(power/3); //(power/3+10);
         it[in].sprite[1]=89;
-        it[in].duration=it[in].active=18*60*2;
+        it[in].duration=it[in].active=tier_ward(co,18*60*2);	// Warding (tier.c)
         it[in].temp=SK_CURSE;
         it[in].power=power;
 
@@ -1279,7 +1279,7 @@ int spell_stun(int cn,int co,int power)
         strcpy(it[in].name,"Stun");
         it[in].flags|=IF_SPELL;
         it[in].sprite[1]=91;
-        it[in].duration=it[in].active=power+TICKS;
+        it[in].duration=it[in].active=tier_ward(co,power+TICKS);	// Warding (tier.c)
         it[in].temp=SK_STUN;
         it[in].power=power;
 

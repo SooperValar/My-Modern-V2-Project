@@ -202,6 +202,16 @@ The design is in `docs/ITEM_TIERS.md`. This first part builds the core:
 - `tools/design/item_tier_samples.py` prints sample rolls (the same rules, for looking at numbers).
 - Build: `tier.c` is a new file, so the Makefile changed; `claude-sync.sh get` now copies the Makefile too.
 
+#### Item tiers, part 3 (the Epic effects work)
+
+All eight Epic special effects now do what their tooltip says (`tier.c`). The strength grows with the item level (1 to 20). Wearing two pieces with the same effect doesn't add up: the best one counts.
+
+- **Regeneration / Clarity / Stamina**: hitpoints / mana / endurance keep regenerating while moving and fighting, at 10% (item level 1) to 30% (level 20) of the standing-still rate; standing still they regenerate 1-5% faster (`tier_regen`, called from `do_regenerate`). Clarity works for every class (all have Meditate; Templars' is fixed at 1, so they get the base rate).
+- **Warding**: a Curse or Stun on the wearer lasts 5-25% shorter (`spell_curse`, `spell_stun`).
+- **Lasting**: Bless, Enhance Weapon and Protection cast by the wearer last 20-50% longer (10 minutes become 12-15), Light the same (30 minutes become 36-45). Not Magic Shield, Curse or Stun.
+- **Enlightened**: experience from kills +1-5% (only kill experience, not quests or pentagrams).
+- Thorns and Light already worked in part 1.
+
 #### Item tiers, part 2 (soulstones, Soul Crucibles, upgrade stones)
 
 - **Soulstone on a plain helmet or body armor** (bronze to titanium, emerald too): it becomes a Magic piece, item level = the stone's level (at most 20). "The soulstone sinks into the armor. Magical powers awaken in it."

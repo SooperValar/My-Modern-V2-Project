@@ -697,3 +697,75 @@ void god_soul_level(int cn,char *a1,int up)
 	if (!god_give_char(in,cn)) { it[in].used=USE_EMPTY; do_char_log(cn,0,"Your backpack is full.\n"); return; }
 	do_char_log(cn,1,"Made a level %d %s.\n",it[in].data[0],up ? "upgrade stone" : "soulstone");
 }
+
+/* ======================================================================
+ * Part 3: the Epic special effects in the game
+ * Several pieces with the same effect don't add up: the best one counts.
+ * ====================================================================== */
+
+/* the item level of the best worn Epic (or better) piece with effect e, 0 none */
+int tier_char_effect(int cn,int e)
+{
+	int n,in,best=0;
+
+	if (!IS_SANECHAR(cn) || !(ch[cn].flags&(CF_PLAYER|CF_USURP))) return 0;
+	for (n=0; n<20; n++) {
+		if (!(in=ch[cn].worn[n]) || !IS_SANEITEM(in)) continue;
+		if (IT_TIER(in)<TIER_EPIC || IT_TEFFECT(in)!=e) continue;
+		if (IT_TLEVEL(in)>best) best=IT_TLEVEL(in);
+	}
+	return best;
+}
+
+// pct percent of v, the fraction rounded at random (regeneration per tick is small)
+static int pct_of(int v,int pct)
+{
+	int x=v*pct;
+	return x/100+(RANDOM(100)<x%100 ? 1 : 0);
+}
+
+/* Regeneration / Clarity / Stamina, once a tick from do_regenerate(): standing
+ * still gives +1..5% faster regeneration, anything else 10..30% of the standing rate */
+void tier_regen(int cn,int standing,int moonmult,int nohp,int noend,int nomana)
+{
+	int lv,rate;
+
+	if (!(ch[cn].flags&(CF_PLAYER|CF_USURP)) || ch[cn].stunned) return;
+
+	if (!nohp && (lv=tier_char_effect(cn,TE_REGEN))) {
+		rate=moonmult*2+(ch[cn].skill[SK_REGEN][0] ? ch[cn].skill[SK_REGEN][5]*moonmult/30 : 0);
+		ch[cn].a_hp+=pct_of(rate,tier_effect_pct(lv,standing ? 1 : 10,standing ? 5 : 30));
+	}
+	if (!noend && (lv=tier_char_effect(cn,TE_STAMINA))) {
+		rate=moonmult*4+(ch[cn].skill[SK_REST][0] ? ch[cn].skill[SK_REST][5]*moonmult/30 : 0);
+		ch[cn].a_end+=pct_of(rate,tier_effect_pct(lv,standing ? 1 : 10,standing ? 5 : 30));
+	}
+	if (!nomana && (lv=tier_char_effect(cn,TE_CLARITY))) {
+		rate=moonmult+(ch[cn].skill[SK_MEDIT][0] ? ch[cn].skill[SK_MEDIT][5]*moonmult/30 : 0);
+		ch[cn].a_mana+=pct_of(rate,tier_effect_pct(lv,standing ? 1 : 10,standing ? 5 : 30));
+	}
+}
+
+/* Warding: a curse or stun on co lasts 5..25% shorter */
+int tier_ward(int co,int duration)
+{
+	int lv=tier_char_effect(co,TE_WARDING);
+	if (!lv) return duration;
+	return max(1,duration-duration*tier_effect_pct(lv,5,25)/100);
+}
+
+/* Lasting: Bless, Enhance Weapon, Protection and Light cast by cn last 20..50% longer */
+int tier_lasting(int cn,int duration)
+{
+	int lv=tier_char_effect(cn,TE_LASTING);
+	if (!lv) return duration;
+	return duration+duration*tier_effect_pct(lv,20,50)/100;
+}
+
+/* Enlightened: experience from kills +1..5% */
+int tier_enlightened(int cn,int p)
+{
+	int lv=tier_char_effect(cn,TE_ENLIGHT);
+	if (!lv || p<=0) return p;
+	return p+max(1,p*tier_effect_pct(lv,1,5)/100);
+}

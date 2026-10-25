@@ -2951,6 +2951,7 @@ void do_give_exp(int cn,int p,int gflag,int rank)
 	                	p=scale_exps2(master,rank,p);
 	                else
                         	p=scale_exps2(cn,rank,p);
+                        p=tier_enlightened(cn,p);	// Epic effect Enlightened: more from kills (tier.c)
                 }
                 if (p) {
                         ch[cn].points+=p;
@@ -3777,6 +3778,9 @@ void do_regenerate(int cn)
                                         break;
                 }
         }
+
+        // Epic effects Regeneration / Clarity / Stamina (tier.c)
+        if (ch[cn].flags&(CF_PLAYER|CF_USURP)) tier_regen(cn,ch_base_status(ch[cn].status)<=7,moonmult,nohp,noend,nomana);
 
         if (ch[cn].flags&CF_UNDEAD) {   // Lab 11's undead regenerate less than the usual 650
                 int reg=(ch[cn].temp>=LAB11_TEMPS_FROM && ch[cn].temp<=LAB11_TEMPS_TO) ? LAB11_UNDEAD_REGEN : 650;
