@@ -34,14 +34,15 @@ static int util_sk[]={SK_PERCEPT,SK_LOCK,SK_BARTER,SK_REPAIR,SK_LIGHT,SK_IDENT,S
 
 static char *at_prefix[7]={"","Brave","Willful","Wise","Nimble","Strong","Balanced"};	// AT_*+1, 6 = spread
 
-// metal templates: helmet, body armor, and the item levels they drop at
-static struct { char *metal; int helm,body,from,to; } metals[]={
-	{"Bronze",	57,	59,	1,	6},
-	{"Steel",	63,	65,	1,	20},	// steel at every level (Harakim wear it for good)
-	{"Golden",	69,	71,	5,	14},
-	{"Emerald",	981,	982,	9,	17},
-	{"Crystal",	75,	76,	11,	20},
-	{"Titanium",	94,	95,	16,	20},
+// metal templates: helmet, body armor, the item levels they drop at, and the
+// "special" sprites (the old modded armor's, with the red gem; emerald's are new)
+static struct { char *metal; int helm,body,from,to,spr_helm,spr_body; } metals[]={
+	{"Bronze",	57,	59,	1,	6,	840,	845},
+	{"Steel",	63,	65,	1,	20,	830,	835},	// steel at every level (Harakim wear it for good)
+	{"Golden",	69,	71,	5,	14,	870,	875},
+	{"Emerald",	981,	982,	9,	17,	18210,	18211},
+	{"Crystal",	75,	76,	11,	20,	850,	855},
+	{"Titanium",	94,	95,	16,	20,	860,	865},
 };
 #define NMETAL ((int)(sizeof(metals)/sizeof(metals[0])))
 
@@ -311,7 +312,7 @@ char *tier_name(int in)
 /* make a new tiered item from a plain helmet or body armor template */
 int tier_create(int temp,int tier,int cat,int level)
 {
-	int in;
+	int in,n;
 
 	if (temp<=0 || temp>=MAXTITEM || tier<TIER_MAGIC || tier>TIER_EPIC) return 0;
 	if (!(it_temp[temp].placement&(PL_HEAD|PL_BODY))) return 0;
@@ -324,6 +325,11 @@ int tier_create(int temp,int tier,int cat,int level)
 	IT_TEFFECT(in)=(tier>=TIER_EPIC) ? roll_effect(cat) : 0;
 
 	tier_roll(in,0);
+
+	for (n=0; n<NMETAL; n++) {			// the special sprite of that metal and piece
+		if (metals[n].helm==temp) it[in].sprite[0]=metals[n].spr_helm;
+		if (metals[n].body==temp) it[in].sprite[0]=metals[n].spr_body;
+	}
 
 	it[in].temp=0;					// not the shop's plain stock any more
 	it[in].min_rank=level;
