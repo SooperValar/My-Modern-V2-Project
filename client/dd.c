@@ -1452,6 +1452,7 @@ unsigned int dd_font_rgb(int f)
 	unsigned short v;
 	unsigned int sr=0,sg=0,sb=0;
 
+	if (f>=100) f-=100;	// +100: outlined (item marks)
 	if (f>=10 && f<=14) return tier_rgb[f-10]|0x01000000;
 	if (f<0 || f>3) f=1;
 	nr=700+f;
@@ -1518,6 +1519,10 @@ void dd_putc(int xpos,int ypos,char font,int c)
 
 void dd_puttext(int x,int y,int font,char *text)
 {
+	if (font>=100) {	// outlined text (item marks): the smooth font draws a dark ring around it
+		if (hud_active==2 && hud_font) { if (x>=0 && y>=0 && y+9<=MAXY) htext_add(x,y,font,text,(int)strlen(text)); return; }
+		font-=100;
+	}
 	if (hud_active==2 && hud_font && ((font>=0 && font<=3) || (font>=10 && font<=14))) {
 		if (x>=0 && y>=0 && y+9<=MAXY) htext_add(x,y,font,text,(int)strlen(text));
 		return;

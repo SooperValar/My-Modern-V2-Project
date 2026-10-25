@@ -211,6 +211,7 @@ The design is in `docs/ITEM_TIERS.md`. This first part builds the core:
 #### Spell scroll marks
 
 - Spell scrolls (driver 48) show two small marks on their picture in the backpack, worn slots and shop / grave windows: the god's initial top left (**A** Ankh, **I** Ishtar, **S** Skua; the plain "Spell of" scrolls none) and the **charges left** top right. Worked out from the scroll's power (75 / 150 / 300) and charges, so custom scrolls follow too (`item_marks` in `tier.c`).
+- The marks are drawn bold with a black outline (letter gold, charges white) so they read over any scroll picture. Outlined text is font code +100 in `dd_puttext`; the presenter (`draw_texts` in `main.c`) draws the black ring and then the colour.
 - Protocol: `SV_ITEMMARKS` (78: a letter and a number per slot, for the backpack and worn slots or the open shop / grave), sent like `SV_TIERS`. The client must be updated.
 
 #### The gods' shops

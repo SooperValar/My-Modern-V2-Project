@@ -346,7 +346,7 @@ static void fill_rect(int x0,int y0,int x1,int y1,unsigned int rgb)
 
 // HUD text with a real font, at full window resolution, one character per
 // 6-unit cell (the layout was made for the 6x9 bitmap font)
-static HFONT hud_hfont=NULL;
+static HFONT hud_hfont=NULL,hud_bfont=NULL;
 static char hud_fontface[64]="Consolas";
 
 static void draw_texts(void)
@@ -365,6 +365,8 @@ static void draw_texts(void)
 			CLEARTYPE_QUALITY,FIXED_PITCH|FF_MODERN,hud_fontface);
 		if (!hud_hfont) return;
 	}
+	if (!hud_bfont) hud_bfont=CreateFontA(-CW2W(9)-1,0,0,0,FW_BOLD,0,0,0,DEFAULT_CHARSET,OUT_TT_PRECIS,CLIP_DEFAULT_PRECIS,
+			CLEARTYPE_QUALITY,FIXED_PITCH|FF_MODERN,hud_fontface);
 	for (i=0; i<256; i++) dx[i]=cell;
 	old=SelectObject(bb_dc,hud_hfont);
 	SetBkMode(bb_dc,TRANSPARENT);
@@ -372,6 +374,17 @@ static void draw_texts(void)
 	for (n=0; n<cnt; n++,t++) {
 		len=t->len; if (len>256) len=256;
 		col=dd_font_rgb(t->font)&0xFFFFFF;
+		if (t->font>=100) {	// outlined: bold, with a black ring so it reads over any item picture
+			int ox,oy,r=HUD_SCALE_X100>=250 ? 2 : 1,x=CW2W(t->x),y=CW2W(t->y);
+			if (hud_bfont) SelectObject(bb_dc,hud_bfont);
+			SetTextColor(bb_dc,RGB(0,0,0)); last=0;
+			for (oy=-r; oy<=r; oy++) for (ox=-r; ox<=r; ox++)
+				if (ox || oy) ExtTextOutA(bb_dc,x+ox,y+oy,0,NULL,pool+t->off,len,dx);
+			SetTextColor(bb_dc,RGB((col>>16)&255,(col>>8)&255,col&255)); last=col;
+			ExtTextOutA(bb_dc,x,y,0,NULL,pool+t->off,len,dx);
+			SelectObject(bb_dc,hud_hfont);
+			continue;
+		}
 		if (col!=last) { SetTextColor(bb_dc,RGB((col>>16)&255,(col>>8)&255,col&255)); last=col; }
 		ExtTextOutA(bb_dc,CW2W(t->x),CW2W(t->y),0,NULL,pool+t->off,len,dx);	// centred in the rows
 	}

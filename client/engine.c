@@ -40,8 +40,8 @@ size_t strlen(const char *s);
 static void item_mark(int x,int y,unsigned char *m)
 {
 	char b[8];
-	if (m[0]) { b[0]=m[0]; b[1]=0; dd_puttext(x+1,y,1,b); }
-	if (m[1]!=255) { sprintf(b,"%d",m[1]); dd_puttext(x+32-(int)strlen(b)*6-1,y,2,b); }
+	if (m[0]) { b[0]=m[0]; b[1]=0; dd_puttext(x+1,y,112,b); }	// gold, outlined
+	if (m[1]!=255) { sprintf(b,"%d",m[1]); dd_puttext(x+32-(int)strlen(b)*6-1,y,110,b); }	// white, outlined
 }
 int lowhp_hp=0;		// #lowhp <hp>: glow below this many hitpoints, 0 = off (client.ini [display] lowhp_hp)
 void dd_showbox(int xf,int yf,int xs,int ys,unsigned short col);
