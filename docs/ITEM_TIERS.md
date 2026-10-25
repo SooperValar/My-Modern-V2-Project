@@ -179,30 +179,23 @@ Skill suffixes: mostly the skill's own name ("of Resistance", "of Bless", "of St
 - **Late game starts at rank 16, Major General** (Lieutenant General, 17, was the other candidate). From there gear lasts a long time, so players have time to farm the perfect pieces.
 - **Legendaries have item levels 16-20** (need rank 16+). Only monsters of rank 16 and up can roll Legendary; below that the 1% Legendary roll becomes Epic. A Legendary drops at the monster's rank, capped at 20.
 
-## Epic special effect ideas (for 8)
+## Epic special effects (round 7)
 
-- **Regeneration**: faster hitpoint regeneration.
-- **Clarity**: faster mana regeneration.
-- **Stamina**: faster endurance regeneration.
-- **Warding**: shorter curse and stun on the wearer.
-- **Light**: the item gives light (the old "Shining" prefix did this).
-- **Night sight**: see in the dark (infravision).
-- **Water breathing**: no underwater damage (ties in with Lab 11 and the planned flooded mine).
-- **Thorns**: part of melee damage taken goes back to the attacker (new code).
-- **Thrift**: spells cost a little less mana (like Concentrate, but for everyone).
-- **Wisdom**: a little more experience from kills.
+Every Epic gets one. Left out: **Night sight** (it is the reward of the four-potion quest and would undo Lab 11's darkness) and **Water breathing** (would undo Lab 11's water and the planned flooded mine). Thrift was dropped (too close to Concentrate).
 
-Side notes (to come back to)
-- **Class-aware rolls**: a skill bonus the character's class doesn't have (Concentrate on a Templar) wastes a bonus slot. Options: the class of the character who rerolls or upgrades decides which skills can roll, or such a bonus simply does nothing for that class (as a skill the character doesn't know does now).
-- **Rank to reroll or upgrade**: the character may need the rank of the gear he rerolls or upgrades.
+| Effect | What it does | Built on |
+|---|---|---|
+| **Regeneration** | Hitpoints also regenerate while moving and fighting (today only while standing still), plus faster regeneration | `do_regenerate` |
+| **Clarity** | The same for mana | `do_regenerate` (today mana only regenerates with Meditate) |
+| **Stamina** | The same for endurance | `do_regenerate` |
+| **Thorns** | Melee attackers take damage back | items' existing "gethit damage" |
+| **Light** | The wearer gives off light | items' light |
+| **Warding** | Curses and stuns on the wearer wear off sooner | spell timers (new) |
+| **Lasting** | Spells the wearer casts last longer | spell durations (new) |
+| **(name open)** | More experience from kills only, at most +5% | experience code (new) |
 
-Later
-- Weapons, the other armor pieces, rings.
-- Upgrade stones on each other: suggestion, they don't combine.
-
-Decided
-- Stone on stone stays: using a soulstone on another merges them into a higher-level stone, as now.
-- No old items or players to convert: there are none in the game yet.
+- Category: no hard limits, so everyone has options; suggestion: weighted odds, e.g. Thorns twice as likely on Fighter items, Clarity and Lasting twice as likely on Mage items.
+- Open: the strength numbers per item level; for the regeneration three, how much regenerates while active (suggestion: 20% of the standing rate at low levels up to 50% at level 20) and whether Clarity gives mana regeneration without Meditate; the name for the experience effect (ideas: Insight, Seasoned, Veteran, Tutelage, Fortune).
 
 ## How soulstones work now (for reference)
 
