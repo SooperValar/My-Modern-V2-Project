@@ -2796,6 +2796,8 @@ void use_driver(int cn,int in,int carried)
                                 case 61:        ret=use_lab8_key(cn,in); break;
                                 case 71:        ret=use_time_portal(cn,in); break;
                                 case 72:        ret=use_lab11(cn,in); break;
+                                case 73:        ret=use_soul_crucible(cn,in); break;	// item tiers (tier.c)
+                                case 74:        ret=use_upgrade_stone(cn,in); break;
                                 /* CS, 991127: offering to shrines in Lab 8 */
                                 case 63:        ret=use_lab8_shrine(cn,in); break;
                                 /* CS, 991127: offering money to shrine in Lab 8 */

@@ -20,6 +20,8 @@
 
 #include "server.h"
 
+void souldestroy(int cn,int in);
+
 static int tier_mult[5]={0,1,2,3,5};			// even steps, Legendary 5
 static char *tier_word[5]={"","Magic","Rare","Epic","Legendary"};
 static char *cat_word[5]={"","Fighter","Mercenary","Mage","Utility"};
@@ -473,4 +475,225 @@ void god_tier_item(int cn,char *a1,char *a2,char *a3,char *a4)
 	if (!in) { do_char_log(cn,0,"Could not create it.\n"); return; }
 	if (!god_give_char(in,cn)) { it[in].used=USE_EMPTY; do_char_log(cn,0,"Your backpack is full.\n"); return; }
 	do_char_log(cn,1,"Made: %s.\n",tier_name(in));
+}
+
+/* ======================================================================
+ * Part 2: soulstones, Soul Crucibles and upgrade stones
+ *
+ *  - soulstone on a plain helmet / body armor: it becomes Magic, item level =
+ *    the stone's level (at most 20)
+ *  - soulstone of the item's own level on a Magic / Rare / Epic piece: reroll
+ *  - Soul Crucible (Lesser up to stone level 7, Soul Crucible 14, Greater 20):
+ *    two soulstones go in (different levels: a warning, the lower level counts),
+ *    an upgrade stone comes out; the crucible is used up
+ *  - upgrade stone one level above the item: Magic -> Rare -> Epic; on an Epic
+ *    it rerolls the special effect
+ *  - soulstones are not used on weapons for now; Legendaries can't be changed
+ * ====================================================================== */
+
+#define SOULSTONE_TEMP	1146
+
+// experience at the start of each rank (points2rank's thresholds)
+static int rank_exp[24]={0,50,850,4900,17700,48950,113750,233800,438600,766650,1266650,1998700,
+	3035500,4463550,6384350,8915600,12192400,16368450,21617250,28133300,36133300,49014500,63000600,80977100};
+
+static int is_tier_piece(int temp)	// a plain helmet or body armor of the tier metals
+{
+	int n;
+	for (n=0; n<NMETAL; n++) if (metals[n].helm==temp || metals[n].body==temp) return 1;
+	return 0;
+}
+
+int tier_make_soulstone(int level,int exp)	// a soulstone like the ones Strong monsters carry
+{
+	int in;
+
+	if (!exp) exp=rank_exp[max(0,min(23,level))]+1;
+	if (!(in=god_create_item(SOULSTONE_TEMP))) return 0;
+	level=points2rank(exp);
+	sprintf(it[in].name,"Soulstone");
+	sprintf(it[in].reference,"soulstone");
+	sprintf(it[in].description,"Level %d soulstone, holding %d exp.",level,exp);
+	it[in].data[0]=level;
+	it[in].data[1]=exp;
+	it[in].temp=0;
+	it[in].driver=68;
+	return in;
+}
+
+int tier_make_upstone(int level)
+{
+	int in;
+
+	if (!(in=god_create_item(TIER_UPSTONE_TEMP))) return 0;
+	it[in].data[0]=level;
+	sprintf(it[in].name,"Upgrade Stone");
+	sprintf(it[in].reference,"upgrade stone");
+	sprintf(it[in].description,"A level %d upgrade stone. Use it with a level %d helmet or armor on your cursor to raise its tier.",level,level-1);
+	it[in].temp=0;
+	return in;
+}
+
+// take the item on the cursor away and put a new one there
+static void replace_citem(int cn,int in2,int in3)
+{
+	it[in2].used=USE_EMPTY;
+	ch[cn].citem=in3;
+	it[in3].carried=cn;
+	it[in3].flags|=IF_UPDATE;
+	do_update_char(cn);
+}
+
+/* a soulstone (in) used with the item on the cursor (in2). Returns -1 when it
+ * is not a tier matter (the old soulstone uses go on), else 0 or 1. */
+int tier_soulstone(int cn,int in,int in2)
+{
+	int lv=it[in].data[0],in3;
+
+	if (it[in2].flags&IF_WEAPON) {
+		do_char_log(cn,0,"Soulstones can't be used on weapons yet.\n");
+		return 0;
+	}
+	if (IT_TIER(in2)==TIER_LEGEND) {
+		do_char_log(cn,0,"This item is too powerful to change.\n");
+		return 0;
+	}
+	if (IT_TIER(in2)) {				// reroll
+		if (lv!=IT_TLEVEL(in2)) {
+			do_char_log(cn,0,"That needs a level %d soulstone (this one is level %d).\n",IT_TLEVEL(in2),lv);
+			return 0;
+		}
+		tier_reroll(in2);
+		souldestroy(cn,in);
+		do_update_char(cn);
+		do_char_log(cn,1,"The soulstone sinks into the armor. Its powers shift.\n");
+		chlog(cn,"Soulstone reroll: %s",it[in2].name);
+		return 1;
+	}
+	if (is_tier_piece(it[in2].temp)) {		// plain piece: becomes Magic
+		if (!(in3=tier_create(it[in2].temp,TIER_MAGIC,0,min(20,max(1,lv))))) return 0;
+		souldestroy(cn,in);
+		replace_citem(cn,in2,in3);
+		do_char_log(cn,1,"The soulstone sinks into the armor. Magical powers awaken in it.\n");
+		chlog(cn,"Soulstone made %s",it[in3].name);
+		return 1;
+	}
+	return -1;
+}
+
+/* driver 73: Soul Crucible. data[0] highest stone level, data[1] level inside
+ * (0 empty), data[2] its experience, data[3] warning until (ticker), data[4]
+ * the empty sprite (half +1, full +2), data[5] 1 when it holds an upgrade stone */
+int use_soul_crucible(int cn,int in)
+{
+	int in2=ch[cn].citem,lv,in3;
+
+	if (!it[in].carried) { do_char_log(cn,0,"Pick it up first.\n"); return 0; }
+
+	if (!in2 || (in2&0x80000000)) {		// empty hand: take out what is inside
+		if (it[in].data[5]) {
+			if (!(in3=tier_make_upstone(it[in].data[1]))) return 0;
+			god_take_from_char(in,cn); it[in].used=USE_EMPTY;
+			ch[cn].citem=in3; it[in3].carried=cn;
+			do_char_log(cn,1,"You take out the level %d upgrade stone. The crucible crumbles to dust.\n",it[in3].data[0]);
+			do_update_char(cn);
+			return 1;
+		}
+		if (it[in].data[1]) {
+			if (!(in3=tier_make_soulstone(it[in].data[1],it[in].data[2]))) return 0;
+			ch[cn].citem=in3; it[in3].carried=cn;
+			it[in].data[1]=it[in].data[2]=0; it[in].sprite[0]=it[in].data[4]; it[in].flags|=IF_UPDATE;
+			do_char_log(cn,1,"You take the soulstone back out.\n");
+			do_update_char(cn);
+			return 1;
+		}
+		do_char_log(cn,1,"A %s. Put two soulstones of the same level (up to level %d) into it to make an upgrade stone: hold a soulstone and use the crucible.\n",
+			it[in].name,it[in].data[0]);
+		return 0;
+	}
+	if (it[in].data[5]) { do_char_log(cn,0,"The crucible already holds an upgrade stone. Use it with an empty hand to take it out.\n"); return 0; }
+	if (it[in2].driver!=68) { do_char_log(cn,0,"Only soulstones go into a soul crucible.\n"); return 0; }
+
+	lv=it[in2].data[0];
+	if (lv>it[in].data[0]) { do_char_log(cn,0,"This crucible is too weak for a level %d soulstone (up to level %d).\n",lv,it[in].data[0]); return 0; }
+
+	if (!it[in].data[1]) {				// the first stone
+		it[in].data[1]=lv; it[in].data[2]=it[in2].data[1];
+		ch[cn].citem=0; it[in2].used=USE_EMPTY;
+		it[in].sprite[0]=it[in].data[4]+1; it[in].flags|=IF_UPDATE;
+		do_char_log(cn,1,"The level %d soulstone sinks into the crucible. Add a second one of the same level.\n",lv);
+		do_update_char(cn);
+		return 1;
+	}
+
+	if (lv!=it[in].data[1] && it[in].data[3]<globs->ticker) {	// different levels: warn once
+		it[in].data[3]=globs->ticker+TICKS*15;
+		do_char_log(cn,0,"The stones differ: level %d inside, level %d in your hand. The upgrade stone would only be level %d. Use the crucible again to combine them anyway.\n",
+			it[in].data[1],lv,min(lv,it[in].data[1]));
+		return 0;
+	}
+
+	lv=min(lv,it[in].data[1]);
+	ch[cn].citem=0; it[in2].used=USE_EMPTY;
+	it[in].data[1]=lv; it[in].data[2]=0; it[in].data[3]=0; it[in].data[5]=1;
+	it[in].sprite[0]=it[in].data[4]+2; it[in].flags|=IF_UPDATE;
+	do_char_log(cn,1,"The two soulstones melt together into a level %d upgrade stone. Use the crucible with an empty hand to take it out.\n",lv);
+	chlog(cn,"Soul crucible: level %d upgrade stone",lv);
+	do_update_char(cn);
+	return 1;
+}
+
+// a different Epic effect (upgrade stone on an Epic)
+static void tier_new_effect(int in)
+{
+	int old=IT_TEFFECT(in),lv=IT_TLEVEL(in),e,tries=0;
+
+	do e=roll_effect(IT_TCAT(in)); while (e==old && ++tries<20);
+	if (old==TE_THORNS) it[in].gethit_dam[0]-=max(1,lv/2);
+	if (old==TE_LIGHT) it[in].light[0]-=8+lv;
+	IT_TEFFECT(in)=e;
+	if (e==TE_THORNS) it[in].gethit_dam[0]+=max(1,lv/2);
+	if (e==TE_LIGHT) it[in].light[0]+=8+lv;
+	it[in].flags|=IF_UPDATE;
+}
+
+/* driver 74: upgrade stone, used with a helmet or armor on the cursor */
+int use_upgrade_stone(int cn,int in)
+{
+	int in2=ch[cn].citem,lv=it[in].data[0],need;
+
+	if (!in2 || (in2&0x80000000)) {
+		do_char_log(cn,1,"A level %d upgrade stone. Hold a level %d Magic, Rare or Epic helmet or armor and use the stone with it.\n",lv,lv-1);
+		return 0;
+	}
+	if (it[in2].flags&IF_WEAPON) { do_char_log(cn,0,"Upgrade stones can't be used on weapons yet.\n"); return 0; }
+	if (IT_TIER(in2)==TIER_LEGEND) { do_char_log(cn,0,"This item is too powerful to change.\n"); return 0; }
+	if (!IT_TIER(in2)) { do_char_log(cn,0,"Only Magic, Rare and Epic helmets and armor can be upgraded. A soulstone makes a plain piece Magic.\n"); return 0; }
+
+	need=IT_TLEVEL(in2)+1;
+	if (lv!=need) { do_char_log(cn,0,"That needs a level %d upgrade stone (item level %d + 1); this one is level %d.\n",need,IT_TLEVEL(in2),lv); return 0; }
+
+	god_take_from_char(in,cn); it[in].used=USE_EMPTY;
+	if (IT_TIER(in2)==TIER_EPIC) {
+		tier_new_effect(in2);
+		do_char_log(cn,1,"The armor's glow flickers and settles. Its special power has changed.\n");
+	} else {
+		tier_upgrade(in2);
+		do_char_log(cn,1,"The armor's glow intensifies for a moment. Afterward, you feel it has become more powerful.\n");
+	}
+	chlog(cn,"Upgrade stone: %s",it[in2].name);
+	do_update_char(cn);
+	return 1;
+}
+
+/* god commands: #soullevel <level>, #upstone <level> */
+void god_soul_level(int cn,char *a1,int up)
+{
+	int lv=atoi(a1),in;
+
+	if (lv<1 || lv>23) { do_char_log(cn,0,"Usage: #%s <level 1-23>\n",up ? "upstone" : "soullevel"); return; }
+	in=up ? tier_make_upstone(lv) : tier_make_soulstone(lv,0);
+	if (!in) return;
+	if (!god_give_char(in,cn)) { it[in].used=USE_EMPTY; do_char_log(cn,0,"Your backpack is full.\n"); return; }
+	do_char_log(cn,1,"Made a level %d %s.\n",it[in].data[0],up ? "upgrade stone" : "soulstone");
 }

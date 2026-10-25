@@ -1153,6 +1153,11 @@ int use_soulstone(int cn,int in)
 		
 		return 1;
 	}
+
+	{	// item tiers: helmets and body armor, weapons blocked (tier.c)
+		int r=tier_soulstone(cn,in,in2);
+		if (r>=0) return r;
+	}
 	
 	switch(it[in2].temp) {
 		case 18:	in=soultransform(cn,in,in2,101); it[in].hp[0]+=10; return 1;	// red flower

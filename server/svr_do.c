@@ -2295,6 +2295,7 @@ void do_command(int cn, char *ptr)
 		if (prefix(cmd,"skua"))          	{ do_become_skua(cn); return; };
                 if (prefix(cmd,"slap") && f_giu)        { god_slap(cn,dbatoi_self(cn,arg[1])); return; };
                 if (prefix(cmd,"sort"))                 { do_sort(cn,arg[1]); return; };
+		if (!strcmp(cmd,"soullevel") && f_g) 	{ god_soul_level(cn,arg[1],0); return; }
 		if (prefix(cmd,"soulstone") && f_g) 	{ do_make_soulstone(cn,atoi(arg[1])); return; }
 		if (prefix(cmd,"speedy") && f_g)        { god_set_gflag(cn,GF_SPEEDY); return; };
                 if (prefix(cmd,"spellignore") && !f_m)  { do_spellignore(cn); return; };
@@ -2321,6 +2322,7 @@ void do_command(int cn, char *ptr)
                 if (prefix(cmd,"twohand"))              { do_info_twohand(cn); return; };
                 break;
         case 'u':
+                if (!strcmp(cmd,"upstone") && f_g)      { god_soul_level(cn,arg[1],1); return; };
                 if (prefix(cmd,"u"))                    { break; };
                 if (!strcmp(cmd,"undo") && f_c)         { build_undo(cn); return; };
                 if (prefix(cmd,"unique") && f_g)        { god_unique(cn); return; };

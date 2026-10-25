@@ -1,0 +1,47 @@
+# Item tiers part 2: Soul Crucibles, the upgrade stone, Damor sells the crucibles.
+# Crucibles (driver 73): d0 highest stone level, d4 empty sprite (+1 one stone, +2 full)
+it 1369 copy 1146
+it 1369 name Lesser Soul Crucible
+it 1369 ref lesser soul crucible
+it 1369 desc A small stone crucible with a carved star. It can join two soulstones up to level 7 into an upgrade stone.
+it 1369 spr 18220 18220
+it 1369 driver 73
+it 1369 value 5000
+it 1369 d 0 7
+it 1369 d 1 0
+it 1369 d 4 18220
+it 1370 copy 1146
+it 1370 name Soul Crucible
+it 1370 ref soul crucible
+it 1370 desc A stone crucible with a carved star. It can join two soulstones up to level 14 into an upgrade stone.
+it 1370 spr 18223 18223
+it 1370 driver 73
+it 1370 value 22500
+it 1370 d 0 14
+it 1370 d 1 0
+it 1370 d 4 18223
+it 1371 copy 1146
+it 1371 name Greater Soul Crucible
+it 1371 ref greater soul crucible
+it 1371 desc A heavy stone crucible with a carved star. It can join two soulstones of any level into an upgrade stone.
+it 1371 spr 18226 18226
+it 1371 driver 73
+it 1371 value 150000
+it 1371 d 0 23
+it 1371 d 1 0
+it 1371 d 4 18226
+# upgrade stone (driver 74): d0 its level
+it 1372 copy 1146
+it 1372 name Upgrade Stone
+it 1372 ref upgrade stone
+it 1372 desc An upgrade stone.
+it 1372 spr 18229 18229
+it 1372 driver 74
+it 1372 d 0 0
+it 1372 d 1 0
+# Damor in Aston sells the three crucibles
+ch 72 setflags 400
+ch 72 d 0 1369
+ch 72 d 1 1370
+ch 72 d 2 1371
+ch 72 items 1369 1370 1371

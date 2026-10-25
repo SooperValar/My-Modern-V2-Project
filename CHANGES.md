@@ -202,6 +202,17 @@ The design is in `docs/ITEM_TIERS.md`. This first part builds the core:
 - `tools/design/item_tier_samples.py` prints sample rolls (the same rules, for looking at numbers).
 - Build: `tier.c` is a new file, so the Makefile changed; `claude-sync.sh get` now copies the Makefile too.
 
+#### Item tiers, part 2 (soulstones, Soul Crucibles, upgrade stones)
+
+- **Soulstone on a plain helmet or body armor** (bronze to titanium, emerald too): it becomes a Magic piece, item level = the stone's level (at most 20). "The soulstone sinks into the armor. Magical powers awaken in it."
+- **Soulstone on a Magic, Rare or Epic piece**: rerolls its bonuses (same tier, category, level and Epic effect). The stone must be exactly the item's level. "The soulstone sinks into the armor. Its powers shift."
+- **Soulstones are not used on weapons** for now ("Soulstones can't be used on weapons yet."). Other old soulstone uses (flowers, potions, torches, the other armor pieces) work as before. Legendaries: "This item is too powerful to change."
+- **Soul Crucibles** (driver 73): Lesser (stones up to level 7), Soul Crucible (up to 14), Greater (any level), templates 1369-1371. Hold a soulstone and use the crucible: the first stone goes in (an empty hand takes it back out), the second makes an upgrade stone. Stones of different levels: a warning first ("The upgrade stone would only be level N. Use the crucible again to combine them anyway."), and the lower level counts. Then use the crucible with an empty hand to take the upgrade stone out; the crucible crumbles. Sprites 18220-18228 (three ranks: pale blue, violet, gold glow; each empty / one stone / full), made from one generated picture by `tools/sprites/art/crucible/crucible_build.py`.
+- **Upgrade stone** (driver 74, template 1372, sprite 18229, the soulstone star in gold): used with a Magic or Rare piece one level below it (a level 13 stone for a level 12 item) raises it one tier, keeping its bonuses and adding a skill (Epic also gets its special effect). "The armor's glow intensifies for a moment. Afterward, you feel it has become more powerful." On an Epic it rerolls the special effect instead. The item's level and rank requirement don't change.
+- **Damor** (Aston, Damor's Magic Shop) sells the three crucibles: 50, 225 and 1,500 gold (placeholders).
+- God commands: `#soullevel <level>` makes a soulstone of that level, `#upstone <level>` an upgrade stone.
+- World data: `tools/world/tier_part2.txt`.
+
 #### Two-handed axes
 
 - New skill **Two-Handed Axe** (skill 36, `SK_AXE2H`; Agility/Strength/Strength like Two-Handed). Every class that has Two-Handed has it too, with the same maximum and cost, and knows it from the start (at 4, like Two-Handed). Existing characters get it automatically (`really_update_char`); it keeps following Two-Handed when a character arches.
