@@ -36,6 +36,8 @@ static int gs_category(int t)
 
 	if (!x->used || !x->name[0] || !(x->flags&IF_TAKE)) return -1;
 	if (x->flags&(IF_SPELL|IF_MONEY)) return -1;
+	if (x->flags&IF_UNIQUE) return -1;	// unique items stay unique: god weapons, Fire/Ice sets, Math caps, Helm of Shadows...
+	if (t==169) return -1;			// the Grolm Crown (always unique, but has no unique flag)
 	if (t>=GODSHOP_ARROW_TEMP && t<=GODSHOP_ARROW_TEMP+1) return -1;
 	if ((x->flags&IF_WEAPON) || (x->placement&(PL_WEAPON|PL_TWOHAND|PL_SHIELD))) return 0;	// also torches and candles (left hand)
 	if (x->placement&PL_BELT) return 1;
