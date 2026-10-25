@@ -1,0 +1,8 @@
+# Lab 11: two signs beside the doorway from the Entry Hall into the Atrium (the first underwater part),
+# saying the lab is unfinished and deaths there are arena deaths (LAB11_ARENA_DEATHS in data.h).
+it 1373 copy 240
+it 1373 name Sign (Unfinished)
+it 1373 ref the sign
+it 1373 desc This part of the labyrinth is still being built. Until it is finished, every death in it is an arena death: you keep all your items.
+place 1373 201 947
+place 1373 201 953

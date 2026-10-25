@@ -2531,6 +2531,14 @@ void do_char_killed(int cn,int co)
                 do_char_log(co,1,"You lost the arena fight. You keep all your items, but you may not challenge the arena again for 5 minutes.\n");
         }
 
+        // Lab 11 is still being built: every player death in it is an arena death
+        // (items kept, no hitpoints or mana lost); signs at its entrance say so
+        if (LAB11_ARENA_DEATHS && (ch[co].flags&CF_PLAYER) &&
+            ch[co].x>=LAB11_AREA_X0 && ch[co].x<=LAB11_AREA_X1 && ch[co].y>=LAB11_AREA_Y0 && ch[co].y<=LAB11_AREA_Y1) {
+                mf|=MF_ARENA;
+                do_char_log(co,1,"This part of the labyrinth is still being built: you keep all your items (arena death).\n");
+        }
+
         // hack for grolms:
         if (ch[co].temp>=364 && ch[co].temp<=374) {
                 do_area_sound(co,0,ch[co].x,ch[co].y,17);
