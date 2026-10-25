@@ -88,6 +88,12 @@ int tier_ward(int co,int duration);
 int tier_lasting(int cn,int duration);
 int tier_enlightened(int cn,int p);
 int tier_thorns(int cn);
+
+// godshop.c
+int godshop_cat(int co);
+void godshop_fill(int cn,int co);
+void godshop_take(int cn,int co,int nr);
+void god_godshop(int cn,char *arg);
 int tier_item_glow(int in);
 int tier_tile_glow(int in,int cn);
 void driver(int cn);

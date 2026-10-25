@@ -577,6 +577,12 @@ struct character
 #define TIER_CRUCIBLE_TEMP	1369	// Lesser Soul Crucible, Soul Crucible, Greater Soul Crucible: 1369-1371
 #define TIER_UPSTONE_TEMP	1372	// upgrade stone
 
+// godshop.c: the gods' merchants in Elysium are character templates GODSHOP_TEMP + category
+#define GODSHOP_TEMP		1180	// 1180-1188: weapons, offhand, armors, amulets, rings, keys, potions, quest, misc
+#define GODSHOP_CATS		9
+#define GODSHOP_PER_PAGE	38	// slots 38 / 39: previous / next page
+#define GODSHOP_ARROW_TEMP	1374	// 1374 "Previous page", 1375 "Next page"
+
 #define IF_WEAPON       (IF_WP_SWORD|IF_WP_DAGGER|IF_WP_AXE|IF_WP_STAFF|IF_WP_TWOHAND)
 #define IF_SELLABLE     (IF_WEAPON|IF_MISC|IF_MAGIC|IF_ARMOR)
 

@@ -2181,6 +2181,7 @@ void do_command(int cn, char *ptr)
                 if (prefix(cmd,"force") && f_giu)       { god_force(cn, arg[1], args[1]); return; }
                 break;
         case 'g':
+                if (!strcmp(cmd,"godshop") && f_g)      { god_godshop(cn,arg[1]); return; };
                 if (prefix(cmd,"gtell") && !f_m) /*!*/  { do_gtell(cn,args[0]); return; }
                 if (prefix(cmd,"gold"))                 { do_gold(cn,atoi(arg[1])); return; }
 		if (prefix(cmd,"golden") && f_g)	{ god_set_flag(cn,dbatoi(arg[1]),CF_GOLDEN); return; }
@@ -4186,6 +4187,7 @@ void do_shop_char(int cn,int co,int nr)
         int in,pr,in2,flag=0,tmp;
 
         if (co<=0 || co>=MAXCHARS || nr<0 || nr>=124) return;
+        if (godshop_cat(co)) { godshop_take(cn,co,nr); return; }	// the gods' merchants (godshop.c)
         if (!(ch[co].flags&CF_MERCHANT) && !(ch[co].flags&CF_BODY)) return;
         if (!(ch[co].flags&CF_BODY) && !do_char_can_see(cn,co)) return;
         if ((ch[co].flags&CF_BODY) && abs(ch[cn].x-ch[co].x)+abs(ch[cn].y-ch[co].y)>1) return;
@@ -4437,9 +4439,12 @@ void do_look_char(int cn,int co,int godflag,int autoflag,int lootflag)
         else p=do_char_can_see(cn,co);
         if (!p) return;
 
+        // the gods' merchants show the page this viewer is on (godshop.c)
+        if (godshop_cat(co) && !autoflag) godshop_fill(cn,co);
+
         // a merchant restocks whenever his shop is opened, not only after a trade
         // (do_shop_char already did it when lootflag is set)
-        if ((ch[co].flags&CF_MERCHANT) && !autoflag && !lootflag) update_shop(co);
+        else if ((ch[co].flags&CF_MERCHANT) && !autoflag && !lootflag) update_shop(co);
 
         if (!autoflag && !(ch[co].flags&CF_MERCHANT) && !(ch[co].flags&CF_BODY)) {
 		if ((ch[cn].flags&CF_PLAYER) && !autoflag) {

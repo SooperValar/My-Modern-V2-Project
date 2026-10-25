@@ -208,6 +208,18 @@ The design is in `docs/ITEM_TIERS.md`. This first part builds the core:
 - `tools/design/item_tier_samples.py` prints sample rolls (the same rules, for looking at numbers).
 - Build: `tier.c` is a new file, so the Makefile changed; `claude-sync.sh get` now copies the Makefile too.
 
+#### The gods' shops
+
+Every item template a player can carry, free, for gods and their helpers (`godshop.c`).
+
+- **Nine categories**, worked out from each item's own data (new items sort themselves): **weapons** (103), **offhand** (torches, candles), **armors** (73), **amulets** (26), **rings** (rings and gems, 40), **keys** (74), **potions** (potions, flowers, scrolls: anything used up, 82), **quest** (items some NPC asks for, and labyrinth items, 50), **misc** (the rest, 35). Map objects (doors, chests, walls...) are not sold.
+- **Pages**: 38 items per page; the last two slots are "Previous page" / "Next page" arrows (templates 1374/1375, sprites 18230/18231).
+- **Quest items come out inert**: the copy has no template number, so no NPC accepts it as the real thing (its description says so). For the gods' live quests (LQ).
+- **Nine merchants in Elysium** (character templates 1180-1188, immortal): Armsmaster, Shieldwarden, Armorer, Amulet Keeper, Ringmaker, Keymaster, Alchemist, Questkeeper, Curator. They serve gods and imps standing next to them; anyone else is turned away ("I only serve the gods and their helpers"). For now they stand in a row in Elysium (795-803, 805) until the Elysium layout is done (`tools/world/godshop_merchants.txt`).
+- **`#godshop <category>`** (gods only) opens a category's shop from anywhere; `#godshop` alone lists the categories with their counts.
+- **Logged**: every item taken goes into the character's log and the server log (`GODSHOP: <name> took <item> (t=<template>, <category>)`, with `[imp]` for imps), so imps' use can be checked later.
+- The gods' merchants don't buy anything. A shop page is filled for each viewer when they look (so tooltips work); taking an item uses the viewer's own page, so two gods browsing at once don't get each other's items.
+
 #### Item tiers, part 4 (the glow)
 
 - **Tiered items glow**: a thin outline, one pixel around the sprite, in a strong tier colour (Magic blue, Rare gold, Epic purple, Legendary orange). In the clean HUD the panels behind items are drawn by the presenter (the framebuffer holds the transparent key colour there); the outline is blended with the panel colour, not the key, which had turned every colour pink. Everywhere they show: on the ground, in the backpack, in the worn slots, and in shop and grave windows. Subtle by design; on the ground it is as dark as the tile, so it doesn't light up dark places.

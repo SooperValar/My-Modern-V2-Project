@@ -399,6 +399,8 @@ struct player
 	char passwd[16];
 
 	int changed_field[TILEX*TILEY];	// IDs of changed fields
+
+	int gs_page;			// godshop.c: the page this player is on in a gods' shop
 };
 
 #define MAXPLAYER		250

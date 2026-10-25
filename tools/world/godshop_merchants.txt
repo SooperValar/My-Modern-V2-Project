@@ -1,0 +1,179 @@
+# Gods' merchants in Elysium (godshop.c): character templates 1180-1188, one per category.
+# Temporary places in a row at y=805; the Elysium layout will move them.
+it 1374 copy 1146
+it 1374 name Previous page
+it 1374 ref the previous page
+it 1374 desc Click to go back a page.
+it 1374 spr 18230 18230
+it 1374 driver 0
+it 1374 value 0
+it 1375 copy 1146
+it 1375 name Next page
+it 1375 ref the next page
+it 1375 desc Click for the next page.
+it 1375 spr 18231 18231
+it 1375 driver 0
+it 1375 value 0
+
+ch 1180 copy 1203
+ch 1180 name Armsmaster
+ch 1180 ref the armsmaster
+ch 1180 desc A merchant of the gods. Sells weapons to gods and their helpers, free.
+ch 1180 pos 795 805
+ch 1180 d 0 0
+ch 1180 d 1 0
+ch 1180 d 2 0
+ch 1180 d 3 0
+ch 1180 d 4 0
+ch 1180 d 5 0
+ch 1180 d 6 0
+ch 1180 d 7 0
+ch 1180 d 8 0
+ch 1180 d 9 0
+ch 1180 items 0
+ch 1180 setflags 1
+ch 1180 text 2 The gods' weapons, %s. Take what you need.
+ch 1181 copy 1203
+ch 1181 name Shieldwarden
+ch 1181 ref the shieldwarden
+ch 1181 desc A merchant of the gods. Sells offhand items: torches and candles to gods and their helpers, free.
+ch 1181 pos 796 805
+ch 1181 d 0 0
+ch 1181 d 1 0
+ch 1181 d 2 0
+ch 1181 d 3 0
+ch 1181 d 4 0
+ch 1181 d 5 0
+ch 1181 d 6 0
+ch 1181 d 7 0
+ch 1181 d 8 0
+ch 1181 d 9 0
+ch 1181 items 0
+ch 1181 setflags 1
+ch 1181 text 2 The gods' offhand items, %s. Take what you need.
+ch 1182 copy 1203
+ch 1182 name Armorer
+ch 1182 ref the armorer
+ch 1182 desc A merchant of the gods. Sells armor to gods and their helpers, free.
+ch 1182 pos 797 805
+ch 1182 d 0 0
+ch 1182 d 1 0
+ch 1182 d 2 0
+ch 1182 d 3 0
+ch 1182 d 4 0
+ch 1182 d 5 0
+ch 1182 d 6 0
+ch 1182 d 7 0
+ch 1182 d 8 0
+ch 1182 d 9 0
+ch 1182 items 0
+ch 1182 setflags 1
+ch 1182 text 2 The gods' armor, %s. Take what you need.
+ch 1183 copy 1203
+ch 1183 name Amulet Keeper
+ch 1183 ref the amulet keeper
+ch 1183 desc A merchant of the gods. Sells amulets to gods and their helpers, free.
+ch 1183 pos 798 805
+ch 1183 d 0 0
+ch 1183 d 1 0
+ch 1183 d 2 0
+ch 1183 d 3 0
+ch 1183 d 4 0
+ch 1183 d 5 0
+ch 1183 d 6 0
+ch 1183 d 7 0
+ch 1183 d 8 0
+ch 1183 d 9 0
+ch 1183 items 0
+ch 1183 setflags 1
+ch 1183 text 2 The gods' amulets, %s. Take what you need.
+ch 1184 copy 1203
+ch 1184 name Ringmaker
+ch 1184 ref the ringmaker
+ch 1184 desc A merchant of the gods. Sells rings and gems to gods and their helpers, free.
+ch 1184 pos 799 805
+ch 1184 d 0 0
+ch 1184 d 1 0
+ch 1184 d 2 0
+ch 1184 d 3 0
+ch 1184 d 4 0
+ch 1184 d 5 0
+ch 1184 d 6 0
+ch 1184 d 7 0
+ch 1184 d 8 0
+ch 1184 d 9 0
+ch 1184 items 0
+ch 1184 setflags 1
+ch 1184 text 2 The gods' rings and gems, %s. Take what you need.
+ch 1185 copy 1203
+ch 1185 name Keymaster
+ch 1185 ref the keymaster
+ch 1185 desc A merchant of the gods. Sells keys to gods and their helpers, free.
+ch 1185 pos 800 805
+ch 1185 d 0 0
+ch 1185 d 1 0
+ch 1185 d 2 0
+ch 1185 d 3 0
+ch 1185 d 4 0
+ch 1185 d 5 0
+ch 1185 d 6 0
+ch 1185 d 7 0
+ch 1185 d 8 0
+ch 1185 d 9 0
+ch 1185 items 0
+ch 1185 setflags 1
+ch 1185 text 2 The gods' keys, %s. Take what you need.
+ch 1186 copy 1203
+ch 1186 name Alchemist
+ch 1186 ref the alchemist
+ch 1186 desc A merchant of the gods. Sells potions, flowers and scrolls to gods and their helpers, free.
+ch 1186 pos 801 805
+ch 1186 d 0 0
+ch 1186 d 1 0
+ch 1186 d 2 0
+ch 1186 d 3 0
+ch 1186 d 4 0
+ch 1186 d 5 0
+ch 1186 d 6 0
+ch 1186 d 7 0
+ch 1186 d 8 0
+ch 1186 d 9 0
+ch 1186 items 0
+ch 1186 setflags 1
+ch 1186 text 2 The gods' potions, flowers and scrolls, %s. Take what you need.
+ch 1187 copy 1203
+ch 1187 name Questkeeper
+ch 1187 ref the questkeeper
+ch 1187 desc A merchant of the gods. Sells quest items (inert copies for live quests) to gods and their helpers, free.
+ch 1187 pos 802 805
+ch 1187 d 0 0
+ch 1187 d 1 0
+ch 1187 d 2 0
+ch 1187 d 3 0
+ch 1187 d 4 0
+ch 1187 d 5 0
+ch 1187 d 6 0
+ch 1187 d 7 0
+ch 1187 d 8 0
+ch 1187 d 9 0
+ch 1187 items 0
+ch 1187 setflags 1
+ch 1187 text 2 The gods' quest items, %s. Take what you need.
+ch 1188 copy 1203
+ch 1188 name Curator
+ch 1188 ref the curator
+ch 1188 desc A merchant of the gods. Sells everything else to gods and their helpers, free.
+ch 1188 pos 803 805
+ch 1188 d 0 0
+ch 1188 d 1 0
+ch 1188 d 2 0
+ch 1188 d 3 0
+ch 1188 d 4 0
+ch 1188 d 5 0
+ch 1188 d 6 0
+ch 1188 d 7 0
+ch 1188 d 8 0
+ch 1188 d 9 0
+ch 1188 items 0
+ch 1188 setflags 1
+ch 1188 text 2 The gods' everything else, %s. Take what you need.
