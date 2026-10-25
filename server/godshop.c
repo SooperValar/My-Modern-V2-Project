@@ -18,7 +18,7 @@
 
 #include "server.h"
 
-static char *gs_name[GODSHOP_CATS]={"weapons","belts","armors","amulets","rings","keys","potions","quest","misc"};
+static char *gs_name[GODSHOP_CATS]={"weapons","belts","armors","amulets","rings","keys","potions","quest","misc","scrolls"};
 
 static int is_quest_temp(int t)		// an item some NPC asks for, or a labyrinth item
 {
@@ -39,13 +39,15 @@ static int gs_category(int t)
 	if (x->flags&IF_UNIQUE) return -1;	// unique items stay unique: god weapons, Fire/Ice sets, Math caps, Helm of Shadows...
 	if (t==169) return -1;			// the Grolm Crown (always unique, but has no unique flag)
 	if (t>=GODSHOP_ARROW_TEMP && t<=GODSHOP_ARROW_TEMP+1) return -1;
+	if (strstr(x->name,"Scroll")) return 9;
+	if (x->flags&IF_USEDESTROY) return 6;	// potions, flowers, drinks (some ales are held in the hand)
+	if (x->driver==68 || x->driver==73 || x->driver==74) return 8;	// soulstones, crucibles, upgrade stones
 	if ((x->flags&IF_WEAPON) || (x->placement&(PL_WEAPON|PL_TWOHAND|PL_SHIELD))) return 0;	// also torches and candles (left hand)
 	if (x->placement&PL_BELT) return 1;
 	if (x->placement&(PL_HEAD|PL_BODY|PL_ARMS|PL_LEGS|PL_FEET|PL_CLOAK)) return 2;
 	if (x->placement&PL_NECK) return 3;
 	if ((x->placement&PL_RING) && x->driver!=68) return 4;
 	if (strstr(x->name,"Key") || strstr(x->name,"key")) return 5;
-	if (x->flags&IF_USEDESTROY) return 6;
 	if (is_quest_temp(t)) return 7;
 	return 8;
 }

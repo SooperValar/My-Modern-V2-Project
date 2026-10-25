@@ -12,6 +12,8 @@ In order:
 
 6. **Equipment compare**: when hovering an item, show how it compares to what is worn in that slot (e.g. a second tooltip with the worn piece, or +/- differences in green and red).
 
+7. **Ice set sprites**: the Helmet, Armor, Leggings, Boots and Gloves of Ice (unique, templates 1272-1276) use sprites 18100-18104, which don't exist in the client ("Sprite ... is missing"). They need pictures (new ones or recoloured).
+
 Later (ideas, not decided):
 
 - Prestige: what triggers it and what it gives (the Final Test's Shrine of Change will be used).

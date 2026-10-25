@@ -179,3 +179,22 @@ ch 1188 setflags 1
 ch 1188 text 2 The gods' everything else, %s. Take what you need.
 # changed: the offhand merchant became the Beltmaker; respawn him with the new name
 killnpc 1181
+# added: scrolls get their own merchant (category 9)
+ch 1189 copy 1203
+ch 1189 name Scribe
+ch 1189 ref the scribe
+ch 1189 desc A merchant of the gods. Sells scrolls to gods and their helpers, free.
+ch 1189 pos 804 805
+ch 1189 d 0 0
+ch 1189 d 1 0
+ch 1189 d 2 0
+ch 1189 d 3 0
+ch 1189 d 4 0
+ch 1189 d 5 0
+ch 1189 d 6 0
+ch 1189 d 7 0
+ch 1189 d 8 0
+ch 1189 d 9 0
+ch 1189 items 0
+ch 1189 setflags 1
+ch 1189 text 2 The gods' scrolls, %s. Take what you need.
