@@ -133,7 +133,7 @@ struct area area[]={
 
         {822,176,      1020,333,        "Underground II",               1},
 
-        {792,796,       813,811,        "Elysium",                      1},
+        {776,793,       821,824,        "Elysium",                      1},
 
         {367,227,       410,244,        "Gargoyle's Nest",              1},
         {410,227,       480,329,        "Gargoyle's Nest",              1},
