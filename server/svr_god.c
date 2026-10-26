@@ -1339,6 +1339,7 @@ static void build_set(unsigned int *BI,int x)
                         BI[m++]=0x40000000|MF_NOLAG;
                         BI[m++]=0x40000000|MF_NOFIGHT;
                         BI[m++]=0x40000000|MF_NOEXPIRE;
+                        BI[m++]=0x40000000|MF_LIT;
 
                         BI[m++]=0x20000000|SPR_TUNDRA_GROUND;
                         BI[m++]=0x20000000|SPR_DESERT_GROUND;

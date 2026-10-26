@@ -208,6 +208,14 @@ The design is in `docs/ITEM_TIERS.md`. This first part builds the core:
 - `tools/design/item_tier_samples.py` prints sample rolls (the same rules, for looking at numbers).
 - Build: `tier.c` is a new file, so the Makefile changed; `claude-sync.sh get` now copies the Makefile too.
 
+#### Lit tiles (new zone flag)
+- `MF_LIT` (map flag bit 12): the tile is always fully lit, day and night, whatever the lights around it - for a lit spot in a dark area. Only that tile; it doesn't spread. Done in `check_dlight`/`check_dlightm`, so seeing characters and items there and the light the client draws both follow it.
+- Build page 0 has it as **Lit** (icon sprite 18232); in build mode a lit tile shows a small warm white dot (sprite 18233, client `engine.c`). `#tile` lists it as "lit"; the build tooltip explains it.
+- Sprites in `tools/sprites/art/lit/`, installed as PNGs in the client's GFX folder.
+
+#### Elysium sheet tool, round 2
+- `elysium_build.py` rewritten after the first rebuild left messy floors: new floor copies plain floor (never carpet pieces) from the same room, flags come from the same room (a room that is all new is listed to check), walls take the nearest wall style, and the sheet has codes for columns (`c`), gate/arch pieces (`g`), tables (`t`) and portals (`P`) so nothing is silently turned into plain wall. An unchanged sheet builds to nothing.
+
 #### Merchants are easy to see
 - Merchants (`CF_MERCHANT`, all 63 of them) had Stealth around 160, so players had to walk right up to them before they showed. `do_char_can_see` now ignores a merchant's Stealth: they show from as far as any character with no Stealth (light and line of sight still count).
 

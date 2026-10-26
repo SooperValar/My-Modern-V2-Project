@@ -87,6 +87,7 @@
 
 #define MF_ARENA        (1U<<11)
 
+#define MF_LIT          (1U<<12)
 #define MF_NOEXPIRE     (1U<<13)
 
 struct cmap {

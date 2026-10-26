@@ -664,7 +664,7 @@ static void tip_build(int nr,int cn,int slot,int *line)
 		{MF_BANK,"Bank","Players can use their depot here."},{MF_TAVERN,"Tavern","Players can log out safely here."},
 		{MF_NOMAGIC,"No magic","Spells cannot be cast here."},{MF_DEATHTRAP,"Death trap","Stepping here kills."},
 		{MF_ARENA,"Arena","Deaths here are arena deaths."},{MF_NOEXPIRE,"No expire","Items lying here never decay."},
-		{MF_NOFIGHT,"No fight","Nobody can attack here."},{MF_NOLIGHT,"No light","Own lights do not shine here."}};
+		{MF_NOFIGHT,"No fight","Nobody can attack here."},{MF_LIT,"Lit","Always fully lit, day and night."},{MF_NOLIGHT,"No light","Own lights do not shine here."}};
 	unsigned int v=ch[cn].item[slot];
 	int n,t;
 	char buf[80],*s,*d;
@@ -1832,6 +1832,7 @@ void plr_change(int nr)
                                                         case    MF_ARENA:       *(short int*)(buf+5)=78; break;
                                                         case    MF_NOEXPIRE:    *(short int*)(buf+5)=81; break;
                                                         case    MF_NOLAG:       *(short int*)(buf+5)=49; break;
+                                                        case    MF_LIT:         *(short int*)(buf+5)=18232; break;
                                                         default:                *(short int*)(buf+5)=0; break;
                                                 }
                                                 *(short int*)(buf+7)=0;
@@ -2234,6 +2235,7 @@ inline int check_dlight(int x,int y)
 
         m=x+y*MAPX;
 
+        if (map[m].flags&MF_LIT) return 255;	// lit tile: full light, day and night
         if (!(map[m].flags&MF_INDOORS)) return globs->dlight;
 
         return (globs->dlight*map[m].dlight)/256;
@@ -2241,6 +2243,7 @@ inline int check_dlight(int x,int y)
 
 inline int check_dlightm(int m)
 {
+        if (map[m].flags&MF_LIT) return 255;
         if (!(map[m].flags&MF_INDOORS)) return globs->dlight;
 
         return (globs->dlight*map[m].dlight)/256;

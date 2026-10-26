@@ -110,6 +110,7 @@ struct global
 
 #define MF_ARENA        (1ULL<<11)
 
+#define MF_LIT          (1ULL<<12)      // always fully lit (a lit tile in a dark area, set in build mode)
 #define MF_NOEXPIRE     (1ULL<<13)
 /* CS, 991204: NOFIGHT */
 #define MF_NOFIGHT      (1Ull<<14)

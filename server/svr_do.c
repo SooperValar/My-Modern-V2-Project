@@ -2066,7 +2066,7 @@ void do_tile(int cn,char *ax,char *ay)
 		{MF_MOVEBLOCK,"move block"},{MF_SIGHTBLOCK,"sight block"},{MF_INDOORS,"indoors"},
 		{MF_UWATER,"under water"},{MF_NOLAG,"no lag"},{MF_NOMONST,"no monsters"},{MF_BANK,"bank"},
 		{MF_TAVERN,"tavern"},{MF_NOMAGIC,"no magic"},{MF_DEATHTRAP,"death trap"},{MF_NOLIGHT,"no light"},{MF_ARENA,"arena"},
-		{MF_NOEXPIRE,"no expire"},{MF_NOFIGHT,"no fight"}};
+		{MF_NOEXPIRE,"no expire"},{MF_NOFIGHT,"no fight"},{MF_LIT,"lit"}};
 	int x,y,m,n,in,co;
 	char buf[300],*area;
 

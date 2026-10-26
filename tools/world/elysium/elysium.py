@@ -27,6 +27,9 @@ CODES = {  # code: (meaning, fill, text)
     'i': ('other item (stays where it is)', 'D2B48C', '000000'),
     'n': ('display NPC (the monster gallery)', 'C81E1E', 'FFFFFF'),
     't': ('table (blocks walking, not sight)', '8B5A2B', 'FFFFFF'),
+    'c': ('column / pillar', 'E8E0C8', '000000'),
+    'g': ('gate or arch piece (dark iron)', '4A4A60', 'FFFFFF'),
+    'P': ('portal (a new one needs a ?note saying where it goes)', '3C50FF', 'FFFFFF'),
 }
 for k, (t, nm) in enumerate(MERCH.items()):
     CODES['M%d' % (k+1)] = ('god shop merchant: %s (template %d)' % (nm, t), '28C83C', '000000')
@@ -49,11 +52,17 @@ def code(f):
             return 'M%d' % (t-1179)
         return 'n'
     if f[5]:
+        if 'Portal' in f[6] and 'floor tile' not in f[6]:
+            return 'P'
         return NAMES.get(f[6], 'i')
     if spr == 1008 and not fs:
         return ''
     if fs in (1242, 1244):
         return 't'
+    if fs == 106:
+        return 'c'
+    if fs in (968, 970, 976, 978):
+        return 'g'
     if fs or fl & 1:
         return '#'
     return '.'
@@ -106,7 +115,7 @@ def export(tsv, path):
         if not k:
             continue
         ws.conditional_formatting.add(rng, FormulaRule(
-            formula=['EXACT(B2,"%s")' % k] if k in ('i', 'n', 'S', 's', 't', 'T') else ['UPPER(B2)="%s"' % k.upper()],
+            formula=['EXACT(B2,"%s")' % k] if k in ('i', 'n', 'S', 's', 't', 'T', 'c', 'g') else ['UPPER(B2)="%s"' % k.upper()],
             fill=PatternFill('solid', start_color=bg, end_color=bg, bgColor=bg),
             font=Font(name='Arial', size=8, color=fg), stopIfTrue=True))
 

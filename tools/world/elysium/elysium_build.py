@@ -3,149 +3,173 @@
 
     elysium_build.py <xlsx> <dump.tsv> <out.spec>
 
-Only cells that differ from the hidden "Original" sheet are rebuilt (plus the vault floors,
-which all get the no-expire flag). Styles per region:
-  gallery  x778-791 y796-805   red gallery walls (126), gallery floor 950-958, indoors
-  vaults   x808-820 y792-814   stone floor, indoors + no-expire (items never decay)
-  east     x792-808 y812-824   the old north hall moved here: plain stone 142-145, open sky
-  shop     x776-792 y806-819   the merchants' hall, on the old north hall's ground: the same
-  elsewhere: copies the floor of the unchanged neighbours; walls 100/102/104, lone walls are columns (106)
+dump.tsv must be the dump the sheet was exported from (area_dump of the live map).
+Only cells that differ from the hidden "Original" sheet are rebuilt; everything else keeps
+its exact sprites, flags and items.
+
+How changed cells get their look:
+  rooms    the floor cells (anything walkable, tables included) split by walls, columns, gates
+           and doors; each room is one area
+  floor    a random plain floor sprite of the same room's unchanged floor (carpet pieces
+           520-541 are never copied); its flags are the room's most common flags
+           (indoors, no-expire, ...). A room with no unchanged floor gets plain stone,
+           indoors, and is listed so its flags can be checked
+  wall #   the wall sprite family nearest to it (unchanged walls within 3 tiles), else 100/102/104
+  column c 106, gate g 976, table t corners 1242 / rest 1244 (blocks walking only)
+  F T H D S  fire bowl, trash can, shrine, door (turned to its wall), shield (turned to its wall)
+  M1-M10   god shop merchant moves there and faces away from the wall next to it
+  n        the gallery NPCs, only as a whole block moved
+  P / ?    a new portal or anything else: listed, built by hand
 """
 import sys, random
-from collections import Counter
+from collections import Counter, deque
 sys.path.insert(0, __import__('os').path.dirname(__import__('os').path.abspath(__file__)))
 import elysium as e
 random.seed(106)
 xlsx, tsv, out = sys.argv[1:4]
 T = e.load(tsv)
 old, new = e.read(xlsx, 'Original'), e.read(xlsx, 'Map')
-INDOORS, NOEXPIRE = 0x4, 0x2000
-FLOORISH = lambda v: v not in ('', '#')
-inr = lambda r, x, y: r[0] <= x <= r[1] and r[2] <= y <= r[3]
-GAL, VAULT, EAST, SHOP = (778, 791, 796, 805), (808, 820, 792, 814), (792, 808, 812, 824), (776, 792, 806, 819)
-FAM = {'gal': ([950, 951, 952, 953, 954, 955, 956, 957, 958], INDOORS),
-       'vault': ([142, 143, 144, 145], INDOORS | NOEXPIRE),   # plain stone (520-530 are carpet pieces)
-       'east': ([142, 143, 144, 145], 0),          # the old north hall's stone (141 is its brown border)
-       'main': ([142, 143, 144, 145], INDOORS)}
-WALLS = [102]*6 + [100]*2 + [104]*2
-lines, notes = [], []
+STATIC = 0xffffffff & ~0x3          # map flags kept per room (not move/sight block)
+CARPET = range(520, 542)
+BLOCK = ('', '#', 'c', 'g', 'D')
+N4 = ((1, 0), (-1, 0), (0, 1), (0, -1))
+spr_of = lambda k: int(T[k][2])
+fs_of = lambda k: int(T[k][3])
+fl_of = lambda k: int(T[k][4], 16)
+notes = []
+
+# --- rooms
+room, rooms = {}, []
+for k, v in new.items():
+    if v in BLOCK or k in room:
+        continue
+    q, cells = deque([k]), []
+    room[k] = len(rooms)
+    while q:
+        c = q.popleft(); cells.append(c)
+        for dx, dy in N4:
+            n = (c[0]+dx, c[1]+dy)
+            if n in new and n not in room and new[n] not in BLOCK:
+                room[n] = len(rooms); q.append(n)
+    rooms.append(cells)
+style = []
+for i, cells in enumerate(rooms):
+    plain = [k for k in cells if old[k] == new[k] and new[k] == '.' and fs_of(k) == 0 and spr_of(k) != 1008]
+    sprites = [spr_of(k) for k in plain if spr_of(k) not in CARPET]
+    flags = Counter(fl_of(k) & STATIC for k in plain)
+    if not sprites:
+        sprites = [142, 143, 144, 145]
+    if flags:
+        fl = flags.most_common(1)[0][0]
+    else:
+        fl = 0x4
+        if any(old[k] != new[k] for k in cells):
+            xs = [k[0] for k in cells]; ys = [k[1] for k in cells]
+            notes.append('room x %d-%d y %d-%d is all new: plain stone, indoors - check its flags' % (min(xs), max(xs), min(ys), max(ys)))
+    style.append((sprites, fl))
 
 
-def region(x, y):
-    if inr(GAL, x, y): return 'gal'
-    if inr(VAULT, x, y): return 'vault'
-    if inr(EAST, x, y): return 'east'
-    if inr(SHOP, x, y): return 'east'   # the shop hall is on the old north hall's ground: same stone, open sky
-    return None
+def floor_of(k):
+    if k in room:
+        sp, fl = style[room[k]]
+        return random.choice(sp), fl
+    best = None   # a wall or column: the flags of the room next to it
+    for dx, dy in N4:
+        n = (k[0]+dx, k[1]+dy)
+        if n in room:
+            best = style[room[n]]; break
+    sp, fl = best or ([142, 143, 144, 145], 0x4)
+    return random.choice(sp), fl
 
 
-def floor_of(x, y):
-    """sprite and flags for a floor tile at x,y"""
-    r = region(x, y)
-    if r:
-        fam, fl = FAM[r]
-        return random.choice(fam), fl
+def wall(x, y):
+    return new.get((x, y)) in ('#', 'c', 'g')
+
+
+def wall_sprite(k):
     c = Counter()
     for d in range(1, 4):
         for dx in range(-d, d+1):
             for dy in range(-d, d+1):
-                k = (x+dx, y+dy)
-                if k in T and k in new and old[k] == new[k] and FLOORISH(new[k]) and int(T[k][3]) == 0 and int(T[k][2]) != 1008:
-                    c[(int(T[k][2]), int(T[k][4], 16) & (INDOORS | NOEXPIRE))] += 1
-        if c: break
+                n = (k[0]+dx, k[1]+dy)
+                if n in new and old[n] == new[n] == '#' and fs_of(n) not in (0, 106):
+                    c[fs_of(n)] += 1
+        if c:
+            break
     if not c:
-        fam, fl = FAM['main']; return random.choice(fam), fl
-    spr = random.choice([s for (s, f), n in c.items() for _ in range(n)])
-    return spr, c.most_common(1)[0][0][1]
-
-
-def wall(x, y):
-    return new.get((x, y)) == '#'
+        return random.choice([102]*6 + [100]*2 + [104]*2)
+    if set(c) <= {100, 102, 104}:   # the stone walls come as a mix
+        return random.choice([102]*6 + [100]*2 + [104]*2)
+    return c.most_common(1)[0][0]
 
 
 # --- tiles
-tiles = 0
-for (x, y), v in sorted(new.items()):
-    o = old[x, y]
-    cur = T[x, y]; cs, cf, cfl = int(cur[2]), int(cur[3]), int(cur[4], 16)
-    vault_fix = region(x, y) == 'vault' and FLOORISH(v) and not (cfl & NOEXPIRE)
-    if o == v and not vault_fix:
+lines, tiles = [], 0
+for k, v in sorted(new.items()):
+    if old[k] == v:
         continue
+    x, y = k
     if v == '':
         spr, fs, fl = 1008, 0, 0
-    elif v == 't':   # table piece: corners 1242, the rest 1244 (blocks walking only)
-        spr, ffl = floor_of(x, y)
-        nb = sum(new.get((x+dx, y+dy)) == 't' for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)))
-        fs, fl = (1242 if nb == 2 else 1244), 1 | (ffl & INDOORS)
-    elif v == '#':
-        spr, ffl = floor_of(x, y)
-        if region(x, y) == 'gal':
-            fs = 126
-        elif not any(wall(x+dx, y+dy) for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1))):
-            fs = 106
-        else:
-            fs = random.choice(WALLS)
-        fl = 3 | (ffl & INDOORS)
+    elif v in ('#', 'c', 'g'):
+        spr, ffl = floor_of(k)
+        fs = {'#': None, 'c': 106, 'g': 976}[v] or wall_sprite(k)
+        fl = 3 | ffl
+    elif v == 't':
+        spr, ffl = floor_of(k)
+        nb = sum(new.get((x+dx, y+dy)) == 't' for dx, dy in N4)
+        fs, fl = (1242 if nb == 2 else 1244), 1 | ffl
     else:
-        if o == v or (FLOORISH(o) and cs != 1008 and cf == 0 and region(x, y) is None):
-            spr, fl = cs, cfl          # was floor already: keep its look
-            if region(x, y) == 'vault': fl |= INDOORS | NOEXPIRE
+        if old[k] not in BLOCK and old[k] != 't' and spr_of(k) != 1008 and fs_of(k) == 0:
+            spr = spr_of(k)                    # was floor already: keep its sprite
+            _, fl = floor_of(k)
         else:
-            spr, fl = floor_of(x, y)
+            spr, fl = floor_of(k)
         fs = 0
-        fl = (cfl & ~(0x1 | 0x2 | INDOORS | NOEXPIRE)) | fl if cs != 1008 else fl
     lines.append('tile %d %d %d %d %x' % (x, y, spr, fs, fl)); tiles += 1
 
 # --- items
 ITEM = {'F': 741, 'T': 1115, 'H': 603}
-had_item = lambda f: bool(f[5])
 clears, places = [], []
 shield_n = 0
-for (x, y), v in sorted(new.items()):
-    o = old[x, y]
-    if o == v:
+for k, v in sorted(new.items()):
+    if old[k] == v:
         continue
-    if had_item(T[x, y]):
+    x, y = k
+    if T[k][5]:
         clears.append('clear %d %d %d %d' % (x, y, x, y))
     if v in ITEM:
         places.append('place %d %d %d' % (ITEM[v], x, y))
     elif v == 'D':
-        t = 738 if (wall(x, y-1) and wall(x, y+1)) else 737
-        places.append('place %d %d %d' % (t, x, y))
+        places.append('place %d %d %d' % (738 if (wall(x, y-1) and wall(x, y+1)) else 737, x, y))
     elif v == 'S':
-        if wall(x-1, y) or wall(x+1, y): t = (747, 749)[shield_n % 2]
-        else: t = (746, 748)[shield_n % 2]
+        t = (747, 749)[shield_n % 2] if (wall(x-1, y) or wall(x+1, y)) else (746, 748)[shield_n % 2]
         shield_n += 1
         places.append('place %d %d %d' % (t, x, y))
-    elif v == 'P':
-        places.append('place %d %d %d' % (1376 if y < 804 else 1377, x, y))
+    elif v == 'P' or v.startswith('?') or v == 'i':
+        notes.append('%d,%d: "%s" - build by hand' % (x, y, v))
 
-# --- characters: merchants by code, gallery NPCs by the move of the whole gallery
+# --- characters
 chl, dirs = [], []
-for (x, y), v in sorted(new.items()):
-    if v.upper().startswith('M') and v[1:].isdigit() and old[x, y] != v:
+for k, v in sorted(new.items()):
+    if v.upper().startswith('M') and v[1:].isdigit() and old[k] != v:
+        x, y = k
         t = 1179 + int(v[1:])
-        chl += ['ch %d pos %d %d' % (t, x, y)]
-        # face away from the wall it stands at: DX_RIGHT 1 (+x), LEFT 2 (-x), UP 3 (-y), DOWN 4 (+y)
+        chl.append('ch %d pos %d %d' % (t, x, y))
         d = 1 if wall(x-1, y) else 2 if wall(x+1, y) else 3 if wall(x, y+1) else 4 if wall(x, y-1) else 0
         if d: dirs.append('dir %d %d' % (t, d))
 on = sorted(k for k, v in old.items() if v == 'n')
 nn = sorted(k for k, v in new.items() if v == 'n')
-dx, dy = nn[0][0]-on[0][0], nn[0][1]-on[0][1]
-if sorted((x+dx, y+dy) for x, y in on) != nn:
-    sys.exit('gallery NPCs: the new block is not the old one moved (%d old, %d new)' % (len(on), len(nn)))
-for (x, y) in on:
-    t = int(T[x, y][9])
-    chl.append('ch %d pos %d %d' % (t, x+dx, y+dy))
+if on != nn:
+    dx, dy = nn[0][0]-on[0][0], nn[0][1]-on[0][1]
+    if sorted((x+dx, y+dy) for x, y in on) != nn:
+        sys.exit('gallery NPCs: the new block is not the old one moved (%d old, %d new)' % (len(on), len(nn)))
+    for (x, y) in on:
+        chl.append('ch %d pos %d %d' % (int(T[x, y][9]), x+dx, y+dy))
 moves = ['movenpc %s' % l.split()[1] for l in chl]
 
-spec = ['# Elysium rebuild from elysium_layout.xlsx (elysium_build.py)',
-        'it 1376 copy 179', 'it 1376 name Portal to Staffers Corner', 'it 1376 ref portal to Staffers Corner',
-        'it 1376 desc A magic portal. It leads to the Staffers Corner.', 'it 1376 d 0 838', 'it 1376 d 1 160',
-        'it 1377 copy 179', 'it 1377 name Portal to the Temple of Skua', 'it 1377 ref portal to the Temple of Skua',
-        'it 1377 desc A magic portal. It leads to the Temple of Skua.', 'it 1377 d 0 512', 'it 1377 d 1 512',
-        ] + clears + lines + places + chl + moves + dirs
+spec = ['# Elysium rebuild from elysium_layout.xlsx (elysium_build.py)'] + clears + lines + places + chl + moves + dirs
 open(out, 'w').write('\n'.join(spec) + '\n')
-print('%d tiles, %d clears, %d items, %d characters (gallery moved by %d,%d)' % (tiles, len(clears), len(places), len(chl), dx, dy))
-xs = [k[0] for k, v in new.items() if v]; ys = [k[1] for k, v in new.items() if v]
-print('built area x %d-%d y %d-%d' % (min(xs), max(xs), min(ys), max(ys)))
+print('%d tiles, %d clears, %d items, %d characters, %d rooms' % (tiles, len(clears), len(places), len(chl), len(rooms)))
+for n in notes:
+    print('NOTE', n)
