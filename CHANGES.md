@@ -208,6 +208,9 @@ The design is in `docs/ITEM_TIERS.md`. This first part builds the core:
 - `tools/design/item_tier_samples.py` prints sample rolls (the same rules, for looking at numbers).
 - Build: `tier.c` is a new file, so the Makefile changed; `claude-sync.sh get` now copies the Makefile too.
 
+#### Merchants are easy to see
+- Merchants (`CF_MERCHANT`, all 63 of them) had Stealth around 160, so players had to walk right up to them before they showed. `do_char_can_see` now ignores a merchant's Stealth: they show from as far as any character with no Stealth (light and line of sight still count).
+
 #### Build mode tooltips
 - In build mode the backpack holds build pieces (template numbers, floor sprites, zone flags), not items, so the tooltip showed whatever real item happened to have that number. Now it describes the piece: a template's name, number, sprite, whether it blocks walking/sight, light, driver and description; a floor tile's sprite; a zone flag's name and what it does (`tip_build` in `svr_tick.c`).
 

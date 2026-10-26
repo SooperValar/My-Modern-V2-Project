@@ -3364,9 +3364,12 @@ int do_char_can_see(int cn,int co)
         if (d>1000) { prof_stop(21,prof); return 0; } // save some time...
 
         // modify by perception and stealth:
-        if (ch[co].mode==0) d=(d*(ch[co].skill[SK_STEALTH][5]+20))/20;
-        else if (ch[co].mode==1) d=(d*(ch[co].skill[SK_STEALTH][5]+50))/50;
-        else d=(d*(ch[co].skill[SK_STEALTH][5]+100))/100;
+        // merchants don't hide: their Stealth is ignored, so they can be seen as far as anyone with Stealth 0
+        if (!(ch[co].flags&CF_MERCHANT)) {
+                if (ch[co].mode==0) d=(d*(ch[co].skill[SK_STEALTH][5]+20))/20;
+                else if (ch[co].mode==1) d=(d*(ch[co].skill[SK_STEALTH][5]+50))/50;
+                else d=(d*(ch[co].skill[SK_STEALTH][5]+100))/100;
+        }
 
         d-=ch[cn].skill[SK_PERCEPT][5]*2;
 
