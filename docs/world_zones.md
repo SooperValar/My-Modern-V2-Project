@@ -113,7 +113,7 @@ Shown by `/who`, by NPCs when asked where you are, and in server logs. A spot in
 | 103 | Underwater Pentagram Quest | 265,264 | 329,293 | "in the Underwater Pentagram Quest" |
 | 104 | Underwater Pentagram Quest | 265,294 | 320,300 | "in the Underwater Pentagram Quest" |
 | 105 | Underground II | 822,176 | 1020,333 | "in the Underground II" |
-| 106 | Elysium | 792,796 | 813,811 | "in the Elysium" |
+| 106 | Elysium | 776,793 | 821,824 | "in the Elysium" |
 | 107 | Gargoyle's Nest | 367,227 | 410,244 | "in the Gargoyle's Nest" |
 | 108 | Gargoyle's Nest | 410,227 | 480,329 | "in the Gargoyle's Nest" |
 | 109 | Aston | 1,1 | 20,20 | "in Aston" |

@@ -211,6 +211,14 @@ The design is in `docs/ITEM_TIERS.md`. This first part builds the core:
 #### Elysium layout sheet
 - `tools/world/elysium/elysium_layout.xlsx`: the whole built Elysium (map x 771-829, y 788-826; rows = x, north at the top, like the minimap), one cell per tile with codes for walls, floor, fire bowls, doors, the shrine, the 10 god shop merchants (M1-M10) and the monster gallery NPCs. A hidden "Original" sheet keeps the export so only changed cells get rebuilt. `?note` cells are free-form requests.
 - `elysium.py export|diff`, `area_dump.c` (dumps a map rectangle with items and characters), `elysium_preview.png`.
+- **Elysium rebuilt from the sheet** (`elysium_build.py` makes the build_lab spec from the cells that changed; `apply.sh` runs it on the server .dat and relights the area):
+  - North-east: the god shop hall, the 10 merchants along its walls facing into the room, the trash can, shields and fire bowls.
+  - North-west: the monster gallery, moved as one block from the south-east (all 45 NPCs keep their place and facing); its door opens into the shop hall.
+  - Main hall: shrine on the north wall between two shields; two portals - west to the Staffers Corner (838,160, template 1376), east to the Temple of Skua (512,512, template 1377).
+  - East: the old north hall moved here, with its table (new sheet code `t`) in the middle and three shields.
+  - South: four god vaults off a corridor, each with its own door; their floors never let items decay (no-expire).
+  - Zone "Elysium" widened to x 776-821, y 793-824 (`area.c`); minimap and zone map redrawn.
+- `build_lab` has a new `dir <temp> <dx>` command (resting direction of a template and its living NPCs); `isorender.py` draws an area from the game's camera angle (`elysium_render.png`).
 
 #### Spell scroll marks
 
