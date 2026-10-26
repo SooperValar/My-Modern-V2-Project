@@ -34,5 +34,7 @@ for k in order:
     f=T[k]
     if int(f[3]): blit(int(f[3]),*k,a=ALPHA)
     if f[7]: blit(int(f[7]),*k)
-    if f[11]: blit(int(f[11]) if int(f[11])>1000 else 0,*k)
+    if len(f)>11 and f[11]:   # character: idle sprite for its direction (client: base + 0/8/16/24/32/40/48/56)
+        off={3:0,4:8,2:16,1:24,5:32,6:40,7:48,8:56}.get(int(f[12]) if len(f)>12 and f[12] else 3,0)
+        blit(int(f[11])+off,*k)
 im.save(out); print(im.size)

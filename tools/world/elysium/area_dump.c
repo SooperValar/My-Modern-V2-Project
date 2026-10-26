@@ -12,7 +12,7 @@ int main(int a,char**v){
  for(int x=x0;x<=x1;x++)for(int y=y0;y<=y1;y++){struct map*q=&m[x+y*MAPX];
   printf("%d\t%d\t%d\t%d\t%llx",x,y,q->sprite,q->fsprite,(unsigned long long)q->flags);
   if(q->it&&q->it<MAXITEM){struct item*i=&its[q->it];printf("\t%d\t%s\t%d\t%d",i->temp,i->name,i->sprite[0],i->driver);}else printf("\t\t\t\t");
-  if(q->ch&&q->ch<MAXCHARS){struct character*c=&chs[q->ch];printf("\t%d\t%s\t%d",c->temp,c->name,c->sprite);}else printf("\t\t\t");
+  if(q->ch&&q->ch<MAXCHARS){struct character*c=&chs[q->ch];printf("\t%d\t%s\t%d\t%d",c->temp,c->name,c->sprite,c->dir);}else printf("\t\t\t\t");
   printf("\n");}
  // characters whose spawn/home is here
  for(int n=1;n<MAXCHARS;n++){struct character*c=&chs[n]; if(!c->used) continue; if(c->x>=x0&&c->x<=x1&&c->y>=y0&&c->y<=y1) fprintf(stderr,"CH %d t%d %s @%d,%d\n",n,c->temp,c->name,c->x,c->y);}

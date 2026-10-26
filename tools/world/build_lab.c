@@ -15,6 +15,8 @@
  *   clear <x0> <y0> <x1> <y1>                      remove every item lying in that rectangle
  *   killnpc <temp>                                 remove the living NPC(s) of that template ("server pop" makes new ones)
  *   movenpc <temp>                                 move the living NPC(s) of that template to its spawn position
+ *   dir <temp> <dx>                                resting direction (DX_RIGHT 1 = +x, LEFT 2 = -x, UP 3 = -y, DOWN 4 = +y)
+ *                                                  of the template and its living NPC(s)
  *   settemp <x> <y> <temp>                         fix the template number of the item on that tile
  *   ch <temp> copy <from>                          new character template = copy of another
  *   ch <temp> name|ref|desc <text...>
@@ -174,6 +176,20 @@ int main(int argc,char **argv)
 				fseek(cf,(long)n*sizeof(cc),SEEK_SET); fwrite(&cc,sizeof(cc),1,cf);
 			}
 			fclose(cf);
+
+		} else if (sscanf(line,"dir %d %d",&a,&b)==2) {
+			static struct character cc; FILE *cf; int cnt=0;
+			if (!sane_ch(a,ln) || b<1 || b>8) continue;
+			tc[a].dir=b; tc[a].data[30]=b;
+			sprintf(fn,"%s/char.dat",argv[1]); if (!(cf=fopen(fn,"r+b"))) { perror(fn); continue; }
+			for (n=1; n<MAXCHARS; n++) {
+				fseek(cf,(long)n*sizeof(cc),SEEK_SET); if (fread(&cc,sizeof(cc),1,cf)!=1) break;
+				if (cc.used!=USE_ACTIVE || cc.temp!=a || (cc.flags&(CF_PLAYER|CF_BODY))) continue;
+				cc.dir=b; cc.data[30]=b; cc.status=0;
+				fseek(cf,(long)n*sizeof(cc),SEEK_SET); fwrite(&cc,sizeof(cc),1,cf); cnt++;
+			}
+			fclose(cf);
+			printf("template %d: facing %d (%d living)\n",a,b,cnt);
 
 		} else if (sscanf(line,"settemp %d %d %d",&a,&b,&c)==3) {
 			long mpos=(long)(a+b*MAPX)*sizeof(struct map);

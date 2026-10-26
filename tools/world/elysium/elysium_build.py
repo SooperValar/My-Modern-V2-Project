@@ -7,7 +7,8 @@ Only cells that differ from the hidden "Original" sheet are rebuilt (plus the va
 which all get the no-expire flag). Styles per region:
   gallery  x778-791 y796-805   red gallery walls (126), gallery floor 950-958, indoors
   vaults   x808-820 y792-814   stone floor, indoors + no-expire (items never decay)
-  east     x792-808 y812-824   the old north hall moved here: its floor 141-145, open sky
+  east     x792-808 y812-824   the old north hall moved here: plain stone 142-145, open sky
+  shop     x776-792 y806-819   the merchants' hall, on the old north hall's ground: the same
   elsewhere: copies the floor of the unchanged neighbours; walls 100/102/104, lone walls are columns (106)
 """
 import sys, random
@@ -21,7 +22,7 @@ old, new = e.read(xlsx, 'Original'), e.read(xlsx, 'Map')
 INDOORS, NOEXPIRE = 0x4, 0x2000
 FLOORISH = lambda v: v not in ('', '#')
 inr = lambda r, x, y: r[0] <= x <= r[1] and r[2] <= y <= r[3]
-GAL, VAULT, EAST = (778, 791, 796, 805), (808, 820, 792, 814), (792, 808, 812, 824)
+GAL, VAULT, EAST, SHOP = (778, 791, 796, 805), (808, 820, 792, 814), (792, 808, 812, 824), (776, 792, 806, 819)
 FAM = {'gal': ([950, 951, 952, 953, 954, 955, 956, 957, 958], INDOORS),
        'vault': ([142, 143, 144, 145], INDOORS | NOEXPIRE),   # plain stone (520-530 are carpet pieces)
        'east': ([142, 143, 144, 145], 0),          # the old north hall's stone (141 is its brown border)
@@ -34,6 +35,7 @@ def region(x, y):
     if inr(GAL, x, y): return 'gal'
     if inr(VAULT, x, y): return 'vault'
     if inr(EAST, x, y): return 'east'
+    if inr(SHOP, x, y): return 'east'   # the shop hall is on the old north hall's ground: same stone, open sky
     return None
 
 
@@ -71,6 +73,10 @@ for (x, y), v in sorted(new.items()):
         continue
     if v == '':
         spr, fs, fl = 1008, 0, 0
+    elif v == 't':   # table piece: corners 1242, the rest 1244 (blocks walking only)
+        spr, ffl = floor_of(x, y)
+        nb = sum(new.get((x+dx, y+dy)) == 't' for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)))
+        fs, fl = (1242 if nb == 2 else 1244), 1 | (ffl & INDOORS)
     elif v == '#':
         spr, ffl = floor_of(x, y)
         if region(x, y) == 'gal':
@@ -115,11 +121,14 @@ for (x, y), v in sorted(new.items()):
         places.append('place %d %d %d' % (1376 if y < 804 else 1377, x, y))
 
 # --- characters: merchants by code, gallery NPCs by the move of the whole gallery
-chl = []
+chl, dirs = [], []
 for (x, y), v in sorted(new.items()):
     if v.upper().startswith('M') and v[1:].isdigit() and old[x, y] != v:
         t = 1179 + int(v[1:])
         chl += ['ch %d pos %d %d' % (t, x, y)]
+        # face away from the wall it stands at: DX_RIGHT 1 (+x), LEFT 2 (-x), UP 3 (-y), DOWN 4 (+y)
+        d = 1 if wall(x-1, y) else 2 if wall(x+1, y) else 3 if wall(x, y+1) else 4 if wall(x, y-1) else 0
+        if d: dirs.append('dir %d %d' % (t, d))
 on = sorted(k for k, v in old.items() if v == 'n')
 nn = sorted(k for k, v in new.items() if v == 'n')
 dx, dy = nn[0][0]-on[0][0], nn[0][1]-on[0][1]
@@ -135,7 +144,7 @@ spec = ['# Elysium rebuild from elysium_layout.xlsx (elysium_build.py)',
         'it 1376 desc A magic portal. It leads to the Staffers Corner.', 'it 1376 d 0 838', 'it 1376 d 1 160',
         'it 1377 copy 179', 'it 1377 name Portal to the Temple of Skua', 'it 1377 ref portal to the Temple of Skua',
         'it 1377 desc A magic portal. It leads to the Temple of Skua.', 'it 1377 d 0 512', 'it 1377 d 1 512',
-        ] + clears + lines + places + chl + moves
+        ] + clears + lines + places + chl + moves + dirs
 open(out, 'w').write('\n'.join(spec) + '\n')
 print('%d tiles, %d clears, %d items, %d characters (gallery moved by %d,%d)' % (tiles, len(clears), len(places), len(chl), dx, dy))
 xs = [k[0] for k, v in new.items() if v]; ys = [k[1] for k, v in new.items() if v]
