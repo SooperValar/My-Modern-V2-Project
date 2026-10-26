@@ -653,6 +653,64 @@ static char *tip_money(int v,char *buf)
 	return buf;
 }
 
+/* build mode: the backpack holds build pieces, not items - zone flags
+ * (0x40000000|flag), floor sprites (0x20000000|sprite) or item templates */
+static void tip_build(int nr,int cn,int slot,int *line)
+{
+	static struct { unsigned long long f; char *name; char *what; } fl[]={
+		{MF_MOVEBLOCK,"Move block","Nobody can walk onto the tile."},{MF_SIGHTBLOCK,"Sight block","Nobody can see through the tile."},
+		{MF_INDOORS,"Indoors","No daylight or weather."},{MF_UWATER,"Under water","Breath runs out here."},
+		{MF_NOLAG,"No lag","Lagging players are not kept here."},{MF_NOMONST,"No monsters","Monsters will not step here."},
+		{MF_BANK,"Bank","Players can use their depot here."},{MF_TAVERN,"Tavern","Players can log out safely here."},
+		{MF_NOMAGIC,"No magic","Spells cannot be cast here."},{MF_DEATHTRAP,"Death trap","Stepping here kills."},
+		{MF_ARENA,"Arena","Deaths here are arena deaths."},{MF_NOEXPIRE,"No expire","Items lying here never decay."},
+		{MF_NOFIGHT,"No fight","Nobody can attack here."},{MF_NOLIGHT,"No light","Own lights do not shine here."}};
+	unsigned int v=ch[cn].item[slot];
+	int n,t;
+	char buf[80],*s,*d;
+
+	tip_div=0;
+	if (!v) return;
+	if (v&0x40000000) {
+		unsigned long long f=v&0x3fffffff;
+		for (n=0; n<(int)(sizeof(fl)/sizeof(fl[0])); n++) if (fl[n].f==f) break;
+		tip_line(nr,0,slot,line,1,"Zone flag: %s",n<(int)(sizeof(fl)/sizeof(fl[0])) ? fl[n].name : "?");
+		tip_sep();
+		if (n<(int)(sizeof(fl)/sizeof(fl[0]))) tip_line(nr,0,slot,line,2,"%s",fl[n].what);
+		tip_line(nr,0,slot,line,1,"Drop it on a tile to switch it");
+		tip_line(nr,0,slot,line,1,"on or off there.");
+		return;
+	}
+	if (v&0x20000000) {
+		tip_line(nr,0,slot,line,1,"Floor tile");
+		tip_sep();
+		tip_line(nr,0,slot,line,2,"Sprite %d",v&0x1fffffff);
+		tip_line(nr,0,slot,line,1,"Right-click on the map to lay it.");
+		return;
+	}
+	t=(int)v;
+	if (t<1 || t>=MAXTITEM || it_temp[t].used==USE_EMPTY) return;
+	tip_line(nr,0,slot,line,1,"%s",it_temp[t].name);
+	tip_sep();
+	tip_line(nr,0,slot,line,2,"Template %d, sprite %d",t,it_temp[t].sprite[0]);
+	if ((it_temp[t].flags&IF_MOVEBLOCK) && (it_temp[t].flags&IF_SIGHTBLOCK)) tip_line(nr,0,slot,line,2,"Blocks walking and sight");
+	else if (it_temp[t].flags&IF_MOVEBLOCK) tip_line(nr,0,slot,line,2,"Blocks walking");
+	else if (it_temp[t].flags&IF_SIGHTBLOCK) tip_line(nr,0,slot,line,2,"Blocks sight");
+	if (it_temp[t].light[0]>0) tip_line(nr,0,slot,line,2,"%+5d Light",it_temp[t].light[0]);
+	if (it_temp[t].driver) tip_line(nr,0,slot,line,2,"Driver %d%s",it_temp[t].driver,(it_temp[t].flags&IF_USE) ? ", can be used" : "");
+	tip_sep();
+	s=it_temp[t].description;
+	for (n=0; n<3 && *s; n++) {
+		while (*s==' ') s++;
+		d=buf;
+		while (*s && d-buf<36) *d++=*s++;
+		if (*s && *s!=' ') { char *sp=d; while (sp>buf && sp[-1]!=' ') sp--; if (sp>buf+10) { s-=d-sp; d=sp; } }
+		*d=0;
+		if (n==2 && *s) strcpy(d>buf+33 ? buf+33 : d,"...");
+		if (buf[0]) tip_line(nr,0,slot,line,1,"%s",buf);
+	}
+}
+
 void plr_cmd_iteminfo(int nr)
 {
 	int cn,co,where,slot,in=0,line=0,n,act,ok,first,flag,shown;
@@ -674,6 +732,7 @@ void plr_cmd_iteminfo(int nr)
 		else if (slot<60 && (ch[co].flags&CF_BODY)) in=ch[co].worn[slot-40];
 	}
 	if (in&0x80000000) in=0;
+	if (where==0 && slot<40 && IS_BUILDING(cn)) { tip_build(nr,cn,slot,&line); in=0; }	// build pieces, not items
 
 	if (in>0 && in<MAXITEM && it[in].used!=USE_EMPTY) {
 		act=it[in].active ? 1 : 0;
