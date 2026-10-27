@@ -208,6 +208,10 @@ The design is in `docs/ITEM_TIERS.md`. This first part builds the core:
 - `tools/design/item_tier_samples.py` prints sample rolls (the same rules, for looking at numbers).
 - Build: `tier.c` is a new file, so the Makefile changed; `claude-sync.sh get` now copies the Makefile too.
 
+#### Pentagrams: solve count and graves
+- **Solve count follows the players doing pentagrams.** It was players online + three random 0-19 (about 28 + everyone online, 54 after a server start), whatever they were doing. Now: 10 + 6 for each player who activated a pentagram in the last 10 minutes and is still online (at least 1) + a random 0-4 per round: about 12-16 alone, 22-26 for two, 40-44 for five. Worked out at every activation, so it follows people joining and leaving; a solve starts a new round with nobody counted. The log line shows "(act of needed, n doing pentagrams)". Tunable: `PENTA_BASE`, `PENTA_PER_PLAYER`, `PENTA_RECENT` in `use_driver.c`.
+- **No graves for empty pentagram enemies.** A pentagram enemy (`is_penta_enemy`: templates 364-385, 538-542, 1094-1097) whose only belonging is its own weapon leaves no grave; it just vanishes after the death mist, like an NPC with nothing on it. Ones with something else (the Grolm Fighters/Warriors/Knights/Mages carry armor and gold, or a tier drop) still leave one (`svr_effect.c`).
+
 #### Equipment compare
 - Hovering an item you could wear (backpack, shop, grave) adds **"Compared to your <worn piece>:"** to its tooltip, listing only what would change: WV, AV, attributes, hitpoints/endurance/mana and skills, gains in green and losses in red, plus an Epic effect gained (+) or lost (-). "No difference." when nothing changes; "Nothing worn there:" for an empty slot.
   - Rings: two sections, one for each worn ring.

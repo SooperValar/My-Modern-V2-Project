@@ -1838,7 +1838,41 @@ int spawn_penta_enemy(int in)
         } else return cn;
 }
 
-static int penta_needed=54;
+/* Pentagram solve: how many pentagrams must be active at once. It follows the
+ * players actually doing pentagrams - those who activated one in the last 10
+ * minutes and are still online - instead of everyone online:
+ *   needed = PENTA_BASE + PENTA_PER_PLAYER * players + a random 0-4 per round
+ * so about 16 alone, 22 for two, 40 for five. */
+#define PENTA_BASE		10
+#define PENTA_PER_PLAYER	6
+#define PENTA_RECENT		(TICKS*60*10)
+static int penta_rand=2;
+static unsigned int penta_seen[MAXCHARS];	// ticker of each player's last activation
+
+static int penta_players(void)
+{
+	int n,cnt=0;
+	for (n=1; n<MAXCHARS; n++) {
+		if (!penta_seen[n]) continue;
+		if (ch[n].used!=USE_ACTIVE || !(ch[n].flags&(CF_PLAYER|CF_USURP)) || globs->ticker-penta_seen[n]>PENTA_RECENT) { penta_seen[n]=0; continue; }
+		cnt++;
+	}
+	return cnt;
+}
+
+static int penta_needed_now(void)
+{
+	return PENTA_BASE+PENTA_PER_PLAYER*max(1,penta_players())+penta_rand;
+}
+
+/* is co a pentagram enemy? They are made from templates 364-385, 538-542 and
+ * 1094-1097 (spawn_penta_enemy) and keep their pentagram's item number in data[0] */
+int is_penta_enemy(int co)
+{
+	int in=ch[co].data[0],t=ch[co].temp;
+	if (!((t>=364 && t<=385) || (t>=538 && t<=542) || (t>=1094 && t<=1097))) return 0;
+	return in>0 && in<MAXITEM && it[in].used!=USE_EMPTY && it[in].driver==33;
+}
 
 void solved_pentagram(int cn,int in)
 {
@@ -1874,8 +1908,9 @@ void solved_pentagram(int cn,int in)
                 }
                 it[n].duration=it[n].active=TICKS*(10+RANDOM(20));
         }
-        penta_needed=globs->players_online+RANDOM(20)+RANDOM(20)+RANDOM(20);
-	xlog("New solve will be at %d (%d online)",penta_needed,globs->players_online);
+        for (n=1; n<MAXCHARS; n++) penta_seen[n]=0;	// a new round: nobody is doing it yet
+        penta_rand=RANDOM(5);
+	xlog("Pentagram solved; next solve at %d + %d per player doing pentagrams",PENTA_BASE+penta_rand,PENTA_PER_PLAYER);
 }
 
 int use_pentagram(int cn,int in)
@@ -1912,6 +1947,7 @@ int use_pentagram(int cn,int in)
         v=it[in].data[0];
         it[in].data[8]=cn;
         it[in].duration=-1;
+        if (cn>0 && cn<MAXCHARS) penta_seen[cn]=globs->ticker;	// doing pentagrams now
 
         do_char_log(cn,1,"You activated the pentagram with the value %d. It is worth %d experience point%s.\n",v,(v*v)/7+1,v==1 ? "" : "s");
 
@@ -1955,9 +1991,9 @@ int use_pentagram(int cn,int in)
         do_char_log(cn,1,"Your pentagrammas are worth a total of %d experience points. Note that only the highest 5 pentagrammas count towards your experience bonus.\n",exp);
         do_char_log(cn,1,"There are %d pentagrammas total, of which %d are active.\n",tot,act);
 
-        chlog(cn,"Activated pentagram %d (%d of %d)",it[in].data[0],act,penta_needed);
+        chlog(cn,"Activated pentagram %d (%d of %d, %d doing pentagrams)",it[in].data[0],act,penta_needed_now(),penta_players());
 
-        if (act>=penta_needed) { solved_pentagram(cn,in); return 0; }
+        if (act>=penta_needed_now()) { solved_pentagram(cn,in); return 0; }
 
         for (m=1; m<4; m++) {
                 if ((co=it[in].data[m])==0 || ch[co].data[0]!=in || ch[co].used==USE_EMPTY || (ch[co].flags&CF_BODY)) {

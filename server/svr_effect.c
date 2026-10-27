@@ -117,6 +117,7 @@ void effect_tick(void)
 							if (ch[co].item[z]) { flag=1; break; }
 						}
 						for (z=0; z<20 && !flag; z++) {
+							if (z==WN_RHAND && is_penta_enemy(co)) continue;	// a pentagram enemy's own weapon: no grave just for that
 							if (ch[co].worn[z]) { flag=1; break; }
 						}
 						if (ch[co].citem) flag=1;

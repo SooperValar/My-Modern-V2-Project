@@ -98,6 +98,7 @@ void god_godshop(int cn,char *arg);
 void god_note(int cn,char *text);
 void god_setrecall(int cn,char *who,char *cx,char *cy);
 int temple_in_lab(int cn);
+int is_penta_enemy(int co);
 void god_recall_default(int cn);
 int tier_item_glow(int in);
 int tier_tile_glow(int in,int cn);
