@@ -541,18 +541,33 @@ int sv_spelltime(unsigned char *buf)
 }
 
 struct tipinfo tip;
+struct tipinfo wtip[2];
 
-int sv_iteminfo(unsigned char *buf)
+static void tip_store(struct tipinfo *t,unsigned char *buf)
 {
 	int l=buf[3];
 
-	if (tip.state!=1 || buf[1]!=tip.where || buf[2]!=(tip.slot&255)) return 64;	// an old answer
-	if (l==255) { tip.state=2; return 64; }
+	if (t->state!=1 || buf[1]!=t->where || buf[2]!=(t->slot&255)) return;	// an old answer / not for this one
+	if (l==255) { t->state=2; return; }
+	if (l==0) t->ncmp=0;
 	if (l<TIP_LINES) {
-		memcpy(tip.text[l],buf+5,58); tip.text[l][58]=0;
-		tip.font[l]=buf[4];
-		if (l+1>tip.lines) tip.lines=l+1;
+		memcpy(t->text[l],buf+5,58); t->text[l][58]=0;
+		t->font[l]=buf[4];
+		if (buf[4]==8) {	// the worn slot(s) this item compares to
+			int a=-1,b=-1;
+			t->ncmp=sscanf(t->text[l],"W %d %d",&a,&b);
+			if (t->ncmp<0) t->ncmp=0;
+			t->cmp[0]=a; t->cmp[1]=b;
+		}
+		if (l+1>t->lines) t->lines=l+1;
 	}
+}
+
+int sv_iteminfo(unsigned char *buf)
+{
+	tip_store(&tip,buf);
+	tip_store(&wtip[0],buf);
+	tip_store(&wtip[1],buf);
 	return 64;
 }
 

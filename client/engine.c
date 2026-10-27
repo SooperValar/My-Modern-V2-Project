@@ -459,15 +459,69 @@ static void hud_rows(int x,int y,int n,int w)
 
 /* item tooltips: after resting the mouse ~0.35s on an item in the backpack,
  * equipment or an open shop/grave, ask the server about it and show the
- * answer next to the mouse */
+ * answer next to the mouse. Holding Shift also shows the worn piece(s) it
+ * would replace (equipment compare) beside it. */
+static void tip_ask(struct tipinfo *t,int where,int slot,int sprite,int co,unsigned int now)
+{
+	unsigned char buf[16];
+
+	memset(buf,0,16);
+	buf[0]=CL_CMD_ITEMINFO; buf[1]=(unsigned char)where;
+	*(unsigned short*)(buf+2)=(unsigned short)slot;
+	*(unsigned int*)(buf+4)=co;
+	xsend(buf);
+	if (t->state!=2 || t->where!=where || t->slot!=slot || t->sprite!=sprite) { t->lines=0; t->ncmp=0; }	// keep showing a refresh of the same item
+	t->where=where; t->slot=slot; t->sprite=sprite; t->co=co; t->state=1; t->at=now;
+}
+
+static int tip_stale(struct tipinfo *t,int where,int slot,int sprite,int co,unsigned int now)
+{
+	return t->where!=where || t->slot!=slot || t->sprite!=sprite || t->co!=co || t->state==0 ||
+	       (t->state==2 && now-t->at>5000) || (t->state==1 && now-t->at>3000);
+}
+
+static void tip_size(struct tipinfo *t,char *title,int *w,int *h)
+{
+	int n,len=title ? (int)strlen(title) : 0;
+
+	for (n=0; n<t->lines; n++) if (t->font[n]!=8 && (int)strlen(t->text[n])>len) len=strlen(t->text[n]);
+	*w=len*6+14; *h=10+(title ? 12 : 0);
+	for (n=0; n<t->lines; n++) {
+		if (t->font[n]==8) continue;		// not drawn
+		*h+=(t->font[n]==9) ? 5 : 10;		// font 9 = divider
+	}
+}
+
+static void tip_draw(struct tipinfo *t,char *title,int x,int y,int w,int h)
+{
+	int n,ty;
+	unsigned short col;
+
+	dd_hud_vclip(x,y,w,h);
+	col=(unsigned short)((((HUD_RGB_PANEL>>16)&255)>>3)<<11 | (((HUD_RGB_PANEL>>8)&255)>>2)<<5 | ((HUD_RGB_PANEL&255)>>3));
+	dd_hud_fill(x,y,w,h,col);
+	dd_hud_hline(x,y,w);
+	dd_hud_hline(x,y+h-2,w);
+	dd_hud_vline(x,y,h);
+	dd_hud_vline(x+w-2,y,h);
+	ty=y+5;
+	if (title) { dd_puttext(x+7,ty,3,title); ty+=12; }
+	for (n=0; n<t->lines; n++) {
+		if (t->font[n]==8) continue;
+		if (t->font[n]==9) { dd_hud_hline(x+5,ty+1,w-10); ty+=5; continue; }
+		dd_puttext(x+7,ty,t->font[n],t->text[n]);
+		ty+=10;
+	}
+}
+
 static void hud_tooltip(void)
 {
 	static int last_where=-1,last_slot=-1,last_sprite=0;
 	static unsigned int since=0;
 	extern int hightlight,hightlight_sub;
-	int where=-1,slot=0,sprite=0,co=0,n,w,h,x,y,len,ty;
+	int where=-1,slot=0,sprite=0,co=0,k,w,h,x,y,ww[2],wh[2],wi[2],nw=0,tw,th,bx;
 	unsigned int now=GetTickCount();
-	unsigned short col;
+	int shift=(GetAsyncKeyState(VK_SHIFT)&0x8000)!=0;
 
 	if (hightlight==HL_BACKPACK && hightlight_sub>=0 && hightlight_sub<40) { where=0; slot=hightlight_sub; sprite=pl.item[slot]; }
 	else if (hightlight==HL_EQUIPMENT && hightlight_sub>=0 && hightlight_sub<20) { where=1; slot=hightlight_sub; sprite=pl.worn[slot]; }
@@ -482,41 +536,31 @@ static void hud_tooltip(void)
 	if (now-since<350) return;
 
 	// ask (again) if we have nothing for this item, or it's more than 5 seconds old
-	if (tip.where!=where || tip.slot!=slot || tip.sprite!=sprite || tip.co!=co || tip.state==0 ||
-	    (tip.state==2 && now-tip.at>5000) || (tip.state==1 && now-tip.at>3000)) {
-		unsigned char buf[16];
-		memset(buf,0,16);
-		buf[0]=CL_CMD_ITEMINFO; buf[1]=(unsigned char)where;
-		*(unsigned short*)(buf+2)=(unsigned short)slot;
-		*(unsigned int*)(buf+4)=co;
-		xsend(buf);
-		if (tip.state!=2 || tip.where!=where || tip.slot!=slot || tip.sprite!=sprite) tip.lines=0;	// keep showing a refresh of the same item
-		tip.where=where; tip.slot=slot; tip.sprite=sprite; tip.co=co; tip.state=1; tip.at=now;
-	}
+	if (tip_stale(&tip,where,slot,sprite,co,now)) tip_ask(&tip,where,slot,sprite,co,now);
 	if (!tip.lines) return;
 
-	// size and place: right of and below the mouse, kept on the canvas
-	for (n=0,len=0; n<tip.lines; n++) if ((int)strlen(tip.text[n])>len) len=strlen(tip.text[n]);
-	w=len*6+14; h=10;
-	for (n=0; n<tip.lines; n++) h+=(tip.font[n]==9) ? 5 : 10;	// font 9 = divider
+	// Shift: the worn piece(s) this item would replace
+	if (shift && where!=1 && tip.state==2) {
+		for (k=0; k<tip.ncmp && k<2; k++) {
+			int ws=tip.cmp[k];
+			if (ws<0 || ws>=20 || !pl.worn[ws]) continue;
+			if (tip_stale(&wtip[k],1,ws,pl.worn[ws],0,now)) tip_ask(&wtip[k],1,ws,pl.worn[ws],0,now);
+			if (wtip[k].lines) { tip_size(&wtip[k],"Equipped:",&ww[nw],&wh[nw]); wi[nw]=k; nw++; }
+		}
+	}
+
+	// size and place: right of and below the mouse, kept on the canvas; worn pieces to its right (or left)
+	tip_size(&tip,NULL,&w,&h);
+	tw=w; th=h;
+	for (k=0; k<nw; k++) { tw+=4+ww[k]; if (wh[k]>th) th=wh[k]; }
 	x=mouse_cx+18; y=mouse_cy+14;
-	if (x+w>hud_cw-2) x=mouse_cx-12-w;
-	if (y+h>hud_ch-2) y=hud_ch-2-h;
+	if (x+tw>hud_cw-2) x=mouse_cx-12-tw;
+	if (y+th>hud_ch-2) y=hud_ch-2-th;
 	if (x<2) x=2;
 	if (y<2) y=2;
 
-	dd_hud_vclip(x,y,w,h);
-	col=(unsigned short)((((HUD_RGB_PANEL>>16)&255)>>3)<<11 | (((HUD_RGB_PANEL>>8)&255)>>2)<<5 | ((HUD_RGB_PANEL&255)>>3));
-	dd_hud_fill(x,y,w,h,col);
-	dd_hud_hline(x,y,w);
-	dd_hud_hline(x,y+h-2,w);
-	dd_hud_vline(x,y,h);
-	dd_hud_vline(x+w-2,y,h);
-	for (n=0,ty=y+5; n<tip.lines; n++) {
-		if (tip.font[n]==9) { dd_hud_hline(x+5,ty+1,w-10); ty+=5; continue; }
-		dd_puttext(x+7,ty,tip.font[n],tip.text[n]);
-		ty+=10;
-	}
+	tip_draw(&tip,NULL,x,y,w,h);
+	for (k=0,bx=x+w+4; k<nw; k++) { tip_draw(&wtip[wi[k]],"Equipped:",bx,y,ww[k],wh[k]); bx+=ww[k]+4; }
 }
 
 static void hud_buffs(void)

@@ -626,7 +626,7 @@ static void tip_line(int nr,int where,int slot,int *line,int font,char *format,.
 	va_list args;
 	char tmp[200];
 
-	if (*line>=39) return;
+	if (*line>=63) return;	// the client keeps 64 lines
 	if (tip_div && *line) {	// font 9, no text: the client draws a thin line
 		memset(buf,0,64);
 		buf[0]=SV_ITEMINFO; buf[1]=where; buf[2]=slot; buf[3]=*line; buf[4]=9;
@@ -711,6 +711,105 @@ static void tip_build(int nr,int cn,int slot,int *line)
 	}
 }
 
+/* ---- equipment compare: what wearing this item would change ---------------
+ * stats as one vector: WV, AV, 5 attributes, hp/end/mana, thorns, 50 skills */
+#define CMP_N	(10+50)
+static void cmp_vec(int in,int *v,int add)
+{
+	int act,n;
+	if (!in || in>=MAXITEM || it[in].used==USE_EMPTY) return;
+	act=it[in].active ? 1 : 0;
+	v[0]+=add*it[in].weapon[act];
+	v[1]+=add*it[in].armor[act];
+	for (n=0; n<5; n++) v[2+n]+=add*it[in].attrib[n][act];
+	v[7]+=add*it[in].hp[act]; v[8]+=add*it[in].end[act]; v[9]+=add*it[in].mana[act];
+	for (n=0; n<50; n++) v[10+n]+=add*it[in].skill[n][act];
+}
+
+static int cmp_effect(int in,char *name)	// the Epic effect's name, or 0
+{
+	char el[4][60];
+	if (!in || in>=MAXITEM || !IT_TIER(in) || !IT_TEFFECT(in)) return 0;
+	if (!tier_tip_effect(in,el)) return 0;
+	strcpy(name,el[0]);
+	return 1;
+}
+
+/* one section: "Compared to your ...:" and the differences, gains green, losses red.
+ * w1/w2: the worn piece(s) it would replace (0 = none) */
+static void cmp_section(int nr,int where,int slot,int *line,int in,int w1,int w2,char *title)
+{
+	int v[CMP_N],n,cnt=0;
+	char a[60],b[60];
+	static char *vn[10]={"WV","AV",0,0,0,0,0,"Hitpoints","Endurance","Mana"};
+
+	memset(v,0,sizeof(v));
+	cmp_vec(in,v,1); cmp_vec(w1,v,-1); cmp_vec(w2,v,-1);
+	tip_sep();
+	tip_line(nr,where,slot,line,1,"%s",title);
+	for (n=0; n<CMP_N; n++) {
+		if (!v[n]) continue;
+		if (n>=2 && n<7) tip_line(nr,where,slot,line,v[n]>0 ? 2 : 0,"%+5d %s",v[n],at_name[n-2]);
+		else if (n>=10) tip_line(nr,where,slot,line,v[n]>0 ? 2 : 0,"%+5d %s",v[n],skilltab[n-10].name);
+		else tip_line(nr,where,slot,line,v[n]>0 ? 2 : 0,"%+5d %s",v[n],vn[n]);
+		cnt++;
+	}
+	if (cmp_effect(in,a)) {
+		if (!(cmp_effect(w1,b) && !strcmp(a,b))) { tip_line(nr,where,slot,line,2,"  + %s",a); cnt++; }
+	}
+	if (cmp_effect(w1,b) && !(cmp_effect(in,a) && !strcmp(a,b))) { tip_line(nr,where,slot,line,0,"  - %s",b); cnt++; }
+	if (!cnt) tip_line(nr,where,slot,line,1,"  No difference.");
+}
+
+static void cmp_name(int in,char *buf)
+{
+	if (in && in<MAXITEM && it[in].used!=USE_EMPTY) { strncpy(buf,it[in].name,30); buf[30]=0; }
+	else strcpy(buf,"nothing");
+}
+
+/* the item at in (backpack, shop, grave) against what cn wears in its slot(s);
+ * also tells the client which worn slots to show beside it (font 8 line, "W n [n]") */
+static void tip_compare(int nr,int where,int slot,int *line,int cn,int in)
+{
+	int pl=it[in].placement,w=-1,rh,lh;
+	char t[80],n1[40],n2[40];
+
+	if (!pl) return;
+	rh=ch[cn].worn[WN_RHAND]; lh=ch[cn].worn[WN_LHAND];
+	if (pl&PL_RING) {
+		cmp_name(ch[cn].worn[WN_LRING],n1); cmp_name(ch[cn].worn[WN_RRING],n2);
+		sprintf(t,"Compared to your left ring (%s):",n1); cmp_section(nr,where,slot,line,in,ch[cn].worn[WN_LRING],0,t);
+		sprintf(t,"Compared to your right ring (%s):",n2); cmp_section(nr,where,slot,line,in,ch[cn].worn[WN_RRING],0,t);
+		tip_line(nr,where,slot,line,8,"W %d %d",WN_LRING,WN_RRING);
+		return;
+	}
+	if (pl&PL_TWOHAND) {	// replaces the weapon and the shield
+		cmp_name(rh,n1); cmp_name(lh,n2);
+		if (rh && lh) sprintf(t,"Compared to your %s and %s:",n1,n2);
+		else if (rh || lh) sprintf(t,"Compared to your %s:",rh ? n1 : n2);
+		else strcpy(t,"Your hands are empty:");
+		cmp_section(nr,where,slot,line,in,rh,lh,t);
+		if (rh && lh) tip_line(nr,where,slot,line,8,"W %d %d",WN_RHAND,WN_LHAND);
+		else if (rh || lh) tip_line(nr,where,slot,line,8,"W %d",rh ? WN_RHAND : WN_LHAND);
+		return;
+	}
+	if (pl&PL_SHIELD && rh && (it[rh].placement&PL_TWOHAND)) {
+		cmp_name(rh,n1);
+		tip_sep();
+		tip_line(nr,where,slot,line,0,"Can't be used with your %s.",n1);
+		return;
+	}
+	if (pl&PL_HEAD) w=WN_HEAD; else if (pl&PL_NECK) w=WN_NECK; else if (pl&PL_BODY) w=WN_BODY;
+	else if (pl&PL_ARMS) w=WN_ARMS; else if (pl&PL_BELT) w=WN_BELT; else if (pl&PL_LEGS) w=WN_LEGS;
+	else if (pl&PL_FEET) w=WN_FEET; else if (pl&PL_WEAPON) w=WN_RHAND; else if (pl&PL_SHIELD) w=WN_LHAND;
+	else if (pl&PL_CLOAK) w=WN_CLOAK;
+	if (w<0) return;
+	if (ch[cn].worn[w]) { cmp_name(ch[cn].worn[w],n1); sprintf(t,"Compared to your %s:",n1); }
+	else strcpy(t,"Nothing worn there:");
+	cmp_section(nr,where,slot,line,in,ch[cn].worn[w],0,t);
+	if (ch[cn].worn[w]) tip_line(nr,where,slot,line,8,"W %d",w);
+}
+
 void plr_cmd_iteminfo(int nr)
 {
 	int cn,co,where,slot,in=0,line=0,n,act,ok,first,flag,shown;
@@ -768,6 +867,9 @@ void plr_cmd_iteminfo(int nr)
 				if (it[in].light[1]>0) { if (!shown++) tip_line(nr,where,slot,&line,1,"When active:"); tip_line(nr,where,slot,&line,2,"%+5d Light",it[in].light[1]); }
 			}
 		}
+
+		// what wearing it would change (not for what you already wear)
+		if (where!=1 && !(it[in].flags&IF_NEEDIDENT && !(it[in].flags&IF_IDENTIFIED))) tip_compare(nr,where,slot,&line,cn,in);
 
 		// requirements, red when not met (base values, like wearing it checks)
 		tip_sep();

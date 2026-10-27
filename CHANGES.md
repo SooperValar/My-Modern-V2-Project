@@ -208,6 +208,14 @@ The design is in `docs/ITEM_TIERS.md`. This first part builds the core:
 - `tools/design/item_tier_samples.py` prints sample rolls (the same rules, for looking at numbers).
 - Build: `tier.c` is a new file, so the Makefile changed; `claude-sync.sh get` now copies the Makefile too.
 
+#### Equipment compare
+- Hovering an item you could wear (backpack, shop, grave) adds **"Compared to your <worn piece>:"** to its tooltip, listing only what would change: WV, AV, attributes, hitpoints/endurance/mana and skills, gains in green and losses in red, plus an Epic effect gained (+) or lost (-). "No difference." when nothing changes; "Nothing worn there:" for an empty slot.
+  - Rings: two sections, one for each worn ring.
+  - Two-handed weapons: against the weapon and the shield together. A shield while wielding a two-hander: "Can't be used with your ...".
+  - Not for unidentified items or what you already wear.
+- **Hold Shift** while hovering: the worn piece(s) it would replace are shown beside the tooltip ("Equipped:"), as their own full tooltips.
+- How: `tip_compare` in `svr_tick.c` writes the section and a hidden line (font 8, "W <slot> [<slot>]") naming the worn slots; the client (`engine.c` hud_tooltip, `socket.c`) reads it and asks for those worn tooltips while Shift is down. Tooltips can now hold 64 lines (was 40).
+
 #### Recall points: Elysium for gods and imps, #setrecall
 - Gods and imps recall (Recall spell, death, `#recall`) to **Elysium, 800,804** by default: at login and when the god/imp flag is given, a god or imp whose recall point is one of the standard temples (Aston, Purple temple, Staffers Corner) gets Elysium instead. A point of their own (set with #setrecall) is kept.
 - `#setrecall <player> <x> <y>` (gods): sets where a player recalls to and comes back after dying. `here` = where you stand, `default` = Elysium for gods/imps, otherwise their religion's temple (Aston / Purple temple / Staffers Corner); with no position it shows the current one. Refuses blocked tiles; tells the player; logged.

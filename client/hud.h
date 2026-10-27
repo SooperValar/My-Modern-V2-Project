@@ -160,16 +160,18 @@ struct buffinfo {
 extern struct buffinfo buff[20];
 
 // item tooltips: lines come from the server (SV_ITEMINFO)
-#define TIP_LINES	40
+#define TIP_LINES	64
 struct tipinfo {
 	int where,slot,sprite,co;	// what it describes
 	int state;			// 0 empty, 1 asked, 2 complete
 	unsigned int at;		// GetTickCount() when asked
 	int lines;
 	char text[TIP_LINES][60];
-	unsigned char font[TIP_LINES];
+	unsigned char font[TIP_LINES];	// font 9 = divider, font 8 = "W n [n]": the worn slots it compares to (not drawn)
+	int ncmp,cmp[2];		// from the font 8 line
 };
 extern struct tipinfo tip;
+extern struct tipinfo wtip[2];		// equipment compare: the worn pieces, shown beside the tooltip while Shift is held
 void dd_hud_vclip(int x,int y,int w,int h);
 
 // smooth HUD font: text remembered for the presenter (dd.c)

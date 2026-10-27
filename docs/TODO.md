@@ -10,7 +10,7 @@ In order:
 4. **Pentagram enemies leave no grave** unless they carry something besides their weapon.
 5. **Pentagram solve balance**: look at how the solve count works (now: players online + three random 0-19, so about 28 + players online; 54 right after a server start; every active pentagram in the world counts) and make it work for a solo player as well as for groups. **Base it on the players actually doing pentagrams** (e.g. those in the pentagram area or who activated one recently), not everyone online; usually 1-5 people.
 
-6. **Equipment compare**: when hovering an item, show how it compares to what is worn in that slot (e.g. a second tooltip with the worn piece, or +/- differences in green and red).
+6. ~~**Equipment compare**~~ (done: differences in the tooltip, Shift shows the worn piece): when hovering an item, show how it compares to what is worn in that slot (e.g. a second tooltip with the worn piece, or +/- differences in green and red).
 
 7. **Ice set sprites**: the Helmet, Armor, Leggings, Boots and Gloves of Ice (unique, templates 1272-1276) use sprites 18100-18104, which don't exist in the client ("Sprite ... is missing"). They need pictures (new ones or recoloured).
 
