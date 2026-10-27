@@ -584,8 +584,16 @@ void lab_left_check(int cn)
 {
         if (!IS_SANEPLAYER(cn)) return;
         if (ch[cn].data[CHD_LABTEMPLE]) return;         // still inside a lab
-        if (ch[cn].temple_x!=512 && ch[cn].temple_x!=558 && ch[cn].temple_x!=813) return;
+        if (temple_in_lab(cn)) return;
         lab_strip_items(cn);
+}
+
+/* is this character's temple (recall point) inside the labyrinth? Works for any
+ * recall point - city temples, Elysium, or one set with #setrecall */
+int temple_in_lab(int cn)
+{
+        char *a=get_area_m(ch[cn].temple_x,ch[cn].temple_y,0);
+        return a && strstr(a,"Labyrinth")!=NULL;
 }
 
 int lab_restore_temple(int cn)

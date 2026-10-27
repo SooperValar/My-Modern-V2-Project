@@ -734,6 +734,7 @@ void do_help(int cn,char *topic)
 		//do_char_log(cn,3,"#build <template>       build mode.\n");
 		do_char_log(cn,3,"#create <item template> creating items.\n");
 		do_char_log(cn,3,"#note [\"title\"] <text>  a note with your text.\n");
+		do_char_log(cn,3,"#setrecall <player> <x> <y>|here|default  recall point.\n");
 		//do_char_log(cn,3,"#creator <player>       make player a Creator.\n");
 		do_char_log(cn,3,"#ggold <amount>         give money to a player.\n");
 		do_char_log(cn,3,"#god <player>           make player a God.\n");
@@ -2184,6 +2185,7 @@ void do_command(int cn, char *ptr)
         case 'g':
                 if (!strcmp(cmd,"godshop") && f_g)      { god_godshop(cn,arg[1]); return; };
                 if (!strcmp(cmd,"note") && f_g)         { god_note(cn,args[0]); return; };
+                if (!strcmp(cmd,"setrecall") && f_g)    { god_setrecall(cn,arg[1],arg[2],arg[3]); return; };
                 if (prefix(cmd,"gtell") && !f_m) /*!*/  { do_gtell(cn,args[0]); return; }
                 if (prefix(cmd,"gold"))                 { do_gold(cn,atoi(arg[1])); return; }
 		if (prefix(cmd,"golden") && f_g)	{ god_set_flag(cn,dbatoi(arg[1]),CF_GOLDEN); return; }
@@ -2279,7 +2281,9 @@ void do_command(int cn, char *ptr)
                 if (prefix(cmd,"rac"))                  { break; };
                 if (prefix(cmd,"rais"))                 { break; };
                 if (prefix(cmd,"raise") && f_giu)       { god_raise_char(cn,dbatoi_self(cn,arg[1]),atoi(arg[2])); return; };
-                if (prefix(cmd,"recall") && f_giu)      { lab_restore_temple(cn); god_goto(cn,cn,"512","512"); lab_left_check(cn); return; };
+                if (prefix(cmd,"recall") && f_giu)      { char bx[12],by[12]; lab_restore_temple(cn);	// to your own recall point (Aston if there is none)
+                                                          if (ch[cn].temple_x) { sprintf(bx,"%d",ch[cn].temple_x); sprintf(by,"%d",ch[cn].temple_y); } else { strcpy(bx,"512"); strcpy(by,"512"); }
+                                                          god_goto(cn,cn,bx,by); lab_left_check(cn); return; };
                 if (prefix(cmd,"respawn") && f_giu)     { do_respawn(cn,atoi(arg[1])); return; };
                 if (prefix(cmd,"rings"))                { do_info_rings(cn); return; };
                 if (!strcmp(cmd,"repair") && f_p)       { do_repair_all(cn,0); return; };

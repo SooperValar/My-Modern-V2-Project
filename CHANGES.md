@@ -208,6 +208,12 @@ The design is in `docs/ITEM_TIERS.md`. This first part builds the core:
 - `tools/design/item_tier_samples.py` prints sample rolls (the same rules, for looking at numbers).
 - Build: `tier.c` is a new file, so the Makefile changed; `claude-sync.sh get` now copies the Makefile too.
 
+#### Recall points: Elysium for gods and imps, #setrecall
+- Gods and imps recall (Recall spell, death, `#recall`) to **Elysium, 800,804** by default: at login and when the god/imp flag is given, a god or imp whose recall point is one of the standard temples (Aston, Purple temple, Staffers Corner) gets Elysium instead. A point of their own (set with #setrecall) is kept.
+- `#setrecall <player> <x> <y>` (gods): sets where a player recalls to and comes back after dying. `here` = where you stand, `default` = Elysium for gods/imps, otherwise their religion's temple (Aston / Purple temple / Staffers Corner); with no position it shows the current one. Refuses blocked tiles; tells the player; logged.
+- `#recall` (gods/imps) now takes you to your own recall point instead of always Aston.
+- The labyrinth checks no longer assume a city temple means "out of the lab": a player is in a lab when they have a saved lab temple or their recall point lies in a "Labyrinth" zone (`temple_in_lab`), so custom recall points don't keep lab items or strip them early.
+
 #### #note: notes with your own text
 - `#note ["title"] <text>` (gods): puts a note in your backpack with your text as its description (what players read when they look at it, up to 199 characters); the optional title in quotes is its name, default "Note". Made from the plain note template 1139 (scroll picture, can be picked up, given and dropped). Logged with its text (`god_note` in `svr_god.c`).
 - Item tooltips now show up to 6 lines of description (was 3), so a long note fits.

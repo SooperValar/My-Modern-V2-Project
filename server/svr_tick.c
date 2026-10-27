@@ -1423,6 +1423,7 @@ void plr_login(int nr)
 		}
 	}
 
+        god_recall_default(cn);		// gods and imps: Elysium unless they have their own point
         do_update_char(cn);
         ch[cn].tavern_x=ch[cn].temple_x;
         ch[cn].tavern_y=ch[cn].temple_y;

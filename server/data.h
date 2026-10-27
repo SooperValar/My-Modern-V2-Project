@@ -321,6 +321,8 @@ extern unsigned int mapmarker;
 #define SEYAN_SHRINES   22      // shrines of Kwai (bits in data[21]): 20 original + Lab 10 + Lab 11
 #define SEYAN_SHRINEBITS ((1u<<SEYAN_SHRINES)-1)
 #define LOOKTIER_STEP   448     // prestige look: a recoloured sprite set right after the original
+#define ELYSIUM_RECALL_X 800  // gods' and imps' default recall point (temple), in Elysium
+#define ELYSIUM_RECALL_Y 804
 #define CHD_ARENALOCK   79      // players: no arena of rank fight before this tick (NPCs use 79 for patrol rest)
 
 #define RANKS           24

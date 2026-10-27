@@ -629,7 +629,7 @@ void tmplabcheck(int in)
 	if (!(cn=it[in].carried) |! IS_SANEPLAYER(cn)) return;
 	
 	// player is inside a lab?
-	if (ch[cn].temple_x!=512 && ch[cn].temple_x!=558 && ch[cn].temple_x!=813) return;
+	if (ch[cn].data[CHD_LABTEMPLE] || temple_in_lab(cn)) return;
 	
 	god_take_from_char(in,cn);
 	it[in].used=USE_EMPTY;

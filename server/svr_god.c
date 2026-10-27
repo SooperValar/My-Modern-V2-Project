@@ -1899,6 +1899,7 @@ void god_set_flag(int cn,int co,unsigned long long flag)
 	}
 
 	ch[co].flags^=flag;
+	if ((flag==CF_GOD || flag==CF_IMP) && (ch[co].flags&flag)) god_recall_default(co);	// to Elysium
 
 	switch (flag) {
 		case    CF_IMMORTAL:    ptr="immortal"; break;
@@ -2879,4 +2880,58 @@ void god_note(int cn,char *text)
 	}
 	do_char_log(cn,1,"You wrote a note: %s.\n",it[in].name);
 	chlog(cn,"GOD: wrote a note \"%s\": %s",it[in].name,it[in].description);
+}
+
+/* Gods and imps recall (and die back) to Elysium unless they have their own
+ * recall point: a god/imp whose temple is one of the standard temples (Aston,
+ * the Purple temple, the Staffers Corner) gets Elysium instead. Called at login
+ * and when the god or imp flag is given. */
+void god_recall_default(int cn)
+{
+	if (!IS_SANECHAR(cn) || !(ch[cn].flags&(CF_GOD|CF_IMP))) return;
+	if (ch[cn].data[CHD_LABTEMPLE]) return;		// inside a lab: the lab's temple stays
+	if (ch[cn].temple_x!=512 && ch[cn].temple_x!=558 && ch[cn].temple_x!=813) return;	// has its own point
+	ch[cn].temple_x=ELYSIUM_RECALL_X;
+	ch[cn].temple_y=ELYSIUM_RECALL_Y;
+}
+
+/* #setrecall <player> [<x> <y> | here | default]: set (or show) where a
+ * character recalls to and comes back after dying */
+void god_setrecall(int cn,char *who,char *cx,char *cy)
+{
+	int co,x,y,m;
+
+	if (!who || !*who) {
+		do_char_log(cn,0,"#setrecall <player> <x> <y>   (or: here, default; no more = show it)\n");
+		return;
+	}
+	co=dbatoi_self(cn,who);
+	if (!IS_SANECHAR(co) || (ch[co].flags&CF_BODY) || !(ch[co].flags&(CF_PLAYER|CF_USURP))) {
+		do_char_log(cn,0,"No player called %s.\n",who);
+		return;
+	}
+	if (!cx || !*cx) {
+		do_char_log(cn,1,"%s recalls to %d,%d (%s).\n",ch[co].name,ch[co].temple_x,ch[co].temple_y,get_area_m(ch[co].temple_x,ch[co].temple_y,0));
+		return;
+	}
+	if (!strcasecmp(cx,"here")) { x=ch[cn].x; y=ch[cn].y; }
+	else if (!strcasecmp(cx,"default")) {
+		if (ch[co].flags&(CF_GOD|CF_IMP)) { x=ELYSIUM_RECALL_X; y=ELYSIUM_RECALL_Y; }
+		else if (ch[co].kindred&KIN_PURPLE) { x=558; y=542; }
+		else if (ch[co].flags&CF_STAFF) { x=813; y=165; }
+		else { x=512; y=512; }
+	} else {
+		if (!isdigit(*cx) || !cy || !isdigit(*cy)) { do_char_log(cn,0,"#setrecall <player> <x> <y>\n"); return; }
+		x=atoi(cx); y=atoi(cy);
+	}
+	if (!SANEXY(x,y)) { do_char_log(cn,0,"Bad coordinates (%d %d).\n",x,y); return; }
+	m=x+y*MAPX;
+	if (map[m].flags&MF_MOVEBLOCK) { do_char_log(cn,0,"%d,%d can't be walked on - pick an open tile.\n",x,y); return; }
+
+	ch[co].data[CHD_LABTEMPLE]=0;		// a set point wins over a saved lab temple
+	ch[co].temple_x=ch[co].tavern_x=x;
+	ch[co].temple_y=ch[co].tavern_y=y;
+	do_char_log(cn,1,"%s now recalls to %d,%d (%s).\n",ch[co].name,x,y,get_area_m(x,y,0));
+	if (co!=cn && ch[co].used==USE_ACTIVE) do_char_log(co,1,"Your recall point was moved to %d,%d (%s).\n",x,y,get_area_m(x,y,1));
+	chlog(cn,"GOD: set %s's recall point to %d,%d",ch[co].name,x,y);
 }
