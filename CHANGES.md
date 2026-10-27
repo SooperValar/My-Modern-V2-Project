@@ -213,6 +213,7 @@ The design is in `docs/ITEM_TIERS.md`. This first part builds the core:
 - `#setrecall <player> <x> <y>` (gods): sets where a player recalls to and comes back after dying. `here` = where you stand, `default` = Elysium for gods/imps, otherwise their religion's temple (Aston / Purple temple / Staffers Corner); with no position it shows the current one. Refuses blocked tiles; tells the player; logged.
 - `#recall` (gods/imps) now takes you to your own recall point instead of always Aston.
 - `#temple` (gods/imps) now goes to the Temple of Skua (512,512) instead of 800,800 in Elysium, which `#recall` covers.
+- Elysium's west portal (template 1376) now lands at 802,162 inside the Staffers Corner; it went to 838,160, outside the building (`tools/world/elysium/staffportal.spec`).
 - The labyrinth checks no longer assume a city temple means "out of the lab": a player is in a lab when they have a saved lab temple or their recall point lies in a "Labyrinth" zone (`temple_in_lab`), so custom recall points don't keep lab items or strip them early.
 
 #### #write: notes with a title
