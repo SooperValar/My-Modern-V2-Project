@@ -416,6 +416,42 @@ void tier_kill_drop(int cn,int co)
 	chlog(cc,"Tier drop: %s (%s, level %d) from %s",it[in].name,tier_word[IT_TIER(in)],level,ch[co].name);
 }
 
+/* Soulstones from any enemy a player (or a player's companion) kills. The chance
+ * follows the player's rank, so new players find them often and it tapers off:
+ * 1 in (SOULDROP_BASE + SOULDROP_PER_RANK * rank) kills - 1 in 40 for a Private,
+ * 1 in 110 at rank 10, 1 in 201 at rank 23. The stone is made like a Strong
+ * enemy's: 10-15% of the enemy's experience value, its level from that. Strong
+ * enemies already carry one and don't roll again. */
+#define SOULDROP_BASE		40
+#define SOULDROP_PER_RANK	7
+void soul_kill_drop(int cn,int co)
+{
+	int cc,exp,rank,in;
+
+	if (!IS_SANECHAR(cn) || !IS_SANECHAR(co)) return;
+	if (ch[co].flags&(CF_PLAYER|CF_LABKEEPER|CF_USURP)) return;
+	cc=cn;
+	if (!(ch[cc].flags&CF_PLAYER) && IS_SANECHAR(ch[cn].data[63])) cc=ch[cn].data[63];	// a player's companion
+	if (!(ch[cc].flags&CF_PLAYER)) return;
+	if (!strncmp(ch[co].name,"Strong ",7)) return;
+	if (RANDOM(SOULDROP_BASE+SOULDROP_PER_RANK*points2rank(ch[cc].points_tot))) return;
+
+	exp=ch[co].points_tot/10+RANDOM(ch[co].points_tot/20+1);
+	if (exp<1) return;
+	rank=points2rank(exp);
+	in=god_create_item(1146);
+	if (!in) return;
+	sprintf(it[in].name,"Soulstone");
+	sprintf(it[in].reference,"soulstone");
+	sprintf(it[in].description,"Level %d soulstone, holding %d exp.",rank,exp);
+	it[in].data[0]=rank;
+	it[in].data[1]=exp;
+	it[in].temp=0;
+	it[in].driver=68;
+	if (!god_give_char(in,co)) { it[in].used=USE_EMPTY; return; }
+	chlog(cc,"Soulstone drop: level %d from %s",rank,ch[co].name);
+}
+
 /* treasure chests that gave "of the Lion" armor: a Magic piece of that metal */
 int tier_chest_item(int temp)
 {
@@ -826,6 +862,7 @@ static int special_item(int in,int backpack)
 	if (!in || (in&0x80000000) || !IS_SANEITEM(in) || it[in].used==USE_EMPTY) return 0;
 	if (IT_TIER(in)>=TIER_MAGIC) return 1;		// Magic, Rare, Epic, Legendary
 	if (is_unique(in)) return 1;			// unique weapons and the like
+	if (it[in].driver==68) return 1;		// a soulstone
 	if (backpack && (it[in].flags&IF_MAGIC)) return 1;	// carried magic things: potions, scrolls, rings...
 	return 0;
 }

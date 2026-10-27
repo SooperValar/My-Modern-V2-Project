@@ -2812,6 +2812,7 @@ void do_char_killed(int cn,int co)
                         } else player_exit(ch[co].player);
                 }
                 tier_kill_drop(cn,co);	// maybe a Magic / Rare / Epic helmet or armor
+                soul_kill_drop(cn,co);	// maybe a soulstone (more often for low ranks)
                 chlog(co,"new npc body");
 		if (ch[co].flags&CF_RESPAWN) ch[co].flags=CF_BODY|CF_RESPAWN;
                 else ch[co].flags=CF_BODY;

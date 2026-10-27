@@ -70,6 +70,7 @@ int tier_upgrade(int in);
 int tier_reroll(int in);
 int tier_pick_template(int level,int helm);
 void tier_kill_drop(int cn,int co);
+void soul_kill_drop(int cn,int co);
 int tier_chest_item(int temp);
 int tier_font(int in);
 void tier_tip_lines(int in,char *l1,char *l2);
