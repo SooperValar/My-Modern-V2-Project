@@ -209,7 +209,7 @@ The design is in `docs/ITEM_TIERS.md`. This first part builds the core:
 - Build: `tier.c` is a new file, so the Makefile changed; `claude-sync.sh get` now copies the Makefile too.
 
 #### Soulstones from any enemy
-- Any enemy a player (or their companion) kills can now drop a soulstone; before, only "Strong" pentagram enemies carried one. The chance follows the player's rank, so new players find them often: 1 in (40 + 7 x rank) kills - 1 in 40 at rank 0, 1 in 75 at rank 5, 1 in 110 at rank 10, 1 in 145 at rank 15, 1 in 201 at rank 23. The stone is made like a Strong enemy's (10-15% of the enemy's experience value, its level from that); Strong enemies keep their own stone and don't roll again. Logged. Tunable: `SOULDROP_BASE`, `SOULDROP_PER_RANK` (`soul_kill_drop` in `tier.c`).
+- Any enemy a player (or their companion) kills can now drop a soulstone; before, only "Strong" pentagram enemies carried one. The chance follows the player's rank, so new players find them often: 1 in (20 + 6 x rank) kills - 1 in 20 at rank 0, 1 in 50 at rank 5, 1 in 80 at rank 10, 1 in 110 at rank 15, 1 in 158 at rank 23. The stone is made like a Strong enemy's (10-15% of the enemy's experience value, its level from that); Strong enemies keep their own stone and don't roll again. Logged. Tunable: `SOULDROP_BASE`, `SOULDROP_PER_RANK` (`soul_kill_drop` in `tier.c`).
 - A grave holding a soulstone glows.
 
 #### Grave glow only for something worth a look

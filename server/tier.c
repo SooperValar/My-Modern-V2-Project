@@ -418,12 +418,12 @@ void tier_kill_drop(int cn,int co)
 
 /* Soulstones from any enemy a player (or a player's companion) kills. The chance
  * follows the player's rank, so new players find them often and it tapers off:
- * 1 in (SOULDROP_BASE + SOULDROP_PER_RANK * rank) kills - 1 in 40 for a Private,
- * 1 in 110 at rank 10, 1 in 201 at rank 23. The stone is made like a Strong
+ * 1 in (SOULDROP_BASE + SOULDROP_PER_RANK * rank) kills - 1 in 20 for a Private,
+ * 1 in 80 at rank 10, 1 in 158 at rank 23. The stone is made like a Strong
  * enemy's: 10-15% of the enemy's experience value, its level from that. Strong
  * enemies already carry one and don't roll again. */
-#define SOULDROP_BASE		40
-#define SOULDROP_PER_RANK	7
+#define SOULDROP_BASE		20
+#define SOULDROP_PER_RANK	6
 void soul_kill_drop(int cn,int co)
 {
 	int cc,exp,rank,in;
