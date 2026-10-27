@@ -95,6 +95,7 @@ int godshop_cat(int co);
 void godshop_fill(int cn,int co);
 void godshop_take(int cn,int co,int nr);
 void god_godshop(int cn,char *arg);
+void god_note(int cn,char *text);
 int tier_item_glow(int in);
 int tier_tile_glow(int in,int cn);
 void driver(int cn);

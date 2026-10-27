@@ -822,10 +822,10 @@ void plr_cmd_iteminfo(int nr)
 			}
 		}
 
-		// description, wrapped at about 36 characters, at most 3 lines
+		// description, wrapped at about 36 characters, at most 6 lines (notes can be long)
 		tip_sep();
 		s=it[in].description;
-		for (n=0; n<3 && *s; n++) {
+		for (n=0; n<6 && *s; n++) {
 			while (*s==' ') s++;
 			d=buf;
 			while (*s && d-buf<36) *d++=*s++;
@@ -834,7 +834,7 @@ void plr_cmd_iteminfo(int nr)
 				if (sp>buf+10) { s-=d-sp; d=sp; }
 			}
 			*d=0;
-			if (n==2 && *s) strcpy(d>buf+33 ? buf+33 : d,"...");
+			if (n==5 && *s) strcpy(d>buf+33 ? buf+33 : d,"...");
 			if (buf[0]) tip_line(nr,where,slot,&line,1,"%s",buf);
 		}
 	}

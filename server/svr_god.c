@@ -2840,3 +2840,43 @@ void god_prestige(int cn,int co,char *arg)
 	do_char_log(cn,1,"%s is now prestige %d (sprite %d).\n",ch[co].name,p,ch[co].sprite);
 	if (co!=cn) do_char_log(co,2,"You are now prestige %d.\n",p);
 }
+
+/* #note ["title"] <text>: a note (scroll) in your hand with your own text.
+ * The text is what players read when they look at it (up to 199 characters);
+ * the title is its name (default "Note"). Made from the plain note template. */
+#define NOTE_TEMP 1139
+void god_note(int cn,char *text)
+{
+	char title[40]="Note";
+	int in,n;
+
+	if (!text || !*text) {
+		do_char_log(cn,0,"#note [\"title\"] <text>, e.g. #note \"Welcome\" The gate is to the north.\n");
+		return;
+	}
+	if (*text=='"') {	// optional title in quotes
+		text++;
+		for (n=0; *text && *text!='"' && n<39; n++) title[n]=*text++;
+		title[n]=0;
+		while (*text && *text!='"') text++;
+		if (*text=='"') text++;
+		while (*text==' ') text++;
+		if (!title[0]) strcpy(title,"Note");
+	}
+	if (!*text) { do_char_log(cn,0,"The note needs some text.\n"); return; }
+	if (strlen(text)>199) do_char_log(cn,0,"Your text is %d characters; the note keeps the first 199.\n",(int)strlen(text));
+
+	in=god_create_item(NOTE_TEMP);
+	if (!in) { do_char_log(cn,0,"Could not create the note.\n"); return; }
+	strncpy(it[in].name,title,39); it[in].name[39]=0;
+	strncpy(it[in].reference,title,39); it[in].reference[39]=0;
+	for (n=0; it[in].reference[n]; n++) it[in].reference[n]=tolower(it[in].reference[n]);
+	strncpy(it[in].description,text,199); it[in].description[199]=0;
+	if (!god_give_char(in,cn)) {
+		it[in].used=USE_EMPTY;
+		do_char_log(cn,0,"Your inventory is full!\n");
+		return;
+	}
+	do_char_log(cn,1,"You wrote a note: %s.\n",it[in].name);
+	chlog(cn,"GOD: wrote a note \"%s\": %s",it[in].name,it[in].description);
+}

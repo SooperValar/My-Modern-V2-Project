@@ -208,6 +208,10 @@ The design is in `docs/ITEM_TIERS.md`. This first part builds the core:
 - `tools/design/item_tier_samples.py` prints sample rolls (the same rules, for looking at numbers).
 - Build: `tier.c` is a new file, so the Makefile changed; `claude-sync.sh get` now copies the Makefile too.
 
+#### #note: notes with your own text
+- `#note ["title"] <text>` (gods): puts a note in your backpack with your text as its description (what players read when they look at it, up to 199 characters); the optional title in quotes is its name, default "Note". Made from the plain note template 1139 (scroll picture, can be picked up, given and dropped). Logged with its text (`god_note` in `svr_god.c`).
+- Item tooltips now show up to 6 lines of description (was 3), so a long note fits.
+
 #### Lit tiles (new zone flag)
 - `MF_LIT` (map flag bit 12): the tile is always fully lit, day and night, whatever the lights around it - for a lit spot in a dark area. Only that tile; it doesn't spread. Done in `check_dlight`/`check_dlightm`, so seeing characters and items there and the light the client draws both follow it.
 - Build page 0 has it as **Lit** (icon sprite 18232); in build mode a lit tile shows a small warm white dot (sprite 18233, client `engine.c`). `#tile` lists it as "lit"; the build tooltip explains it.

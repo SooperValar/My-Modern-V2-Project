@@ -733,6 +733,7 @@ void do_help(int cn,char *topic)
 		do_char_log(cn,3," \n");
 		//do_char_log(cn,3,"#build <template>       build mode.\n");
 		do_char_log(cn,3,"#create <item template> creating items.\n");
+		do_char_log(cn,3,"#note [\"title\"] <text>  a note with your text.\n");
 		//do_char_log(cn,3,"#creator <player>       make player a Creator.\n");
 		do_char_log(cn,3,"#ggold <amount>         give money to a player.\n");
 		do_char_log(cn,3,"#god <player>           make player a God.\n");
@@ -2182,6 +2183,7 @@ void do_command(int cn, char *ptr)
                 break;
         case 'g':
                 if (!strcmp(cmd,"godshop") && f_g)      { god_godshop(cn,arg[1]); return; };
+                if (!strcmp(cmd,"note") && f_g)         { god_note(cn,args[0]); return; };
                 if (prefix(cmd,"gtell") && !f_m) /*!*/  { do_gtell(cn,args[0]); return; }
                 if (prefix(cmd,"gold"))                 { do_gold(cn,atoi(arg[1])); return; }
 		if (prefix(cmd,"golden") && f_g)	{ god_set_flag(cn,dbatoi(arg[1]),CF_GOLDEN); return; }
