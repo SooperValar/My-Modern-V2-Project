@@ -1841,12 +1841,11 @@ int spawn_penta_enemy(int in)
 /* Pentagram solve: how many pentagrams must be active at once. It follows the
  * players actually doing pentagrams - those who activated one in the last 10
  * minutes and are still online - instead of everyone online:
- *   needed = PENTA_BASE + PENTA_PER_PLAYER * players + a random 0-2 per round
- * so 7-9 alone, 14-16 for two, 35-37 for five. */
-#define PENTA_BASE		0
-#define PENTA_PER_PLAYER	7
+ *   needed = for each player: PENTA_PER_PLAYER + a random 2 or 3 (rolled per round)
+ * so 7-8 alone, 14-16 for two, 21-24 for three, 35-40 for five. */
+#define PENTA_PER_PLAYER	5
 #define PENTA_RECENT		(TICKS*60*10)
-static int penta_rand=1;
+static unsigned int penta_bits=0;	// this round's rolls: bit k set = player k+1 adds 3, else 2
 static unsigned int penta_seen[MAXCHARS];	// ticker of each player's last activation
 
 static int penta_players(void)
@@ -1862,7 +1861,9 @@ static int penta_players(void)
 
 static int penta_needed_now(void)
 {
-	return PENTA_BASE+PENTA_PER_PLAYER*max(1,penta_players())+penta_rand;
+	int n,p=max(1,penta_players()),need=0;
+	for (n=0; n<p; n++) need+=PENTA_PER_PLAYER+2+((penta_bits>>(n&31))&1);
+	return need;
 }
 
 /* is co a pentagram enemy? They are made from templates 364-385, 538-542 and
@@ -1909,8 +1910,8 @@ void solved_pentagram(int cn,int in)
                 it[n].duration=it[n].active=TICKS*(10+RANDOM(20));
         }
         for (n=1; n<MAXCHARS; n++) penta_seen[n]=0;	// a new round: nobody is doing it yet
-        penta_rand=RANDOM(3);
-	xlog("Pentagram solved; next solve at %d + %d per player doing pentagrams",PENTA_BASE+penta_rand,PENTA_PER_PLAYER);
+        penta_bits=(unsigned int)RANDOM(65536)|((unsigned int)RANDOM(65536)<<16);
+	xlog("Pentagram solved; next solve: %d + 2 or 3 per player doing pentagrams",PENTA_PER_PLAYER);
 }
 
 int use_pentagram(int cn,int in)
