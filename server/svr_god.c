@@ -1281,6 +1281,8 @@ void god_build_stop(int cn)
 {
         int co, n, in;
 
+        build_clear_reset(cn);	// a #clear waiting for corners ends with build mode
+
         /* Empty builder's inventory */
         for (n=0; n<40; n++)
                 ch[cn].item[n]=0;
@@ -1693,6 +1695,7 @@ void god_build_cmd(int cn,char *arg)
 			do_char_log(cn,3,"#build next | prev  next / previous page\n");
 			do_char_log(cn,3,"#build end          stop, get your backpack back\n");
 			do_char_log(cn,3,"#undo               undo your last placement or area\n");
+			do_char_log(cn,3,"#clear              remove all objects/items in an area (click two corners)\n");
 			do_char_log(cn,3,"#tile               what is on the tile under the mouse\n");
 			do_char_log(cn,3,"#light              recompute lighting everywhere\n");
 			do_char_log(cn,3," \n");

@@ -2152,6 +2152,7 @@ void do_command(int cn, char *ptr)
                 if (prefix(cmd,"belt"))                 { do_info_belt(cn); return; };
                 break;
         case 'c':
+                if (!strcmp(cmd,"clear") && f_c)        { build_clear_cmd(cn); return; };
 		if (prefix(cmd,"cap") && f_g)    	{ set_cap(cn,atoi(arg[1])); return; };
 		if (prefix(cmd,"caution") && f_gius)    { do_caution(cn, cn, "%s\n", args[0]); return; }
                 if (prefix(cmd,"ccp") && f_i)           { god_set_flag(cn,dbatoi_self(cn,arg[1]),CF_CCP); return; };

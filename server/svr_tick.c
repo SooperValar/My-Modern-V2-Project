@@ -542,6 +542,7 @@ void plr_cmd_pickup(int nr)
         cn=player[nr].usnr;
 
         if (IS_BUILDING(cn)) {
+                if (build_clear_click(cn,x,y)) return;	// a #clear corner
                 build_undo_begin(cn);
                 build_remove(x,y);
                 return;

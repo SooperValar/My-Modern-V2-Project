@@ -244,3 +244,55 @@ void build_undo(int cn)
 	do_char_log(cn,1,"Undid the last build action (%d tile%s).%s %d more can be undone.\n",cnt,cnt==1 ? "" : "s",
 		lost ? " Some items could not be brought back." : "",left);
 }
+
+/* ---- #clear: remove every object and item in a rectangle -------------------
+ * #clear in build mode, then left-click two corners on the map. Floors stay;
+ * walls, tables and other objects and all items go. One #undo brings it back.
+ * #clear again before the second corner cancels. */
+static unsigned char clear_state[MAXCHARS];	// 0 off, 1 first corner next, 2 second corner next
+static unsigned short clear_x[MAXCHARS],clear_y[MAXCHARS];
+#define CLEAR_MAX	100	// at most 100x100 tiles at once
+
+void build_clear_cmd(int cn)
+{
+	if (!IS_BUILDING(cn)) { do_char_log(cn,0,"#clear works in build mode (#build).\n"); return; }
+	if (clear_state[cn]) { clear_state[cn]=0; do_char_log(cn,1,"Clear cancelled.\n"); return; }
+	clear_state[cn]=1;
+	do_char_log(cn,1,"Clear: left-click the first corner, then the opposite corner. Objects and items in between are removed, floors stay. #clear again cancels.\n");
+}
+
+/* a left-click on the map in build mode: 1 if it was a #clear corner */
+int build_clear_click(int cn,int x,int y)
+{
+	int xs,ys,xe,ye,cnt=0,m;
+
+	if (cn<1 || cn>=MAXCHARS || !clear_state[cn]) return 0;
+	if (x<0 || x>=MAPX || y<0 || y>=MAPY) return 1;
+	if (clear_state[cn]==1) {
+		clear_x[cn]=x; clear_y[cn]=y; clear_state[cn]=2;
+		do_char_log(cn,1,"First corner %d,%d. Now the opposite corner.\n",x,y);
+		return 1;
+	}
+	xs=min(x,clear_x[cn]); xe=max(x,clear_x[cn]);
+	ys=min(y,clear_y[cn]); ye=max(y,clear_y[cn]);
+	clear_state[cn]=0;
+	if (xe-xs+1>CLEAR_MAX || ye-ys+1>CLEAR_MAX) {
+		do_char_log(cn,0,"That's %dx%d tiles; #clear does at most %dx%d at once. Nothing removed.\n",xe-xs+1,ye-ys+1,CLEAR_MAX,CLEAR_MAX);
+		return 1;
+	}
+	build_undo_begin(cn);
+	for (x=xs; x<=xe; x++) for (y=ys; y<=ye; y++) {
+		m=x+y*MAPX;
+		if (!map[m].fsprite && !map[m].it) continue;
+		build_remove(x,y);
+		cnt++;
+	}
+	do_char_log(cn,1,"Cleared %d tile(s) in %d,%d - %d,%d. #undo puts them back.\n",cnt,xs,ys,xe,ye);
+	chlog(cn,"build: cleared %d,%d - %d,%d (%d tiles)",xs,ys,xe,ye,cnt);
+	return 1;
+}
+
+void build_clear_reset(int cn)
+{
+	if (cn>0 && cn<MAXCHARS) clear_state[cn]=0;
+}
