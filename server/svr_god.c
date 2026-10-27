@@ -2842,17 +2842,18 @@ void god_prestige(int cn,int co,char *arg)
 	if (co!=cn) do_char_log(co,2,"You are now prestige %d.\n",p);
 }
 
-/* #note ["title"] <text>: a note (scroll) in your hand with your own text.
- * The text is what players read when they look at it (up to 199 characters);
- * the title is its name (default "Note"). Made from the plain note template. */
-#define NOTE_TEMP 1139
+/* #write ["title"] <text> (gods, imps): a note in your backpack with your own
+ * text. The text is what players read when they look at it (up to 199
+ * characters); the title is its name (default "Note"). Made from the empty
+ * parchment (template 132) like the original #write, never decays. */
+#define NOTE_TEMP 132
 void god_note(int cn,char *text)
 {
 	char title[40]="Note";
 	int in,n;
 
 	if (!text || !*text) {
-		do_char_log(cn,0,"#note [\"title\"] <text>, e.g. #note \"Welcome\" The gate is to the north.\n");
+		do_char_log(cn,0,"#write [\"title\"] <text>, e.g. #write \"Welcome\" The gate is to the north.\n");
 		return;
 	}
 	if (*text=='"') {	// optional title in quotes
@@ -2873,13 +2874,15 @@ void god_note(int cn,char *text)
 	strncpy(it[in].reference,title,39); it[in].reference[39]=0;
 	for (n=0; it[in].reference[n]; n++) it[in].reference[n]=tolower(it[in].reference[n]);
 	strncpy(it[in].description,text,199); it[in].description[199]=0;
+	it[in].temp=0;			// not the parchment any more (like the original #write)
+	it[in].flags|=IF_NOEXPIRE;
 	if (!god_give_char(in,cn)) {
 		it[in].used=USE_EMPTY;
 		do_char_log(cn,0,"Your inventory is full!\n");
 		return;
 	}
 	do_char_log(cn,1,"You wrote a note: %s.\n",it[in].name);
-	chlog(cn,"GOD: wrote a note \"%s\": %s",it[in].name,it[in].description);
+	chlog(cn,"IMP: wrote a note \"%s\": %s",it[in].name,it[in].description);
 }
 
 /* Gods and imps recall (and die back) to Elysium unless they have their own

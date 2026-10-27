@@ -725,7 +725,7 @@ void do_help(int cn,char *topic)
 		//do_char_log(cn,3,"#summon <name> [<rank> [<which>]]\n");
 		do_char_log(cn,3,"#thrall <name> [<rank>] clone slave.\n");
 		do_char_log(cn,3,"#usurp <ID>            turn self into ID.\n");
-		do_char_log(cn,3,"#write <text>          make scrolls with text.\n");
+		do_char_log(cn,3,"#write [\"title\"] <text> make a note with your text.\n");
 		do_char_log(cn,3," \n");
 	}
 	if (ch[cn].flags&(CF_GOD)) {
@@ -733,7 +733,6 @@ void do_help(int cn,char *topic)
 		do_char_log(cn,3," \n");
 		//do_char_log(cn,3,"#build <template>       build mode.\n");
 		do_char_log(cn,3,"#create <item template> creating items.\n");
-		do_char_log(cn,3,"#note [\"title\"] <text>  a note with your text.\n");
 		do_char_log(cn,3,"#setrecall <player> <x> <y>|here|default  recall point.\n");
 		//do_char_log(cn,3,"#creator <player>       make player a Creator.\n");
 		do_char_log(cn,3,"#ggold <amount>         give money to a player.\n");
@@ -2184,8 +2183,6 @@ void do_command(int cn, char *ptr)
                 break;
         case 'g':
                 if (!strcmp(cmd,"godshop") && f_g)      { god_godshop(cn,arg[1]); return; };
-                if (!strcmp(cmd,"note") && f_g)         { god_note(cn,args[0]); return; };
-                if (!strcmp(cmd,"setrecall") && f_g)    { god_setrecall(cn,arg[1],arg[2],arg[3]); return; };
                 if (prefix(cmd,"gtell") && !f_m) /*!*/  { do_gtell(cn,args[0]); return; }
                 if (prefix(cmd,"gold"))                 { do_gold(cn,atoi(arg[1])); return; }
 		if (prefix(cmd,"golden") && f_g)	{ god_set_flag(cn,dbatoi(arg[1]),CF_GOLDEN); return; }
@@ -2290,6 +2287,7 @@ void do_command(int cn, char *ptr)
                 if (!strcmp(cmd,"repairinv") && f_p)    { do_repair_all(cn,1); return; };
                 break;
         case 's':
+                if (!strcmp(cmd,"setrecall") && f_g)    { god_setrecall(cn,arg[1],arg[2],arg[3]); return; };
                 if (prefix(cmd,"s"))                    { break; };
                 if (prefix(cmd,"shout"))           	{ do_shout(cn,args[0]); return; };
                 if (prefix(cmd,"safe") && f_g)          { god_set_flag(cn,dbatoi_self(cn,arg[1]),CF_SAFE); return; };
@@ -2340,7 +2338,7 @@ void do_command(int cn, char *ptr)
                 if (prefix(cmd,"who"))                  { user_who(cn); return; };
                 if (prefix(cmd,"wave") && !f_sh)        { ch[cn].misc_action=DR_WAVE; return; };
                 if (prefix(cmd,"withdraw") && !f_m)     { do_withdraw(cn,atoi(arg[1]),atoi(arg[2])); return; };
-                if (prefix(cmd,"write") && f_giu)       { do_create_note(cn,args[0]); return; };
+                if (prefix(cmd,"write") && f_giu)       { god_note(cn,args[0]); return; };	// was do_create_note: now with a title
                 if (prefix(cmd,"weapon"))               { do_info_weapon(cn); return; };
                 break;
         }

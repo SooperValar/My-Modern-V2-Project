@@ -214,9 +214,10 @@ The design is in `docs/ITEM_TIERS.md`. This first part builds the core:
 - `#recall` (gods/imps) now takes you to your own recall point instead of always Aston.
 - The labyrinth checks no longer assume a city temple means "out of the lab": a player is in a lab when they have a saved lab temple or their recall point lies in a "Labyrinth" zone (`temple_in_lab`), so custom recall points don't keep lab items or strip them early.
 
-#### #note: notes with your own text
-- `#note ["title"] <text>` (gods): puts a note in your backpack with your text as its description (what players read when they look at it, up to 199 characters); the optional title in quotes is its name, default "Note". Made from the plain note template 1139 (scroll picture, can be picked up, given and dropped). Logged with its text (`god_note` in `svr_god.c`).
+#### #write: notes with a title
+- The original `#write <text>` (gods, imps) made an untitled "Parchment" and silently did nothing when the text was too long or the backpack full. It is now `#write ["title"] <text>`: the optional title in quotes is the note's name (default "Note"), the text (up to 199 characters) is what players read when they look at it; too-long text is cut with a message, a full backpack says so. Still the empty parchment (template 132), never decays, logged with its text (`god_note` in `svr_god.c`).
 - Item tooltips now show up to 6 lines of description (was 3), so a long note fits.
+- Fix: the first try added it as `#note`, in the wrong letter's block of the command switch (and `#setrecall` too), so neither worked; `#setrecall` is now under "s".
 
 #### Lit tiles (new zone flag)
 - `MF_LIT` (map flag bit 12): the tile is always fully lit, day and night, whatever the lights around it - for a lit spot in a dark area. Only that tile; it doesn't spread. Done in `check_dlight`/`check_dlightm`, so seeing characters and items there and the light the client draws both follow it.
