@@ -821,21 +821,39 @@ int tier_item_glow(int in)
 	return 0;
 }
 
+static int special_item(int in,int backpack)
+{
+	if (!in || (in&0x80000000) || !IS_SANEITEM(in) || it[in].used==USE_EMPTY) return 0;
+	if (IT_TIER(in)>=TIER_MAGIC) return 1;		// Magic, Rare, Epic, Legendary
+	if (is_unique(in)) return 1;			// unique weapons and the like
+	if (backpack && (it[in].flags&IF_MAGIC)) return 1;	// carried magic things: potions, scrolls, rings...
+	return 0;
+}
+
+/* does this body (or its grave) glow? A player's always does while it holds
+ * anything (their belongings); an NPC's only when it holds something special -
+ * not for the weapon and armor it fought with, or gold */
 static int body_has_items(int co)
 {
 	int n;
 
 	if (!IS_SANECHAR(co) || !(ch[co].flags&CF_BODY)) return 0;
-	if (ch[co].gold) return 1;
-	if (ch[co].citem && !(ch[co].citem&0x80000000)) return 1;
-	for (n=0; n<40; n++) if (ch[co].item[n]) return 1;
-	for (n=0; n<20; n++) if (ch[co].worn[n]) return 1;
+	if (ch[co].data[99]) {	// a player's body
+		if (ch[co].gold) return 1;
+		if (ch[co].citem && !(ch[co].citem&0x80000000)) return 1;
+		for (n=0; n<40; n++) if (ch[co].item[n]) return 1;
+		for (n=0; n<20; n++) if (ch[co].worn[n]) return 1;
+		return 0;
+	}
+	if (special_item(ch[co].citem,1)) return 1;
+	for (n=0; n<40; n++) if (special_item(ch[co].item[n],1)) return 1;
+	for (n=0; n<20; n++) if (special_item(ch[co].worn[n],0)) return 1;
 	return 0;
 }
 
 /* the glow of a map tile for the client: the item's tier (1-4), 5 for a grave
- * that still holds something, +8 when the character there is a body that
- * still holds something */
+ * that holds something worth a look (body_has_items), +8 when the character
+ * there is such a body */
 int tier_tile_glow(int in,int cn)
 {
 	int g=0;

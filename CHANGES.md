@@ -208,6 +208,9 @@ The design is in `docs/ITEM_TIERS.md`. This first part builds the core:
 - `tools/design/item_tier_samples.py` prints sample rolls (the same rules, for looking at numbers).
 - Build: `tier.c` is a new file, so the Makefile changed; `claude-sync.sh get` now copies the Makefile too.
 
+#### Grave glow only for something worth a look
+- Every NPC grave glowed, because every NPC dies holding the weapon and armor it fought with. Now an NPC's body or grave glows only when it holds something special: a Magic/Rare/Epic/Legendary piece, a unique item, or a magic item in its backpack (potions, scrolls, rings...). Its own fighting gear and gold don't count. A player's body/grave still glows while it holds anything, so players can find their belongings (`body_has_items` in `tier.c`).
+
 #### #help lists the new commands
 - Imps: `#recall`, `#temple`. Gods: `#godshop`, `#soullevel`, `#tier`, `#upstone` (with `#create`, `#setrecall`). Creators: `#clear` (with `#build`, `#undo`, `#tile`, `#light`). `#write` was already in the imp list.
 
