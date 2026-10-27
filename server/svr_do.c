@@ -2317,7 +2317,7 @@ void do_command(int cn, char *ptr)
         case 't':
                 if (prefix(cmd,"tell"))            	{ do_tell(cn,arg[1],args[1]); return; };
                 if (prefix(cmd,"tavern") && f_g && !f_m){ god_tavern(cn); return; };
-                if (prefix(cmd,"temple") && f_giu)      { god_goto(cn,cn,"800","800"); return; };
+                if (prefix(cmd,"temple") && f_giu)      { god_goto(cn,cn,"512","512"); return; };	// the Temple of Skua (was 800,800, Elysium - #recall goes there now)
                 if (prefix(cmd,"thrall") && f_giu)      { god_thrall(cn,arg[1],arg[2]); return; };
 		if (prefix(cmd,"time"))      		{ show_time(cn); return; };
                 if (!strcmp(cmd,"tile") && (f_g || f_c))         { do_tile(cn,arg[1],arg[2]); return; };
