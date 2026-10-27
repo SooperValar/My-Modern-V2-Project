@@ -168,7 +168,8 @@ struct tipinfo {
 	int lines;
 	char text[TIP_LINES][60];
 	unsigned char font[TIP_LINES];	// font 9 = divider, font 8 = "W n [n]": the worn slots it compares to (not drawn)
-	int ncmp,cmp[2];		// from the font 8 line
+	int ncmp,cmp[2];		// from the font 8 line (taken over when the answer is complete)
+	int pncmp,pcmp[2];		// ...while the answer is still coming in
 };
 extern struct tipinfo tip;
 extern struct tipinfo wtip[2];		// equipment compare: the worn pieces, shown beside the tooltip while Shift is held

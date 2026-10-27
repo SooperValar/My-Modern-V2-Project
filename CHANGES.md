@@ -217,7 +217,7 @@ The design is in `docs/ITEM_TIERS.md`. This first part builds the core:
   - Rings: two sections, one for each worn ring.
   - Two-handed weapons: against the weapon and the shield together. A shield while wielding a two-hander: "Can't be used with your ...".
   - Not for unidentified items or what you already wear.
-- **Hold Shift** while hovering: the worn piece(s) it would replace are shown beside the tooltip ("Equipped:"), as their own full tooltips.
+- **Hold Shift** while hovering: the worn piece(s) it would replace are shown beside the tooltip ("Equipped:"), as their own full tooltips. (Fix: they blinked every few seconds while the tooltip refreshed; the client now keeps the last complete answer's worn slots until the new one is complete.)
 - How: `tip_compare` in `svr_tick.c` writes the section and a hidden line (font 8, "W <slot> [<slot>]") naming the worn slots; the client (`engine.c` hud_tooltip, `socket.c`) reads it and asks for those worn tooltips while Shift is down. Tooltips can now hold 64 lines (was 40).
 
 #### Recall points: Elysium for gods and imps, #setrecall

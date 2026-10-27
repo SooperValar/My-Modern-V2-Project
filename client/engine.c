@@ -470,7 +470,7 @@ static void tip_ask(struct tipinfo *t,int where,int slot,int sprite,int co,unsig
 	*(unsigned short*)(buf+2)=(unsigned short)slot;
 	*(unsigned int*)(buf+4)=co;
 	xsend(buf);
-	if (t->state!=2 || t->where!=where || t->slot!=slot || t->sprite!=sprite) { t->lines=0; t->ncmp=0; }	// keep showing a refresh of the same item
+	if (t->state!=2 || t->where!=where || t->slot!=slot || t->sprite!=sprite) { t->lines=0; t->ncmp=0; t->pncmp=0; }	// keep showing a refresh of the same item
 	t->where=where; t->slot=slot; t->sprite=sprite; t->co=co; t->state=1; t->at=now;
 }
 
@@ -540,7 +540,7 @@ static void hud_tooltip(void)
 	if (!tip.lines) return;
 
 	// Shift: the worn piece(s) this item would replace
-	if (shift && where!=1 && tip.state==2) {
+	if (shift && where!=1) {	// from the last complete answer, also while a refresh is on its way
 		for (k=0; k<tip.ncmp && k<2; k++) {
 			int ws=tip.cmp[k];
 			if (ws<0 || ws>=20 || !pl.worn[ws]) continue;

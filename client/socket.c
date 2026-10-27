@@ -548,16 +548,20 @@ static void tip_store(struct tipinfo *t,unsigned char *buf)
 	int l=buf[3];
 
 	if (t->state!=1 || buf[1]!=t->where || buf[2]!=(t->slot&255)) return;	// an old answer / not for this one
-	if (l==255) { t->state=2; return; }
-	if (l==0) t->ncmp=0;
+	if (l==255) {	// complete: now take over the compare slots (no flicker while a refresh comes in)
+		t->state=2;
+		t->ncmp=t->pncmp; t->cmp[0]=t->pcmp[0]; t->cmp[1]=t->pcmp[1];
+		return;
+	}
+	if (l==0) t->pncmp=0;
 	if (l<TIP_LINES) {
 		memcpy(t->text[l],buf+5,58); t->text[l][58]=0;
 		t->font[l]=buf[4];
 		if (buf[4]==8) {	// the worn slot(s) this item compares to
 			int a=-1,b=-1;
-			t->ncmp=sscanf(t->text[l],"W %d %d",&a,&b);
-			if (t->ncmp<0) t->ncmp=0;
-			t->cmp[0]=a; t->cmp[1]=b;
+			t->pncmp=sscanf(t->text[l],"W %d %d",&a,&b);
+			if (t->pncmp<0) t->pncmp=0;
+			t->pcmp[0]=a; t->pcmp[1]=b;
 		}
 		if (l+1>t->lines) t->lines=l+1;
 	}
