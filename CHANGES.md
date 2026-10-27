@@ -208,6 +208,9 @@ The design is in `docs/ITEM_TIERS.md`. This first part builds the core:
 - `tools/design/item_tier_samples.py` prints sample rolls (the same rules, for looking at numbers).
 - Build: `tier.c` is a new file, so the Makefile changed; `claude-sync.sh get` now copies the Makefile too.
 
+#### #help lists the new commands
+- Imps: `#recall`, `#temple`. Gods: `#godshop`, `#soullevel`, `#tier`, `#upstone` (with `#create`, `#setrecall`). Creators: `#clear` (with `#build`, `#undo`, `#tile`, `#light`). `#write` was already in the imp list.
+
 #### Build mode: #clear (area delete)
 - `#clear` (build mode): left-click two corners on the map and every object (walls, tables, columns, ...) and item in that rectangle is removed; floors stay (lay another floor over a rug to remove it). Up to 100x100 tiles; one `#undo` brings it all back; `#clear` again before the second corner cancels; leaving build mode cancels too. Logged (`build_clear_*` in `build.c`).
 

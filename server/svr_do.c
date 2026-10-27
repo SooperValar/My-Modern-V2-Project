@@ -717,11 +717,13 @@ void do_help(int cn,char *topic)
 		do_char_log(cn,3,"#nowho <player>        not listed in who.\n");
 		do_char_log(cn,3,"#npclist <search>      display list of NPCs.\n");
 		do_char_log(cn,3,"#raise <player> <exp>  give player exps.\n");
+		do_char_log(cn,3,"#recall                go to your recall point.\n");
 		do_char_log(cn,3,"#respawn <temp-id>     make npcs id respawn.\n");
 		do_char_log(cn,3,"#shutup <player>       make unable to talk.\n");
 		do_char_log(cn,3,"#shrines <player>      all Kwai shrines, max sword.\n");
 		do_char_log(cn,3,"#slap <player>         slap in face.\n");
 		do_char_log(cn,3,"#sprite <player>       change a player's sprite.\n");
+		do_char_log(cn,3,"#temple                go to the Temple of Skua.\n");
 		//do_char_log(cn,3,"#summon <name> [<rank> [<which>]]\n");
 		do_char_log(cn,3,"#thrall <name> [<rank>] clone slave.\n");
 		do_char_log(cn,3,"#usurp <ID>            turn self into ID.\n");
@@ -733,6 +735,7 @@ void do_help(int cn,char *topic)
 		do_char_log(cn,3," \n");
 		//do_char_log(cn,3,"#build <template>       build mode.\n");
 		do_char_log(cn,3,"#create <item template> creating items.\n");
+		do_char_log(cn,3,"#godshop <category>     free shop of every item.\n");
 		do_char_log(cn,3,"#setrecall <player> <x> <y>|here|default  recall point.\n");
 		//do_char_log(cn,3,"#creator <player>       make player a Creator.\n");
 		do_char_log(cn,3,"#ggold <amount>         give money to a player.\n");
@@ -745,9 +748,12 @@ void do_help(int cn,char *topic)
 		do_char_log(cn,3,"#pol <player>           make player POH leader.\n");
 		//do_char_log(cn,3,"#race <player> <temp>   new race for a player(avoid).\n");
 		do_char_log(cn,3,"#send <player> <target> teleport player to target.\n");
+		do_char_log(cn,3,"#soullevel <level>      soulstone of that level.\n");
 		do_char_log(cn,3,"#staff <player>         make a player staffer.\n");
 		do_char_log(cn,3,"#summon <name> [<rank> [<which>]]\n");
 		do_char_log(cn,3,"#tavern                 log off quickly.\n");
+		do_char_log(cn,3,"#tier <1-3> <level> [f|m|c|u] [h|a]  tier helmet/armor.\n");
+		do_char_log(cn,3,"#upstone <level>        upgrade stone of that level.\n");
 		do_char_log(cn,3," \n");
 	}
 	if (ch[cn].flags&(CF_CREATOR)) {
@@ -757,6 +763,7 @@ void do_help(int cn,char *topic)
 		do_char_log(cn,3,"#build <page>|next|prev go to a build page.\n");
 		do_char_log(cn,3,"#build end              stop building.\n");
 		do_char_log(cn,3,"#undo                   undo last build action.\n");
+		do_char_log(cn,3,"#clear                  remove objects in an area.\n");
 		do_char_log(cn,3,"#tile [x y]             what is on a tile (mouse).\n");
 		do_char_log(cn,3,"#light                  recompute all lighting.\n");
 		do_char_log(cn,3," \n");
