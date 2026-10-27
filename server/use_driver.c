@@ -1841,12 +1841,12 @@ int spawn_penta_enemy(int in)
 /* Pentagram solve: how many pentagrams must be active at once. It follows the
  * players actually doing pentagrams - those who activated one in the last 10
  * minutes and are still online - instead of everyone online:
- *   needed = PENTA_BASE + PENTA_PER_PLAYER * players + a random 0-4 per round
- * so about 16 alone, 22 for two, 40 for five. */
-#define PENTA_BASE		10
-#define PENTA_PER_PLAYER	6
+ *   needed = PENTA_BASE + PENTA_PER_PLAYER * players + a random 0-2 per round
+ * so 7-9 alone, 14-16 for two, 35-37 for five. */
+#define PENTA_BASE		0
+#define PENTA_PER_PLAYER	7
 #define PENTA_RECENT		(TICKS*60*10)
-static int penta_rand=2;
+static int penta_rand=1;
 static unsigned int penta_seen[MAXCHARS];	// ticker of each player's last activation
 
 static int penta_players(void)
@@ -1909,7 +1909,7 @@ void solved_pentagram(int cn,int in)
                 it[n].duration=it[n].active=TICKS*(10+RANDOM(20));
         }
         for (n=1; n<MAXCHARS; n++) penta_seen[n]=0;	// a new round: nobody is doing it yet
-        penta_rand=RANDOM(5);
+        penta_rand=RANDOM(3);
 	xlog("Pentagram solved; next solve at %d + %d per player doing pentagrams",PENTA_BASE+penta_rand,PENTA_PER_PLAYER);
 }
 
