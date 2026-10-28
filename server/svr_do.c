@@ -1591,14 +1591,14 @@ void do_info_twohand(int cn)
 	static int t[]={35,36,37,38,125};
 	info_weapon_table(cn,"two-handed swords","2Hand",SK_TWOHAND,t,5);
 	info_blessed(cn);
-	do_char_log(cn,2,"* Two-handed swords take both hands: no shield.\n");
+	do_char_log(cn,2,"* Two-handed swords take both hands: no shield. Deflect: while you wield one, 1 in %d melee hits against you is deflected.\n",WP2H_SPECIAL);
 }
 
 void do_info_axe2h(int cn)
 {
 	static int t[]={AXE2H_T_BRONZE,AXE2H_T_BRONZE+1,AXE2H_T_BRONZE+2,AXE2H_T_BRONZE+3,AXE2H_T_BRONZE+4};
 	info_weapon_table(cn,"two-handed axes","2Axe",SK_AXE2H,t,5);
-	do_char_log(cn,2,"* Two-handed axes take both hands: no shield. They hit harder than two-handed swords but attack slower.\n");
+	do_char_log(cn,2,"* Two-handed axes take both hands: no shield. Critical hits: 1 in %d of your hits does double damage.\n",WP2H_SPECIAL);
 }
 
 void do_info_axe(int cn)
@@ -3141,6 +3141,21 @@ int do_hurt(int cn,int co,int dam,int type)
         return dam/1000;
 }
 
+/* does player cn wield a two-handed axe (axe=1) or two-handed sword (axe=0)?
+ * Only players get the weapon specials, so monsters stay as they were. */
+static int wields_2h(int cn,int axe)
+{
+        int in;
+        unsigned long long f;
+
+        if (!IS_SANECHAR(cn) || !(ch[cn].flags&CF_PLAYER)) return 0;
+        in=ch[cn].worn[WN_RHAND];
+        if (!in || !IS_SANEITEM(in)) return 0;
+        f=it[in].flags;
+        if (!(f&IF_WP_TWOHAND)) return 0;
+        return axe ? (f&IF_WP_AXE)!=0 : !(f&IF_WP_AXE);
+}
+
 void do_attack(int cn,int co,int surround)
 {
         int hit,dam=0,die,m,odam=0;
@@ -3219,11 +3234,23 @@ void do_attack(int cn,int co,int surround)
         if (die<=chance) hit=1;
         else hit=0;
 
+        // two-handed sword: a player wielding one deflects some melee hits
+        if (hit && wields_2h(co,0) && !RANDOM(WP2H_SPECIAL)) {
+                hit=0;
+                do_char_log(co,1,"You deflect %s's blow.\n",ch[cn].reference);
+                if (ch[cn].flags&CF_PLAYER) do_char_log(cn,1,"%s deflects your blow.\n",ch[co].name);
+        }
+
         if (hit) {
                 dam=ch[cn].weapon+RANDOM(6)+1;
                 if (ch[cn].attrib[AT_STREN][5]>3) dam+=RANDOM(ch[cn].attrib[AT_STREN][5]/2);
                 if (die==2) dam+=RANDOM(6)+1;
                 if (die==1) dam+=RANDOM(6)+RANDOM(6)+2;
+                // two-handed axe: a player wielding one sometimes lands a critical hit
+                if (wields_2h(cn,1) && !RANDOM(WP2H_SPECIAL)) {
+                        dam*=2;
+                        do_char_log(cn,1,"Critical hit!\n");
+                }
                 odam=dam;
                 dam+=bonus;
 

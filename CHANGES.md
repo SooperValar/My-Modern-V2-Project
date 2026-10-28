@@ -208,6 +208,13 @@ The design is in `docs/ITEM_TIERS.md`. This first part builds the core:
 - `tools/design/item_tier_samples.py` prints sample rolls (the same rules, for looking at numbers).
 - Build: `tier.c` is a new file, so the Makefile changed; `claude-sync.sh get` now copies the Makefile too.
 
+#### Two-handed swords and axes: same stats, different specials
+- Two-handed axes now have the same weapon value, Agility/Strength requirements and attack speed as two-handed swords (they had 25% more WV, attacked 3 speed steps slower and needed more Strength). Each has its own special instead, a percentage, so it works the same from Bronze to Titanium:
+  - **Two-handed axe - Critical hits:** 1 in 8 of your hits does double damage.
+  - **Two-handed sword - Deflect:** while you wield one, 1 in 8 melee hits against you is deflected (no damage); both sides get a message.
+- Only players get the specials (monsters that wield these weapons fight as before). The item tooltip and `#twohand` / `#axe2h` describe them. Tunable: `WP2H_SPECIAL` (data.h).
+- World data: templates 1364-1368 (`tools/world/axe2h_rebalance.spec`); axes already in the game are updated by `tools/world/wfix.c` (keeps any bonus a piece had on top).
+
 #### Soulstones from any enemy
 - Any enemy a player (or their companion) kills can now drop a soulstone; before, only "Strong" pentagram enemies carried one. The chance follows the player's rank, so new players find them often: 1 in (20 + 6 x rank) kills - 1 in 20 at rank 0, 1 in 50 at rank 5, 1 in 80 at rank 10, 1 in 110 at rank 15, 1 in 158 at rank 23. The stone is made like a Strong enemy's (10-15% of the enemy's experience value, its level from that); Strong enemies keep their own stone and don't roll again. Logged. Tunable: `SOULDROP_BASE`, `SOULDROP_PER_RANK` (`soul_kill_drop` in `tier.c`).
 - A grave holding a soulstone glows.

@@ -846,6 +846,8 @@ void plr_cmd_iteminfo(int nr)
 			tip_line(nr,where,slot,&line,0,"to learn its powers.");
 		} else {
 			if (it[in].weapon[act]) tip_line(nr,where,slot,&line,2,"%+5d WV",it[in].weapon[act]);
+			if ((it[in].flags&(IF_WP_TWOHAND|IF_WP_AXE))==(IF_WP_TWOHAND|IF_WP_AXE)) tip_line(nr,where,slot,&line,3,"Critical hits: 1 in %d of your",WP2H_SPECIAL),tip_line(nr,where,slot,&line,3,"hits does double damage");
+			else if (it[in].flags&IF_WP_TWOHAND) tip_line(nr,where,slot,&line,3,"Deflect: 1 in %d melee hits",WP2H_SPECIAL),tip_line(nr,where,slot,&line,3,"against you is deflected");
 			if (it[in].armor[act]) tip_line(nr,where,slot,&line,2,"%+5d AV",it[in].armor[act]);
 			if (it[in].light[act]>0) tip_line(nr,where,slot,&line,2,"%+5d Light",it[in].light[act]);
 			if (it[in].gethit_dam[act]) tip_line(nr,where,slot,&line,2," 1-%d Damage to attackers",it[in].gethit_dam[act]);	// do_hurt: RANDOM(d)+1
