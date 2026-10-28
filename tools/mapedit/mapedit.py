@@ -156,6 +156,7 @@ class World:
             self.mtimes = {n: os.path.getmtime(p(n)) for n in self.FILES if os.path.exists(p(n))}
             self.touched = set()
             self.made = None
+            self.live, self.live_actions, self.live_backup = False, [], None
             self.undo, self.redo, self.dirty = [], [], 0
             self.free_hint = 1
             self.areas = self.read_areas()
@@ -165,7 +166,7 @@ class World:
                 self.history = []
 
     def refresh_live(self):
-        """while the game runs (view only), read its files again now and then so NPCs and changes show"""
+        """while the game runs, read its files again now and then so NPCs and changes show"""
         with self.lock:
             if self.dirty or time.time() - self.loaded < 8:
                 return
@@ -173,15 +174,26 @@ class World:
             try:
                 self.map = bytearray(open(p('map.dat'), 'rb').read())
                 self.item = bytearray(open(p('item.dat'), 'rb').read())
+                self.titem = bytearray(open(p('titem.dat'), 'rb').read())
                 self.char = bytearray(open(p('char.dat'), 'rb').read())
                 if self.tchar is not None: self.tchar = bytearray(open(p('tchar.dat'), 'rb').read())
                 if self.fx is not None: self.fx = bytearray(open(p('effect.dat'), 'rb').read())
             except OSError:
                 return
             self.mtimes = {n: os.path.getmtime(p(n)) for n in self.FILES if os.path.exists(p(n))}
-            self.undo, self.redo = [], []
+            # changes made offline can't be undone any more; live edits can (they check what they find)
+            self.undo = [e for e in self.undo if ('L', 0) in e]
+            self.redo = [e for e in self.redo if ('L', 0) in e]
             self.gen += 1
             self.loaded = time.time()
+
+    def reload_now(self):
+        """read the running game's files right now (it keeps them in shared memory, so they are current)"""
+        with self.lock:
+            self.loaded = 0
+            d = self.dirty; self.dirty = 0
+            self.refresh_live()
+            self.dirty = d
 
     def online(self):
         n = 0
@@ -551,6 +563,9 @@ class World:
 
     def _respawn_template(self, rec, tp):
         """like the game's reset_char: the NPCs of this template go, and it spawns again (with the changes) at its spot"""
+        if self.live:          # the game does it itself
+            self.live_actions.append(((23, tp, 0, 0, 0), (23, tp, 0, 0, 0)))
+            return
         for c in self.living(tp):
             self._free_char(rec, c)
         for x, y, ptp, n in self.pending():
@@ -703,7 +718,9 @@ class World:
             d = int(op['dir'])
             if d not in DIRS:
                 return 'bad direction'
-            if c:
+            if c and self.live:
+                self.live_actions.append(((22, c, tp, d, 0), (22, c, tp, self.char[c * CHAR_SIZE + C_DIR], 0)))
+            elif c:
                 self._keep(rec, 'c', c)
                 self.char[c * CHAR_SIZE + C_DIR] = d
                 self._c_set(self.char, c, C_DATA + 30 * 4, '<i', d)
@@ -721,7 +738,9 @@ class World:
             if why:
                 return '%d,%d: %s' % (tx, ty, why)
             self._save_map(rec, tx, ty)
-            if c:
+            if c and self.live:
+                self.live_actions.append(((21, c, tp, tx, ty), (21, c, tp, x, y)))
+            elif c:
                 t0 = self.tile(x, y); t0[2] = 0; self.set_tile(x, y, t0)
                 t1 = self.tile(tx, ty); t1[2] = c; self.set_tile(tx, ty, t1)
                 self._keep(rec, 'c', c)
@@ -733,7 +752,9 @@ class World:
                     self._keep(rec, 'f', n); struct.pack_into('<2I', self.fx, n * FX_SIZE + 7, tx, ty)
             return ''
         if k == 'npcremove':
-            if c:
+            if c and self.live:
+                self.live_actions.append(((20, c, tp, 0, 0), (23, tp, 0, 0, 0)))
+            elif c:
                 self._free_char(rec, c)
             for ptp, n in pend:
                 self._keep(rec, 'f', n); self.fx[n * FX_SIZE] = USE_EMPTY
@@ -869,7 +890,7 @@ class World:
             npc_moved = any(key[0] in 'ctf' for key in real)
             if npc_moved and not any(key[0] == 'm' for key in real) and 'x' in ops[0]:     # an NPC spawn: remember its tile for the history
                 real[('m', int(ops[0]['x']), int(ops[0]['y']))] = self._cur(('m', int(ops[0]['x']), int(ops[0]['y'])))
-            if real:
+            if real or self.live_actions:
                 self.touched |= {self.KIND_FILE[key[0]] for key in real}
                 self.undo.append(real)
                 self.redo.clear()
@@ -880,9 +901,114 @@ class World:
                                      'x': fx, 'y': fy})
             return max(len([k for k in real if k[0] == 'm']), n if real else 0), msgs
 
+    # --- live editing: the changes go to the running game as a patch (see edpatch in console.c)
+    KIND_NR = {'m': 0, 'i': 1, 'c': 2, 't': 3, 'T': 4, 'f': 5}
+
+    def _write_patch(self, pairs, actions):
+        """pairs: {key: (bytes the game should have now, bytes to write)}"""
+        out, cnt = [], 0
+        for key, (exp, new) in pairs.items():
+            idx = key[1] + key[2] * MAPX if key[0] == 'm' else key[1]
+            diff = [i for i in range(len(new)) if exp[i] != new[i]]
+            runs = []
+            for i in diff:              # runs of changed bytes; close ones go together
+                if runs and i - runs[-1][1] <= 2:
+                    runs[-1][1] = i + 1
+                else:
+                    runs.append([i, i + 1])
+            for i, j in runs:
+                out.append(struct.pack('<BIHH', self.KIND_NR[key[0]], idx, i, j - i) + exp[i:j] + new[i:j])
+                cnt += 1
+        body = b'MYV2PATCH1' + struct.pack('<I', cnt) + b''.join(out) + struct.pack('<I', len(actions)) + \
+            b''.join(struct.pack('<B4i', *a) for a in actions)
+        path = os.path.abspath(os.path.join(self.server_dir, '.edpatch.bin'))
+        with open(path, 'wb') as f:
+            f.write(body)
+        return path, cnt
+
+    def _send_patch(self, ctl, pairs, actions):
+        path, cnt = self._write_patch(pairs, actions)
+        if not cnt and not actions:
+            return True, ''
+        r = ctl.console('edpatch ' + path, timeout=60) if ctl else None
+        if r is None:
+            return False, 'The game server did not answer on its control port (it needs the newer server: Update code & restart).'
+        if r.startswith('ok'):
+            notes = [l[5:] for l in r.splitlines() if l.startswith('note ')]
+            return True, '; '.join(notes)
+        if 'Unknown command' in r:
+            return False, 'The running server is older than live editing: use "Update code & restart" on the Server page once.'
+        return False, 'Not done: the game changed something there since the editor looked (an NPC walked by, an item was picked up…). Try again.' \
+            if 'conflict' in r else r.strip()
+
+    def _live_backup(self):
+        if self.live_backup:
+            return
+        bk = os.path.join(self.dat, 'mapedit-backups', time.strftime('%Y%m%d-%H%M%S') + '-live')
+        os.makedirs(bk, exist_ok=True)
+        for n in self.FILES:
+            if os.path.exists(os.path.join(self.dat, n)):
+                shutil.copy2(os.path.join(self.dat, n), os.path.join(bk, n))
+        self.live_backup = bk
+
+    def apply_live(self, ops, label, ctl):
+        with self.lock:
+            if self.dirty:
+                return 0, ['There are unsaved changes from before the server started: save or discard them first.']
+            self.reload_now()
+            self._live_backup()
+            n0, h0 = len(self.undo), len(self.history)
+            self.live, self.live_actions = True, []
+            try:
+                changed, msgs = self.apply(ops, label + ' (live)')
+            finally:
+                self.live = False
+            acts, self.live_actions = self.live_actions, []
+            if len(self.undo) == n0:
+                self.dirty = 0
+                return changed, msgs
+            rec = self.undo[-1]
+            new = {k: self._cur(k) for k in rec}
+            ok, note = self._send_patch(ctl, {k: (rec[k], new[k]) for k in rec}, [a for a, _ in acts])
+            if not ok:
+                self._swap(rec)
+                self.undo.pop(); del self.history[h0:]
+                self.dirty = 0; self.touched = set()
+                return 0, msgs + [note]
+            rec[('L', 0)] = (new, [a for a, _ in acts], [b for _, b in reversed(acts)])
+            self.dirty = 0; self.touched = set()
+            self.reload_now()
+            return changed, msgs + ([note] if note else [])
+
+    def undo_live(self, which, ctl):
+        with self.lock:
+            src, dst = (self.undo, self.redo) if which == 'undo' else (self.redo, self.undo)
+            if not src:
+                return [], ''
+            rec = src[-1]
+            if ('L', 0) not in rec:
+                src.pop()
+                return [], 'That change was made while the server was stopped; it can\'t be undone while it runs.'
+            new, acts, inv = rec[('L', 0)]
+            old = {k: v for k, v in rec.items() if k != ('L', 0)}
+            self.reload_now()
+            ok, note = self._send_patch(ctl, {k: (new[k], old[k]) for k in old}, inv)
+            if not ok:
+                return [], note
+            src.pop()
+            back = dict(new); back[('L', 0)] = (old, inv, acts)
+            dst.append(back)
+            self.reload_now()
+            pos = [[k[1], k[2]] for k in old if k[0] == 'm']
+            self.history.append({'t': time.strftime('%H:%M:%S'), 'what': which + ' (live)', 'tiles': len(pos),
+                                 'x': pos[0][0] if pos else 0, 'y': pos[0][1] if pos else 0})
+            return pos, note
+
     def _swap(self, rec):
         back = {}
         for key, old in rec.items():
+            if key[0] == 'L':
+                continue
             back[key] = self._cur(key)
             if key[0] == 'm':
                 o = (key[1] + key[2] * MAPX) * MAP_SIZE
@@ -1021,6 +1147,13 @@ class ServerCtl:
             s.close()
         t = buf.decode('latin-1')
         return t[:-2] if t.endswith('.\n') else t
+
+    def port_ok(self):
+        """is the running server's control port answering (live editing needs it)? checked at most every 10 s"""
+        now = time.time()
+        if now - getattr(self, '_port_t', 0) > 10:
+            self._port_t, self._port = now, self.console('status', 2) is not None
+        return self._port
 
     def status(self):
         running = server_running()
@@ -1374,7 +1507,7 @@ def make_handler(world, sprites, page, minimap, ctl):
                 running = server_running()
                 if running:
                     world.refresh_live()
-                return self.js({'running': running, 'online': world.online(), 'gen': world.gen, 'dirty': world.dirty,
+                return self.js({'running': running, 'live': bool(running and ctl and ctl.port_ok()), 'online': world.online(), 'gen': world.gen, 'dirty': world.dirty,
                                 'undo': len(world.undo), 'redo': len(world.redo), 'areas': world.areas,
                                 'minimap': bool(minimap and os.path.exists(minimap)), 'dat': os.path.abspath(world.dat),
                                 'backups': len(world.backups())})
@@ -1412,15 +1545,26 @@ def make_handler(world, sprites, page, minimap, ctl):
             if u.path == '/api/srv/action':
                 err = ctl.run_job(str(body.get('action', '')), int(body.get('warn', 30)), str(body.get('reason', '')))
                 return self.js({'error': err} if err else {'ok': True})
-            if u.path in ('/api/edit', '/api/undo', '/api/redo', '/api/save', '/api/relight', '/api/restore') and server_running():
-                return self.js({'error': 'The game server is running: the map is view-only. Stop the server to edit.'})
+            if u.path in ('/api/edit', '/api/undo', '/api/redo') and server_running():
+                if u.path == '/api/edit':      # live: the changes go straight into the running game
+                    changed, msgs = world.apply_live(body.get('ops', []), body.get('label', ''), ctl)
+                    return self.js({'changed': changed, 'msgs': msgs, 'dirty': world.dirty, 'undo': len(world.undo),
+                                    'redo': len(world.redo), 'made': world.made, 'live': True})
+                n0 = len(world.undo) + len(world.redo)
+                tiles, note = world.undo_live(u.path[5:], ctl)
+                ok = note == '' or bool(tiles)
+                return self.js({'tiles': tiles, 'done': ok, 'error': None if ok else note, 'note': note if ok else '',
+                                'dirty': world.dirty, 'undo': len(world.undo), 'redo': len(world.redo)})
+            if u.path in ('/api/save', '/api/relight', '/api/restore') and server_running():
+                return self.js({'error': 'The game server is running: live edits are already in the game, there is nothing to save.'})
             if u.path == '/api/edit':
                 changed, msgs = world.apply(body.get('ops', []), body.get('label', ''))
                 return self.js({'changed': changed, 'msgs': msgs, 'dirty': world.dirty, 'undo': len(world.undo), 'redo': len(world.redo),
                                 'made': world.made})
             if u.path in ('/api/undo', '/api/redo'):
+                n0 = len(world.undo if u.path == '/api/undo' else world.redo)
                 tiles = world.undo_redo(u.path[5:])
-                return self.js({'tiles': tiles, 'dirty': world.dirty, 'undo': len(world.undo), 'redo': len(world.redo)})
+                return self.js({'tiles': tiles, 'done': n0 > 0, 'dirty': world.dirty, 'undo': len(world.undo), 'redo': len(world.redo)})
             if u.path == '/api/save':
                 return self.js({'msg': world.save(), 'dirty': world.dirty})
             if u.path == '/api/restore':
@@ -1592,6 +1736,7 @@ nav .grow { flex: 1; }
 #world { position: absolute; inset: 0; background: rgba(5,5,6,.82); z-index: 10; display: none; place-items: center; }
 #world canvas { width: min(92%, 88vh); aspect-ratio: 1; image-rendering: pixelated; border: 1px solid var(--line); border-radius: 8px; cursor: crosshair; }
 #world .t { position: absolute; top: 14px; color: var(--dim); }
+#banner.live { background: var(--okbg); color: #d6f5d8; border-color: #2f5a33; }
 #banner { position: absolute; left: 50%; transform: translateX(-50%); top: 56px; background: var(--badbg); color: #ffd6cf; border: 1px solid #5a2c26; padding: 6px 14px; border-radius: 8px; z-index: 4; display: none; font-size: 12px; }
 #toast { position: absolute; left: 50%; transform: translateX(-50%); bottom: 16px; max-width: 70%; background: var(--panel); border: 1px solid var(--line); border-left: 3px solid var(--gold); padding: 8px 14px; border-radius: 7px; display: none; z-index: 12; white-space: pre-line; }
 
@@ -1897,6 +2042,7 @@ const TOOLS = [
 ];
 
 // ---------------------------------------------------------------- helpers
+const RO = () => info.running && !info.live;     // view only: the server runs and live editing is not available
 async function api(path, body) {
   const r = await fetch(path, body === undefined ? {} : { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
   return r.json();
@@ -2463,7 +2609,7 @@ async function selectTile(x, y) {
   selTile = { x, y }; selPatrol = null; redrawTop();
   const r = await api(`/api/tile?x=${x}&y=${y}`);
   if (!selTile || selTile.x !== x || selTile.y !== y) return;
-  const ro = info.running;
+  const ro = RO();
   const el = $('#tile');
   el.innerHTML = `<div class="hd mono">${x}, ${y}</div><div>${esc(r.zone || 'no zone')}</div>
     <div class="kv">
@@ -2658,7 +2804,8 @@ function tplRender() {
   $('#tcancel').onclick = closeTemplate;
   $('#tapply').onclick = () => tplApply(false);
   $('#tnew').onclick = () => tplApply(true);
-  if (info.running) { $('#tapply').disabled = $('#tnew').disabled = true; $('#tapply').title = 'The game server is running: editing is off.'; }
+  if (RO()) { $('#tapply').disabled = $('#tnew').disabled = true; $('#tapply').title = 'The game server is running: editing is off.'; }
+  else if (info.running) $('#tapply').title = 'Live: goes straight into the running game';
 }
 function tplChanged() {
   const out = {}, o = TP.orig, c = TP.cur;
@@ -2669,7 +2816,7 @@ function tplChanged() {
   return out;
 }
 async function tplApply(asNew) {
-  if (info.running) return toast('The game server is running: editing is off.', true);
+  if (RO()) return toast('The game server is running: editing is off.', true);
   const f = tplChanged(), text = TP.kind === 'npc' && JSON.stringify(TP.cur.text) !== JSON.stringify(TP.orig.text) ? TP.cur.text : null;
   let t = TP.t;
   if (asNew) {
@@ -3006,22 +3153,25 @@ function preview(op) {
 }
 async function edit(ops, lbl, reselect) {
   if (!ops.length) return;
-  if (info.running) { toast('The game server is running: editing is off.', true); refetch(ops.map(o => [o.x, o.y])); return; }
+  if (RO()) { toast('The game server is running and live editing is not available (the server needs "Update code & restart" once).', true); refetch(ops.filter(o => o.x !== undefined).map(o => [o.x, o.y])); return; }
   const r = await api('/api/edit', { ops, label: lbl });
   if (r.error) toast(r.error, true);
   else if (r.msgs && r.msgs.length) toast([...new Set(r.msgs)].slice(0, 3).join('\n'), true);
   Object.assign(info, { dirty: r.dirty ?? info.dirty, undo: r.undo ?? info.undo, redo: r.redo ?? info.redo }); status();
+  if (r.live && ops.some(o => o.op.startsWith('npc') || o.op.includes('temp'))) { chunks.clear(); redraw(); }
   refetch(ops.filter(o => o.x !== undefined).flatMap(o => o.tx !== undefined ? [[o.x, o.y], [o.tx, o.ty]] : [[o.x, o.y]]));
   if (r.ok !== false && ops.some(o => o.op.startsWith('npc'))) api('/api/npcs').then(n => { if (Array.isArray(n) && pal) { pal.npcs = n; if (mode === 'map' && tab === 'npcs') leftUI(); } });
   if (selTile && (reselect || ops.some(o => o.x === selTile.x && o.y === selTile.y))) selectTile(selTile.x, selTile.y);
   if (mode === 'history') leftUI();
 }
 async function undoRedo(w) {
-  if (info.running) return;
+  if (RO()) return;
   const r = await api('/api/' + w, {});
   if (r.error) return toast(r.error, true);
+  if (r.note) toast(r.note);
   Object.assign(info, { dirty: r.dirty, undo: r.undo, redo: r.redo }); status();
   if (r.tiles && r.tiles.length) { refetch(r.tiles); toast((w === 'undo' ? 'Undone: ' : 'Redone: ') + r.tiles.length + ' tile(s)'); if (selTile) selectTile(selTile.x, selTile.y); }
+  else if (r.done) { chunks.clear(); redraw(); toast(w === 'undo' ? 'Undone.' : 'Redone.'); if (selTile) selectTile(selTile.x, selTile.y); }
   if (mode === 'history') leftUI();
 }
 function fill(x, y, alt) {
@@ -3107,12 +3257,12 @@ cv.addEventListener('mousedown', e => {
   const r = cv.getBoundingClientRect(), sx = e.clientX - r.left, sy = e.clientY - r.top, t = screenToTile(sx, sy);
   if (e.button === 1 || e.button === 2 || (e.button === 0 && (spaceDown || tool === 'pan'))) { panning = { sx, sy, cx: cam.x, cy: cam.y }; cv.style.cursor = 'grabbing'; e.preventDefault(); return; }
   if (e.button !== 0) return;
-  if (destPick) { if (info.running) { destPick = null; return toast('The game server is running: editing is off.', true); } setDestination(t); return; }
+  if (destPick) { if (RO()) { destPick = null; return toast('The game server is running: editing is off.', true); } setDestination(t); return; }
   if (tplPick) { tplPicked(t); return; }
-  if (npcPick) { if (info.running) { npcPick = null; return toast('The game server is running: editing is off.', true); } moveNpc(t); return; }
+  if (npcPick) { if (RO()) { npcPick = null; return toast('The game server is running: editing is off.', true); } moveNpc(t); return; }
   if (tool === 'select') { selectTile(t.x, t.y); return; }
   if (tool === 'pick') { pick(t.x, t.y); return; }
-  if (info.running) { toast('The game server is running: editing is off.', true); return; }
+  if (RO()) { toast('The game server is running: editing is off.', true); return; }
   if (brush.kind === 'npc' && tool !== 'erase') {     // NPCs go one at a time
     if (e.altKey) edit([{ op: 'npcremove', x: t.x, y: t.y }], 'removed an NPC');
     else edit([{ op: 'npcplace', x: t.x, y: t.y, t: brush.t[0], dir: brush.dir || 4 }], `placed ${brush.t[1]} (facing ${FACEN[brush.dir || 4]})`);
@@ -3294,15 +3444,18 @@ function relightBtn(on) {
 function status() {
   const p = $('#pill');
   p.className = info.running ? 'up' : 'down';
-  p.textContent = info.running ? `Server up · ${info.online} online` : 'Server stopped · editing on';
+  p.textContent = info.running ? `Server up · ${info.online} online${info.live ? ' · live editing' : ''}` : 'Server stopped · editing on';
   $('#banner').style.display = info.running ? 'block' : 'none';
+  $('#banner').classList.toggle('live', !!info.live);
+  $('#banner').textContent = info.live ? 'Live editing: every change goes straight into the running game, and players see it right away. Ctrl+Z undoes it.'
+    : 'The game server is running: you can look around, but editing is off. (Live editing needs the newer server: "Update code & restart" on the Server page.)';
   const d = $('#dirty');
-  d.textContent = info.running ? 'View only while the server runs' : info.dirty ? `${info.dirty} unsaved change${info.dirty === 1 ? '' : 's'}` : 'No unsaved changes';
+  d.textContent = info.running ? (info.live ? 'Live: nothing to save, changes are in the game' : 'View only while the server runs') : info.dirty ? `${info.dirty} unsaved change${info.dirty === 1 ? '' : 's'}` : 'No unsaved changes';
   d.classList.toggle('on', !!info.dirty);
   $('#save').disabled = info.running || !info.dirty;
   $('#discard').disabled = !info.dirty;
-  $('#undo').disabled = info.running || !info.undo;
-  $('#redo').disabled = info.running || !info.redo;
+  $('#undo').disabled = RO() || !info.undo;
+  $('#redo').disabled = RO() || !info.redo;
   $('#undosave').disabled = info.running || !!info.dirty || !info.backups;
 }
 async function refreshInfo() {

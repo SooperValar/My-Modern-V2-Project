@@ -114,6 +114,8 @@ static char *after(char *line,int n)
 	return p;
 }
 
+static void con_edpatch(char *path);
+
 static void con_cmd(char *line)
 {
 	char copy[1024],*w[4],*p;
@@ -139,6 +141,7 @@ static void con_cmd(char *line)
 		}
 		return;
 	}
+	if (!strcmp(w[0],"edpatch")) { con_edpatch(after(line,1)); return; }
 	if (!strcmp(w[0],"help") || !strcmp(w[0],"?")) {
 		out("  Console commands:\n"
 		    "  who                           players online\n"
@@ -197,6 +200,142 @@ static void con_cmd(char *line)
 		xlog("CONSOLE: shutdown");
 		quit=1;
 	} else out("  Unknown command \"%s\". Type help.\n",w[0]);
+}
+
+/* ---- live editing from the MyV2 Editor --------------------------------------
+ * "edpatch <file>": the editor writes the changes it made to its copy of the world
+ * into <file>; each change carries the bytes it expects to find, so nothing the game
+ * changed in the meantime is overwritten. All or nothing: one mismatch and nothing
+ * is applied. Then the NPC actions run (move, turn, remove, respawn a template).
+ *
+ * file: "MYV2PATCH1", u32 records, { u8 kind, u32 index, u16 offset, u16 len, old[len], new[len] }...,
+ *       u32 actions, { u8 type, i32 a, b, c, d }...
+ * kinds: 0 map, 1 item, 2 char, 3 char template, 4 item template, 5 effect
+ * actions: 20 remove NPC a (template b), 21 move NPC a (template b) to c,d, 22 turn NPC a (template b) to c,
+ *          23 respawn template a (as the game's reset) */
+extern void reset_char(int n);
+
+struct edrec { unsigned char kind; unsigned int idx; unsigned short off, len; long pos; };
+#define ED_MAXREC 200000
+#define ED_MAXACT 4096
+
+static unsigned char *ed_base(int kind,unsigned int idx,int *size)
+{
+	switch (kind) {
+		case 0: *size=sizeof(struct map); return idx<MAPX*MAPY ? (unsigned char*)&map[idx] : NULL;
+		case 1: *size=sizeof(struct item); return idx<MAXITEM ? (unsigned char*)&it[idx] : NULL;
+		case 2: *size=sizeof(struct character); return idx<MAXCHARS ? (unsigned char*)&ch[idx] : NULL;
+		case 3: *size=sizeof(struct character); return idx<MAXTCHARS ? (unsigned char*)&ch_temp[idx] : NULL;
+		case 4: *size=sizeof(struct item); return idx<MAXTITEM ? (unsigned char*)&it_temp[idx] : NULL;
+		case 5: *size=sizeof(struct effect); return idx<MAXEFFECT ? (unsigned char*)&fx[idx] : NULL;
+	}
+	return NULL;
+}
+
+static int ed_light_of(int m)
+{
+	int in=map[m].it,v=0,cn=map[m].ch;
+	if (in>0 && in<MAXITEM) v+=it[in].active ? it[in].light[1] : it[in].light[0];
+	return v + ((cn>0 && cn<MAXCHARS) ? ch[cn].light : 0);
+}
+
+static void con_edpatch(char *path)
+{
+	static struct edrec rec[ED_MAXREC];
+	static int act[ED_MAXACT][5];
+	static unsigned char mark[MAPX*MAPY];
+	unsigned char hdr[10],buf[8192],*p;
+	unsigned int cnt,nact,n,k,i;
+	int size,bad=0,x,y,m,x0=MAPX,y0=MAPY,x1=-1,y1=-1,lights=0,sight=0,cn,v,done=0;
+	FILE *f;
+
+	f=fopen(path,"rb");
+	if (!f) { out("error cannot open %s\n",path); return; }
+	if (fread(hdr,1,10,f)!=10 || memcmp(hdr,"MYV2PATCH1",10) || fread(&cnt,4,1,f)!=1 || cnt>ED_MAXREC) { out("error not a patch file\n"); fclose(f); return; }
+
+	// 1. read and check every change
+	for (n=0; n<cnt; n++) {
+		if (fread(&rec[n].kind,1,1,f)!=1 || fread(&rec[n].idx,4,1,f)!=1 || fread(&rec[n].off,2,1,f)!=1 || fread(&rec[n].len,2,1,f)!=1) { out("error short file\n"); fclose(f); return; }
+		rec[n].pos=ftell(f);
+		p=ed_base(rec[n].kind,rec[n].idx,&size);
+		if (!p || rec[n].off+rec[n].len>size || rec[n].len>sizeof(buf)) { out("error bad record %d\n",n); fclose(f); return; }
+		if (fread(buf,1,rec[n].len,f)!=rec[n].len) { out("error short file\n"); fclose(f); return; }
+		if (memcmp(buf,p+rec[n].off,rec[n].len)) {
+			if (bad<20) out("conflict %d %u\n",rec[n].kind,rec[n].idx);
+			bad++;
+		}
+		fseek(f,rec[n].len,SEEK_CUR);
+	}
+	if (fread(&nact,4,1,f)!=1) nact=0;
+	if (nact>ED_MAXACT) nact=ED_MAXACT;
+	for (n=0; n<nact; n++) if (fread(&hdr[0],1,1,f)!=1 || fread(&act[n][1],4,4,f)!=4) { nact=n; break; } else act[n][0]=hdr[0];
+	for (n=0; n<nact; n++) {	// the NPCs the actions are for must still be there
+		if (act[n][0]==23) continue;
+		cn=act[n][1];
+		if (cn<1 || cn>=MAXCHARS || ch[cn].used!=USE_ACTIVE || ch[cn].temp!=act[n][2] || (ch[cn].flags&(CF_PLAYER|CF_BODY))) {
+			if (bad<20) out("conflict npc %d\n",cn);
+			bad++;
+		}
+	}
+	if (bad) { out("rejected %d conflicts (the game changed those since the editor looked)\n",bad); fclose(f); return; }
+
+	// 2. which tiles change in a way that moves light around (items, sight, indoors)
+	for (n=0; n<cnt; n++) {
+		m=-1;
+		if (rec[n].kind==0) {
+			m=rec[n].idx;
+			if (rec[n].off+rec[n].len<=4 && !(rec[n].off<20 && rec[n].off+rec[n].len>20)) m=-1;	// only the floor or object sprite
+			if (rec[n].off<=20 && rec[n].off+rec[n].len>20) sight=1;
+		} else if (rec[n].kind==1 && it[rec[n].idx].used==USE_ACTIVE && !it[rec[n].idx].carried) m=it[rec[n].idx].x+it[rec[n].idx].y*MAPX;
+		if (m<0 || m>=MAPX*MAPY) continue;
+		x=m%MAPX; y=m/MAPX; lights=1;
+		if (x<x0) x0=x;
+		if (y<y0) y0=y;
+		if (x>x1) x1=x;
+		if (y>y1) y1=y;
+		for (i=max(1,y-LIGHTDIST); i<min(MAPY-1,y+1+LIGHTDIST); i++)
+			memset(mark+i*MAPX+max(1,x-LIGHTDIST),1,min(MAPX-1,x+1+LIGHTDIST)-max(1,x-LIGHTDIST));
+	}
+	x0=max(1,x0-LIGHTDIST); y0=max(1,y0-LIGHTDIST); x1=min(MAPX-2,x1+LIGHTDIST); y1=min(MAPY-2,y1+LIGHTDIST);
+	if (lights) for (y=y0; y<=y1; y++) for (x=x0; x<=x1; x++) {
+		m=x+y*MAPX; if (!mark[m]) continue;
+		if ((v=ed_light_of(m))) do_add_light(x,y,-v);
+		map[m].dlight=0;
+	}
+
+	// 3. apply
+	for (n=0; n<cnt; n++) {
+		p=ed_base(rec[n].kind,rec[n].idx,&size);
+		fseek(f,rec[n].pos+rec[n].len,SEEK_SET);
+		if (fread(p+rec[n].off,1,rec[n].len,f)==rec[n].len) done++;
+	}
+	fclose(f);
+
+	if (lights) for (y=y0; y<=y1; y++) for (x=x0; x<=x1; x++) {
+		m=x+y*MAPX; if (!mark[m]) continue;
+		mark[m]=0;
+		if ((v=ed_light_of(m))) do_add_light(x,y,v);
+		if (map[m].flags&MF_INDOORS) compute_dlight(x,y);
+	}
+	if (sight) { for (k=1; k<MAXCHARS; k++) see[k].x=see[k].y=0; reset_go(x0+LIGHTDIST,y0+LIGHTDIST); }
+
+	// 4. NPC actions
+	for (n=0; n<nact; n++) {
+		cn=act[n][1];
+		switch (act[n][0]) {
+			case 20: god_destroy_items(cn); plr_map_remove(cn); ch[cn].used=USE_EMPTY; break;
+			case 21:
+				ch[cn].status=0; ch[cn].attack_cn=0; ch[cn].skill_nr=0; ch[cn].goto_x=0; ch[cn].misc_action=0;
+				plr_map_remove(cn);
+				if (!god_drop_char(cn,act[n][3],act[n][4])) { plr_map_set(cn); out("note %s could not be moved there\n",ch[cn].name); }
+				else ch[cn].data[29]=act[n][3]+act[n][4]*MAPX;
+				break;
+			case 22: ch[cn].dir=act[n][3]; ch[cn].data[30]=act[n][3]; ch[cn].status=0; break;
+			case 23: if (act[n][1]>0 && act[n][1]<MAXTCHARS) reset_char(act[n][1]); break;
+		}
+	}
+	out("ok %d %d\n",done,nact);
+	xlog("CONSOLE: MyV2 Editor live edit: %d changes, %d NPC actions",done,nact);
 }
 
 /* ---- the control port ---- */
