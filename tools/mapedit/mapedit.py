@@ -692,6 +692,21 @@ nav .grow { flex: 1; }
 #card canvas { width: 40px; height: 40px; flex: none; background: var(--panel2); border-radius: 6px; }
 #card .t { font-weight: 600; }
 #card .s { color: var(--dim); font-size: 12px; }
+#card.mix { flex-direction: column; align-items: stretch; gap: 8px; max-height: 46%; overflow-y: auto; }
+#card .mixhd { display: flex; align-items: baseline; gap: 8px; }
+#card .mixhd .t { flex: 1; }
+.mixrow { display: flex; align-items: center; gap: 8px; }
+.mixrow canvas { width: 30px !important; height: 30px !important; }
+.mixrow .num { width: 40px; font: 11px ui-monospace, Consolas, monospace; color: var(--dim); }
+.mixrow input[type=range] { flex: 1; accent-color: var(--gold); min-width: 0; }
+.mixrow .pct { width: 34px; text-align: right; font-size: 11px; color: var(--dim); }
+.mixrow .x, .mixbtns button { color: var(--dim); border: 1px solid var(--line); border-radius: 5px; padding: 1px 7px; font-size: 11px; }
+.mixrow .x:hover { color: var(--bad); border-color: var(--bad); }
+.mixbtns { display: flex; gap: 6px; flex-wrap: wrap; }
+.mixbtns button:hover { color: var(--text); border-color: var(--gold); }
+.cell .badge { position: absolute; top: 3px; right: 4px; font-size: 9px; color: var(--gold2); }
+.cell { position: relative; }
+.cell.inmix { border-color: #8a6a2a; }
 
 #view { position: relative; min-width: 0; min-height: 0; overflow: hidden; background: #050506; }
 #cv { width: 100%; height: 100%; display: block; }
@@ -1089,7 +1104,57 @@ function cats() {
     items: t.filter(x => x[3]),
   };
 }
-function brushKey(b) { return b.kind + ':' + (b.kind === 'place' ? b.t[0] : b.kind === 'flag' ? b.bit : b.s); }
+function brushKey(b) { return b.kind + ':' + (b.kind === 'place' ? b.t[0] : b.kind === 'flag' ? b.bit : b.kind === 'mix' ? b.items.map(i => i.s + 'x' + i.w).join(',') : b.s); }
+// ---- floor mixes: several floors painted at random, each with a weight
+let mixes = [];
+try { mixes = JSON.parse(localStorage.getItem('myv2.mixes') || '[]'); } catch (e) {}
+function saveMixes() { try { localStorage.setItem('myv2.mixes', JSON.stringify(mixes)); } catch (e) {} }
+function mixPick(items) {
+  let tot = 0; for (const i of items) tot += i.w;
+  let r = Math.random() * tot;
+  for (const i of items) { r -= i.w; if (r < 0) return i.s; }
+  return items[items.length - 1].s;
+}
+function toggleMix(s) {   // Ctrl/Shift+click on a floor
+  let items = brush.kind === 'mix' ? brush.items.map(i => ({ ...i })) : brush.kind === 'floor' ? [{ s: brush.s, w: 5 }] : [];
+  const k = items.findIndex(i => i.s === s);
+  if (k >= 0) items.splice(k, 1); else items.push({ s, w: 5 });
+  if (!items.length) return;
+  if (items.length === 1) setBrush({ kind: 'floor', s: items[0].s, set: false });
+  else setBrush({ kind: 'mix', items, name: '' });
+}
+const avgCache = new Map();
+function avgColor(n) {   // the average color of a floor sprite (to find look-alikes)
+  if (avgCache.has(n)) return Promise.resolve(avgCache.get(n));
+  return new Promise(res => {
+    const done = () => {
+      const im = sprites.get(n) && sprites.get(n).img;
+      if (!im) return false;
+      const d = im.getContext('2d').getImageData(0, 0, im.width, im.height).data;
+      let r = 0, g = 0, b = 0, c = 0;
+      for (let i = 0; i < d.length; i += 4) if (d[i + 3] > 200) { r += d[i]; g += d[i + 1]; b += d[i + 2]; c++; }
+      const v = c ? [r / c, g / c, b / c] : null; avgCache.set(n, v); res(v); return true;
+    };
+    sprite(n);
+    if (done()) return;
+    let tries = 0; const t = setInterval(() => { if (done() || ++tries > 60) { clearInterval(t); if (!avgCache.has(n)) res(null); } }, 100);
+  });
+}
+async function addSimilar() {
+  const items = brush.kind === 'mix' ? brush.items : brush.kind === 'floor' ? [{ s: brush.s, w: 5 }] : null;
+  if (!items) return;
+  toast('Looking for floors that look alike…');
+  const want = await Promise.all(items.map(i => avgColor(i.s)));
+  const ref = want.filter(Boolean); if (!ref.length) return;
+  const m = ref.reduce((a, v) => [a[0] + v[0] / ref.length, a[1] + v[1] / ref.length, a[2] + v[2] / ref.length], [0, 0, 0]);
+  const cand = pal.floors.map(f => f[0]).filter(s => s !== 1008 && !items.some(i => i.s === s)).slice(0, 400);
+  const cols = await Promise.all(cand.map(avgColor));
+  const scored = cand.map((s, i) => [s, cols[i] ? Math.hypot(cols[i][0] - m[0], cols[i][1] - m[1], cols[i][2] - m[2]) : 1e9]).sort((a, b) => a[1] - b[1]);
+  const add = scored.filter(x => x[1] < 28).slice(0, 4);
+  if (!add.length) return toast('No floors that look close enough.', true);
+  setBrush({ kind: 'mix', items: [...items.map(i => ({ ...i })), ...add.map(([s]) => ({ s, w: 2 }))], name: brush.name || '' }, true);
+  toast('Added ' + add.map(a => a[0]).join(', ') + ' (lower weight: lower the sliders or remove any you don\'t like)');
+}
 function setBrush(b, keepTool) {
   brush = b;
   const k = brushKey(b);
@@ -1098,7 +1163,8 @@ function setBrush(b, keepTool) {
   card(); document.querySelectorAll('#palwrap [data-k]').forEach(el => el.classList.toggle('sel', el.dataset.k === k));
 }
 function card() {
-  const c = $('#card'); c.innerHTML = '';
+  const c = $('#card'); c.innerHTML = ''; c.classList.toggle('mix', brush.kind === 'mix');
+  if (brush.kind === 'mix') return mixCard(c);
   let spr = 0, t = '', s = '';
   if (brush.kind === 'floor') { spr = brush.s; t = 'Floor ' + brush.s; s = brush.set && pal && pal.sets[brush.s] ? 'Floor sprite ' + brush.s + ' (random variants ' + pal.sets[brush.s].join(', ') + ')' : 'Floor sprite ' + brush.s; }
   else if (brush.kind === 'place') { spr = brush.t[2]; t = brush.t[1]; s = `Template ${brush.t[0]} · ${brush.t[6] ? 'item' : 'drawn into the tile'}${brush.t[5] & 1 ? ' · blocks walking' : ''}`; }
@@ -1108,6 +1174,35 @@ function card() {
   else c.appendChild(thumb(spr, 40));
   const d = document.createElement('div'); d.innerHTML = `<div class="t"></div><div class="s"></div>`;
   d.firstChild.textContent = t; d.lastChild.textContent = s; c.appendChild(d);
+  if (brush.kind === 'floor') {   // start a mix from this floor
+    const m = document.createElement('div'); m.className = 'mixbtns'; m.style.marginTop = '6px';
+    m.innerHTML = '<button data-a="sim" title="Make a mix: add floors whose color is close to this one">+ look-alikes</button>';
+    m.firstChild.onclick = addSimilar; d.appendChild(m);
+  }
+}
+function mixCard(c) {
+  const tot = brush.items.reduce((a, i) => a + i.w, 0);
+  c.innerHTML = `<div class="mixhd"><span class="t"></span><span class="s">${brush.items.length} floors</span></div>`;
+  c.querySelector('.t').textContent = brush.name ? 'Mix: ' + brush.name : 'Floor mix';
+  for (const it of brush.items) {
+    const r = document.createElement('div'); r.className = 'mixrow';
+    r.appendChild(thumb(it.s, 30));
+    r.insertAdjacentHTML('beforeend', `<span class="num">${it.s}</span><input type="range" min="1" max="10" value="${it.w}" title="How often this one is painted"><span class="pct">${Math.round(it.w / tot * 100)}%</span><button class="x" title="Take it out of the mix">×</button>`);
+    r.querySelector('input').oninput = e => { it.w = +e.target.value; const t2 = brush.items.reduce((a, i) => a + i.w, 0); c.querySelectorAll('.mixrow').forEach((row, k) => row.querySelector('.pct').textContent = Math.round(brush.items[k].w / t2 * 100) + '%'); };
+    r.querySelector('.x').onclick = () => { const items = brush.items.filter(i => i !== it); items.length === 1 ? setBrush({ kind: 'floor', s: items[0].s, set: false }, true) : setBrush({ kind: 'mix', items, name: brush.name }, true); };
+    c.appendChild(r);
+  }
+  const b = document.createElement('div'); b.className = 'mixbtns';
+  b.innerHTML = '<button data-a="sim" title="Add floors whose color is close to these">+ look-alikes</button><button data-a="save" title="Keep this mix in the list (in this browser)">Save mix</button>';
+  b.querySelector('[data-a=sim]').onclick = addSimilar;
+  b.querySelector('[data-a=save]').onclick = () => {
+    const name = prompt('Name for this mix (e.g. Aston grass):', brush.name || '');
+    if (!name) return;
+    mixes = mixes.filter(m => m.name !== name); mixes.unshift({ name, items: brush.items.map(i => ({ ...i })) }); saveMixes();
+    brush.name = name; card(); leftUI(); toast('Saved the mix "' + name + '"');
+  };
+  c.appendChild(b);
+  c.insertAdjacentHTML('beforeend', '<div class="s">Ctrl+click floors on the left to add or remove them.</div>');
 }
 function lazy(container, items, make) {
   container.innerHTML = '';
@@ -1129,7 +1224,22 @@ function cellFloor(s, n) {
   if (brushKey(brush) === c.dataset.k) c.classList.add('sel');
   c.title = `Floor ${s}` + (n ? ` · on ${n} tiles` : '') + (pal.sets[s] ? ' · paints random variants' : '');
   c.appendChild(thumb(s, 64, 48)); const l = document.createElement('div'); l.className = 'lab'; l.textContent = s; c.appendChild(l);
-  c.onclick = () => setBrush({ kind: 'floor', s, set: true });
+  if (brush.kind === 'mix' && brush.items.some(i => i.s === s)) { c.classList.add('inmix'); c.insertAdjacentHTML('beforeend', '<span class="badge">mix</span>'); }
+  c.title += ' · Ctrl+click: add to a mix';
+  c.onclick = e => (e.ctrlKey || e.metaKey || e.shiftKey) ? toggleMix(s) : setBrush({ kind: 'floor', s, set: true });
+  return c;
+}
+function cellMix(m, saved) {
+  const c = document.createElement('div'); c.className = 'cell'; c.dataset.k = brushKey({ kind: 'mix', items: m.items });
+  if (brushKey(brush) === c.dataset.k) c.classList.add('sel');
+  c.title = (m.name || 'Mix') + ': ' + m.items.map(i => i.s).join(', ') + (saved ? ' · right-click to delete' : '');
+  const cv = document.createElement('canvas'); cv.width = 64; cv.height = 48;
+  const g = cv.getContext('2d'), n = Math.min(4, m.items.length);
+  m.items.slice(0, 4).forEach((it, k) => { const t = thumb(it.s, 32, 24); setTimeout(() => g.drawImage(t, (k % 2) * 32, Math.floor(k / 2) * 24 + (n <= 2 ? 12 : 0)), 300); });
+  c.appendChild(cv);
+  const l = document.createElement('div'); l.className = 'lab'; l.textContent = m.name || 'mix'; c.appendChild(l);
+  c.onclick = () => setBrush({ kind: 'mix', items: m.items.map(i => ({ ...i })), name: m.name });
+  if (saved) c.oncontextmenu = e => { e.preventDefault(); if (confirm('Delete the mix "' + m.name + '"?')) { mixes = mixes.filter(x => x !== m); saveMixes(); leftUI(); } };
   return c;
 }
 function cellFlag(b) {
@@ -1150,6 +1260,7 @@ function cellTemp(t) {
   return c;
 }
 function cellRecent(b) {
+  if (b.kind === 'mix') return cellMix(b, false);
   if (b.kind === 'floor') return cellFloor(b.s, 0);
   if (b.kind === 'flag') return cellFlag(b.bit);
   if (b.kind === 'place') return cellTemp(b.t);
@@ -1174,10 +1285,20 @@ function leftUI() {
   const sect = t => { const s = document.createElement('div'); s.className = 'sect'; s.style.padding = '8px 2px 8px'; s.textContent = t; w.appendChild(s); };
   const grid = () => { const g = document.createElement('div'); g.className = 'grid'; w.appendChild(g); return g; };
   const match = (name, num) => !q || name.toLowerCase().includes(q) || String(num) === q || String(num).startsWith(q);
+  function mixSection(withSets) {
+    const saved = mixes.filter(m => match(m.name, ''));
+    const sets = withSets ? Object.entries(pal.sets).map(([k, v]) => ({ name: 'set ' + k, items: v.map(s => ({ s, w: 5 })) })) : [];
+    if (!saved.length && !sets.length) return;
+    sect(saved.length ? 'Floor mixes' + (sets.length ? ' · and the game\'s own sets' : '') : 'The game\'s own floor sets');
+    const g = grid();
+    saved.forEach(m => g.appendChild(cellMix(m, true)));
+    sets.forEach(m => g.appendChild(cellMix(m, false)));
+  }
   if (mode === 'map') {
     const C = cats();
     if (tab === 'builder') {
-      if (recent.length) { sect('Recently used'); lazy(grid(), recent.filter(b => match(b.kind === 'place' ? b.t[1] : b.kind === 'flag' ? FLAGS[b.bit] : '', b.kind === 'place' ? b.t[0] : b.s ?? '')), cellRecent); }
+      if (recent.length) { sect('Recently used'); lazy(grid(), recent.filter(b => match(b.kind === 'place' ? b.t[1] : b.kind === 'flag' ? FLAGS[b.bit] : b.kind === 'mix' ? (b.name || 'mix') : '', b.kind === 'place' ? b.t[0] : b.s ?? '')), cellRecent); }
+      mixSection();
       sect('Floors and flags');
       const g = grid();
       const fl = FLAGS.map((f, i) => i).filter(i => match(FLAGS[i], ''));
@@ -1188,7 +1309,8 @@ function leftUI() {
     } else if (tab === 'floors') {
       const list = pal.floors.filter(([s]) => match('', s));
       if (/^\d+$/.test(q) && !list.some(([s]) => String(s) === q)) list.unshift([+q, 0]);
-      sect('Floors · by how often they are used'); lazy(grid(), list, f => cellFloor(f[0], f[1]));
+      if (!q) mixSection(true);
+      sect('Floors · by how often they are used · Ctrl+click to mix'); lazy(grid(), list, f => cellFloor(f[0], f[1]));
     } else if (tab === 'flags') {
       sect('Paint a flag on tiles'); lazy(grid(), FLAGS.map((f, i) => i).filter(i => match(FLAGS[i], '')), cellFlag);
     } else {
@@ -1325,6 +1447,7 @@ function opFor(x, y, alt) {
   if (b.kind === 'flag') return { op: 'flag', x, y, bit: b.bit, mode: alt ? 0 : 1 };
   if (alt) return null;
   if (b.kind === 'floor') return { op: 'floor', x, y, s: b.s, set: b.set };
+  if (b.kind === 'mix') return { op: 'floor', x, y, s: mixPick(b.items), set: false };
   if (b.kind === 'object') return { op: 'object', x, y, s: b.s, block: b.block };
   if (b.kind === 'place') return { op: 'place', x, y, t: b.t[0] };
   return null;
@@ -1334,7 +1457,7 @@ function label(alt) {
   const b = brush;
   if (b.kind === 'flag') return (alt ? 'cleared ' : 'set ') + FLAGS[b.bit];
   if (alt) return 'erase';
-  return b.kind === 'floor' ? 'floor ' + b.s : b.kind === 'place' ? b.t[1] : 'object ' + b.s;
+  return b.kind === 'floor' ? 'floor ' + b.s : b.kind === 'mix' ? (b.name ? 'mix ' + b.name : 'floor mix ' + b.items.map(i => i.s).join('/')) : b.kind === 'place' ? b.t[1] : 'object ' + b.s;
 }
 function preview(op) {
   const t = T(op.x, op.y);
