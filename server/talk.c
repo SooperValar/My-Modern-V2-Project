@@ -787,6 +787,9 @@ void npc_hear(int cn,int co,char *text)
         // dont talk to enemies
         if (!obey(cn,co)) for (n=80; n<92; n++) if ((ch[cn].data[n]&0xffff)==co) return;
 
+        // MyV2: the NPC's own dialogue (npctalk.dat, made with the MyV2 Editor) comes first
+        if (talk_custom_say(cn,co,text)) return;
+
         for (n=0; n<20; n++) word[n][0]=0;
 
         strcpy(buf,text);

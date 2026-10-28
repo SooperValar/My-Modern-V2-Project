@@ -261,6 +261,14 @@ int mana_needed(int v,int diff);
 int skill_needed(int v,int diff);
 
 void do_add_light(int x,int y,int stren);
+// npctalk.c (MyV2 custom dialogue)
+int talk_load(void);
+int talk_entries(void);
+int talk_custom_say(int cn,int co,char *text);
+int talk_custom_give(int cn,int co,int in);
+int quest_get(int co,int n);
+void quest_set(int co,int n,int v);
+void talk_set_echo(void (*f)(char *));
 int do_store_item(int cn);
 int do_swap_item(int cn,int n);
 void do_look_char(int cn,int co,int godflag,int autoflag,int lootflag);

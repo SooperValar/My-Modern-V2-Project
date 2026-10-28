@@ -115,6 +115,7 @@ static char *after(char *line,int n)
 }
 
 static void con_edpatch(char *path);
+static void con_echo(char *s) { out("  says: %s\n",s); }
 
 static void con_cmd(char *line)
 {
@@ -142,6 +143,21 @@ static void con_cmd(char *line)
 		return;
 	}
 	if (!strcmp(w[0],"edpatch")) { con_edpatch(after(line,1)); return; }
+	if (!strcmp(w[0],"talktest")) {	// talktest <NPC template> <player> <text>: as if the player said it there
+		int t=atoi(w[1]),cn=0;
+		for (n=1; n<MAXCHARS; n++) if (ch[n].used==USE_ACTIVE && ch[n].temp==t && !(ch[n].flags&(CF_PLAYER|CF_BODY))) { cn=n; break; }
+		if (!cn) { out("  No NPC of template %d in the world.\n",t); return; }
+		if (!(co=con_player(w[2]))) return;
+		talk_set_echo(con_echo);
+		if (!talk_custom_say(cn,co,after(line,3))) out("  (no matching dialogue)\n");
+		talk_set_echo(NULL);
+		return;
+	}
+	if (!strcmp(w[0],"talkreload")) {
+		n=talk_load();
+		out("  NPC dialogue loaded: %d entries%s.\n",talk_entries(),n ? " (some lines were not understood)" : "");
+		return;
+	}
 	if (!strcmp(w[0],"help") || !strcmp(w[0],"?")) {
 		out("  Console commands:\n"
 		    "  who                           players online\n"
@@ -151,7 +167,20 @@ static void con_cmd(char *line)
 		    "  announce <text>               message to everyone online\n"
 		    "  tell <player> <text>          message to one player\n"
 		    "  kick <player>                 log a player out\n"
+		    "  quest <player> [<n> <value>]  show or set a player's quest steps\n"
+		    "  talkreload                    read the NPC dialogue file again\n"
 		    "  shutdown                      save and stop the server\n");
+	} else if (!strcmp(w[0],"quest")) {
+		if (!(co=con_player(w[1]))) return;
+		if (*w[2]) {
+			n=atoi(w[2]);
+			if (n<1 || n>31 || !*w[3]) { out("  quest <player> <1-31> <value>\n"); return; }
+			quest_set(co,n,atoi(w[3]));
+			out("  %s: quest %d = %d\n",ch[co].name,n,quest_get(co,n));
+		} else {
+			for (n=1,v=0; n<=31; n++) if (quest_get(co,n)) { out("  %s: quest %d = %d\n",ch[co].name,n,quest_get(co,n)); v++; }
+			if (!v) out("  %s has no quest steps yet.\n",ch[co].name);
+		}
 	} else if (!strcmp(w[0],"who")) {
 		con_who();
 	} else if (!strcmp(w[0],"raise") || !strcmp(w[0],"lower")) {

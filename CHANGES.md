@@ -215,6 +215,20 @@ The design is in `docs/ITEM_TIERS.md`. This first part builds the core:
 - When the server stops, the editor reloads the world it saved; editing stays off while it runs.
 - **Sync-only buttons** on the Server page: "Send to Windows" (`claude-sync.sh send`), "Get code" (`get`: take the changed source and rebuild, no restart; the new build is used at the next restart), "Get world" (`get-world`, only while stopped, with a backup). Claude can run the same through requests, plus `stop-send` (warn, stop, send) for world edits, and `reload-editor`, which restarts the editor itself after an update (not while there are unsaved map changes).
 
+#### Custom NPC dialogue and quest steps
+- NPCs can have their own conversation lines (new server file `npctalk.c`, data in `.dat/npctalk.dat`, made in the editor's NPC **Conversations** tab):
+  - **Triggers:** each line starts with what the player says (every word must be in it; `a|b` = either, `ring*` = ring, rings, …) or an item the player hands over.
+  - **Conditions (optional):** a quest step (=, is not, below, above, at most, at least), the player carries or doesn't carry an item, or their rank.
+  - **What happens:** the NPC answers (several lines in turn, `%s` = the player's name), then sets or adds to quest steps, gives an item, experience or money, takes an item from the player, and for a handed-over item keeps it (otherwise it hands it back).
+- The first matching line of the NPC wins, before the game's built-in answers and before its "wants item" quest.
+- **Quest steps:** 31 numbered quests per character, all starting at 0, saved in `.dat/quest.dat` with the character's creation date (a new character in an old slot starts clean). Quest names are kept in `npctalk.dat` for the editor.
+- **Console:**
+  - `quest <player> [<n> <value>]` shows or sets a player's steps.
+  - `talktest <NPC template> <player> <text>` tries a conversation without logging in, printing the answers.
+  - `talkreload` reads the file again. The editor sends this itself when you apply changes while the server runs, so new lines work right away.
+- Copying an NPC template (placing a copy, "Save as a new NPC") copies its conversations; a removed editor-made NPC loses them.
+- Tested with the real server: a quest intro over two lines that sets step 1, a follow-up line for step 1 and above, non-matching speech ignored, steps shown and reset from the console.
+
 #### Editor: live editing while the server runs
 - With the server running, the MyV2 Editor edits the live game. Floors, objects, items, flags, portals, NPCs (place, move, turn, remove) and NPC and item templates all go straight in, and players see them right away. The banner turns green ("Live editing"). There is nothing to save, and Ctrl+Z / Ctrl+Y undo and redo.
 - How: the editor reads the game's current files (the server keeps them in shared memory), makes the change on that copy, and sends the difference to the server as a patch file with the console command `edpatch <file>` (control port, `console.c`). Every changed byte range carries the bytes it expects to find. If anything there changed in the meantime (an NPC walked onto the tile, an item was picked up), the server applies nothing and says so; the editor then tells you to try again. Undo works the same way, so it never overwrites something the game changed.

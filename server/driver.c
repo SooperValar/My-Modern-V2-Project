@@ -487,6 +487,9 @@ int npc_give(int cn,int co,int in,int money)
         if (ch[co].flags&(CF_PLAYER|CF_USURP)) ch[cn].data[92]=TICKS*60;
         else if (!group_active(cn)) return 0;
 
+        // MyV2: the NPC's own dialogue can take this item (npctalk.dat)
+        if (in && talk_custom_give(cn,co,in)) return 0;
+
         if (in && ch[cn].data[49]==it[in].temp) {
                 if (ch[cn].data[49]==740 && ch[cn].temp==518) { // hack for black candle
 

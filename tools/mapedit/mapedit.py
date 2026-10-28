@@ -129,6 +129,86 @@ def cstr(b):
     return b.split(b'\0', 1)[0].decode('latin-1')
 
 
+# ---------------------------------------------------------------- NPC dialogue (.dat/npctalk.dat, read by npctalk.c)
+OPS = ('=', '!=', '<', '>', '<=', '>=')
+
+
+def talk_parse(text):
+    quests, npcs, cur, e = {}, {}, None, None
+    for line in text.splitlines():
+        line = line.strip()
+        if not line or line.startswith('#'):
+            continue
+        w = line.split(None, 1)
+        k, rest = w[0], (w[1] if len(w) > 1 else '')
+        a = rest.split()
+        try:
+            if k == 'quest' and a:
+                quests[int(a[0])] = rest.split(None, 1)[1] if len(a) > 1 else ''
+            elif k == 'npc' and a:
+                cur, e = int(a[0]), None
+                npcs.setdefault(cur, [])
+            elif k == 'when' and cur is not None and a:
+                e = {'when': 'give' if a[0] == 'give' else 'say', 'words': '', 'item': 0, 'conds': [], 'answers': [], 'acts': []}
+                if a[0] == 'give':
+                    e['item'] = int(a[1])
+                else:
+                    e['words'] = rest.split(None, 1)[1] if len(a) > 1 else ''
+                npcs[cur].append(e)
+            elif e is None:
+                continue
+            elif k == 'end':
+                e = None
+            elif k == 'if':
+                if a[0] == 'quest': e['conds'].append({'type': 'quest', 'n': int(a[1]), 'op': a[2], 'v': int(a[3])})
+                elif a[0] == 'has': e['conds'].append({'type': 'has', 't': int(a[1])})
+                elif a[0] == '!has': e['conds'].append({'type': 'hasnot', 't': int(a[1])})
+                elif a[0] == 'rank': e['conds'].append({'type': 'rank', 'op': a[1], 'v': int(a[2])})
+            elif k == 'answer':
+                e['answers'].append(rest)
+            elif k in ('set', 'add') and a[0] == 'quest':
+                e['acts'].append({'type': k, 'n': int(a[1]), 'v': int(a[2])})
+            elif k == 'give' and a[0] in ('item', 'exp', 'gold'):
+                e['acts'].append({'type': a[0], 'v': int(a[1])})
+            elif k == 'take' and a[0] == 'item':
+                e['acts'].append({'type': 'take', 'v': int(a[1])})
+            elif k == 'keep':
+                e['acts'].append({'type': 'keep'})
+        except (IndexError, ValueError):
+            continue
+    return quests, npcs
+
+
+def talk_text(quests, npcs, names):
+    out = ['# MyV2 custom NPC dialogue - written by the MyV2 Editor (the server reads it: npctalk.c)', '']
+    for n in sorted(quests):
+        out.append('quest %d %s' % (n, quests[n]))
+    for t in sorted(npcs):
+        if not npcs[t]:
+            continue
+        out += ['', 'npc %d %s' % (t, names.get(t, ''))]
+        for e in npcs[t]:
+            clean = lambda x: ' '.join(str(x).split())
+            out.append('when give %d' % int(e.get('item', 0)) if e.get('when') == 'give' else 'when say ' + clean(e.get('words', '')).lower())
+            for c in e.get('conds', []):
+                ty = c.get('type')
+                if ty == 'quest' and c.get('op') in OPS: out.append('if quest %d %s %d' % (int(c['n']), c['op'], int(c['v'])))
+                elif ty == 'has': out.append('if has %d' % int(c['t']))
+                elif ty == 'hasnot': out.append('if !has %d' % int(c['t']))
+                elif ty == 'rank' and c.get('op') in OPS: out.append('if rank %s %d' % (c['op'], int(c['v'])))
+            for a in e.get('answers', []):
+                if clean(a):
+                    out.append('answer ' + clean(a)[:400])
+            for a in e.get('acts', []):
+                ty = a.get('type')
+                if ty in ('set', 'add'): out.append('%s quest %d %d' % (ty, int(a['n']), int(a['v'])))
+                elif ty in ('item', 'exp', 'gold'): out.append('give %s %d' % (ty, int(a['v'])))
+                elif ty == 'take': out.append('take item %d' % int(a['v']))
+                elif ty == 'keep': out.append('keep')
+            out.append('end')
+    return '\n'.join(out) + '\n'
+
+
 # ---------------------------------------------------------------- world
 class World:
     FILES = ('map.dat', 'item.dat', 'char.dat', 'tchar.dat', 'effect.dat', 'titem.dat')
@@ -156,6 +236,7 @@ class World:
             self.mtimes = {n: os.path.getmtime(p(n)) for n in self.FILES if os.path.exists(p(n))}
             self.touched = set()
             self.made = None
+            self.talk_copies = []
             self.live, self.live_actions, self.live_backup = False, [], None
             self.undo, self.redo, self.dirty = [], [], 0
             self.free_hint = 1
@@ -531,6 +612,42 @@ class World:
         self._keep(rec, 'c', c)
         self.char[o + C_USED] = USE_EMPTY
 
+    # --- NPC dialogue
+    def talk_path(self):
+        return os.path.join(self.dat, 'npctalk.dat')
+
+    def talk_load(self):
+        try:
+            return talk_parse(open(self.talk_path(), encoding='latin-1').read())
+        except OSError:
+            return {}, {}
+
+    def talk_save(self, quests, npcs, ctl=None):
+        p = self.talk_path()
+        if os.path.exists(p):
+            bk = os.path.join(self.dat, 'mapedit-backups')
+            os.makedirs(bk, exist_ok=True)
+            shutil.copy2(p, os.path.join(bk, 'npctalk-%s.dat' % time.strftime('%Y%m%d-%H%M%S')))
+        names = {t: self.tname(t) for t in npcs if self.tchar is not None and 0 < t < MAXTCHARS}
+        with open(p + '.tmp', 'w', encoding='latin-1', errors='replace') as f:
+            f.write(talk_text(quests, npcs, names))
+        os.replace(p + '.tmp', p)
+        if ctl and server_running():
+            r = ctl.console('talkreload', 5)
+            return 'Saved; the game uses it now.' if r and 'loaded' in r else 'Saved. (The game reads it at its next start: the running server is older.)'
+        return 'Saved. The game uses it when the server starts.'
+
+    def talk_copy(self, src, dst, ctl=None):
+        """a copied NPC template gets the original's dialogue (and a freed number loses its own)"""
+        q, npcs = self.talk_load()
+        if src in npcs and npcs[src]:
+            npcs[dst] = json.loads(json.dumps(npcs[src]))
+        elif dst in npcs:
+            del npcs[dst]
+        else:
+            return
+        self.talk_save(q, npcs, ctl)
+
     # --- templates: reading and changing them
     def ctemp(self, t):
         if self.tchar is None or not (0 < t < MAXTCHARS) or not self.tchar[t * CHAR_SIZE + C_USED]:
@@ -611,6 +728,7 @@ class World:
             self._keep(rec, 't', t)
             o = t * CHAR_SIZE
             self.tchar[o:o + CHAR_SIZE] = self.tchar[src * CHAR_SIZE:(src + 1) * CHAR_SIZE]
+            self.talk_copies.append((src, t))
             self._c_set(self.tchar, t, C_TEMP, '<H', t)
             self._c_set(self.tchar, t, C_X, '<hhhh', 0, 0, 0, 0)          # not placed yet: the NPC brush places it
             self._c_set(self.tchar, t, C_DATA + 29 * 4, '<i', 0)
@@ -695,6 +813,7 @@ class World:
             o = tp * CHAR_SIZE
             if tp != src:
                 self.tchar[o:o + CHAR_SIZE] = self.tchar[src * CHAR_SIZE:(src + 1) * CHAR_SIZE]
+                self.talk_copies.append((src, tp))
             self.tchar[o + C_USED] = USE_ACTIVE
             self._c_set(self.tchar, tp, C_TEMP, '<H', tp)
             self._c_set(self.tchar, tp, C_FLAGS, '<Q', self.t_u64(tp, C_FLAGS) | CF_RESPAWN)
@@ -762,6 +881,7 @@ class World:
                 self._keep(rec, 't', tp)
                 if tp >= NPC_FIRST_NEW:
                     self.tchar[tp * CHAR_SIZE + C_USED] = USE_EMPTY
+                    self.talk_copies.append((0, tp))     # its dialogue goes too
                 else:
                     self._c_set(self.tchar, tp, C_FLAGS, '<Q', self.t_u64(tp, C_FLAGS) & ~CF_RESPAWN)
                 for n in range(1, MAXEFFECT):     # and any other respawn timer it has
@@ -792,6 +912,7 @@ class World:
         rec, msgs, n = {}, [], 0
         with self.lock:
             self.made = None
+            self.talk_copies = []
             for op in ops:
                 if op['op'] in ('ctempset', 'ctempnew', 'itempset', 'itempnew'):
                     err = self.temp_op(rec, op)
@@ -977,6 +1098,8 @@ class World:
                 return 0, msgs + [note]
             rec[('L', 0)] = (new, [a for a, _ in acts], [b for _, b in reversed(acts)])
             self.dirty = 0; self.touched = set()
+            for a, b in self.talk_copies:
+                self.talk_copy(a, b, ctl)
             self.reload_now()
             return changed, msgs + ([note] if note else [])
 
@@ -1521,6 +1644,9 @@ def make_handler(world, sprites, page, minimap, ctl):
                 return self.js(world.chars())
             if u.path == '/api/npcs':
                 return self.js(world.npc_templates())
+            if u.path == '/api/talk':
+                qs, npcs = world.talk_load()
+                return self.js({'quests': {str(k): v for k, v in qs.items()}, 'entries': npcs.get(int(q.get('t', 0)), [])})
             if u.path == '/api/ctemp':
                 return self.js(world.ctemp(int(q['t'])) or {'error': 'no such NPC template'})
             if u.path == '/api/itemp':
@@ -1557,8 +1683,17 @@ def make_handler(world, sprites, page, minimap, ctl):
                                 'dirty': world.dirty, 'undo': len(world.undo), 'redo': len(world.redo)})
             if u.path in ('/api/save', '/api/relight', '/api/restore') and server_running():
                 return self.js({'error': 'The game server is running: live edits are already in the game, there is nothing to save.'})
+            if u.path == '/api/talk':
+                qs, npcs = world.talk_load()
+                if 'quests' in body:
+                    qs = {int(k): str(v)[:60] for k, v in body['quests'].items() if 1 <= int(k) <= 31 and str(v).strip()}
+                if 't' in body:
+                    npcs[int(body['t'])] = body.get('entries') or []
+                return self.js({'msg': world.talk_save(qs, npcs, ctl)})
             if u.path == '/api/edit':
                 changed, msgs = world.apply(body.get('ops', []), body.get('label', ''))
+                for a, b in world.talk_copies:
+                    world.talk_copy(a, b, ctl)
                 return self.js({'changed': changed, 'msgs': msgs, 'dirty': world.dirty, 'undo': len(world.undo), 'redo': len(world.redo),
                                 'made': world.made})
             if u.path in ('/api/undo', '/api/redo'):
@@ -2765,12 +2900,14 @@ const setBit = (f, b, on) => bit(f, b) === on ? f : f + (on ? 1 : -1) * 2 ** b;
 const pos = v => v ? [v % 1024, Math.floor(v / 1024)] : null;
 
 let TP = null;   // {kind: 'npc'|'item', t, orig, cur, tab}
-function tplDirty() { return TP && (Object.keys(tplChanged()).length || (TP.kind === 'npc' && JSON.stringify(TP.cur.text) !== JSON.stringify(TP.orig.text))); }
+function talkDirty() { return TP && TP.talk && JSON.stringify(TP.talk) !== TP.talkOrig; }
+function tplDirty() { return TP && (Object.keys(tplChanged()).length || talkDirty() || (TP.kind === 'npc' && JSON.stringify(TP.cur.text) !== JSON.stringify(TP.orig.text))); }
 function openTemplate(kind, t) {
   if (tplDirty() && !(TP.kind === kind && TP.t === t) && !confirm('You have changes here you did not apply. Leave them?')) return;
-  api(`/api/${kind === 'npc' ? 'ctemp' : 'itemp'}?t=${t}`).then(r => {
+  Promise.all([api(`/api/${kind === 'npc' ? 'ctemp' : 'itemp'}?t=${t}`), kind === 'npc' ? api('/api/talk?t=' + t) : null]).then(([r, tk]) => {
     if (r.error) return toast(r.error, true);
     TP = { kind, t, orig: JSON.parse(JSON.stringify(r)), cur: r, tab: TP && TP.kind === kind ? TP.tab : 'general' };
+    if (tk) { TP.talk = { entries: tk.entries || [], quests: tk.quests || {} }; TP.talkOrig = JSON.stringify(TP.talk); }
     $('#tpl').classList.add('on'); $('#tpl').classList.remove('picking');
     tplRender();
   });
@@ -2778,7 +2915,7 @@ function openTemplate(kind, t) {
 function closeTemplate() { if (tplDirty() && !confirm('Close without applying your changes?')) return; TP = null; $('#tpl').classList.remove('on', 'picking'); $('#ipop').style.display = 'none'; }
 function tplTabs() {
   return TP.kind === 'npc'
-    ? { general: 'General', stats: 'Stats & skills', gear: 'Equipment & stock', behave: 'Behaviour', patrol: 'Patrol route', talk: 'Talk & quest', adv: 'Advanced' }
+    ? { general: 'General', stats: 'Stats & skills', gear: 'Equipment & stock', behave: 'Behaviour', patrol: 'Patrol route', talk: 'Talk & quest', conv: 'Conversations', adv: 'Advanced' }
     : { general: 'General', stats: 'Stats & requirements', adv: 'Advanced' };
 }
 function tplRender() {
@@ -2827,11 +2964,16 @@ async function tplApply(asNew) {
     t = r.made[1];
     f.name = name; f.reference = TP.kind === 'npc' ? name : name.toLowerCase();
   }
+  if (TP.talk && (talkDirty() || (asNew && TP.talk.entries.length))) {
+    const tr = await api('/api/talk', { t, entries: TP.talk.entries, quests: TP.talk.quests });
+    toast(tr.error || 'Conversations: ' + tr.msg, !!tr.error);
+    TP.talkOrig = JSON.stringify(TP.talk);
+  }
   if (Object.keys(f).length || text) {
     const op = TP.kind === 'npc' ? { op: 'ctempset', t, fields: f, text, respawn: asNew ? false : $('#tresp').checked }
       : { op: 'itempset', t, fields: f, update_map: asNew ? false : $('#tmap').checked };
     await edit([op], `${asNew ? 'new' : 'changed'} ${TP.kind === 'npc' ? 'NPC' : 'item'} template ${t} (${f.name || TP.cur.name})`);
-  } else if (!asNew) return toast('Nothing changed.');
+  } else if (!asNew && !TP.talk) return toast('Nothing changed.');
   if (TP.kind === 'item') {     // the palette and the map show the new name and look
     const i = pal.templates.findIndex(x => x[0] === t), r = await api('/api/itemp?t=' + t);
     const row = [t, r.name, r.sprite[0], bit(r.flags, 2) ? 1 : 0, r.driver, (bit(r.flags, 0) ? 1 : 0) | (bit(r.flags, 1) ? 2 : 0),
@@ -3040,7 +3182,7 @@ const NPC_TABS = {
   },
   talk(b, c) {
     const g = grid2(b, 'What it says');
-    b.insertAdjacentHTML('afterbegin', '<div class="note">Write <b>%s</b> where the player\'s name goes. For a different answer to a question players ask, a custom dialogue system is planned (it needs a server addition).</div>');
+    b.insertAdjacentHTML('afterbegin', '<div class="note">Write <b>%s</b> where the player\'s name goes. Its own answers to what players say, and quest steps, are on the <b>Conversations</b> tab.</div>');
     CTEXT.forEach(([i, l, h]) => row(g, l, txt(() => c.text[i], v => c.text[i] = v, 159), h));
     row(g, 'Dying words chance', num(() => c.data[48], v => c.data[48] = v, 0, 100), '% chance it says its dying words.');
     const g2 = grid2(b, 'Knowledge (answers to players\' questions)');
@@ -3052,6 +3194,69 @@ const NPC_TABS = {
     row(g3, 'Teaches the skill', sel([[0, 'nothing'], ...SKILLS.map((s, i) => [i, s])], () => c.data[50], v => c.data[50] = v));
     row(g3, 'and gives experience', num(() => c.data[51], v => c.data[51] = v, 0), 'only together with a skill');
     row(g3, 'Gives back the item', ipick(() => c.data[66], v => c.data[66] = v, { none: 'nothing' }));
+  },
+  conv(b, c) {
+    const T = TP.talk, E = T.entries, Q = T.quests;
+    b.insertAdjacentHTML('beforeend', `<div class="note">What it answers when a player talks to it, or hands it an item. The first line whose trigger and conditions fit is used,
+      so put special cases above general ones. <b>%s</b> = the player's name. Quest steps remember how far each player got (each quest is a number, 0 at the start).
+      Test without logging in: in the server console, <span class="mono">talktest ${TP.t} &lt;player&gt; &lt;what they say&gt;</span>.</div>`);
+    const qopts = () => Array.from({ length: 31 }, (_, i) => [i + 1, Q[i + 1] ? `${i + 1} · ${Q[i + 1]}` : `${i + 1} · (unnamed)`]);
+    const OPN = [['=', 'is'], ['!=', 'is not'], ['<', 'is below'], ['>', 'is above'], ['<=', 'is at most'], ['>=', 'is at least']];
+    const selS = (opts, get, set) => { const s = document.createElement('select'); s.innerHTML = opts.map(([v, l]) => `<option value="${esc(v)}">${esc(l)}</option>`).join(''); s.value = get(); s.onchange = () => set(s.value); return s; };
+    const line = (items) => { const d = document.createElement('div'); d.className = 'ipick'; d.style.margin = '4px 0'; items.forEach(i => d.append(typeof i === 'string' ? document.createTextNode(i) : i)); return d; };
+    const xb = (f) => { const x = document.createElement('button'); x.className = 'sm'; x.textContent = '×'; x.onclick = () => { f(); tplRender(); }; return x; };
+    E.forEach((e, k) => {
+      const card = document.createElement('div'); card.className = 'note'; card.style.cssText = 'margin:12px 0;color:var(--text)';
+      const hd = document.createElement('div'); hd.className = 'ipick'; hd.innerHTML = `<b style="color:var(--gold2)">${k + 1}.</b>`;
+      hd.append(selS([['say', 'When the player says'], ['give', 'When the player gives it']], () => e.when, v => { e.when = v; tplRender(); }));
+      if (e.when === 'say') { const w = txt(() => e.words, v => e.words = v, 200); w.placeholder = 'ring*   or   hello|hi'; w.style.flex = '1'; hd.append(w); }
+      else hd.append(ipick(() => e.item, v => e.item = v));
+      const sp = document.createElement('span'); sp.style.flex = e.when === 'say' ? '0' : '1'; hd.append(sp);
+      const mk = (t, f, tip) => { const x = document.createElement('button'); x.className = 'sm'; x.textContent = t; x.title = tip || ''; x.onclick = () => { f(); tplRender(); }; hd.append(x); };
+      if (k > 0) mk('↑', () => { [E[k - 1], E[k]] = [E[k], E[k - 1]]; }, 'Move up (checked earlier)');
+      if (k < E.length - 1) mk('↓', () => { [E[k + 1], E[k]] = [E[k], E[k + 1]]; }, 'Move down');
+      mk('Delete', () => { if (confirm('Delete this line?')) E.splice(k, 1); });
+      card.append(hd);
+      if (e.when === 'say') card.insertAdjacentHTML('beforeend', '<div class="hint">Every word must be in what they say. a|b = either word, ring* = ring, rings, ringmaster…</div>');
+      const h = (t) => { const d = document.createElement('div'); d.className = 'lb'; d.style.cssText = 'margin-top:10px;color:var(--dim)'; d.textContent = t; card.append(d); };
+      h('Only if');
+      e.conds.forEach((cd, i) => {
+        const ty = selS([['quest', 'quest step'], ['has', 'the player carries'], ['hasnot', 'the player does not carry'], ['rank', 'the player\'s rank']], () => cd.type,
+          v => { e.conds[i] = v === 'quest' ? { type: v, n: 1, op: '=', v: 0 } : v === 'rank' ? { type: v, op: '>=', v: 0 } : { type: v, t: 0 }; tplRender(); });
+        const parts = [ty];
+        if (cd.type === 'quest') parts.push(sel(qopts(), () => cd.n, v => cd.n = v), selS(OPN, () => cd.op, v => cd.op = v), num(() => cd.v, v => cd.v = v, 0, 65535));
+        else if (cd.type === 'rank') parts.push(selS(OPN, () => cd.op, v => cd.op = v), num(() => cd.v, v => cd.v = v, 0, 30));
+        else parts.push(ipick(() => cd.t, v => cd.t = v));
+        parts.push(xb(() => e.conds.splice(i, 1)));
+        card.append(line(parts));
+      });
+      if (!e.conds.length) card.insertAdjacentHTML('beforeend', '<div class="hint">always</div>');
+      const ac = document.createElement('button'); ac.className = 'sm'; ac.textContent = '+ condition'; ac.onclick = () => { e.conds.push({ type: 'quest', n: 1, op: '=', v: 0 }); tplRender(); }; card.append(ac);
+      h('It answers (each line is said in turn)');
+      const ta = txt(() => e.answers.join('\n'), v => e.answers = v.split('\n'), 4000, true); ta.style.height = '70px'; card.append(ta);
+      h('Then');
+      e.acts.forEach((a, i) => {
+        const ty = selS([['set', 'set quest step'], ['add', 'add to quest step'], ['item', 'give the player an item'], ['exp', 'give experience'], ['gold', 'give money (silver)'], ['take', 'take an item from the player'], ['keep', 'keep the item they gave']],
+          () => a.type, v => { e.acts[i] = v === 'set' || v === 'add' ? { type: v, n: 1, v: 1 } : v === 'keep' ? { type: v } : { type: v, v: 0 }; tplRender(); });
+        const parts = [ty];
+        if (a.type === 'set' || a.type === 'add') parts.push(sel(qopts(), () => a.n, v => a.n = v), a.type === 'set' ? ' to ' : ' + ', num(() => a.v, v => a.v = v, a.type === 'add' ? -65535 : 0, 65535));
+        else if (a.type === 'item' || a.type === 'take') parts.push(ipick(() => a.v, v => a.v = v));
+        else if (a.type === 'exp' || a.type === 'gold') parts.push(num(() => a.v, v => a.v = v, 0));
+        parts.push(xb(() => e.acts.splice(i, 1)));
+        card.append(line(parts));
+      });
+      const aa = document.createElement('button'); aa.className = 'sm'; aa.textContent = '+ action'; aa.onclick = () => { e.acts.push({ type: 'set', n: 1, v: 1 }); tplRender(); }; card.append(aa);
+      if (e.when === 'give' && !e.acts.some(a => a.type === 'keep')) card.insertAdjacentHTML('beforeend', '<div class="hint">It hands the item back unless "keep the item they gave" is among the actions.</div>');
+      b.append(card);
+    });
+    const add = document.createElement('button'); add.className = 'btn sec'; add.textContent = '+ Add a line';
+    add.onclick = () => { E.push({ when: 'say', words: '', item: 0, conds: [], answers: [''], acts: [] }); tplRender(); };
+    b.append(add);
+    const g = grid2(b, 'Quest names (shared by all NPCs)');
+    for (let i = 1; i <= 31; i++) {
+      if (!Q[i] && i > 1 && !Q[i - 1]) continue;
+      row(g, 'Quest ' + i, txt(() => Q[i] || '', v => { if (v.trim()) Q[i] = v; else delete Q[i]; }, 59));
+    }
   },
   adv(b, c) {
     b.insertAdjacentHTML('beforeend', '<div class="note">Every driver value of the template. The other tabs set the usual ones; these are for special NPCs (data 0-9 depend on the special driver).</div>');
