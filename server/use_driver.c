@@ -2775,6 +2775,10 @@ void use_driver(int cn,int in,int carried)
                         if (map[m].ch || map[m].to_ch) return;
                 }
 
+                // MyV2: quest rules for the item on this tile (npctalk.dat "at x y"), e.g. a portal
+                // that takes a player somewhere else once they reached a quest step
+                if (cn && !carried && talk_custom_use(cn,in)) { ch[cn].cerrno=ERR_SUCCESS; return; }
+
                 if (it[in].flags&IF_USESPECIAL) {
                         switch(it[in].driver) {
                                 case 1:         ret=use_create_item(cn,in); break; // uses may-deactivate

@@ -161,6 +161,16 @@ static void con_cmd(char *line)
 		talk_set_echo(NULL);
 		return;
 	}
+	if (!strcmp(w[0],"talkuse")) {	// talkuse <player> <x> <y>: as if the player used the item there
+		if (!(co=con_player(w[1]))) return;
+		talk_set_echo(con_echo);
+		v=talk_test_use(co,atoi(w[2]),atoi(w[3]));
+		talk_set_echo(NULL);
+		if (v<0) out("  No item on %s,%s.\n",w[2],w[3]);
+		else if (!v) out("  (no rule took it: the item works as usual)\n");
+		else out("  (a rule took it%s)\n",ch[co].used==USE_ACTIVE ? "" : "; teleport and messages only work for a player who is online");
+		return;
+	}
 	if (!strcmp(w[0],"talkreload")) {
 		n=talk_load();
 		out("  NPC dialogue loaded: %d entries%s.\n",talk_entries(),n ? " (some lines were not understood)" : "");
@@ -179,16 +189,17 @@ static void con_cmd(char *line)
 		    "  talkreload                    read the NPC dialogue file again\n"
 		    "  talktest <npc template> <player> <text>   try a conversation\n"
 		    "  talkkill <player> <npc template>          try a quest kill\n"
+		    "  talkuse <player> <x> <y>                  try using the item there\n"
 		    "  shutdown                      save and stop the server\n");
 	} else if (!strcmp(w[0],"quest")) {
 		if (!(co=con_player(w[1]))) return;
 		if (*w[2]) {
 			n=atoi(w[2]);
-			if (n<1 || n>31 || !*w[3]) { out("  quest <player> <1-31> <value>\n"); return; }
+			if (n<1 || n>255 || !*w[3]) { out("  quest <player> <1-255> <value>\n"); return; }
 			quest_set(co,n,atoi(w[3]));
 			out("  %s: quest %d = %d\n",ch[co].name,n,quest_get(co,n));
 		} else {
-			for (n=1,v=0; n<=31; n++) if (quest_get(co,n)) { out("  %s: quest %d = %d\n",ch[co].name,n,quest_get(co,n)); v++; }
+			for (n=1,v=0; n<=255; n++) if (quest_get(co,n)) { out("  %s: quest %d = %d\n",ch[co].name,n,quest_get(co,n)); v++; }
 			if (!v) out("  %s has no quest steps yet.\n",ch[co].name);
 		}
 	} else if (!strcmp(w[0],"who")) {

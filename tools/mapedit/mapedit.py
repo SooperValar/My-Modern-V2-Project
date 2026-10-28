@@ -151,8 +151,11 @@ def talk_parse(text):
             elif k == 'npc' and a:
                 cur, e = int(a[0]), None
                 npcs.setdefault(cur, [])
+            elif k == 'at' and len(a) >= 2:
+                cur, e = '@%d,%d' % (int(a[0]), int(a[1])), None
+                npcs.setdefault(cur, [])
             elif k == 'when' and cur is not None and a:
-                e = {'when': a[0] if a[0] in ('give', 'kill') else 'say', 'words': '', 'item': 0, 'conds': [], 'answers': [], 'acts': []}
+                e = {'when': 'use' if isinstance(cur, str) else a[0] if a[0] in ('give', 'kill') else 'say', 'words': '', 'item': 0, 'conds': [], 'answers': [], 'acts': []}
                 if a[0] == 'give':
                     e['item'] = int(a[1])
                 else:
@@ -182,8 +185,8 @@ def talk_parse(text):
                 e['acts'].append({'type': 'teleport', 'x': int(a[0]), 'y': int(a[1])})
             elif k == 'take' and a[0] == 'item':
                 e['acts'].append({'type': 'take', 'v': int(a[1])})
-            elif k == 'keep':
-                e['acts'].append({'type': 'keep'})
+            elif k in ('keep', 'pass'):
+                e['acts'].append({'type': k})
         except (IndexError, ValueError):
             continue
     return {'names': quests, 'steps': steps}, npcs
@@ -197,13 +200,18 @@ def talk_text(quests, npcs, names):
         for v, t in sorted(qs.get(n, []), key=lambda x: int(x[0])):
             if str(t).strip():
                 out.append('step %d %d %s' % (n, int(v), ' '.join(str(t).split())))
-    for t in sorted(npcs):
+    for t in sorted(npcs, key=lambda k: (isinstance(k, str), str(k).zfill(12))):
         if not npcs[t]:
             continue
-        out += ['', 'npc %d %s' % (t, names.get(t, ''))]
+        if isinstance(t, str):
+            x, y = t[1:].split(',')
+            out += ['', 'at %d %d %s' % (int(x), int(y), names.get(t, ''))]
+        else:
+            out += ['', 'npc %d %s' % (t, names.get(t, ''))]
         for e in npcs[t]:
             clean = lambda x: ' '.join(str(x).split())
-            if e.get('when') == 'give': out.append('when give %d' % int(e.get('item', 0)))
+            if isinstance(t, str) or e.get('when') == 'use': out.append('when use')
+            elif e.get('when') == 'give': out.append('when give %d' % int(e.get('item', 0)))
             elif e.get('when') == 'kill': out.append('when kill ' + clean(e.get('words', '')).lower())
             else: out.append('when say ' + clean(e.get('words', '')).lower())
             for c in e.get('conds', []):
@@ -224,7 +232,7 @@ def talk_text(quests, npcs, names):
                 elif ty == 'skill': out.append('teach skill %d' % int(a['v']))
                 elif ty == 'teleport': out.append('teleport %d %d' % (int(a['x']), int(a['y'])))
                 elif ty == 'take': out.append('take item %d' % int(a['v']))
-                elif ty == 'keep': out.append('keep')
+                elif ty in ('keep', 'pass'): out.append(ty)
             out.append('end')
     return '\n'.join(out) + '\n'
 
@@ -648,7 +656,12 @@ class World:
             bk = os.path.join(self.dat, 'mapedit-backups')
             os.makedirs(bk, exist_ok=True)
             shutil.copy2(p, os.path.join(bk, 'npctalk-%s.dat' % time.strftime('%Y%m%d-%H%M%S')))
-        names = {t: self.tname(t) for t in npcs if self.tchar is not None and 0 < t < MAXTCHARS}
+        names = {t: self.tname(t) for t in npcs if isinstance(t, int) and self.tchar is not None and 0 < t < MAXTCHARS}
+        for t in npcs:
+            if isinstance(t, str):
+                x, y = map(int, t[1:].split(','))
+                i = self.tile(x, y)[4] if 0 <= x < MAPX and 0 <= y < MAPY else 0
+                names[t] = cstr(self.item[i * ITEM_SIZE + I_NAME:i * ITEM_SIZE + I_NAME + 40]) if 0 < i < MAXITEM else ''
         with open(p + '.tmp', 'w', encoding='latin-1', errors='replace') as f:
             f.write(talk_text(quests, npcs, names))
         os.replace(p + '.tmp', p)
@@ -1686,7 +1699,7 @@ def make_handler(world, sprites, page, minimap, ctl):
             if u.path == '/api/talk':
                 qs, npcs = world.talk_load()
                 return self.js({'quests': {str(k): v for k, v in qs['names'].items()}, 'steps': {str(k): v for k, v in qs['steps'].items()},
-                                'entries': npcs.get(int(q.get('t', 0)), []),
+                                'entries': npcs.get('@' + q['at'] if 'at' in q else int(q.get('t', 0)), []),
                                 'givers': {str(t): len(v) for t, v in npcs.items() if v}})
             if u.path == '/api/ctemp':
                 return self.js(world.ctemp(int(q['t'])) or {'error': 'no such NPC template'})
@@ -1727,10 +1740,12 @@ def make_handler(world, sprites, page, minimap, ctl):
             if u.path == '/api/talk':
                 qs, npcs = world.talk_load()
                 if 'quests' in body:
-                    qs['names'] = {int(k): str(v)[:60] for k, v in body['quests'].items() if 1 <= int(k) <= 31 and str(v).strip()}
+                    qs['names'] = {int(k): str(v)[:60] for k, v in body['quests'].items() if 1 <= int(k) <= 255 and str(v).strip()}
                 if 'steps' in body:
-                    qs['steps'] = {int(k): [[int(a), str(b)[:300]] for a, b in v] for k, v in body['steps'].items() if 1 <= int(k) <= 31}
-                if 't' in body:
+                    qs['steps'] = {int(k): [[int(a), str(b)[:300]] for a, b in v] for k, v in body['steps'].items() if 1 <= int(k) <= 255}
+                if 'at' in body:
+                    npcs['@%d,%d' % tuple(int(v) for v in body['at'])] = body.get('entries') or []
+                elif 't' in body:
                     npcs[int(body['t'])] = body.get('entries') or []
                 return self.js({'msg': world.talk_save(qs, npcs, ctl)})
             if u.path == '/api/edit':
@@ -2870,7 +2885,7 @@ function itemEditor(el, r, x, y, ro) {
       <button class="sm pk" title="Then click the spot on the map">Pick on map</button><button class="sm gt">Go there</button></div>
       ${it.data[2] ? '<div class="warn">This is a labyrinth portal (data 2 = ' + it.data[2] + '): it takes players to their next lab part, not to x, y. <button class="sm np">Make it a normal portal</button></div>' : ''}` : ''}
     <details><summary class="lb" style="cursor:pointer">Data values (advanced, driver ${it.driver})</summary><div class="dgrid">${it.data.map((v, i) => `<input type="number" data-i="${i}" value="${v}" title="data[${i}]">`).join('')}</div></details>
-    <div style="display:flex;gap:8px;align-items:center"><button class="btn pri" style="padding:5px 12px">Save item</button><button class="sm et" title="Change what every ${esc(it.name)} is made from: look, stats, flags…">Edit its template…</button></div>`;
+    <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap"><button class="btn pri" style="padding:5px 12px">Save item</button><button class="sm et" title="Change what every ${esc(it.name)} is made from: look, stats, flags…">Edit its template…</button><button class="sm qr" title="What happens when a player uses it, by quest step (a portal that leads elsewhere, a door that only opens after a quest…)">Quest rules…</button></div>`;
   el.appendChild(box);
   const nm = box.querySelector('.nm2'), ds = box.querySelector('.ds2');
   nm.value = it.name; ds.value = it.desc || '';
@@ -2885,6 +2900,7 @@ function itemEditor(el, r, x, y, ro) {
   };
   box.querySelector('.btn').onclick = () => edit([collect()], 'item ' + nm.value, true);
   box.querySelector('.et').disabled = false; box.querySelector('.et').onclick = () => openTemplate('item', it.temp);
+  box.querySelector('.qr').disabled = false; box.querySelector('.qr').onclick = () => openTemplate('use', [x, y, it.name]);
   if (tele) {
     const pk = box.querySelector('.pk');
     pk.onclick = () => { destPick = { x, y }; pk.classList.add('on'); toast('Click the spot on the map where this portal should lead. (Esc cancels)'); cv.style.cursor = 'cell'; };
@@ -2947,6 +2963,14 @@ function talkDirty() { return TP && TP.talk && JSON.stringify(TP.talk) !== TP.ta
 function tplDirty() { return TP && (Object.keys(tplChanged()).length || talkDirty() || (TP.kind === 'npc' && JSON.stringify(TP.cur.text) !== JSON.stringify(TP.orig.text))); }
 function openTemplate(kind, t) {
   if (tplDirty() && !(TP.kind === kind && TP.t === t) && !confirm('You have changes here you did not apply. Leave them?')) return;
+  if (kind === 'use') {    // quest rules of the item on a tile: t = [x, y, name]
+    api(`/api/talk?at=${t[0]},${t[1]}`).then(tk => {
+      TP = { kind, t: t[0] + ',' + t[1], x: t[0], y: t[1], orig: { name: t[2] }, cur: { name: t[2] }, tab: 'conv' };
+      TP.talk = { entries: tk.entries || [], quests: tk.quests || {}, steps: tk.steps || {} }; TP.talkOrig = JSON.stringify(TP.talk);
+      $('#tpl').classList.add('on'); $('#tpl').classList.remove('picking'); tplRender();
+    });
+    return;
+  }
   Promise.all([api(`/api/${kind === 'npc' ? 'ctemp' : 'itemp'}?t=${t}`), kind === 'npc' ? api('/api/talk?t=' + t) : null]).then(([r, tk]) => {
     if (r.error) return toast(r.error, true);
     TP = { kind, t, orig: JSON.parse(JSON.stringify(r)), cur: r, tab: TP && TP.kind === kind ? TP.tab : 'general' };
@@ -2957,12 +2981,27 @@ function openTemplate(kind, t) {
 }
 function closeTemplate() { if (tplDirty() && !confirm('Close without applying your changes?')) return; TP = null; $('#tpl').classList.remove('on', 'picking'); $('#ipop').style.display = 'none'; }
 function tplTabs() {
+  if (TP.kind === 'use') return { conv: 'Quest rules' };
   return TP.kind === 'npc'
     ? { general: 'General', stats: 'Stats & skills', gear: 'Equipment & stock', behave: 'Behaviour', patrol: 'Patrol route', talk: 'Talk & quest', conv: 'Conversations', adv: 'Advanced' }
     : { general: 'General', stats: 'Stats & requirements', adv: 'Advanced' };
 }
 function tplRender() {
   const c = TP.cur, el = $('#tpl');
+  if (TP.kind === 'use') {
+    el.querySelector('.ttl').innerHTML = '<span style="vertical-align:middle"></span><small></small>';
+    el.querySelector('.ttl span').textContent = 'Quest rules: ' + (c.name || 'item');
+    el.querySelector('.ttl small').textContent = `on ${TP.x}, ${TP.y} · when a player uses it`;
+    el.querySelector('.mtabs').innerHTML = '<button class="on">Quest rules</button>';
+    const body = el.querySelector('.mbody'); body.innerHTML = ''; NPC_TABS.conv(body, c);
+    el.querySelector('.mft').innerHTML = '<span class="sp"></span><button class="btn ghost" id="tcancel">Close</button><button class="btn pri" id="tapply">Apply</button>';
+    $('#tcancel').onclick = closeTemplate;
+    $('#tapply').onclick = async () => {
+      const tr = await api('/api/talk', { at: [TP.x, TP.y], entries: TP.talk.entries, quests: TP.talk.quests, steps: TP.talk.steps });
+      toast(tr.error || 'Quest rules: ' + tr.msg, !!tr.error); TP.talkOrig = JSON.stringify(TP.talk);
+    };
+    return;
+  }
   el.querySelector('.ttl').innerHTML = '';
   el.querySelector('.ttl').append(thumb(TP.kind === 'npc' ? c.sprite + 8 : c.sprite[0], 34));
   el.querySelector('.ttl').insertAdjacentHTML('beforeend', `<span style="vertical-align:middle;margin-left:8px"></span><small></small>`);
@@ -2989,6 +3028,7 @@ function tplRender() {
 }
 function tplChanged() {
   const out = {}, o = TP.orig, c = TP.cur;
+  if (TP.kind === 'use') return out;
   for (const k of Object.keys(c)) {
     if (['t', 'count', 'pending', 'made', 'names', 'onmap', 'text'].includes(k)) continue;
     if (JSON.stringify(c[k]) !== JSON.stringify(o[k])) out[k] = c[k];
@@ -3239,12 +3279,21 @@ const NPC_TABS = {
     row(g3, 'Gives back the item', ipick(() => c.data[66], v => c.data[66] = v, { none: 'nothing' }));
   },
   conv(b, c) {
-    const T = TP.talk, E = T.entries, Q = T.quests, S = T.steps;
-    b.insertAdjacentHTML('beforeend', `<div class="note">What happens when a player talks to it, hands it an item, or kills something for its quests.
+    const T = TP.talk, E = T.entries, Q = T.quests, S = T.steps, isUse = TP.kind === 'use';
+    if (isUse) b.insertAdjacentHTML('beforeend', `<div class="note">What happens when a player uses this item (a portal, door, lever, chest…). The first rule whose conditions fit the player is used,
+      and it <b>replaces</b> what the item normally does, unless it has the action "then the item works as usual". If no rule fits, the item works as usual.
+      Example for a portal: "quest 3 is at least 5 → send the player to the lair", then "always → tell: The portal is dark."
+      Try it in the server console: <span class="mono">talkuse &lt;player&gt; ${TP.x} ${TP.y}</span>. The rules belong to the tile, so they stay if you replace the item there.</div>`);
+    else b.insertAdjacentHTML('beforeend', `<div class="note">What happens when a player talks to it, hands it an item, or kills something for its quests.
       For each player the first line whose trigger and conditions fit is used, so put special cases above general ones.
-      <b>%s</b> = the player's name, <b>{q2}</b> = how far they are in quest 2. Quests are numbered 1-31; every player starts each at step 0, and all NPCs share them, so a quest chain can lead from one NPC to the next.
+      <b>%s</b> = the player's name, <b>{q2}</b> = how far they are in quest 2. Quests are numbered 1-255; every player starts each at step 0, and all NPCs share them, so a quest chain can lead from one NPC to the next.
       Try it without logging in, in the server console: <span class="mono">talktest ${TP.t} &lt;player&gt; &lt;what they say&gt;</span> · <span class="mono">talkkill &lt;player&gt; &lt;template&gt;</span> · <span class="mono">quest &lt;player&gt;</span>.</div>`);
-    const qopts = () => Array.from({ length: 31 }, (_, i) => [i + 1, Q[i + 1] ? `${i + 1} · ${Q[i + 1]}` : `${i + 1} · (unnamed)`]);
+    const qopts = (cur) => {   // the named quests, a few free numbers after them, and the one in use
+      const named = Object.keys(Q).map(Number).filter(n => Q[n]), top = Math.max(0, ...named);
+      const ns = new Set([...named, ...Array.from({ length: 5 }, (_, i) => top + 1 + i)].filter(n => n >= 1 && n <= 255));
+      for (const e2 of E) { for (const x of e2.conds) if (x.n) ns.add(+x.n); for (const x of e2.acts) if (x.n) ns.add(+x.n); }
+      return [...ns].sort((a, b2) => a - b2).map(n => [n, Q[n] ? `${n} · ${Q[n]}` : `${n} · (unnamed)`]);
+    };
     const OPN = [['=', 'is'], ['!=', 'is not'], ['<', 'is below'], ['>', 'is above'], ['<=', 'is at most'], ['>=', 'is at least']];
     const selS = (opts, get, set) => { const s = document.createElement('select'); s.innerHTML = opts.map(([v, l]) => `<option value="${esc(v)}">${esc(l)}</option>`).join(''); s.value = get(); s.onchange = () => set(s.value); return s; };
     const line = (items) => { const d = document.createElement('div'); d.className = 'ipick'; d.style.margin = '4px 0'; items.forEach(i => d.append(typeof i === 'string' ? document.createTextNode(i) : i)); return d; };
@@ -3272,13 +3321,14 @@ const NPC_TABS = {
     E.forEach((e, k) => {
       const card = document.createElement('div'); card.className = 'note'; card.style.cssText = 'margin:12px 0;color:var(--text)';
       const hd = document.createElement('div'); hd.className = 'ipick'; hd.innerHTML = `<b style="color:var(--gold2)">${k + 1}.</b>`;
-      hd.append(selS([['say', 'When the player says'], ['give', 'When the player gives it'], ['kill', 'When the player kills']], () => e.when, v => { e.when = v; tplRender(); }));
+      if (isUse) { e.when = 'use'; hd.insertAdjacentHTML('beforeend', '<span style="flex:1">When a player uses it</span>'); }
+      else hd.append(selS([['say', 'When the player says'], ['give', 'When the player gives it'], ['kill', 'When the player kills']], () => e.when, v => { e.when = v; tplRender(); }));
       if (e.when === 'say') { const w = txt(() => e.words, v => e.words = v, 200); w.placeholder = 'ring*   or   hello|hi'; w.style.flex = '1'; hd.append(w); }
       else if (e.when === 'kill') {
         const w = txt(() => e.words, v => e.words = v, 200); w.placeholder = 'NPC name (Spider*, Ghost|Skeleton) or #123,124'; w.style.flex = '1'; hd.append(w);
         const pk = document.createElement('button'); pk.className = 'sm'; pk.textContent = 'Pick NPC…'; pk.onclick = () => npcPick(pk, t => { e.words = e.words && !e.words.startsWith('#') ? e.words + '|' + t[1] : t[1]; tplRender(); }); hd.append(pk);
       }
-      else hd.append(ipick(() => e.item, v => e.item = v));
+      else if (!isUse) hd.append(ipick(() => e.item, v => e.item = v));
       const sp = document.createElement('span'); sp.style.flex = e.when === 'give' ? '1' : '0'; hd.append(sp);
       const mk = (t, f, tip) => { const x = document.createElement('button'); x.className = 'sm'; x.textContent = t; x.title = tip || ''; x.onclick = () => { f(); tplRender(); }; hd.append(x); };
       if (k > 0) mk('↑', () => { [E[k - 1], E[k]] = [E[k], E[k - 1]]; }, 'Move up (checked earlier)');
@@ -3303,14 +3353,14 @@ const NPC_TABS = {
       });
       if (!e.conds.length) card.insertAdjacentHTML('beforeend', '<div class="hint">always</div>');
       const ac = document.createElement('button'); ac.className = 'sm'; ac.textContent = '+ condition'; ac.onclick = () => { e.conds.push({ type: 'quest', n: 1, op: '=', v: 0 }); tplRender(); }; card.append(ac);
-      h(e.when === 'kill' ? 'Message to the player (each line in turn)' : 'It answers aloud (each line is said in turn)');
+      h(e.when === 'kill' || isUse ? 'Message to the player (each line in turn)' : 'It answers aloud (each line is said in turn)');
       const ta = txt(() => e.answers.join('\n'), v => e.answers = v.split('\n'), 4000, true); ta.style.height = '64px'; card.append(ta);
       h('Then');
       e.acts.forEach((a, i) => {
         const ty = selS([['set', 'set quest step'], ['add', 'add to quest step'], ['item', 'give an item'], ['exp', 'give experience'], ['gold', 'give money (silver)'],
           ['luck', 'give luck'], ['skill', 'teach a skill'], ['take', 'take an item from the player'], ['keep', 'keep the item they gave'],
-          ['tell', 'tell the player'], ['announce', 'announce to everyone'], ['teleport', 'send the player to']],
-          () => a.type, v => { e.acts[i] = v === 'set' || v === 'add' ? { type: v, n: 1, v: 1 } : v === 'keep' ? { type: v } : v === 'tell' || v === 'announce' ? { type: v, s: '' } : v === 'teleport' ? { type: v, x: 512, y: 512 } : { type: v, v: 0 }; tplRender(); });
+          ['tell', 'tell the player'], ['announce', 'announce to everyone'], ['teleport', 'send the player to'], ['pass', 'then the item works as usual']],
+          () => a.type, v => { e.acts[i] = v === 'set' || v === 'add' ? { type: v, n: 1, v: 1 } : v === 'keep' || v === 'pass' ? { type: v } : v === 'tell' || v === 'announce' ? { type: v, s: '' } : v === 'teleport' ? { type: v, x: 512, y: 512 } : { type: v, v: 0 }; tplRender(); });
         const parts = [ty];
         if (a.type === 'set' || a.type === 'add') parts.push(sel(qopts(), () => a.n, v => a.n = v), a.type === 'set' ? ' to ' : ' + ', num(() => a.v, v => a.v = v, a.type === 'add' ? -65535 : 0, 65535));
         else if (a.type === 'item' || a.type === 'take') parts.push(ipick(() => a.v, v => a.v = v));
@@ -3331,9 +3381,9 @@ const NPC_TABS = {
     });
     const bar = document.createElement('div'); bar.className = 'ipick'; bar.style.gap = '10px';
     const add = document.createElement('button'); add.className = 'btn sec'; add.textContent = '+ Add a line';
-    add.onclick = () => { E.push({ when: 'say', words: '', item: 0, conds: [], answers: [''], acts: [] }); tplRender(); };
+    add.onclick = () => { E.push({ when: isUse ? 'use' : 'say', words: '', item: 0, conds: [], answers: [''], acts: [] }); tplRender(); };
     const kc = document.createElement('button'); kc.className = 'btn sec'; kc.textContent = '+ Kill counter…'; kc.title = '"Kill 5 spiders in Kwai Hall": makes the two lines that count the kills';
-    bar.append(add, kc); b.append(bar);
+    bar.append(add); if (!isUse) bar.append(kc); b.append(bar);
     // the kill counter helper
     const kbox = document.createElement('div'); kbox.className = 'note'; kbox.style.display = 'none'; b.append(kbox);
     kc.onclick = () => {
@@ -3365,8 +3415,10 @@ const NPC_TABS = {
     };
     // quest names and journal steps
     const h4 = document.createElement('h4'); h4.textContent = 'Quests (shared by all NPCs) · the player sees the step texts with #journal'; b.append(h4);
-    for (let i = 1; i <= 31; i++) {
-      if (!Q[i] && !(S[i] && S[i].length) && i > 1 && !Q[i - 1]) continue;
+    const shown = new Set(Object.keys(Q).map(Number).filter(n => Q[n]).concat(Object.keys(S).map(Number).filter(n => S[n] && S[n].length)));
+    shown.add(Math.max(0, ...shown) + 1);
+    for (const i of [...shown].sort((a, b2) => a - b2)) {
+      if (i < 1 || i > 255) continue;
       const box = document.createElement('div'); box.className = 'note'; box.style.margin = '6px 0';
       const nmI = txt(() => Q[i] || '', v => { if (v.trim()) Q[i] = v; else delete Q[i]; }, 59); nmI.placeholder = 'name, e.g. The lost ring'; nmI.style.flex = '1';
       box.append(line([`Quest ${i} `, nmI]));
