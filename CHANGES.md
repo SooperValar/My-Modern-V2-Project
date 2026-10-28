@@ -208,6 +208,12 @@ The design is in `docs/ITEM_TIERS.md`. This first part builds the core:
 - `tools/design/item_tier_samples.py` prints sample rolls (the same rules, for looking at numbers).
 - Build: `tier.c` is a new file, so the Makefile changed; `claude-sync.sh get` now copies the Makefile too.
 
+#### Map editor in the browser (`tools/mapedit/mapedit.py`, also in the Windows Server folder)
+- Run in the Ubuntu server folder: `python3 /mnt/c/Users/Cody/Desktop/MyV2/Server/mapedit.py`, then open http://localhost:8080. Python standard library only.
+- Shows the world the way the game draws it (the client's own sprites, back-to-front order), with zoom from close-up to whole regions, the world minimap to jump around, go-to by position or zone, NPCs, a grid and any tile flag as a blue overlay. Clicking a tile shows its floor/object sprites, light, flags, item (name, template, driver, data, description) and NPC.
+- Tools: Floor (pick from every floor sprite in use, sorted by use; build mode's random variants; Ctrl+click several for a random mix), Place (any item template by name or number: walls/furniture are drawn into the tile with their blocking, usable things become items, like build mode; or an object sprite picked off the map), Erase (object and item, floor stays), Flags (set/clear/toggle). Drag to paint, Shift+drag for a rectangle (up to 200x200), right-click to pick up what's on a tile. Undo/redo per stroke.
+- Editing only while the game server is stopped (view-only while it runs). Changes stay in memory until Save, which first copies map.dat and item.dat to `.dat/mapedit-backups/<date-time>/`, and refuses if the files changed on disk since loading. Relight runs `./server light` afterwards. Pentagrams still need build mode (they get numbered there).
+
 #### Server console
 - Commands typed into the terminal the server runs in (`console.c`, read without blocking once per pass of the main loop): `help`, `who` (players online with rank, place, god/imp), `raise <player> <exp>`, `lower <player> <exp>`, `gold <player> <gold> [silver]`, `announce <text>` (to everyone, as "[Server] ..."), `tell <player> <text>`, `kick <player>`, `shutdown` (clean stop, like Ctrl+C). Player names can be shortened like in game; raise/lower/gold also work on players who are offline. Everything is logged with "CONSOLE:".
 - Only when the server runs in a terminal (started with an argument, so it doesn't detach); started plain (`./server`) it detaches, and the console switches itself off.
