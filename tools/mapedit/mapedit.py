@@ -2429,7 +2429,13 @@ function draw() {
     }
   }
 }
-function loop() { if (needDraw) draw(); requestAnimationFrame(loop); }
+function loop() {
+  try {
+    if (!W || !H) { const r = $('#view').getBoundingClientRect(); if (r.width && r.height) resize(); }   // the map area got its size
+    else if (needDraw) draw();
+  } catch (e) { console.error(e); }      // never let one bad frame stop the drawing for good
+  requestAnimationFrame(loop);
+}
 
 // ---------------------------------------------------------------- minimap and world map
 const mini = new Image(); let miniOk = false;
