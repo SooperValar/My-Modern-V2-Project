@@ -228,6 +228,16 @@ The design is in `docs/ITEM_TIERS.md`. This first part builds the core:
   - `talktest <NPC template> <player> <text>` tries a conversation without logging in, printing the answers.
   - `talkreload` reads the file again. The editor sends this itself when you apply changes while the server runs, so new lines work right away.
 - Copying an NPC template (placing a copy, "Save as a new NPC") copies its conversations; a removed editor-made NPC loses them.
+- **Kill tracking** ("When the player kills"):
+  - The trigger matches the killed NPC by name (`Spider*`, `Ghost|Skeleton`; every Spider counts, whatever its template) or by template numbers (`#35,36`).
+  - Credit goes to the player who killed it, or whose companion did, and to the members of their group who can see them. Each one only gets it if the line's conditions fit them, so with a quest-step condition a kill only counts while that quest is active.
+  - Hooked into `do_char_killed` next to the soulstone drop.
+  - Console: `talkkill <player> <template>` tries one.
+- **Kill counter** button in the editor: "kill N of X (in area A) while quest Q is at step S" makes the two lines that count the kills in a quest of their own ("Spider: 3/5") and move quest Q on at the last one.
+- New condition **if area** (part of an area name, from `area.c`): for kills the victim's position, otherwise the player's.
+- New actions: **tell** (only the player sees it), **announce** (everyone online), **give luck**, **teach skill**, **teleport x y** (pick on map). `{q2}` in any text shows the player's value of quest 2. For a kill, the message lines go to the player.
+- **Quest journal:** quests have a name and journal texts per step (`step <n> <value> <text>`, edited under the quest in the Conversations tab). The new player command `#journal` lists the player's quests with the text for the step they are at (the highest step text at or below it).
+- Tested with the real server (console): kills counted only once the quest was at the step, 1/3 and 2/3 across two Skeleton templates, the third finishing the step, a template-number match, a wrong area blocking its line, and no counting after the step was done.
 - Tested with the real server: a quest intro over two lines that sets step 1, a follow-up line for step 1 and above, non-matching speech ignored, steps shown and reset from the console.
 
 #### Editor: live editing while the server runs

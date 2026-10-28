@@ -135,6 +135,7 @@ OPS = ('=', '!=', '<', '>', '<=', '>=')
 
 def talk_parse(text):
     quests, npcs, cur, e = {}, {}, None, None
+    steps = {}
     for line in text.splitlines():
         line = line.strip()
         if not line or line.startswith('#'):
@@ -145,11 +146,13 @@ def talk_parse(text):
         try:
             if k == 'quest' and a:
                 quests[int(a[0])] = rest.split(None, 1)[1] if len(a) > 1 else ''
+            elif k == 'step' and len(a) >= 2:
+                steps.setdefault(int(a[0]), []).append([int(a[1]), rest.split(None, 2)[2] if len(a) > 2 else ''])
             elif k == 'npc' and a:
                 cur, e = int(a[0]), None
                 npcs.setdefault(cur, [])
             elif k == 'when' and cur is not None and a:
-                e = {'when': 'give' if a[0] == 'give' else 'say', 'words': '', 'item': 0, 'conds': [], 'answers': [], 'acts': []}
+                e = {'when': a[0] if a[0] in ('give', 'kill') else 'say', 'words': '', 'item': 0, 'conds': [], 'answers': [], 'acts': []}
                 if a[0] == 'give':
                     e['item'] = int(a[1])
                 else:
@@ -164,45 +167,62 @@ def talk_parse(text):
                 elif a[0] == 'has': e['conds'].append({'type': 'has', 't': int(a[1])})
                 elif a[0] == '!has': e['conds'].append({'type': 'hasnot', 't': int(a[1])})
                 elif a[0] == 'rank': e['conds'].append({'type': 'rank', 'op': a[1], 'v': int(a[2])})
+                elif a[0] == 'area': e['conds'].append({'type': 'area', 's': rest.split(None, 1)[1] if len(a) > 1 else ''})
             elif k == 'answer':
                 e['answers'].append(rest)
             elif k in ('set', 'add') and a[0] == 'quest':
                 e['acts'].append({'type': k, 'n': int(a[1]), 'v': int(a[2])})
-            elif k == 'give' and a[0] in ('item', 'exp', 'gold'):
+            elif k == 'give' and a[0] in ('item', 'exp', 'gold', 'luck'):
                 e['acts'].append({'type': a[0], 'v': int(a[1])})
+            elif k in ('tell', 'announce'):
+                e['acts'].append({'type': k, 's': rest})
+            elif k == 'teach' and a[0] == 'skill':
+                e['acts'].append({'type': 'skill', 'v': int(a[1])})
+            elif k == 'teleport':
+                e['acts'].append({'type': 'teleport', 'x': int(a[0]), 'y': int(a[1])})
             elif k == 'take' and a[0] == 'item':
                 e['acts'].append({'type': 'take', 'v': int(a[1])})
             elif k == 'keep':
                 e['acts'].append({'type': 'keep'})
         except (IndexError, ValueError):
             continue
-    return quests, npcs
+    return {'names': quests, 'steps': steps}, npcs
 
 
 def talk_text(quests, npcs, names):
-    out = ['# MyV2 custom NPC dialogue - written by the MyV2 Editor (the server reads it: npctalk.c)', '']
-    for n in sorted(quests):
-        out.append('quest %d %s' % (n, quests[n]))
+    out = ['# MyV2 custom NPC dialogue, kill tracking and quest steps - written by the MyV2 Editor (the server reads it: npctalk.c)', '']
+    qn, qs = quests.get('names', {}), quests.get('steps', {})
+    for n in sorted(set(qn) | set(qs)):
+        out.append('quest %d %s' % (n, ' '.join(str(qn.get(n, '')).split())))
+        for v, t in sorted(qs.get(n, []), key=lambda x: int(x[0])):
+            if str(t).strip():
+                out.append('step %d %d %s' % (n, int(v), ' '.join(str(t).split())))
     for t in sorted(npcs):
         if not npcs[t]:
             continue
         out += ['', 'npc %d %s' % (t, names.get(t, ''))]
         for e in npcs[t]:
             clean = lambda x: ' '.join(str(x).split())
-            out.append('when give %d' % int(e.get('item', 0)) if e.get('when') == 'give' else 'when say ' + clean(e.get('words', '')).lower())
+            if e.get('when') == 'give': out.append('when give %d' % int(e.get('item', 0)))
+            elif e.get('when') == 'kill': out.append('when kill ' + clean(e.get('words', '')).lower())
+            else: out.append('when say ' + clean(e.get('words', '')).lower())
             for c in e.get('conds', []):
                 ty = c.get('type')
                 if ty == 'quest' and c.get('op') in OPS: out.append('if quest %d %s %d' % (int(c['n']), c['op'], int(c['v'])))
                 elif ty == 'has': out.append('if has %d' % int(c['t']))
                 elif ty == 'hasnot': out.append('if !has %d' % int(c['t']))
                 elif ty == 'rank' and c.get('op') in OPS: out.append('if rank %s %d' % (c['op'], int(c['v'])))
+                elif ty == 'area' and clean(c.get('s', '')): out.append('if area ' + clean(c['s']).lower())
             for a in e.get('answers', []):
                 if clean(a):
                     out.append('answer ' + clean(a)[:400])
             for a in e.get('acts', []):
                 ty = a.get('type')
                 if ty in ('set', 'add'): out.append('%s quest %d %d' % (ty, int(a['n']), int(a['v'])))
-                elif ty in ('item', 'exp', 'gold'): out.append('give %s %d' % (ty, int(a['v'])))
+                elif ty in ('item', 'exp', 'gold', 'luck'): out.append('give %s %d' % (ty, int(a['v'])))
+                elif ty in ('tell', 'announce') and clean(a.get('s', '')): out.append('%s %s' % (ty, clean(a['s'])[:400]))
+                elif ty == 'skill': out.append('teach skill %d' % int(a['v']))
+                elif ty == 'teleport': out.append('teleport %d %d' % (int(a['x']), int(a['y'])))
                 elif ty == 'take': out.append('take item %d' % int(a['v']))
                 elif ty == 'keep': out.append('keep')
             out.append('end')
@@ -620,7 +640,7 @@ class World:
         try:
             return talk_parse(open(self.talk_path(), encoding='latin-1').read())
         except OSError:
-            return {}, {}
+            return {'names': {}, 'steps': {}}, {}
 
     def talk_save(self, quests, npcs, ctl=None):
         p = self.talk_path()
@@ -1665,7 +1685,9 @@ def make_handler(world, sprites, page, minimap, ctl):
                 return self.js(world.npc_templates())
             if u.path == '/api/talk':
                 qs, npcs = world.talk_load()
-                return self.js({'quests': {str(k): v for k, v in qs.items()}, 'entries': npcs.get(int(q.get('t', 0)), [])})
+                return self.js({'quests': {str(k): v for k, v in qs['names'].items()}, 'steps': {str(k): v for k, v in qs['steps'].items()},
+                                'entries': npcs.get(int(q.get('t', 0)), []),
+                                'givers': {str(t): len(v) for t, v in npcs.items() if v}})
             if u.path == '/api/ctemp':
                 return self.js(world.ctemp(int(q['t'])) or {'error': 'no such NPC template'})
             if u.path == '/api/itemp':
@@ -1705,7 +1727,9 @@ def make_handler(world, sprites, page, minimap, ctl):
             if u.path == '/api/talk':
                 qs, npcs = world.talk_load()
                 if 'quests' in body:
-                    qs = {int(k): str(v)[:60] for k, v in body['quests'].items() if 1 <= int(k) <= 31 and str(v).strip()}
+                    qs['names'] = {int(k): str(v)[:60] for k, v in body['quests'].items() if 1 <= int(k) <= 31 and str(v).strip()}
+                if 'steps' in body:
+                    qs['steps'] = {int(k): [[int(a), str(b)[:300]] for a, b in v] for k, v in body['steps'].items() if 1 <= int(k) <= 31}
                 if 't' in body:
                     npcs[int(body['t'])] = body.get('entries') or []
                 return self.js({'msg': world.talk_save(qs, npcs, ctl)})
@@ -2926,7 +2950,7 @@ function openTemplate(kind, t) {
   Promise.all([api(`/api/${kind === 'npc' ? 'ctemp' : 'itemp'}?t=${t}`), kind === 'npc' ? api('/api/talk?t=' + t) : null]).then(([r, tk]) => {
     if (r.error) return toast(r.error, true);
     TP = { kind, t, orig: JSON.parse(JSON.stringify(r)), cur: r, tab: TP && TP.kind === kind ? TP.tab : 'general' };
-    if (tk) { TP.talk = { entries: tk.entries || [], quests: tk.quests || {} }; TP.talkOrig = JSON.stringify(TP.talk); }
+    if (tk) { TP.talk = { entries: tk.entries || [], quests: tk.quests || {}, steps: tk.steps || {} }; TP.talkOrig = JSON.stringify(TP.talk); }
     $('#tpl').classList.add('on'); $('#tpl').classList.remove('picking');
     tplRender();
   });
@@ -2984,7 +3008,7 @@ async function tplApply(asNew) {
     f.name = name; f.reference = TP.kind === 'npc' ? name : name.toLowerCase();
   }
   if (TP.talk && (talkDirty() || (asNew && TP.talk.entries.length))) {
-    const tr = await api('/api/talk', { t, entries: TP.talk.entries, quests: TP.talk.quests });
+    const tr = await api('/api/talk', { t, entries: TP.talk.entries, quests: TP.talk.quests, steps: TP.talk.steps });
     toast(tr.error || 'Conversations: ' + tr.msg, !!tr.error);
     TP.talkOrig = JSON.stringify(TP.talk);
   }
@@ -3059,7 +3083,7 @@ function ipick(get, set, opts) {   // an item template: number, name, Pick…, �
 function itemPopup(anchor, pick, filter) {
   const p = $('#ipop'), r = anchor.getBoundingClientRect();
   p.style.display = 'flex'; p.style.left = Math.min(window.innerWidth - 350, r.left) + 'px'; p.style.top = Math.min(window.innerHeight - 390, r.bottom + 4) + 'px';
-  const q = p.querySelector('input'), lst = p.querySelector('.lst'); q.value = '';
+  const q = p.querySelector('input'), lst = p.querySelector('.lst'); q.value = ''; q.placeholder = 'Search an item by name or number';
   const fill = () => {
     const s = q.value.trim().toLowerCase();
     const items = pal.templates.filter(t => (!filter || filter(t)) && (!s || t[1].toLowerCase().includes(s) || String(t[0]) === s)).slice(0, 80);
@@ -3215,52 +3239,89 @@ const NPC_TABS = {
     row(g3, 'Gives back the item', ipick(() => c.data[66], v => c.data[66] = v, { none: 'nothing' }));
   },
   conv(b, c) {
-    const T = TP.talk, E = T.entries, Q = T.quests;
-    b.insertAdjacentHTML('beforeend', `<div class="note">What it answers when a player talks to it, or hands it an item. The first line whose trigger and conditions fit is used,
-      so put special cases above general ones. <b>%s</b> = the player's name. Quest steps remember how far each player got (each quest is a number, 0 at the start).
-      Test without logging in: in the server console, <span class="mono">talktest ${TP.t} &lt;player&gt; &lt;what they say&gt;</span>.</div>`);
+    const T = TP.talk, E = T.entries, Q = T.quests, S = T.steps;
+    b.insertAdjacentHTML('beforeend', `<div class="note">What happens when a player talks to it, hands it an item, or kills something for its quests.
+      For each player the first line whose trigger and conditions fit is used, so put special cases above general ones.
+      <b>%s</b> = the player's name, <b>{q2}</b> = how far they are in quest 2. Quests are numbered 1-31; every player starts each at step 0, and all NPCs share them, so a quest chain can lead from one NPC to the next.
+      Try it without logging in, in the server console: <span class="mono">talktest ${TP.t} &lt;player&gt; &lt;what they say&gt;</span> · <span class="mono">talkkill &lt;player&gt; &lt;template&gt;</span> · <span class="mono">quest &lt;player&gt;</span>.</div>`);
     const qopts = () => Array.from({ length: 31 }, (_, i) => [i + 1, Q[i + 1] ? `${i + 1} · ${Q[i + 1]}` : `${i + 1} · (unnamed)`]);
     const OPN = [['=', 'is'], ['!=', 'is not'], ['<', 'is below'], ['>', 'is above'], ['<=', 'is at most'], ['>=', 'is at least']];
     const selS = (opts, get, set) => { const s = document.createElement('select'); s.innerHTML = opts.map(([v, l]) => `<option value="${esc(v)}">${esc(l)}</option>`).join(''); s.value = get(); s.onchange = () => set(s.value); return s; };
     const line = (items) => { const d = document.createElement('div'); d.className = 'ipick'; d.style.margin = '4px 0'; items.forEach(i => d.append(typeof i === 'string' ? document.createTextNode(i) : i)); return d; };
     const xb = (f) => { const x = document.createElement('button'); x.className = 'sm'; x.textContent = '×'; x.onclick = () => { f(); tplRender(); }; return x; };
+    const areaIn = (get, set) => { const i = txt(get, set, 60); i.setAttribute('list', 'areanames'); i.placeholder = 'part of an area name, e.g. Kwai'; i.style.width = '260px'; return i; };
+    if (!$('#areanames')) { const dl = document.createElement('datalist'); dl.id = 'areanames'; dl.innerHTML = [...new Set(info.areas.map(a => a[4]))].sort().map(n => `<option value="${esc(n)}">`).join(''); document.body.append(dl); }
+    const npcPick = (anchor, done) => {   // choose an NPC (fills its name)
+      const p = $('#ipop'), r = anchor.getBoundingClientRect();
+      p.style.display = 'flex'; p.style.left = Math.min(window.innerWidth - 350, r.left) + 'px'; p.style.top = Math.min(window.innerHeight - 390, r.bottom + 4) + 'px';
+      const q = p.querySelector('input'), lst = p.querySelector('.lst'); q.value = ''; q.placeholder = 'Search an NPC by name or number';
+      const fillL = () => {
+        const s = q.value.trim().toLowerCase(), seen = new Set();
+        const items = (pal.npcs || []).filter(t => (!s || t[1].toLowerCase().includes(s) || String(t[0]) === s) && !seen.has(t[1]) && seen.add(t[1])).slice(0, 80);
+        lst.innerHTML = '';
+        for (const t of items) {
+          const e = document.createElement('div'); e.className = 'r'; e.append(thumb(t[2], 26));
+          const a = document.createElement('span'); a.textContent = t[1]; e.append(a);
+          const n2 = document.createElement('span'); n2.className = 'n'; n2.textContent = t[3]; e.append(n2);
+          e.onmousedown = ev => { ev.preventDefault(); p.style.display = 'none'; done(t); };
+          lst.append(e);
+        }
+      };
+      q.oninput = fillL; fillL(); setTimeout(() => q.focus(), 0);
+    };
     E.forEach((e, k) => {
       const card = document.createElement('div'); card.className = 'note'; card.style.cssText = 'margin:12px 0;color:var(--text)';
       const hd = document.createElement('div'); hd.className = 'ipick'; hd.innerHTML = `<b style="color:var(--gold2)">${k + 1}.</b>`;
-      hd.append(selS([['say', 'When the player says'], ['give', 'When the player gives it']], () => e.when, v => { e.when = v; tplRender(); }));
+      hd.append(selS([['say', 'When the player says'], ['give', 'When the player gives it'], ['kill', 'When the player kills']], () => e.when, v => { e.when = v; tplRender(); }));
       if (e.when === 'say') { const w = txt(() => e.words, v => e.words = v, 200); w.placeholder = 'ring*   or   hello|hi'; w.style.flex = '1'; hd.append(w); }
+      else if (e.when === 'kill') {
+        const w = txt(() => e.words, v => e.words = v, 200); w.placeholder = 'NPC name (Spider*, Ghost|Skeleton) or #123,124'; w.style.flex = '1'; hd.append(w);
+        const pk = document.createElement('button'); pk.className = 'sm'; pk.textContent = 'Pick NPC…'; pk.onclick = () => npcPick(pk, t => { e.words = e.words && !e.words.startsWith('#') ? e.words + '|' + t[1] : t[1]; tplRender(); }); hd.append(pk);
+      }
       else hd.append(ipick(() => e.item, v => e.item = v));
-      const sp = document.createElement('span'); sp.style.flex = e.when === 'say' ? '0' : '1'; hd.append(sp);
+      const sp = document.createElement('span'); sp.style.flex = e.when === 'give' ? '1' : '0'; hd.append(sp);
       const mk = (t, f, tip) => { const x = document.createElement('button'); x.className = 'sm'; x.textContent = t; x.title = tip || ''; x.onclick = () => { f(); tplRender(); }; hd.append(x); };
       if (k > 0) mk('↑', () => { [E[k - 1], E[k]] = [E[k], E[k - 1]]; }, 'Move up (checked earlier)');
       if (k < E.length - 1) mk('↓', () => { [E[k + 1], E[k]] = [E[k], E[k + 1]]; }, 'Move down');
+      mk('Copy', () => E.splice(k + 1, 0, JSON.parse(JSON.stringify(e))), 'Duplicate this line');
       mk('Delete', () => { if (confirm('Delete this line?')) E.splice(k, 1); });
       card.append(hd);
       if (e.when === 'say') card.insertAdjacentHTML('beforeend', '<div class="hint">Every word must be in what they say. a|b = either word, ring* = ring, rings, ringmaster…</div>');
+      if (e.when === 'kill') card.insertAdjacentHTML('beforeend', '<div class="hint">Counts for the player who kills it (or whose companion does) and their group members who can see them, each only if the conditions fit them. Use a quest step as the condition so it only counts while that quest is active.</div>');
       const h = (t) => { const d = document.createElement('div'); d.className = 'lb'; d.style.cssText = 'margin-top:10px;color:var(--dim)'; d.textContent = t; card.append(d); };
       h('Only if');
       e.conds.forEach((cd, i) => {
-        const ty = selS([['quest', 'quest step'], ['has', 'the player carries'], ['hasnot', 'the player does not carry'], ['rank', 'the player\'s rank']], () => cd.type,
-          v => { e.conds[i] = v === 'quest' ? { type: v, n: 1, op: '=', v: 0 } : v === 'rank' ? { type: v, op: '>=', v: 0 } : { type: v, t: 0 }; tplRender(); });
+        const ty = selS([['quest', 'quest step'], ['has', 'the player carries'], ['hasnot', 'the player does not carry'], ['rank', 'the player\'s rank'], ['area', e.when === 'kill' ? 'it dies in the area' : 'the player is in the area']], () => cd.type,
+          v => { e.conds[i] = v === 'quest' ? { type: v, n: 1, op: '=', v: 0 } : v === 'rank' ? { type: v, op: '>=', v: 0 } : v === 'area' ? { type: v, s: '' } : { type: v, t: 0 }; tplRender(); });
         const parts = [ty];
         if (cd.type === 'quest') parts.push(sel(qopts(), () => cd.n, v => cd.n = v), selS(OPN, () => cd.op, v => cd.op = v), num(() => cd.v, v => cd.v = v, 0, 65535));
         else if (cd.type === 'rank') parts.push(selS(OPN, () => cd.op, v => cd.op = v), num(() => cd.v, v => cd.v = v, 0, 30));
+        else if (cd.type === 'area') parts.push(areaIn(() => cd.s, v => cd.s = v));
         else parts.push(ipick(() => cd.t, v => cd.t = v));
         parts.push(xb(() => e.conds.splice(i, 1)));
         card.append(line(parts));
       });
       if (!e.conds.length) card.insertAdjacentHTML('beforeend', '<div class="hint">always</div>');
       const ac = document.createElement('button'); ac.className = 'sm'; ac.textContent = '+ condition'; ac.onclick = () => { e.conds.push({ type: 'quest', n: 1, op: '=', v: 0 }); tplRender(); }; card.append(ac);
-      h('It answers (each line is said in turn)');
-      const ta = txt(() => e.answers.join('\n'), v => e.answers = v.split('\n'), 4000, true); ta.style.height = '70px'; card.append(ta);
+      h(e.when === 'kill' ? 'Message to the player (each line in turn)' : 'It answers aloud (each line is said in turn)');
+      const ta = txt(() => e.answers.join('\n'), v => e.answers = v.split('\n'), 4000, true); ta.style.height = '64px'; card.append(ta);
       h('Then');
       e.acts.forEach((a, i) => {
-        const ty = selS([['set', 'set quest step'], ['add', 'add to quest step'], ['item', 'give the player an item'], ['exp', 'give experience'], ['gold', 'give money (silver)'], ['take', 'take an item from the player'], ['keep', 'keep the item they gave']],
-          () => a.type, v => { e.acts[i] = v === 'set' || v === 'add' ? { type: v, n: 1, v: 1 } : v === 'keep' ? { type: v } : { type: v, v: 0 }; tplRender(); });
+        const ty = selS([['set', 'set quest step'], ['add', 'add to quest step'], ['item', 'give an item'], ['exp', 'give experience'], ['gold', 'give money (silver)'],
+          ['luck', 'give luck'], ['skill', 'teach a skill'], ['take', 'take an item from the player'], ['keep', 'keep the item they gave'],
+          ['tell', 'tell the player'], ['announce', 'announce to everyone'], ['teleport', 'send the player to']],
+          () => a.type, v => { e.acts[i] = v === 'set' || v === 'add' ? { type: v, n: 1, v: 1 } : v === 'keep' ? { type: v } : v === 'tell' || v === 'announce' ? { type: v, s: '' } : v === 'teleport' ? { type: v, x: 512, y: 512 } : { type: v, v: 0 }; tplRender(); });
         const parts = [ty];
         if (a.type === 'set' || a.type === 'add') parts.push(sel(qopts(), () => a.n, v => a.n = v), a.type === 'set' ? ' to ' : ' + ', num(() => a.v, v => a.v = v, a.type === 'add' ? -65535 : 0, 65535));
         else if (a.type === 'item' || a.type === 'take') parts.push(ipick(() => a.v, v => a.v = v));
-        else if (a.type === 'exp' || a.type === 'gold') parts.push(num(() => a.v, v => a.v = v, 0));
+        else if (a.type === 'exp' || a.type === 'gold' || a.type === 'luck') parts.push(num(() => a.v, v => a.v = v, a.type === 'luck' ? -1000 : 0));
+        else if (a.type === 'skill') parts.push(sel(SKILLS.map((s2, i2) => [i2, s2]), () => a.v, v => a.v = v));
+        else if (a.type === 'tell' || a.type === 'announce') { const t2 = txt(() => a.s, v => a.s = v, 300); t2.style.flex = '1'; t2.placeholder = a.type === 'announce' ? '%s has slain Argha the Thief!' : 'only the player sees this'; parts.push(t2); }
+        else if (a.type === 'teleport') {
+          parts.push(num(() => a.x, v => a.x = v, 1, 1022), num(() => a.y, v => a.y = v, 1, 1022));
+          const pk = document.createElement('button'); pk.className = 'sm'; pk.textContent = 'Pick on map';
+          pk.onclick = () => pickSpot('Click where the player should be sent', t => { a.x = t.x; a.y = t.y; }); parts.push(pk);
+        }
         parts.push(xb(() => e.acts.splice(i, 1)));
         card.append(line(parts));
       });
@@ -3268,13 +3329,54 @@ const NPC_TABS = {
       if (e.when === 'give' && !e.acts.some(a => a.type === 'keep')) card.insertAdjacentHTML('beforeend', '<div class="hint">It hands the item back unless "keep the item they gave" is among the actions.</div>');
       b.append(card);
     });
+    const bar = document.createElement('div'); bar.className = 'ipick'; bar.style.gap = '10px';
     const add = document.createElement('button'); add.className = 'btn sec'; add.textContent = '+ Add a line';
     add.onclick = () => { E.push({ when: 'say', words: '', item: 0, conds: [], answers: [''], acts: [] }); tplRender(); };
-    b.append(add);
-    const g = grid2(b, 'Quest names (shared by all NPCs)');
+    const kc = document.createElement('button'); kc.className = 'btn sec'; kc.textContent = '+ Kill counter…'; kc.title = '"Kill 5 spiders in Kwai Hall": makes the two lines that count the kills';
+    bar.append(add, kc); b.append(bar);
+    // the kill counter helper
+    const kbox = document.createElement('div'); kbox.className = 'note'; kbox.style.display = 'none'; b.append(kbox);
+    kc.onclick = () => {
+      kbox.style.display = kbox.style.display === 'none' ? '' : 'none'; if (kbox.style.display === 'none') return;
+      const K = { name: '', area: '', count: 5, quest: 1, step: 1, counter: 2, next: 2 };
+      kbox.innerHTML = '<b style="color:var(--gold2)">Kill counter</b> · counts kills while a quest is at a step, then moves the quest on<div class="grid2" style="margin-top:8px"></div>';
+      const g2 = kbox.querySelector('.grid2');
+      const nm = txt(() => K.name, v => K.name = v, 200); nm.placeholder = 'Spider*  or  Ghost|Skeleton';
+      const pk = document.createElement('button'); pk.className = 'sm'; pk.textContent = 'Pick NPC…'; pk.onclick = () => npcPick(pk, t => { K.name = K.name ? K.name + '|' + t[1] : t[1]; nm.value = K.name; });
+      row(g2, 'Kill', line([nm, pk]));
+      row(g2, 'In the area (optional)', areaIn(() => K.area, v => K.area = v));
+      row(g2, 'How many', num(() => K.count, v => K.count = v, 1, 1000));
+      row(g2, 'While quest', line([sel(qopts(), () => K.quest, v => K.quest = v), ' is at step ', num(() => K.step, v => K.step = v, 0, 65535)]));
+      row(g2, 'Count them in quest', sel(qopts(), () => K.counter, v => K.counter = v), 'A quest number of its own, used only as the counter (shown with {q' + 'N} in messages).');
+      row(g2, 'Then set the quest to step', num(() => K.next, v => K.next = v, 0, 65535), 'Reward the player when they come back: a line for that step.');
+      const go = document.createElement('button'); go.className = 'btn pri'; go.textContent = 'Add the two lines';
+      go.onclick = () => {
+        if (!K.name.trim()) return toast('Which NPC should be killed?', true);
+        if (K.counter === K.quest) return toast('The counter needs a quest number of its own.', true);
+        const conds = [{ type: 'quest', n: K.quest, op: '=', v: K.step }]; if (K.area.trim()) conds.push({ type: 'area', s: K.area.trim() });
+        const what = K.name.split('|')[0].replace('*', '');
+        E.push({ when: 'kill', words: K.name, item: 0, conds: [...conds, { type: 'quest', n: K.counter, op: '>=', v: K.count - 1 }], answers: [`${what}: ${K.count}/${K.count}. Done! Return to ${c.name}.`],
+          acts: [{ type: 'set', n: K.counter, v: K.count }, { type: 'set', n: K.quest, v: K.next }] });
+        E.push({ when: 'kill', words: K.name, item: 0, conds: JSON.parse(JSON.stringify(conds)), answers: [`${what}: {q${K.counter}}/${K.count}`], acts: [{ type: 'add', n: K.counter, v: 1 }] });
+        if (!Q[K.counter]) Q[K.counter] = (Q[K.quest] || 'Quest ' + K.quest) + ' (count)';
+        tplRender(); toast('Added: the last kill (above) and the counting line (below). Press Apply to keep them.');
+      };
+      kbox.append(go);
+    };
+    // quest names and journal steps
+    const h4 = document.createElement('h4'); h4.textContent = 'Quests (shared by all NPCs) · the player sees the step texts with #journal'; b.append(h4);
     for (let i = 1; i <= 31; i++) {
-      if (!Q[i] && i > 1 && !Q[i - 1]) continue;
-      row(g, 'Quest ' + i, txt(() => Q[i] || '', v => { if (v.trim()) Q[i] = v; else delete Q[i]; }, 59));
+      if (!Q[i] && !(S[i] && S[i].length) && i > 1 && !Q[i - 1]) continue;
+      const box = document.createElement('div'); box.className = 'note'; box.style.margin = '6px 0';
+      const nmI = txt(() => Q[i] || '', v => { if (v.trim()) Q[i] = v; else delete Q[i]; }, 59); nmI.placeholder = 'name, e.g. The lost ring'; nmI.style.flex = '1';
+      box.append(line([`Quest ${i} `, nmI]));
+      (S[i] || []).forEach((st, j) => {
+        const tx = txt(() => st[1], v => st[1] = v, 300); tx.style.flex = '1'; tx.placeholder = 'what the journal says at this step';
+        box.append(line(['  step ', num(() => st[0], v => st[0] = v, 0, 65535), tx, xb(() => S[i].splice(j, 1))]));
+      });
+      const as = document.createElement('button'); as.className = 'sm'; as.textContent = '+ journal step';
+      as.onclick = () => { (S[i] = S[i] || []).push([(S[i] && S[i].length ? Math.max(...S[i].map(x => x[0])) : 0) + 1, '']); tplRender(); };
+      box.append(as); b.append(box);
     }
   },
   adv(b, c) {

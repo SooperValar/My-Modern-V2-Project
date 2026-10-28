@@ -653,6 +653,7 @@ void do_help(int cn,char *topic)
 	do_char_log(cn,1,"#moddedarmor           of the Lion, Snake, ...\n");
 	do_char_log(cn,1,"#noshout               you won't hear shouts.\n");
 	do_char_log(cn,1,"#played                time played, created.\n");
+	do_char_log(cn,1,"#journal               your quests.\n");
 	do_char_log(cn,1,"#quest                 skill teachers.\n");
 	do_char_log(cn,1,"#repair                repair all worn gear.\n");
 	do_char_log(cn,1,"#repairinv             repair backpack gear.\n");
@@ -2226,6 +2227,9 @@ void do_command(int cn, char *ptr)
 		if (prefix(cmd,"ipshow") && f_giu)	{ do_list_net(cn,dbatoi(arg[1])); return; }
                 if (prefix(cmd,"itell") && f_giu)       { do_itell(cn,args[0]); return; }
                 break;
+        case 'j':
+                if (prefix(cmd,"journal") && f_p)       { talk_journal(cn); return; };
+                break;
         case 'k':
                 if (prefix(cmd,"kick") && f_giu)        { god_kick(cn,dbatoi(arg[1])); return; };
                 break;
@@ -2816,6 +2820,7 @@ void do_char_killed(int cn,int co)
                 }
                 tier_kill_drop(cn,co);	// maybe a Magic / Rare / Epic helmet or armor
                 soul_kill_drop(cn,co);	// maybe a soulstone (more often for low ranks)
+                talk_custom_kill(cn,co);	// quests that count this kill (npctalk.dat)
                 chlog(co,"new npc body");
 		if (ch[co].flags&CF_RESPAWN) ch[co].flags=CF_BODY|CF_RESPAWN;
                 else ch[co].flags=CF_BODY;

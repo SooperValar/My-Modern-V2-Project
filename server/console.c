@@ -153,6 +153,14 @@ static void con_cmd(char *line)
 		talk_set_echo(NULL);
 		return;
 	}
+	if (!strcmp(w[0],"talkkill")) {	// talkkill <player> <NPC template>: as if the player killed one
+		int found;
+		if (!(co=con_player(w[1]))) return;
+		talk_set_echo(con_echo);
+		if (!talk_test_kill(co,atoi(w[2]),&found)) out(found ? "  (no quest counts that kill now)\n" : "  No NPC of template %d in the world.\n",atoi(w[2]));
+		talk_set_echo(NULL);
+		return;
+	}
 	if (!strcmp(w[0],"talkreload")) {
 		n=talk_load();
 		out("  NPC dialogue loaded: %d entries%s.\n",talk_entries(),n ? " (some lines were not understood)" : "");
@@ -169,6 +177,8 @@ static void con_cmd(char *line)
 		    "  kick <player>                 log a player out\n"
 		    "  quest <player> [<n> <value>]  show or set a player's quest steps\n"
 		    "  talkreload                    read the NPC dialogue file again\n"
+		    "  talktest <npc template> <player> <text>   try a conversation\n"
+		    "  talkkill <player> <npc template>          try a quest kill\n"
 		    "  shutdown                      save and stop the server\n");
 	} else if (!strcmp(w[0],"quest")) {
 		if (!(co=con_player(w[1]))) return;
