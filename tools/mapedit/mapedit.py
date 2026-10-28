@@ -554,6 +554,17 @@ class ServerCtl:
                 ok = self._stop(warn, reason or 'a world update') and self._sync('get-world') and self._start()
             elif name == 'rebuild':
                 ok = self._run(['make', 'server'], 'make server')
+            elif name == 'send':                 # Ubuntu -> Windows: the source, and the world files if the server is stopped
+                ok = self._sync('send')
+            elif name == 'stop-send':            # stop and send the saved world, then stay stopped (for world edits)
+                ok = self._stop(warn, reason or 'maintenance') and self._sync('send')
+            elif name == 'get':                  # Windows -> Ubuntu: the source Claude changed, rebuilt (no restart)
+                ok = self._sync('get')
+            elif name == 'get-world':            # Windows -> Ubuntu: the world files (only while stopped)
+                if server_running():
+                    self._log('stop the server first'); ok = False
+                else:
+                    ok = self._sync('get-world')
             else:
                 self._log('unknown job ' + name)
         except Exception as e:
@@ -694,7 +705,11 @@ class ServerCtl:
             elif act == 'log':
                 entry['result'] = 'done'
                 self._answer(rid, {'ok': True, 'log': self.log_tail(int(req.get('lines', 200)))})
-            elif act in ('start', 'stop', 'restart', 'update-code', 'update-world', 'rebuild'):
+            elif act == 'reload-editor':         # start this editor again (after it was updated)
+                entry['result'] = 'done'
+                self._answer(rid, {'ok': True, 'note': 'the editor restarts now'})
+                threading.Thread(target=self._reexec, daemon=True).start()
+            elif act in ('start', 'stop', 'restart', 'update-code', 'update-world', 'rebuild', 'send', 'stop-send', 'get', 'get-world'):
                 def done(ok, log, entry=entry, rid=rid):
                     entry['result'] = 'done' if ok else 'failed'
                     self._answer(rid, {'ok': ok, 'log': log})
@@ -705,6 +720,14 @@ class ServerCtl:
             else:
                 entry['result'] = 'unknown action'
                 self._answer(rid, {'ok': False, 'error': 'unknown action ' + act})
+
+    def _reexec(self):
+        time.sleep(1.5)
+        if self.world.dirty:
+            print('Not restarting the editor: there are unsaved map changes.')
+            return
+        print('Restarting the editor (requested by Claude) ...')
+        os.execv(sys.executable, [sys.executable] + sys.argv)
 
     def log_tail(self, n=200):
         p = os.path.join(self.dir, 'server.log')
@@ -1224,6 +1247,12 @@ table.pl button:hover { color: var(--text); border-color: var(--gold); }
       <div class="acts" style="margin-top:10px">
         <button class="btn sec" id="supcode" title="Stop, take the source Claude changed (claude-sync.sh get), rebuild, start">Update code &amp; restart</button>
         <button class="btn sec" id="supworld" title="Stop, take the world files from the Windows folder (claude-sync.sh get-world), start">Update world &amp; restart</button>
+      </div>
+      <div class="acts" style="margin-top:10px">
+        <span style="color:var(--dim2);font-size:12px;margin-right:6px">Sync only</span>
+        <button class="btn sec" id="ssend" title="Copy Ubuntu files to the Windows folder (claude-sync.sh send; world files only while stopped)">Send to Windows</button>
+        <button class="btn sec" id="sget" title="Take changed source from Windows and rebuild, without restarting (claude-sync.sh get)">Get code</button>
+        <button class="btn sec" id="sgetw" title="Take the world files from Windows (claude-sync.sh get-world; server must be stopped)">Get world</button>
       </div>
       <div class="jobbox" id="sjob"></div>
     </div>
@@ -2225,7 +2254,7 @@ async function srvRefresh() {
     : '<span>Start it here; it keeps running when you close the editor. Its output goes to server.log.</span>';
   const busy = st.job && !st.job.done;
   $('#sstart').disabled = st.running || busy; $('#srestart').disabled = !st.running || busy; $('#sstop').disabled = !st.running || busy;
-  $('#supcode').disabled = busy; $('#supworld').disabled = busy;
+  $('#supcode').disabled = busy; $('#supworld').disabled = busy; $('#ssend').disabled = busy; $('#sget').disabled = busy; $('#sgetw').disabled = st.running || busy;
   const jb = $('#sjob');
   if (st.job) { jb.style.display = 'block'; jb.textContent = `${st.job.name} · ${st.job.done ? (st.job.ok ? 'finished' : 'failed') : 'working…'}\n` + st.job.log.join('\n'); jb.scrollTop = jb.scrollHeight; }
   // players
@@ -2287,6 +2316,9 @@ $('#srestart').onclick = () => job('restart', 'Restart the game server? Players 
 $('#sstop').onclick = () => job('stop', 'Stop the game server? Players online are warned first (' + $('#swarn').selectedOptions[0].text + ').');
 $('#supcode').onclick = () => job('update-code', 'Stop the server, take the updated source (claude-sync.sh get), rebuild and start again?');
 $('#supworld').onclick = () => job('update-world', 'Stop the server, take the world files from the Windows folder (claude-sync.sh get-world; a backup is made) and start again?');
+$('#ssend').onclick = () => job('send', 'Copy the Ubuntu files to the Windows folder (claude-sync.sh send)?');
+$('#sget').onclick = () => job('get', 'Take the changed source from Windows and rebuild (claude-sync.sh get)? The running server keeps going; the new build is used at the next restart.');
+$('#sgetw').onclick = () => job('get-world', 'Take the world files from the Windows folder (claude-sync.sh get-world; a backup is made)?');
 let logLines = [];
 async function logRefresh(force) {
   if (mode !== 'server') return;
