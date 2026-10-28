@@ -41,6 +41,77 @@ C_ALIGN, C_TOX, C_FRX, C_STATUS, C_ITEM, C_WORN, C_SPELL, C_CITEM, C_DATA = 309,
 CF_RESPAWN, CF_MERCHANT = 1 << 4, 1 << 10
 DIRS = {1: 'south', 2: 'north', 3: 'west', 4: 'east'}     # DX_RIGHT +x, DX_LEFT -x, DX_UP -y, DX_DOWN +y (minimap: north = smaller x)
 
+# template fields: name -> (offset, struct format); strings are 'Ns'
+CT_FIELDS = {
+    'name': (1, '40s'), 'reference': (41, '40s'), 'description': (81, '200s'), 'kindred': (281, '<i'),
+    'sprite': (297, '<H'), 'sound': (299, '<H'), 'flags': (301, '<Q'), 'alignment': (309, '<h'),
+    'attrib': (321, '30B'), 'hp': (351, '<6H'), 'end': (363, '<6H'), 'mana': (375, '<6H'), 'skill': (387, '300B'),
+    'weapon_bonus': (687, 'B'), 'armor_bonus': (688, 'B'), 'points_tot': (709, '<i'), 'x': (717, '<h'), 'y': (719, '<h'),
+    'dir': (733, 'B'), 'gold': (734, '<i'), 'item': (738, '<40I'), 'worn': (898, '<20I'), 'citem': (1058, '<I'),
+    'speed_mod': (1132, 'b'), 'gethit_dam': (1136, 'b'), 'gethit_bonus': (1137, 'b'), 'light_bonus': (1138, 'B'),
+    'class': (1549, '<i'), 'data': (1605, '<100i'),
+}
+CT_TEXT = 2005                    # text[10][160]
+IT_FIELDS = {
+    'name': (1, '40s'), 'reference': (41, '40s'), 'description': (81, '200s'), 'flags': (281, '<Q'), 'value': (289, '<I'),
+    'placement': (293, '<H'), 'max_age': (298, '<2I'), 'max_damage': (314, '<I'), 'attrib': (322, '15b'),
+    'hp': (337, '<3h'), 'end': (343, '<3h'), 'mana': (349, '<3h'), 'skill': (355, '150b'), 'armor': (505, '2b'),
+    'weapon': (507, '2b'), 'light': (509, '<2h'), 'duration': (513, '<I'), 'cost': (517, '<I'), 'power': (521, '<I'),
+    'sprite_override': (535, '<H'), 'sprite': (537, '<2h'), 'status': (541, '2B'), 'gethit_dam': (543, '2b'),
+    'min_rank': (545, 'b'), 'driver': (593, 'B'), 'data': (594, '<10i'),
+}
+
+
+def tpl_read(buf, base, fields):
+    out = {}
+    for k, (off, fmt) in fields.items():
+        if fmt.endswith('s'):
+            out[k] = cstr(buf[base + off:base + off + int(fmt[:-1])])
+        else:
+            v = struct.unpack_from(fmt, buf, base + off)
+            out[k] = list(v) if len(v) > 1 else v[0]
+    return out
+
+
+def tpl_write(buf, base, fields, vals):
+    for k, v in vals.items():
+        if k not in fields:
+            continue
+        off, fmt = fields[k]
+        if fmt.endswith('s'):
+            n = int(fmt[:-1])
+            b = str(v).encode('latin-1', 'replace')[:n - 1]
+            buf[base + off:base + off + n] = b + b'\0' * (n - len(b))
+            continue
+        cnt = struct.calcsize(fmt) // struct.calcsize(fmt.lstrip('<0123456789'))
+        code = fmt.lstrip('<0123456789')
+        lim = {'B': (0, 255), 'b': (-128, 127), 'H': (0, 65535), 'h': (-32768, 32767), 'I': (0, 2 ** 32 - 1),
+               'i': (-2 ** 31, 2 ** 31 - 1), 'Q': (0, 2 ** 64 - 1)}[code]
+        vs = list(v) if isinstance(v, list) else [v]
+        if len(vs) != cnt:
+            continue
+        vs = [max(lim[0], min(lim[1], int(x))) for x in vs]
+        struct.pack_into(fmt, buf, base + off, *vs)
+
+
+def template_points(t):
+    """experience value of an NPC template, as reset_char() works it out"""
+    a, hp, en, ma, sk = t['attrib'], t['hp'], t['end'], t['mana'], t['skill']
+    pts = 0
+    for z in range(5):
+        for m in range(10, a[z * 6]): pts += m * m * m * 3 // 20
+    for m in range(50, hp[0]): pts += m * 3
+    for m in range(50, en[0]): pts += m * 2 // 2
+    for m in range(50, ma[0]): pts += m * 3
+    for z in range(50):
+        if z in (9, 8, 7):        # perception, stealth, lock-picking don't count
+            continue
+        for m in range(1, sk[z * 6]):
+            v = m * m * m * 2 // 40
+            pts += v if v > m else m
+    return pts
+
+
 MF = ['move block', 'sight block', 'indoors', 'under water', 'no lag', 'no monsters', 'bank', 'tavern',
       'no magic', 'death trap', 'no light', 'arena', 'lit', 'no expire', 'no fight']
 MF_MOVEBLOCK, MF_SIGHTBLOCK = 1, 2
@@ -60,8 +131,8 @@ def cstr(b):
 
 # ---------------------------------------------------------------- world
 class World:
-    FILES = ('map.dat', 'item.dat', 'char.dat', 'tchar.dat', 'effect.dat')
-    KIND_FILE = {'m': 'map.dat', 'i': 'item.dat', 'c': 'char.dat', 't': 'tchar.dat', 'f': 'effect.dat'}
+    FILES = ('map.dat', 'item.dat', 'char.dat', 'tchar.dat', 'effect.dat', 'titem.dat')
+    KIND_FILE = {'m': 'map.dat', 'i': 'item.dat', 'c': 'char.dat', 't': 'tchar.dat', 'f': 'effect.dat', 'T': 'titem.dat'}
 
     def __init__(self, dat, server_dir, area_file):
         self.dat, self.server_dir, self.area_file = dat, server_dir, area_file
@@ -73,7 +144,7 @@ class World:
             p = lambda n: os.path.join(self.dat, n)
             self.map = bytearray(open(p('map.dat'), 'rb').read())
             self.item = bytearray(open(p('item.dat'), 'rb').read())
-            self.titem = open(p('titem.dat'), 'rb').read()
+            self.titem = bytearray(open(p('titem.dat'), 'rb').read())
             self.char = bytearray(open(p('char.dat'), 'rb').read())
             self.tchar = bytearray(open(p('tchar.dat'), 'rb').read()) if os.path.exists(p('tchar.dat')) else None
             self.fx = bytearray(open(p('effect.dat'), 'rb').read()) if os.path.exists(p('effect.dat')) else None
@@ -84,6 +155,7 @@ class World:
                 sys.exit('The .dat files are smaller than this editor expects - wrong folder or another server version.')
             self.mtimes = {n: os.path.getmtime(p(n)) for n in self.FILES if os.path.exists(p(n))}
             self.touched = set()
+            self.made = None
             self.undo, self.redo, self.dirty = [], [], 0
             self.free_hint = 1
             self.areas = self.read_areas()
@@ -296,7 +368,9 @@ class World:
         if self.tchar is None or not (0 < tp < MAXTCHARS):
             return {'home': None}
         hx, hy = struct.unpack_from('<hh', self.tchar, tp * CHAR_SIZE + C_X)
-        return {'home': [hx, hy] if self.is_home(tp, c) else None, 'respawns': 1 if self.t_u64(tp, C_FLAGS) & CF_RESPAWN else 0,
+        src, n = (self.char, c) if c else (self.tchar, tp)
+        stops = [v for v in struct.unpack_from('<9i', src, n * CHAR_SIZE + C_DATA + 40) if v]
+        return {'patrol': [[v % MAPX, v // MAPX] for v in stops], 'home': [hx, hy] if self.is_home(tp, c) else None, 'respawns': 1 if self.t_u64(tp, C_FLAGS) & CF_RESPAWN else 0,
                 'made': 1 if tp >= NPC_FIRST_NEW else 0, 'count': len(self.living(tp))}
 
     def npc_templates(self):
@@ -356,7 +430,8 @@ class World:
             rec[k] = bytes(self.map[o:o + MAP_SIZE])
 
     def _buf(self, kind):
-        return {'i': (self.item, ITEM_SIZE), 'c': (self.char, CHAR_SIZE), 't': (self.tchar, CHAR_SIZE), 'f': (self.fx, FX_SIZE)}[kind]
+        return {'i': (self.item, ITEM_SIZE), 'c': (self.char, CHAR_SIZE), 't': (self.tchar, CHAR_SIZE), 'f': (self.fx, FX_SIZE),
+                'T': (self.titem, ITEM_SIZE)}[kind]
 
     def _keep(self, rec, kind, n):
         k = (kind, n)
@@ -444,6 +519,142 @@ class World:
         self._keep(rec, 'c', c)
         self.char[o + C_USED] = USE_EMPTY
 
+    # --- templates: reading and changing them
+    def ctemp(self, t):
+        if self.tchar is None or not (0 < t < MAXTCHARS) or not self.tchar[t * CHAR_SIZE + C_USED]:
+            return None
+        base = t * CHAR_SIZE
+        r = tpl_read(self.tchar, base, CT_FIELDS)
+        r['text'] = [cstr(self.tchar[base + CT_TEXT + i * 160:base + CT_TEXT + i * 160 + 160]) for i in range(10)]
+        r['t'] = t
+        r['count'] = len(self.living(t))
+        r['pending'] = len([p for p in self.pending() if p[2] == t])
+        r['made'] = 1 if t >= NPC_FIRST_NEW else 0
+        r['names'] = {'worn': [self.iname(v) for v in r['worn']], 'item': [self.iname(v) for v in r['item']],
+                      'citem': self.iname(r['citem']), 'want': self.iname(r['data'][49]), 'give': self.iname(r['data'][66])}
+        return r
+
+    def iname(self, t):
+        if 0 < t < MAXTITEM and self.titem[t * ITEM_SIZE + I_USED]:
+            return cstr(self.titem[t * ITEM_SIZE + I_NAME:t * ITEM_SIZE + I_NAME + 40])
+        return ''
+
+    def itemp(self, t):
+        if not (0 < t < MAXTITEM) or not self.titem[t * ITEM_SIZE + I_USED]:
+            return None
+        r = tpl_read(self.titem, t * ITEM_SIZE, IT_FIELDS)
+        r['t'] = t
+        r['onmap'] = sum(1 for i in range(1, MAXITEM) if self.item[i * ITEM_SIZE + I_USED] == USE_ACTIVE
+                         and self.it_u16(i, I_TEMP) == t and not self.it_u16(i, I_CARRIED))
+        r['made'] = 1 if t >= NPC_FIRST_NEW else 0
+        return r
+
+    def _respawn_template(self, rec, tp):
+        """like the game's reset_char: the NPCs of this template go, and it spawns again (with the changes) at its spot"""
+        for c in self.living(tp):
+            self._free_char(rec, c)
+        for x, y, ptp, n in self.pending():
+            if ptp == tp:
+                self._keep(rec, 'f', n); self.fx[n * FX_SIZE] = USE_EMPTY
+        hx, hy = struct.unpack_from('<hh', self.tchar, tp * CHAR_SIZE + C_X)
+        if self.t_u64(tp, C_FLAGS) & CF_RESPAWN and (hx or hy):
+            self._spawn_timer(rec, tp, hx, hy)
+
+    def temp_op(self, rec, op):
+        k = op['op']
+        if k == 'ctempset':
+            if self.tchar is None:
+                return 'tchar.dat is missing'
+            t = int(op['t'])
+            if not self.ctemp(t):
+                return 'NPC template %d does not exist' % t
+            base = t * CHAR_SIZE
+            self._keep(rec, 't', t)
+            before = bytes(self.tchar[base:base + CHAR_SIZE])
+            f = dict(op.get('fields') or {})
+            for k2 in ('x', 'y', 'points_tot'):
+                f.pop(k2, None)
+            tpl_write(self.tchar, base, CT_FIELDS, f)
+            for i, txt in enumerate(op.get('text') or []):
+                if i < 9 and txt is not None:      # text 9 is the NPC's own memory
+                    b = str(txt).encode('latin-1', 'replace')[:159]
+                    self.tchar[base + CT_TEXT + i * 160:base + CT_TEXT + i * 160 + 160] = b + b'\0' * (160 - len(b))
+            if any(k2 in f for k2 in ('attrib', 'hp', 'end', 'mana', 'skill')):
+                struct.pack_into('<i', self.tchar, base + 709, template_points(tpl_read(self.tchar, base, CT_FIELDS)))
+            if 'dir' in f:
+                struct.pack_into('<i', self.tchar, base + C_DATA + 30 * 4, int(f['dir']))
+            if bytes(self.tchar[base:base + CHAR_SIZE]) != before and op.get('respawn', True):
+                self._respawn_template(rec, t)
+            return ''
+        if k == 'ctempnew':
+            src = int(op['from'])
+            if not self.ctemp(src):
+                return 'NPC template %d does not exist' % src
+            t = self._free_tchar()
+            if not t:
+                return 'no free NPC template number left'
+            self._keep(rec, 't', t)
+            o = t * CHAR_SIZE
+            self.tchar[o:o + CHAR_SIZE] = self.tchar[src * CHAR_SIZE:(src + 1) * CHAR_SIZE]
+            self._c_set(self.tchar, t, C_TEMP, '<H', t)
+            self._c_set(self.tchar, t, C_X, '<hhhh', 0, 0, 0, 0)          # not placed yet: the NPC brush places it
+            self._c_set(self.tchar, t, C_DATA + 29 * 4, '<i', 0)
+            for i in range(10, 19):
+                self._c_set(self.tchar, t, C_DATA + i * 4, '<i', 0)       # no patrol of the original
+            if op.get('name'):
+                tpl_write(self.tchar, o, CT_FIELDS, {'name': op['name'], 'reference': op['name']})
+            self.made = ('npc', t)
+            return ''
+        if k == 'itempset':
+            t = int(op['t'])
+            if not self.itemp(t):
+                return 'item template %d does not exist' % t
+            base = t * ITEM_SIZE
+            self._keep(rec, 'T', t)
+            before = bytes(self.titem[base:base + ITEM_SIZE])
+            tpl_write(self.titem, base, IT_FIELDS, op.get('fields') or {})
+            after = bytes(self.titem[base:base + ITEM_SIZE])
+            if op.get('update_map', True) and after != before:
+                # the copies lying on the map get the new values - wherever a copy still had the template's old value
+                # (so their own changes, like a portal's destination or a sign's text, stay)
+                old, new = tpl_read(before, 0, IT_FIELDS), tpl_read(after, 0, IT_FIELDS)
+                chg = {k2 for k2 in IT_FIELDS if old[k2] != new[k2]}
+                for i in range(1, MAXITEM):
+                    o = i * ITEM_SIZE
+                    if self.item[o + I_USED] != USE_ACTIVE or self.it_u16(i, I_TEMP) != t or self.it_u16(i, I_CARRIED):
+                        continue
+                    cur = tpl_read(self.item, o, {k2: IT_FIELDS[k2] for k2 in chg})
+                    upd = {}
+                    for k2 in chg:
+                        if isinstance(new[k2], list):
+                            v = [nv if cv == ov else cv for cv, ov, nv in zip(cur[k2], old[k2], new[k2])]
+                            if v != cur[k2]: upd[k2] = v
+                        elif cur[k2] == old[k2]:
+                            upd[k2] = new[k2]
+                    if upd:
+                        self._save_item(rec, i)
+                        tpl_write(self.item, o, IT_FIELDS, upd)
+                        x, y = self.it_u16(i, I_X), self.it_u16(i, I_Y)
+                        if 0 <= x < MAPX and 0 <= y < MAPY:
+                            self._save_map(rec, x, y)
+            return ''
+        if k == 'itempnew':
+            src = int(op['from'])
+            if not self.itemp(src):
+                return 'item template %d does not exist' % src
+            t = next((n for n in range(NPC_FIRST_NEW, MAXTITEM) if not self.titem[n * ITEM_SIZE + I_USED]), 0)
+            if not t:
+                return 'no free item template number left'
+            self._keep(rec, 'T', t)
+            o = t * ITEM_SIZE
+            self.titem[o:o + ITEM_SIZE] = self.titem[src * ITEM_SIZE:(src + 1) * ITEM_SIZE]
+            struct.pack_into('<H', self.titem, o + I_TEMP, t)
+            if op.get('name'):
+                tpl_write(self.titem, o, IT_FIELDS, {'name': op['name'], 'reference': op['name'].lower()})
+            self.made = ('item', t)
+            return ''
+        return 'unknown template edit'
+
     def npc_op(self, rec, op, x, y):
         """place / move / turn / remove an NPC; returns an error text or ''"""
         if self.tchar is None or self.fx is None:
@@ -456,13 +667,19 @@ class World:
             why = self._free_spot(x, y)
             if why:
                 return '%d,%d: %s' % (x, y, why)
-            tp = self._free_tchar()
+            hx, hy = struct.unpack_from('<hh', self.tchar, src * CHAR_SIZE + C_X)
+            if src >= NPC_FIRST_NEW and not hx and not hy and not self.living(src) \
+                    and not any(p[2] == src for p in self.pending()):
+                tp = src               # a new NPC made in the editor and not placed yet: this is its spot
+            else:
+                tp = self._free_tchar()
             if not tp:
                 return 'no free NPC template number left'
             d = int(op.get('dir', 4))
             self._keep(rec, 't', tp)
             o = tp * CHAR_SIZE
-            self.tchar[o:o + CHAR_SIZE] = self.tchar[src * CHAR_SIZE:(src + 1) * CHAR_SIZE]
+            if tp != src:
+                self.tchar[o:o + CHAR_SIZE] = self.tchar[src * CHAR_SIZE:(src + 1) * CHAR_SIZE]
             self.tchar[o + C_USED] = USE_ACTIVE
             self._c_set(self.tchar, tp, C_TEMP, '<H', tp)
             self._c_set(self.tchar, tp, C_FLAGS, '<Q', self.t_u64(tp, C_FLAGS) | CF_RESPAWN)
@@ -553,7 +770,15 @@ class World:
         """ops: list of dicts; returns (tiles changed, messages)"""
         rec, msgs, n = {}, [], 0
         with self.lock:
+            self.made = None
             for op in ops:
+                if op['op'] in ('ctempset', 'ctempnew', 'itempset', 'itempnew'):
+                    err = self.temp_op(rec, op)
+                    if err:
+                        msgs.append(err)
+                    else:
+                        n += 1
+                    continue
                 x, y = int(op['x']), int(op['y'])
                 if not (0 <= x < MAPX and 0 <= y < MAPY):
                     continue
@@ -642,7 +867,7 @@ class World:
                 if self._cur(key) != old:
                     real[key] = old
             npc_moved = any(key[0] in 'ctf' for key in real)
-            if npc_moved and not any(key[0] == 'm' for key in real):     # an NPC spawn: remember its tile for the history
+            if npc_moved and not any(key[0] == 'm' for key in real) and 'x' in ops[0]:     # an NPC spawn: remember its tile for the history
                 real[('m', int(ops[0]['x']), int(ops[0]['y']))] = self._cur(('m', int(ops[0]['x']), int(ops[0]['y'])))
             if real:
                 self.touched |= {self.KIND_FILE[key[0]] for key in real}
@@ -650,7 +875,7 @@ class World:
                 self.redo.clear()
                 self.dirty += 1
                 tiles = [k for k in real if k[0] == 'm']
-                fx, fy = (tiles[0][1], tiles[0][2]) if tiles else (int(ops[0]['x']), int(ops[0]['y']))
+                fx, fy = (tiles[0][1], tiles[0][2]) if tiles else (int(ops[0].get('x', 0)), int(ops[0].get('y', 0)))
                 self.history.append({'t': time.strftime('%H:%M:%S'), 'what': label or 'edit', 'tiles': max(1, len(tiles)),
                                      'x': fx, 'y': fy})
             return max(len([k for k in real if k[0] == 'm']), n if real else 0), msgs
@@ -702,7 +927,8 @@ class World:
             os.makedirs(bk, exist_ok=True)
             for n in files:
                 shutil.copy2(p(n), os.path.join(bk, n))
-            bufs = {'map.dat': self.map, 'item.dat': self.item, 'char.dat': self.char, 'tchar.dat': self.tchar, 'effect.dat': self.fx}
+            bufs = {'map.dat': self.map, 'item.dat': self.item, 'char.dat': self.char, 'tchar.dat': self.tchar, 'effect.dat': self.fx,
+                    'titem.dat': self.titem}
             for n in files:
                 data = bufs[n]
                 with open(p(n) + '.tmp', 'wb') as f:
@@ -1162,6 +1388,10 @@ def make_handler(world, sprites, page, minimap, ctl):
                 return self.js(world.chars())
             if u.path == '/api/npcs':
                 return self.js(world.npc_templates())
+            if u.path == '/api/ctemp':
+                return self.js(world.ctemp(int(q['t'])) or {'error': 'no such NPC template'})
+            if u.path == '/api/itemp':
+                return self.js(world.itemp(int(q['t'])) or {'error': 'no such item template'})
             if u.path == '/api/history':
                 return self.js({'history': world.history[-300:], 'backups': world.backups()})
             if u.path == '/api/region':
@@ -1186,7 +1416,8 @@ def make_handler(world, sprites, page, minimap, ctl):
                 return self.js({'error': 'The game server is running: the map is view-only. Stop the server to edit.'})
             if u.path == '/api/edit':
                 changed, msgs = world.apply(body.get('ops', []), body.get('label', ''))
-                return self.js({'changed': changed, 'msgs': msgs, 'dirty': world.dirty, 'undo': len(world.undo), 'redo': len(world.redo)})
+                return self.js({'changed': changed, 'msgs': msgs, 'dirty': world.dirty, 'undo': len(world.undo), 'redo': len(world.redo),
+                                'made': world.made})
             if u.path in ('/api/undo', '/api/redo'):
                 tiles = world.undo_redo(u.path[5:])
                 return self.js({'tiles': tiles, 'dirty': world.dirty, 'undo': len(world.undo), 'redo': len(world.redo)})
@@ -1445,6 +1676,53 @@ table.pl button:hover { color: var(--text); border-color: var(--gold); }
 #undosave { margin-top: 8px; color: var(--dim2); font-size: 12px; padding: 0; }
 #undosave:hover:not(:disabled) { color: var(--text); }
 #undosave:disabled { opacity: .5; cursor: default; }
+/* template editor */
+#tpl { position: fixed; inset: 0; background: rgba(5,5,6,.72); z-index: 30; display: none; place-items: center; }
+#tpl.on { display: grid; }
+#tpl.picking { background: transparent; pointer-events: none; }
+#tpl.picking .mbox { display: none; }
+#tpl .mbox { width: min(980px, 94vw); height: min(760px, 92vh); background: var(--panel); border: 1px solid var(--line); border-radius: 12px; display: grid; grid-template-rows: auto auto 1fr auto; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,.5); }
+#tpl .mhd { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-bottom: 1px solid var(--line); }
+#tpl .mhd .ttl { font-size: 15px; font-weight: 650; flex: 1; }
+#tpl .mhd .ttl small { color: var(--dim); font-weight: 400; margin-left: 8px; }
+#tpl .mtabs { display: flex; gap: 2px; padding: 0 12px; border-bottom: 1px solid var(--line); overflow-x: auto; }
+#tpl .mtabs button { padding: 9px 12px; color: var(--dim); border-bottom: 2px solid transparent; white-space: nowrap; }
+#tpl .mtabs button.on { color: var(--gold2); border-bottom-color: var(--gold); }
+#tpl .mbody { overflow-y: auto; padding: 14px 18px 24px; }
+#tpl .mft { display: flex; gap: 10px; align-items: center; padding: 10px 16px; border-top: 1px solid var(--line); flex-wrap: wrap; }
+#tpl .mft .sp { flex: 1; }
+#tpl .grid2 { display: grid; grid-template-columns: 170px 1fr; gap: 8px 14px; align-items: center; }
+#tpl .grid2 > .lb { color: var(--dim); }
+#tpl .hint { color: var(--dim2); font-size: 12px; }
+#tpl h4 { margin: 18px 0 8px; color: var(--gold2); font-size: 13px; font-weight: 650; }
+#tpl h4:first-child { margin-top: 0; }
+#tpl input[type=text], #tpl textarea { width: 100%; }
+#tpl textarea { background: var(--panel2); border: 1px solid var(--line); border-radius: 6px; padding: 5px 9px; color: var(--text); font: inherit; height: 60px; resize: vertical; outline: none; }
+#tpl input[type=number] { width: 90px; }
+#tpl .chks { display: flex; flex-wrap: wrap; gap: 6px 16px; }
+#tpl .chks label { display: flex; gap: 6px; align-items: center; }
+#tpl table.st { border-collapse: collapse; }
+#tpl table.st td, #tpl table.st th { padding: 3px 10px 3px 0; text-align: left; }
+#tpl table.st th { color: var(--dim2); font-weight: 500; font-size: 12px; }
+#tpl table.st input { width: 72px; }
+#tpl .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 0 28px; }
+#tpl .ipick { display: flex; gap: 6px; align-items: center; min-width: 0; }
+#tpl .ipick input { width: 76px; }
+#tpl .ipick .nm { color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; min-width: 0; }
+#tpl .ipick .nm.none { color: var(--dim2); }
+#tpl button.sm { color: var(--dim); border: 1px solid var(--line); border-radius: 5px; padding: 2px 8px; font-size: 12px; white-space: nowrap; }
+#tpl button.sm:hover { color: var(--text); border-color: var(--gold); }
+#tpl .stop { display: grid; grid-template-columns: 28px 70px 70px auto; gap: 6px; align-items: center; margin-bottom: 6px; }
+#tpl .dgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 6px 14px; }
+#tpl .dgrid label { display: grid; grid-template-columns: 1fr 86px; gap: 6px; align-items: center; color: var(--dim); font-size: 12px; }
+#tpl .dgrid label input { width: 86px; }
+#tpl .note { background: var(--panel2); border: 1px solid var(--line); border-radius: 8px; padding: 9px 12px; color: var(--dim); margin: 10px 0; }
+#ipop { position: fixed; z-index: 40; width: 340px; max-height: 380px; background: var(--panel); border: 1px solid var(--gold); border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,.5); display: none; flex-direction: column; }
+#ipop input { margin: 8px; }
+#ipop .lst { overflow-y: auto; padding: 0 4px 6px; }
+#ipop .r { display: flex; gap: 8px; align-items: center; padding: 3px 6px; border-radius: 5px; cursor: pointer; }
+#ipop .r:hover { background: var(--panel3); }
+#ipop .r .n { color: var(--dim2); font-size: 11px; margin-left: auto; }
 </style>
 </head>
 <body>
@@ -1505,6 +1783,8 @@ table.pl button:hover { color: var(--text); border-color: var(--gold); }
   <div id="banner">The game server is running: you can look around, but editing is off. Stop the server to edit.</div>
   <div id="coords">–</div>
   <div id="mini"><span class="t">MAP</span><canvas id="mcv" width="1024" height="1024" title="Click to go there · M for the big map"></canvas></div>
+  <div id="tpl"><div class="mbox"><div class="mhd"><div class="ttl"></div><button class="btn ghost" onclick="closeTemplate()">✕</button></div><div class="mtabs"></div><div class="mbody"></div><div class="mft"></div></div></div>
+  <div id="ipop"><input type="text" placeholder="Search an item by name or number"><div class="lst"></div></div>
   <div id="world"><span class="t">World map — click to go there · M or Esc to close</span><canvas id="wcv" width="1024" height="1024"></canvas></div>
   <div id="toast"></div>
 </main>
@@ -1784,6 +2064,13 @@ function draw() {
     for (const [x, y] of footprint(hover.x, hover.y)) { diamond(x, y, ctx); ctx.stroke(); }
   }
   if (selTile) { diamond(selTile.x, selTile.y, ctx); ctx.lineWidth = 2.2 / zoom; ctx.strokeStyle = '#6fb0ff'; ctx.stroke(); }
+  if (selPatrol && selTile) {    // its patrol route: stop to stop, and back to the first
+    const P = selPatrol.slice(1), c = (p) => [wx(p[0], p[1]) + 32, wy(p[0], p[1]) + 56];
+    ctx.lineWidth = 2 / zoom; ctx.strokeStyle = 'rgba(111,176,255,.9)'; ctx.setLineDash([6 / zoom, 4 / zoom]);
+    ctx.beginPath(); P.forEach((p, i) => { const [a, b] = c(p); i ? ctx.lineTo(a, b) : ctx.moveTo(a, b); }); if (P.length > 1) ctx.closePath(); ctx.stroke(); ctx.setLineDash([]);
+    ctx.font = `bold ${12 / zoom}px system-ui`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    P.forEach((p, i) => { const [a, b] = c(p); ctx.fillStyle = '#1b3a66'; ctx.beginPath(); ctx.arc(a, b, 8 / zoom, 0, 7); ctx.fill(); ctx.fillStyle = '#cfe4ff'; ctx.fillText(i + 1, a, b); });
+  }
   // area names, in screen space
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   if (show.names && zoom >= .35) {
@@ -1922,6 +2209,11 @@ function card() {
   const d = document.createElement('div'); d.innerHTML = `<div class="t"></div><div class="s"></div>`;
   d.firstChild.textContent = t; d.lastChild.textContent = s; c.appendChild(d);
   if (brush.kind === 'npc') { const f = faceRow(brush.dir || 4, v => { brush.dir = v; }); f.style.marginTop = '6px'; d.appendChild(f); }
+  if (brush.kind === 'npc' || brush.kind === 'place') {
+    const m = document.createElement('div'); m.className = 'mixbtns'; m.style.marginTop = '6px';
+    m.innerHTML = `<button title="Change this template: ${brush.kind === 'npc' ? 'name, look, stats, equipment, talk, patrol…' : 'name, look, stats, flags…'}">Edit template…</button>`;
+    m.firstChild.onclick = () => openTemplate(brush.kind === 'npc' ? 'npc' : 'item', brush.t[0]); d.appendChild(m);
+  }
   if (brush.kind === 'floor') {   // start a mix from this floor
     const m = document.createElement('div'); m.className = 'mixbtns'; m.style.marginTop = '6px';
     m.innerHTML = '<button data-a="sim" title="Make a mix: add floors whose color is close to this one">+ look-alikes</button>';
@@ -2005,6 +2297,8 @@ function cellTemp(t) {
   c.title = `${t[1]} · template ${t[0]} · ${t[6] ? 'item' : 'drawn into the tile'}${t[5] & 1 ? ' · blocks walking' : ''}${t[5] & 2 ? ' · blocks sight' : ''}`;
   c.appendChild(thumb(t[2], 64, 64)); const l = document.createElement('div'); l.className = 'lab'; l.textContent = t[1]; c.appendChild(l);
   c.onclick = () => setBrush({ kind: 'place', t });
+  c.oncontextmenu = e => { e.preventDefault(); openTemplate('item', t[0]); };
+  c.title += ' · right-click to edit the template';
   return c;
 }
 function cellNpc(t) {
@@ -2013,6 +2307,8 @@ function cellNpc(t) {
   c.title = `${t[1]} · template ${t[0]} · ${t[3]}${t[7] ? ' · placed with the editor' : ''} · ${t[4]} in the world` + (t[5] || t[6] ? ` · spawns at ${t[5]}, ${t[6]}` : '');
   c.appendChild(thumb(t[2], 64, 64)); const l = document.createElement('div'); l.className = 'lab'; l.textContent = t[1]; c.appendChild(l);
   c.onclick = () => setBrush({ kind: 'npc', t, dir: brush.kind === 'npc' ? brush.dir : 4 });
+  c.oncontextmenu = e => { e.preventDefault(); openTemplate('npc', t[0]); };
+  c.title += ' · right-click to edit';
   return c;
 }
 function cellRecent(b) {
@@ -2162,8 +2458,9 @@ function flipShow(k) { show[k] = !show[k]; layersUI(); redraw(); }
 $('#tgrid').onclick = () => flipShow('grid'); $('#twalls').onclick = () => flipShow('see'); $('#tlight').onclick = () => flipShow('light');
 $('#tright').onclick = () => { $('#app').classList.toggle('noright'); setTimeout(resize, 0); };
 
+let selPatrol = null;   // the patrol route of the selected NPC: [[x, y], ...]
 async function selectTile(x, y) {
-  selTile = { x, y }; redrawTop();
+  selTile = { x, y }; selPatrol = null; redrawTop();
   const r = await api(`/api/tile?x=${x}&y=${y}`);
   if (!selTile || selTile.x !== x || selTile.y !== y) return;
   const ro = info.running;
@@ -2195,6 +2492,8 @@ async function selectTile(x, y) {
   if (r.char) { const n = document.createElement('span'); n.className = 'nm'; n.textContent = `${r.char.name} (template ${r.char.temp})`; $('#tc').appendChild(n); }
   if (r.pending) { $('#tc').appendChild(thumb(r.pending.sprite, 28)); const n = document.createElement('span'); n.className = 'nm'; n.textContent = `${r.pending.name} (template ${r.pending.temp}) · spawns here`; $('#tc').appendChild(n); }
   if ((r.char && !r.char.player) || r.pending) npcEditor(el, r, x, y, ro);
+  const pr = (r.char || r.pending || {}).patrol;
+  if (pr && pr.length) { selPatrol = [[x, y], ...pr]; redrawTop(); }
   if (r.item) itemEditor(el, r, x, y, ro);
   const fl = $('#tfl');
   FLAGS.forEach((f, i) => {
@@ -2217,10 +2516,11 @@ function npcEditor(el, r, x, y, ro) {
   else if (live) note = c.respawns ? `Its template spawns at another spot: this one was made by a spawner or quest. Moving or removing it changes only this one.` : 'Does not respawn (made by a spawner, a quest or a god).';
   if (c.count > 1) note += ` · ${c.count} of this template are in the world`;
   box.innerHTML = `<div class="lb">NPC</div><div class="note"></div><div class="fr"></div>
-    <div class="dest"><button class="sm mv" title="Then click the free tile it should go to">Move (pick on map)</button><button class="sm rm">Remove</button></div>`;
+    <div class="dest"><button class="sm mv" title="Then click the free tile it should go to">Move (pick on map)</button><button class="sm rm">Remove</button><button class="sm ed" title="Name, look, stats, equipment, what it says, patrol route…">Edit NPC…</button></div>`;
   box.querySelector('.note').textContent = note;
   box.querySelector('.fr').appendChild(faceRow(c.dir || 0, d => edit([{ op: 'npcdir', x, y, dir: d }], `${c.name} faces ${FACEN[d]}`, true), ro || (!live && !c.home)));
   const mv = box.querySelector('.mv'), rm = box.querySelector('.rm');
+  box.querySelector('.ed').onclick = () => openTemplate('npc', c.temp);
   mv.disabled = rm.disabled = ro;
   mv.onclick = () => { npcPick = { x, y, name: c.name }; mv.classList.add('on'); cv.style.cursor = 'cell'; toast(`Click the free tile ${c.name} should move to. (Esc cancels)`); };
   rm.onclick = () => {
@@ -2246,7 +2546,7 @@ function itemEditor(el, r, x, y, ro) {
       <button class="sm pk" title="Then click the spot on the map">Pick on map</button><button class="sm gt">Go there</button></div>
       ${it.data[2] ? '<div class="warn">This is a labyrinth portal (data 2 = ' + it.data[2] + '): it takes players to their next lab part, not to x, y. <button class="sm np">Make it a normal portal</button></div>' : ''}` : ''}
     <details><summary class="lb" style="cursor:pointer">Data values (advanced, driver ${it.driver})</summary><div class="dgrid">${it.data.map((v, i) => `<input type="number" data-i="${i}" value="${v}" title="data[${i}]">`).join('')}</div></details>
-    <div><button class="btn pri" style="padding:5px 12px">Save item</button></div>`;
+    <div style="display:flex;gap:8px;align-items:center"><button class="btn pri" style="padding:5px 12px">Save item</button><button class="sm et" title="Change what every ${esc(it.name)} is made from: look, stats, flags…">Edit its template…</button></div>`;
   el.appendChild(box);
   const nm = box.querySelector('.nm2'), ds = box.querySelector('.ds2');
   nm.value = it.name; ds.value = it.desc || '';
@@ -2260,6 +2560,7 @@ function itemEditor(el, r, x, y, ro) {
     return { op: 'itemedit', x, y, name: nm.value, desc: ds.value, data };
   };
   box.querySelector('.btn').onclick = () => edit([collect()], 'item ' + nm.value, true);
+  box.querySelector('.et').disabled = false; box.querySelector('.et').onclick = () => openTemplate('item', it.temp);
   if (tele) {
     const pk = box.querySelector('.pk');
     pk.onclick = () => { destPick = { x, y }; pk.classList.add('on'); toast('Click the spot on the map where this portal should lead. (Esc cancels)'); cv.style.cursor = 'cell'; };
@@ -2273,6 +2574,400 @@ function setDestination(t) {
   edit([{ op: 'itemedit', x: d.x, y: d.y, data: { 0: t.x, 1: t.y } }], `portal at ${d.x},${d.y} leads to ${t.x},${t.y}`, false)
     .then(() => { toast(`The portal at ${d.x}, ${d.y} now leads to ${t.x}, ${t.y}.`); centerOn(d.x, d.y); selectTile(d.x, d.y); });
 }
+
+// ---------------------------------------------------------------- template editor (NPCs and items)
+const ATTRS = ['Braveness', 'Willpower', 'Intuition', 'Agility', 'Strength'];
+const SKILLS = ['Hand to Hand', 'Karate', 'Dagger', 'Sword', 'Axe', 'Staff', 'Two-Handed', 'Lock-Picking', 'Stealth', 'Perception',
+  'Swimming', 'Magic Shield', 'Bartering', 'Repair', 'Light', 'Recall', 'Guardian Angel', 'Protection', 'Enhance Weapon', 'Stun',
+  'Curse', 'Bless', 'Identify', 'Resistance', 'Blast', 'Dispel Magic', 'Heal', 'Ghost Companion', 'Regenerate', 'Rest',
+  'Meditate', 'Sense Magic', 'Immunity', 'Surround Hit', 'Concentrate', 'Warcry', 'Two-Handed Axe'];
+const WEAR = ['Head', 'Neck', 'Body', 'Arms', 'Belt', 'Legs', 'Feet', 'Left hand (shield)', 'Right hand (weapon)', 'Cloak', 'Left ring', 'Right ring'];
+const CTEXT = [
+  [2, 'Greeting', 'said when a player comes close (needs "Greets players" on the Behaviour tab)'],
+  [6, 'Keyword', 'a word players can say to make it stop attacking them (the password)'],
+  [7, 'Reply to the keyword', ''],
+  [8, 'Warning', 'said before it attacks someone coming too close (Attack distance)'],
+  [1, 'Attacking', 'said when it attacks someone'],
+  [0, 'Killed an enemy', ''],
+  [3, 'Dying words', 'said when it is killed (chance: Dying words chance)'],
+  [4, 'Shouting for help', ''],
+  [5, 'Coming to help', ''],
+];
+const AREAS = [[0, 'Only general things'], [4, 'Aston (the city)'], [1, 'Thieves'], [5, 'Thieves 2'], [2, 'The castle'], [3, 'Grolms'],
+  [6, 'The tomb'], [7, 'Joe'], [8, 'Purple'], [9, 'Skeleton lord'], [10, 'Outlaws'], [11, 'Magic maze'], [12, 'Lizards'],
+  [13, 'Underground I'], [14, 'Knights'], [15, 'The mine'], [16, 'The stronghold'], [17, 'The nest'],
+  [21, 'Riddle 1'], [22, 'Riddle 2'], [23, 'Riddle 3'], [24, 'Riddle 4'], [25, 'Riddle 5'], [12345, 'Everything']];
+const DATA_NAMES = { 0: 'Driver 1', 1: 'Driver 2', 2: 'Driver 3', 3: 'Driver 4', 4: 'Driver 5', 5: 'Driver 6', 6: 'Driver 7', 7: 'Driver 8', 8: 'Driver 9', 9: 'Driver 10',
+  10: 'Patrol 1', 11: 'Patrol 2', 12: 'Patrol 3', 13: 'Patrol 4', 14: 'Patrol 5', 15: 'Patrol 6', 16: 'Patrol 7', 17: 'Patrol 8', 18: 'Patrol 9',
+  20: 'Close door', 21: 'Close door', 22: 'Close door', 23: 'Close door', 24: 'Prevent fights', 25: 'Special driver', 26: 'Special sub-driver',
+  29: 'Resting position', 30: 'Resting dir', 31: 'Protect template', 32: 'Light to keep lit', 33: 'Light to keep lit', 34: 'Light to keep lit', 35: 'Light to keep lit',
+  37: 'Greet everyone', 41: 'Street light template', 42: 'Group', 43: 'Attack all but group', 44: 'Attack all but group', 45: 'Attack all but group',
+  46: 'Attack all but group', 47: 'Donate trash', 48: 'Dying words %', 49: 'Wants item', 50: 'Teaches skill', 51: 'Gives exp', 52: 'Shout help code',
+  53: 'Come help code', 59: 'Protect group', 60: 'Random walk time', 62: 'Create light', 64: 'Self destruct', 66: 'Gives item', 68: 'Knowledge level',
+  69: 'Accepts money', 71: 'Talkativity', 72: 'Area of knowledge', 73: 'Random walk max dist', 79: 'Rest at patrol stops', 93: 'Attack distance', 95: 'Keyword action' };
+const NPC_FLAGS = [[4, 'Respawns'], [10, 'Merchant (sells its backpack)'], [0, 'Immortal'], [16, 'Sees in the dark'], [19, 'Undead (holy water hurts)'],
+  [18, 'Never sleeps'], [15, 'Invisible'], [27, 'Simple animation'], [31, 'Ignores spells'], [12, 'No HP regeneration']];
+const ITEM_FLAGS = [
+  ['What it is', [[8, 'Armor'], [16, 'Sword'], [17, 'Dagger'], [18, 'Axe'], [19, 'Staff / club'], [20, 'Two-handed'], [24, 'Magic'], [25, 'Misc'], [28, 'Unique'], [3, 'Money']]],
+  ['What players can do', [[2, 'Pick it up'], [4, 'Look at it'], [5, 'Look (special)'], [9, 'Use it'], [10, 'Use (special, driver)'], [21, 'Using it destroys it'], [22, 'Can be turned on'], [23, 'Can be turned off']]],
+  ['On the map', [[0, 'Blocks walking'], [1, 'Blocks sight'], [32, 'Hidden (data 9 = how hard to see)'], [33, 'Does something when stepped on']]],
+  ['Rules', [[38, 'Never expires'], [34, 'Can\'t go in the depot'], [12, 'Destroyed in shops (quest item)'], [30, 'Destroyed when leaving the labyrinth'], [29, 'Donate (cheap)'], [31, 'Fixed price'], [7, 'Can\'t be repaired'], [40, 'Needs identifying'], [11, 'Single age'], [14, 'Expires when inactive'], [15, 'Expires when active'], [35, 'Ages faster in light']]]];
+const PLACES = [[1, 'Head'], [2, 'Neck'], [4, 'Body'], [8, 'Arms'], [32, 'Belt'], [64, 'Legs'], [128, 'Feet'], [256, 'Weapon hand'], [512, 'Shield hand'], [1024, 'Cloak'], [2048, 'Two-handed'], [4096, 'Ring']];
+
+const bit = (f, b) => Math.floor(f / 2 ** b) % 2 === 1;
+const setBit = (f, b, on) => bit(f, b) === on ? f : f + (on ? 1 : -1) * 2 ** b;
+const pos = v => v ? [v % 1024, Math.floor(v / 1024)] : null;
+
+let TP = null;   // {kind: 'npc'|'item', t, orig, cur, tab}
+function tplDirty() { return TP && (Object.keys(tplChanged()).length || (TP.kind === 'npc' && JSON.stringify(TP.cur.text) !== JSON.stringify(TP.orig.text))); }
+function openTemplate(kind, t) {
+  if (tplDirty() && !(TP.kind === kind && TP.t === t) && !confirm('You have changes here you did not apply. Leave them?')) return;
+  api(`/api/${kind === 'npc' ? 'ctemp' : 'itemp'}?t=${t}`).then(r => {
+    if (r.error) return toast(r.error, true);
+    TP = { kind, t, orig: JSON.parse(JSON.stringify(r)), cur: r, tab: TP && TP.kind === kind ? TP.tab : 'general' };
+    $('#tpl').classList.add('on'); $('#tpl').classList.remove('picking');
+    tplRender();
+  });
+}
+function closeTemplate() { if (tplDirty() && !confirm('Close without applying your changes?')) return; TP = null; $('#tpl').classList.remove('on', 'picking'); $('#ipop').style.display = 'none'; }
+function tplTabs() {
+  return TP.kind === 'npc'
+    ? { general: 'General', stats: 'Stats & skills', gear: 'Equipment & stock', behave: 'Behaviour', patrol: 'Patrol route', talk: 'Talk & quest', adv: 'Advanced' }
+    : { general: 'General', stats: 'Stats & requirements', adv: 'Advanced' };
+}
+function tplRender() {
+  const c = TP.cur, el = $('#tpl');
+  el.querySelector('.ttl').innerHTML = '';
+  el.querySelector('.ttl').append(thumb(TP.kind === 'npc' ? c.sprite + 8 : c.sprite[0], 34));
+  el.querySelector('.ttl').insertAdjacentHTML('beforeend', `<span style="vertical-align:middle;margin-left:8px"></span><small></small>`);
+  el.querySelector('.ttl span').textContent = c.name || '(no name)';
+  el.querySelector('.ttl small').textContent = TP.kind === 'npc'
+    ? `NPC template ${TP.t}${c.made ? ' · made with the editor' : ''} · ${c.count} in the world${c.pending ? ' · ' + c.pending + ' waiting to spawn' : ''}${c.x || c.y ? ` · spawns at ${c.x}, ${c.y}` : ' · not placed'}`
+    : `Item template ${TP.t}${c.made ? ' · made with the editor' : ''} · ${c.onmap} lying on the map`;
+  const tabs = tplTabs();
+  el.querySelector('.mtabs').innerHTML = Object.entries(tabs).map(([k, v]) => `<button data-k="${k}" class="${k === TP.tab ? 'on' : ''}">${v}</button>`).join('');
+  el.querySelectorAll('.mtabs button').forEach(b => b.onclick = () => { TP.tab = b.dataset.k; tplRender(); });
+  const body = el.querySelector('.mbody'); body.innerHTML = '';
+  (TP.kind === 'npc' ? NPC_TABS : ITEM_TABS)[TP.tab](body, c);
+  const ft = el.querySelector('.mft');
+  ft.innerHTML = TP.kind === 'npc'
+    ? `<label class="chk"><input type="checkbox" id="tresp" checked><span>Respawn the ones in the world with the changes</span></label>`
+    : `<label class="chk"><input type="checkbox" id="tmap" checked><span>Also change the ${c.onmap} on the map (where they still have the old value)</span></label>`;
+  ft.insertAdjacentHTML('beforeend', `<span class="sp"></span><button class="btn sec" id="tnew">Save as a new ${TP.kind === 'npc' ? 'NPC' : 'item'}…</button>
+    <button class="btn ghost" id="tcancel">Close</button><button class="btn pri" id="tapply">Apply</button>`);
+  $('#tcancel').onclick = closeTemplate;
+  $('#tapply').onclick = () => tplApply(false);
+  $('#tnew').onclick = () => tplApply(true);
+  if (info.running) { $('#tapply').disabled = $('#tnew').disabled = true; $('#tapply').title = 'The game server is running: editing is off.'; }
+}
+function tplChanged() {
+  const out = {}, o = TP.orig, c = TP.cur;
+  for (const k of Object.keys(c)) {
+    if (['t', 'count', 'pending', 'made', 'names', 'onmap', 'text'].includes(k)) continue;
+    if (JSON.stringify(c[k]) !== JSON.stringify(o[k])) out[k] = c[k];
+  }
+  return out;
+}
+async function tplApply(asNew) {
+  if (info.running) return toast('The game server is running: editing is off.', true);
+  const f = tplChanged(), text = TP.kind === 'npc' && JSON.stringify(TP.cur.text) !== JSON.stringify(TP.orig.text) ? TP.cur.text : null;
+  let t = TP.t;
+  if (asNew) {
+    const name = prompt(`Name for the new ${TP.kind === 'npc' ? 'NPC' : 'item'}:`, TP.cur.name);
+    if (!name) return;
+    const r = await api('/api/edit', { ops: [{ op: TP.kind === 'npc' ? 'ctempnew' : 'itempnew', from: TP.t, name }], label: 'new template ' + name });
+    if (r.error || !r.made) return toast(r.error || (r.msgs || []).join('\n') || 'Could not make it.', true);
+    t = r.made[1];
+    f.name = name; f.reference = TP.kind === 'npc' ? name : name.toLowerCase();
+  }
+  if (Object.keys(f).length || text) {
+    const op = TP.kind === 'npc' ? { op: 'ctempset', t, fields: f, text, respawn: asNew ? false : $('#tresp').checked }
+      : { op: 'itempset', t, fields: f, update_map: asNew ? false : $('#tmap').checked };
+    await edit([op], `${asNew ? 'new' : 'changed'} ${TP.kind === 'npc' ? 'NPC' : 'item'} template ${t} (${f.name || TP.cur.name})`);
+  } else if (!asNew) return toast('Nothing changed.');
+  if (TP.kind === 'item') {     // the palette and the map show the new name and look
+    const i = pal.templates.findIndex(x => x[0] === t), r = await api('/api/itemp?t=' + t);
+    const row = [t, r.name, r.sprite[0], bit(r.flags, 2) ? 1 : 0, r.driver, (bit(r.flags, 0) ? 1 : 0) | (bit(r.flags, 1) ? 2 : 0),
+      (bit(r.flags, 2) || bit(r.flags, 4) || bit(r.flags, 5) || bit(r.flags, 9) || bit(r.flags, 10)) ? 1 : 0];
+    if (i >= 0) pal.templates[i] = row; else pal.templates.push(row);
+    chunks.clear(); redraw();
+    if (asNew) setBrush({ kind: 'place', t: row });
+  } else if (asNew) {
+    const n = await api('/api/npcs'); pal.npcs = n;
+    const row = n.find(x => x[0] === t); if (row) setBrush({ kind: 'npc', t: row, dir: 4 });
+    toast(`New NPC ${t} made. Click a free tile to place it.`);
+  } else chunks.clear(), redraw();
+  if (mode === 'map') leftUI();
+  TP.orig = JSON.parse(JSON.stringify(TP.cur));
+  openTemplate(TP.kind, t);
+}
+
+// ---- small form builders
+function row(box, label, input, hint) {
+  const l = document.createElement('div'); l.className = 'lb'; l.textContent = label; box.appendChild(l);
+  const d = document.createElement('div'); if (input) d.append(input);
+  if (hint) { const h = document.createElement('div'); h.className = 'hint'; h.textContent = hint; d.append(h); }
+  box.appendChild(d); return d;
+}
+function grid2(body, title) {
+  if (title) { const h = document.createElement('h4'); h.textContent = title; body.appendChild(h); }
+  const g = document.createElement('div'); g.className = 'grid2'; body.appendChild(g); return g;
+}
+function txt(get, set, max, area) {
+  const i = document.createElement(area ? 'textarea' : 'input'); if (!area) i.type = 'text'; i.maxLength = max; i.value = get();
+  i.oninput = () => set(i.value); return i;
+}
+function num(get, set, min, max) {
+  const i = document.createElement('input'); i.type = 'number'; i.value = get(); if (min !== undefined) i.min = min; if (max !== undefined) i.max = max;
+  i.onchange = () => { let v = Math.round(+i.value || 0); if (min !== undefined) v = Math.max(min, v); if (max !== undefined) v = Math.min(max, v); i.value = v; set(v); };
+  return i;
+}
+function sel(opts, get, set) {
+  const s = document.createElement('select');
+  s.innerHTML = opts.map(([v, l]) => `<option value="${v}">${esc(l)}</option>`).join('');
+  if (!opts.some(o => o[0] === get())) s.insertAdjacentHTML('beforeend', `<option value="${get()}">${get()} (other)</option>`);
+  s.value = get(); s.onchange = () => set(+s.value); return s;
+}
+function chk(label, get, set) {
+  const l = document.createElement('label'); l.innerHTML = '<input type="checkbox"><span></span>';
+  l.lastChild.textContent = label; l.firstChild.checked = get(); l.firstChild.onchange = () => set(l.firstChild.checked); return l;
+}
+function chks(items) { const d = document.createElement('div'); d.className = 'chks'; items.forEach(i => d.append(i)); return d; }
+function iname(t) { const x = t && pal.templates.find(r => r[0] === t); return x ? x[1] : ''; }
+function ipick(get, set, opts) {   // an item template: number, name, Pick…, ×
+  const d = document.createElement('div'); d.className = 'ipick';
+  const n = document.createElement('input'); n.type = 'number'; n.min = 0; n.value = get() || 0;
+  const th = thumb(0, 24); const nm = document.createElement('span'); nm.className = 'nm';
+  const show = () => { const v = +n.value; const x = v && pal.templates.find(r => r[0] === v); nm.textContent = v ? (x ? x[1] : 'template ' + v + ' (empty!)') : (opts && opts.none) || 'none'; nm.classList.toggle('none', !v); th.dataset.spr = x ? x[2] : 0; paintThumb(th); };
+  n.onchange = () => { set(+n.value || 0); show(); };
+  const b = document.createElement('button'); b.className = 'sm'; b.textContent = 'Pick…';
+  b.onclick = () => itemPopup(b, v => { n.value = v; set(v); show(); }, opts && opts.filter);
+  const x = document.createElement('button'); x.className = 'sm'; x.textContent = '×'; x.title = 'Empty';
+  x.onclick = () => { n.value = 0; set(0); show(); };
+  const e = document.createElement('button'); e.className = 'sm'; e.textContent = 'Edit'; e.title = 'Open this item template';
+  e.onclick = () => { if (+n.value) openTemplate('item', +n.value); };
+  d.append(n, th, nm, b, x, e); show(); return d;
+}
+function itemPopup(anchor, pick, filter) {
+  const p = $('#ipop'), r = anchor.getBoundingClientRect();
+  p.style.display = 'flex'; p.style.left = Math.min(window.innerWidth - 350, r.left) + 'px'; p.style.top = Math.min(window.innerHeight - 390, r.bottom + 4) + 'px';
+  const q = p.querySelector('input'), lst = p.querySelector('.lst'); q.value = '';
+  const fill = () => {
+    const s = q.value.trim().toLowerCase();
+    const items = pal.templates.filter(t => (!filter || filter(t)) && (!s || t[1].toLowerCase().includes(s) || String(t[0]) === s)).slice(0, 80);
+    lst.innerHTML = '';
+    for (const t of items) {
+      const e = document.createElement('div'); e.className = 'r'; e.append(thumb(t[2], 26));
+      const a = document.createElement('span'); a.textContent = t[1]; e.append(a);
+      const b = document.createElement('span'); b.className = 'n'; b.textContent = t[0]; e.append(b);
+      e.onmousedown = ev => { ev.preventDefault(); p.style.display = 'none'; pick(t[0]); };
+      lst.append(e);
+    }
+    if (!items.length) lst.innerHTML = '<div class="hint" style="padding:6px">Nothing matches.</div>';
+  };
+  q.oninput = fill; fill(); setTimeout(() => q.focus(), 0);
+}
+document.addEventListener('mousedown', e => { const p = $('#ipop'); if (p.style.display !== 'none' && !p.contains(e.target)) p.style.display = 'none'; });
+
+// ---- picking a spot on the map from inside the editor (patrol stops)
+let tplPick = null;
+function pickSpot(msg, done) {
+  tplPick = done; $('#tpl').classList.add('picking'); cv.style.cursor = 'cell'; toast(msg + ' (Esc cancels)');
+}
+function tplPicked(t) { const f = tplPick; tplPick = null; $('#tpl').classList.remove('picking'); setTool(tool); if (f && t) f(t); tplRender(); }
+
+// ---- NPC tabs
+const NPC_TABS = {
+  general(b, c) {
+    const g = grid2(b);
+    row(g, 'Name', txt(() => c.name, v => { const same = c.reference === c.name; c.name = v; if (same) c.reference = v; }, 39), 'Names must be unique for players to tell them apart; the reference is used in sentences ("the guard").');
+    row(g, 'Reference', txt(() => c.reference, v => c.reference = v, 39));
+    row(g, 'Description', txt(() => c.description, v => c.description = v, 199, true), 'What players read when they look at it.');
+    const sp = document.createElement('div'); sp.className = 'ipick';
+    const th = thumb(c.sprite + 8, 48);
+    sp.append(num(() => c.sprite, v => { c.sprite = v; th.dataset.spr = v + 8; paintThumb(th); }, 0, 65535), th);
+    row(g, 'Look (sprite base)', sp, 'Copy the number from another NPC to look like it.');
+    row(g, 'Facing', faceRow(c.dir, v => c.dir = v));
+    row(g, 'Alignment', num(() => c.alignment, v => c.alignment = v, -32768, 32767), 'Below 0: an enemy (players may attack it, it drops loot). Above 0: friendly.');
+    const gold = document.createElement('div'); gold.className = 'ipick';
+    gold.append(num(() => Math.floor(c.gold / 100), v => c.gold = v * 100 + c.gold % 100, 0), document.createTextNode(' gold '),
+      num(() => c.gold % 100, v => c.gold = Math.floor(c.gold / 100) * 100 + v, 0, 99), document.createTextNode(' silver'));
+    row(g, 'Money it carries', gold);
+    row(g, 'Class', num(() => c.class, v => c.class = v), 'Monster class (some quests count kills of a class).');
+    const g2 = grid2(b, 'Flags');
+    row(g2, '', chks(NPC_FLAGS.map(([bt, l]) => chk(l, () => bit(c.flags, bt), on => c.flags = setBit(c.flags, bt, on)))));
+  },
+  stats(b, c) {
+    const sc = document.createElement('div'); sc.className = 'ipick';
+    const pct = num(() => 100, () => {}, 10, 400);
+    const go = document.createElement('button'); go.className = 'sm'; go.textContent = 'Scale everything';
+    go.onclick = () => {
+      const p = +pct.value / 100, cl = (v, m) => Math.max(0, Math.min(m, Math.round(v * p)));
+      for (let z = 0; z < 5; z++) { c.attrib[z * 6] = cl(c.attrib[z * 6], 250); c.attrib[z * 6 + 2] = Math.max(c.attrib[z * 6 + 2], c.attrib[z * 6]); }
+      for (const k of ['hp', 'end', 'mana']) { c[k][0] = cl(c[k][0], 999); c[k][2] = Math.max(c[k][2], c[k][0]); }
+      for (let z = 0; z < 50; z++) if (c.skill[z * 6]) { c.skill[z * 6] = cl(c.skill[z * 6], 250); c.skill[z * 6 + 2] = Math.max(c.skill[z * 6 + 2], c.skill[z * 6]); }
+      tplRender(); toast('Scaled to ' + pct.value + '% (press Apply to keep it)');
+    };
+    sc.append(pct, document.createTextNode(' % '), go);
+    const g = grid2(b); row(g, 'Make it stronger or weaker', sc, 'Attributes, hit points, endurance, mana and skills together. 120 = 20% stronger.');
+    const cols = document.createElement('div'); cols.className = 'cols'; b.append(cols);
+    const t1 = document.createElement('table'); t1.className = 'st'; t1.innerHTML = '<tr><th>Attribute</th><th>Value</th></tr>';
+    const put = (t, name, get, set, max) => { const r = t.insertRow(); r.insertCell().textContent = name; r.insertCell().append(num(get, set, 0, max)); };
+    ATTRS.forEach((a, z) => put(t1, a, () => c.attrib[z * 6], v => { c.attrib[z * 6] = v; c.attrib[z * 6 + 2] = Math.max(c.attrib[z * 6 + 2], v); }, 250));
+    put(t1, 'Hit points', () => c.hp[0], v => { c.hp[0] = v; c.hp[2] = Math.max(c.hp[2], v); }, 999);
+    put(t1, 'Endurance', () => c.end[0], v => { c.end[0] = v; c.end[2] = Math.max(c.end[2], v); }, 999);
+    put(t1, 'Mana', () => c.mana[0], v => { c.mana[0] = v; c.mana[2] = Math.max(c.mana[2], v); }, 999);
+    const h = document.createElement('div');
+    h.innerHTML = '<h4>Body</h4>'; h.append(t1);
+    const t3 = document.createElement('table'); t3.className = 'st';
+    put(t3, 'Weapon bonus', () => c.weapon_bonus, v => c.weapon_bonus = v, 255);
+    put(t3, 'Armor bonus', () => c.armor_bonus, v => c.armor_bonus = v, 255);
+    put(t3, 'Damage to attackers', () => c.gethit_dam, v => c.gethit_dam = v, 127);
+    put(t3, 'Glows (light)', () => c.light_bonus, v => c.light_bonus = v, 255);
+    const r = t3.insertRow(); r.insertCell().textContent = 'Speed'; r.insertCell().append(num(() => c.speed_mod, v => c.speed_mod = v, -128, 127));
+    h.insertAdjacentHTML('beforeend', '<h4>Bonuses</h4>'); h.append(t3);
+    cols.append(h);
+    const t2 = document.createElement('table'); t2.className = 'st'; t2.innerHTML = '<tr><th>Skill</th><th>Value</th></tr>';
+    SKILLS.forEach((s, z) => put(t2, s, () => c.skill[z * 6], v => { c.skill[z * 6] = v; c.skill[z * 6 + 2] = Math.max(c.skill[z * 6 + 2], v); }, 250));
+    const h2 = document.createElement('div'); h2.innerHTML = '<h4>Skills (0 = doesn\'t have it)</h4>'; h2.append(t2); cols.append(h2);
+    b.insertAdjacentHTML('beforeend', `<div class="note">Experience players get for killing it is worked out from these values (now ${c.points_tot.toLocaleString()} points in total).</div>`);
+  },
+  gear(b, c) {
+    const g = grid2(b, 'Worn (it fights with these)');
+    WEAR.forEach((w, i) => row(g, w, ipick(() => c.worn[i], v => c.worn[i] = v)));
+    const g2 = grid2(b, bit(c.flags, 10) ? 'Backpack: what it sells (merchant)' : 'Backpack (dropped when it dies)');
+    const free = c.item.findIndex(v => !v);
+    for (let i = 0; i < 40; i++) {
+      if (!c.item[i] && i !== free) continue;
+      row(g2, c.item[i] ? 'Slot ' + (i + 1) : 'Add', ipick(() => c.item[i], v => { c.item[i] = v; tplRender(); }));
+    }
+    const g3 = grid2(b, 'In its hand');
+    row(g3, 'Carried item', ipick(() => c.citem, v => c.citem = v), 'Rarely used.');
+  },
+  behave(b, c) {
+    const d = c.data, g = grid2(b, 'Fighting');
+    row(g, 'Takes part in fights', sel([[0, 'Stays out of fights'], [1, 'Defends good people'], [-1, 'Defends evil people']], () => d[24], v => d[24] = v));
+    row(g, 'Attack distance', num(() => d[93], v => d[93] = v, 0, 100), 'Warns (Warning text), then attacks anyone who comes closer than this. 0 = off.');
+    row(g, 'Keyword', sel([[0, 'Normal'], [1, 'Attacks unless the keyword is said'], [2, 'Only attacks near its resting spot']], () => d[95], v => d[95] = v), 'The keyword itself is on Talk & quest.');
+    row(g, 'Group', num(() => d[42], v => d[42] = v), 'NPCs with the same group number belong together.');
+    const ab = document.createElement('div'); ab.className = 'ipick';
+    for (let i = 43; i <= 46; i++) ab.append(num(() => d[i], v => d[i] = v));
+    row(g, 'Attacks everyone but groups', ab, 'If the first is set, it attacks every character not in one of these groups.');
+    row(g, 'Helps group', num(() => d[59], v => d[59] = v), 'Comes to help members of this group.');
+    row(g, 'Shouts for help, code', num(() => d[52], v => d[52] = v), 'When attacked; NPCs with the same "comes to help" code come running.');
+    row(g, 'Comes to help, code', num(() => d[53], v => d[53] = v));
+    const g2 = grid2(b, 'Moving around');
+    row(g2, 'Random walk every', num(() => Math.round(d[60] / 18), v => d[60] = v * 18, 0), 'seconds (0 = stays put). A patrol route is on its own tab.');
+    row(g2, 'Random walk at most', num(() => d[73], v => d[73] = v, 0), 'tiles from its resting spot (0 = no limit).');
+    row(g2, 'Resting spot', document.createTextNode(d[29] ? pos(d[29]).join(', ') : '— (set when it is placed)'), 'Where it goes back to. Move the NPC on the map to change it.');
+    const g3 = grid2(b, 'Other');
+    row(g3, 'Greets players', chk('Says its greeting to players who come close', () => !!d[37], on => d[37] = on ? 1 : 0));
+    row(g3, 'Light', sel([[0, 'Never'], [1, 'Lights a torch when dark'], [2, 'When dark and not resting'], [3, 'When dark and fighting']], () => d[62], v => d[62] = v));
+    row(g3, 'Picks up trash', num(() => d[47], v => d[47] = v), '1 = picks up and destroys garbage lying around.');
+    row(g3, 'Disappears after', num(() => d[64], v => d[64] = v, 0), 'ticks (18 per second; 0 = never). For summons.');
+  },
+  patrol(b, c) {
+    const d = c.data;
+    b.insertAdjacentHTML('beforeend', '<div class="note">It walks from stop to stop and then starts again at the first one. Up to 9 stops. Leave it empty for an NPC that stays at its resting spot. A stop counts as reached within 4 tiles, so space them out. Like every NPC, it only moves while a player is near (or with "Never sleeps").</div>');
+    const box = document.createElement('div'); b.append(box);
+    const stops = []; for (let i = 10; i <= 18; i++) if (d[i]) stops.push(pos(d[i]));
+    const save = () => { for (let i = 0; i < 9; i++) d[10 + i] = stops[i] ? stops[i][0] + stops[i][1] * 1024 : 0; };
+    stops.forEach((p, i) => {
+      const r = document.createElement('div'); r.className = 'stop';
+      r.innerHTML = `<b style="color:var(--gold2)">${i + 1}</b>`;
+      r.append(num(() => p[0], v => { p[0] = v; save(); }, 0, 1023), num(() => p[1], v => { p[1] = v; save(); }, 0, 1023));
+      const a = document.createElement('div'); a.className = 'ipick';
+      const mk = (t, f) => { const x = document.createElement('button'); x.className = 'sm'; x.textContent = t; x.onclick = f; a.append(x); };
+      mk('Pick on map', () => pickSpot(`Click stop ${i + 1}`, t => { p[0] = t.x; p[1] = t.y; save(); }));
+      if (i > 0) mk('↑', () => { [stops[i - 1], stops[i]] = [stops[i], stops[i - 1]]; save(); tplRender(); });
+      mk('Remove', () => { stops.splice(i, 1); save(); tplRender(); });
+      r.append(a); box.append(r);
+    });
+    if (stops.length < 9) {
+      const add = document.createElement('button'); add.className = 'btn sec'; add.textContent = '+ Add a stop (pick on map)';
+      add.onclick = () => pickSpot(`Click stop ${stops.length + 1}`, t => { stops.push([t.x, t.y]); save(); });
+      b.append(add);
+    }
+    const g = grid2(b, 'Timing');
+    row(g, 'Waits at each stop', num(() => Math.round(d[79] / 18), v => d[79] = v * 18, 0), 'seconds');
+  },
+  talk(b, c) {
+    const g = grid2(b, 'What it says');
+    b.insertAdjacentHTML('afterbegin', '<div class="note">Write <b>%s</b> where the player\'s name goes. For a different answer to a question players ask, a custom dialogue system is planned (it needs a server addition).</div>');
+    CTEXT.forEach(([i, l, h]) => row(g, l, txt(() => c.text[i], v => c.text[i] = v, 159), h));
+    row(g, 'Dying words chance', num(() => c.data[48], v => c.data[48] = v, 0, 100), '% chance it says its dying words.');
+    const g2 = grid2(b, 'Knowledge (answers to players\' questions)');
+    row(g2, 'Knows about', sel(AREAS, () => c.data[72], v => c.data[72] = v), 'Which part of the world it can tell players about (the game\'s built-in answers).');
+    row(g2, 'How much it knows', num(() => c.data[68], v => c.data[68] = v, 0), 'Higher answers harder questions.');
+    row(g2, 'Talkativity', num(() => c.data[71], v => c.data[71] = v, 0));
+    const g3 = grid2(b, 'Quest: bring me an item');
+    row(g3, 'Wants', ipick(() => c.data[49], v => c.data[49] = v, { none: 'nothing' }), 'When a player gives it this item, it thanks them and gives the rewards below.');
+    row(g3, 'Teaches the skill', sel([[0, 'nothing'], ...SKILLS.map((s, i) => [i, s])], () => c.data[50], v => c.data[50] = v));
+    row(g3, 'and gives experience', num(() => c.data[51], v => c.data[51] = v, 0), 'only together with a skill');
+    row(g3, 'Gives back the item', ipick(() => c.data[66], v => c.data[66] = v, { none: 'nothing' }));
+  },
+  adv(b, c) {
+    b.insertAdjacentHTML('beforeend', '<div class="note">Every driver value of the template. The other tabs set the usual ones; these are for special NPCs (data 0-9 depend on the special driver).</div>');
+    const g = document.createElement('div'); g.className = 'dgrid'; b.append(g);
+    for (let i = 0; i < 100; i++) {
+      if (i === 99) continue;
+      const l = document.createElement('label'); l.innerHTML = `<span>${i} · ${esc(DATA_NAMES[i] || '')}</span>`;
+      l.append(num(() => c.data[i], v => c.data[i] = v)); g.append(l);
+    }
+  },
+};
+
+// ---- item tabs
+const ITEM_TABS = {
+  general(b, c) {
+    const g = grid2(b);
+    row(g, 'Name', txt(() => c.name, v => { const same = c.reference === c.name.toLowerCase(); c.name = v; if (same) c.reference = v.toLowerCase(); }, 39));
+    row(g, 'Reference', txt(() => c.reference, v => c.reference = v, 39), 'Used in sentences ("a pair of boots").');
+    row(g, 'Description', txt(() => c.description, v => c.description = v, 199, true), 'What players read when they look at it.');
+    for (const k of [0, 1]) {
+      const sp = document.createElement('div'); sp.className = 'ipick'; const th = thumb(c.sprite[k], 48);
+      sp.append(num(() => c.sprite[k], v => { c.sprite[k] = v; th.dataset.spr = v; paintThumb(th); }, -32768, 32767), th);
+      row(g, k ? 'Look when on/active' : 'Look', sp, k ? 'For doors, torches and the like (0 = same).' : '');
+    }
+    const val = document.createElement('div'); val.className = 'ipick';
+    val.append(num(() => Math.floor(c.value / 100), v => c.value = v * 100 + c.value % 100, 0), document.createTextNode(' gold '),
+      num(() => c.value % 100, v => c.value = Math.floor(c.value / 100) * 100 + v, 0, 99), document.createTextNode(' silver'));
+    row(g, 'Value', val, 'What merchants pay for it.');
+    row(g, 'Min. rank to wear', num(() => c.min_rank, v => c.min_rank = v, 0, 127));
+    row(g, 'Driver', num(() => c.driver, v => c.driver = v, 0, 255), 'The special code it runs when used (6 = portal, 1 = door, …). Its values are on Advanced.');
+    for (const [title, fl] of ITEM_FLAGS) { const g2 = grid2(b, title); row(g2, '', chks(fl.map(([bt, l]) => chk(l, () => bit(c.flags, bt), on => c.flags = setBit(c.flags, bt, on))))); }
+    const g3 = grid2(b, 'Worn on');
+    row(g3, '', chks(PLACES.map(([v, l]) => chk(l, () => !!(c.placement & v), on => c.placement = on ? c.placement | v : c.placement & ~v))));
+  },
+  stats(b, c) {
+    b.insertAdjacentHTML('beforeend', '<div class="note"><b>When worn</b> adds to the player while worn (or a spell while it lasts), <b>When active</b> while it is turned on, <b>Needed</b> is what the player must have to wear or use it.</div>');
+    const cols = document.createElement('div'); cols.className = 'cols'; b.append(cols);
+    const mk = () => { const t = document.createElement('table'); t.className = 'st'; t.innerHTML = '<tr><th></th><th>When worn</th><th>When active</th><th>Needed</th></tr>'; return t; };
+    const put3 = (t, name, arr, base, lo, hi) => { const r = t.insertRow(); r.insertCell().textContent = name; for (let k = 0; k < 3; k++) r.insertCell().append(num(() => arr[base + k], v => arr[base + k] = v, lo, hi)); };
+    const t1 = mk();
+    ATTRS.forEach((a, z) => put3(t1, a, c.attrib, z * 3, -128, 127));
+    put3(t1, 'Hit points', c.hp, 0, -32768, 32767); put3(t1, 'Endurance', c.end, 0, -32768, 32767); put3(t1, 'Mana', c.mana, 0, -32768, 32767);
+    const t3 = document.createElement('table'); t3.className = 'st'; t3.innerHTML = '<tr><th></th><th>Normal</th><th>Active</th></tr>';
+    const put2 = (name, arr, lo, hi) => { const r = t3.insertRow(); r.insertCell().textContent = name; for (let k = 0; k < 2; k++) r.insertCell().append(num(() => arr[k], v => arr[k] = v, lo, hi)); };
+    put2('Armor value', c.armor, -128, 127); put2('Weapon value', c.weapon, -128, 127); put2('Light', c.light, -32768, 32767); put2('Damage to attackers', c.gethit_dam, -128, 127);
+    const h = document.createElement('div'); h.innerHTML = '<h4>Attributes</h4>'; h.append(t1); h.insertAdjacentHTML('beforeend', '<h4>Armor, weapon, light</h4>'); h.append(t3); cols.append(h);
+    const t2 = mk(); SKILLS.forEach((s, z) => put3(t2, s, c.skill, z * 3, -128, 127));
+    const h2 = document.createElement('div'); h2.innerHTML = '<h4>Skills</h4>'; h2.append(t2); cols.append(h2);
+  },
+  adv(b, c) {
+    const g = grid2(b);
+    row(g, 'Lasts (inactive)', num(() => c.max_age[0], v => c.max_age[0] = v, 0), 'ticks before it decays (18 per second; 0 = forever)');
+    row(g, 'Lasts (active)', num(() => c.max_age[1], v => c.max_age[1] = v, 0));
+    row(g, 'Max damage', num(() => c.max_damage, v => c.max_damage = v, 0), 'how much it can take before it breaks (0 = never)');
+    row(g, 'Duration', num(() => c.duration, v => c.duration = v, 0), 'of a spell or an effect');
+    row(g, 'Cost', num(() => c.cost, v => c.cost = v, 0)); row(g, 'Power', num(() => c.power, v => c.power = v, 0));
+    row(g, 'Changes the player\'s look', num(() => c.sprite_override, v => c.sprite_override = v, 0, 65535), 'sprite (potions, costumes)');
+    row(g, 'Animation', (() => { const d = document.createElement('div'); d.className = 'ipick'; d.append(num(() => c.status[0], v => c.status[0] = v, 0, 255), num(() => c.status[1], v => c.status[1] = v, 0, 255)); return d; })(), '0/1 still, 16 = 4-frame loop …');
+    const h = document.createElement('h4'); h.textContent = `Driver values (driver ${c.driver})`; b.append(h);
+    const dg = document.createElement('div'); dg.className = 'dgrid'; b.append(dg);
+    for (let i = 0; i < 10; i++) { const l = document.createElement('label'); l.innerHTML = `<span>data ${i}${c.driver === 6 && i < 2 ? (i ? ' · portal y' : ' · portal x') : ''}</span>`; l.append(num(() => c.data[i], v => c.data[i] = v)); dg.append(l); }
+  },
+};
 
 // ---------------------------------------------------------------- editing
 function footprint(x, y) {
@@ -2316,7 +3011,7 @@ async function edit(ops, lbl, reselect) {
   if (r.error) toast(r.error, true);
   else if (r.msgs && r.msgs.length) toast([...new Set(r.msgs)].slice(0, 3).join('\n'), true);
   Object.assign(info, { dirty: r.dirty ?? info.dirty, undo: r.undo ?? info.undo, redo: r.redo ?? info.redo }); status();
-  refetch(ops.flatMap(o => o.tx !== undefined ? [[o.x, o.y], [o.tx, o.ty]] : [[o.x, o.y]]));
+  refetch(ops.filter(o => o.x !== undefined).flatMap(o => o.tx !== undefined ? [[o.x, o.y], [o.tx, o.ty]] : [[o.x, o.y]]));
   if (r.ok !== false && ops.some(o => o.op.startsWith('npc'))) api('/api/npcs').then(n => { if (Array.isArray(n) && pal) { pal.npcs = n; if (mode === 'map' && tab === 'npcs') leftUI(); } });
   if (selTile && (reselect || ops.some(o => o.x === selTile.x && o.y === selTile.y))) selectTile(selTile.x, selTile.y);
   if (mode === 'history') leftUI();
@@ -2413,6 +3108,7 @@ cv.addEventListener('mousedown', e => {
   if (e.button === 1 || e.button === 2 || (e.button === 0 && (spaceDown || tool === 'pan'))) { panning = { sx, sy, cx: cam.x, cy: cam.y }; cv.style.cursor = 'grabbing'; e.preventDefault(); return; }
   if (e.button !== 0) return;
   if (destPick) { if (info.running) { destPick = null; return toast('The game server is running: editing is off.', true); } setDestination(t); return; }
+  if (tplPick) { tplPicked(t); return; }
   if (npcPick) { if (info.running) { npcPick = null; return toast('The game server is running: editing is off.', true); } moveNpc(t); return; }
   if (tool === 'select') { selectTile(t.x, t.y); return; }
   if (tool === 'pick') { pick(t.x, t.y); return; }
@@ -2477,6 +3173,8 @@ window.addEventListener('mouseup', () => {
 });
 window.addEventListener('keydown', e => {
   const k = e.key.toLowerCase();
+  if (TP && k === 'escape') { if (tplPick) tplPicked(null); else if ($('#ipop').style.display === 'flex') $('#ipop').style.display = 'none'; else closeTemplate(); return; }
+  if (TP && !tplPick) return;      // the template editor is open: its fields get the keys
   if ((e.ctrlKey || e.metaKey) && k === 'k') { e.preventDefault(); $('#q').focus(); $('#q').select(); return; }
   if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') {
     if (k === 'escape') e.target.blur();
