@@ -368,6 +368,8 @@ static void con_edpatch(char *path)
 		if (map[m].flags&MF_INDOORS) compute_dlight(x,y);
 	}
 	if (sight) { for (k=1; k<MAXCHARS; k++) see[k].x=see[k].y=0; reset_go(x0+LIGHTDIST,y0+LIGHTDIST); }
+	for (n=0; n<cnt; n++)	// a changed character (a player's gold, stats, backpack...): work out its values again, refresh its client
+		if (rec[n].kind==2 && rec[n].idx>0 && rec[n].idx<MAXCHARS && ch[rec[n].idx].used==USE_ACTIVE) do_update_char(rec[n].idx);
 
 	// 4. NPC actions
 	for (n=0; n<nact; n++) {

@@ -52,6 +52,29 @@ CT_FIELDS = {
     'class': (1549, '<i'), 'data': (1605, '<100i'),
 }
 CT_TEXT = 2005                    # text[10][160]
+# extra fields of a player character
+PL_FIELDS = dict(CT_FIELDS, **{
+    'points': (705, '<i'), 'luck': (1533, '<i'), 'depot': (1281, '<62I'), 'depot_cost': (1529, '<i'),
+    'creation_date': (1062, '<i'), 'login_date': (1066, '<i'), 'logout_date': (1601, '<i'), 'addr': (1070, '<I'),
+    'current_online_time': (1074, '<I'), 'total_online_time': (1078, '<I'), 'temple_x': (311, '<H'), 'temple_y': (313, '<H'),
+    'tavern_x': (315, '<H'), 'tavern_y': (317, '<H'), 'pass1': (289, '<I'), 'pass2': (293, '<I'), 'used': (0, 'B'),
+    'a_hp': (689, '<i'), 'a_end': (693, '<i'), 'a_mana': (697, '<i'), 'armor': (713, '<h'), 'weapon': (715, '<h'), 'temp': (319, '<H'),
+})
+KIN = [(0, 'Mercenary'), (1, 'Seyan\'Du'), (2, 'Purple'), (4, 'Templar'), (5, 'Arch-Templar'), (6, 'Harakim'), (9, 'Arch-Harakim'),
+       (10, 'Warrior'), (11, 'Sorcerer'), (7, 'male'), (8, 'female')]
+RANKS = ['Private', 'Private First Class', 'Lance Corporal', 'Corporal', 'Sergeant', 'Staff Sergeant', 'Master Sergeant', 'First Sergeant',
+         'Sergeant Major', 'Second Lieutenant', 'First Lieutenant', 'Captain', 'Major', 'Lieutenant Colonel', 'Colonel', 'Brigadier General',
+         'Major General', 'Lieutenant General', 'General', 'Field Marshal', 'Knight of Astonia', 'Baron of Astonia', 'Earl of Astonia',
+         'Warlord of Astonia']
+RANK_PTS = [50, 850, 4900, 17700, 48950, 113750, 233800, 438600, 766650, 1266650, 1998700, 3035500, 4463550, 6384350, 8915600,
+            12192400, 16368450, 21617250, 28133300, 36133300, 49014500, 63000600, 80977100]     # helper.c points2rank()
+
+
+def points2rank(v):
+    for i, p in enumerate(RANK_PTS):
+        if v < p:
+            return i
+    return 23
 IT_FIELDS = {
     'name': (1, '40s'), 'reference': (41, '40s'), 'description': (81, '200s'), 'flags': (281, '<Q'), 'value': (289, '<I'),
     'placement': (293, '<H'), 'max_age': (298, '<2I'), 'max_damage': (314, '<I'), 'attrib': (322, '15b'),
@@ -537,7 +560,8 @@ class World:
                 temps.append([t, cstr(self.titem[o + I_NAME:o + I_NAME + 40]), self.ti_u16(t, I_SPRITE),
                               1 if fl & IF_TAKE else 0, self.titem[o + I_DRIVER],
                               (1 if fl & IF_MOVEBLOCK else 0) | (2 if fl & IF_SIGHTBLOCK else 0),
-                              1 if fl & (IF_TAKE | IF_LOOK | IF_LOOKSPECIAL | IF_USE | IF_USESPECIAL) else 0])
+                              1 if fl & (IF_TAKE | IF_LOOK | IF_LOOKSPECIAL | IF_USE | IF_USESPECIAL) else 0,
+                              struct.unpack_from('<H', self.titem, o + I_PLACEMENT)[0]])
         fl_sorted = sorted(floors.items(), key=lambda a: -a[1])
         ob_sorted = sorted(objs.items(), key=lambda a: -a[1])
         return {'floors': fl_sorted, 'objects': ob_sorted, 'templates': temps, 'flags': MF, 'sets': FLOOR_SETS,
@@ -696,6 +720,111 @@ class World:
                       'citem': self.iname(r['citem']), 'want': self.iname(r['data'][49]), 'give': self.iname(r['data'][66])}
         return r
 
+    # --- player characters
+    def is_player(self, c):
+        o = c * CHAR_SIZE
+        return 0 < c < MAXCHARS and self.char[o + C_USED] != USE_EMPTY and \
+            struct.unpack_from('<Q', self.char, o + C_FLAGS)[0] & CF_PLAYER and not struct.unpack_from('<Q', self.char, o + C_FLAGS)[0] & CF_BODY
+
+    def kin_name(self, k):
+        cls = [n for b, n in KIN if b not in (7, 8) and k >> b & 1]
+        return (cls[0] if cls else '?') + (' (f)' if k >> 8 & 1 else ' (m)' if k >> 7 & 1 else '')
+
+    def players(self):
+        out = []
+        for c in range(1, MAXCHARS):
+            if not self.is_player(c):
+                continue
+            o = c * CHAR_SIZE
+            pt = struct.unpack_from('<i', self.char, o + 709)[0]
+            out.append({'c': c, 'name': cstr(self.char[o + 1:o + 41]), 'online': 1 if self.char[o] == USE_ACTIVE else 0,
+                        'rank': RANKS[points2rank(pt)], 'points': pt, 'kin': self.kin_name(struct.unpack_from('<i', self.char, o + 281)[0]),
+                        'login': max(struct.unpack_from('<i', self.char, o + 1066)[0], struct.unpack_from('<i', self.char, o + 1601)[0]),
+                        'sprite': self.char_sprite(c), 'flags': struct.unpack_from('<Q', self.char, o + C_FLAGS)[0]})
+        out.sort(key=lambda p: (-p['online'], -p['login']))
+        return out
+
+    def iteminfo(self, i):
+        if not (0 < i < MAXITEM) or i & 0x80000000 or not self.item[i * ITEM_SIZE + I_USED]:
+            return None
+        o = i * ITEM_SIZE
+        return {'i': i, 'name': cstr(self.item[o + 1:o + 41]), 'temp': self.it_u16(i, I_TEMP), 'sprite': self.item_sprite(i),
+                'desc': cstr(self.item[o + I_DESC:o + I_DESC + 200]), 'value': struct.unpack_from('<I', self.item, o + 289)[0]}
+
+    def pchar(self, c):
+        if not self.is_player(c):
+            return None
+        o = c * CHAR_SIZE
+        r = tpl_read(self.char, o, PL_FIELDS)
+        r['text'] = []
+        r['c'] = c
+        r['online'] = 1 if self.char[o] == USE_ACTIVE else 0
+        r['rank'] = RANKS[points2rank(r['points_tot'])]
+        r['kin_name'] = self.kin_name(r['kindred'])
+        r['bank'] = r['data'][13]
+        r['items'] = {'item': [self.iteminfo(i) for i in r['item']], 'worn': [self.iteminfo(i) for i in r['worn'][:12]],
+                      'depot': [self.iteminfo(i) for i in r['depot']], 'citem': self.iteminfo(r['citem'])}
+        r['ip'] = '%d.%d.%d.%d' % (r['addr'] & 255, r['addr'] >> 8 & 255, r['addr'] >> 16 & 255, r['addr'] >> 24) if r['addr'] else ''
+        r['quests'] = {}
+        try:      # quest steps (npctalk.c's quest.dat)
+            with open(os.path.join(self.dat, 'quest.dat'), 'rb') as f:
+                h = f.read(16)
+                if h[:8] == b'MYV2QST2':
+                    nv, rs = struct.unpack_from('<ii', h, 8)
+                    f.seek(16 + c * rs)
+                    row = f.read(rs)
+                    if len(row) == rs and struct.unpack_from('<i', row)[0] == r['creation_date']:
+                        r['quests'] = {n + 1: v for n, v in enumerate(struct.unpack_from('<%dH' % nv, row, 4)) if v}
+        except OSError:
+            pass
+        return r
+
+    def moa(self, c):
+        """the client's character file (struct key + struct pdata of the client)"""
+        p = self.pchar(c)
+        if not p:
+            return None
+        name = p['name'].encode('latin-1', 'replace')[:39]
+        key = struct.pack('<III40si', c, p['pass1'], p['pass2'], name, p['temp'] if 0 < p['temp'] < 1000 else 2)
+        pd = bytearray(480)
+        pd[0:len(name)] = name
+        ref = p['reference'].encode('latin-1', 'replace')[:79]; pd[80:80 + len(ref)] = ref
+        de = p['description'].encode('latin-1', 'replace')[:159]; pd[160:160 + len(de)] = de
+        struct.pack_into('<iii', pd, 324, 0, 1, 1)                   # hide, show names, show percentages
+        for n in range(12):                                         # the skill buttons: empty
+            pd[336 + n * 12:336 + n * 12 + 2] = b'-\0'
+            struct.pack_into('<i', pd, 336 + n * 12 + 8, -1)
+        return key + bytes(pd)
+
+    def phistory(self, c, limit=400):
+        """what server.log says about this character"""
+        p = self.pchar(c)
+        if not p:
+            return []
+        pat = re.compile(r'^(\d\d)\.(\d\d)\.(\d\d) (\d\d:\d\d:\d\d): (.+?) \((\d+) at (\d+),(\d+) from ([\d.]+), ID=-?\d+\): (.*)$')
+        key = ' (%d at ' % c
+        out = []
+        for fn in ('server.log.1', 'server.log'):
+            try:
+                f = open(os.path.join(self.server_dir, fn), 'rb')
+            except OSError:
+                continue
+            with f:
+                for line in f:
+                    if key.encode() not in line:
+                        continue
+                    m = pat.match(line.decode('latin-1').rstrip('\n'))
+                    if not m or m.group(5).split(' [')[0] != p['name']:
+                        continue
+                    t = m.group(10)
+                    kind = 'login' if t.startswith('Login successful') else 'logout' if t.startswith(('Connection closed', 'Idle timeout', 'Exit', 'Pressed F12', 'Punished for leaving')) \
+                        else 'kill' if t.startswith('Killed ') else 'death' if t.startswith(('Died', 'new player body')) or 'killed by' in t.lower() else 'other'
+                    out.append({'t': '20%s-%s-%s %s' % (m.group(3), m.group(2), m.group(1), m.group(4)), 'x': int(m.group(7)), 'y': int(m.group(8)),
+                                'ip': m.group(9), 'kind': kind, 'text': t[:200]})
+                    if len(out) > 20000:
+                        del out[:10000]
+        return out[-limit:]
+
     def iname(self, t):
         if 0 < t < MAXTITEM and self.titem[t * ITEM_SIZE + I_USED]:
             return cstr(self.titem[t * ITEM_SIZE + I_NAME:t * ITEM_SIZE + I_NAME + 40])
@@ -724,6 +853,57 @@ class World:
         hx, hy = struct.unpack_from('<hh', self.tchar, tp * CHAR_SIZE + C_X)
         if self.t_u64(tp, C_FLAGS) & CF_RESPAWN and (hx or hy):
             self._spawn_timer(rec, tp, hx, hy)
+
+    def player_op(self, rec, op):
+        c = int(op['c'])
+        if not self.is_player(c):
+            return 'not a player character'
+        o = c * CHAR_SIZE
+        k = op['op']
+        if k == 'pset':
+            f = {k2: v for k2, v in (op.get('fields') or {}).items() if k2 in PL_FIELDS and k2 not in
+                 ('item', 'worn', 'depot', 'citem', 'used', 'pass1', 'pass2', 'temp', 'x', 'y', 'a_hp', 'a_end', 'a_mana', 'armor', 'weapon',
+                  'creation_date', 'login_date', 'logout_date', 'addr', 'current_online_time', 'total_online_time')}
+            self._keep(rec, 'c', c)
+            if 'bank' in op:
+                d = list(struct.unpack_from('<100i', self.char, o + C_DATA)); d[13] = int(op['bank']); f['data'] = d
+            if op.get('nopass'):            # forget the password (CF_PASSWD and the stored hash)
+                self.char[o + 1139:o + 1155] = b'\0' * 16
+                f['flags'] = int(f.get('flags', struct.unpack_from('<Q', self.char, o + C_FLAGS)[0])) & ~(1 << 42)
+            tpl_write(self.char, o, PL_FIELDS, f)
+            return ''
+        where, slot = op.get('where'), int(op.get('slot', 0))
+        off, cnt = {'item': (C_ITEM, 40), 'worn': (C_WORN, 12), 'depot': (1281, 62), 'citem': (C_CITEM, 1)}.get(where, (0, 0))
+        if not cnt or not (0 <= slot < cnt):
+            return 'bad slot'
+        cur = struct.unpack_from('<I', self.char, o + off + 4 * slot)[0]
+        if k == 'pdelitem':
+            if not cur:
+                return 'that slot is empty'
+            self._keep(rec, 'c', c)
+            if 0 < cur < MAXITEM and not cur & 0x80000000:
+                self._save_item(rec, cur); self.item[cur * ITEM_SIZE + I_USED] = USE_EMPTY
+            struct.pack_into('<I', self.char, o + off + 4 * slot, 0)
+            return ''
+        if k == 'padditem':
+            tp = int(op['t'])
+            if not self.itemp(tp):
+                return 'item template %d does not exist' % tp
+            if cur:
+                return 'that slot is taken'
+            i = self._free_item()
+            if not i:
+                return 'no free item slot'
+            self._save_item(rec, i); self._keep(rec, 'c', c)
+            io = i * ITEM_SIZE
+            self.item[io:io + ITEM_SIZE] = self.titem[tp * ITEM_SIZE:(tp + 1) * ITEM_SIZE]
+            self.item[io + I_USED] = USE_ACTIVE
+            struct.pack_into('<H', self.item, io + I_TEMP, tp)
+            struct.pack_into('<hhH', self.item, io + I_X, 0, 0, c)
+            struct.pack_into('<i', self.item, io + I_ACTIVE, 0)
+            struct.pack_into('<I', self.char, o + off + 4 * slot, i)
+            return ''
+        return 'unknown player edit'
 
     def temp_op(self, rec, op):
         k = op['op']
@@ -947,6 +1127,13 @@ class World:
             self.made = None
             self.talk_copies = []
             for op in ops:
+                if op['op'] in ('pset', 'padditem', 'pdelitem'):
+                    err = self.player_op(rec, op)
+                    if err:
+                        msgs.append(err)
+                    else:
+                        n += 1
+                    continue
                 if op['op'] in ('ctempset', 'ctempnew', 'itempset', 'itempnew'):
                     err = self.temp_op(rec, op)
                     if err:
@@ -1696,6 +1883,24 @@ def make_handler(world, sprites, page, minimap, ctl):
                 return self.js(world.chars())
             if u.path == '/api/npcs':
                 return self.js(world.npc_templates())
+            if u.path == '/api/players':
+                return self.js(world.players())
+            if u.path == '/api/pchar':
+                return self.js(world.pchar(int(q['c'])) or {'error': 'no such player'})
+            if u.path == '/api/phist':
+                return self.js(world.phistory(int(q['c'])))
+            if u.path == '/api/moa':
+                b = world.moa(int(q['c']))
+                if not b:
+                    return self.send(404, 'text/plain', b'no such player')
+                nm = re.sub(r'[^A-Za-z0-9_-]', '', world.pchar(int(q['c']))['name']) or 'character'
+                self.send_response(200)
+                self.send_header('Content-Type', 'application/octet-stream')
+                self.send_header('Content-Disposition', 'attachment; filename="%s.moa"' % nm)
+                self.send_header('Content-Length', str(len(b)))
+                self.end_headers()
+                self.wfile.write(b)
+                return
             if u.path == '/api/talk':
                 qs, npcs = world.talk_load()
                 return self.js({'quests': {str(k): v for k, v in qs['names'].items()}, 'steps': {str(k): v for k, v in qs['steps'].items()},
@@ -2078,6 +2283,7 @@ table.pl button:hover { color: var(--text); border-color: var(--gold); }
 
 <nav>
   <button data-m="map" class="on" title="Build the map"><svg viewBox="0 0 24 24"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2z"/><path d="M9 4v14M15 6v14"/></svg>Map</button>
+  <button data-m="players" title="Player characters: stats, backpack, depot, history, character file"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.5 3-5.5 6.5-5.5s6.5 2 6.5 5.5"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18.5 14.8c2 .8 3 2.6 3 5.2"/></svg>Players</button>
   <button data-m="npcs" title="Every NPC and player in the world"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>NPCs</button>
   <button data-m="history" title="What you changed, and the saves"><svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5M12 7v5l3 2"/></svg>History</button>
   <button data-m="server" title="Run and control the game server"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="7" rx="1.5"/><rect x="3" y="13" width="18" height="7" rx="1.5"/><path d="M7 7.5h.01M7 16.5h.01"/></svg>Server</button>
@@ -2674,8 +2880,8 @@ function leftUI() {
     $('#lsearch').style.display = ''; $('#card').style.display = '';
     $('#lsearch').placeholder = 'Search name or number';
   } else {
-    tabs.innerHTML = `<button class="on">${{ npcs: 'NPCs and players', history: 'History', help: 'Help' }[mode]}</button>`;
-    $('#lsearch').style.display = mode === 'npcs' ? '' : 'none'; $('#card').style.display = 'none';
+    tabs.innerHTML = `<button class="on">${{ npcs: 'NPCs and players', players: 'Player characters', history: 'History', help: 'Help' }[mode]}</button>`;
+    $('#lsearch').style.display = mode === 'npcs' || mode === 'players' ? '' : 'none'; $('#card').style.display = 'none';
     $('#lsearch').placeholder = 'Search a name';
   }
   w.innerHTML = '';
@@ -2738,6 +2944,24 @@ function leftUI() {
         const d = document.createElement('div'); d.innerHTML = '<div></div><div class="n"></div>';
         d.firstChild.textContent = c[1]; d.lastChild.textContent = `${c[5] ? (c[7] ? 'player · online' : 'player · offline') : 'template ' + c[4]} · ${c[2]}, ${c[3]}`;
         r.appendChild(d); r.onclick = () => { centerOn(c[2], c[3]); selectTile(c[2], c[3]); };
+        return r;
+      });
+    });
+  } else if (mode === 'players') {
+    w.innerHTML = '<div class="empty">Loading…</div>';
+    api('/api/players').then(list => {
+      if (mode !== 'players') return;
+      list = list.filter(p => !q || p.name.toLowerCase().includes(q) || String(p.c) === q);
+      const box = document.createElement('div'); box.className = 'list'; w.innerHTML = ''; w.appendChild(box);
+      const s = document.createElement('div'); s.className = 'sect'; s.style.padding = '2px 2px 8px';
+      s.textContent = `${list.length} character${list.length === 1 ? '' : 's'} · ${list.filter(p => p.online).length} online · click to open`; box.appendChild(s);
+      lazy(box, list, p => {
+        const r = document.createElement('div'); r.className = 'row';
+        r.appendChild(thumb(p.sprite, 34));
+        const d = document.createElement('div'); d.innerHTML = '<div></div><div class="n"></div>';
+        d.firstChild.innerHTML = (p.online ? '<span style="color:var(--ok)">● </span>' : '') + esc(p.name);
+        d.lastChild.textContent = `${p.rank} · ${p.kin} · ${p.online ? 'online' : p.login ? 'last seen ' + new Date(p.login * 1000).toLocaleDateString() : 'never'}`;
+        r.appendChild(d); r.onclick = () => openPlayer(p.c);
         return r;
       });
     });
@@ -2966,7 +3190,7 @@ const pos = v => v ? [v % 1024, Math.floor(v / 1024)] : null;
 
 let TP = null;   // {kind: 'npc'|'item', t, orig, cur, tab}
 function talkDirty() { return TP && TP.talk && JSON.stringify(TP.talk) !== TP.talkOrig; }
-function tplDirty() { return TP && (Object.keys(tplChanged()).length || talkDirty() || (TP.kind === 'npc' && JSON.stringify(TP.cur.text) !== JSON.stringify(TP.orig.text))); }
+function tplDirty() { return TP && (Object.keys(tplChanged()).length || (TP.kind === 'player' && TP.nopass) || talkDirty() || (TP.kind === 'npc' && JSON.stringify(TP.cur.text) !== JSON.stringify(TP.orig.text))); }
 function openTemplate(kind, t) {
   if (tplDirty() && !(TP.kind === kind && TP.t === t) && !confirm('You have changes here you did not apply. Leave them?')) return;
   if (kind === 'use') {    // quest rules of the item on a tile: t = [x, y, name]
@@ -2988,6 +3212,7 @@ function openTemplate(kind, t) {
 function closeTemplate() { if (tplDirty() && !confirm('Close without applying your changes?')) return; TP = null; $('#tpl').classList.remove('on', 'picking'); $('#ipop').style.display = 'none'; }
 function tplTabs() {
   if (TP.kind === 'use') return { conv: 'Quest rules' };
+  if (TP.kind === 'player') return { overview: 'Overview', stats: 'Stats & skills', gear: 'Worn & backpack', depot: 'Depot', history: 'History', account: 'Account' };
   return TP.kind === 'npc'
     ? { general: 'General', stats: 'Stats & skills', gear: 'Equipment & stock', behave: 'Behaviour', patrol: 'Patrol route', talk: 'Talk & quest', conv: 'Conversations', adv: 'Advanced' }
     : { general: 'General', stats: 'Stats & requirements', adv: 'Advanced' };
@@ -3006,6 +3231,29 @@ function tplRender() {
       const tr = await api('/api/talk', { at: [TP.x, TP.y], entries: TP.talk.entries, quests: TP.talk.quests, steps: TP.talk.steps });
       toast(tr.error || 'Quest rules: ' + tr.msg, !!tr.error); TP.talkOrig = JSON.stringify(TP.talk);
     };
+    return;
+  }
+  if (TP.kind === 'player') {
+    el.querySelector('.ttl').innerHTML = '';
+    el.querySelector('.ttl').append(thumb(c.sprite + 8, 34));
+    el.querySelector('.ttl').insertAdjacentHTML('beforeend', '<span style="vertical-align:middle;margin-left:8px"></span><small></small>');
+    el.querySelector('.ttl span').textContent = c.name;
+    el.querySelector('.ttl small').textContent = `${c.rank} · ${c.kin_name} · ${c.online ? 'online' : 'offline'} · character ${c.c}`;
+    el.querySelector('.mtabs').innerHTML = Object.entries(tplTabs()).map(([k, v]) => `<button data-k="${k}" class="${k === TP.tab ? 'on' : ''}">${v}</button>`).join('');
+    el.querySelectorAll('.mtabs button').forEach(bt => bt.onclick = () => { TP.tab = bt.dataset.k; tplRender(); });
+    const body = el.querySelector('.mbody'); body.innerHTML = ''; PLAYER_TABS[TP.tab](body, c);
+    el.querySelector('.mft').innerHTML = `<span class="hint">${c.online ? 'Live: Apply changes the character in the running game.' : info.running ? 'Offline character: Apply changes it in the running game\'s files.' : 'Server stopped: Apply, then Save to the game.'}</span><span class="sp"></span><button class="btn ghost" id="tcancel">Close</button><button class="btn pri" id="tapply">Apply</button>`;
+    $('#tcancel').onclick = closeTemplate;
+    $('#tapply').onclick = async () => {
+      if (RO()) return toast('The game server is running and live editing is not available.', true);
+      const f = tplChanged(), op = { op: 'pset', c: c.c, fields: f };
+      delete f.bank; if (c.bank !== TP.orig.bank) op.bank = c.bank;
+      if (TP.nopass) op.nopass = 1;
+      if (!Object.keys(f).length && op.bank === undefined && !op.nopass) return toast('Nothing changed.');
+      await edit([op], 'changed player ' + c.name);
+      TP.nopass = false; TP.orig = JSON.parse(JSON.stringify(TP.cur)); openPlayer(c.c);
+    };
+    if (RO()) $('#tapply').disabled = true;
     return;
   }
   el.querySelector('.ttl').innerHTML = '';
@@ -3036,7 +3284,7 @@ function tplChanged() {
   const out = {}, o = TP.orig, c = TP.cur;
   if (TP.kind === 'use') return out;
   for (const k of Object.keys(c)) {
-    if (['t', 'count', 'pending', 'made', 'names', 'onmap', 'text'].includes(k)) continue;
+    if (['t', 'count', 'pending', 'made', 'names', 'onmap', 'text', 'items', 'item', 'worn', 'depot', 'citem', 'rank', 'kin_name', 'ip', 'quests', 'online', 'c'].includes(k)) continue;
     if (JSON.stringify(c[k]) !== JSON.stringify(o[k])) out[k] = c[k];
   }
   return out;
@@ -3499,6 +3747,135 @@ const ITEM_TABS = {
     for (let i = 0; i < 10; i++) { const l = document.createElement('label'); l.innerHTML = `<span>data ${i}${c.driver === 6 && i < 2 ? (i ? ' · portal y' : ' · portal x') : ''}</span>`; l.append(num(() => c.data[i], v => c.data[i] = v)); dg.append(l); }
   },
 };
+
+// ---------------------------------------------------------------- player characters
+const PFLAGS = [[11, 'Staff'], [23, 'Imp (can impersonate monsters)'], [1, 'God'], [45, 'Greater god'], [2, 'Creator (#build)'], [0, 'Immortal'],
+  [9, 'No shout'], [8, 'No tell'], [24, 'Muted until tomorrow'], [25, "Can't change description"], [40, 'Golden list'], [41, 'Black list'], [30, 'Hidden in #who']];
+const fmtDate = t => t ? new Date(t * 1000).toLocaleString() : '–';
+const fmtDur = ticks => { const s = Math.floor(ticks / 18), h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60); return h ? `${h} h ${m} min` : `${m} min`; };
+async function openPlayer(c) {
+  if (tplDirty() && !(TP.kind === 'player' && TP.t === c) && !confirm('You have changes here you did not apply. Leave them?')) return;
+  const r = await api('/api/pchar?c=' + c);
+  if (r.error) return toast(r.error, true);
+  TP = { kind: 'player', t: c, orig: JSON.parse(JSON.stringify(r)), cur: r, tab: TP && TP.kind === 'player' ? TP.tab : 'overview', hist: null };
+  $('#tpl').classList.add('on'); $('#tpl').classList.remove('picking'); tplRender();
+}
+async function playerItem(op) {    // add or remove an item right away, keep the other unapplied changes
+  await edit([op], (op.op === 'padditem' ? 'gave ' : 'took an item from ') + TP.cur.name);
+  const r = await api('/api/pchar?c=' + TP.t);
+  if (r.error) return toast(r.error, true);
+  for (const k of ['items', 'item', 'worn', 'depot', 'citem']) { TP.cur[k] = r[k]; TP.orig[k] = JSON.parse(JSON.stringify(r[k])); }
+  tplRender();
+}
+const PLAYER_TABS = {
+  overview(b, c) {
+    if (c.online) b.insertAdjacentHTML('beforeend', '<div class="note"><b style="color:var(--ok)">Online now.</b> Changes go into the game as soon as you apply them (the server works out their values again and updates their screen).</div>');
+    const g = grid2(b);
+    row(g, 'Name', document.createTextNode(c.name), 'Player names are not changed here.');
+    row(g, 'Description', txt(() => c.description, v => c.description = v, 199, true));
+    const ex = document.createElement('div'); ex.className = 'ipick';
+    const rk = document.createElement('span'); rk.className = 'hint';
+    const showRank = () => { let i = 0; for (const p of [50, 850, 4900, 17700, 48950, 113750, 233800, 438600, 766650, 1266650, 1998700, 3035500, 4463550, 6384350, 8915600, 12192400, 16368450, 21617250, 28133300, 36133300, 49014500, 63000600, 80977100]) if (c.points_tot >= p) i++; rk.textContent = ' → ' + ['Private', 'Private First Class', 'Lance Corporal', 'Corporal', 'Sergeant', 'Staff Sergeant', 'Master Sergeant', 'First Sergeant', 'Sergeant Major', 'Second Lieutenant', 'First Lieutenant', 'Captain', 'Major', 'Lieutenant Colonel', 'Colonel', 'Brigadier General', 'Major General', 'Lieutenant General', 'General', 'Field Marshal', 'Knight of Astonia', 'Baron of Astonia', 'Earl of Astonia', 'Warlord of Astonia'][i]; };
+    const tot = num(() => c.points_tot, v => { c.points += v - c.points_tot; c.points_tot = v; showRank(); un.value = c.points; }, 0);
+    tot.style.width = '130px'; ex.append(tot, rk); showRank();
+    row(g, 'Experience (total)', ex, 'Sets the rank. Changing it changes the unspent experience by the same amount.');
+    const un = num(() => c.points, v => c.points = v, 0); un.style.width = '130px';
+    row(g, 'Unspent experience', un, 'What they can still spend on attributes and skills.');
+    const money = (get, set) => { const d = document.createElement('div'); d.className = 'ipick'; d.append(num(() => Math.floor(get() / 100), v => set(v * 100 + get() % 100), 0), ' gold ', num(() => get() % 100, v => set(Math.floor(get() / 100) * 100 + v), 0, 99), ' silver'); return d; };
+    row(g, 'Money carried', money(() => c.gold, v => c.gold = v));
+    row(g, 'Bank', money(() => c.bank, v => c.bank = v), 'Pays the depot rent.');
+    row(g, 'Luck', num(() => c.luck, v => c.luck = v, -100000, 100000));
+    const tp = document.createElement('div'); tp.className = 'ipick';
+    tp.append(num(() => c.temple_x, v => c.temple_x = v, 0, 1023), num(() => c.temple_y, v => c.temple_y = v, 0, 1023));
+    const pk = document.createElement('button'); pk.className = 'sm'; pk.textContent = 'Pick on map'; pk.onclick = () => pickSpot('Click their new recall / respawn point', t => { c.temple_x = t.x; c.temple_y = t.y; }); tp.append(pk);
+    row(g, 'Recall point (temple)', tp, 'Where #recall and dying take them.');
+    const px = c.online ? c.x : c.tavern_x, py = c.online ? c.y : c.tavern_y;
+    const ps = document.createElement('div'); ps.className = 'ipick'; ps.append(`${px}, ${py} `);
+    const gt = document.createElement('button'); gt.className = 'sm'; gt.textContent = 'Show on map'; gt.onclick = () => { closeTemplate(); centerOn(px, py); selectTile(px, py); }; ps.append(gt);
+    row(g, c.online ? 'Standing at' : 'Comes back at', ps, c.online ? '' : 'Where they appear when they log in next.');
+    const qs = Object.entries(c.quests || {});
+    const g2 = grid2(b, 'Quest steps');
+    row(g2, '', document.createTextNode(qs.length ? qs.map(([n, v]) => `quest ${n} = ${v}`).join(' · ') : 'none'), 'Change them in the server console: quest ' + c.name + ' <n> <value>');
+  },
+  stats(b, c) {
+    b.insertAdjacentHTML('beforeend', '<div class="note"><b>Value</b> is what they have; <b>Max</b> is the most their class can reach. Only skills their class can learn (Max above 0) are listed, plus any they have.</div>');
+    const cols = document.createElement('div'); cols.className = 'cols'; b.append(cols);
+    const mk = () => { const t = document.createElement('table'); t.className = 'st'; t.innerHTML = '<tr><th></th><th>Value</th><th>Max</th></tr>'; return t; };
+    const put = (t, name, arr, i, step, hi) => { const r = t.insertRow(); r.insertCell().textContent = name; r.insertCell().append(num(() => arr[i], v => arr[i] = v, 0, hi)); r.insertCell().append(num(() => arr[i + 2], v => arr[i + 2] = v, 0, hi)); };
+    const t1 = mk(); ATTRS.forEach((a, z) => put(t1, a, c.attrib, z * 6, 6, 255));
+    put(t1, 'Hit points', c.hp, 0, 0, 65535); put(t1, 'Endurance', c.end, 0, 0, 65535); put(t1, 'Mana', c.mana, 0, 0, 65535);
+    const h = document.createElement('div'); h.innerHTML = '<h4>Body</h4>'; h.append(t1); cols.append(h);
+    const t2 = mk(); SKILLS.forEach((s2, z) => { if (c.skill[z * 6 + 2] || c.skill[z * 6]) put(t2, s2, c.skill, z * 6, 6, 255); });
+    const h2 = document.createElement('div'); h2.innerHTML = '<h4>Skills</h4>'; h2.append(t2); cols.append(h2);
+  },
+  gear(b, c) { playerSlots(b, c, 'worn', 'Worn', WEAR); playerSlots(b, c, 'citem', 'In the hand (on the mouse)', ['Held']); playerSlots(b, c, 'item', 'Backpack', null, 40); },
+  depot(b, c) { b.insertAdjacentHTML('beforeend', `<div class="note">Rent paid so far: ${Math.floor(c.depot_cost / 100)}G ${c.depot_cost % 100}S. Bank: ${Math.floor(c.bank / 100)}G ${c.bank % 100}S (on the Overview tab).</div>`); playerSlots(b, c, 'depot', 'Depot', null, 62); },
+  history(b, c) {
+    const g = grid2(b);
+    row(g, 'Created', document.createTextNode(fmtDate(c.creation_date)));
+    row(g, 'Last login', document.createTextNode(fmtDate(c.login_date)));
+    row(g, 'Last logout', document.createTextNode(c.online ? 'online now' : fmtDate(c.logout_date)));
+    row(g, 'Time played', document.createTextNode(fmtDur(c.total_online_time) + (c.online ? ` (this session ${fmtDur(c.current_online_time)})` : '')));
+    row(g, 'Last address', document.createTextNode(c.ip || '–'));
+    const box = document.createElement('div'); b.append(box);
+    const show = () => {
+      const H = TP.hist; box.innerHTML = '';
+      if (!H) { box.innerHTML = '<div class="hint">Reading the server log…</div>'; return; }
+      const f = document.createElement('div'); f.className = 'ipick'; f.style.margin = '14px 0 6px';
+      const s = document.createElement('select'); s.innerHTML = '<option value="">everything</option><option value="session">logins and logouts</option><option value="kill">kills</option><option value="death">deaths</option><option value="other">other</option>';
+      s.value = TP.histF || ''; s.onchange = () => { TP.histF = s.value; show(); };
+      f.append(`From the server log: ${H.length} entr${H.length === 1 ? 'y' : 'ies'} · show `, s); box.append(f);
+      const list = H.filter(e => !TP.histF || (TP.histF === 'session' ? e.kind === 'login' || e.kind === 'logout' : e.kind === TP.histF)).slice().reverse();
+      const t = document.createElement('table'); t.className = 'st'; t.style.width = '100%';
+      const col = { login: 'var(--ok)', logout: 'var(--dim)', kill: 'var(--gold2)', death: 'var(--bad)', other: 'var(--text)' };
+      for (const e of list.slice(0, 400)) {
+        const r = t.insertRow();
+        r.insertCell().innerHTML = `<span class="mono" style="color:var(--dim)">${esc(e.t)}</span>`;
+        const m = r.insertCell(); m.style.color = col[e.kind]; m.textContent = e.text;
+        const w = r.insertCell(); w.innerHTML = `<span class="mono hint">${e.x},${e.y}</span>`; w.style.cursor = 'pointer'; w.title = 'Show on the map';
+        w.onclick = () => { closeTemplate(); centerOn(e.x, e.y); };
+      }
+      if (!list.length) box.insertAdjacentHTML('beforeend', '<div class="hint">Nothing in the server log for this character (the log only covers what the server wrote since it was last cleared).</div>');
+      box.append(t);
+    };
+    show();
+    if (!TP.hist) api('/api/phist?c=' + c.c).then(h => { if (TP && TP.kind === 'player') { TP.hist = h; if (TP.tab === 'history') show(); } });
+  },
+  account(b, c) {
+    const g = grid2(b);
+    const a = document.createElement('a'); a.className = 'btn sec'; a.href = '/api/moa?c=' + c.c; a.download = c.name + '.moa'; a.textContent = 'Download ' + c.name + '.moa';
+    row(g, 'Character file', a, 'For a player who lost theirs: in the client, Load it, then log in. Anyone with this file can play the character, so send it only to its owner.');
+    const pw = bit(c.flags, 42);
+    row(g, 'Password', pw ? chk('Remove the password (on Apply)', () => !!TP.nopass, on => TP.nopass = on) : document.createTextNode('none set'), pw ? 'For a player who forgot it. They can set a new one in the game.' : '');
+    row(g, 'Character number', document.createTextNode(c.c));
+    const g2 = grid2(b, 'Rights and flags');
+    row(g2, '', chks(PFLAGS.map(([bt, l]) => chk(l, () => bit(c.flags, bt), on => c.flags = setBit(c.flags, bt, on)))));
+  },
+};
+function playerSlots(b, c, where, title, names, count) {
+  const g = grid2(b, title);
+  const list = where === 'citem' ? [c.items.citem] : c.items[where];
+  const n = names ? names.length : count;
+  const free = list.findIndex(v => !v);
+  for (let i = 0; i < n; i++) {
+    const it = list[i];
+    if (!it && !names && i !== free) continue;
+    const d = document.createElement('div'); d.className = 'ipick';
+    if (it) {
+      d.append(thumb(it.sprite, 28));
+      const nm = document.createElement('span'); nm.className = 'nm'; nm.textContent = it.name; nm.title = `item ${it.i} · template ${it.temp} · worth ${Math.floor(it.value / 100)}G ${it.value % 100}S${it.desc ? '\n' + it.desc : ''}`; d.append(nm);
+      const e = document.createElement('button'); e.className = 'sm'; e.textContent = 'Template…'; e.onclick = () => openTemplate('item', it.temp); d.append(e);
+      const x = document.createElement('button'); x.className = 'sm'; x.textContent = 'Remove';
+      x.onclick = () => { if (confirm(`Take ${it.name} away from ${c.name}? (Ctrl+Z undoes it)`)) playerItem({ op: 'pdelitem', c: c.c, where, slot: i }); }; d.append(x);
+    } else {
+      const s = document.createElement('span'); s.className = 'nm none'; s.textContent = 'empty'; d.append(s);
+      const ad = document.createElement('button'); ad.className = 'sm'; ad.textContent = '+ Give an item…';
+      const PLW = [1, 2, 4, 8, 32, 64, 128, 512, 256 | 2048, 1024, 4096, 4096];   // what fits each worn slot (PL_ bits)
+      ad.onclick = () => itemPopup(ad, t => playerItem({ op: 'padditem', c: c.c, where, slot: i, t }), where === 'worn' ? (t => (t[7] || 0) & PLW[i]) : (t => t[3])); d.append(ad);
+    }
+    row(g, names ? names[i] : (it ? 'Slot ' + (i + 1) : 'Add'), d);
+  }
+}
 
 // ---------------------------------------------------------------- editing
 function footprint(x, y) {

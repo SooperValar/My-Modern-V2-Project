@@ -243,6 +243,17 @@ The design is in `docs/ITEM_TIERS.md`. This first part builds the core:
 - Tested with the real server (console): kills counted only once the quest was at the step, 1/3 and 2/3 across two Skeleton templates, the third finishing the step, a template-number match, a wrong area blocking its line, and no counting after the step was done.
 - Tested with the real server: a quest intro over two lines that sets step 1, a follow-up line for step 1 and above, non-matching speech ignored, steps shown and reset from the console.
 
+#### Editor: player characters
+- New **Players** page (rail) listing every player character, online ones first, with rank, class and last seen. Clicking one opens it in tabs:
+  - **Overview:** description; total experience (sets the rank, and changes the unspent experience by the same amount) and unspent experience; money carried; bank (pays the depot rent; `data[13]`); luck; the recall point (pick on map); where they stand, or where they come back at the next login; their quest steps.
+  - **Stats & skills:** attributes, hit points, endurance, mana and the skills their class can learn, each with value and maximum.
+  - **Worn & backpack:** the 12 worn slots, the item on the mouse and the 40 backpack slots. Each item can be removed (Ctrl+Z undoes it) or its template opened; an empty slot gets **+ Give an item…** (worn slots only offer items that fit there).
+  - **Depot:** the 62 depot slots, the same way, and the rent paid so far.
+  - **History:** created, last login, last logout, time played, last address, and the lines about the character in `server.log` (logins, logouts, kills, deaths, other), which can be filtered and clicked to show the place on the map.
+  - **Account:** download the character's **.moa** file (the client's key file: number, both keys, name, starting race, default display options) for a player who lost theirs; remove a forgotten password; rights and flags (staff, imp, god, creator, no shout, no tell, muted, golden/black list, hidden in #who).
+- Changes go through the normal edit path: undo, history, saving when the server is stopped, and live into the running game when it runs.
+- `edpatch` (`console.c`) now works out an online character's values again and refreshes their client after a live change to it (`do_update_char`).
+
 #### Editor: live editing while the server runs
 - With the server running, the MyV2 Editor edits the live game. Floors, objects, items, flags, portals, NPCs (place, move, turn, remove) and NPC and item templates all go straight in, and players see them right away. The banner turns green ("Live editing"). There is nothing to save, and Ctrl+Z / Ctrl+Y undo and redo.
 - How: the editor reads the game's current files (the server keeps them in shared memory), makes the change on that copy, and sends the difference to the server as a patch file with the console command `edpatch <file>` (control port, `console.c`). Every changed byte range carries the bytes it expects to find. If anything there changed in the meantime (an NPC walked onto the tile, an item was picked up), the server applies nothing and says so; the editor then tells you to try again. Undo works the same way, so it never overwrites something the game changed.
