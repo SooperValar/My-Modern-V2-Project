@@ -215,6 +215,12 @@ The design is in `docs/ITEM_TIERS.md`. This first part builds the core:
 - When the server stops, the editor reloads the world it saved; editing stays off while it runs.
 - **Sync-only buttons** on the Server page: "Send to Windows" (`claude-sync.sh send`), "Get code" (`get`: take the changed source and rebuild, no restart; the new build is used at the next restart), "Get world" (`get-world`, only while stopped, with a backup). Claude can run the same through requests, plus `stop-send` (warn, stop, send) for world edits, and `reload-editor`, which restarts the editor itself after an update (not while there are unsaved map changes).
 
+#### Editor: NPCs
+- New tab **NPCs** (Merchants / Friendly / Enemies, searchable by name or number). Pick one, choose where it faces (N/E/S/W, the minimap's directions), click a free tile. The editor makes a copy of its template (new numbers from 2000 up), with that tile as its spawn and resting spot and respawning on, and adds a respawn timer to `effect.dat`. The server then creates it the normal way, with its items, about a second after it starts. Until then it shows faded on a dashed ring.
+- Select an NPC (or a faded one waiting to spawn) to **turn** it, **move** it (pick the tile on the map) or **remove** it. Moving or turning one that its template spawns also moves or turns its spawn. Removing it stops its template from respawning (a copy the editor made is freed). NPCs made by spawners or quests are only moved or removed themselves. Alt+click with an NPC picked removes the NPC on that tile.
+- Undo/redo, history and saving cover NPCs. Saving now also writes `char.dat`, `tchar.dat` and `effect.dat` when they were changed (backed up like the map); "Undo last save" puts back whichever files that save wrote.
+- Tested on a copy with the real server: a placed Geoffrey spawned with all his items, facing as set; a moved and turned one kept its spot; a removed one did not come back.
+
 #### Editor: items and portals
 - Selecting a tile with an item shows an item editor: name, description (what players read when they look), its data values, and for portals (driver 6) "Leads to x, y" with **Pick on map** (click the destination on the map or on the world map with M) and **Go there**. Placing a portal asks right away where it should lead. Lab portals (data 2 set) are flagged, with a button to make them normal portals. Undo works for these too.
 

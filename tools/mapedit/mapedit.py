@@ -23,9 +23,12 @@ from urllib.parse import urlparse, parse_qs
 # ---------------------------------------------------------------- data layout
 # (offsets from the server's data.h; checked against the file sizes at start)
 MAPX = MAPY = 1024
-MAXITEM, MAXCHARS, MAXTITEM = 98304, 8192, 4548
+MAXITEM, MAXCHARS, MAXTITEM, MAXTCHARS, MAXEFFECT = 98304, 8192, 4548, 4548, 4096
+FX_SIZE = 47                      # effect: used B, flags B, type B, duration I, data 10I
+NPC_FIRST_NEW = 2000              # templates the editor makes (one per placed NPC) are numbered from here
 MAP_SIZE, ITEM_SIZE, CHAR_SIZE = 28, 634, 3605
 USE_EMPTY, USE_ACTIVE = 0, 1
+TICKS_SPAWN = 18                  # a placed NPC appears about a second after the server starts
 # map: sprite H, fsprite H, ch I, to_ch I, it I, dlight H, light h, flags Q
 MAP_FMT = '<HHIIIHhQ'
 # item
@@ -34,6 +37,9 @@ I_USED, I_NAME, I_DESC, I_FLAGS, I_TEMP, I_SPRITE, I_X, I_Y, I_CARRIED, I_DRIVER
 I_PLACEMENT = 293
 # character
 C_USED, C_NAME, C_FLAGS, C_SPRITE, C_TEMP, C_X, C_Y, C_DIR = 0, 1, 301, 297, 319, 717, 719, 733
+C_ALIGN, C_TOX, C_FRX, C_STATUS, C_ITEM, C_WORN, C_SPELL, C_CITEM, C_DATA = 309, 721, 725, 729, 738, 898, 978, 1058, 1605
+CF_RESPAWN, CF_MERCHANT = 1 << 4, 1 << 10
+DIRS = {1: 'south', 2: 'north', 3: 'west', 4: 'east'}     # DX_RIGHT +x, DX_LEFT -x, DX_UP -y, DX_DOWN +y (minimap: north = smaller x)
 
 MF = ['move block', 'sight block', 'indoors', 'under water', 'no lag', 'no monsters', 'bank', 'tavern',
       'no magic', 'death trap', 'no light', 'arena', 'lit', 'no expire', 'no fight']
@@ -54,6 +60,9 @@ def cstr(b):
 
 # ---------------------------------------------------------------- world
 class World:
+    FILES = ('map.dat', 'item.dat', 'char.dat', 'tchar.dat', 'effect.dat')
+    KIND_FILE = {'m': 'map.dat', 'i': 'item.dat', 'c': 'char.dat', 't': 'tchar.dat', 'f': 'effect.dat'}
+
     def __init__(self, dat, server_dir, area_file):
         self.dat, self.server_dir, self.area_file = dat, server_dir, area_file
         self.lock = threading.RLock()
@@ -65,11 +74,16 @@ class World:
             self.map = bytearray(open(p('map.dat'), 'rb').read())
             self.item = bytearray(open(p('item.dat'), 'rb').read())
             self.titem = open(p('titem.dat'), 'rb').read()
-            self.char = open(p('char.dat'), 'rb').read()
+            self.char = bytearray(open(p('char.dat'), 'rb').read())
+            self.tchar = bytearray(open(p('tchar.dat'), 'rb').read()) if os.path.exists(p('tchar.dat')) else None
+            self.fx = bytearray(open(p('effect.dat'), 'rb').read()) if os.path.exists(p('effect.dat')) else None
+            if self.tchar is not None and len(self.tchar) < MAXTCHARS * CHAR_SIZE: self.tchar = None
+            if self.fx is not None and len(self.fx) < MAXEFFECT * FX_SIZE: self.fx = None
             if len(self.map) < MAPX * MAPY * MAP_SIZE or len(self.item) < MAXITEM * ITEM_SIZE \
                     or len(self.titem) < MAXTITEM * ITEM_SIZE:
                 sys.exit('The .dat files are smaller than this editor expects - wrong folder or another server version.')
-            self.mtimes = {n: os.path.getmtime(p(n)) for n in ('map.dat', 'item.dat')}
+            self.mtimes = {n: os.path.getmtime(p(n)) for n in self.FILES if os.path.exists(p(n))}
+            self.touched = set()
             self.undo, self.redo, self.dirty = [], [], 0
             self.free_hint = 1
             self.areas = self.read_areas()
@@ -87,10 +101,12 @@ class World:
             try:
                 self.map = bytearray(open(p('map.dat'), 'rb').read())
                 self.item = bytearray(open(p('item.dat'), 'rb').read())
-                self.char = open(p('char.dat'), 'rb').read()
+                self.char = bytearray(open(p('char.dat'), 'rb').read())
+                if self.tchar is not None: self.tchar = bytearray(open(p('tchar.dat'), 'rb').read())
+                if self.fx is not None: self.fx = bytearray(open(p('effect.dat'), 'rb').read())
             except OSError:
                 return
-            self.mtimes = {n: os.path.getmtime(p(n)) for n in ('map.dat', 'item.dat')}
+            self.mtimes = {n: os.path.getmtime(p(n)) for n in self.FILES if os.path.exists(p(n))}
             self.undo, self.redo = [], []
             self.gen += 1
             self.loaded = time.time()
@@ -195,13 +211,16 @@ class World:
         x1, y1 = min(MAPX - 1, x1), min(MAPY - 1, y1)
         g, f, fl, it, ch, li = [], [], [], [], [], []
         with self.lock:
+            pend = {(x, y): self.tchar_sprite(tp) for x, y, tp, _ in self.pending() if x0 <= x <= x1 and y0 <= y <= y1}
+            pc = []
             for y in range(y0, y1 + 1):
                 for x in range(x0, x1 + 1):
                     s, fs, c, _, i, dl, lt, flags = struct.unpack_from(MAP_FMT, self.map, (x + y * MAPX) * MAP_SIZE)
                     g.append(s); f.append(fs); fl.append(flags & 0xffffffff); li.append(max(0, lt))
                     it.append(self.item_sprite(i) if 0 < i < MAXITEM and self.it_u8(i, I_USED) else 0)
                     ch.append(self.char_sprite(c) if 0 < c < MAXCHARS and self.char[c * CHAR_SIZE + C_USED] else 0)
-        return {'x0': x0, 'y0': y0, 'w': x1 - x0 + 1, 'h': y1 - y0 + 1, 'g': g, 'f': f, 'fl': fl, 'it': it, 'ch': ch, 'li': li}
+                    pc.append(pend.get((x, y), 0) if not ch[-1] else 0)
+        return {'x0': x0, 'y0': y0, 'w': x1 - x0 + 1, 'h': y1 - y0 + 1, 'g': g, 'f': f, 'fl': fl, 'it': it, 'ch': ch, 'li': li, 'pc': pc}
 
     def tile_info(self, x, y):
         with self.lock:
@@ -216,9 +235,93 @@ class World:
                              'desc': cstr(self.item[o + I_DESC:o + I_DESC + 200])}
             if 0 < c < MAXCHARS and self.char[c * CHAR_SIZE + C_USED]:
                 o = c * CHAR_SIZE
-                r['char'] = {'index': c, 'name': cstr(self.char[o + C_NAME:o + C_NAME + 40]),
-                             'temp': struct.unpack_from('<H', self.char, o + C_TEMP)[0]}
+                tp = struct.unpack_from('<H', self.char, o + C_TEMP)[0]
+                fl = struct.unpack_from('<Q', self.char, o + C_FLAGS)[0]
+                r['char'] = {'index': c, 'name': cstr(self.char[o + C_NAME:o + C_NAME + 40]), 'temp': tp,
+                             'dir': self.char[o + C_DIR], 'player': 1 if fl & CF_PLAYER else 0,
+                             'merchant': 1 if fl & CF_MERCHANT else 0,
+                             'alignment': struct.unpack_from('<h', self.char, o + C_ALIGN)[0]}
+                r['char'].update(self.spawn_info(tp, c))
+            else:
+                for px, py, tp, n in self.pending():
+                    if (px, py) == (x, y):
+                        r['pending'] = {'temp': tp, 'name': self.tname(tp), 'sprite': self.tchar_sprite(tp), 'dir': self.tchar[tp * CHAR_SIZE + C_DIR]}
+                        r['pending'].update(self.spawn_info(tp, 0))
+                        break
             return r
+
+    # --- NPCs: every template is one NPC with its own spawn spot (x, y; data[29] = its resting place)
+    def t_u16(self, t, off): return struct.unpack_from('<H', self.tchar, t * CHAR_SIZE + off)[0]
+    def t_u64(self, t, off): return struct.unpack_from('<Q', self.tchar, t * CHAR_SIZE + off)[0]
+    def tname(self, t): return cstr(self.tchar[t * CHAR_SIZE + C_NAME:t * CHAR_SIZE + C_NAME + 40])
+
+    def tchar_sprite(self, t, d=None):
+        o = t * CHAR_SIZE
+        spr = struct.unpack_from('<H', self.tchar, o + C_SPRITE)[0]
+        d = self.tchar[o + C_DIR] if d is None else d
+        return spr + {3: 0, 4: 8, 2: 16, 1: 24}.get(d, 8) if spr else 0
+
+    def pending(self):
+        """NPCs waiting to (re)spawn: respawn timers in effect.dat -> (x, y, template, effect)"""
+        out = []
+        if self.fx is None or self.tchar is None:
+            return out
+        for n in range(1, MAXEFFECT):
+            o = n * FX_SIZE
+            if self.fx[o] == USE_ACTIVE and self.fx[o + 2] == 2:
+                x, y, tp = struct.unpack_from('<3I', self.fx, o + 7)
+                if 0 < tp < MAXTCHARS and x < MAPX and y < MAPY:
+                    out.append((x, y, tp, n))
+        return out
+
+    def living(self, tp):
+        out = []
+        for c in range(1, MAXCHARS):
+            o = c * CHAR_SIZE
+            if self.char[o + C_USED] == USE_ACTIVE and struct.unpack_from('<H', self.char, o + C_TEMP)[0] == tp \
+                    and not struct.unpack_from('<Q', self.char, o + C_FLAGS)[0] & (CF_PLAYER | CF_BODY):
+                out.append(c)
+        return out
+
+    def is_home(self, tp, c):
+        """is this NPC the one its template spawns (not a copy a spawner or a quest made somewhere else)?"""
+        if self.tchar is None or not self.tchar[tp * CHAR_SIZE + C_USED] or not self.t_u64(tp, C_FLAGS) & CF_RESPAWN:
+            return False
+        if not c:
+            return True
+        return struct.unpack_from('<i', self.char, c * CHAR_SIZE + C_DATA + 29 * 4)[0] == \
+            struct.unpack_from('<i', self.tchar, tp * CHAR_SIZE + C_DATA + 29 * 4)[0]
+
+    def spawn_info(self, tp, c):
+        if self.tchar is None or not (0 < tp < MAXTCHARS):
+            return {'home': None}
+        hx, hy = struct.unpack_from('<hh', self.tchar, tp * CHAR_SIZE + C_X)
+        return {'home': [hx, hy] if self.is_home(tp, c) else None, 'respawns': 1 if self.t_u64(tp, C_FLAGS) & CF_RESPAWN else 0,
+                'made': 1 if tp >= NPC_FIRST_NEW else 0, 'count': len(self.living(tp))}
+
+    def npc_templates(self):
+        if self.tchar is None:
+            return []
+        count = {}
+        for c in range(1, MAXCHARS):
+            o = c * CHAR_SIZE
+            if self.char[o + C_USED] == USE_ACTIVE and not struct.unpack_from('<Q', self.char, o + C_FLAGS)[0] & (CF_PLAYER | CF_BODY):
+                tp = struct.unpack_from('<H', self.char, o + C_TEMP)[0]
+                count[tp] = count.get(tp, 0) + 1
+        out = []
+        for t in range(1, MAXTCHARS):
+            o = t * CHAR_SIZE
+            if not self.tchar[o + C_USED]:
+                continue
+            fl = self.t_u64(t, C_FLAGS)
+            if fl & CF_PLAYER:
+                continue
+            x, y = struct.unpack_from('<hh', self.tchar, o + C_X)
+            al = struct.unpack_from('<h', self.tchar, o + C_ALIGN)[0]
+            # [number, name, sprite, kind (merchant / enemy / friendly), how many in the world, spawn x, spawn y, made by the editor]
+            out.append([t, self.tname(t), self.tchar_sprite(t, 4), 'merchant' if fl & CF_MERCHANT else 'enemy' if al < 0 else 'friendly',
+                        count.get(t, 0), x, y, 1 if t >= NPC_FIRST_NEW else 0])
+        return out
 
     def palette(self):
         with self.lock:
@@ -242,7 +345,8 @@ class World:
                               1 if fl & (IF_TAKE | IF_LOOK | IF_LOOKSPECIAL | IF_USE | IF_USESPECIAL) else 0])
         fl_sorted = sorted(floors.items(), key=lambda a: -a[1])
         ob_sorted = sorted(objs.items(), key=lambda a: -a[1])
-        return {'floors': fl_sorted, 'objects': ob_sorted, 'templates': temps, 'flags': MF, 'sets': FLOOR_SETS}
+        return {'floors': fl_sorted, 'objects': ob_sorted, 'templates': temps, 'flags': MF, 'sets': FLOOR_SETS,
+                'npcs': self.npc_templates()}
 
     # --- editing: every change remembers the old bytes so a batch can be undone
     def _save_map(self, rec, x, y):
@@ -251,10 +355,183 @@ class World:
             o = (x + y * MAPX) * MAP_SIZE
             rec[k] = bytes(self.map[o:o + MAP_SIZE])
 
-    def _save_item(self, rec, i):
-        k = ('i', i)
+    def _buf(self, kind):
+        return {'i': (self.item, ITEM_SIZE), 'c': (self.char, CHAR_SIZE), 't': (self.tchar, CHAR_SIZE), 'f': (self.fx, FX_SIZE)}[kind]
+
+    def _keep(self, rec, kind, n):
+        k = (kind, n)
         if k not in rec:
-            rec[k] = bytes(self.item[i * ITEM_SIZE:(i + 1) * ITEM_SIZE])
+            b, sz = self._buf(kind)
+            rec[k] = bytes(b[n * sz:(n + 1) * sz])
+
+    def _save_item(self, rec, i):
+        self._keep(rec, 'i', i)
+
+    def _cur(self, key):
+        if key[0] == 'm':
+            o = (key[1] + key[2] * MAPX) * MAP_SIZE
+            return bytes(self.map[o:o + MAP_SIZE])
+        b, sz = self._buf(key[0])
+        return bytes(b[key[1] * sz:(key[1] + 1) * sz])
+
+    # --- NPC editing helpers
+    def _c_set(self, buf, n, off, fmt, *v):
+        struct.pack_into(fmt, buf, n * CHAR_SIZE + off, *v)
+
+    def _char_at(self, x, y):
+        c = self.tile(x, y)[2]
+        if 0 < c < MAXCHARS and self.char[c * CHAR_SIZE + C_USED] == USE_ACTIVE:
+            return c
+        return 0
+
+    def _pending_at(self, x, y):
+        return [(tp, n) for px, py, tp, n in self.pending() if (px, py) == (x, y)]
+
+    def _free_tchar(self):
+        for t in range(NPC_FIRST_NEW, MAXTCHARS):
+            if not self.tchar[t * CHAR_SIZE + C_USED]:
+                return t
+        return 0
+
+    def _free_fx(self):
+        for n in range(1, MAXEFFECT):
+            if not self.fx[n * FX_SIZE]:
+                return n
+        return 0
+
+    def _free_spot(self, x, y):
+        t = self.tile(x, y)
+        if t[7] & MF_MOVEBLOCK or t[0] == 1008:
+            return 'blocked (a wall, an object or the void)'
+        if self._char_at(x, y):
+            return 'someone is standing there'
+        if self._pending_at(x, y):
+            return 'an NPC is waiting to spawn there'
+        i = t[4]
+        if 0 < i < MAXITEM and self.it_u8(i, I_USED) and self.it_u64(i, I_FLAGS) & IF_MOVEBLOCK:
+            return 'an item there blocks walking'
+        return ''
+
+    def _spawn_timer(self, rec, tp, x, y):
+        n = self._free_fx()
+        if not n:
+            return False
+        self._keep(rec, 'f', n)
+        o = n * FX_SIZE
+        self.fx[o:o + FX_SIZE] = b'\0' * FX_SIZE
+        self.fx[o] = USE_ACTIVE; self.fx[o + 2] = 2                    # a respawn timer, as when an NPC dies
+        struct.pack_into('<I3I', self.fx, o + 3, TICKS_SPAWN, x, y, tp)
+        return True
+
+    def _set_home(self, rec, tp, x, y):
+        self._keep(rec, 't', tp)
+        self._c_set(self.tchar, tp, C_X, '<hhhh', x, y, x, y)
+        self._c_set(self.tchar, tp, C_DATA + 29 * 4, '<i', x + y * MAPX)
+
+    def _free_char(self, rec, c):
+        """take a living NPC out of the world: off its tile, its items gone"""
+        o = c * CHAR_SIZE
+        x, y = struct.unpack_from('<hh', self.char, o + C_X)
+        if 0 <= x < MAPX and 0 <= y < MAPY:
+            t = self.tile(x, y)
+            if t[2] == c:
+                self._save_map(rec, x, y); t[2] = 0; self.set_tile(x, y, t)
+        ids = list(struct.unpack_from('<40I', self.char, o + C_ITEM)) + list(struct.unpack_from('<20I', self.char, o + C_WORN)) + \
+            list(struct.unpack_from('<20I', self.char, o + C_SPELL)) + [struct.unpack_from('<I', self.char, o + C_CITEM)[0]]
+        for i in ids:
+            if 0 < i < MAXITEM and not i & 0x80000000:
+                self._save_item(rec, i); self.item[i * ITEM_SIZE + I_USED] = USE_EMPTY
+        self._keep(rec, 'c', c)
+        self.char[o + C_USED] = USE_EMPTY
+
+    def npc_op(self, rec, op, x, y):
+        """place / move / turn / remove an NPC; returns an error text or ''"""
+        if self.tchar is None or self.fx is None:
+            return 'tchar.dat or effect.dat is missing: NPCs cannot be edited'
+        k = op['op']
+        if k == 'npcplace':
+            src = int(op['t'])
+            if not (0 < src < MAXTCHARS) or not self.tchar[src * CHAR_SIZE + C_USED]:
+                return 'NPC template %d does not exist' % src
+            why = self._free_spot(x, y)
+            if why:
+                return '%d,%d: %s' % (x, y, why)
+            tp = self._free_tchar()
+            if not tp:
+                return 'no free NPC template number left'
+            d = int(op.get('dir', 4))
+            self._keep(rec, 't', tp)
+            o = tp * CHAR_SIZE
+            self.tchar[o:o + CHAR_SIZE] = self.tchar[src * CHAR_SIZE:(src + 1) * CHAR_SIZE]
+            self.tchar[o + C_USED] = USE_ACTIVE
+            self._c_set(self.tchar, tp, C_TEMP, '<H', tp)
+            self._c_set(self.tchar, tp, C_FLAGS, '<Q', self.t_u64(tp, C_FLAGS) | CF_RESPAWN)
+            self.tchar[o + C_DIR] = d
+            self._c_set(self.tchar, tp, C_DATA + 30 * 4, '<i', d)
+            self._set_home(rec, tp, x, y)
+            if not self._spawn_timer(rec, tp, x, y):
+                return 'no free effect slot for the spawn'
+            self._save_map(rec, x, y)
+            return ''
+        c = self._char_at(x, y)
+        pend = self._pending_at(x, y)
+        if c and struct.unpack_from('<Q', self.char, c * CHAR_SIZE + C_FLAGS)[0] & CF_PLAYER:
+            return 'that is a player'
+        if not c and not pend:
+            return 'no NPC on %d,%d' % (x, y)
+        tp = struct.unpack_from('<H', self.char, c * CHAR_SIZE + C_TEMP)[0] if c else pend[0][0]
+        home = self.is_home(tp, c)
+        self._save_map(rec, x, y)
+        if k == 'npcdir':
+            d = int(op['dir'])
+            if d not in DIRS:
+                return 'bad direction'
+            if c:
+                self._keep(rec, 'c', c)
+                self.char[c * CHAR_SIZE + C_DIR] = d
+                self._c_set(self.char, c, C_DATA + 30 * 4, '<i', d)
+                self._c_set(self.char, c, C_STATUS, '<h', 0)
+            if home:
+                self._keep(rec, 't', tp)
+                self.tchar[tp * CHAR_SIZE + C_DIR] = d
+                self._c_set(self.tchar, tp, C_DATA + 30 * 4, '<i', d)
+            return ''
+        if k == 'npcmove':
+            tx, ty = int(op['tx']), int(op['ty'])
+            if not (0 <= tx < MAPX and 0 <= ty < MAPY):
+                return 'outside the map'
+            why = self._free_spot(tx, ty)
+            if why:
+                return '%d,%d: %s' % (tx, ty, why)
+            self._save_map(rec, tx, ty)
+            if c:
+                t0 = self.tile(x, y); t0[2] = 0; self.set_tile(x, y, t0)
+                t1 = self.tile(tx, ty); t1[2] = c; self.set_tile(tx, ty, t1)
+                self._keep(rec, 'c', c)
+                self._c_set(self.char, c, C_X, '<hhhhhh', tx, ty, tx, ty, tx, ty)
+                self._c_set(self.char, c, C_DATA + 29 * 4, '<i', tx + ty * MAPX)
+            if home:
+                self._set_home(rec, tp, tx, ty)
+                for _, n in self._pending_at(x, y) if not c else []:
+                    self._keep(rec, 'f', n); struct.pack_into('<2I', self.fx, n * FX_SIZE + 7, tx, ty)
+            return ''
+        if k == 'npcremove':
+            if c:
+                self._free_char(rec, c)
+            for ptp, n in pend:
+                self._keep(rec, 'f', n); self.fx[n * FX_SIZE] = USE_EMPTY
+            if home:     # it should not come back: its template stops respawning (one the editor made is freed)
+                self._keep(rec, 't', tp)
+                if tp >= NPC_FIRST_NEW:
+                    self.tchar[tp * CHAR_SIZE + C_USED] = USE_EMPTY
+                else:
+                    self._c_set(self.tchar, tp, C_FLAGS, '<Q', self.t_u64(tp, C_FLAGS) & ~CF_RESPAWN)
+                for n in range(1, MAXEFFECT):     # and any other respawn timer it has
+                    o = n * FX_SIZE
+                    if self.fx[o] == USE_ACTIVE and self.fx[o + 2] == 2 and struct.unpack_from('<I', self.fx, o + 15)[0] == tp:
+                        self._keep(rec, 'f', n); self.fx[o] = USE_EMPTY
+            return ''
+        return 'unknown NPC edit'
 
     def _free_item(self):
         for i in list(range(self.free_hint, MAXITEM)) + list(range(1, self.free_hint)):
@@ -280,9 +557,16 @@ class World:
                 x, y = int(op['x']), int(op['y'])
                 if not (0 <= x < MAPX and 0 <= y < MAPY):
                     continue
+                k = op['op']
+                if k.startswith('npc'):
+                    err = self.npc_op(rec, op, x, y)
+                    if err:
+                        msgs.append(err)
+                    else:
+                        n += 1
+                    continue
                 self._save_map(rec, x, y)
                 t = self.tile(x, y)
-                k = op['op']
                 if k == 'floor':
                     s = int(op['s'])
                     t[0] = random.choice(FLOOR_SETS[s]) if s in FLOOR_SETS and op.get('set', True) else s
@@ -355,11 +639,13 @@ class World:
             # keep only real changes
             real = {}
             for key, old in rec.items():
-                cur = bytes(self.map[(key[1] + key[2] * MAPX) * MAP_SIZE:(key[1] + key[2] * MAPX + 1) * MAP_SIZE]) if key[0] == 'm' \
-                    else bytes(self.item[key[1] * ITEM_SIZE:(key[1] + 1) * ITEM_SIZE])
-                if cur != old:
+                if self._cur(key) != old:
                     real[key] = old
+            npc_moved = any(key[0] in 'ctf' for key in real)
+            if npc_moved and not any(key[0] == 'm' for key in real):     # an NPC spawn: remember its tile for the history
+                real[('m', int(ops[0]['x']), int(ops[0]['y']))] = self._cur(('m', int(ops[0]['x']), int(ops[0]['y'])))
             if real:
+                self.touched |= {self.KIND_FILE[key[0]] for key in real}
                 self.undo.append(real)
                 self.redo.clear()
                 self.dirty += 1
@@ -367,17 +653,19 @@ class World:
                 fx, fy = (tiles[0][1], tiles[0][2]) if tiles else (int(ops[0]['x']), int(ops[0]['y']))
                 self.history.append({'t': time.strftime('%H:%M:%S'), 'what': label or 'edit', 'tiles': max(1, len(tiles)),
                                      'x': fx, 'y': fy})
-            return len([k for k in real if k[0] == 'm']), msgs
+            return max(len([k for k in real if k[0] == 'm']), n if real else 0), msgs
 
     def _swap(self, rec):
         back = {}
         for key, old in rec.items():
+            back[key] = self._cur(key)
             if key[0] == 'm':
                 o = (key[1] + key[2] * MAPX) * MAP_SIZE
-                back[key] = bytes(self.map[o:o + MAP_SIZE]); self.map[o:o + MAP_SIZE] = old
+                self.map[o:o + MAP_SIZE] = old
             else:
-                o = key[1] * ITEM_SIZE
-                back[key] = bytes(self.item[o:o + ITEM_SIZE]); self.item[o:o + ITEM_SIZE] = old
+                b, sz = self._buf(key[0])
+                b[key[1] * sz:(key[1] + 1) * sz] = old
+            self.touched.add(self.KIND_FILE[key[0]])
         return back
 
     def undo_redo(self, which):
@@ -394,6 +682,11 @@ class World:
                     ix, iy = struct.unpack_from('<hh', self.item, k[1] * ITEM_SIZE + I_X)
                     if 0 <= ix < MAPX and 0 <= iy < MAPY and [ix, iy] not in pos:
                         pos.append([ix, iy])
+                elif k[0] in 'ct':
+                    b = self.char if k[0] == 'c' else self.tchar
+                    ix, iy = struct.unpack_from('<hh', b, k[1] * CHAR_SIZE + C_X)
+                    if 0 < ix < MAPX and 0 < iy < MAPY and [ix, iy] not in pos:
+                        pos.append([ix, iy])
             if pos:
                 self.history.append({'t': time.strftime('%H:%M:%S'), 'what': which, 'tiles': len(pos), 'x': pos[0][0], 'y': pos[0][1]})
             return pos
@@ -401,19 +694,23 @@ class World:
     def save(self):
         with self.lock:
             p = lambda n: os.path.join(self.dat, n)
-            for n in ('map.dat', 'item.dat'):
-                if abs(os.path.getmtime(p(n)) - self.mtimes[n]) > 1:
+            files = [n for n in self.FILES if n in self.touched or n in ('map.dat', 'item.dat')]
+            for n in files:
+                if n in self.mtimes and abs(os.path.getmtime(p(n)) - self.mtimes[n]) > 1:
                     return 'The world files changed on disk since they were loaded (the server ran?). Reload first - your unsaved changes would overwrite them.'
             bk = os.path.join(self.dat, 'mapedit-backups', time.strftime('%Y%m%d-%H%M%S'))
             os.makedirs(bk, exist_ok=True)
-            for n in ('map.dat', 'item.dat'):
+            for n in files:
                 shutil.copy2(p(n), os.path.join(bk, n))
-            for n, data in (('map.dat', self.map), ('item.dat', self.item)):
+            bufs = {'map.dat': self.map, 'item.dat': self.item, 'char.dat': self.char, 'tchar.dat': self.tchar, 'effect.dat': self.fx}
+            for n in files:
+                data = bufs[n]
                 with open(p(n) + '.tmp', 'wb') as f:
                     f.write(data)
                 os.replace(p(n) + '.tmp', p(n))
                 self.mtimes[n] = os.path.getmtime(p(n))
             self.dirty = 0
+            self.touched = set()
             self.history.append({'t': time.strftime('%H:%M:%S'), 'what': 'saved to the game', 'tiles': 0})
             return 'Saved. Backup of the old files: ' + bk
 
@@ -430,8 +727,9 @@ class World:
             if not b:
                 return 'There is no saved backup to go back to.'
             src = os.path.join(self.dat, 'mapedit-backups', b[-1])
-            for n in ('map.dat', 'item.dat'):
-                shutil.copy2(os.path.join(src, n), os.path.join(self.dat, n))
+            for n in self.FILES:
+                if os.path.exists(os.path.join(src, n)):
+                    shutil.copy2(os.path.join(src, n), os.path.join(self.dat, n))
             os.rename(src, src + '-restored')
             self.load()
             self.history.append({'t': time.strftime('%H:%M:%S'), 'what': 'undid the save of ' + b[-1], 'tiles': 0})
@@ -862,6 +1160,8 @@ def make_handler(world, sprites, page, minimap, ctl):
                 return self.js(world.search(q.get('q', '')))
             if u.path == '/api/chars':
                 return self.js(world.chars())
+            if u.path == '/api/npcs':
+                return self.js(world.npc_templates())
             if u.path == '/api/history':
                 return self.js({'history': world.history[-300:], 'backups': world.backups()})
             if u.path == '/api/region':
@@ -1121,6 +1421,11 @@ table.pl button:hover { color: var(--text); border-color: var(--gold); }
 #tile .ied button.sm { color: var(--dim); border: 1px solid var(--line); border-radius: 5px; padding: 2px 8px; font-size: 12px; }
 #tile .ied button.sm:hover { color: var(--text); border-color: var(--gold); }
 #tile .ied button.sm.on { color: var(--gold2); border-color: var(--gold); background: var(--goldbg); }
+.face { display: flex; gap: 4px; flex-wrap: wrap; align-items: center; }
+.face button { color: var(--dim); border: 1px solid var(--line); border-radius: 5px; padding: 2px 8px; font-size: 12px; }
+.face button:hover { color: var(--text); border-color: var(--gold); }
+.face button.on { color: var(--gold2); border-color: var(--gold); background: var(--goldbg); }
+#tile .ied .note { color: var(--dim); font-size: 12px; }
 #tile .flg { display: grid; grid-template-columns: 1fr 1fr; gap: 3px 8px; margin-top: 8px; }
 .chk { display: flex; align-items: center; gap: 8px; padding: 3px 0; cursor: pointer; user-select: none; }
 .chk .dot { width: 9px; height: 9px; border-radius: 3px; flex: none; }
@@ -1459,6 +1764,10 @@ function draw() {
       if (show.walls && d.f[i]) put(d.f[i], x, y, show.see ? .28 : undefined);
       if (show.items && d.it[i]) put(d.it[i], x, y);
       if (chars && d.ch[i]) put(d.ch[i], x, y);
+      else if (chars && d.pc && d.pc[i]) {     // waiting to (re)spawn: faded, on a dashed ring
+        diamond(x, y); g2.setLineDash([3 / zoom, 3 / zoom]); g2.lineWidth = 1.5 / zoom; g2.strokeStyle = 'rgba(255,211,106,.85)'; g2.stroke(); g2.setLineDash([]);
+        put(d.pc[i], x, y, .6);
+      }
     }
     drawMini(v);
   }
@@ -1522,7 +1831,16 @@ function toggleWorld(on) {
 }
 
 // ---------------------------------------------------------------- left panel
-const TABS = { builder: 'Builder', floors: 'Floors', walls: 'Walls', objects: 'Objects', items: 'Items', flags: 'Flags' };
+const TABS = { builder: 'Builder', floors: 'Floors', walls: 'Walls', objects: 'Objects', items: 'Items', npcs: 'NPCs', flags: 'Flags' };
+// facing, named the way the minimap shows it (north = smaller x, west = smaller y); the game's DX_ numbers
+const FACE = [[2, 'N', 'north (−x)'], [4, 'E', 'east (+y)'], [1, 'S', 'south (+x)'], [3, 'W', 'west (−y)']];
+const FACEN = { 1: 'south', 2: 'north', 3: 'west', 4: 'east' };
+function faceRow(cur, onpick, disabled) {
+  const d = document.createElement('div'); d.className = 'face';
+  d.innerHTML = '<span style="color:var(--dim2);font-size:12px;margin-right:2px">Facing</span>' + FACE.map(([v, k, t]) => `<button data-d="${v}" title="${t}" class="${v === cur ? 'on' : ''}" ${disabled ? 'disabled' : ''}>${k}</button>`).join('');
+  d.querySelectorAll('button').forEach(b => b.onclick = () => { d.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); onpick(+b.dataset.d); });
+  return d;
+}
 function cats() {
   // [number, name, sprite, take, driver, blocks, item]
   const t = pal.templates;
@@ -1532,7 +1850,7 @@ function cats() {
     items: t.filter(x => x[3]),
   };
 }
-function brushKey(b) { return b.kind + ':' + (b.kind === 'place' ? b.t[0] : b.kind === 'flag' ? b.bit : b.kind === 'mix' ? b.items.map(i => i.s + 'x' + i.w).join(',') : b.s); }
+function brushKey(b) { return b.kind + ':' + (b.kind === 'place' || b.kind === 'npc' ? b.t[0] : b.kind === 'flag' ? b.bit : b.kind === 'mix' ? b.items.map(i => i.s + 'x' + i.w).join(',') : b.s); }
 // ---- floor mixes: several floors painted at random, each with a weight
 let mixes = [];
 try { mixes = JSON.parse(localStorage.getItem('myv2.mixes') || '[]'); } catch (e) {}
@@ -1598,10 +1916,12 @@ function card() {
   else if (brush.kind === 'place') { spr = brush.t[2]; t = brush.t[1]; s = `Template ${brush.t[0]} · ${brush.t[6] ? 'item' : 'drawn into the tile'}${brush.t[5] & 1 ? ' · blocks walking' : ''}`; }
   else if (brush.kind === 'object') { spr = brush.s; t = 'Object ' + brush.s; s = 'Picked from the map' + (brush.block & 1 ? ' · blocks walking' : '') + (brush.block & 2 ? ' · blocks sight' : ''); }
   else if (brush.kind === 'flag') { t = 'Flag: ' + FLAGS[brush.bit]; s = 'Paint sets it · Alt+paint clears it'; }
+  else if (brush.kind === 'npc') { spr = brush.t[2]; t = brush.t[1]; s = `NPC template ${brush.t[0]} · ${brush.t[3]} · click a free tile to place one (it respawns there) · Alt+click removes an NPC`; }
   if (brush.kind === 'flag') { const d = document.createElement('div'); d.style.cssText = `width:40px;height:40px;border-radius:8px;background:${FCOL[brush.bit]};flex:none`; c.appendChild(d); }
   else c.appendChild(thumb(spr, 40));
   const d = document.createElement('div'); d.innerHTML = `<div class="t"></div><div class="s"></div>`;
   d.firstChild.textContent = t; d.lastChild.textContent = s; c.appendChild(d);
+  if (brush.kind === 'npc') { const f = faceRow(brush.dir || 4, v => { brush.dir = v; }); f.style.marginTop = '6px'; d.appendChild(f); }
   if (brush.kind === 'floor') {   // start a mix from this floor
     const m = document.createElement('div'); m.className = 'mixbtns'; m.style.marginTop = '6px';
     m.innerHTML = '<button data-a="sim" title="Make a mix: add floors whose color is close to this one">+ look-alikes</button>';
@@ -1687,7 +2007,16 @@ function cellTemp(t) {
   c.onclick = () => setBrush({ kind: 'place', t });
   return c;
 }
+function cellNpc(t) {
+  const c = document.createElement('div'); c.className = 'cell'; c.dataset.k = 'npc:' + t[0];
+  if (brushKey(brush) === c.dataset.k) c.classList.add('sel');
+  c.title = `${t[1]} · template ${t[0]} · ${t[3]}${t[7] ? ' · placed with the editor' : ''} · ${t[4]} in the world` + (t[5] || t[6] ? ` · spawns at ${t[5]}, ${t[6]}` : '');
+  c.appendChild(thumb(t[2], 64, 64)); const l = document.createElement('div'); l.className = 'lab'; l.textContent = t[1]; c.appendChild(l);
+  c.onclick = () => setBrush({ kind: 'npc', t, dir: brush.kind === 'npc' ? brush.dir : 4 });
+  return c;
+}
 function cellRecent(b) {
+  if (b.kind === 'npc') return cellNpc(b.t);
   if (b.kind === 'mix') return cellMix(b, false);
   if (b.kind === 'floor') return cellFloor(b.s, 0);
   if (b.kind === 'flag') return cellFlag(b.bit);
@@ -1739,6 +2068,14 @@ function leftUI() {
       if (/^\d+$/.test(q) && !list.some(([s]) => String(s) === q)) list.unshift([+q, 0]);
       if (!q) mixSection(true);
       sect('Floors · by how often they are used · Ctrl+click to mix'); lazy(grid(), list, f => cellFloor(f[0], f[1]));
+    } else if (tab === 'npcs') {
+      const kinds = { merchant: 'Merchants', friendly: 'Friendly', enemy: 'Enemies' };
+      for (const [k, v] of Object.entries(kinds)) {
+        const list = (pal.npcs || []).filter(t => t[3] === k && match(t[1], t[0])).sort((a, b) => a[1].localeCompare(b[1]) || a[0] - b[0]);
+        if (!list.length) continue;
+        sect(`${v} · ${list.length}`); lazy(grid(), list, cellNpc);
+      }
+      if (!(pal.npcs || []).length) w.insertAdjacentHTML('beforeend', '<div class="empty">No NPC templates (tchar.dat) found.</div>');
     } else if (tab === 'flags') {
       sect('Paint a flag on tiles'); lazy(grid(), FLAGS.map((f, i) => i).filter(i => match(FLAGS[i], '')), cellFlag);
     } else {
@@ -1797,6 +2134,7 @@ function leftUI() {
       <p><b style="color:var(--gold2)">Alt</b> paints the opposite: with a flag it clears it, with a wall/object/item it erases.</p>
       <p><b style="color:var(--gold2)">Select</b> (V) a tile to see everything on it in the right panel and change it there: floor, object, item, flags.</p>
       <p><b style="color:var(--gold2)">Save to the game</b> writes the map; the files from before are kept as a backup, and <b>Undo last save</b> puts them back. Afterwards the lighting can be recomputed with <span class="mono">./server light</span> (button in the right panel after a save).</p>
+      <p><b style="color:var(--gold2)">NPCs</b> (tab NPCs): pick one, choose where it faces, click a free tile. You get your own copy of it (a new template from 2000 up) that spawns and respawns on that tile, with its items, about a second after the server starts; until then it shows faded. Select an NPC to turn it, move it or remove it. Alt+click with an NPC picked removes the NPC on that tile.</p>
       <p><b style="color:var(--gold2)">Pentagrams</b> still need build mode in the game (they are numbered there).</p></div>`;
   }
 }
@@ -1835,7 +2173,7 @@ async function selectTile(x, y) {
       <span class="k">Floor</span><span class="v" id="tf"></span>
       <span class="k">Object</span><span class="v" id="to"></span>
       <span class="k">Item</span><span class="v" id="ti"></span>
-      ${r.char ? '<span class="k">NPC</span><span class="v" id="tc"></span>' : ''}
+      ${r.char || r.pending ? `<span class="k">${r.char && r.char.player ? 'Player' : 'NPC'}</span><span class="v" id="tc"></span>` : ''}
       <span class="k">Light</span><span class="v">${r.light}</span>
     </div>
     <div class="flg" id="tfl"></div>`;
@@ -1855,6 +2193,8 @@ async function selectTile(x, y) {
     if (!ro) { const b = document.createElement('button'); b.className = 'x'; b.textContent = 'remove'; b.onclick = () => edit([{ op: 'erase', x, y }], 'erase', true); ti.appendChild(b); }
   } else ti.textContent = '–';
   if (r.char) { const n = document.createElement('span'); n.className = 'nm'; n.textContent = `${r.char.name} (template ${r.char.temp})`; $('#tc').appendChild(n); }
+  if (r.pending) { $('#tc').appendChild(thumb(r.pending.sprite, 28)); const n = document.createElement('span'); n.className = 'nm'; n.textContent = `${r.pending.name} (template ${r.pending.temp}) · spawns here`; $('#tc').appendChild(n); }
+  if ((r.char && !r.char.player) || r.pending) npcEditor(el, r, x, y, ro);
   if (r.item) itemEditor(el, r, x, y, ro);
   const fl = $('#tfl');
   FLAGS.forEach((f, i) => {
@@ -1865,6 +2205,34 @@ async function selectTile(x, y) {
     l.firstChild.onchange = e => edit([{ op: 'flag', x, y, bit: i, mode: e.target.checked ? 1 : 0 }], (e.target.checked ? 'set ' : 'cleared ') + f, true);
     fl.appendChild(l);
   });
+}
+
+// ---- the NPC on the selected tile: facing, move, remove
+let npcPick = null;    // {x, y}: the next click on the map moves this NPC there
+function npcEditor(el, r, x, y, ro) {
+  const c = r.char || r.pending, live = !!r.char;
+  const box = document.createElement('div'); box.className = 'ied';
+  let note = '';
+  if (c.home) note = `Spawns at ${c.home[0]}, ${c.home[1]}` + (c.made ? ' · placed with the editor' : '') + (live ? '' : ' · appears when the server runs');
+  else if (live) note = c.respawns ? `Its template spawns at another spot: this one was made by a spawner or quest. Moving or removing it changes only this one.` : 'Does not respawn (made by a spawner, a quest or a god).';
+  if (c.count > 1) note += ` · ${c.count} of this template are in the world`;
+  box.innerHTML = `<div class="lb">NPC</div><div class="note"></div><div class="fr"></div>
+    <div class="dest"><button class="sm mv" title="Then click the free tile it should go to">Move (pick on map)</button><button class="sm rm">Remove</button></div>`;
+  box.querySelector('.note').textContent = note;
+  box.querySelector('.fr').appendChild(faceRow(c.dir || 0, d => edit([{ op: 'npcdir', x, y, dir: d }], `${c.name} faces ${FACEN[d]}`, true), ro || (!live && !c.home)));
+  const mv = box.querySelector('.mv'), rm = box.querySelector('.rm');
+  mv.disabled = rm.disabled = ro;
+  mv.onclick = () => { npcPick = { x, y, name: c.name }; mv.classList.add('on'); cv.style.cursor = 'cell'; toast(`Click the free tile ${c.name} should move to. (Esc cancels)`); };
+  rm.onclick = () => {
+    const perm = c.home ? (c.made ? 'It was placed with the editor; it is taken out completely.' : 'It will not respawn any more (its template stops respawning).') : 'Only this one goes.';
+    if (!confirm(`Remove ${c.name} from ${x}, ${y}? ${perm} (Ctrl+Z undoes it before you save.)`)) return;
+    edit([{ op: 'npcremove', x, y }], 'removed ' + c.name, true);
+  };
+  el.appendChild(box);
+}
+function moveNpc(t) {
+  const p = npcPick; npcPick = null; setTool(tool);
+  edit([{ op: 'npcmove', x: p.x, y: p.y, tx: t.x, ty: t.y }], `moved ${p.name} to ${t.x},${t.y}`, false).then(() => selectTile(t.x, t.y));
 }
 
 // ---- the item on the selected tile: name, description, where a portal leads, data values
@@ -1948,7 +2316,8 @@ async function edit(ops, lbl, reselect) {
   if (r.error) toast(r.error, true);
   else if (r.msgs && r.msgs.length) toast([...new Set(r.msgs)].slice(0, 3).join('\n'), true);
   Object.assign(info, { dirty: r.dirty ?? info.dirty, undo: r.undo ?? info.undo, redo: r.redo ?? info.redo }); status();
-  refetch(ops.map(o => [o.x, o.y]));
+  refetch(ops.flatMap(o => o.tx !== undefined ? [[o.x, o.y], [o.tx, o.ty]] : [[o.x, o.y]]));
+  if (r.ok !== false && ops.some(o => o.op.startsWith('npc'))) api('/api/npcs').then(n => { if (Array.isArray(n) && pal) { pal.npcs = n; if (mode === 'map' && tab === 'npcs') leftUI(); } });
   if (selTile && (reselect || ops.some(o => o.x === selTile.x && o.y === selTile.y))) selectTile(selTile.x, selTile.y);
   if (mode === 'history') leftUI();
 }
@@ -2044,9 +2413,15 @@ cv.addEventListener('mousedown', e => {
   if (e.button === 1 || e.button === 2 || (e.button === 0 && (spaceDown || tool === 'pan'))) { panning = { sx, sy, cx: cam.x, cy: cam.y }; cv.style.cursor = 'grabbing'; e.preventDefault(); return; }
   if (e.button !== 0) return;
   if (destPick) { if (info.running) { destPick = null; return toast('The game server is running: editing is off.', true); } setDestination(t); return; }
+  if (npcPick) { if (info.running) { npcPick = null; return toast('The game server is running: editing is off.', true); } moveNpc(t); return; }
   if (tool === 'select') { selectTile(t.x, t.y); return; }
   if (tool === 'pick') { pick(t.x, t.y); return; }
   if (info.running) { toast('The game server is running: editing is off.', true); return; }
+  if (brush.kind === 'npc' && tool !== 'erase') {     // NPCs go one at a time
+    if (e.altKey) edit([{ op: 'npcremove', x: t.x, y: t.y }], 'removed an NPC');
+    else edit([{ op: 'npcplace', x: t.x, y: t.y, t: brush.t[0], dir: brush.dir || 4 }], `placed ${brush.t[1]} (facing ${FACEN[brush.dir || 4]})`);
+    return;
+  }
   if (tool === 'fill') { fill(t.x, t.y, e.altKey); return; }
   if (tool === 'rect' || e.shiftKey) { rect = { a: t, b: t, alt: e.altKey }; redrawTop(); return; }
   stroke = { ops: [], seen: new Set(), alt: e.altKey };
@@ -2073,7 +2448,7 @@ window.addEventListener('mousemove', e => {
     let s = `${t.x}, ${t.y}`;
     const z = info.areas.filter(a => a[0] <= t.x && t.x <= a[2] && a[1] <= t.y && t.y <= a[3]).map(a => a[4]);
     if (z.length) s += ' · ' + z[z.length - 1];
-    if (d) { s += ` · floor ${d.d.g[d.i]}`; if (d.d.f[d.i]) s += ` · wall ${d.d.f[d.i]}`; if (d.d.it[d.i]) s += ' · item'; if (d.d.ch[d.i]) s += ' · NPC'; }
+    if (d) { s += ` · floor ${d.d.g[d.i]}`; if (d.d.f[d.i]) s += ` · wall ${d.d.f[d.i]}`; if (d.d.it[d.i]) s += ' · item'; if (d.d.ch[d.i]) s += ' · NPC'; else if (d.d.pc && d.d.pc[d.i]) s += ' · NPC (spawns)'; }
     $('#coords').textContent = s;
   }
   if (rect) { rect.b = t; redrawTop(); return; }
@@ -2114,7 +2489,7 @@ window.addEventListener('keydown', e => {
     return;
   }
   if (k === ' ') { spaceDown = true; cv.style.cursor = 'grab'; e.preventDefault(); return; }
-  if (k === 'escape') { if (destPick) { destPick = null; setTool(tool); toast('Cancelled.'); return; } toggleWorld(false); rect = null; selTile = null; redrawTop(); return; }
+  if (k === 'escape') { if (destPick || npcPick) { destPick = npcPick = null; setTool(tool); toast('Cancelled.'); return; } toggleWorld(false); rect = null; selTile = null; redrawTop(); return; }
   const map = { v: 'select', b: 'brush', u: 'rect', f: 'fill', e: 'erase', i: 'pick', h: 'pan' };
   if (map[k]) return setTool(map[k]);
   if (k === '[') return stepSize(-1);
