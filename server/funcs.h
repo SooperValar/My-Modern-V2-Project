@@ -240,6 +240,8 @@ int do_char_can_see_item(int cn,int in);
 void do_update_char(int cn);
 void do_regenerate(int cn);
 int do_lookup_char_self(char *name, int cn);
+int do_lookup_char(char *name);
+void console_poll(void);
 void do_admin_log(int source, char *format,...);
 void do_imp_log(int font,char *format,...);
 void do_announce(int source, int author, char *format,...);

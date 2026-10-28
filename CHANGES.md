@@ -208,6 +208,10 @@ The design is in `docs/ITEM_TIERS.md`. This first part builds the core:
 - `tools/design/item_tier_samples.py` prints sample rolls (the same rules, for looking at numbers).
 - Build: `tier.c` is a new file, so the Makefile changed; `claude-sync.sh get` now copies the Makefile too.
 
+#### Server console
+- Commands typed into the terminal the server runs in (`console.c`, read without blocking once per pass of the main loop): `help`, `who` (players online with rank, place, god/imp), `raise <player> <exp>`, `lower <player> <exp>`, `gold <player> <gold> [silver]`, `announce <text>` (to everyone, as "[Server] ..."), `tell <player> <text>`, `kick <player>`, `shutdown` (clean stop, like Ctrl+C). Player names can be shortened like in game; raise/lower/gold also work on players who are offline. Everything is logged with "CONSOLE:".
+- Only when the server runs in a terminal (started with an argument, so it doesn't detach); started plain (`./server`) it detaches, and the console switches itself off.
+
 #### New characters: full cloth armor, 5 gold
 - All six starting templates (Mercenary, Templar, Harakim, male and female: 2, 3, 4, 76, 77, 78) now start wearing a full set of cloth armor (helmet, armor, sleeves, leggings, boots, cloak; they had only the armor) and with 5 gold (was 2). `tools/world/newplayer_start.spec`.
 - `build_lab`: new `ch <temp> worn <slot> <item temp>` and `ch <temp> gold <silver>`. It now works out a template's experience value again only for `copy` and `scale` (before, any `ch` line did, e.g. moving an NPC).

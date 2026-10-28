@@ -789,7 +789,7 @@ int main(int argc,char *args[])
 	
 	load_mod();
 
-        xlog("Entering game loop...");
+        xlog("Entering game loop... (type help in this terminal for console commands)");
 
         while (!doleave) {
                 if ((globs->ticker&4095)==0) {
@@ -797,6 +797,7 @@ int main(int argc,char *args[])
 			//update();
 		}
                 game_loop(sock);
+                console_poll();		// commands typed into the server's terminal (console.c)
                 if (quit) {
                         if  (ltimer==0) {
                                 // kick all players
