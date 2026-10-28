@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Mercenaries of Astonia v2 - map editor in the browser.
+"""MyV2 Editor - the Mercenaries of Astonia v2 map editor, in the browser.
 
 Run it in the server's folder (where .dat/ and ./server are), then open
 http://localhost:8080 in your browser:
@@ -516,6 +516,12 @@ def make_handler(world, sprites, page, minimap):
                 except ValueError:
                     r = None
                 return self.send(200, r[0], r[1], True) if r else self.send(404, 'text/plain', b'no sprite')
+            if u.path in ('/icon.ico', '/favicon.ico'):   # the game's own icon, from the client folder
+                for n in ('res_icon_1.ico', 'TLB.ICO', 'tlb.ico'):
+                    f = os.path.join(sprites.client, n)
+                    if os.path.exists(f):
+                        return self.send(200, 'image/x-icon', open(f, 'rb').read(), True)
+                return self.send(404, 'text/plain', b'none')
             if u.path == '/minimap.png':
                 if minimap and os.path.exists(minimap):
                     return self.send(200, 'image/png', open(minimap, 'rb').read(), True)
@@ -580,7 +586,7 @@ def make_handler(world, sprites, page, minimap):
 
 
 def main():
-    ap = argparse.ArgumentParser(description='Astonia v2 map editor (browser)')
+    ap = argparse.ArgumentParser(description='MyV2 Editor: the Astonia v2 map editor (browser)')
     ap.add_argument('--dat', default='.dat', help='folder with map.dat etc. (default .dat)')
     ap.add_argument('--client', default='/mnt/c/Users/Cody/Desktop/MyV2/Client', help='the game client folder (sprites)')
     ap.add_argument('--area', default='area.c', help="the server's area.c (zone names)")
@@ -600,7 +606,7 @@ def main():
     page = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'mapedit.html'), 'rb').read() \
         if os.path.exists(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'mapedit.html')) else PAGE.encode()
     httpd = ThreadingHTTPServer((a.host, a.port), make_handler(world, sprites, page, a.minimap))
-    print('Map editor: open http://localhost:%d in your browser.%s Ctrl+C to quit.' %
+    print('MyV2 Editor: open http://localhost:%d in your browser.%s Ctrl+C to quit.' %
           (a.port, ' (The game server is running: view only.)' if server_running() else ''))
     try:
         httpd.serve_forever()
@@ -615,7 +621,8 @@ PAGE = r'''<!doctype html>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Astonia Editor</title>
+<title>MyV2 Editor</title>
+<link rel="icon" href="/icon.ico">
 <style>
 :root {
   --bg: #121316; --rail: #17181c; --panel: #1b1c20; --panel2: #232429; --panel3: #2b2d33; --line: #2f3137; --text: #e7e4dc;
@@ -637,7 +644,7 @@ svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width:
 #app.noright { grid-template-columns: 64px 280px 1fr 0; }
 header { grid-column: 1 / -1; display: flex; align-items: center; gap: 14px; padding: 0 14px; border-bottom: 1px solid var(--line); background: var(--rail); }
 .logo { display: flex; align-items: center; gap: 10px; font-weight: 600; font-size: 15px; min-width: 316px; }
-.logo .a { width: 30px; height: 30px; border-radius: 7px; background: linear-gradient(135deg, #e9b955, #b9822c); color: #2a1d06; display: grid; place-items: center; font-weight: 800; font-family: Georgia, serif; }
+.logo img { width: 32px; height: 32px; border-radius: 6px; image-rendering: pixelated; box-shadow: 0 0 0 1px #3b3d44; }
 .logo .ed { color: var(--gold); }
 #search { position: relative; flex: 1; max-width: 560px; margin: 0 auto; }
 #search input { width: 100%; padding: 8px 12px 8px 34px; border-radius: 8px; background: var(--panel); }
@@ -746,7 +753,7 @@ nav .grow { flex: 1; }
 <body>
 <div id="app">
 <header>
-  <div class="logo"><div class="a">A</div><div>Astonia <span class="ed">Editor</span></div></div>
+  <div class="logo"><img src="/icon.ico" alt=""><div>MyV2 <span class="ed">Editor</span></div></div>
   <div id="search">
     <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
     <input id="q" type="text" placeholder="Search items, NPCs, players, places… or type x y" autocomplete="off">
