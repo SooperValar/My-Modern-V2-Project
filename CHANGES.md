@@ -228,6 +228,7 @@ The design is in `docs/ITEM_TIERS.md`. This first part builds the core:
 
 #### #help lists the new commands
 - Imps: `#recall`, `#temple`. Gods: `#godshop`, `#soullevel`, `#tier`, `#upstone` (with `#create`, `#setrecall`). Creators: `#clear` (with `#build`, `#undo`, `#tile`, `#light`). `#write` was already in the imp list.
+- Also: `#give` (imps), `#lower` and `#skill` (gods) were missing, and `#ggold`'s line was wrong (it is `#ggold <player> <gold> [silver]`).
 
 #### Build mode: #clear (area delete)
 - `#clear` (build mode): left-click two corners on the map and every object (walls, tables, columns, ...) and item in that rectangle is removed; floors stay (lay another floor over a rug to remove it). Up to 100x100 tiles; one `#undo` brings it all back; `#clear` again before the second corner cancels; leaving build mode cancels too. Logged (`build_clear_*` in `build.c`).

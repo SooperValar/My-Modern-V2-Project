@@ -699,6 +699,7 @@ void do_help(int cn,char *topic)
 		do_char_log(cn,3,"#exit                  return from #USURP.\n");
 		do_char_log(cn,3,"#force <char><text>    make him act.\n");
 		//do_char_log(cn,3,"#gargoyle              turn self into a garg.\n");
+		do_char_log(cn,3,"#give <player>         give the item on your cursor.\n");
 		do_char_log(cn,3,"#goto <char>           go to char.\n");
 		do_char_log(cn,3,"#goto <x> <y>          goto x,y.\n");
 		do_char_log(cn,3,"#goto n|e|s|w <nnn>    goto <nnn> in dir.\n");
@@ -738,7 +739,9 @@ void do_help(int cn,char *topic)
 		do_char_log(cn,3,"#godshop <category>     free shop of every item.\n");
 		do_char_log(cn,3,"#setrecall <player> <x> <y>|here|default  recall point.\n");
 		//do_char_log(cn,3,"#creator <player>       make player a Creator.\n");
-		do_char_log(cn,3,"#ggold <amount>         give money to a player.\n");
+		do_char_log(cn,3,"#ggold <player> <gold> [silver] give money.\n");
+		do_char_log(cn,3,"#lower <player> <exp>   take exp away.\n");
+		do_char_log(cn,3,"#skill <player> <skill> <value> set a skill.\n");
 		do_char_log(cn,3,"#god <player>           make player a God.\n");
 		do_char_log(cn,3,"#prestige <player> [n]  prestige level (+look).\n");
 		do_char_log(cn,3,"#imp <player> <amount>  make player an Imp.\n");
