@@ -328,6 +328,24 @@ class World:
                     t[1] = 0
                     t[7] &= ~3
                     self.set_tile(x, y, t)
+                elif k == 'itemedit':        # change the item on the tile: name, description, data values
+                    i = t[4]
+                    if not (0 < i < MAXITEM) or not self.it_u8(i, I_USED):
+                        msgs.append('no item on %d,%d' % (x, y)); continue
+                    self._save_item(rec, i)
+                    o = i * ITEM_SIZE
+                    if 'name' in op:
+                        b = str(op['name']).encode('latin-1', 'replace')[:39]
+                        self.item[o + I_NAME:o + I_NAME + 40] = b + b'\0' * (40 - len(b))
+                        r = b.lower()     # the reference ("a portal") follows the name
+                        self.item[o + 41:o + 81] = r + b'\0' * (40 - len(r))
+                    if 'desc' in op:
+                        b = str(op['desc']).encode('latin-1', 'replace')[:199]
+                        self.item[o + I_DESC:o + I_DESC + 200] = b + b'\0' * (200 - len(b))
+                    for kk, v in (op.get('data') or {}).items():
+                        if 0 <= int(kk) < 10:
+                            struct.pack_into('<i', self.item, o + I_DATA + 4 * int(kk), int(v))
+                    self.set_tile(x, y, t)
                 elif k == 'flag':
                     b = 1 << int(op['bit'])
                     m = int(op.get('mode', 2))
@@ -346,8 +364,9 @@ class World:
                 self.redo.clear()
                 self.dirty += 1
                 tiles = [k for k in real if k[0] == 'm']
-                self.history.append({'t': time.strftime('%H:%M:%S'), 'what': label or 'edit', 'tiles': len(tiles),
-                                     'x': tiles[0][1], 'y': tiles[0][2]})
+                fx, fy = (tiles[0][1], tiles[0][2]) if tiles else (int(ops[0]['x']), int(ops[0]['y']))
+                self.history.append({'t': time.strftime('%H:%M:%S'), 'what': label or 'edit', 'tiles': max(1, len(tiles)),
+                                     'x': fx, 'y': fy})
             return len([k for k in real if k[0] == 'm']), msgs
 
     def _swap(self, rec):
@@ -369,10 +388,15 @@ class World:
             rec = src.pop()
             dst.append(self._swap(rec))
             self.dirty += 1
-            tiles = [k for k in rec if k[0] == 'm']
-            if tiles:
-                self.history.append({'t': time.strftime('%H:%M:%S'), 'what': which, 'tiles': len(tiles), 'x': tiles[0][1], 'y': tiles[0][2]})
-            return [[k[1], k[2]] for k in rec if k[0] == 'm']
+            pos = [[k[1], k[2]] for k in rec if k[0] == 'm']
+            for k in rec:          # items changed on their own (renamed, a portal's destination): where they lie
+                if k[0] == 'i':
+                    ix, iy = struct.unpack_from('<hh', self.item, k[1] * ITEM_SIZE + I_X)
+                    if 0 <= ix < MAPX and 0 <= iy < MAPY and [ix, iy] not in pos:
+                        pos.append([ix, iy])
+            if pos:
+                self.history.append({'t': time.strftime('%H:%M:%S'), 'what': which, 'tiles': len(pos), 'x': pos[0][0], 'y': pos[0][1]})
+            return pos
 
     def save(self):
         with self.lock:
@@ -420,6 +444,279 @@ def server_running():
         return any(int(p) != os.getpid() for p in out)
     except Exception:
         return False
+
+
+# ---------------------------------------------------------------- the game server: control
+CONSOLE_PORT = 5556
+
+
+class ServerCtl:
+    """Runs and talks to the game server.
+    - console(): a command over the server's control port (127.0.0.1:5556, console.c)
+    - jobs (one at a time, in a thread): start, stop, restart, update code (claude-sync.sh get:
+      copies the source Claude changed and rebuilds), update world (claude-sync.sh get-world).
+      Stopping warns players first if any are online.
+    - requests from Claude: JSON files dropped into <control>/requests/ are carried out and
+      answered in <control>/responses/<id>.json; <control>/status.json is kept up to date.
+    """
+
+    def __init__(self, server_dir, control_dir, world):
+        self.dir, self.control, self.world = server_dir, control_dir, world
+        self.job = None            # {'name', 'step', 'log': [...], 'done', 'ok', 'started'}
+        self.lock = threading.Lock()
+        self.requests = []         # what Claude asked for, newest last
+        self.was_running = server_running()
+        self.started_at = None
+        if control_dir:
+            for d in ('requests', 'responses'):
+                try:
+                    os.makedirs(os.path.join(control_dir, d), exist_ok=True)
+                except OSError:
+                    pass
+        threading.Thread(target=self._watch, daemon=True).start()
+
+    # --- the control port
+    def console(self, cmd, timeout=5):
+        import socket
+        try:
+            s = socket.create_connection(('127.0.0.1', CONSOLE_PORT), timeout=timeout)
+        except OSError:
+            return None
+        try:
+            s.sendall((cmd.replace('\n', ' ') + '\n').encode('latin-1', 'replace'))
+            buf = b''
+            end = time.time() + timeout
+            while not (buf.endswith(b'\n.\n') or buf == b'.\n') and time.time() < end:
+                d = s.recv(65536)
+                if not d:
+                    break
+                buf += d
+        except OSError:
+            return None
+        finally:
+            s.close()
+        t = buf.decode('latin-1')
+        return t[:-2] if t.endswith('.\n') else t
+
+    def status(self):
+        running = server_running()
+        st = {'running': running, 'online': 0, 'uptime': None, 'port': False, 'players': []}
+        if running:
+            r = self.console('status', 2)
+            if r is not None:
+                st['port'] = True
+                for kv in r.split():
+                    k, _, v = kv.partition('=')
+                    if v.lstrip('-').isdigit():
+                        st[k] = int(v)
+                w = self.console('whotab', 2) or ''
+                for line in w.splitlines():
+                    f = line.split('\t')
+                    if len(f) >= 7:
+                        st['players'].append({'name': f[0], 'rank': f[1], 'x': int(f[2]), 'y': int(f[3]), 'where': f[4],
+                                              'role': f[5], 'points': int(f[6])})
+            else:
+                st['online'] = self.world.online()
+        with self.lock:
+            st['job'] = dict(self.job) if self.job else None
+            if st['job']:
+                st['job']['log'] = list(self.job['log'][-60:])
+            st['requests'] = self.requests[-30:]
+        return st
+
+    # --- jobs
+    def _log(self, msg):
+        with self.lock:
+            if self.job:
+                self.job['log'].append(time.strftime('%H:%M:%S ') + msg)
+                self.job['step'] = msg
+
+    def run_job(self, name, warn=30, reason='a restart', on_done=None):
+        with self.lock:
+            if self.job and not self.job['done']:
+                return 'Busy: %s is still running.' % self.job['name']
+            self.job = {'name': name, 'step': 'starting', 'log': [], 'done': False, 'ok': None, 'started': time.strftime('%H:%M:%S')}
+        threading.Thread(target=self._job, args=(name, warn, reason, on_done), daemon=True).start()
+        return None
+
+    def _job(self, name, warn, reason, on_done):
+        ok = False
+        try:
+            if name == 'start':
+                ok = self._start()
+            elif name == 'stop':
+                ok = self._stop(warn, reason or 'maintenance')
+            elif name == 'restart':
+                ok = self._stop(warn, reason or 'a restart') and self._start()
+            elif name == 'update-code':
+                ok = self._stop(warn, reason or 'an update') and self._sync('get') and self._start()
+            elif name == 'update-world':
+                ok = self._stop(warn, reason or 'a world update') and self._sync('get-world') and self._start()
+            elif name == 'rebuild':
+                ok = self._run(['make', 'server'], 'make server')
+            else:
+                self._log('unknown job ' + name)
+        except Exception as e:
+            self._log('failed: %s' % e)
+        with self.lock:
+            self.job['done'], self.job['ok'] = True, ok
+        self._log('done' if ok else 'stopped with an error')
+        if on_done:
+            on_done(ok, list(self.job['log']))
+
+    def _run(self, args, label):
+        self._log('running ' + label)
+        try:
+            p = subprocess.run(args, cwd=self.dir, capture_output=True, text=True, timeout=900)
+        except Exception as e:
+            self._log('%s failed: %s' % (label, e)); return False
+        for line in (p.stdout + p.stderr).splitlines()[-40:]:
+            self._log('  ' + line)
+        if p.returncode:
+            self._log('%s ended with code %d' % (label, p.returncode)); return False
+        return True
+
+    def _sync(self, what):
+        sc = os.path.join(self.dir, 'claude-sync.sh')
+        if not os.path.exists(sc):
+            self._log('no claude-sync.sh in ' + self.dir); return False
+        return self._run(['bash', sc, what], 'claude-sync.sh ' + what)
+
+    def _start(self):
+        if server_running():
+            self._log('the server is already running'); return True
+        exe = os.path.join(self.dir, 'server')
+        if not os.path.exists(exe):
+            self._log('no ./server here - build it first'); return False
+        self._log('starting ./server loop (its output goes to server.log)')
+        log = open(os.path.join(self.dir, 'server.log'), 'a')
+        subprocess.Popen([exe, 'loop'], cwd=self.dir, stdout=log, stderr=subprocess.STDOUT, stdin=subprocess.DEVNULL,
+                         start_new_session=True)       # keeps running when the editor is closed
+        for _ in range(60):
+            time.sleep(1)
+            if self.console('status', 1) is not None:
+                self._log('the server is up'); self.started_at = time.time(); return True
+            if not server_running() and _ > 5:
+                self._log('the server stopped right away - see the log'); return False
+        self._log('the server runs, but its control port does not answer (an old ./server? update the code)')
+        return server_running()
+
+    def _stop(self, warn, reason):
+        if not server_running():
+            self._log('the server is not running'); return True
+        st = self.status()
+        if warn and st.get('online'):
+            self._log('warning %d player(s): going down in %d seconds' % (st['online'], warn))
+            self.console('announce The server goes down for %s in %d seconds.' % (reason, warn))
+            left = warn
+            while left > 0:
+                step = 10 if left > 10 else left
+                time.sleep(step)
+                left -= step
+                if left in (30, 10):
+                    self.console('announce The server goes down in %d seconds.' % left)
+        self._log('shutting down (saves everything)')
+        if self.console('shutdown', 3) is None:
+            self._log('control port not answering: sending the stop signal instead')
+            subprocess.run(['pkill', '-TERM', '-x', 'server'])
+        for _ in range(90):
+            time.sleep(1)
+            if not server_running():
+                self._log('the server has stopped'); return True
+        self._log('the server did not stop within 90 seconds'); return False
+
+    # --- Claude's requests, and keeping the world view right
+    def _watch(self):
+        while True:
+            try:
+                running = server_running()
+                if self.was_running and not running and not self.world.dirty:
+                    self.world.load()                  # it saved its files when it stopped
+                self.was_running = running
+                if self.control:
+                    self._requests()
+                    self._status_file()
+            except Exception as e:
+                print('control:', e)
+            time.sleep(2)
+
+    def _status_file(self):
+        st = self.status()
+        st['time'] = time.strftime('%Y-%m-%d %H:%M:%S')
+        st['editor'] = 'MyV2 Editor'
+        p = os.path.join(self.control, 'status.json')
+        try:
+            with open(p + '.tmp', 'w') as f:
+                json.dump(st, f, indent=1)
+            os.replace(p + '.tmp', p)
+        except OSError:
+            pass
+
+    def _answer(self, rid, obj):
+        p = os.path.join(self.control, 'responses', rid + '.json')
+        try:
+            with open(p + '.tmp', 'w') as f:
+                json.dump(obj, f, indent=1)
+            os.replace(p + '.tmp', p)
+        except OSError:
+            pass
+
+    def _requests(self):
+        d = os.path.join(self.control, 'requests')
+        try:
+            names = sorted(n for n in os.listdir(d) if n.endswith('.json'))
+        except OSError:
+            return
+        for n in names:
+            p = os.path.join(d, n)
+            try:
+                req = json.load(open(p))
+                os.remove(p)
+            except (OSError, ValueError):
+                try:
+                    os.remove(p)
+                except OSError:
+                    pass
+                continue
+            rid = re.sub(r'[^\w.-]', '_', str(req.get('id') or n[:-5]))
+            act = req.get('action', '')
+            entry = {'id': rid, 'time': time.strftime('%H:%M:%S'), 'action': act, 'cmd': req.get('cmd', ''), 'note': req.get('note', ''), 'result': 'working'}
+            with self.lock:
+                self.requests.append(entry)
+            print('Claude asks: %s %s' % (act, req.get('cmd', '')))
+            if act == 'status':
+                entry['result'] = 'done'
+                self._answer(rid, {'ok': True, 'status': self.status()})
+            elif act == 'console':
+                r = self.console(req.get('cmd', ''))
+                entry['result'] = 'done' if r is not None else 'server not reachable'
+                self._answer(rid, {'ok': r is not None, 'output': r})
+            elif act == 'log':
+                entry['result'] = 'done'
+                self._answer(rid, {'ok': True, 'log': self.log_tail(int(req.get('lines', 200)))})
+            elif act in ('start', 'stop', 'restart', 'update-code', 'update-world', 'rebuild'):
+                def done(ok, log, entry=entry, rid=rid):
+                    entry['result'] = 'done' if ok else 'failed'
+                    self._answer(rid, {'ok': ok, 'log': log})
+                err = self.run_job(act, int(req.get('warn', 30)), req.get('reason', ''), done)
+                if err:
+                    entry['result'] = err
+                    self._answer(rid, {'ok': False, 'error': err})
+            else:
+                entry['result'] = 'unknown action'
+                self._answer(rid, {'ok': False, 'error': 'unknown action ' + act})
+
+    def log_tail(self, n=200):
+        p = os.path.join(self.dir, 'server.log')
+        try:
+            with open(p, 'rb') as f:
+                f.seek(0, 2)
+                size = f.tell()
+                f.seek(max(0, size - 256 * 1024))
+                lines = f.read().decode('latin-1').splitlines()
+            return lines[-n:]
+        except OSError:
+            return []
 
 
 # ---------------------------------------------------------------- sprites
@@ -489,7 +786,7 @@ class Sprites:
 
 
 # ---------------------------------------------------------------- web server
-def make_handler(world, sprites, page, minimap):
+def make_handler(world, sprites, page, minimap, ctl):
     class H(BaseHTTPRequestHandler):
         def log_message(self, *a):
             pass
@@ -534,6 +831,10 @@ def make_handler(world, sprites, page, minimap):
                                 'undo': len(world.undo), 'redo': len(world.redo), 'areas': world.areas,
                                 'minimap': bool(minimap and os.path.exists(minimap)), 'dat': os.path.abspath(world.dat),
                                 'backups': len(world.backups())})
+            if u.path == '/api/srv/status':
+                return self.js(ctl.status())
+            if u.path == '/api/srv/log':
+                return self.js({'log': ctl.log_tail(int(q.get('n', 300)))})
             if u.path == '/api/search':
                 return self.js(world.search(q.get('q', '')))
             if u.path == '/api/chars':
@@ -552,6 +853,12 @@ def make_handler(world, sprites, page, minimap):
             u = urlparse(self.path)
             n = int(self.headers.get('Content-Length') or 0)
             body = json.loads(self.rfile.read(n) or b'{}')
+            if u.path == '/api/srv/cmd':
+                r = ctl.console(str(body.get('cmd', '')))
+                return self.js({'output': r} if r is not None else {'error': 'The server does not answer on its control port (is it running, with the new code?).'})
+            if u.path == '/api/srv/action':
+                err = ctl.run_job(str(body.get('action', '')), int(body.get('warn', 30)), str(body.get('reason', '')))
+                return self.js({'error': err} if err else {'ok': True})
             if u.path in ('/api/edit', '/api/undo', '/api/redo', '/api/save', '/api/relight', '/api/restore') and server_running():
                 return self.js({'error': 'The game server is running: the map is view-only. Stop the server to edit.'})
             if u.path == '/api/edit':
@@ -593,6 +900,8 @@ def main():
     ap.add_argument('--minimap', default=None, help='world minimap picture (default: the project docs one)')
     ap.add_argument('--port', type=int, default=8080)
     ap.add_argument('--host', default='127.0.0.1')
+    ap.add_argument('--control', default='/mnt/c/Users/Cody/Desktop/MyV2/Server/control',
+                    help='folder where Claude leaves requests (status, console commands, restarts, updates); "" = off')
     a = ap.parse_args()
     if a.minimap is None:
         a.minimap = os.path.join(a.client, 'Claude outputs', 'My-Modern-V2-Project', 'docs', 'world_minimap.png')
@@ -605,7 +914,8 @@ def main():
         print('Warning: no sprites found in %s (give --client)' % a.client)
     page = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'mapedit.html'), 'rb').read() \
         if os.path.exists(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'mapedit.html')) else PAGE.encode()
-    httpd = ThreadingHTTPServer((a.host, a.port), make_handler(world, sprites, page, a.minimap))
+    ctl = ServerCtl(world.server_dir, a.control if a.control and os.path.isdir(os.path.dirname(a.control)) else None, world)
+    httpd = ThreadingHTTPServer((a.host, a.port), make_handler(world, sprites, page, a.minimap, ctl))
     print('MyV2 Editor: open http://localhost:%d in your browser.%s Ctrl+C to quit.' %
           (a.port, ' (The game server is running: view only.)' if server_running() else ''))
     try:
@@ -731,6 +1041,38 @@ nav .grow { flex: 1; }
 #banner { position: absolute; left: 50%; transform: translateX(-50%); top: 56px; background: var(--badbg); color: #ffd6cf; border: 1px solid #5a2c26; padding: 6px 14px; border-radius: 8px; z-index: 4; display: none; font-size: 12px; }
 #toast { position: absolute; left: 50%; transform: translateX(-50%); bottom: 16px; max-width: 70%; background: var(--panel); border: 1px solid var(--line); border-left: 3px solid var(--gold); padding: 8px 14px; border-radius: 7px; display: none; z-index: 12; white-space: pre-line; }
 
+#srv { grid-column: 3 / 5; overflow-y: auto; padding: 20px 24px 40px; display: none; background: var(--bg); }
+#app.srvmode #view, #app.srvmode #right { display: none; }
+#app.srvmode #srv { display: block; }
+#app.srvmode #left { display: none; }
+#app.srvmode { grid-template-columns: 64px 0 1fr 0; }
+.sgrid { display: grid; grid-template-columns: minmax(320px, 1fr) minmax(320px, 1fr); gap: 16px; max-width: 1400px; }
+.box { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; min-width: 0; }
+.box h3 { margin: 0 0 10px; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--dim2); font-weight: 600; display: flex; align-items: center; gap: 8px; }
+.box.wide { grid-column: 1 / -1; }
+.big { font-size: 22px; font-weight: 600; display: flex; align-items: center; gap: 10px; }
+.dotst { width: 11px; height: 11px; border-radius: 50%; background: var(--dim2); }
+.dotst.up { background: var(--ok); box-shadow: 0 0 8px var(--ok); }
+.facts { display: flex; gap: 22px; margin: 10px 0 14px; color: var(--dim); flex-wrap: wrap; }
+.facts b { color: var(--text); font-weight: 600; }
+.acts { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.btn.sec { background: var(--panel3); border: 1px solid var(--line); }
+.btn.sec:hover:not(:disabled) { border-color: var(--gold); }
+.btn.danger:hover:not(:disabled) { border-color: var(--bad); color: #ffd6cf; }
+.jobbox { margin-top: 12px; background: #0e0f11; border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; font: 12px/1.5 ui-monospace, Consolas, monospace; color: #c9c6be; max-height: 220px; overflow-y: auto; white-space: pre-wrap; display: none; }
+table.pl { width: 100%; border-collapse: collapse; }
+table.pl td, table.pl th { text-align: left; padding: 6px 6px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+table.pl th { color: var(--dim2); font-weight: 500; font-size: 12px; }
+table.pl td.w { white-space: normal; color: var(--dim); }
+table.pl button { color: var(--dim); border: 1px solid var(--line); border-radius: 5px; padding: 1px 7px; font-size: 11px; margin-right: 3px; }
+table.pl button:hover { color: var(--text); border-color: var(--gold); }
+.row2 { display: flex; gap: 8px; }
+.row2 input { flex: 1; min-width: 0; }
+#conout, #logbox { background: #0e0f11; border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; font: 12px/1.45 ui-monospace, Consolas, monospace; color: #c9c6be; white-space: pre-wrap; overflow-y: auto; }
+#conout { height: 180px; margin-top: 8px; }
+#logbox { height: 340px; }
+.req { padding: 5px 0; border-bottom: 1px solid var(--line); color: var(--dim); font-size: 12px; }
+.req b { color: var(--text); font-weight: 500; }
 #right { background: var(--panel); border-left: 1px solid var(--line); display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
 #rscroll { flex: 1; overflow-y: auto; padding: 4px 14px 10px; min-height: 0; }
 #right .sect { padding: 14px 0 8px; }
@@ -744,6 +1086,18 @@ nav .grow { flex: 1; }
 #tile .x { color: var(--dim); padding: 1px 6px; border: 1px solid var(--line); border-radius: 5px; font-size: 11px; }
 #tile .x:hover { color: var(--bad); border-color: var(--bad); }
 #tile .nm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text); }
+#tile .ied { margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--line); display: flex; flex-direction: column; gap: 6px; }
+#tile .ied .lb { color: var(--dim2); font-size: 12px; }
+#tile .ied input[type=text], #tile .ied textarea { width: 100%; background: var(--panel2); border: 1px solid var(--line); border-radius: 6px; padding: 4px 8px; color: var(--text); font: inherit; }
+#tile .ied textarea { height: 54px; resize: vertical; }
+#tile .ied .dest { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+#tile .ied .dest input { width: 64px; }
+#tile .ied .dgrid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; }
+#tile .ied .dgrid input { width: 100%; padding: 3px 4px; font-size: 11px; }
+#tile .ied .warn { color: var(--gold2); font-size: 12px; }
+#tile .ied button.sm { color: var(--dim); border: 1px solid var(--line); border-radius: 5px; padding: 2px 8px; font-size: 12px; }
+#tile .ied button.sm:hover { color: var(--text); border-color: var(--gold); }
+#tile .ied button.sm.on { color: var(--gold2); border-color: var(--gold); background: var(--goldbg); }
 #tile .flg { display: grid; grid-template-columns: 1fr 1fr; gap: 3px 8px; margin-top: 8px; }
 .chk { display: flex; align-items: center; gap: 8px; padding: 3px 0; cursor: pointer; user-select: none; }
 .chk .dot { width: 9px; height: 9px; border-radius: 3px; flex: none; }
@@ -782,6 +1136,7 @@ nav .grow { flex: 1; }
   <button data-m="map" class="on" title="Build the map"><svg viewBox="0 0 24 24"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2z"/><path d="M9 4v14M15 6v14"/></svg>Map</button>
   <button data-m="npcs" title="Every NPC and player in the world"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>NPCs</button>
   <button data-m="history" title="What you changed, and the saves"><svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5M12 7v5l3 2"/></svg>History</button>
+  <button data-m="server" title="Run and control the game server"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="7" rx="1.5"/><rect x="3" y="13" width="18" height="7" rx="1.5"/><path d="M7 7.5h.01M7 16.5h.01"/></svg>Server</button>
   <div class="grow"></div>
   <button data-m="help" title="How it works"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.7.3-1 .9-1 1.7M12 17h.01"/></svg>Help</button>
 </nav>
@@ -852,6 +1207,48 @@ nav .grow { flex: 1; }
     <button id="undosave" title="Put the world back as it was before the last save (from its backup)">Undo last save</button>
   </div>
 </aside>
+
+<section id="srv">
+  <div class="sgrid">
+    <div class="box">
+      <h3>Game server</h3>
+      <div class="big"><span class="dotst" id="sdot"></span><span id="sstate">…</span></div>
+      <div class="facts" id="sfacts"></div>
+      <div class="acts">
+        <button class="btn pri" id="sstart">Start</button>
+        <button class="btn sec" id="srestart">Restart</button>
+        <button class="btn sec danger" id="sstop">Stop</button>
+        <span style="color:var(--dim2);font-size:12px;margin-left:6px">Warn players</span>
+        <select id="swarn"><option value="0">no wait</option><option value="30" selected>30 s</option><option value="60">1 min</option><option value="120">2 min</option><option value="300">5 min</option></select>
+      </div>
+      <div class="acts" style="margin-top:10px">
+        <button class="btn sec" id="supcode" title="Stop, take the source Claude changed (claude-sync.sh get), rebuild, start">Update code &amp; restart</button>
+        <button class="btn sec" id="supworld" title="Stop, take the world files from the Windows folder (claude-sync.sh get-world), start">Update world &amp; restart</button>
+      </div>
+      <div class="jobbox" id="sjob"></div>
+    </div>
+    <div class="box">
+      <h3>Announce</h3>
+      <div class="row2"><input type="text" id="sann" placeholder="A message every player sees as [Server] …"><button class="btn sec" id="sannb">Send</button></div>
+      <h3 style="margin-top:16px">Console</h3>
+      <div class="row2"><input type="text" id="scmd" placeholder="help · who · raise Bob 5000 · gold Bob 50 · tell Bob hi · kick Bob"><button class="btn sec" id="scmdb">Run</button></div>
+      <div id="conout"></div>
+    </div>
+    <div class="box wide">
+      <h3>Players online <span id="pcount" style="color:var(--dim)"></span></h3>
+      <div id="plist"></div>
+    </div>
+    <div class="box wide">
+      <h3>Server log <label class="chk" style="margin-left:auto;text-transform:none;letter-spacing:0;font-weight:400"><input type="checkbox" id="lfollow" checked><span>follow</span></label>
+        <input type="text" id="lfilter" placeholder="filter" style="width:180px;text-transform:none;letter-spacing:0;font-weight:400"></h3>
+      <div id="logbox"></div>
+    </div>
+    <div class="box wide">
+      <h3>Requests from Claude</h3>
+      <div id="sreq" class="empty">None yet. When you ask Claude to check or restart the server, its requests show up here.</div>
+    </div>
+  </div>
+</section>
 </div>
 
 <script>
@@ -1082,7 +1479,9 @@ function drawMap(c, v) {
 function drawMini(v) { if (miniOk) drawMap($('#mcv'), v); }
 function mapClick(e) {
   const r = e.target.getBoundingClientRect();
-  centerOn(Math.floor((e.clientY - r.top) / r.height * 1024), Math.floor((e.clientX - r.left) / r.width * 1024));
+  const x = Math.floor((e.clientY - r.top) / r.height * 1024), y = Math.floor((e.clientX - r.left) / r.width * 1024);
+  if (destPick) { setDestination({ x, y }); return; }    // a portal's destination, picked on the world map
+  centerOn(x, y);
 }
 $('#mcv').onclick = mapClick;
 $('#wcv').onclick = e => { mapClick(e); toggleWorld(false); };
@@ -1374,7 +1773,10 @@ function leftUI() {
 }
 $('#lsearch').oninput = () => leftUI();
 document.querySelectorAll('nav button').forEach(b => b.onclick = () => {
-  mode = b.dataset.m; document.querySelectorAll('nav button').forEach(x => x.classList.toggle('on', x === b)); $('#lsearch').value = ''; leftUI();
+  mode = b.dataset.m; document.querySelectorAll('nav button').forEach(x => x.classList.toggle('on', x === b)); $('#lsearch').value = '';
+  $('#app').classList.toggle('srvmode', mode === 'server');
+  if (mode === 'server') { srvRefresh(); logRefresh(true); return; }
+  leftUI(); setTimeout(resize, 0);
 });
 
 // ---------------------------------------------------------------- right panel
@@ -1424,6 +1826,7 @@ async function selectTile(x, y) {
     if (!ro) { const b = document.createElement('button'); b.className = 'x'; b.textContent = 'remove'; b.onclick = () => edit([{ op: 'erase', x, y }], 'erase', true); ti.appendChild(b); }
   } else ti.textContent = '–';
   if (r.char) { const n = document.createElement('span'); n.className = 'nm'; n.textContent = `${r.char.name} (template ${r.char.temp})`; $('#tc').appendChild(n); }
+  if (r.item) itemEditor(el, r, x, y, ro);
   const fl = $('#tfl');
   FLAGS.forEach((f, i) => {
     const on = r.flags.includes({ 'blocks walking': 'move block', 'blocks sight': 'sight block', 'no fighting': 'no fight' }[f] || f);
@@ -1433,6 +1836,45 @@ async function selectTile(x, y) {
     l.firstChild.onchange = e => edit([{ op: 'flag', x, y, bit: i, mode: e.target.checked ? 1 : 0 }], (e.target.checked ? 'set ' : 'cleared ') + f, true);
     fl.appendChild(l);
   });
+}
+
+// ---- the item on the selected tile: name, description, where a portal leads, data values
+let destPick = null;   // {x, y}: the next click on the map sets where this portal leads
+function itemEditor(el, r, x, y, ro) {
+  const it = r.item, tele = it.driver === 6;
+  const box = document.createElement('div'); box.className = 'ied';
+  box.innerHTML = `<div class="lb">Item name</div><input type="text" maxlength="39" class="nm2">
+    <div class="lb">Description (what players read when they look at it)</div><textarea maxlength="199" class="ds2"></textarea>
+    ${tele ? `<div class="lb">Leads to</div><div class="dest">x <input type="number" class="dx"> y <input type="number" class="dy">
+      <button class="sm pk" title="Then click the spot on the map">Pick on map</button><button class="sm gt">Go there</button></div>
+      ${it.data[2] ? '<div class="warn">This is a labyrinth portal (data 2 = ' + it.data[2] + '): it takes players to their next lab part, not to x, y. <button class="sm np">Make it a normal portal</button></div>' : ''}` : ''}
+    <details><summary class="lb" style="cursor:pointer">Data values (advanced, driver ${it.driver})</summary><div class="dgrid">${it.data.map((v, i) => `<input type="number" data-i="${i}" value="${v}" title="data[${i}]">`).join('')}</div></details>
+    <div><button class="btn pri" style="padding:5px 12px">Save item</button></div>`;
+  el.appendChild(box);
+  const nm = box.querySelector('.nm2'), ds = box.querySelector('.ds2');
+  nm.value = it.name; ds.value = it.desc || '';
+  if (tele) { box.querySelector('.dx').value = it.data[0]; box.querySelector('.dy').value = it.data[1]; }
+  box.querySelectorAll('.dgrid input').forEach(i => { if (tele && (i.dataset.i === '0' || i.dataset.i === '1')) i.disabled = true; });
+  box.querySelectorAll('input,textarea,button').forEach(e => e.disabled = ro);
+  const collect = () => {
+    const data = {};
+    box.querySelectorAll('.dgrid input').forEach(i => { if (+i.value !== it.data[+i.dataset.i]) data[i.dataset.i] = +i.value; });
+    if (tele) { data[0] = +box.querySelector('.dx').value; data[1] = +box.querySelector('.dy').value; }
+    return { op: 'itemedit', x, y, name: nm.value, desc: ds.value, data };
+  };
+  box.querySelector('.btn').onclick = () => edit([collect()], 'item ' + nm.value, true);
+  if (tele) {
+    const pk = box.querySelector('.pk');
+    pk.onclick = () => { destPick = { x, y }; pk.classList.add('on'); toast('Click the spot on the map where this portal should lead. (Esc cancels)'); cv.style.cursor = 'cell'; };
+    const np = box.querySelector('.np');
+    if (np) np.onclick = () => edit([{ op: 'itemedit', x, y, data: { 2: 0, 3: 0 } }], 'normal portal', true);
+    box.querySelector('.gt').onclick = () => { const dx = +box.querySelector('.dx').value, dy = +box.querySelector('.dy').value; centerOn(dx, dy); toast('That is where it leads. Its own spot: ' + x + ', ' + y); };
+  }
+}
+function setDestination(t) {
+  const d = destPick; destPick = null; setTool(tool);
+  edit([{ op: 'itemedit', x: d.x, y: d.y, data: { 0: t.x, 1: t.y } }], `portal at ${d.x},${d.y} leads to ${t.x},${t.y}`, false)
+    .then(() => { toast(`The portal at ${d.x}, ${d.y} now leads to ${t.x}, ${t.y}.`); centerOn(d.x, d.y); selectTile(d.x, d.y); });
 }
 
 // ---------------------------------------------------------------- editing
@@ -1572,6 +2014,7 @@ cv.addEventListener('mousedown', e => {
   const r = cv.getBoundingClientRect(), sx = e.clientX - r.left, sy = e.clientY - r.top, t = screenToTile(sx, sy);
   if (e.button === 1 || e.button === 2 || (e.button === 0 && (spaceDown || tool === 'pan'))) { panning = { sx, sy, cx: cam.x, cy: cam.y }; cv.style.cursor = 'grabbing'; e.preventDefault(); return; }
   if (e.button !== 0) return;
+  if (destPick) { if (info.running) { destPick = null; return toast('The game server is running: editing is off.', true); } setDestination(t); return; }
   if (tool === 'select') { selectTile(t.x, t.y); return; }
   if (tool === 'pick') { pick(t.x, t.y); return; }
   if (info.running) { toast('The game server is running: editing is off.', true); return; }
@@ -1617,7 +2060,16 @@ window.addEventListener('mouseup', () => {
     for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) { const op = opFor(x, y, alt); if (op) { ops.push(op); preview(op); } }
     edit(ops, label(alt) + ` (${x1 - x0 + 1}×${y1 - y0 + 1})`); return;
   }
-  if (stroke) { const s = stroke; stroke = null; edit(s.ops, label(s.alt)); }
+  if (stroke) {
+    const s = stroke; stroke = null;
+    const p = edit(s.ops, label(s.alt));
+    // a portal: ask right away where it should lead
+    if (!s.alt && brush.kind === 'place' && brush.t[4] === 6 && s.ops.length === 1 && s.ops[0].op === 'place') {
+      const o = s.ops[0];
+      p.then(() => { selectTile(o.x, o.y); destPick = { x: o.x, y: o.y }; cv.style.cursor = 'cell';
+        toast('Portal placed. Now click where it should lead: here on the map, or press M and click on the world map. (Esc: decide later)'); });
+    }
+  }
 });
 window.addEventListener('keydown', e => {
   const k = e.key.toLowerCase();
@@ -1633,7 +2085,7 @@ window.addEventListener('keydown', e => {
     return;
   }
   if (k === ' ') { spaceDown = true; cv.style.cursor = 'grab'; e.preventDefault(); return; }
-  if (k === 'escape') { toggleWorld(false); rect = null; selTile = null; redrawTop(); return; }
+  if (k === 'escape') { if (destPick) { destPick = null; setTool(tool); toast('Cancelled.'); return; } toggleWorld(false); rect = null; selTile = null; redrawTop(); return; }
   const map = { v: 'select', b: 'brush', u: 'rect', f: 'fill', e: 'erase', i: 'pick', h: 'pan' };
   if (map[k]) return setTool(map[k]);
   if (k === '[') return stepSize(-1);
@@ -1759,6 +2211,96 @@ async function refreshInfo() {
   if (r.minimap && !miniOk && !mini.src) { mini.onload = () => { miniOk = true; $('#mini').style.display = 'block'; redraw(); }; mini.src = '/minimap.png'; }
   if (first) redraw();
 }
+
+// ---------------------------------------------------------------- server page
+let srvSt = null;
+function fmtUp(s) { if (s == null) return '–'; const d = Math.floor(s / 86400), h = Math.floor(s / 3600) % 24, m = Math.floor(s / 60) % 60; return (d ? d + 'd ' : '') + (d || h ? h + 'h ' : '') + m + 'm'; }
+async function srvRefresh() {
+  if (mode !== 'server') return;
+  const st = await api('/api/srv/status'); srvSt = st;
+  $('#sdot').className = 'dotst' + (st.running ? ' up' : '');
+  $('#sstate').textContent = st.running ? 'Running' : 'Stopped';
+  $('#sfacts').innerHTML = st.running
+    ? `<span>Players online <b>${st.online}</b></span><span>Up <b>${fmtUp(st.uptime)}</b></span>` + (st.port ? '' : '<span style="color:var(--gold2)">control port not answering: the running ./server is older than this feature (Update code &amp; restart)</span>')
+    : '<span>Start it here; it keeps running when you close the editor. Its output goes to server.log.</span>';
+  const busy = st.job && !st.job.done;
+  $('#sstart').disabled = st.running || busy; $('#srestart').disabled = !st.running || busy; $('#sstop').disabled = !st.running || busy;
+  $('#supcode').disabled = busy; $('#supworld').disabled = busy;
+  const jb = $('#sjob');
+  if (st.job) { jb.style.display = 'block'; jb.textContent = `${st.job.name} · ${st.job.done ? (st.job.ok ? 'finished' : 'failed') : 'working…'}\n` + st.job.log.join('\n'); jb.scrollTop = jb.scrollHeight; }
+  // players
+  $('#pcount').textContent = st.running ? '· ' + st.players.length : '';
+  const pl = $('#plist');
+  if (!st.running) pl.innerHTML = '<div class="empty">The server is stopped.</div>';
+  else if (!st.players.length) pl.innerHTML = '<div class="empty">Nobody online.</div>';
+  else {
+    pl.innerHTML = '<table class="pl"><tr><th>Name</th><th>Rank</th><th>Where</th><th></th><th></th></tr></table>';
+    const t = pl.firstChild;
+    for (const p of st.players) {
+      const r = t.insertRow();
+      r.insertCell().textContent = p.name + (p.role ? ` (${p.role})` : '');
+      r.insertCell().textContent = p.rank;
+      const w = r.insertCell(); w.className = 'w'; w.textContent = `${p.x}, ${p.y}` + (p.where ? ' · ' + p.where : '');
+      const a = r.insertCell();
+      for (const [lbl, fn] of [['Map', () => { document.querySelector('nav button[data-m=map]').click(); setTimeout(() => { centerOn(p.x, p.y); selectTile(p.x, p.y); }, 50); }],
+        ['Tell', async () => { const m = prompt('Message to ' + p.name + ':'); if (m) runCmd('tell ' + p.name + ' ' + m); }],
+        ['Gold', async () => { const m = prompt('How much gold for ' + p.name + '?', '10'); if (m && +m > 0) runCmd('gold ' + p.name + ' ' + (+m)); }],
+        ['Exp', async () => { const m = prompt('How much experience for ' + p.name + '?', '1000'); if (m && +m > 0) runCmd('raise ' + p.name + ' ' + (+m)); }],
+        ['Kick', async () => { if (confirm('Kick ' + p.name + '?')) runCmd('kick ' + p.name); }]]) {
+        const b = document.createElement('button'); b.textContent = lbl; b.onclick = fn; a.appendChild(b);
+      }
+      r.insertCell().textContent = '';
+    }
+  }
+  // Claude's requests
+  const rq = $('#sreq');
+  if (st.requests && st.requests.length) {
+    rq.className = ''; rq.innerHTML = '';
+    for (const e of st.requests.slice().reverse()) {
+      const d = document.createElement('div'); d.className = 'req';
+      d.innerHTML = '<span class="mono"></span> · <b></b> <span></span>';
+      d.children[0].textContent = e.time; d.children[1].textContent = e.action + (e.cmd ? ': ' + e.cmd : ''); d.children[2].textContent = '— ' + e.result + (e.note ? ' · ' + e.note : '');
+      rq.appendChild(d);
+    }
+  }
+}
+async function runCmd(cmd) {
+  const o = $('#conout');
+  o.textContent += '> ' + cmd + '\n';
+  const r = await api('/api/srv/cmd', { cmd });
+  o.textContent += (r.error ? r.error + '\n' : (r.output || '(no answer)\n'));
+  o.scrollTop = o.scrollHeight;
+  srvRefresh();
+}
+$('#scmdb').onclick = () => { const c = $('#scmd').value.trim(); if (c) { runCmd(c); $('#scmd').value = ''; } };
+$('#scmd').addEventListener('keydown', e => { if (e.key === 'Enter') $('#scmdb').click(); });
+$('#sannb').onclick = () => { const t = $('#sann').value.trim(); if (t) { runCmd('announce ' + t); $('#sann').value = ''; } };
+$('#sann').addEventListener('keydown', e => { if (e.key === 'Enter') $('#sannb').click(); });
+async function job(action, ask) {
+  if (ask && !confirm(ask)) return;
+  const r = await api('/api/srv/action', { action, warn: +$('#swarn').value });
+  if (r.error) toast(r.error, true);
+  srvRefresh();
+}
+$('#sstart').onclick = () => job('start');
+$('#srestart').onclick = () => job('restart', 'Restart the game server? Players online are warned first (' + $('#swarn').selectedOptions[0].text + ').');
+$('#sstop').onclick = () => job('stop', 'Stop the game server? Players online are warned first (' + $('#swarn').selectedOptions[0].text + ').');
+$('#supcode').onclick = () => job('update-code', 'Stop the server, take the updated source (claude-sync.sh get), rebuild and start again?');
+$('#supworld').onclick = () => job('update-world', 'Stop the server, take the world files from the Windows folder (claude-sync.sh get-world; a backup is made) and start again?');
+let logLines = [];
+async function logRefresh(force) {
+  if (mode !== 'server') return;
+  if (!force && !$('#lfollow').checked) return;
+  const r = await api('/api/srv/log?n=400'); logLines = r.log || []; logDraw();
+}
+function logDraw() {
+  const f = $('#lfilter').value.toLowerCase(), b = $('#logbox');
+  b.textContent = logLines.filter(l => !f || l.toLowerCase().includes(f)).join('\n') || '(server.log is empty)';
+  if ($('#lfollow').checked) b.scrollTop = b.scrollHeight;
+}
+$('#lfilter').oninput = logDraw;
+setInterval(srvRefresh, 3000);
+setInterval(() => logRefresh(false), 3000);
 
 // ---------------------------------------------------------------- start
 (async function start() {

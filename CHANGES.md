@@ -208,6 +208,15 @@ The design is in `docs/ITEM_TIERS.md`. This first part builds the core:
 - `tools/design/item_tier_samples.py` prints sample rolls (the same rules, for looking at numbers).
 - Build: `tier.c` is a new file, so the Makefile changed; `claude-sync.sh get` now copies the Makefile too.
 
+#### Server control from the editor (and for Claude)
+- **Control port** (`console.c`): the server also takes its console commands on 127.0.0.1:5556 (this computer only), one line in, the answer back ending with a "." line. New machine-readable commands for it: `status` (online, ticker, uptime, pid) and `whotab` (one tab-separated line per player online).
+- **Server page in the MyV2 Editor** (rail: Server): running/stopped, players online, uptime; Start (keeps running when the editor is closed; output to `server.log`), Restart, Stop (players online are warned first: no wait / 30 s / 1-5 min, with reminders), "Update code & restart" (stop, `claude-sync.sh get` = take the changed source and rebuild, start), "Update world & restart" (stop, `claude-sync.sh get-world`, start), with the steps shown as they run; Announce; a console (any console command); the players online with Map / Tell / Gold / Exp / Kick; the server log (follow, filter).
+- **Requests from Claude**: while the editor runs, JSON files dropped into the Windows `Server/control/requests/` are carried out (status, console, log, start, stop, restart, update-code, update-world) and answered in `control/responses/`; `control/status.json` is kept up to date. They are listed on the Server page. Claude asks in chat before anything that stops or restarts the game.
+- When the server stops, the editor reloads the world it saved; editing stays off while it runs.
+
+#### Editor: items and portals
+- Selecting a tile with an item shows an item editor: name, description (what players read when they look), its data values, and for portals (driver 6) "Leads to x, y" with **Pick on map** (click the destination on the map or on the world map with M) and **Go there**. Placing a portal asks right away where it should lead. Lab portals (data 2 set) are flagged, with a button to make them normal portals. Undo works for these too.
+
 #### MyV2 Editor: the map editor in the browser (`tools/mapedit/mapedit.py`, also in the Windows Server folder)
 - Named "MyV2 Editor", with the game's own icon (the client's `res_icon_1.ico`) in the corner and as the browser tab icon.
 - **Floor mixes** (so a big area of one floor doesn't look like a flat or tiled pattern): Ctrl+click (or Shift+click) floors to put several in one brush; each has a weight slider (how often it's painted, shown in %), and "+ look-alikes" adds floors whose color is close. Brush, rectangle and fill paint a random pick per tile. "Save mix" keeps it under a name in the Floors and Builder tabs (stored in the browser; right-click a saved mix to delete it); the game's own random sets (e.g. 551 = the four Aston grasses) are listed there too.

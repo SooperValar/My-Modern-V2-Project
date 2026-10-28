@@ -11,7 +11,14 @@
  *   shutdown                      save and stop the server (like Ctrl+C)
  *
  * Read without blocking from stdin once per pass of the main loop; if stdin
- * is closed (server started in the background) the console just switches off.
+ * is closed (server started in the background) that part switches off.
+ *
+ * The same commands also come over the control port: a TCP port on 127.0.0.1
+ * only (CONSOLE_PORT, 5556), used by the MyV2 Editor's Server page. One line
+ * in, the answer back, ending with a line "." - plus a few machine-readable
+ * commands for it:
+ *   status                        online=<n> ticker=<t> uptime=<seconds> pid=<pid>
+ *   whotab                        one line per player online: name<TAB>rank<TAB>x<TAB>y<TAB>where<TAB>god/imp/staff<TAB>points
  * Everything done here is logged with "CONSOLE:".
  */
 #include <stdio.h>
@@ -21,20 +28,40 @@
 #include <stdarg.h>
 #include <unistd.h>
 #include <sys/select.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <fcntl.h>
+#include <errno.h>
+#include <time.h>
 #include "server.h"
+
+#define CONSOLE_PORT	5556
 
 extern volatile int quit;
 static int con_off=0;
 static char con_buf[1024];
 static int con_len=0;
 
+// where answers go: the terminal, or the control port's client
+static int con_to=-1;			// -1 = stdout, else the client socket
+static char net_out[65536];
+static int net_out_len=0;
+static time_t con_started=0;
+
 static void out(char *format,...)
 {
 	va_list args;
+	char buf[2048];
+	int n;
+
 	va_start(args,format);
-	vprintf(format,args);
+	n=vsnprintf(buf,sizeof(buf),format,args);
 	va_end(args);
-	fflush(stdout);
+	if (n<0) return;
+	if (n>=(int)sizeof(buf)) n=sizeof(buf)-1;
+	if (con_to<0) { fputs(buf,stdout); fflush(stdout); return; }
+	if (net_out_len+n<(int)sizeof(net_out)) { memcpy(net_out+net_out_len,buf,n); net_out_len+=n; }
 }
 
 /* a player by (the start of) their name, online or not */
@@ -98,6 +125,20 @@ static void con_cmd(char *line)
 	if (!*w[0]) return;
 	for (p=w[0]; *p; p++) *p=tolower(*p);
 
+	if (!strcmp(w[0],"status")) {
+		int cnt=0;
+		for (n=1; n<MAXCHARS; n++) if (ch[n].used==USE_ACTIVE && (ch[n].flags&CF_PLAYER)) cnt++;
+		out("online=%d ticker=%d uptime=%ld pid=%d\n",cnt,globs->ticker,(long)(time(NULL)-con_started),(int)getpid());
+		return;
+	}
+	if (!strcmp(w[0],"whotab")) {
+		for (n=1; n<MAXCHARS; n++) {
+			if (ch[n].used!=USE_ACTIVE || !(ch[n].flags&CF_PLAYER)) continue;
+			out("%s\t%s\t%d\t%d\t%s\t%s\t%d\n",ch[n].name,rank_name[min(23,max(0,points2rank(ch[n].points_tot)))],ch[n].x,ch[n].y,
+				get_area_m(ch[n].x,ch[n].y,0),(ch[n].flags&CF_GOD) ? "god" : (ch[n].flags&CF_IMP) ? "imp" : (ch[n].flags&CF_STAFF) ? "staff" : "",ch[n].points_tot);
+		}
+		return;
+	}
 	if (!strcmp(w[0],"help") || !strcmp(w[0],"?")) {
 		out("  Console commands:\n"
 		    "  who                           players online\n"
@@ -158,6 +199,70 @@ static void con_cmd(char *line)
 	} else out("  Unknown command \"%s\". Type help.\n",w[0]);
 }
 
+/* ---- the control port ---- */
+static int lsock=-2, csock=-1;
+static char cbuf[2048];
+static int clen=0;
+
+static void net_open(void)
+{
+	struct sockaddr_in a;
+	int one=1;
+
+	lsock=socket(AF_INET,SOCK_STREAM,0);
+	if (lsock<0) { xlog("Console: no control port (socket failed)"); lsock=-1; return; }
+	setsockopt(lsock,SOL_SOCKET,SO_REUSEADDR,&one,sizeof(one));
+	memset(&a,0,sizeof(a));
+	a.sin_family=AF_INET; a.sin_port=htons(CONSOLE_PORT); a.sin_addr.s_addr=htonl(INADDR_LOOPBACK);	// this computer only
+	if (bind(lsock,(struct sockaddr*)&a,sizeof(a))<0 || listen(lsock,4)<0) {
+		xlog("Console: control port %d not available",CONSOLE_PORT);
+		close(lsock); lsock=-1; return;
+	}
+	fcntl(lsock,F_SETFL,O_NONBLOCK);
+	xlog("Console: control port 127.0.0.1:%d open (MyV2 Editor)",CONSOLE_PORT);
+}
+
+static void net_send_all(int fd,char *b,int len)
+{
+	int w,tries=0;
+	while (len>0 && tries<200) {
+		w=send(fd,b,len,MSG_NOSIGNAL);
+		if (w>0) { b+=w; len-=w; continue; }
+		if (w<0 && (errno==EAGAIN || errno==EWOULDBLOCK)) { usleep(1000); tries++; continue; }
+		break;
+	}
+}
+
+static void net_poll(void)
+{
+	int r,c;
+	char *nl;
+
+	if (lsock==-2) { con_started=time(NULL); net_open(); }
+	if (lsock<0) return;
+	if (csock<0) {
+		c=accept(lsock,NULL,NULL);
+		if (c<0) return;
+		fcntl(c,F_SETFL,O_NONBLOCK);
+		csock=c; clen=0;
+	}
+	r=recv(csock,cbuf+clen,sizeof(cbuf)-1-clen,0);
+	if (r==0 || (r<0 && errno!=EAGAIN && errno!=EWOULDBLOCK)) { close(csock); csock=-1; return; }
+	if (r<0) return;
+	clen+=r; cbuf[clen]=0;
+	while ((nl=strchr(cbuf,'\n'))) {
+		*nl=0;
+		if (nl>cbuf && nl[-1]=='\r') nl[-1]=0;
+		con_to=csock; net_out_len=0;
+		con_cmd(cbuf);
+		out(".\n");			// end of the answer
+		net_send_all(csock,net_out,net_out_len);
+		con_to=-1;
+		r=strlen(nl+1); memmove(cbuf,nl+1,r+1); clen=r;
+	}
+	if (clen>=(int)sizeof(cbuf)-1) clen=0;
+}
+
 /* called once per pass of the main loop */
 void console_poll(void)
 {
@@ -166,6 +271,7 @@ void console_poll(void)
 	int r,n;
 	char *nl;
 
+	net_poll();
 	if (con_off) return;
 	FD_ZERO(&fds); FD_SET(0,&fds);
 	tv.tv_sec=0; tv.tv_usec=0;
