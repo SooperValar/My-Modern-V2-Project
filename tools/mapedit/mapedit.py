@@ -1211,10 +1211,29 @@ class World:
             return 'Went back to the world as it was before the save of %s.' % b[-1]
 
 
+def reap():
+    """collect finished child processes (a server this editor started, also before it restarted itself)"""
+    try:
+        while os.waitpid(-1, os.WNOHANG)[0] > 0:
+            pass
+    except (ChildProcessError, OSError):
+        pass
+
+
 def server_running():
+    reap()
     try:
         out = subprocess.run(['pgrep', '-x', 'server'], capture_output=True, text=True).stdout.split()
-        return any(int(p) != os.getpid() for p in out)
+        for p in out:
+            if int(p) == os.getpid():
+                continue
+            try:                       # a finished process nobody collected yet is not running
+                if open('/proc/%s/stat' % p).read().rsplit(')', 1)[1].split()[0] == 'Z':
+                    continue
+            except (OSError, IndexError):
+                pass
+            return True
+        return False
     except Exception:
         return False
 
