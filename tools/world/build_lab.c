@@ -25,6 +25,8 @@
  *   ch <temp> d <i> <value>                        data[i]
  *   ch <temp> setflags <hex> | clrflags <hex>
  *   ch <temp> items <temp>...                      backpack (also a merchant's stock)
+ *   ch <temp> worn <slot> <temp>                   worn item (slot: 0 head, 2 body, 3 arms, 5 legs, 6 feet, 8 weapon, 9 cloak, ...)
+ *   ch <temp> gold <silver>                        money it starts with (100 = 1 gold)
  *   ch <temp> text <i> <text...>
  */
 #include <stdio.h>
@@ -202,7 +204,9 @@ int main(int argc,char **argv)
 		} else if (sscanf(line,"ch %d %63s %n",&a,word,&off)==2) {
 			struct character *t=&tc[a];
 			if (!sane_ch(a,ln)) continue;
-			touched[a]=1;
+			// the experience value is worked out again only for a new or rescaled template
+			// (not when only its position, items, money, texts or data change)
+			if (!strcmp(word,"copy") || !strcmp(word,"scale")) touched[a]=1;
 			strncpy(text,line+off,sizeof(text)-1);
 			if (!strcmp(word,"copy")) { b=atoi(text); if (!sane_ch(b,ln)) continue;
 				if (tc[a].used) printf("line %d: char template %d was used (%s), overwritten\n",ln,a,tc[a].name);
@@ -220,6 +224,8 @@ int main(int argc,char **argv)
 			else if (!strcmp(word,"d") && sscanf(text,"%d %d",&i,&b)==2 && i>=0 && i<100) t->data[i]=b;
 			else if (!strcmp(word,"setflags")) { sscanf(text,"%llx",&fl); t->flags|=fl; }
 			else if (!strcmp(word,"clrflags")) { sscanf(text,"%llx",&fl); t->flags&=~fl; }
+			else if (!strcmp(word,"worn") && sscanf(text,"%d %d",&i,&b)==2 && i>=0 && i<20) t->worn[i]=b;	// worn slot (WN_*) = item template
+			else if (!strcmp(word,"gold")) t->gold=atoi(text);	// in silver: 100 = 1G
 			else if (!strcmp(word,"items")) { char *p=text; for (i=0; i<40; i++) { t->item[i]=(int)strtol(p,&p,10); } }
 			else if (!strcmp(word,"text") && sscanf(text,"%d %n",&i,&off)==1 && i>=0 && i<10) { strncpy(t->text[i],text+off,sizeof(t->text[i])-1); t->text[i][sizeof(t->text[i])-1]=0; }
 			else printf("line %d not understood: %s\n",ln,line);
