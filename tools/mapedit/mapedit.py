@@ -3184,6 +3184,21 @@ const ITEM_FLAGS = [
   ['Rules', [[38, 'Never expires'], [34, 'Can\'t go in the depot'], [12, 'Destroyed in shops (quest item)'], [30, 'Destroyed when leaving the labyrinth'], [29, 'Donate (cheap)'], [31, 'Fixed price'], [7, 'Can\'t be repaired'], [40, 'Needs identifying'], [11, 'Single age'], [14, 'Expires when inactive'], [15, 'Expires when active'], [35, 'Ages faster in light']]]];
 const PLACES = [[1, 'Head'], [2, 'Neck'], [4, 'Body'], [8, 'Arms'], [32, 'Belt'], [64, 'Legs'], [128, 'Feet'], [256, 'Weapon hand'], [512, 'Shield hand'], [1024, 'Cloak'], [2048, 'Two-handed'], [4096, 'Ring']];
 
+const RANK_NAMES = ['Private', 'Private First Class', 'Lance Corporal', 'Corporal', 'Sergeant', 'Staff Sergeant', 'Master Sergeant', 'First Sergeant',
+  'Sergeant Major', 'Second Lieutenant', 'First Lieutenant', 'Captain', 'Major', 'Lieutenant Colonel', 'Colonel', 'Brigadier General', 'Major General',
+  'Lieutenant General', 'General', 'Field Marshal', 'Knight of Astonia', 'Baron of Astonia', 'Earl of Astonia', 'Warlord of Astonia'];
+const RANK_PTS = [50, 850, 4900, 17700, 48950, 113750, 233800, 438600, 766650, 1266650, 1998700, 3035500, 4463550, 6384350, 8915600,
+  12192400, 16368450, 21617250, 28133300, 36133300, 49014500, 63000600, 80977100];      // helper.c points2rank()
+const rankOf = p => { let i = 0; while (i < RANK_PTS.length && p >= RANK_PTS[i]) i++; return i; };
+function npcPoints(c) {     // an NPC's experience value, as the server's reset_char() works it out from its stats
+  let p = 0;
+  for (let z = 0; z < 5; z++) for (let m = 10; m < c.attrib[z * 6]; m++) p += Math.floor(m * m * m * 3 / 20);
+  for (let m = 50; m < c.hp[0]; m++) p += m * 3;
+  for (let m = 50; m < c.end[0]; m++) p += Math.floor(m * 2 / 2);
+  for (let m = 50; m < c.mana[0]; m++) p += m * 3;
+  for (let z = 0; z < 50; z++) { if (z === 7 || z === 8 || z === 9) continue; for (let m = 1; m < c.skill[z * 6]; m++) p += Math.max(m, Math.floor(m * m * m * 2 / 40)); }
+  return p;
+}
 const bit = (f, b) => Math.floor(f / 2 ** b) % 2 === 1;
 const setBit = (f, b, on) => bit(f, b) === on ? f : f + (on ? 1 : -1) * 2 ** b;
 const pos = v => v ? [v % 1024, Math.floor(v / 1024)] : null;
@@ -3261,7 +3276,7 @@ function tplRender() {
   el.querySelector('.ttl').insertAdjacentHTML('beforeend', `<span style="vertical-align:middle;margin-left:8px"></span><small></small>`);
   el.querySelector('.ttl span').textContent = c.name || '(no name)';
   el.querySelector('.ttl small').textContent = TP.kind === 'npc'
-    ? `NPC template ${TP.t}${c.made ? ' · made with the editor' : ''} · ${c.count} in the world${c.pending ? ' · ' + c.pending + ' waiting to spawn' : ''}${c.x || c.y ? ` · spawns at ${c.x}, ${c.y}` : ' · not placed'}`
+    ? `${RANK_NAMES[rankOf(npcPoints(c))]} · NPC template ${TP.t}${c.made ? ' · made with the editor' : ''} · ${c.count} in the world${c.pending ? ' · ' + c.pending + ' waiting to spawn' : ''}${c.x || c.y ? ` · spawns at ${c.x}, ${c.y}` : ' · not placed'}`
     : `Item template ${TP.t}${c.made ? ' · made with the editor' : ''} · ${c.onmap} lying on the map`;
   const tabs = tplTabs();
   el.querySelector('.mtabs').innerHTML = Object.entries(tabs).map(([k, v]) => `<button data-k="${k}" class="${k === TP.tab ? 'on' : ''}">${v}</button>`).join('');
@@ -3435,7 +3450,33 @@ const NPC_TABS = {
       tplRender(); toast('Scaled to ' + pct.value + '% (press Apply to keep it)');
     };
     sc.append(pct, document.createTextNode(' % '), go);
-    const g = grid2(b); row(g, 'Make it stronger or weaker', sc, 'Attributes, hit points, endurance, mana and skills together. 120 = 20% stronger.');
+    const g = grid2(b);
+    // rank: comes from the stats (the server works it out again at every respawn), so it is set by scaling them
+    const rk = document.createElement('div'); rk.className = 'ipick';
+    const now = npcPoints(c), cur = rankOf(now);
+    const rs = sel(RANK_NAMES.map((n, i) => [i, `${i} · ${n}`]), () => cur, () => {});
+    const go2 = document.createElement('button'); go2.className = 'sm'; go2.textContent = 'Scale to this rank';
+    go2.onclick = () => {
+      const want = +rs.value, lo = want ? RANK_PTS[want - 1] : 0, hi = want < RANK_PTS.length ? RANK_PTS[want] : Infinity;
+      const base = JSON.parse(JSON.stringify({ attrib: c.attrib, hp: c.hp, end: c.end, mana: c.mana, skill: c.skill }));
+      const scaled = f => {
+        const t = JSON.parse(JSON.stringify(base)), cl = (v, m) => Math.max(0, Math.min(m, Math.round(v * f)));
+        for (let z = 0; z < 5; z++) { t.attrib[z * 6] = Math.max(1, cl(base.attrib[z * 6], 250)); t.attrib[z * 6 + 2] = Math.max(t.attrib[z * 6 + 2], t.attrib[z * 6]); }
+        for (const k of ['hp', 'end', 'mana']) { t[k][0] = cl(base[k][0], 999); t[k][2] = Math.max(t[k][2], t[k][0]); }
+        for (let z = 0; z < 50; z++) if (base.skill[z * 6]) { t.skill[z * 6] = Math.max(1, cl(base.skill[z * 6], 250)); t.skill[z * 6 + 2] = Math.max(t.skill[z * 6 + 2], t.skill[z * 6]); }
+        return t;
+      };
+      let a = 0.02, z = 40, best = null;                // the smallest scale that reaches the rank
+      if (npcPoints(scaled(z)) < lo) return toast(`It can't reach ${RANK_NAMES[want]} by scaling (its stats hit the maximum). Give it more skills first.`, true);
+      for (let k = 0; k < 40; k++) { const m = (a + z) / 2, p = npcPoints(scaled(m)); if (p >= lo) { z = m; best = m; } else a = m; }
+      const t = scaled(best ?? z), p = npcPoints(t);
+      if (p >= hi) return toast(`Its stats can't be scaled finely enough to land exactly on ${RANK_NAMES[want]} (it jumps to ${RANK_NAMES[rankOf(p)]}). Try the rank next to it, or change a few values by hand.`, true);
+      Object.assign(c, t); tplRender();
+      toast(`Now ${RANK_NAMES[rankOf(p)]} (${p.toLocaleString()} points, stats × ${(best ?? z).toFixed(2)}). Press Apply to keep it.`);
+    };
+    rk.append(rs, go2);
+    row(g, 'Rank', rk, `Now ${RANK_NAMES[cur]} (${now.toLocaleString()} points). An NPC's rank comes from its stats; this scales them all until it is the rank you pick. It also sets the experience players get for killing it.`);
+    row(g, 'Make it stronger or weaker', sc, 'Attributes, hit points, endurance, mana and skills together. 120 = 20% stronger.');
     const cols = document.createElement('div'); cols.className = 'cols'; b.append(cols);
     const t1 = document.createElement('table'); t1.className = 'st'; t1.innerHTML = '<tr><th>Attribute</th><th>Value</th></tr>';
     const put = (t, name, get, set, max) => { const r = t.insertRow(); r.insertCell().textContent = name; r.insertCell().append(num(get, set, 0, max)); };
@@ -3456,7 +3497,7 @@ const NPC_TABS = {
     const t2 = document.createElement('table'); t2.className = 'st'; t2.innerHTML = '<tr><th>Skill</th><th>Value</th></tr>';
     SKILLS.forEach((s, z) => put(t2, s, () => c.skill[z * 6], v => { c.skill[z * 6] = v; c.skill[z * 6 + 2] = Math.max(c.skill[z * 6 + 2], v); }, 250));
     const h2 = document.createElement('div'); h2.innerHTML = '<h4>Skills (0 = doesn\'t have it)</h4>'; h2.append(t2); cols.append(h2);
-    b.insertAdjacentHTML('beforeend', `<div class="note">Experience players get for killing it is worked out from these values (now ${c.points_tot.toLocaleString()} points in total).</div>`);
+    b.insertAdjacentHTML('beforeend', `<div class="note">Rank and the experience players get for killing it are worked out from these values: now ${npcPoints(c).toLocaleString()} points, ${RANK_NAMES[rankOf(npcPoints(c))]}.</div>`);
   },
   gear(b, c) {
     const g = grid2(b, 'Worn (it fights with these)');
