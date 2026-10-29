@@ -2163,11 +2163,14 @@ nav .grow { flex: 1; }
 .slot.sz { font: 700 13px ui-monospace, Consolas, monospace; color: #e8d8b0; }
 .slot.sz small { position: absolute; left: 3px; top: 1px; font-size: 8px; color: #9c8a64; font-weight: 500; }
 #view.hasban #tools { top: 44px; }
-#view.hasban #viewbar { top: 47px; }
-#viewbar { position: absolute; right: 10px; top: 13px; display: flex; gap: 6px; z-index: 3; }
-#viewbar .rnd { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; color: #cfc3a6;
+#view.hasban #viewbar { top: 43px; }
+#viewbar { position: absolute; right: 26px; top: 9px; display: flex; gap: 6px; z-index: 3; }
+#tright { position: absolute; right: 0; top: 50%; transform: translateY(-50%); z-index: 3; width: 18px; height: 70px; border-radius: 7px 0 0 7px;
+  background: linear-gradient(90deg, #2a241b, #1f1b15); border: 1px solid #4a3d26; border-right: 0; color: #d6a443; font: 700 18px/1 system-ui; display: grid; place-items: center; padding: 0 0 2px; }
+#tright:hover { color: #ffe39a; background: linear-gradient(90deg, #3a3022, #251f17); }
+#viewbar .rnd { width: 42px; height: 42px; border-radius: 50%; display: grid; place-items: center; color: #cfc3a6;
   background: radial-gradient(circle at 50% 30%, #332c21, #1b1813); border: 1px solid #4d4130; box-shadow: 0 3px 10px rgba(0,0,0,.45); }
-#viewbar .rnd svg { width: 18px; height: 18px; }
+#viewbar .rnd svg { width: 24px; height: 24px; }
 #viewbar .rnd:hover { color: #fff3d6; border-color: #8a7140; }
 #viewbar .rnd.on { color: #ffe39a; border-color: #d6a443; box-shadow: 0 0 9px rgba(214,164,67,.4); }
 #zoombar { position: absolute; left: 50%; transform: translateX(-50%); bottom: 10px; display: flex; align-items: center; gap: 8px; z-index: 3;
@@ -2362,12 +2365,12 @@ table.pl button:hover { color: var(--text); border-color: var(--gold); }
     <button class="slot" id="redo" title="Redo (Ctrl+Y)"><svg viewBox="0 0 24 24"><path d="M16 7h4V3"/><path d="M19.4 7A8 8 0 1 0 20 13"/><circle cx="12" cy="12" r="1.2"/></svg></button>
   </div>
   <div id="viewbar">
-    <button class="rnd" id="tgrid" title="Grid (G)"><svg viewBox="0 0 24 24"><path d="M12 2 22 12 12 22 2 12z"/><path d="M7 7l10 10M17 7 7 17M12 2v20M2 12h20" opacity=".55"/></svg></button>
-    <button class="rnd" id="twalls" title="See through walls (W)"><svg viewBox="0 0 24 24"><path d="M3 6h18v12H3z"/><path d="M3 10h18M3 14h18M8 6v4M15 6v4M11 10v4M6 14v4M17 14v4" opacity=".55"/><circle cx="12" cy="12" r="2.6" fill="currentColor" stroke="none"/></svg></button>
-    <button class="rnd" id="tlight" title="Light from lamps, as at night (L)"><svg viewBox="0 0 24 24"><path d="M10 22h4l1-9H9z"/><path d="M12 13c-2.5-1.2-3.3-3.6-1.8-6 .3 1.4 1.1 2 1.8 2.2C11.2 6.5 12.6 4 15 3c-.9 2.3 1.4 4.1 1 6.7-.3 2-2 3.1-4 3.3z"/></svg></button>
-    <button class="rnd" id="tref" title="Load the world again from disk"><svg viewBox="0 0 24 24"><path d="M5 9a7.5 7.5 0 0 1 13-2l1.5 2"/><path d="M19 15a7.5 7.5 0 0 1-13 2L4.5 15"/><path d="M19.5 4.5V9H15M4.5 19.5V15H9"/></svg></button>
-    <button class="rnd" id="tright" title="Show / hide the right panel"><svg viewBox="0 0 24 24"><path d="M4 4h10l6 4v12H4z"/><path d="M14 4v4h6M8 11h6M8 15h8"/></svg></button>
+    <button class="rnd" id="tgrid" title="Grid (G)"><svg viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="17" height="17" rx="1"/><path d="M9.2 3.5v17M14.8 3.5v17M3.5 9.2h17M3.5 14.8h17"/></svg></button>
+    <button class="rnd" id="twalls" title="See through walls (W)"><svg viewBox="0 0 24 24"><rect x="2.5" y="3.5" width="8.5" height="4.5" rx=".6" fill="currentColor" fill-opacity="0.0" stroke-dasharray="1.5 1.3" stroke-opacity=".7"/><rect x="12.5" y="3.5" width="9" height="4.5" rx=".6" fill="currentColor" fill-opacity="0.0" stroke-dasharray="1.5 1.3" stroke-opacity=".7"/><rect x="2.5" y="10" width="4" height="4.5" rx=".6" fill="currentColor" fill-opacity="0.45"/><rect x="8" y="10" width="8" height="4.5" rx=".6" fill="currentColor" fill-opacity="0.4"/><rect x="17.5" y="10" width="4" height="4.5" rx=".6" fill="currentColor" fill-opacity="0.12" stroke-dasharray="1.5 1.3" stroke-opacity=".7"/><rect x="2.5" y="16.5" width="8.5" height="4.5" rx=".6" fill="currentColor" fill-opacity="0.95"/><rect x="12.5" y="16.5" width="9" height="4.5" rx=".6" fill="currentColor" fill-opacity="0.6"/></svg></button>
+    <button class="rnd" id="tlight" title="Light from lamps, as at night (L)"><svg viewBox="0 0 24 24"><path d="M3.5 11a8.6 8.6 0 0 1 14.6-5.2L20.5 8"/><path d="M20.5 3.3V8h-4.7"/><path d="M20.5 13a8.6 8.6 0 0 1-14.6 5.2L3.5 16"/><path d="M3.5 20.7V16h4.7"/><rect x="10.1" y="12" width="3.8" height="5.6" rx=".5" fill="currentColor" fill-opacity=".3"/><path d="M12 12v-1.1"/><path d="M12 10.6c-1.3-.8-1.4-2.3-.3-3.8.3 1 .8 1.3 1.1 1.4-.1-.7.2-1.4.7-1.8.2 1.5 1 2.1.3 3.4-.3.6-1 1-1.8.8z" fill="currentColor" stroke-width=".9"/></svg></button>
+    <button class="rnd" id="tref" title="Load the world again from disk"><svg viewBox="0 0 24 24"><path d="M3.5 11a8.6 8.6 0 0 1 14.6-5.2L20.5 8"/><path d="M20.5 3.3V8h-4.7"/><path d="M20.5 13a8.6 8.6 0 0 1-14.6 5.2L3.5 16"/><path d="M3.5 20.7V16h4.7"/><circle cx="12" cy="12" r="4.9"/><path d="M7.1 12h9.8M12 7.1c-1.7 1.5-1.7 8.3 0 9.8M12 7.1c1.7 1.5 1.7 8.3 0 9.8"/></svg></button>
   </div>
+  <button id="tright" title="Hide the right panel">›</button>
   <div id="zoombar">
     <button id="zout" title="Zoom out (wheel)"><svg viewBox="0 0 24 24"><path d="M12 5 19 12 12 19 5 12z"/><path d="M9 12h6"/></svg></button>
     <input type="range" id="zr" min="0" max="100" step="1" title="Zoom (mouse wheel)">
@@ -3101,7 +3104,11 @@ function toggles() {
 }
 function flipShow(k) { show[k] = !show[k]; layersUI(); redraw(); }
 $('#tgrid').onclick = () => flipShow('grid'); $('#twalls').onclick = () => flipShow('see'); $('#tlight').onclick = () => flipShow('light');
-$('#tright').onclick = () => { $('#app').classList.toggle('noright'); setTimeout(resize, 0); };
+$('#tright').onclick = () => {
+  const hid = $('#app').classList.toggle('noright');
+  $('#tright').textContent = hid ? '‹' : '›'; $('#tright').title = hid ? 'Show the right panel' : 'Hide the right panel';
+  setTimeout(resize, 0);
+};
 
 let selPatrol = null;   // the patrol route of the selected NPC: [[x, y], ...]
 async function selectTile(x, y) {

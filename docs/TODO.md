@@ -22,5 +22,5 @@ Later (ideas, not decided):
 - Lab 11's third merchant.
 - Undead regeneration and underwater damage balance, after more testing.
 
-## MyV2 Editor: redo the view-switch icons (round buttons top right of the map)
+## ~~MyV2 Editor: redo the view-switch icons (round buttons top right of the map)~~ (done)
 Cody wants to revisit these five, like the tool symbols: grid, see through walls, light from lamps, reload the world, show/hide the right panel. Same gold-on-wood style.

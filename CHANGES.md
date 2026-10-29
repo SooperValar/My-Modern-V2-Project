@@ -298,7 +298,13 @@ The design is in `docs/ITEM_TIERS.md`. This first part builds the core:
 - **Own toolbar design** (it followed the inspiration mock-up too closely):
   - **Map tools:** a hotbar across the top of the map (Cody preferred it to a column down the side), with square wood-and-gold slots, the key letter in the corner and a gold mark under the active tool.
   - **Same bar:** the brush size (click for bigger, right-click for smaller) and undo/redo.
-  - **View switches** (grid, see through walls, light, reload, right panel) are round buttons top right; zoom is a slider at the bottom.
+  - **View switches:** larger round buttons top right (42 px), with icons Cody chose:
+    - grid: a 3×3 grid
+    - see through walls: a brick wall, solid at the bottom left and see-through at the top right
+    - light from lamps: a candle in refresh arrows
+    - reload the world: a globe in refresh arrows
+  - **Right panel:** shown and hidden with a tab on the panel's edge (› hides it, ‹ brings it back).
+  - **Zoom:** a slider at the bottom.
   - **Icons:** a new set of the editor's own. Tools, as Cody chose them: select (an arrow over a tile), a paint brush, a dashed rectangle with corner handles, fill (four squares with arrows going out), an eraser, an eye dropper with a drop, and move (a hand with four arrows). View switches: a tile grid, a brick wall with an eye to see through walls, a torch for light.
   - **Banner:** the live/view-only banner is a strip along the top of the map.
   - **Left rail and category tabs** in the same style:
