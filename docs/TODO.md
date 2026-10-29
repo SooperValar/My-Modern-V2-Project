@@ -21,3 +21,6 @@ Later (ideas, not decided):
 - Swimming skill: a river south of Aston and a flooded mine quest like Lab 11 (without the darkness).
 - Lab 11's third merchant.
 - Undead regeneration and underwater damage balance, after more testing.
+
+## MyV2 Editor: redo the view-switch icons (round buttons top right of the map)
+Cody wants to revisit these five, like the tool symbols: grid, see through walls, light from lamps, reload the world, show/hide the right panel. Same gold-on-wood style.
