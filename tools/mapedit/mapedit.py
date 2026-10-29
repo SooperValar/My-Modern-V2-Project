@@ -2085,18 +2085,28 @@ header { grid-column: 1 / -1; display: flex; align-items: center; gap: 14px; pad
 #pill.up { background: var(--okbg); color: var(--ok); border: 1px solid #2c4a2f; }
 #pill.down { background: var(--goldbg); color: var(--gold2); border: 1px solid #574420; }
 
-nav { background: var(--rail); border-right: 1px solid var(--line); display: flex; flex-direction: column; align-items: center; padding: 8px 0; gap: 4px; }
-nav button { width: 52px; padding: 7px 0 6px; border-radius: 8px; color: var(--dim); display: flex; flex-direction: column; align-items: center; gap: 3px; font-size: 11px; }
-nav button svg { width: 20px; height: 20px; }
-nav button:hover { color: var(--text); background: var(--panel); }
-nav button.on { color: var(--gold2); background: var(--goldbg); }
+nav { background: linear-gradient(180deg, #1f1b15 0%, #15130f 100%); border-right: 1px solid #3a3022; display: flex; flex-direction: column; align-items: center; padding: 10px 0; gap: 8px; }
+nav button { position: relative; width: 56px; color: #a8987a; display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 10.5px; letter-spacing: .02em; }
+nav button .ico { width: 42px; height: 42px; border-radius: 3px; display: grid; place-items: center;
+  background: radial-gradient(circle at 50% 35%, #3a3226 0%, #221d16 75%); border: 1px solid #4d4130;
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,.55), inset 0 2px 3px rgba(255,230,170,.06); }
+nav button svg { width: 22px; height: 22px; stroke-width: 1.6; }
+nav button:hover { color: #eadcb9; }
+nav button:hover .ico { border-color: #8a7140; color: #fff3d6; }
+nav button.on { color: #f0c463; }
+nav button.on .ico { color: #ffe39a; border-color: #d6a443; background: radial-gradient(circle at 50% 35%, #5a4520 0%, #2a2014 80%);
+  box-shadow: 0 0 10px rgba(214,164,67,.35), inset 0 0 0 1px rgba(0,0,0,.4); }
+nav button.on::after { content: ''; position: absolute; right: -4px; top: 13px; width: 3px; height: 18px; border-radius: 2px; background: #d6a443; }
 nav .grow { flex: 1; }
 
 #left { background: var(--panel); border-right: 1px solid var(--line); display: flex; flex-direction: column; min-height: 0; }
-.tabs { display: flex; flex-wrap: wrap; gap: 2px 4px; padding: 10px 10px 0; border-bottom: 1px solid var(--line); }
-.tabs button { padding: 6px 8px 8px; color: var(--dim); border-bottom: 2px solid transparent; }
-.tabs button:hover { color: var(--text); }
-.tabs button.on { color: var(--gold2); border-bottom-color: var(--gold); }
+.tabs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; padding: 10px 10px 10px; border-bottom: 1px solid #3a3022; }
+.tabs button { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 2px 4px; border-radius: 3px; color: #a8987a; font-size: 11px;
+  background: linear-gradient(180deg, #29231a, #1c1913); border: 1px solid #40362a; }
+.tabs button svg { width: 18px; height: 18px; stroke-width: 1.6; }
+.tabs button:hover { color: #fff3d6; border-color: #8a7140; }
+.tabs button.on { color: #ffe39a; border-color: #d6a443; background: linear-gradient(180deg, #4a3a1c, #2a2014); box-shadow: 0 0 8px rgba(214,164,67,.25); }
+.tabs button.title { grid-column: 1 / -1; flex-direction: row; justify-content: center; gap: 8px; font-size: 12.5px; padding: 7px; }
 #lsearch { margin: 10px; }
 .sect { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--dim2); padding: 6px 12px 6px; }
 #palwrap { flex: 1; overflow-y: auto; padding: 0 8px 10px 10px; min-height: 0; }
@@ -2324,13 +2334,13 @@ table.pl button:hover { color: var(--text); border-color: var(--gold); }
 </header>
 
 <nav>
-  <button data-m="map" class="on" title="Build the map"><svg viewBox="0 0 24 24"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2z"/><path d="M9 4v14M15 6v14"/></svg>Map</button>
-  <button data-m="players" title="Player characters: stats, backpack, depot, history, character file"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.5 3-5.5 6.5-5.5s6.5 2 6.5 5.5"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18.5 14.8c2 .8 3 2.6 3 5.2"/></svg>Players</button>
-  <button data-m="npcs" title="Every NPC and player in the world"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>NPCs</button>
-  <button data-m="history" title="What you changed, and the saves"><svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5M12 7v5l3 2"/></svg>History</button>
-  <button data-m="server" title="Run and control the game server"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="7" rx="1.5"/><rect x="3" y="13" width="18" height="7" rx="1.5"/><path d="M7 7.5h.01M7 16.5h.01"/></svg>Server</button>
+  <button data-m="map" class="on" title="Build the map"><span class="ico"><svg viewBox="0 0 24 24"><path d="M4 5c3-1.5 5 1.5 8 0s5-1.5 8 0v14c-3-1.5-5 1.5-8 0s-5-1.5-8 0z"/><path d="M7 9.5l2 1.5 3-2 2 2.5" stroke-dasharray="1.6 1.6"/><path d="M15.5 13.5l3 3M18.5 13.5l-3 3"/></svg></span>Map</button>
+  <button data-m="players" title="Player characters: stats, backpack, depot, history, character file"><span class="ico"><svg viewBox="0 0 24 24"><path d="M5 13c0-5 3-9 7-9s7 4 7 9v5l-2 2H7l-2-2z"/><path d="M5 12.5h14M12 12.5V20M8.5 15.5h1.5M14 15.5h1.5"/></svg></span>Players</button>
+  <button data-m="npcs" title="Every NPC and player in the world"><span class="ico"><svg viewBox="0 0 24 24"><path d="M12 3c-4 0-6.5 3.5-6.5 8.5V21h13v-9.5C18.5 6.5 16 3 12 3z"/><path d="M8.5 13c.5-3 1.8-4.5 3.5-4.5s3 1.5 3.5 4.5c-1 1.5-2.2 2-3.5 2s-2.5-.5-3.5-2z"/></svg></span>NPCs</button>
+  <button data-m="history" title="What you changed, and the saves"><span class="ico"><svg viewBox="0 0 24 24"><path d="M6 3h12M6 21h12"/><path d="M7 3c0 5 5 6 5 9s-5 4-5 9M17 3c0 5-5 6-5 9s5 4 5 9"/><path d="M9.5 18.5h5" opacity=".6"/></svg></span>History</button>
+  <button data-m="server" title="Run and control the game server"><span class="ico"><svg viewBox="0 0 24 24"><path d="M5 21V8h2V5h2v3h2V5h2v3h2V5h2v3h2v13z"/><path d="M10 21v-4a2 2 0 0 1 4 0v4M8 12h2M14 12h2"/></svg></span>Server</button>
   <div class="grow"></div>
-  <button data-m="help" title="How it works"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.7.3-1 .9-1 1.7M12 17h.01"/></svg>Help</button>
+  <button data-m="help" title="How it works"><span class="ico"><svg viewBox="0 0 24 24"><path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3z"/><path d="M5 17a3 3 0 0 1 3-3h11"/><path d="M10.5 7.5a2 2 0 1 1 2.6 1.9c-.6.2-1.1.6-1.1 1.2"/></svg></span>Help</button>
 </nav>
 
 <aside id="left">
@@ -2726,6 +2736,16 @@ function toggleWorld(on) {
 
 // ---------------------------------------------------------------- left panel
 const TABS = { builder: 'Builder', floors: 'Floors', walls: 'Walls', objects: 'Objects', items: 'Items', npcs: 'NPCs', flags: 'Flags' };
+const TAB_ICONS = {      // the editor's own icons, same set as the toolbar
+  builder: '<path d="M14 4l6 6-3 3-6-6z"/><path d="M11 7 3.5 14.5a2 2 0 0 0 0 2.8l3.2 3.2a2 2 0 0 0 2.8 0L17 13"/>',
+  floors: '<path d="M12 4 21 9.5 12 15 3 9.5z" fill="currentColor" fill-opacity=".25"/><path d="M12 4 21 9.5 12 15 3 9.5z"/><path d="M3 13.5 12 19l9-5.5" opacity=".6"/>',
+  walls: '<path d="M3 5h18v14H3z"/><path d="M3 9.7h18M3 14.3h18M9 5v4.7M15 5v4.7M6 9.7v4.6M12 9.7v4.6M18 9.7v4.6M9 14.3V19M15 14.3V19"/>',
+  objects: '<path d="M6 5h12l1 3v11H5V8z"/><path d="M5 8h14M5 13h14M10 13v3h4v-3"/>',
+  items: '<path d="M19 3l-9.5 9.5M19 3v4l-8 8M19 3h-4l-8 8"/><path d="M6.5 13.5l4 4M4 20l3.5-3.5"/>',
+  npcs: '<path d="M12 3c-4 0-6.5 3.5-6.5 8.5V21h13v-9.5C18.5 6.5 16 3 12 3z"/><path d="M8.5 13c.5-3 1.8-4.5 3.5-4.5s3 1.5 3.5 4.5c-1 1.5-2.2 2-3.5 2s-2.5-.5-3.5-2z"/>',
+  flags: '<path d="M5 21V3"/><path d="M5 4h13l-3 4 3 4H5"/>',
+  title: '<path d="M12 3 21 12 12 21 3 12z"/>',
+};
 // facing, named the way the minimap shows it (north = smaller x, west = smaller y); the game's DX_ numbers
 const FACE = [[2, 'N', 'north (−x)'], [4, 'E', 'east (+y)'], [1, 'S', 'south (+x)'], [3, 'W', 'west (−y)']];
 const FACEN = { 1: 'south', 2: 'north', 3: 'west', 4: 'east' };
@@ -2931,12 +2951,12 @@ function cellRecent(b) {
 function leftUI() {
   const tabs = $('#tabs'), w = $('#palwrap'), q = $('#lsearch').value.trim().toLowerCase();
   if (mode === 'map') {
-    tabs.innerHTML = Object.entries(TABS).map(([k, v]) => `<button data-tab="${k}" class="${k === tab ? 'on' : ''}">${v}</button>`).join('');
+    tabs.innerHTML = Object.entries(TABS).map(([k, v]) => `<button data-tab="${k}" class="${k === tab ? 'on' : ''}"><svg viewBox="0 0 24 24">${TAB_ICONS[k]}</svg>${v}</button>`).join('');
     tabs.querySelectorAll('button').forEach(b => b.onclick = () => { tab = b.dataset.tab; $('#lsearch').value = ''; leftUI(); });
     $('#lsearch').style.display = ''; $('#card').style.display = '';
     $('#lsearch').placeholder = 'Search name or number';
   } else {
-    tabs.innerHTML = `<button class="on">${{ npcs: 'NPCs and players', players: 'Player characters', history: 'History', help: 'Help' }[mode]}</button>`;
+    tabs.innerHTML = `<button class="on title"><svg viewBox="0 0 24 24">${TAB_ICONS.title}</svg>${{ npcs: 'NPCs and players', players: 'Player characters', history: 'History', help: 'Help' }[mode]}</button>`;
     $('#lsearch').style.display = mode === 'npcs' || mode === 'players' ? '' : 'none'; $('#card').style.display = 'none';
     $('#lsearch').placeholder = 'Search a name';
   }
