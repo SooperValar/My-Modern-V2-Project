@@ -10,11 +10,16 @@
    when give <item template>      a player hands it this item
    when kill <name>|#<t>,<t>...   a player (or their companion, or someone in their group nearby)
                                   kills an NPC with this name (Spider*, a|b) or these template numbers
+   when near                      a player comes close (with "Greets players" on: once per player, at most every 30 s);
+                                  if no line fits, it says its normal greeting
+   when money <silver>            a player hands it at least this much money (it keeps it; if no line fits, it refuses)
    at <x> <y> [comment]           the lines after this belong to the item on that tile (a portal, door, lever...)
    when use                       a player uses that item; if no line fits, the item works as usual
    if quest <n> <op> <v>          op: = != < > <= >=
    if has <item template>         the player carries one   (if !has: does not)
    if rank <op> <v>
+   if skill <nr> <op> <v>         the player's skill (0 = doesn't know it; Bartering is 12)
+   if gold <op> <silver>          money the player carries
    if area <text>                 where it happens (the player; for kills: the victim) is in an
                                   area whose name contains this
    answer <text>                  the NPC says it aloud (%s = the player's name, {q2} = quest 2's value)
@@ -24,6 +29,9 @@
    give item <t> | give exp <n> | give gold <silver> | give luck <n>
    teach skill <nr>               the player learns the skill (if they don't have it)
    take item <t>                  takes one from the player's backpack
+   take gold <silver>             takes money from the player (if they have it)
+   cast <spell> <power>           the NPC casts it on the player: bless, protect, enhance, mshield, light, heal
+                                  (the game lowers the power to what the player can take)
    teleport <x> <y>
    keep                           (when give) the NPC keeps the item; otherwise it hands it back
    pass                           (when use) afterwards the item works as usual (otherwise the line replaces it)
@@ -54,10 +62,17 @@
 #define MAXEFF 16
 #define POOL (768*1024)
 
-enum { C_QUEST=1, C_HAS, C_HASNOT, C_RANK, C_AREA };
-enum { E_ANSWER=1, E_SETQ, E_ADDQ, E_ITEM, E_EXP, E_GOLD, E_TAKE, E_KEEP, E_TELL, E_ANNOUNCE, E_LUCK, E_SKILL, E_TELEPORT, E_PASS };
+enum { C_QUEST=1, C_HAS, C_HASNOT, C_RANK, C_AREA, C_SKILL, C_GOLD };
+enum { E_ANSWER=1, E_SETQ, E_ADDQ, E_ITEM, E_EXP, E_GOLD, E_TAKE, E_KEEP, E_TELL, E_ANNOUNCE, E_LUCK, E_SKILL, E_TELEPORT, E_PASS, E_TAKEGOLD, E_CAST };
 enum { OP_EQ, OP_NE, OP_LT, OP_GT, OP_LE, OP_GE };
-enum { T_SAY, T_GIVE, T_KILL, T_USE };
+enum { T_SAY, T_GIVE, T_KILL, T_USE, T_NEAR, T_MONEY };
+static char *spellname[]={"bless","protect","enhance","mshield","light","heal",NULL};
+int spell_bless(int cn,int co,int power);
+int spell_protect(int cn,int co,int power);
+int spell_enhance(int cn,int co,int power);
+int spell_mshield(int cn,int co,int power);
+int spell_light(int cn,int co,int power);
+int spell_heal(int cn,int co,int power);
 
 struct tcond { char type, op; int n, v; };
 struct teff { char type; int a, b; int str; };
@@ -114,7 +129,7 @@ static void lower(char *s) { for (; *s; s++) *s=tolower((unsigned char)*s); }
 int talk_load(void)
 {
 	FILE *f;
-	char line[1024],w1[64],w2[64],op[8],*p,*q;
+	char line[1024],w1[64],w2[64],op[16],*p,*q;
 	int temp=0,n,v,x,y,ln=0,bad=0,ax=0,ay=0;
 	struct tentry *e=NULL;
 
@@ -148,6 +163,8 @@ int talk_load(void)
 			e=&ent[nent++]; memset(e,0,sizeof(*e)); e->temp=temp;
 			q+=strlen(w2); while (isspace((unsigned char)*q)) q++;
 			if (!strcmp(w2,"use") || ax) { e->trig=T_USE; e->ux=ax; e->uy=ay; if (!ax) { bad++; nent--; e=NULL; } }
+			else if (!strcmp(w2,"near")) e->trig=T_NEAR;
+			else if (!strcmp(w2,"money")) { e->trig=T_MONEY; e->give=atoi(q); }
 			else if (!strcmp(w2,"give")) { e->trig=T_GIVE; e->give=atoi(q); }
 			else if (!strcmp(w2,"kill")) { e->trig=T_KILL; lower(q); e->words=pool_add(q); }
 			else { e->trig=T_SAY; lower(q); e->words=pool_add(q); }
@@ -162,6 +179,8 @@ int talk_load(void)
 			else if (sscanf(q,"!has %d",&n)==1) { c->type=C_HASNOT; c->n=n; e->nc++; }
 			else if (sscanf(q,"rank %7s %d",op,&v)==2 && parse_op(op)>=0) { c->type=C_RANK; c->op=parse_op(op); c->v=v; e->nc++; }
 			else if (!strncmp(q,"area ",5)) { c->type=C_AREA; lower(q+5); c->n=pool_add(q+5); e->nc++; }
+			else if (sscanf(q,"skill %d %7s %d",&n,op,&v)==3 && n>=0 && n<50 && parse_op(op)>=0) { c->type=C_SKILL; c->n=n; c->op=parse_op(op); c->v=v; e->nc++; }
+			else if (sscanf(q,"gold %7s %d",op,&v)==2 && parse_op(op)>=0) { c->type=C_GOLD; c->op=parse_op(op); c->v=v; e->nc++; }
 			else bad++;
 			continue;
 		}
@@ -180,6 +199,11 @@ int talk_load(void)
 			else if (!strcmp(w1,"give") && sscanf(q,"luck %d",&n)==1) { t->type=E_LUCK; t->a=n; e->ne++; }
 			else if (!strcmp(w1,"teach") && sscanf(q,"skill %d",&n)==1 && n>=0 && n<50) { t->type=E_SKILL; t->a=n; e->ne++; }
 			else if (!strcmp(w1,"take") && sscanf(q,"item %d",&n)==1) { t->type=E_TAKE; t->a=n; e->ne++; }
+			else if (!strcmp(w1,"take") && sscanf(q,"gold %d",&n)==1 && n>0) { t->type=E_TAKEGOLD; t->a=n; e->ne++; }
+			else if (!strcmp(w1,"cast") && sscanf(q,"%15s %d",op,&v)==2) {
+				for (n=0; spellname[n] && strcmp(spellname[n],op); n++) ;
+				if (spellname[n] && v>0) { t->type=E_CAST; t->a=n; t->b=v; e->ne++; } else bad++;
+			}
 			else if (!strcmp(w1,"teleport") && sscanf(q,"%d %d",&x,&y)==2 && x>0 && y>0 && x<MAPX && y<MAPY) { t->type=E_TELEPORT; t->a=x; t->b=y; e->ne++; }
 			else if (!strcmp(w1,"keep")) { t->type=E_KEEP; e->ne++; }
 			else if (!strcmp(w1,"pass")) { t->type=E_PASS; e->ne++; }
@@ -349,6 +373,8 @@ static int conds_ok(struct tentry *e,int co,int x,int y)
 			case C_HAS:    if (!carried(co,c->n)) return 0; break;
 			case C_HASNOT: if (carried(co,c->n)) return 0; break;
 			case C_RANK:   if (!cmp_op(points2rank(ch[co].points_tot),c->op,c->v)) return 0; break;
+			case C_SKILL:  if (!cmp_op(ch[co].skill[c->n][0],c->op,c->v)) return 0; break;
+			case C_GOLD:   if (!cmp_op(ch[co].gold,c->op,c->v)) return 0; break;
 			case C_AREA:
 				strncpy(area,get_area_m(x,y,0),511); area[511]=0;
 				for (s=area; *s; s++) *s=tolower((unsigned char)*s);
@@ -429,6 +455,23 @@ static int run(struct tentry *e,int cn,int co,int given)
 				break;
 			case E_KEEP:   keep=1; break;
 			case E_PASS:   pass=1; break;
+			case E_TAKEGOLD:
+				if (ch[co].gold>=x->a) {
+					ch[co].gold-=x->a; if (cn) ch[cn].gold+=x->a; do_update_char(co);
+					do_char_log(co,1,"You give %s %dG %dS.\n",who ? who : "away",x->a/100,x->a%100);
+				}
+				break;
+			case E_CAST:
+				in=cn ? cn : co;	// an NPC casts it; for a kill or an item, the player's own magic
+				switch (x->a) {
+					case 0: spell_bless(in,co,x->b); break;
+					case 1: spell_protect(in,co,x->b); break;
+					case 2: spell_enhance(in,co,x->b); break;
+					case 3: spell_mshield(in,co,x->b); break;
+					case 4: spell_light(in,co,x->b); break;
+					case 5: spell_heal(in,co,x->b); break;
+				}
+				break;
 		}
 	}
 	if (given && cn) {
@@ -450,6 +493,33 @@ int talk_custom_say(int cn,int co,char *text)
 		if (ent[n].temp!=ch[cn].temp || ent[n].trig!=T_SAY) continue;
 		if (!said(pool+ent[n].words,text) || !conds_ok(&ent[n],co,ch[co].x,ch[co].y)) continue;
 		return run(&ent[n],cn,co,0);
+	}
+	return 0;
+}
+
+/* a player came close to an NPC that greets players: 1 = a line took it (no normal greeting) */
+int talk_custom_near(int cn,int co)
+{
+	int n;
+	if (!talk_loaded) talk_load();
+	if (!nent || !(ch[co].flags&CF_PLAYER)) return 0;
+	for (n=0; n<nent; n++) {
+		if (ent[n].temp!=ch[cn].temp || ent[n].trig!=T_NEAR || !conds_ok(&ent[n],co,ch[co].x,ch[co].y)) continue;
+		return run(&ent[n],cn,co,0);
+	}
+	return 0;
+}
+
+/* a player gave the NPC money (already moved to the NPC): 1 = a line took it (the NPC keeps it) */
+int talk_custom_money(int cn,int co,int money)
+{
+	int n;
+	if (!talk_loaded) talk_load();
+	if (!nent || !(ch[co].flags&CF_PLAYER) || money<=0) return 0;
+	for (n=0; n<nent; n++) {
+		if (ent[n].temp!=ch[cn].temp || ent[n].trig!=T_MONEY || money<ent[n].give || !conds_ok(&ent[n],co,ch[co].x,ch[co].y)) continue;
+		run(&ent[n],cn,co,0);
+		return 1;
 	}
 	return 0;
 }

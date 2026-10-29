@@ -568,6 +568,8 @@ int npc_give(int cn,int co,int in,int money)
                         lab9_pose_riddle(cn, co);
                 }
 
+        } else if (!in && money && talk_custom_money(cn,co,money)) {
+                ;	// MyV2: a dialogue line took the money (npctalk.dat "when money"); the NPC keeps it
         } else if (!in && money) {
                 do_sayx(cn,"I don't take money from you!");
                 ch[co].gold+=money;
@@ -766,7 +768,8 @@ int npc_see(int cn,int co)
                                         do_sayx(cn,"Hi, %s. Bring me a Potion of Life and I'll teach you Curse.",ch[co].name);
                         } else {
 				// here is message filter, if talking NPC is priest and player char is PURPLE we greet him								
-				if((ch[cn].temp == 180) && (ch[co].kindred&KIN_PURPLE)) { // priest template is 180
+				if (talk_custom_near(cn,co)) ;	// MyV2: its own greeting lines (npctalk.dat "when near")
+				else if((ch[cn].temp == 180) && (ch[co].kindred&KIN_PURPLE)) { // priest template is 180
 				    do_sayx(cn,"Greetings, %s!",ch[co].name);
 				} else { // if it is not priest or player is not purple we do nothing, NPC will talk as usual
 				    npc_saytext_n(cn, 2, ch[co].name);

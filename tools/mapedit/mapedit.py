@@ -178,8 +178,8 @@ def talk_parse(text):
                 cur, e = '@%d,%d' % (int(a[0]), int(a[1])), None
                 npcs.setdefault(cur, [])
             elif k == 'when' and cur is not None and a:
-                e = {'when': 'use' if isinstance(cur, str) else a[0] if a[0] in ('give', 'kill') else 'say', 'words': '', 'item': 0, 'conds': [], 'answers': [], 'acts': []}
-                if a[0] == 'give':
+                e = {'when': 'use' if isinstance(cur, str) else a[0] if a[0] in ('give', 'kill', 'near', 'money') else 'say', 'words': '', 'item': 0, 'conds': [], 'answers': [], 'acts': []}
+                if a[0] in ('give', 'money'):
                     e['item'] = int(a[1])
                 else:
                     e['words'] = rest.split(None, 1)[1] if len(a) > 1 else ''
@@ -194,6 +194,8 @@ def talk_parse(text):
                 elif a[0] == '!has': e['conds'].append({'type': 'hasnot', 't': int(a[1])})
                 elif a[0] == 'rank': e['conds'].append({'type': 'rank', 'op': a[1], 'v': int(a[2])})
                 elif a[0] == 'area': e['conds'].append({'type': 'area', 's': rest.split(None, 1)[1] if len(a) > 1 else ''})
+                elif a[0] == 'skill': e['conds'].append({'type': 'skill', 'n': int(a[1]), 'op': a[2], 'v': int(a[3])})
+                elif a[0] == 'gold': e['conds'].append({'type': 'gold', 'op': a[1], 'v': int(a[2])})
             elif k == 'answer':
                 e['answers'].append(rest)
             elif k in ('set', 'add') and a[0] == 'quest':
@@ -208,6 +210,10 @@ def talk_parse(text):
                 e['acts'].append({'type': 'teleport', 'x': int(a[0]), 'y': int(a[1])})
             elif k == 'take' and a[0] == 'item':
                 e['acts'].append({'type': 'take', 'v': int(a[1])})
+            elif k == 'take' and a[0] == 'gold':
+                e['acts'].append({'type': 'takegold', 'v': int(a[1])})
+            elif k == 'cast' and len(a) >= 2:
+                e['acts'].append({'type': 'cast', 's': a[0], 'v': int(a[1])})
             elif k in ('keep', 'pass'):
                 e['acts'].append({'type': k})
         except (IndexError, ValueError):
@@ -236,6 +242,8 @@ def talk_text(quests, npcs, names):
             if isinstance(t, str) or e.get('when') == 'use': out.append('when use')
             elif e.get('when') == 'give': out.append('when give %d' % int(e.get('item', 0)))
             elif e.get('when') == 'kill': out.append('when kill ' + clean(e.get('words', '')).lower())
+            elif e.get('when') == 'near': out.append('when near')
+            elif e.get('when') == 'money': out.append('when money %d' % max(1, int(e.get('item', 1) or 1)))
             else: out.append('when say ' + clean(e.get('words', '')).lower())
             for c in e.get('conds', []):
                 ty = c.get('type')
@@ -244,6 +252,8 @@ def talk_text(quests, npcs, names):
                 elif ty == 'hasnot': out.append('if !has %d' % int(c['t']))
                 elif ty == 'rank' and c.get('op') in OPS: out.append('if rank %s %d' % (c['op'], int(c['v'])))
                 elif ty == 'area' and clean(c.get('s', '')): out.append('if area ' + clean(c['s']).lower())
+                elif ty == 'skill' and c.get('op') in OPS: out.append('if skill %d %s %d' % (int(c['n']), c['op'], int(c['v'])))
+                elif ty == 'gold' and c.get('op') in OPS: out.append('if gold %s %d' % (c['op'], int(c['v'])))
             for a in e.get('answers', []):
                 if clean(a):
                     out.append('answer ' + clean(a)[:400])
@@ -255,6 +265,8 @@ def talk_text(quests, npcs, names):
                 elif ty == 'skill': out.append('teach skill %d' % int(a['v']))
                 elif ty == 'teleport': out.append('teleport %d %d' % (int(a['x']), int(a['y'])))
                 elif ty == 'take': out.append('take item %d' % int(a['v']))
+                elif ty == 'takegold' and int(a.get('v', 0)) > 0: out.append('take gold %d' % int(a['v']))
+                elif ty == 'cast' and a.get('s') in ('bless', 'protect', 'enhance', 'mshield', 'light', 'heal'): out.append('cast %s %d' % (a['s'], max(1, int(a['v']))))
                 elif ty in ('keep', 'pass'): out.append(ty)
             out.append('end')
     return '\n'.join(out) + '\n'
@@ -3316,6 +3328,7 @@ async function tplApply(asNew) {
     t = r.made[1];
     f.name = name; f.reference = TP.kind === 'npc' ? name : name.toLowerCase();
   }
+  if (TP.kind === 'npc' && TP.talk && TP.talk.entries.some(e => e.when === 'near') && !TP.cur.data[37]) { TP.cur.data[37] = 1; f.data = TP.cur.data; }
   if (TP.talk && (talkDirty() || (asNew && TP.talk.entries.length))) {
     const tr = await api('/api/talk', { t, entries: TP.talk.entries, quests: TP.talk.quests, steps: TP.talk.steps });
     toast(tr.error || 'Conversations: ' + tr.msg, !!tr.error);
@@ -3617,12 +3630,14 @@ const NPC_TABS = {
       const card = document.createElement('div'); card.className = 'note'; card.style.cssText = 'margin:12px 0;color:var(--text)';
       const hd = document.createElement('div'); hd.className = 'ipick'; hd.innerHTML = `<b style="color:var(--gold2)">${k + 1}.</b>`;
       if (isUse) { e.when = 'use'; hd.insertAdjacentHTML('beforeend', '<span style="flex:1">When a player uses it</span>'); }
-      else hd.append(selS([['say', 'When the player says'], ['give', 'When the player gives it'], ['kill', 'When the player kills']], () => e.when, v => { e.when = v; tplRender(); }));
+      else hd.append(selS([['say', 'When the player says'], ['near', 'When a player comes close'], ['give', 'When the player gives it'], ['money', 'When the player gives money'], ['kill', 'When the player kills']], () => e.when, v => { e.when = v; if (v === 'money' && !e.item) e.item = 100; tplRender(); }));
       if (e.when === 'say') { const w = txt(() => e.words, v => e.words = v, 200); w.placeholder = 'ring*   or   hello|hi'; w.style.flex = '1'; hd.append(w); }
       else if (e.when === 'kill') {
         const w = txt(() => e.words, v => e.words = v, 200); w.placeholder = 'NPC name (Spider*, Ghost|Skeleton) or #123,124'; w.style.flex = '1'; hd.append(w);
         const pk = document.createElement('button'); pk.className = 'sm'; pk.textContent = 'Pick NPC…'; pk.onclick = () => npcPick(pk, t => { e.words = e.words && !e.words.startsWith('#') ? e.words + '|' + t[1] : t[1]; tplRender(); }); hd.append(pk);
       }
+      else if (e.when === 'money') { hd.append(' at least ', num(() => e.item || 1, v => e.item = v, 1), ' silver (100 = 1 gold)'); }
+      else if (e.when === 'near') hd.insertAdjacentHTML('beforeend', '<span class="hint" style="flex:1">once per player, at most every 30 seconds</span>');
       else if (!isUse) hd.append(ipick(() => e.item, v => e.item = v));
       const sp = document.createElement('span'); sp.style.flex = e.when === 'give' ? '1' : '0'; hd.append(sp);
       const mk = (t, f, tip) => { const x = document.createElement('button'); x.className = 'sm'; x.textContent = t; x.title = tip || ''; x.onclick = () => { f(); tplRender(); }; hd.append(x); };
@@ -3632,15 +3647,19 @@ const NPC_TABS = {
       mk('Delete', () => { if (confirm('Delete this line?')) E.splice(k, 1); });
       card.append(hd);
       if (e.when === 'say') card.insertAdjacentHTML('beforeend', '<div class="hint">Every word must be in what they say. a|b = either word, ring* = ring, rings, ringmaster…</div>');
+      if (e.when === 'near') card.insertAdjacentHTML('beforeend', '<div class="hint">Replaces its normal greeting when the conditions fit (Apply turns on "Greets players" for it). If no line fits, it says its normal greeting.</div>');
+      if (e.when === 'money') card.insertAdjacentHTML('beforeend', '<div class="hint">Players hand money over by holding gold on the mouse and giving it to the NPC. With a line that fits, it keeps the money; otherwise it gives it back. Put bigger amounts above smaller ones.</div>');
       if (e.when === 'kill') card.insertAdjacentHTML('beforeend', '<div class="hint">Counts for the player who kills it (or whose companion does) and their group members who can see them, each only if the conditions fit them. Use a quest step as the condition so it only counts while that quest is active.</div>');
       const h = (t) => { const d = document.createElement('div'); d.className = 'lb'; d.style.cssText = 'margin-top:10px;color:var(--dim)'; d.textContent = t; card.append(d); };
       h('Only if');
       e.conds.forEach((cd, i) => {
-        const ty = selS([['quest', 'quest step'], ['has', 'the player carries'], ['hasnot', 'the player does not carry'], ['rank', 'the player\'s rank'], ['area', e.when === 'kill' ? 'it dies in the area' : 'the player is in the area']], () => cd.type,
-          v => { e.conds[i] = v === 'quest' ? { type: v, n: 1, op: '=', v: 0 } : v === 'rank' ? { type: v, op: '>=', v: 0 } : v === 'area' ? { type: v, s: '' } : { type: v, t: 0 }; tplRender(); });
+        const ty = selS([['quest', 'quest step'], ['has', 'the player carries'], ['hasnot', 'the player does not carry'], ['rank', 'the player\'s rank'], ['skill', 'the player\'s skill'], ['gold', 'the player\'s money (silver)'], ['area', e.when === 'kill' ? 'it dies in the area' : 'the player is in the area']], () => cd.type,
+          v => { e.conds[i] = v === 'quest' ? { type: v, n: 1, op: '=', v: 0 } : v === 'rank' ? { type: v, op: '<=', v: 1 } : v === 'skill' ? { type: v, n: 12, op: '>', v: 0 } : v === 'gold' ? { type: v, op: '>=', v: 100 } : v === 'area' ? { type: v, s: '' } : { type: v, t: 0 }; tplRender(); });
         const parts = [ty];
         if (cd.type === 'quest') parts.push(sel(qopts(), () => cd.n, v => cd.n = v), selS(OPN, () => cd.op, v => cd.op = v), num(() => cd.v, v => cd.v = v, 0, 65535));
-        else if (cd.type === 'rank') parts.push(selS(OPN, () => cd.op, v => cd.op = v), num(() => cd.v, v => cd.v = v, 0, 30));
+        else if (cd.type === 'rank') { parts.push(selS(OPN, () => cd.op, v => cd.op = v), sel(RANK_NAMES.map((n2, i2) => [i2, `${i2} · ${n2}`]), () => cd.v, v => cd.v = v)); }
+        else if (cd.type === 'skill') parts.push(sel(SKILLS.map((s2, i2) => [i2, s2]), () => cd.n, v => cd.n = v), selS(OPN, () => cd.op, v => cd.op = v), num(() => cd.v, v => cd.v = v, 0, 255), '(0 = doesn\'t know it)');
+        else if (cd.type === 'gold') parts.push(selS(OPN, () => cd.op, v => cd.op = v), num(() => cd.v, v => cd.v = v, 0));
         else if (cd.type === 'area') parts.push(areaIn(() => cd.s, v => cd.s = v));
         else parts.push(ipick(() => cd.t, v => cd.t = v));
         parts.push(xb(() => e.conds.splice(i, 1)));
@@ -3654,12 +3673,15 @@ const NPC_TABS = {
       e.acts.forEach((a, i) => {
         const ty = selS([['set', 'set quest step'], ['add', 'add to quest step'], ['item', 'give an item'], ['exp', 'give experience'], ['gold', 'give money (silver)'],
           ['luck', 'give luck'], ['skill', 'teach a skill'], ['take', 'take an item from the player'], ['keep', 'keep the item they gave'],
+          ['takegold', 'take money from the player'], ['cast', 'cast a spell on the player'],
           ['tell', 'tell the player'], ['announce', 'announce to everyone'], ['teleport', 'send the player to'], ['pass', 'then the item works as usual']],
-          () => a.type, v => { e.acts[i] = v === 'set' || v === 'add' ? { type: v, n: 1, v: 1 } : v === 'keep' || v === 'pass' ? { type: v } : v === 'tell' || v === 'announce' ? { type: v, s: '' } : v === 'teleport' ? { type: v, x: 512, y: 512 } : { type: v, v: 0 }; tplRender(); });
+          () => a.type, v => { e.acts[i] = v === 'set' || v === 'add' ? { type: v, n: 1, v: 1 } : v === 'keep' || v === 'pass' ? { type: v } : v === 'tell' || v === 'announce' ? { type: v, s: '' } : v === 'teleport' ? { type: v, x: 512, y: 512 } : v === 'cast' ? { type: v, s: 'bless', v: 30 } : { type: v, v: 0 }; tplRender(); });
         const parts = [ty];
         if (a.type === 'set' || a.type === 'add') parts.push(sel(qopts(), () => a.n, v => a.n = v), a.type === 'set' ? ' to ' : ' + ', num(() => a.v, v => a.v = v, a.type === 'add' ? -65535 : 0, 65535));
         else if (a.type === 'item' || a.type === 'take') parts.push(ipick(() => a.v, v => a.v = v));
-        else if (a.type === 'exp' || a.type === 'gold' || a.type === 'luck') parts.push(num(() => a.v, v => a.v = v, a.type === 'luck' ? -1000 : 0));
+        else if (a.type === 'exp' || a.type === 'gold' || a.type === 'luck' || a.type === 'takegold') parts.push(num(() => a.v, v => a.v = v, a.type === 'luck' ? -1000 : 0), a.type === 'gold' || a.type === 'takegold' ? ' silver' : '');
+        else if (a.type === 'cast') parts.push(selS([['bless', 'Bless'], ['protect', 'Protect'], ['enhance', 'Enhance Weapon'], ['mshield', 'Magic Shield'], ['light', 'Light'], ['heal', 'Heal']], () => a.s, v => a.s = v),
+          ' power ', num(() => a.v, v => a.v = v, 1, 500), '(the game lowers it to what the player can take)');
         else if (a.type === 'skill') parts.push(sel(SKILLS.map((s2, i2) => [i2, s2]), () => a.v, v => a.v = v));
         else if (a.type === 'tell' || a.type === 'announce') { const t2 = txt(() => a.s, v => a.s = v, 300); t2.style.flex = '1'; t2.placeholder = a.type === 'announce' ? '%s has slain Argha the Thief!' : 'only the player sees this'; parts.push(t2); }
         else if (a.type === 'teleport') {

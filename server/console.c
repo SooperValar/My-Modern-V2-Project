@@ -171,6 +171,19 @@ static void con_cmd(char *line)
 		else out("  (a rule took it%s)\n",ch[co].used==USE_ACTIVE ? "" : "; teleport and messages only work for a player who is online");
 		return;
 	}
+	if (!strcmp(w[0],"talknear") || !strcmp(w[0],"talkmoney")) {	// talknear <NPC template> <player> | talkmoney <NPC template> <player> <silver>
+		int t=atoi(w[1]),cn=0,m=atoi(w[3]),r;
+		for (n=1; n<MAXCHARS; n++) if (ch[n].used==USE_ACTIVE && ch[n].temp==t && !(ch[n].flags&(CF_PLAYER|CF_BODY))) { cn=n; break; }
+		if (!cn) { out("  No NPC of template %d in the world.\n",t); return; }
+		if (!(co=con_player(w[2]))) return;
+		talk_set_echo(con_echo);
+		if (w[0][4]=='n') r=talk_custom_near(cn,co);
+		else { if (m<=0 || ch[co].gold<m) { talk_set_echo(NULL); out("  talkmoney <npc> <player> <silver> (and the player must have it)\n"); return; }
+		       ch[co].gold-=m; ch[cn].gold+=m; r=talk_custom_money(cn,co,m); if (!r) { ch[co].gold+=m; ch[cn].gold-=m; } }
+		talk_set_echo(NULL);
+		if (!r) out("  (no line took it%s)\n",w[0][4]=='n' ? ": the normal greeting" : ": it refuses the money");
+		return;
+	}
 	if (!strcmp(w[0],"talkreload")) {
 		n=talk_load();
 		out("  NPC dialogue loaded: %d entries%s.\n",talk_entries(),n ? " (some lines were not understood)" : "");
@@ -190,6 +203,8 @@ static void con_cmd(char *line)
 		    "  talktest <npc template> <player> <text>   try a conversation\n"
 		    "  talkkill <player> <npc template>          try a quest kill\n"
 		    "  talkuse <player> <x> <y>                  try using the item there\n"
+		    "  talknear <npc template> <player>          try a player coming close\n"
+		    "  talkmoney <npc template> <player> <silver>   try handing money over\n"
 		    "  shutdown                      save and stop the server\n");
 	} else if (!strcmp(w[0],"quest")) {
 		if (!(co=con_player(w[1]))) return;
