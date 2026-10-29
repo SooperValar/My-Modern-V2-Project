@@ -964,6 +964,8 @@ class World:
             self._c_set(self.tchar, t, C_TEMP, '<H', t)
             self._c_set(self.tchar, t, C_X, '<hhhh', 0, 0, 0, 0)          # not placed yet: the NPC brush places it
             self._c_set(self.tchar, t, C_DATA + 29 * 4, '<i', 0)
+            # no respawning until it is placed (else the game keeps trying to spawn it at 0,0: "Could not drop char")
+            self._c_set(self.tchar, t, C_FLAGS, '<Q', self.t_u64(t, C_FLAGS) & ~CF_RESPAWN)
             for i in range(10, 19):
                 self._c_set(self.tchar, t, C_DATA + i * 4, '<i', 0)       # no patrol of the original
             if op.get('name'):
@@ -1033,9 +1035,11 @@ class World:
             if why:
                 return '%d,%d: %s' % (x, y, why)
             hx, hy = struct.unpack_from('<hh', self.tchar, src * CHAR_SIZE + C_X)
-            if src >= NPC_FIRST_NEW and not hx and not hy and not self.living(src) \
-                    and not any(p[2] == src for p in self.pending()):
+            if src >= NPC_FIRST_NEW and not hx and not hy and not self.living(src):
                 tp = src               # a new NPC made in the editor and not placed yet: this is its spot
+                for px, py, ptp, pn in self.pending():      # a stale spawn timer of it (at 0,0) goes
+                    if ptp == src:
+                        self._keep(rec, 'f', pn); self.fx[pn * FX_SIZE] = USE_EMPTY
             else:
                 tp = self._free_tchar()
             if not tp:
