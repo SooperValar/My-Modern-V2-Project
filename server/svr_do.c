@@ -643,6 +643,7 @@ void do_help(int cn,char *topic)
 	do_char_log(cn,1,"#fightback             toggle auto-figtback.\n");
 	do_char_log(cn,1,"#follow <player>|self  you'll follow player.\n");
 	do_char_log(cn,1,"#gold <amount>         get X gold coins.\n");
+	do_char_log(cn,1,"#silver <amount>       get X silver coins.\n");
 	do_char_log(cn,1,"#group <player>        group with player.\n");
 	do_char_log(cn,1,"#gtell <message        tell to your group.\n");
 	do_char_log(cn,1,"#ignore <player>       ignore that player.\n");
@@ -1237,6 +1238,26 @@ void do_god_give(int cn,int co)
         do_char_log(cn,1,"%s given to %s.\n", it[in].name, ch[co].name);
 	chlog(cn,"IMP: Gave %s (t=%d) to %s (%d)",it[in].name,in,ch[co].name,co);
         ch[cn].citem=0;
+}
+
+/* #silver <amount>: like #gold, in silver coins (100 = 1 gold), for small amounts */
+void do_silver(int cn,int val)
+{
+        if (ch[cn].citem) {
+                do_char_log(cn,0,"Please remove the item from your mouse cursor first.\n");
+                return;
+        }
+        if (val<1) {
+                do_char_log(cn,0,"That's not very much, is it?\n");
+                return;
+        }
+        if (val>ch[cn].gold) {
+                do_char_log(cn,0,"You don't have that much money!\n");
+                return;
+        }
+        ch[cn].gold-=val;
+        ch[cn].citem=0x80000000|val;
+	do_update_char(cn);
 }
 
 void do_gold(int cn,int val)
@@ -2310,6 +2331,7 @@ void do_command(int cn, char *ptr)
                 if (prefix(cmd,"seen"))                 { do_seen(cn, arg[1]); return; };
 		if (prefix(cmd,"send") && f_g)   	{ god_goto(cn,dbatoi(arg[1]),arg[2],arg[3]); return; }
                 if (prefix(cmd,"shutup") && f_gius)     { god_shutup(cn,dbatoi_self(cn,arg[1])); return; };
+                if (prefix(cmd,"silver"))               { do_silver(cn,atoi(arg[1])); return; };
                 if (prefix(cmd,"shrines") && f_gi)      { god_shrines(cn,dbatoi_self(cn,arg[1])); return; };
                 if (prefix(cmd,"skill") && f_g)         { god_skill(cn,dbatoi_self(cn,arg[1]),skill_lookup(arg[2]),atoi(arg[3])); return; };
 		if (prefix(cmd,"skua"))          	{ do_become_skua(cn); return; };
