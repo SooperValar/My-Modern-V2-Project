@@ -2136,10 +2136,10 @@ nav .grow { flex: 1; }
 #view { position: relative; min-width: 0; min-height: 0; overflow: hidden; background: #050506; }
 #cv { width: 100%; height: 100%; display: block; }
 /* map tools: a hotbar column on the left, view switches top right, zoom at the bottom */
-#tools { position: absolute; left: 10px; top: 12px; display: flex; flex-direction: column; gap: 4px; padding: 6px; z-index: 3;
+#tools { position: absolute; left: 10px; top: 10px; display: flex; flex-direction: row; align-items: center; gap: 4px; padding: 5px 6px; z-index: 3;
   background: linear-gradient(180deg, #2a241b 0%, #1a1712 100%); border: 1px solid #4a3d26; border-radius: 4px;
   box-shadow: 0 6px 18px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,220,150,.08); }
-#tools .sep { height: 1px; margin: 3px 2px; background: linear-gradient(90deg, transparent, #6b5630, transparent); }
+#tools .sep { width: 1px; align-self: stretch; margin: 2px 4px; background: linear-gradient(180deg, transparent, #6b5630, transparent); }
 .slot { position: relative; width: 40px; height: 40px; border-radius: 3px; color: #d8c9a6; display: grid; place-items: center;
   background: radial-gradient(circle at 50% 35%, #3a3226 0%, #221d16 75%); border: 1px solid #4d4130;
   box-shadow: inset 0 0 0 1px rgba(0,0,0,.55), inset 0 2px 3px rgba(255,230,170,.06); }
@@ -2148,12 +2148,13 @@ nav .grow { flex: 1; }
 .slot:hover:not(:disabled) { color: #fff3d6; border-color: #8a7140; }
 .slot.on { color: #ffe39a; border-color: #d6a443; background: radial-gradient(circle at 50% 35%, #5a4520 0%, #2a2014 80%);
   box-shadow: 0 0 10px rgba(214,164,67,.35), inset 0 0 0 1px rgba(0,0,0,.4); }
-.slot.on::before { content: ''; position: absolute; left: -7px; top: 12px; width: 3px; height: 16px; border-radius: 2px; background: #d6a443; }
+.slot.on::before { content: ''; position: absolute; bottom: -6px; left: 12px; height: 3px; width: 16px; border-radius: 2px; background: #d6a443; }
 .slot:disabled { opacity: .35; cursor: default; }
 .slot.sz { font: 700 13px ui-monospace, Consolas, monospace; color: #e8d8b0; }
 .slot.sz small { position: absolute; left: 3px; top: 1px; font-size: 8px; color: #9c8a64; font-weight: 500; }
-#view.hasban #tools, #view.hasban #viewbar { top: 46px; }
-#viewbar { position: absolute; right: 10px; top: 12px; display: flex; gap: 6px; z-index: 3; }
+#view.hasban #tools { top: 44px; }
+#view.hasban #viewbar { top: 47px; }
+#viewbar { position: absolute; right: 10px; top: 13px; display: flex; gap: 6px; z-index: 3; }
 #viewbar .rnd { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; color: #cfc3a6;
   background: radial-gradient(circle at 50% 30%, #332c21, #1b1813); border: 1px solid #4d4130; box-shadow: 0 3px 10px rgba(0,0,0,.45); }
 #viewbar .rnd svg { width: 18px; height: 18px; }
@@ -2342,7 +2343,7 @@ table.pl button:hover { color: var(--text); border-color: var(--gold); }
 <main id="view">
   <canvas id="cv"></canvas>
   <div id="tools">
-    <div id="toolgrp" style="display:flex;flex-direction:column;gap:4px"></div>
+    <div id="toolgrp" style="display:flex;flex-direction:row;gap:4px"></div>
     <div class="sep"></div>
     <button class="slot sz" id="szbtn" title="Brush size: click for bigger, right-click for smaller ([ and ])"><small>size</small><span>1</span></button>
     <select id="size"><option value="1">1×1</option><option value="2">2×2</option><option value="3">3×3</option><option value="5">5×5</option><option value="7">7×7</option><option value="9">9×9</option></select>

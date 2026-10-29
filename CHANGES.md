@@ -296,8 +296,8 @@ The design is in `docs/ITEM_TIERS.md`. This first part builds the core:
 
 #### MyV2 Editor: the map editor in the browser (`tools/mapedit/mapedit.py`, also in the Windows Server folder)
 - **Own toolbar design** (it followed the inspiration mock-up too closely):
-  - **Map tools:** a vertical hotbar column on the left edge of the map, with square wood-and-gold slots and the key letter in the corner.
-  - **Same column:** the brush size (click for bigger, right-click for smaller) and undo/redo.
+  - **Map tools:** a hotbar across the top of the map (Cody preferred it to a column down the side), with square wood-and-gold slots, the key letter in the corner and a gold mark under the active tool.
+  - **Same bar:** the brush size (click for bigger, right-click for smaller) and undo/redo.
   - **View switches** (grid, see through walls, light, reload, right panel) are round buttons top right; zoom is a slider at the bottom.
   - **Icons:** a new set of the editor's own, built around the map's diamond tiles: select over a tile, a quill to paint, a dashed tile with corner handles for the rectangle, stacked tiles for fill, a pickaxe to erase, a lens over a tile to pick, a compass rose to move the view, a torch for light, a brick wall with an eye to see through walls.
   - **Banner:** the live/view-only banner is a strip along the top of the map.
