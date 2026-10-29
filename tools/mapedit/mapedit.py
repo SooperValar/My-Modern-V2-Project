@@ -439,8 +439,10 @@ class World:
         x1, y1 = min(MAPX - 1, x1), min(MAPY - 1, y1)
         g, f, fl, it, ch, li = [], [], [], [], [], []
         with self.lock:
-            pend = {(x, y): self.tchar_sprite(tp) for x, y, tp, _ in self.pending() if x0 <= x <= x1 and y0 <= y <= y1}
-            pc = []
+            pl = self.pending()
+            pend = {(x, y): self.tchar_sprite(tp) for x, y, tp, _ in pl if x0 <= x <= x1 and y0 <= y <= y1}
+            pname = {(x, y): self.tname(tp) for x, y, tp, _ in pl if x0 <= x <= x1 and y0 <= y <= y1}
+            pc, nm = [], {}      # nm: tile index -> [name, 1 player / 0 NPC / 2 waiting to spawn]
             for y in range(y0, y1 + 1):
                 for x in range(x0, x1 + 1):
                     s, fs, c, _, i, dl, lt, flags = struct.unpack_from(MAP_FMT, self.map, (x + y * MAPX) * MAP_SIZE)
@@ -448,7 +450,12 @@ class World:
                     it.append(self.item_sprite(i) if 0 < i < MAXITEM and self.it_u8(i, I_USED) else 0)
                     ch.append(self.char_sprite(c) if 0 < c < MAXCHARS and self.char[c * CHAR_SIZE + C_USED] else 0)
                     pc.append(pend.get((x, y), 0) if not ch[-1] else 0)
-        return {'x0': x0, 'y0': y0, 'w': x1 - x0 + 1, 'h': y1 - y0 + 1, 'g': g, 'f': f, 'fl': fl, 'it': it, 'ch': ch, 'li': li, 'pc': pc}
+                    if ch[-1]:
+                        o = c * CHAR_SIZE
+                        nm[len(ch) - 1] = [cstr(self.char[o + C_NAME:o + C_NAME + 40]), 1 if struct.unpack_from('<Q', self.char, o + C_FLAGS)[0] & CF_PLAYER else 0]
+                    elif pc[-1]:
+                        nm[len(ch) - 1] = [pname[(x, y)], 2]
+        return {'x0': x0, 'y0': y0, 'w': x1 - x0 + 1, 'h': y1 - y0 + 1, 'g': g, 'f': f, 'fl': fl, 'it': it, 'ch': ch, 'li': li, 'pc': pc, 'nm': nm}
 
     def tile_info(self, x, y):
         with self.lock:
@@ -2433,7 +2440,8 @@ let pal = null, mode = 'map', tab = 'builder', tool = 'brush';
 let brush = { kind: 'floor', s: 142, set: true };
 let recent = [];
 let size = 1;
-const show = { floors: true, walls: true, items: true, chars: true, see: false, light: false, grid: false, names: true };
+const show = { floors: true, walls: true, items: true, chars: true, see: false, light: false, grid: false, names: true, npcnames: false };
+try { show.npcnames = localStorage.getItem('myv2.npcnames') === '1'; } catch (e) {}
 const flagOn = new Set();
 let selTile = null;
 const chunks = new Map(), sprites = new Map();
@@ -2630,6 +2638,21 @@ function draw() {
   }
   // area names, in screen space
   ctx.setTransform(1, 0, 0, 1, 0, 0);
+  if (show.npcnames && show.chars && zoom >= .3) {     // names over the characters
+    ctx.font = `600 ${zoom >= .7 ? 12 : 10}px system-ui, Segoe UI, sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    for (let y = v.y1; y >= v.y0; y--) for (let x = v.x0; x <= v.x1; x++) {
+      const t = T(x, y);
+      if (!t || !t.d.nm) continue;
+      const n = t.d.nm[t.i];
+      if (!n) continue;
+      const p = tileToScreen(x, y), ty = p.sy - 68 * zoom;
+      if (p.sx < -60 || p.sx > W + 60 || ty < -20 || ty > H + 20) continue;
+      const w = ctx.measureText(n[0]).width + 8;
+      ctx.fillStyle = 'rgba(10,10,12,.62)'; ctx.fillRect(p.sx - w / 2, ty - 8, w, 16);
+      ctx.fillStyle = n[1] === 1 ? '#8fc4ff' : n[1] === 2 ? 'rgba(255,211,106,.6)' : '#f3e6c4';
+      ctx.fillText(n[0], p.sx, ty + 1);
+    }
+  }
   if (show.names && zoom >= .35) {
     ctx.font = '600 12px system-ui, Segoe UI, sans-serif'; ctx.textBaseline = 'middle';
     const used = [];
@@ -3025,9 +3048,9 @@ document.querySelectorAll('nav button').forEach(b => b.onclick = () => {
 
 // ---------------------------------------------------------------- right panel
 function layersUI() {
-  const L = [['floors', 'Floors'], ['walls', 'Walls and objects'], ['items', 'Items'], ['chars', 'Characters'], ['see', 'See through walls (W)'], ['light', 'Light from lamps (L)'], ['grid', 'Grid (G)'], ['names', 'Area names']];
+  const L = [['floors', 'Floors'], ['walls', 'Walls and objects'], ['items', 'Items'], ['chars', 'Characters'], ['npcnames', 'NPC and player names (N)'], ['see', 'See through walls (W)'], ['light', 'Light from lamps (L)'], ['grid', 'Grid (G)'], ['names', 'Area names']];
   $('#layers').innerHTML = L.map(([k, v]) => `<label class="chk"><input type="checkbox" data-l="${k}" ${show[k] ? 'checked' : ''}><span>${v}</span></label>`).join('');
-  $('#layers').querySelectorAll('input').forEach(i => i.onchange = () => { show[i.dataset.l] = i.checked; toggles(); redraw(); });
+  $('#layers').querySelectorAll('input').forEach(i => i.onchange = () => { show[i.dataset.l] = i.checked; toggles(); redraw(); try { localStorage.setItem('myv2.npcnames', show.npcnames ? '1' : '0'); } catch (e) {} });
   $('#flagshow').innerHTML = FLAGS.map((f, i) => `<label class="chk"><input type="checkbox" data-f="${i}" ${flagOn.has(i) ? 'checked' : ''}><span class="dot" style="background:${FCOL[i]}"></span><span>${f}</span></label>`).join('');
   $('#flagshow').querySelectorAll('input').forEach(i => i.onchange = () => { const b = +i.dataset.f; i.checked ? flagOn.add(b) : flagOn.delete(b); redraw(); });
   toggles();
@@ -4170,6 +4193,7 @@ window.addEventListener('keydown', e => {
   if (k === 'w') return flipShow('see');
   if (k === 'l') return flipShow('light');
   if (k === 'm') return toggleWorld();
+  if (k === 'n') { flipShow('npcnames'); try { localStorage.setItem('myv2.npcnames', show.npcnames ? '1' : '0'); } catch (e) {} return; }
   const step = 160 / zoom;
   if (k === 'arrowleft') { cam.x -= step; redraw(); } else if (k === 'arrowright') { cam.x += step; redraw(); }
   else if (k === 'arrowup') { cam.y -= step; redraw(); } else if (k === 'arrowdown') { cam.y += step; redraw(); }
