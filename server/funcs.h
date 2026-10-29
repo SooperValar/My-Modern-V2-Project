@@ -271,6 +271,8 @@ void quest_set(int co,int n,int v);
 void talk_set_echo(void (*f)(char *));
 void talk_custom_kill(int cn,int co);
 int talk_custom_near(int cn,int co);
+int talk_has_near(int cn);
+int talk_near_due(int cn,int co);
 int talk_custom_money(int cn,int co,int money);
 int talk_custom_use(int cn,int in);
 int talk_test_use(int co,int x,int y);

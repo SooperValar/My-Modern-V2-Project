@@ -751,8 +751,13 @@ int npc_see(int cn,int co)
                 }
         }
 
+        // MyV2: an NPC with its own greeting lines (npctalk.dat "when near") greets each player at most once a minute,
+        // instead of remembering only the last four players it greeted
+        if (!ch[cn].attack_cn && (ch[co].flags&(CF_PLAYER)) && ch[cn].data[37] && indoor1==indoor2 && talk_has_near(cn)) {
+                if (talk_near_due(cn,co) && !talk_custom_near(cn,co)) npc_saytext_n(cn, 2, ch[co].name);
+        }
         // check if we need to talk to him
-        if (!ch[cn].attack_cn && (ch[co].flags&(CF_PLAYER)) && ch[cn].data[37] && indoor1==indoor2 && ch[cn].data[56]<globs->ticker) {
+        else if (!ch[cn].attack_cn && (ch[co].flags&(CF_PLAYER)) && ch[cn].data[37] && indoor1==indoor2 && ch[cn].data[56]<globs->ticker) {
                 for (n=37; n<41; n++)
                         if (ch[cn].data[n]==co) break;
                 if (n==41) {

@@ -10,7 +10,7 @@
    when give <item template>      a player hands it this item
    when kill <name>|#<t>,<t>...   a player (or their companion, or someone in their group nearby)
                                   kills an NPC with this name (Spider*, a|b) or these template numbers
-   when near                      a player comes close (with "Greets players" on: once per player, at most every 30 s);
+   when near                      a player comes close (with "Greets players" on): each player at most once a minute;
                                   if no line fits, it says its normal greeting
    when money <silver>            a player hands it at least this much money (it keeps it; if no line fits, it refuses)
    at <x> <y> [comment]           the lines after this belong to the item on that tile (a portal, door, lever...)
@@ -89,6 +89,7 @@ struct tstep { char n; unsigned short v; int str; };
 struct qrow { int stamp; unsigned short v[QVARS]; };
 
 static struct tentry ent[MAXENT];
+static char hasnear[MAXTCHARS];		// templates with "when near" lines
 static struct tstep step[MAXSTEP];
 static int qname[QVARS+1];
 static int nent=0, nstep=0, talk_loaded=0;
@@ -134,6 +135,7 @@ int talk_load(void)
 	struct tentry *e=NULL;
 
 	nent=nstep=0; plen=1; pool[0]=0; talk_loaded=1;
+	memset(hasnear,0,sizeof(hasnear));
 	memset(qname,0,sizeof(qname));
 	f=fopen(TALK_FILE,"r");
 	if (!f) return 0;
@@ -211,6 +213,7 @@ int talk_load(void)
 		}
 	}
 	fclose(f);
+	for (n=0; n<nent; n++) if (ent[n].trig==T_NEAR && ent[n].temp>0 && ent[n].temp<MAXTCHARS) hasnear[ent[n].temp]=1;
 	xlog("NPC dialogue: %d entries, %d quest steps loaded from %s%s",nent,nstep,TALK_FILE,bad ? " (some lines not understood)" : "");
 	return bad;
 }
@@ -495,6 +498,35 @@ int talk_custom_say(int cn,int co,char *text)
 		return run(&ent[n],cn,co,0);
 	}
 	return 0;
+}
+
+/* does this NPC have its own greeting lines? (then talk_near_due() decides when it greets, not the game's
+ * memory of the last four players, which would keep it from greeting the same player again for a long time) */
+int talk_has_near(int cn)
+{
+	if (!talk_loaded) talk_load();
+	return ch[cn].temp>0 && ch[cn].temp<MAXTCHARS && hasnear[ch[cn].temp];
+}
+
+/* each player at most once a minute per NPC (and the NPC not more than once every 2 seconds) */
+int talk_near_due(int cn,int co)
+{
+	static struct { int cn,co,tick; } seen[1024];
+	static int last[MAXCHARS];
+	int n,free=-1,oldest=0;
+	if (cn<1 || cn>=MAXCHARS) return 0;
+	if (globs->ticker-last[cn]<TICKS*2 && last[cn]) return 0;
+	for (n=0; n<1024; n++) {
+		if (seen[n].cn==cn && seen[n].co==co) {
+			if (globs->ticker-seen[n].tick<TICKS*60) return 0;
+			seen[n].tick=globs->ticker; last[cn]=globs->ticker; return 1;
+		}
+		if (!seen[n].cn && free<0) free=n;
+		if (seen[n].tick<seen[oldest].tick) oldest=n;
+	}
+	n=free>=0 ? free : oldest;
+	seen[n].cn=cn; seen[n].co=co; seen[n].tick=globs->ticker; last[cn]=globs->ticker;
+	return 1;
 }
 
 /* a player came close to an NPC that greets players: 1 = a line took it (no normal greeting) */
