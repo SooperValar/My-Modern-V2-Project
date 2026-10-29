@@ -295,6 +295,12 @@ The design is in `docs/ITEM_TIERS.md`. This first part builds the core:
 - Selecting a tile with an item shows an item editor: name, description (what players read when they look), its data values, and for portals (driver 6) "Leads to x, y" with **Pick on map** (click the destination on the map or on the world map with M) and **Go there**. Placing a portal asks right away where it should lead. Lab portals (data 2 set) are flagged, with a button to make them normal portals. Undo works for these too.
 
 #### MyV2 Editor: the map editor in the browser (`tools/mapedit/mapedit.py`, also in the Windows Server folder)
+- **Own toolbar design** (it followed the inspiration mock-up too closely):
+  - **Map tools:** a vertical hotbar column on the left edge of the map, with square wood-and-gold slots and the key letter in the corner.
+  - **Same column:** the brush size (click for bigger, right-click for smaller) and undo/redo.
+  - **View switches** (grid, see through walls, light, reload, right panel) are round buttons top right; zoom is a slider at the bottom.
+  - **Icons:** a new set of the editor's own, built around the map's diamond tiles: select over a tile, a quill to paint, a dashed tile with corner handles for the rectangle, stacked tiles for fill, a pickaxe to erase, a lens over a tile to pick, a compass rose to move the view, a torch for light, a brick wall with an eye to see through walls.
+  - **Banner:** the live/view-only banner is a strip along the top of the map.
 - **NPC and player names** on the map: Show → "NPC and player names" (or the N key; remembered in this browser). Each name sits over the character: NPCs in cream, players in blue, NPCs waiting to spawn faded. The map regions now carry the names of the characters on them.
 - Named "MyV2 Editor", with the game's own icon (the client's `res_icon_1.ico`) in the corner and as the browser tab icon.
 - **Floor mixes** (so a big area of one floor doesn't look like a flat or tiled pattern): Ctrl+click (or Shift+click) floors to put several in one brush; each has a weight slider (how often it's painted, shown in %), and "+ look-alikes" adds floors whose color is close. Brush, rectangle and fill paint a random pick per tile. "Save mix" keeps it under a name in the Floors and Builder tabs (stored in the browser; right-click a saved mix to delete it); the game's own random sets (e.g. 551 = the four Aston grasses) are listed there too.

@@ -2135,16 +2135,38 @@ nav .grow { flex: 1; }
 
 #view { position: relative; min-width: 0; min-height: 0; overflow: hidden; background: #050506; }
 #cv { width: 100%; height: 100%; display: block; }
-#bar { position: absolute; left: 10px; right: 10px; top: 10px; display: flex; gap: 8px; flex-wrap: wrap; pointer-events: none; z-index: 3; }
-.grp { display: flex; align-items: center; gap: 2px; background: rgba(27,28,32,.94); border: 1px solid var(--line); border-radius: 9px; padding: 3px; pointer-events: auto; box-shadow: 0 4px 14px rgba(0,0,0,.4); }
-.grp button { width: 32px; height: 30px; border-radius: 6px; color: #c9c6be; display: grid; place-items: center; }
-.grp button:hover:not(:disabled) { background: var(--panel3); color: #fff; }
-.grp button.on { background: var(--goldbg); color: var(--gold2); box-shadow: 0 0 0 1px #6b5323 inset; }
-.grp button:disabled { opacity: .35; cursor: default; }
-.grp .lbl { color: var(--dim2); font-size: 11px; padding: 0 4px 0 8px; }
-.grp select { background: transparent; border: 0; padding: 3px 4px; }
-.grp select option { background: var(--panel); }
-.grp .zv { width: 48px; text-align: center; color: var(--dim); font-size: 12px; }
+/* map tools: a hotbar column on the left, view switches top right, zoom at the bottom */
+#tools { position: absolute; left: 10px; top: 12px; display: flex; flex-direction: column; gap: 4px; padding: 6px; z-index: 3;
+  background: linear-gradient(180deg, #2a241b 0%, #1a1712 100%); border: 1px solid #4a3d26; border-radius: 4px;
+  box-shadow: 0 6px 18px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,220,150,.08); }
+#tools .sep { height: 1px; margin: 3px 2px; background: linear-gradient(90deg, transparent, #6b5630, transparent); }
+.slot { position: relative; width: 40px; height: 40px; border-radius: 3px; color: #d8c9a6; display: grid; place-items: center;
+  background: radial-gradient(circle at 50% 35%, #3a3226 0%, #221d16 75%); border: 1px solid #4d4130;
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,.55), inset 0 2px 3px rgba(255,230,170,.06); }
+.slot svg { width: 22px; height: 22px; stroke-width: 1.6; }
+.slot i { position: absolute; right: 3px; bottom: 1px; font: 600 9px ui-monospace, Consolas, monospace; font-style: normal; color: #9c8a64; }
+.slot:hover:not(:disabled) { color: #fff3d6; border-color: #8a7140; }
+.slot.on { color: #ffe39a; border-color: #d6a443; background: radial-gradient(circle at 50% 35%, #5a4520 0%, #2a2014 80%);
+  box-shadow: 0 0 10px rgba(214,164,67,.35), inset 0 0 0 1px rgba(0,0,0,.4); }
+.slot.on::before { content: ''; position: absolute; left: -7px; top: 12px; width: 3px; height: 16px; border-radius: 2px; background: #d6a443; }
+.slot:disabled { opacity: .35; cursor: default; }
+.slot.sz { font: 700 13px ui-monospace, Consolas, monospace; color: #e8d8b0; }
+.slot.sz small { position: absolute; left: 3px; top: 1px; font-size: 8px; color: #9c8a64; font-weight: 500; }
+#view.hasban #tools, #view.hasban #viewbar { top: 46px; }
+#viewbar { position: absolute; right: 10px; top: 12px; display: flex; gap: 6px; z-index: 3; }
+#viewbar .rnd { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; color: #cfc3a6;
+  background: radial-gradient(circle at 50% 30%, #332c21, #1b1813); border: 1px solid #4d4130; box-shadow: 0 3px 10px rgba(0,0,0,.45); }
+#viewbar .rnd svg { width: 18px; height: 18px; }
+#viewbar .rnd:hover { color: #fff3d6; border-color: #8a7140; }
+#viewbar .rnd.on { color: #ffe39a; border-color: #d6a443; box-shadow: 0 0 9px rgba(214,164,67,.4); }
+#zoombar { position: absolute; left: 50%; transform: translateX(-50%); bottom: 10px; display: flex; align-items: center; gap: 8px; z-index: 3;
+  background: rgba(26,23,18,.92); border: 1px solid #4a3d26; border-radius: 4px; padding: 4px 10px; }
+#zoombar button { color: #cfc3a6; width: 22px; height: 22px; display: grid; place-items: center; }
+#zoombar button svg { width: 16px; height: 16px; }
+#zoombar button:hover { color: #fff3d6; }
+#zoombar input[type=range] { width: 140px; accent-color: #d6a443; }
+#zoombar .zv { width: 44px; text-align: right; color: #b8a982; font: 12px ui-monospace, Consolas, monospace; }
+#size { display: none; }
 #bar .rgt { margin-left: auto; }
 #coords { position: absolute; left: 10px; bottom: 10px; background: rgba(23,24,28,.92); border: 1px solid var(--line); border-radius: 7px; padding: 4px 10px; color: var(--dim); font: 12px ui-monospace, Consolas, monospace; pointer-events: none; z-index: 3; }
 #mini { position: absolute; right: 10px; bottom: 10px; width: 220px; height: 220px; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: #000; z-index: 3; box-shadow: 0 6px 20px rgba(0,0,0,.5); display: none; }
@@ -2154,7 +2176,7 @@ nav .grow { flex: 1; }
 #world canvas { width: min(92%, 88vh); aspect-ratio: 1; image-rendering: pixelated; border: 1px solid var(--line); border-radius: 8px; cursor: crosshair; }
 #world .t { position: absolute; top: 14px; color: var(--dim); }
 #banner.live { background: var(--okbg); color: #d6f5d8; border-color: #2f5a33; }
-#banner { position: absolute; left: 50%; transform: translateX(-50%); top: 56px; background: var(--badbg); color: #ffd6cf; border: 1px solid #5a2c26; padding: 6px 14px; border-radius: 8px; z-index: 4; display: none; font-size: 12px; }
+#banner { position: absolute; left: 0; right: 0; top: 0; background: var(--badbg); color: #ffd6cf; border-bottom: 1px solid #5a2c26; padding: 7px 14px 7px 70px; z-index: 4; display: none; font-size: 12px; }
 #toast { position: absolute; left: 50%; transform: translateX(-50%); bottom: 16px; max-width: 70%; background: var(--panel); border: 1px solid var(--line); border-left: 3px solid var(--gold); padding: 8px 14px; border-radius: 7px; display: none; z-index: 12; white-space: pre-line; }
 
 #srv { grid-column: 3 / 5; overflow-y: auto; padding: 20px 24px 40px; display: none; background: var(--bg); }
@@ -2319,29 +2341,27 @@ table.pl button:hover { color: var(--text); border-color: var(--gold); }
 
 <main id="view">
   <canvas id="cv"></canvas>
-  <div id="bar">
-    <div class="grp" id="toolgrp"></div>
-    <div class="grp"><span class="lbl">Size</span>
-      <select id="size" title="Brush size: [ and ]"><option value="1">1×1</option><option value="2">2×2</option><option value="3">3×3</option><option value="5">5×5</option><option value="7">7×7</option><option value="9">9×9</option></select>
-    </div>
-    <div class="grp">
-      <button id="undo" title="Undo (Ctrl+Z)"><svg viewBox="0 0 24 24"><path d="M9 14 4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-3"/></svg></button>
-      <button id="redo" title="Redo (Ctrl+Y)"><svg viewBox="0 0 24 24"><path d="m15 14 5-5-5-5"/><path d="M20 9H9a5 5 0 0 0 0 10h3"/></svg></button>
-    </div>
-    <div class="grp">
-      <button id="zout" title="Zoom out (wheel)"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5M8 11h6"/></svg></button>
-      <span class="zv" id="zv">100%</span>
-      <button id="zin" title="Zoom in (wheel)"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5M8 11h6M11 8v6"/></svg></button>
-    </div>
-    <div class="grp">
-      <button id="tgrid" title="Grid (G)"><svg viewBox="0 0 24 24"><path d="M12 3 21 12 12 21 3 12z"/><path d="M7.5 7.5 16.5 16.5M16.5 7.5 7.5 16.5"/></svg></button>
-      <button id="twalls" title="See through walls (W)"><svg viewBox="0 0 24 24"><path d="M4 20V8l8-4 8 4v12"/><path d="M9 20v-6h6v6" stroke-dasharray="2 2"/></svg></button>
-      <button id="tlight" title="Light from lamps, as at night (L)"><svg viewBox="0 0 24 24"><path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"/></svg></button>
-      <button id="tref" title="Load the world again from disk"><svg viewBox="0 0 24 24"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/></svg></button>
-    </div>
-    <div class="grp rgt">
-      <button id="tright" title="Show / hide the right panel"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M15 4v16"/></svg></button>
-    </div>
+  <div id="tools">
+    <div id="toolgrp" style="display:flex;flex-direction:column;gap:4px"></div>
+    <div class="sep"></div>
+    <button class="slot sz" id="szbtn" title="Brush size: click for bigger, right-click for smaller ([ and ])"><small>size</small><span>1</span></button>
+    <select id="size"><option value="1">1×1</option><option value="2">2×2</option><option value="3">3×3</option><option value="5">5×5</option><option value="7">7×7</option><option value="9">9×9</option></select>
+    <div class="sep"></div>
+    <button class="slot" id="undo" title="Undo (Ctrl+Z)"><svg viewBox="0 0 24 24"><path d="M8 7H4V3"/><path d="M4.6 7A8 8 0 1 1 4 13"/><circle cx="12" cy="12" r="1.2"/></svg></button>
+    <button class="slot" id="redo" title="Redo (Ctrl+Y)"><svg viewBox="0 0 24 24"><path d="M16 7h4V3"/><path d="M19.4 7A8 8 0 1 0 20 13"/><circle cx="12" cy="12" r="1.2"/></svg></button>
+  </div>
+  <div id="viewbar">
+    <button class="rnd" id="tgrid" title="Grid (G)"><svg viewBox="0 0 24 24"><path d="M12 2 22 12 12 22 2 12z"/><path d="M7 7l10 10M17 7 7 17M12 2v20M2 12h20" opacity=".55"/></svg></button>
+    <button class="rnd" id="twalls" title="See through walls (W)"><svg viewBox="0 0 24 24"><path d="M3 6h18v12H3z"/><path d="M3 10h18M3 14h18M8 6v4M15 6v4M11 10v4M6 14v4M17 14v4" opacity=".55"/><circle cx="12" cy="12" r="2.6" fill="currentColor" stroke="none"/></svg></button>
+    <button class="rnd" id="tlight" title="Light from lamps, as at night (L)"><svg viewBox="0 0 24 24"><path d="M10 22h4l1-9H9z"/><path d="M12 13c-2.5-1.2-3.3-3.6-1.8-6 .3 1.4 1.1 2 1.8 2.2C11.2 6.5 12.6 4 15 3c-.9 2.3 1.4 4.1 1 6.7-.3 2-2 3.1-4 3.3z"/></svg></button>
+    <button class="rnd" id="tref" title="Load the world again from disk"><svg viewBox="0 0 24 24"><path d="M5 9a7.5 7.5 0 0 1 13-2l1.5 2"/><path d="M19 15a7.5 7.5 0 0 1-13 2L4.5 15"/><path d="M19.5 4.5V9H15M4.5 19.5V15H9"/></svg></button>
+    <button class="rnd" id="tright" title="Show / hide the right panel"><svg viewBox="0 0 24 24"><path d="M4 4h10l6 4v12H4z"/><path d="M14 4v4h6M8 11h6M8 15h8"/></svg></button>
+  </div>
+  <div id="zoombar">
+    <button id="zout" title="Zoom out (wheel)"><svg viewBox="0 0 24 24"><path d="M12 5 19 12 12 19 5 12z"/><path d="M9 12h6"/></svg></button>
+    <input type="range" id="zr" min="0" max="100" step="1" title="Zoom (mouse wheel)">
+    <button id="zin" title="Zoom in (wheel)"><svg viewBox="0 0 24 24"><path d="M12 3 21 12 12 21 3 12z"/><path d="M8.5 12h7M12 8.5v7"/></svg></button>
+    <span class="zv" id="zv">100%</span>
   </div>
   <div id="banner">The game server is running: you can look around, but editing is off. Stop the server to edit.</div>
   <div id="coords">–</div>
@@ -2450,14 +2470,14 @@ let hover = null, stroke = null, rect = null, panning = null, spaceDown = false,
 const FLAGS = ['blocks walking', 'blocks sight', 'indoors', 'under water', 'no lag', 'no monsters', 'bank', 'tavern',
   'no magic', 'death trap', 'no light', 'arena', 'lit', 'no expire', 'no fighting'];
 const FCOL = ['#ef5a50', '#b48cff', '#5b8ff5', '#3cc9d8', '#8c96a8', '#47c98a', '#e8b44a', '#f08a3c', '#d468e8', '#ff5a3c', '#5d6470', '#f06ea6', '#ffe9a8', '#a6d65c', '#2fbfa0'];
-const TOOLS = [
-  ['select', 'V', 'Select: look at a tile and change it', '<path d="M5 3l14 8-6 2-3 6z"/>'],
-  ['brush', 'B', 'Brush: paint the chosen piece', '<path d="M18 3l3 3-9 9-4 1 1-4z"/><path d="M8 16c-2 0-4 2-4 5 3 0 5-2 5-4"/>'],
-  ['rect', 'U', 'Rectangle: drag an area', '<rect x="4" y="5" width="16" height="14" rx="1"/>'],
-  ['fill', 'F', 'Fill: a room (up to its walls, indoors or outdoors like the tile you click) or, with a floor, a patch of the same floor', '<path d="M5 12 12 5l7 7-7 7z"/><path d="M19 15c1 2 2 3 2 4a2 2 0 0 1-4 0c0-1 1-2 2-4z"/>'],
-  ['erase', 'E', 'Erase: remove walls, objects and items (floor stays)', '<path d="m3 17 9-9 7 7-5 5H7z"/><path d="M14 20h7"/>'],
-  ['pick', 'I', 'Pick: take what is on a tile as the brush', '<path d="M20 4a2.8 2.8 0 0 0-4 0l-3 3 4 4 3-3a2.8 2.8 0 0 0 0-4z"/><path d="m13 7-9 9v4h4l9-9"/>'],
-  ['pan', 'H', 'Move the view', '<path d="M8 13V6a1.5 1.5 0 0 1 3 0v6M11 11V4a1.5 1.5 0 0 1 3 0v7M14 11V5.5a1.5 1.5 0 0 1 3 0V13M17 9.5a1.5 1.5 0 0 1 3 0V15a6 6 0 0 1-6 6h-1a7 7 0 0 1-5.5-2.7L4.3 14a1.6 1.6 0 0 1 2.4-2l1.3 1.3"/>'],
+const TOOLS = [     // the editor's own icon set: diamond tiles, quill, pickaxe, compass
+  ['select', 'V', 'Select: look at a tile and change it', '<path d="M12 14 21 18.5 12 23 3 18.5z" opacity=".5"/><path d="M8 2v13l3.2-3 2.3 5 2-1-2.3-4.8H17z"/>'],
+  ['brush', 'B', 'Brush: paint the chosen piece', '<path d="M20 3c-6 0-11 4.5-12.5 11L6 18l3.5-1.6C16 15 20 9 20 3z"/><path d="M13 9 6 18M4 21h7"/>'],
+  ['rect', 'U', 'Rectangle: drag an area', '<path d="M12 3 21 12 12 21 3 12z" stroke-dasharray="3 2.2"/><circle cx="12" cy="3" r="1.6" fill="currentColor"/><circle cx="21" cy="12" r="1.6" fill="currentColor"/><circle cx="12" cy="21" r="1.6" fill="currentColor"/><circle cx="3" cy="12" r="1.6" fill="currentColor"/>'],
+  ['fill', 'F', 'Fill: a room (up to its walls, indoors or outdoors like the tile you click) or, with a floor, a patch of the same floor', '<path d="M12 4 18 8 12 12 6 8z" fill="currentColor" opacity=".35"/><path d="M12 4 18 8 12 12 6 8z"/><path d="M6 12l6 4 6-4M6 16l6 4 6-4"/>'],
+  ['erase', 'E', 'Erase: remove walls, objects and items (floor stays)', '<path d="M4 9c4-5 10-6 16-4-5 0-9 2-12 6z"/><path d="m11.5 8.5 8.5 12.5"/><path d="M15 21h6" opacity=".5"/>'],
+  ['pick', 'I', 'Pick: take what is on a tile as the brush', '<path d="M12 11 20 15.5 12 20 4 15.5z" opacity=".55"/><circle cx="12" cy="8" r="5"/><path d="M12 1v3M12 12v3M5 8h3M16 8h3"/>'],
+  ['pan', 'H', 'Move the view', '<path d="M12 2 14 10 22 12 14 14 12 22 10 14 2 12 10 10z"/><circle cx="12" cy="12" r="1.4" fill="currentColor"/>'],
 ];
 
 // ---------------------------------------------------------------- helpers
@@ -4070,12 +4090,14 @@ function setTool(t) {
   cv.style.cursor = t === 'pan' ? 'grab' : t === 'select' ? 'default' : 'crosshair';
   redrawTop();
 }
-$('#toolgrp').innerHTML = TOOLS.map(([t, k, tip, path]) => `<button data-t="${t}" title="${tip} (${k})"><svg viewBox="0 0 24 24">${path}</svg></button>`).join('');
+$('#toolgrp').innerHTML = TOOLS.map(([t, k, tip, path]) => `<button class="slot" data-t="${t}" title="${tip} (${k})"><svg viewBox="0 0 24 24">${path}</svg><i>${k}</i></button>`).join('');
 document.querySelectorAll('#toolgrp button').forEach(b => b.onclick = () => setTool(b.dataset.t));
-$('#size').onchange = e => { size = +e.target.value; redrawTop(); };
+$('#size').onchange = e => { size = +e.target.value; $('#szbtn span').textContent = size; redrawTop(); };
+$('#szbtn').onclick = () => stepSize(1);
+$('#szbtn').oncontextmenu = e => { e.preventDefault(); stepSize(-1); };
 function stepSize(d) {
   const o = [...$('#size').options].map(o => +o.value), i = Math.max(0, Math.min(o.length - 1, o.indexOf(size) + d));
-  size = o[i]; $('#size').value = size; redrawTop();
+  size = o[i]; $('#size').value = size; $('#szbtn span').textContent = size; redrawTop();
 }
 
 // ---------------------------------------------------------------- input
@@ -4091,8 +4113,11 @@ function zoomAt(f, sx, sy) {
   zoom = Math.min(3, Math.max(.15, zoom * f));
   cam.x = px - (sx - W / 2) / zoom; cam.y = py - (sy - H / 2) / zoom;
   $('#zv').textContent = Math.round(zoom * 100) + '%';
+  $('#zr').value = Math.round(Math.log(zoom / .15) / Math.log(20) * 100);
   redraw();
 }
+$('#zr').oninput = e => zoomAt(.15 * Math.pow(20, +e.target.value / 100) / zoom);
+$('#zr').value = Math.round(Math.log(1 / .15) / Math.log(20) * 100);
 $('#zin').onclick = () => zoomAt(1.25); $('#zout').onclick = () => zoomAt(1 / 1.25);
 cv.addEventListener('wheel', e => {
   e.preventDefault();
@@ -4294,6 +4319,7 @@ function status() {
   p.className = info.running ? 'up' : 'down';
   p.textContent = info.running ? `Server up · ${info.online} online${info.live ? ' · live editing' : ''}` : 'Server stopped · editing on';
   $('#banner').style.display = info.running ? 'block' : 'none';
+  $('#view').classList.toggle('hasban', !!info.running);
   $('#banner').classList.toggle('live', !!info.live);
   $('#banner').textContent = info.live ? 'Live editing: every change goes straight into the running game, and players see it right away. Ctrl+Z undoes it.'
     : 'The game server is running: you can look around, but editing is off. (Live editing needs the newer server: "Update code & restart" on the Server page.)';
