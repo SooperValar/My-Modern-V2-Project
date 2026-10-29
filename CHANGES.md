@@ -299,7 +299,7 @@ The design is in `docs/ITEM_TIERS.md`. This first part builds the core:
   - **Map tools:** a hotbar across the top of the map (Cody preferred it to a column down the side), with square wood-and-gold slots, the key letter in the corner and a gold mark under the active tool.
   - **Same bar:** the brush size (click for bigger, right-click for smaller) and undo/redo.
   - **View switches** (grid, see through walls, light, reload, right panel) are round buttons top right; zoom is a slider at the bottom.
-  - **Icons:** a new set of the editor's own, built around the map's diamond tiles: select over a tile, a quill to paint, a dashed tile with corner handles for the rectangle, stacked tiles for fill, a pickaxe to erase, a lens over a tile to pick, a compass rose to move the view, a torch for light, a brick wall with an eye to see through walls.
+  - **Icons:** a new set of the editor's own. Tools, as Cody chose them: select (an arrow over a tile), a paint brush, a dashed rectangle with corner handles, fill (four squares with arrows going out), an eraser, an eye dropper with a drop, and move (a hand with four arrows). View switches: a tile grid, a brick wall with an eye to see through walls, a torch for light.
   - **Banner:** the live/view-only banner is a strip along the top of the map.
   - **Left rail and category tabs** in the same style:
     - **Rail:** the sections are slots with icons (Map: a parchment map; Players: a knight's helmet; NPCs: a hooded figure; History: an hourglass; Server: a castle tower; Help: a book), and a gold mark beside the open one.
