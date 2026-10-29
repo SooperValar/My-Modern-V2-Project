@@ -26,6 +26,8 @@ MAPX = MAPY = 1024
 MAXITEM, MAXCHARS, MAXTITEM, MAXTCHARS, MAXEFFECT = 98304, 8192, 4548, 4548, 4096
 FX_SIZE = 47                      # effect: used B, flags B, type B, duration I, data 10I
 NPC_FIRST_NEW = 2000              # templates the editor makes (one per placed NPC) are numbered from here
+PLAYER_START = {2, 3, 4, 13, 76, 77, 78, 79, 543, 544, 545, 546, 547, 548, 549, 550, 551, 552}   # new player characters are made from these
+PENTA_TEMPLATES = set(range(364, 386)) | set(range(538, 543)) | set(range(1094, 1098))
 MAP_SIZE, ITEM_SIZE, CHAR_SIZE = 28, 634, 3605
 USE_EMPTY, USE_ACTIVE = 0, 1
 TICKS_SPAWN = 18                  # a placed NPC appears about a second after the server starts
@@ -551,14 +553,60 @@ class World:
             if not self.tchar[o + C_USED]:
                 continue
             fl = self.t_u64(t, C_FLAGS)
-            if fl & CF_PLAYER:
+            if fl & CF_PLAYER or t in PLAYER_START or t == 1:
                 continue
             x, y = struct.unpack_from('<hh', self.tchar, o + C_X)
             al = struct.unpack_from('<h', self.tchar, o + C_ALIGN)[0]
-            # [number, name, sprite, kind (merchant / enemy / friendly), how many in the world, spawn x, spawn y, made by the editor]
+            # [number, name, sprite, kind (merchant / enemy / friendly), how many in the world, spawn x, spawn y, made by the editor,
+            #  placed (has a spawn spot and respawns), sprite base]
             out.append([t, self.tname(t), self.tchar_sprite(t, 4), 'merchant' if fl & CF_MERCHANT else 'enemy' if al < 0 else 'friendly',
-                        count.get(t, 0), x, y, 1 if t >= NPC_FIRST_NEW else 0])
+                        count.get(t, 0), x, y, 1 if t >= NPC_FIRST_NEW else 0, 1 if fl & CF_RESPAWN and (x or y) else 0,
+                        struct.unpack_from('<H', self.tchar, o + C_SPRITE)[0]])
         return out
+
+    def npc_world(self):
+        """every NPC that is in the game: alive, or waiting to (re)spawn"""
+        out = []
+        for c in range(1, MAXCHARS):
+            o = c * CHAR_SIZE
+            if self.char[o + C_USED] != USE_ACTIVE:
+                continue
+            fl = struct.unpack_from('<Q', self.char, o + C_FLAGS)[0]
+            if fl & (CF_PLAYER | CF_BODY):
+                continue
+            x, y = struct.unpack_from('<hh', self.char, o + C_X)
+            tp = struct.unpack_from('<H', self.char, o + C_TEMP)[0]
+            al = struct.unpack_from('<h', self.char, o + C_ALIGN)[0]
+            out.append([c, cstr(self.char[o + C_NAME:o + C_NAME + 40]), x, y, tp, self.char_sprite(c), 'alive',
+                        'merchant' if fl & CF_MERCHANT else 'enemy' if al < 0 else 'friendly', self.zone(x, y)])
+        if self.tchar is not None:
+            for x, y, tp, n in self.pending():
+                fl = self.t_u64(tp, C_FLAGS)
+                al = struct.unpack_from('<h', self.tchar, tp * CHAR_SIZE + C_ALIGN)[0]
+                out.append([0, self.tname(tp), x, y, tp, self.tchar_sprite(tp), 'waiting',
+                            'merchant' if fl & CF_MERCHANT else 'enemy' if al < 0 else 'friendly', self.zone(x, y)])
+        return out
+
+    def plain_base(self, kind):
+        """a plain NPC of this kind to start a new one from: placed in the world, no special code, no patrol, the weakest"""
+        best = None
+        for t in range(2, MAXTCHARS):
+            o = t * CHAR_SIZE
+            if not self.tchar[o + C_USED] or t in PLAYER_START or t in PENTA_TEMPLATES:
+                continue
+            fl = self.t_u64(t, C_FLAGS)
+            al = struct.unpack_from('<h', self.tchar, o + C_ALIGN)[0]
+            k = 'merchant' if fl & CF_MERCHANT else 'enemy' if al < 0 else 'friendly'
+            d = struct.unpack_from('<100i', self.tchar, o + C_DATA)
+            pts = struct.unpack_from('<i', self.tchar, o + 709)[0]
+            x, y = struct.unpack_from('<hh', self.tchar, o + C_X)
+            if k != kind or fl & (CF_PLAYER | 1 | (1 << 15) | (1 << 19)) or d[25] or d[26] or d[10] or pts <= 0 or not (x or y) or not fl & CF_RESPAWN:
+                continue
+            if kind == 'friendly' and (al <= 0 or d[24] or d[42]):      # a townsperson: good, stays out of fights, no group
+                continue
+            if best is None or pts < best[0]:
+                best = (pts, t)
+        return best[1] if best else 0
 
     def palette(self):
         with self.lock:
@@ -972,6 +1020,35 @@ class World:
                 tpl_write(self.tchar, o, CT_FIELDS, {'name': op['name'], 'reference': op['name']})
             self.made = ('npc', t)
             return ''
+        if k == 'ctempblank':           # + New NPC: a plain one of a kind, with a name and a look
+            kind = op.get('kind', 'friendly')
+            src = self.plain_base(kind)
+            if not src:
+                return 'no plain %s NPC found to start from' % kind
+            t = self._free_tchar()
+            if not t:
+                return 'no free NPC template number left'
+            self._keep(rec, 't', t)
+            o = t * CHAR_SIZE
+            self.tchar[o:o + CHAR_SIZE] = self.tchar[src * CHAR_SIZE:(src + 1) * CHAR_SIZE]
+            self._c_set(self.tchar, t, C_TEMP, '<H', t)
+            self._c_set(self.tchar, t, C_X, '<hhhh', 0, 0, 0, 0)
+            self._c_set(self.tchar, t, C_FLAGS, '<Q', self.t_u64(t, C_FLAGS) & ~CF_RESPAWN)    # placing it turns this on
+            d = list(struct.unpack_from('<100i', self.tchar, o + C_DATA))
+            for i in list(range(10, 24)) + [29, 31, 32, 33, 34, 35, 41, 47, 48, 49, 50, 51, 52, 53, 54, 55, 59, 60, 63, 64, 66, 69, 73, 79, 93, 95]:
+                d[i] = 0                     # no patrol, doors, lights, quest, helpers or attack zone of the original
+            d[37] = 1                        # greets players (its greeting line is empty until you write one)
+            struct.pack_into('<100i', self.tchar, o + C_DATA, *d)
+            self.tchar[o + CT_TEXT:o + CT_TEXT + 1600] = b'\0' * 1600
+            name = str(op.get('name') or 'New NPC')
+            f = {'name': name, 'reference': name, 'description': str(op.get('description') or '')}
+            if op.get('sprite'):
+                f['sprite'] = int(op['sprite'])
+            if kind != 'merchant':
+                f['item'] = [0] * 40         # an empty backpack (a merchant keeps its stock to start from)
+            tpl_write(self.tchar, o, CT_FIELDS, f)
+            self.made = ('npc', t)
+            return ''
         if k == 'itempset':
             t = int(op['t'])
             if not self.itemp(t):
@@ -1157,7 +1234,7 @@ class World:
                     else:
                         n += 1
                     continue
-                if op['op'] in ('ctempset', 'ctempnew', 'itempset', 'itempnew'):
+                if op['op'] in ('ctempset', 'ctempnew', 'ctempblank', 'itempset', 'itempnew'):
                     err = self.temp_op(rec, op)
                     if err:
                         msgs.append(err)
@@ -1906,6 +1983,8 @@ def make_handler(world, sprites, page, minimap, ctl):
                 return self.js(world.chars())
             if u.path == '/api/npcs':
                 return self.js(world.npc_templates())
+            if u.path == '/api/npcworld':
+                return self.js(world.npc_world())
             if u.path == '/api/players':
                 return self.js(world.players())
             if u.path == '/api/pchar':
@@ -2110,6 +2189,21 @@ nav .grow { flex: 1; }
 .tabs button svg { width: 18px; height: 18px; stroke-width: 1.6; }
 .tabs button:hover { color: #fff3d6; border-color: #8a7140; }
 .tabs button.on { color: #ffe39a; border-color: #d6a443; background: linear-gradient(180deg, #4a3a1c, #2a2014); box-shadow: 0 0 8px rgba(214,164,67,.25); }
+.seg { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 4px; margin: 2px 0 10px; }
+.seg button { padding: 6px 4px; border-radius: 3px; color: #a8987a; background: linear-gradient(180deg, #29231a, #1c1913); border: 1px solid #40362a; font-size: 12px; }
+.seg button:hover { color: #fff3d6; border-color: #8a7140; }
+.seg button.on { color: #ffe39a; border-color: #d6a443; background: linear-gradient(180deg, #4a3a1c, #2a2014); }
+.newnpc { background: var(--panel2); border: 1px solid #40362a; border-radius: 4px; padding: 10px; margin-bottom: 12px; display: flex; flex-direction: column; gap: 6px; }
+.newnpc .lb { color: var(--dim); font-size: 12px; }
+.newnpc .hint { color: var(--dim2); font-size: 11.5px; }
+.newnpc input[type=text] { width: 100%; }
+.newnpc .seg { margin: 0; }
+.newnpc .looks { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; max-height: 210px; overflow-y: auto; }
+.newnpc .look { border: 1px solid #40362a; border-radius: 3px; display: grid; place-items: center; cursor: pointer; background: #1c1913; }
+.newnpc .look:hover { border-color: #8a7140; }
+.newnpc .look.on { border-color: #d6a443; box-shadow: 0 0 6px rgba(214,164,67,.35); }
+#palwrap .row button.sm { color: var(--dim); border: 1px solid var(--line); border-radius: 5px; padding: 1px 7px; font-size: 11px; }
+#palwrap .row button.sm:hover { color: var(--text); border-color: var(--gold); }
 .tabs button.title { grid-column: 1 / -1; flex-direction: row; justify-content: center; gap: 8px; font-size: 12.5px; padding: 7px; }
 #lsearch { margin: 10px; }
 .sect { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--dim2); padding: 6px 12px 6px; }
@@ -2742,6 +2836,7 @@ function toggleWorld(on) {
 }
 
 // ---------------------------------------------------------------- left panel
+let npcSub = 'world', newNpc = null;    // NPCs tab: In the world / Blueprints; the + New NPC form
 const TABS = { builder: 'Builder', floors: 'Floors', walls: 'Walls', objects: 'Objects', items: 'Items', npcs: 'NPCs', flags: 'Flags' };
 const TAB_ICONS = {      // the editor's own icons, same set as the toolbar
   builder: '<path d="M14 4l6 6-3 3-6-6z"/><path d="M11 7 3.5 14.5a2 2 0 0 0 0 2.8l3.2 3.2a2 2 0 0 0 2.8 0L17 13"/>',
@@ -2999,13 +3094,74 @@ function leftUI() {
       if (!q) mixSection(true);
       sect('Floors · by how often they are used · Ctrl+click to mix'); lazy(grid(), list, f => cellFloor(f[0], f[1]));
     } else if (tab === 'npcs') {
-      const kinds = { merchant: 'Merchants', friendly: 'Friendly', enemy: 'Enemies' };
-      for (const [k, v] of Object.entries(kinds)) {
-        const list = (pal.npcs || []).filter(t => t[3] === k && match(t[1], t[0])).sort((a, b) => a[1].localeCompare(b[1]) || a[0] - b[0]);
-        if (!list.length) continue;
-        sect(`${v} · ${list.length}`); lazy(grid(), list, cellNpc);
+      const all = pal.npcs || [], blue = all.filter(t => !t[8]), made = blue.filter(t => t[7]);
+      const seg = document.createElement('div'); seg.className = 'seg';
+      seg.innerHTML = `<button data-s="world" class="${npcSub === 'world' ? 'on' : ''}">In the world</button><button data-s="blue" class="${npcSub === 'blue' ? 'on' : ''}">Blueprints · ${blue.length}</button>`;
+      seg.querySelectorAll('button').forEach(b => b.onclick = () => { npcSub = b.dataset.s; leftUI(); });
+      w.appendChild(seg);
+      if (npcSub === 'world') {
+        const box = document.createElement('div'); box.className = 'list'; w.appendChild(box);
+        box.innerHTML = '<div class="empty">Loading…</div>';
+        api('/api/npcworld').then(list => {
+          if (mode !== 'map' || tab !== 'npcs' || npcSub !== 'world') return;
+          list = list.filter(c => !q || c[1].toLowerCase().includes(q) || String(c[4]) === q || (c[8] || '').toLowerCase().includes(q));
+          list.sort((a, b) => a[1].localeCompare(b[1]) || a[4] - b[4]);
+          box.innerHTML = '';
+          const s2 = document.createElement('div'); s2.className = 'sect'; s2.style.padding = '2px 2px 8px';
+          s2.textContent = `${list.length} NPC${list.length === 1 ? '' : 's'} · click to go there · right-click to edit`; box.appendChild(s2);
+          lazy(box, list, c => {
+            const r = document.createElement('div'); r.className = 'row';
+            const th = thumb(c[5], 34); if (c[6] === 'waiting') th.style.opacity = .45; r.appendChild(th);
+            const d = document.createElement('div'); d.style.flex = '1'; d.style.minWidth = '0'; d.innerHTML = '<div></div><div class="n"></div>';
+            d.firstChild.textContent = c[1];
+            d.lastChild.textContent = `${c[6] === 'waiting' ? 'respawning · ' : ''}${c[8] ? c[8] + ' · ' : ''}${c[2]}, ${c[3]} · template ${c[4]}`;
+            r.appendChild(d);
+            const cp = document.createElement('button'); cp.className = 'sm'; cp.textContent = 'Copy'; cp.title = 'Place copies of it: pick this as the NPC brush';
+            cp.onclick = e => { e.stopPropagation(); const t = all.find(x => x[0] === c[4]); if (t) setBrush({ kind: 'npc', t, dir: 4 }); else toast('That template is not in the list (a player start template?).', true); };
+            r.appendChild(cp);
+            r.onclick = () => { centerOn(c[2], c[3]); selectTile(c[2], c[3]); };
+            r.oncontextmenu = e => { e.preventDefault(); openTemplate('npc', c[4]); };
+            return r;
+          });
+        });
+      } else {
+        // + New NPC
+        const nb = document.createElement('button'); nb.className = 'btn pri'; nb.style.cssText = 'width:100%;margin:2px 0 8px'; nb.textContent = '+ New NPC…';
+        w.appendChild(nb);
+        const form = document.createElement('div'); form.className = 'newnpc'; form.style.display = newNpc ? '' : 'none'; w.appendChild(form);
+        nb.onclick = () => { newNpc = newNpc ? null : { name: '', kind: 'friendly', sprite: 0 }; leftUI(); };
+        if (newNpc) {
+          form.innerHTML = `<div class="lb">Name</div><input type="text" maxlength="39" class="nn" placeholder="e.g. Old Sage">
+            <div class="lb">Kind</div><div class="seg k"><button data-k="friendly">Friendly</button><button data-k="merchant">Merchant</button><button data-k="enemy">Enemy</button></div>
+            <div class="lb">Look · pick one</div><div class="looks"></div>
+            <div class="hint">It starts as a plain ${newNpc.kind} (the game's ${newNpc.kind === 'merchant' ? 'Ruth' : newNpc.kind === 'enemy' ? 'Thief' : 'townsfolk'}) without its own lines, patrol or quest. Afterwards: set its rank, gear and lines, then place it with the NPC brush.</div>
+            <button class="btn pri go" style="width:100%;margin-top:8px">Create</button>`;
+          const nn = form.querySelector('.nn'); nn.value = newNpc.name; nn.oninput = () => newNpc.name = nn.value;
+          form.querySelectorAll('.k button').forEach(b => { b.classList.toggle('on', b.dataset.k === newNpc.kind); b.onclick = () => { newNpc.kind = b.dataset.k; leftUI(); }; });
+          const looks = form.querySelector('.looks'), seen = new Set();
+          for (const t of all) {
+            if (!t[9] || seen.has(t[9])) continue; seen.add(t[9]);
+            const c = document.createElement('div'); c.className = 'look' + (newNpc.sprite === t[9] ? ' on' : ''); c.title = 'Looks like ' + t[1];
+            c.appendChild(thumb(t[9] + 8, 40, 48)); c.onclick = () => { newNpc.sprite = t[9]; looks.querySelectorAll('.look').forEach(x => x.classList.toggle('on', x === c)); };
+            looks.appendChild(c);
+          }
+          form.querySelector('.go').onclick = async () => {
+            if (RO()) return toast('The game server is running and live editing is not available.', true);
+            if (!newNpc.name.trim()) return toast('Give it a name first.', true);
+            const r = await api('/api/edit', { ops: [{ op: 'ctempblank', kind: newNpc.kind, name: newNpc.name.trim(), sprite: newNpc.sprite || 0 }], label: 'new NPC ' + newNpc.name });
+            if (r.error || !r.made) return toast(r.error || (r.msgs || []).join('\n') || 'Could not make it.', true);
+            Object.assign(info, { dirty: r.dirty ?? info.dirty, undo: r.undo ?? info.undo }); status();
+            pal.npcs = await api('/api/npcs'); newNpc = null; leftUI();
+            const row = pal.npcs.find(x => x[0] === r.made[1]); if (row) setBrush({ kind: 'npc', t: row, dir: 4 });
+            openTemplate('npc', r.made[1]);
+            toast('Made. Set it up here, then click a free tile on the map to place it (the NPC brush is ready).');
+          };
+        }
+        const mine = made.filter(t => match(t[1], t[0])), game = blue.filter(t => !t[7] && match(t[1], t[0]));
+        if (mine.length) { sect('Your new NPCs · not placed yet'); lazy(grid(), mine, cellNpc); }
+        if (game.length) { sect("The game's own · spawned by its code (pentagrams, labyrinth, summons…)"); lazy(grid(), game.sort((a, b) => a[1].localeCompare(b[1])), cellNpc); }
+        if (!mine.length && !game.length) w.insertAdjacentHTML('beforeend', '<div class="empty">Nothing matches.</div>');
       }
-      if (!(pal.npcs || []).length) w.insertAdjacentHTML('beforeend', '<div class="empty">No NPC templates (tchar.dat) found.</div>');
     } else if (tab === 'flags') {
       sect('Paint a flag on tiles'); lazy(grid(), FLAGS.map((f, i) => i).filter(i => match(FLAGS[i], '')), cellFlag);
     } else {
