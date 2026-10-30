@@ -2480,7 +2480,9 @@ table.pl button:hover { color: var(--text); border-color: var(--gold); }
 #tpl .rwadd { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 14px; }
 #tpl .note2 { line-height: 1.6; }
 .faces { display: flex; gap: 8px; margin: 4px 0; }
-.faces .face { padding: 3px; border: 1px solid #40362a; border-radius: 8px; background: #221d16; }
+.faces .face { padding: 3px; border: 1px solid #40362a; border-radius: 8px; background: #221d16; position: relative; }
+.faces .face .fl { position: absolute; left: 4px; top: 2px; font-size: 11px; font-weight: 700; color: #a8987a; }
+.faces .face.on .fl { color: #ffe39a; }
 .faces .face:hover { border-color: #8a7140; }
 .faces .face.on { border-color: #d6a443; background: #3a2f17; box-shadow: 0 0 0 1px #d6a443 inset; }
 #tpl .grid2 > label { display: flex; gap: 8px; align-items: center; }
@@ -3479,16 +3481,18 @@ async function openChest(x, y) {
   TP.Corig = JSON.stringify(C) + '|' + it.name;
   $('#tpl').classList.add('on'); $('#tpl').classList.remove('picking'); tplRender();
 }
-const CHEST_FACES = [[220, 221], [222, 223]];     // the game has a chest in two facings: the lock on one side or the other
+// a chest's facing: where its lock points (north = smaller x, up-left on the map). 220-223 are the game's own,
+// 18130-18133 the same chest turned around (tools/sprites/draw_chest_back.py)
+const CHEST_FACES = [[18130, 18131, 'N', 'north'], [18132, 18133, 'E', 'east'], [220, 221, 'S', 'south'], [222, 223, 'W', 'west']];
 function chestFacing(x, y, it, ro, after) {
   const cur = CHEST_FACES.findIndex(f => f[0] === it.sprite || f[1] === it.sprite);
   if (cur < 0) return null;
   const d = document.createElement('div'); d.className = 'faces';
   CHEST_FACES.forEach((f, i) => {
     const b = document.createElement('button'); b.className = 'face' + (i === cur ? ' on' : ''); b.disabled = ro;
-    b.title = i ? 'Lock on the right' : 'Lock on the left';
-    b.append(thumb(f[0], 44, 44));
-    b.onclick = async () => { if (i === cur) return; await edit([{ op: 'itemedit', x, y, sprite: f }], `turned the chest at ${x},${y}`, false); it.sprite = f[0]; if (after) after(); };
+    b.title = 'Lock facing ' + f[3];
+    b.append(thumb(f[0], 44, 44), Object.assign(document.createElement('span'), { className: 'fl', textContent: f[2] }));
+    b.onclick = async () => { if (i === cur) return; await edit([{ op: 'itemedit', x, y, sprite: [f[0], f[1]] }], `turned the chest at ${x},${y} to face ${f[3]}`, false); it.sprite = f[0]; if (after) after(); };
     d.append(b);
   });
   return d;
