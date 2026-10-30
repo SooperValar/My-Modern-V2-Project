@@ -1368,6 +1368,8 @@ class World:
                         self.item[o + I_DRIVER] = int(op['driver']) & 255
                     if 'duration' in op:
                         struct.pack_into('<I', self.item, o + 513, max(0, int(op['duration'])))
+                    if 'sprite' in op:          # its look: [closed, open] (a chest's facing)
+                        struct.pack_into('<2h', self.item, o + 537, int(op['sprite'][0]), int(op['sprite'][1]))
                     self.set_tile(x, y, t)
                 elif k == 'flag':
                     b = 1 << int(op['bit'])
@@ -2477,6 +2479,10 @@ table.pl button:hover { color: var(--text); border-color: var(--gold); }
 #tpl .chip.on { color: #ffe39a; border-color: #d6a443; background: #3a2f17; }
 #tpl .rwadd { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 14px; }
 #tpl .note2 { line-height: 1.6; }
+.faces { display: flex; gap: 8px; margin: 4px 0; }
+.faces .face { padding: 3px; border: 1px solid #40362a; border-radius: 8px; background: #221d16; }
+.faces .face:hover { border-color: #8a7140; }
+.faces .face.on { border-color: #d6a443; background: #3a2f17; box-shadow: 0 0 0 1px #d6a443 inset; }
 #tpl .grid2 > label { display: flex; gap: 8px; align-items: center; }
 #tpl .mft { display: flex; gap: 10px; align-items: center; padding: 10px 16px; border-top: 1px solid var(--line); flex-wrap: wrap; }
 #tpl .mft .sp { flex: 1; }
@@ -3456,6 +3462,8 @@ async function lootEditor(el, r, x, y, ro) {
   b.textContent = isNew ? 'Edit chest…' : 'Convert to an editor chest…';
   b.title = 'Opens the chest editor: weighted rewards with items, gold, tier armor, once-only items, once per player, its own refill time';
   b.onclick = () => openChest(x, y);
+  const fc = chestFacing(x, y, it, ro);
+  if (fc) { const l = document.createElement('div'); l.className = 'lb'; l.textContent = 'Facing'; box.append(l, fc); }
   box.append(b);
 }
 
@@ -3470,6 +3478,20 @@ async function openChest(x, y) {
   TP = { kind: 'chest', t: x + ',' + y, x, y, it, isNew, name: it.name, C, orig: {}, cur: {}, tab: 'chest' };
   TP.Corig = JSON.stringify(C) + '|' + it.name;
   $('#tpl').classList.add('on'); $('#tpl').classList.remove('picking'); tplRender();
+}
+const CHEST_FACES = [[220, 221], [222, 223]];     // the game has a chest in two facings: the lock on one side or the other
+function chestFacing(x, y, it, ro, after) {
+  const cur = CHEST_FACES.findIndex(f => f[0] === it.sprite || f[1] === it.sprite);
+  if (cur < 0) return null;
+  const d = document.createElement('div'); d.className = 'faces';
+  CHEST_FACES.forEach((f, i) => {
+    const b = document.createElement('button'); b.className = 'face' + (i === cur ? ' on' : ''); b.disabled = ro;
+    b.title = i ? 'Lock on the right' : 'Lock on the left';
+    b.append(thumb(f[0], 44, 44));
+    b.onclick = async () => { if (i === cur) return; await edit([{ op: 'itemedit', x, y, sprite: f }], `turned the chest at ${x},${y}`, false); it.sprite = f[0]; if (after) after(); };
+    d.append(b);
+  });
+  return d;
 }
 function chestDirty() { return TP && TP.kind === 'chest' && JSON.stringify(TP.C) + '|' + TP.name !== TP.Corig; }
 
@@ -3515,6 +3537,8 @@ function chestRender(el) {
   const nm = document.createElement('input'); nm.type = 'text'; nm.maxLength = 39; nm.value = TP.name; nm.oninput = () => { TP.name = nm.value; };
   const rf = document.createElement('div'); rf.className = 'ipick';
   rf.append(num(() => Math.round((C.refill || 0) / 60), v => { C.refill = v * 60; }, 0, 100000), 'minutes', Object.assign(document.createElement('span'), { className: 'hint', textContent: '(0 = right away; 60 = an hour)' }));
+  const fc = chestFacing(TP.x, TP.y, TP.it, ro, () => chestRender(el));
+  if (fc) g.append(Object.assign(document.createElement('div'), { className: 'lb', textContent: 'Facing' }), fc);
   g.append(Object.assign(document.createElement('div'), { className: 'lb', textContent: 'Name players see' }), nm,
     Object.assign(document.createElement('div'), { className: 'lb', textContent: 'Stays empty for' }), rf,
     Object.assign(document.createElement('div'), { className: 'lb', textContent: 'Once per player' }),
@@ -3524,7 +3548,7 @@ function chestRender(el) {
   if (C.first !== undefined && C.first !== null) {
     g.append(document.createElement('div'), ipick(() => C.first, v => { C.first = v; }, { filter: t => t[3], none: 'pick one' }),
       document.createElement('div'), Object.assign(document.createElement('div'), { className: 'hint',
-        textContent: 'Every player gets this once, the first time they open the chest, instead of a draw. The chest stays closed for the others. After that it gives from the rewards below as usual.' + (C.once ? ' With "once per player" on, that is one draw after the first-time item.' : '') }));
+        textContent: 'Every player gets this once, the first time they open the chest, instead of a draw. The chest stays closed for the others. After that it gives from the rewards below as usual, but that player first has to wait the "Stays empty for" time.' + (C.once ? ' With "once per player" on, that is one draw after the first-time item.' : '') }));
   }
   // --- the chances
   const tot = C.rewards.reduce((a, b) => a + (+b.w || 0), 0) || 1;
