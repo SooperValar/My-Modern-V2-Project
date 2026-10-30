@@ -160,7 +160,7 @@ OPS = ('=', '!=', '<', '>', '<=', '>=')
 
 def talk_parse(text):
     quests, npcs, cur, e = {}, {}, None, None
-    steps = {}
+    steps, chests, chest = {}, {}, None
     for line in text.splitlines():
         line = line.strip()
         if not line or line.startswith('#'):
@@ -169,6 +169,23 @@ def talk_parse(text):
         k, rest = w[0], (w[1] if len(w) > 1 else '')
         a = rest.split()
         try:
+            if chest is not None:
+                if k == 'end':
+                    chest = None
+                elif k == 'refill' and a:
+                    chest['refill'] = int(a[0])
+                elif k == 'once':
+                    chest['once'] = 1
+                elif k == 'reward' and a:
+                    if a[0] in ('item', 'unique', 'gold'): chest['rewards'].append({'type': a[0], 'v': int(a[1]), 'w': int(a[2])})
+                    elif a[0] == 'nothing': chest['rewards'].append({'type': 'nothing', 'w': int(a[1])})
+                    elif a[0] == 'tier': chest['rewards'].append({'type': 'tier', 'tier': a[1], 'metal': a[2], 'piece': a[3], 'w': int(a[4])})
+                continue
+            if k == 'chest' and len(a) >= 2:
+                chest = {'refill': 0, 'once': 0, 'rewards': []}
+                chests['%d,%d' % (int(a[0]), int(a[1]))] = chest
+                cur, e = None, None
+                continue
             if k == 'quest' and a:
                 quests[int(a[0])] = rest.split(None, 1)[1] if len(a) > 1 else ''
             elif k == 'step' and len(a) >= 2:
@@ -220,7 +237,7 @@ def talk_parse(text):
                 e['acts'].append({'type': k})
         except (IndexError, ValueError):
             continue
-    return {'names': quests, 'steps': steps}, npcs
+    return {'names': quests, 'steps': steps, 'chests': chests}, npcs
 
 
 def talk_text(quests, npcs, names):
@@ -231,6 +248,19 @@ def talk_text(quests, npcs, names):
         for v, t in sorted(qs.get(n, []), key=lambda x: int(x[0])):
             if str(t).strip():
                 out.append('step %d %d %s' % (n, int(v), ' '.join(str(t).split())))
+    for key, c in sorted(quests.get('chests', {}).items()):
+        if not c.get('rewards'):
+            continue
+        x, y = key.split(',')
+        out += ['', 'chest %d %d %s' % (int(x), int(y), names.get('chest ' + key, ''))]
+        if int(c.get('refill', 0) or 0) > 0: out.append('refill %d' % int(c['refill']))
+        if c.get('once'): out.append('once player')
+        for r in c['rewards']:
+            w = max(1, int(r.get('w', 1)))
+            if r['type'] in ('item', 'unique', 'gold'): out.append('reward %s %d %d' % (r['type'], int(r['v']), w))
+            elif r['type'] == 'nothing': out.append('reward nothing %d' % w)
+            elif r['type'] == 'tier': out.append('reward tier %s %s %s %d' % (r.get('tier', 'magic'), r.get('metal', 'any'), r.get('piece', 'any'), w))
+        out.append('end')
     for t in sorted(npcs, key=lambda k: (isinstance(k, str), str(k).zfill(12))):
         if not npcs[t]:
             continue
@@ -469,6 +499,7 @@ class World:
                 r['item'] = {'index': i, 'name': cstr(self.item[o + I_NAME:o + I_NAME + 40]), 'temp': self.it_u16(i, I_TEMP),
                              'sprite': self.item_sprite(i), 'driver': self.item[o + I_DRIVER],
                              'data': list(struct.unpack_from('<10i', self.item, o + I_DATA)),
+                             'duration': struct.unpack_from('<I', self.item, o + 513)[0],
                              'desc': cstr(self.item[o + I_DESC:o + I_DESC + 200])}
             if 0 < c < MAXCHARS and self.char[c * CHAR_SIZE + C_USED]:
                 o = c * CHAR_SIZE
@@ -739,7 +770,7 @@ class World:
         try:
             return talk_parse(open(self.talk_path(), encoding='latin-1').read())
         except OSError:
-            return {'names': {}, 'steps': {}}, {}
+            return {'names': {}, 'steps': {}, 'chests': {}}, {}
 
     def talk_save(self, quests, npcs, ctl=None):
         p = self.talk_path()
@@ -748,6 +779,10 @@ class World:
             os.makedirs(bk, exist_ok=True)
             shutil.copy2(p, os.path.join(bk, 'npctalk-%s.dat' % time.strftime('%Y%m%d-%H%M%S')))
         names = {t: self.tname(t) for t in npcs if isinstance(t, int) and self.tchar is not None and 0 < t < MAXTCHARS}
+        for key in quests.get('chests', {}):
+            x, y = map(int, key.split(','))
+            i = self.tile(x, y)[4] if 0 <= x < MAPX and 0 <= y < MAPY else 0
+            names['chest ' + key] = cstr(self.item[i * ITEM_SIZE + I_NAME:i * ITEM_SIZE + I_NAME + 40]) if 0 < i < MAXITEM else ''
         for t in npcs:
             if isinstance(t, str):
                 x, y = map(int, t[1:].split(','))
@@ -1316,6 +1351,10 @@ class World:
                     for kk, v in (op.get('data') or {}).items():
                         if 0 <= int(kk) < 10:
                             struct.pack_into('<i', self.item, o + I_DATA + 4 * int(kk), int(v))
+                    if 'driver' in op:
+                        self.item[o + I_DRIVER] = int(op['driver']) & 255
+                    if 'duration' in op:
+                        struct.pack_into('<I', self.item, o + 513, max(0, int(op['duration'])))
                     self.set_tile(x, y, t)
                 elif k == 'flag':
                     b = 1 << int(op['bit'])
@@ -2003,6 +2042,9 @@ def make_handler(world, sprites, page, minimap, ctl):
                 self.end_headers()
                 self.wfile.write(b)
                 return
+            if u.path == '/api/chest':
+                qs, npcs = world.talk_load()
+                return self.js({'chest': qs['chests'].get('%d,%d' % (int(q['x']), int(q['y'])))})
             if u.path == '/api/talk':
                 qs, npcs = world.talk_load()
                 return self.js({'quests': {str(k): v for k, v in qs['names'].items()}, 'steps': {str(k): v for k, v in qs['steps'].items()},
@@ -2044,6 +2086,14 @@ def make_handler(world, sprites, page, minimap, ctl):
                                 'dirty': world.dirty, 'undo': len(world.undo), 'redo': len(world.redo)})
             if u.path in ('/api/save', '/api/relight', '/api/restore') and server_running():
                 return self.js({'error': 'The game server is running: live edits are already in the game, there is nothing to save.'})
+            if u.path == '/api/chest':
+                qs, npcs = world.talk_load()
+                key = '%d,%d' % (int(body['x']), int(body['y']))
+                if body.get('chest'):
+                    qs['chests'][key] = body['chest']
+                else:
+                    qs['chests'].pop(key, None)
+                return self.js({'msg': world.talk_save(qs, npcs, ctl)})
             if u.path == '/api/talk':
                 qs, npcs = world.talk_load()
                 if 'quests' in body:
@@ -2353,6 +2403,12 @@ table.pl button:hover { color: var(--text); border-color: var(--gold); }
 .face button:hover { color: var(--text); border-color: var(--gold); }
 .face button.on { color: var(--gold2); border-color: var(--gold); background: var(--goldbg); }
 #tile .ied .note { color: var(--dim); font-size: 12px; }
+#tile .chestg { display: flex; flex-direction: column; gap: 6px; }
+#tile .chestg .rw { display: flex; flex-direction: column; gap: 4px; padding: 6px; border: 1px solid #40362a; border-radius: 4px; background: #1c1913; }
+#tile .chestg .ipick { display: flex; gap: 5px; align-items: center; flex-wrap: wrap; }
+#tile .chestg input[type=number] { width: 64px; padding: 3px 6px; }
+#tile .chestg select { padding: 3px 6px; max-width: 100%; }
+#tile .chestg .hint { color: var(--dim2); font-size: 11px; }
 #tile .flg { display: grid; grid-template-columns: 1fr 1fr; gap: 3px 8px; margin-top: 8px; }
 .chk { display: flex; align-items: center; gap: 8px; padding: 3px 0; cursor: pointer; user-select: none; }
 .chk .dot { width: 9px; height: 9px; border-radius: 3px; flex: none; }
@@ -3306,7 +3362,7 @@ async function selectTile(x, y) {
   if ((r.char && !r.char.player) || r.pending) npcEditor(el, r, x, y, ro);
   const pr = (r.char || r.pending || {}).patrol;
   if (pr && pr.length) { selPatrol = [[x, y], ...pr]; redrawTop(); }
-  if (r.item) itemEditor(el, r, x, y, ro);
+  if (r.item) { lootEditor(el, r, x, y, ro); itemEditor(el, r, x, y, ro); }
   const fl = $('#tfl');
   FLAGS.forEach((f, i) => {
     const on = r.flags.includes({ 'blocks walking': 'move block', 'blocks sight': 'sight block', 'no fighting': 'no fight' }[f] || f);
@@ -3316,6 +3372,97 @@ async function selectTile(x, y) {
     l.firstChild.onchange = e => edit([{ op: 'flag', x, y, bit: i, mode: e.target.checked ? 1 : 0 }], (e.target.checked ? 'set ' : 'cleared ') + f, true);
     fl.appendChild(l);
   });
+}
+
+
+// ---- loot: chests, flowers, shelves... (item drivers that give something when used)
+const LOOT = { 1: 'gives one item', 42: 'gives one item at random', 59: 'gives gold', 30: 'needs an item in the hand, which it takes', 53: 'gives an item engraved with the player\'s name', 54: 'gives an item and alerts the monsters nearby', 75: 'MyV2 chest' };
+const LEGACY_TIER = { 57: ['bronze', 'helm'], 59: ['bronze', 'armor'], 63: ['steel', 'helm'], 65: ['steel', 'armor'], 69: ['golden', 'helm'], 71: ['golden', 'armor'],
+  75: ['crystal', 'helm'], 76: ['crystal', 'armor'], 94: ['titanium', 'helm'], 95: ['titanium', 'armor'], 981: ['emerald', 'helm'], 982: ['emerald', 'armor'] };
+const METALS = [['any', 'any metal'], ['bronze', 'Bronze'], ['steel', 'Steel'], ['golden', 'Golden'], ['emerald', 'Emerald'], ['crystal', 'Crystal'], ['titanium', 'Titanium']];
+const durText = t => { const s2 = Math.round(t / 18); return s2 >= 3600 ? (s2 / 3600).toFixed(s2 % 3600 ? 1 : 0) + ' h' : s2 >= 60 ? Math.round(s2 / 60) + ' min' : s2 + ' s'; };
+function legacyRewards(it) {     // what an old-style loot item gives, as editor rewards
+  const d = it.data, out = [];
+  if (it.driver === 59) out.push({ type: 'gold', v: d[0] * 100, w: 1 });
+  else if (it.driver === 42) {
+    const cnt = {}; for (const v of d) if (v) cnt[v] = (cnt[v] || 0) + 1;
+    for (const [t, w] of Object.entries(cnt)) { const lt = LEGACY_TIER[t]; out.push(lt ? { type: 'tier', tier: 'magic', metal: lt[0], piece: lt[1], w } : { type: 'item', v: +t, w }); }
+  } else if (d[0]) out.push({ type: 'item', v: d[0], w: 1 });
+  return out;
+}
+function rewardText(r) {
+  if (r.type === 'gold') return `${Math.floor(r.v / 100)}G ${r.v % 100}S`;
+  if (r.type === 'nothing') return 'nothing ("It\'s empty...")';
+  if (r.type === 'tier') return `a new ${r.tier} ${r.metal === 'any' ? '' : r.metal + ' '}${r.piece === 'any' ? 'helmet or armor' : r.piece === 'helm' ? 'helmet' : 'body armor'}`;
+  return (iname(r.v) || 'template ' + r.v) + (r.type === 'unique' ? ' (only once on the server)' : '');
+}
+async function lootEditor(el, r, x, y, ro) {
+  const it = r.item;
+  if (!(it.driver in LOOT)) return;
+  const box = document.createElement('div'); box.className = 'ied'; el.appendChild(box);
+  const tk = await api(`/api/chest?x=${x}&y=${y}`);
+  const isNew = it.driver === 75;
+  let C = isNew && tk.chest ? JSON.parse(JSON.stringify(tk.chest)) : null;
+  const render = () => {
+    box.innerHTML = `<div class="lb" style="color:var(--gold2)">Loot · ${esc(LOOT[it.driver])}</div>`;
+    if (!C) {        // an old-style one: what it gives, and Convert
+      const rw = legacyRewards(it), tot = rw.reduce((a, b) => a + b.w, 0);
+      const ul = document.createElement('div'); ul.className = 'note';
+      ul.innerHTML = rw.length ? rw.map(q => `${esc(rewardText(q))}${rw.length > 1 ? ` <span class="hint">· ${Math.round(q.w / tot * 100)}%</span>` : ''}`).join('<br>') : '<span class="hint">nothing set</span>';
+      if (it.driver === 30) ul.innerHTML += `<br><span class="hint">takes: ${esc(iname(it.data[1]) || 'template ' + it.data[1])}</span>`;
+      ul.innerHTML += `<br><span class="hint">opens again after ${durText(it.duration)}</span>`;
+      box.appendChild(ul);
+      const cv = document.createElement('button'); cv.className = 'sm'; cv.disabled = ro;
+      cv.textContent = isNew ? 'Set up its rewards' : 'Convert to an editor chest';
+      cv.title = 'Then: weighted rewards with gold, tier armor, once-only items, once per player, its own refill time';
+      cv.onclick = () => {
+        if ([30, 53, 54].includes(it.driver) && !confirm('Converting drops its special part (' + LOOT[it.driver] + '). Convert anyway?')) return;
+        C = { refill: Math.round(it.duration / 18), once: 0, rewards: rw.length ? rw : [{ type: 'item', v: 0, w: 1 }] }; render();
+      };
+      box.appendChild(cv);
+      return;
+    }
+    const g = document.createElement('div'); g.className = 'chestg';
+    const rf = document.createElement('div'); rf.className = 'ipick';
+    rf.append('Opens again after ', num(() => Math.round((C.refill || 0) / 60), v => C.refill = v * 60, 0, 100000), ' min');
+    g.append(rf);
+    g.append(chk('Once per player (each gets something from it only once)', () => !!C.once, on => C.once = on ? 1 : 0));
+    const tot = C.rewards.reduce((a, b) => a + (+b.w || 0), 0) || 1;
+    C.rewards.forEach((q, i) => {
+      const row2 = document.createElement('div'); row2.className = 'rw';
+      const ty = document.createElement('select');
+      ty.innerHTML = [['item', 'Item'], ['gold', 'Gold'], ['tier', 'Tier armor'], ['unique', 'Item, once on the server'], ['nothing', 'Nothing']].map(([v, l]) => `<option value="${v}">${l}</option>`).join('');
+      ty.value = q.type; ty.onchange = () => { C.rewards[i] = ty.value === 'tier' ? { type: 'tier', tier: 'magic', metal: 'any', piece: 'any', w: q.w } : ty.value === 'gold' ? { type: 'gold', v: 1000, w: q.w } : ty.value === 'nothing' ? { type: 'nothing', w: q.w } : { type: ty.value, v: 0, w: q.w }; render(); };
+      row2.append(ty);
+      if (q.type === 'item' || q.type === 'unique') row2.append(ipick(() => q.v, v => q.v = v, { filter: t => t[3] }));
+      else if (q.type === 'gold') { const d2 = document.createElement('div'); d2.className = 'ipick'; d2.append(num(() => Math.floor(q.v / 100), v => q.v = v * 100 + q.v % 100, 0), 'G', num(() => q.v % 100, v => q.v = Math.floor(q.v / 100) * 100 + v, 0, 99), 'S'); row2.append(d2); }
+      else if (q.type === 'tier') {
+        const d2 = document.createElement('div'); d2.className = 'ipick';
+        const sl = (opts, k) => { const e2 = document.createElement('select'); e2.innerHTML = opts.map(([v, l]) => `<option value="${v}">${l}</option>`).join(''); e2.value = q[k]; e2.onchange = () => q[k] = e2.value; return e2; };
+        d2.append(sl([['magic', 'Magic'], ['rare', 'Rare'], ['epic', 'Epic']], 'tier'), sl(METALS, 'metal'), sl([['any', 'helmet or armor'], ['helm', 'helmet'], ['armor', 'body armor']], 'piece'));
+        row2.append(d2);
+      }
+      const wt = document.createElement('div'); wt.className = 'ipick';
+      wt.append('weight ', num(() => q.w, v => { q.w = v; render(); }, 1, 1000), document.createTextNode(` ${Math.round((+q.w || 0) / tot * 100)}%`));
+      const xx = document.createElement('button'); xx.className = 'sm'; xx.textContent = '×'; xx.onclick = () => { C.rewards.splice(i, 1); render(); }; wt.append(xx);
+      row2.append(wt);
+      g.append(row2);
+    });
+    const ad = document.createElement('button'); ad.className = 'sm'; ad.textContent = '+ reward'; ad.onclick = () => { C.rewards.push({ type: 'item', v: 0, w: 1 }); render(); };
+    g.append(ad);
+    g.insertAdjacentHTML('beforeend', '<div class="hint">One reward is drawn by weight each time it is opened. "Once on the server": only one player ever gets it; after that it is left out of the draw (as are items marked Unique while one exists). If nothing can be given, it is empty.</div>');
+    const sv = document.createElement('button'); sv.className = 'btn pri'; sv.style.padding = '5px 12px'; sv.textContent = isNew ? 'Save chest' : 'Save and convert'; sv.disabled = ro;
+    sv.onclick = async () => {
+      if (C.rewards.some(q => (q.type === 'item' || q.type === 'unique') && !q.v)) return toast('Pick an item for every item reward.', true);
+      const r2 = await api('/api/chest', { x, y, chest: C });
+      if (r2.error) return toast(r2.error, true);
+      if (!isNew) await edit([{ op: 'itemedit', x, y, driver: 75 }], `converted ${it.name} at ${x},${y} to an editor chest`, true);
+      toast('Chest: ' + r2.msg);
+    };
+    g.append(sv);
+    box.append(g);
+  };
+  render();
 }
 
 // ---- the NPC on the selected tile: facing, move, remove

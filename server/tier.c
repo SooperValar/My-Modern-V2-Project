@@ -464,6 +464,19 @@ int tier_chest_item(int temp)
 	return tier_create(temp,TIER_MAGIC,0,level);
 }
 
+/* MyV2 chests: a new tiered helmet or body armor. metal: 0 Bronze .. 5 Titanium, -1 any;
+ * piece: 1 helmet, 2 body armor, 0 either. Its level is picked inside that metal's range. */
+int tier_chest_reward(int tier,int metal,int piece)
+{
+	int m,level,helm;
+
+	if (tier<TIER_MAGIC || tier>TIER_EPIC) tier=TIER_MAGIC;
+	m=(metal>=0 && metal<NMETAL) ? metal : RANDOM(NMETAL);
+	helm=piece==1 ? 1 : piece==2 ? 0 : RANDOM(2);
+	level=metals[m].from+RANDOM(metals[m].to-metals[m].from+1);
+	return tier_create(helm ? metals[m].helm : metals[m].body,tier,0,level);
+}
+
 /* ---- display ---- */
 
 int tier_font(int in)	// tooltip font for the name: 10 Common ... 14 Legendary

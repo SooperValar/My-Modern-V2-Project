@@ -298,6 +298,33 @@ The design is in `docs/ITEM_TIERS.md`. This first part builds the core:
 - Undo/redo, history and saving cover NPCs. Saving now also writes `char.dat`, `tchar.dat` and `effect.dat` when they were changed (backed up like the map); "Undo last save" puts back whichever files that save wrote.
 - Tested on a copy with the real server: a placed Geoffrey spawned with all his items, facing as set; a moved and turned one kept its spot; a removed one did not come back.
 
+#### Chests (MyV2 chests and the chest editor)
+- **How the game's own loot items work:** a chest, flower, mushroom or bookshelf is a map item whose driver gives something when it is used:
+  - **Driver 1:** one fixed item (data 0).
+  - **Driver 42:** one item at random, equal chance, from up to 10 (data 0-9). Some armor numbers give a Magic piece of that metal instead (`tier_chest_item`).
+  - **Driver 59:** gold (data 0).
+  - **Driver 30:** needs an item in the hand, which it takes.
+  - **Driver 53:** an item engraved with the player's name.
+  - **Driver 54:** an item, and it alerts the monsters nearby.
+  - Once opened it stays open for its duration (Treasure Chests: 1 hour), then anyone can open it again.
+  - Items marked Unique (`IF_UNIQUE`: Helm of Shadows, god weapons, the Fire and Ice sets) can't be created while a copy exists anywhere (`god_create_item`).
+- **MyV2 chest** (new driver 75, `talk_chest_open` in `npctalk.c`, set up in `.dat/npctalk.dat` as `chest <x> <y> ... end`):
+  - **Rewards:** weighted, drawn by weight each time it is opened. They can mix items, gold, **tier armor** (Magic/Rare/Epic, a metal or any, helmet/armor/either: made new by `tier_chest_reward` in `tier.c`, its level picked inside the metal's range), **items given only once on the whole server**, and "nothing".
+  - **Once per player:** each player gets something from it only once.
+  - **Refill:** its own refill time.
+  - Rewards that can't be given any more are left out of the draw; if nothing is left, it's empty. A full backpack keeps it closed so the player can come back.
+  - `.dat/chestlog.dat` keeps who opened which once-per-player chest and which once-only rewards went to whom; `server.log` names every once-only reward.
+  - Console: `chesttest <player> <x> <y>`.
+- **Chest editor** in the tile panel for every loot item:
+  - **Old-style ones:** shows what they give, in words, with each one's chance and when they open again.
+  - **Convert to an editor chest:** keeps those rewards (the old tier armor numbers become Magic pieces of that metal). Drivers 30, 53 and 54 lose their special part, and it asks first.
+  - **Editor chests:** refill time, once per player, and the reward list (item / gold / tier armor / item once on the server / nothing) with weights and the chance of each.
+- Tested with the real server:
+  - a Bronze armor of Magic tier made new;
+  - gold;
+  - once per player refusing the second try;
+  - an "once on the server" reward given once and then left out of the draw (the next players got a new Bronze Mage Helm of Heal and another item from the list).
+
 #### Editor: items and portals
 - Selecting a tile with an item shows an item editor: name, description (what players read when they look), its data values, and for portals (driver 6) "Leads to x, y" with **Pick on map** (click the destination on the map or on the world map with M) and **Go there**. Placing a portal asks right away where it should lead. Lab portals (data 2 set) are flagged, with a button to make them normal portals. Undo works for these too.
 

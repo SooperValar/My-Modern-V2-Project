@@ -38,6 +38,21 @@
    end
  For a player, the first entry whose trigger and conditions match is used.
 
+   chest <x> <y> [comment]        the item on that tile (driver 75) is a MyV2 chest; its lines:
+   refill <seconds>               how long it stays open (empty) before it can be opened again
+   once player                    each player gets something from it only once (else "It's empty")
+   reward item <t> <weight>       a reward, chosen at random by weight
+   reward gold <silver> <weight>
+   reward tier <magic|rare|epic> <metal|any> <helm|armor|any> <weight>   a tiered piece, made new
+   reward unique <t> <weight>     an item this chest gives only once on the whole server
+   reward nothing <weight>        "It's empty..."
+   end
+   (rewards that can't be given any more - a unique already given, an item marked Unique that
+   exists somewhere - are left out of the draw; if nothing is left, the chest is empty)
+
+ .dat/chestlog.dat: which player got something from which once-per-player chest, and which
+ unique rewards were given (text, one line each).
+
  .dat/quest.dat: the quest steps of every character (255 per character), kept with the
  character's creation date so a new character in an old slot starts clean. (A file of the
  first version, 31 quests and no header, is converted when the server opens it.)
@@ -88,6 +103,20 @@ struct tentry {
 struct tstep { char n; unsigned short v; int str; };
 struct qrow { int stamp; unsigned short v[QVARS]; };
 
+/* chests */
+#define MAXCHEST 600
+#define MAXREW 16
+enum { RW_ITEM=1, RW_GOLD, RW_TIER, RW_UNIQUE, RW_NOTHING };
+struct reward { char type; int a, b, c, d, w; };
+struct chest { int x, y, refill, once; struct reward r[MAXREW]; int nr; };
+static struct chest chests[MAXCHEST];
+static int nchest=0;
+#define CHESTLOG DATDIR"/chestlog.dat"
+static struct { int x, y, cn, stamp; } *opened=NULL;	// once-per-player chests already opened
+static int nopened=0, maxopened=0;
+static int given_unique[512], ngiven=0;
+static int chestlog_loaded=0;
+
 static struct tentry ent[MAXENT];
 static char hasnear[MAXTCHARS];		// templates with "when near" lines
 static struct tstep step[MAXSTEP];
@@ -133,8 +162,9 @@ int talk_load(void)
 	char line[1024],w1[64],w2[64],op[16],*p,*q;
 	int temp=0,n,v,x,y,ln=0,bad=0,ax=0,ay=0;
 	struct tentry *e=NULL;
+	struct chest *ch_=NULL;
 
-	nent=nstep=0; plen=1; pool[0]=0; talk_loaded=1;
+	nent=nstep=0; nchest=0; plen=1; pool[0]=0; talk_loaded=1;
 	memset(hasnear,0,sizeof(hasnear));
 	memset(qname,0,sizeof(qname));
 	f=fopen(TALK_FILE,"r");
@@ -157,6 +187,37 @@ int talk_load(void)
 				step[nstep].n=n; step[nstep].v=v; step[nstep].str=pool_add(q+x); nstep++;
 			} else bad++;
 			continue;
+		}
+		if (!strcmp(w1,"chest")) {
+			e=NULL; ch_=NULL;
+			if (sscanf(q,"%d %d",&x,&y)==2 && nchest<MAXCHEST) { ch_=&chests[nchest++]; memset(ch_,0,sizeof(*ch_)); ch_->x=x; ch_->y=y; }
+			else bad++;
+			continue;
+		}
+		if (ch_) {
+			char a1[16],a2[16],a3[16];
+			if (!strcmp(w1,"end")) { ch_=NULL; continue; }
+			if (!strcmp(w1,"refill")) { ch_->refill=atoi(q); continue; }
+			if (!strcmp(w1,"once")) { ch_->once=1; continue; }
+			if (!strcmp(w1,"reward") && ch_->nr<MAXREW) {
+				struct reward *r=&ch_->r[ch_->nr];
+				memset(r,0,sizeof(*r));
+				if (sscanf(q,"item %d %d",&n,&v)==2) { r->type=RW_ITEM; r->a=n; r->w=v; }
+				else if (sscanf(q,"gold %d %d",&n,&v)==2) { r->type=RW_GOLD; r->a=n; r->w=v; }
+				else if (sscanf(q,"unique %d %d",&n,&v)==2) { r->type=RW_UNIQUE; r->a=n; r->w=v; }
+				else if (sscanf(q,"nothing %d",&v)==1) { r->type=RW_NOTHING; r->w=v; }
+				else if (sscanf(q,"tier %15s %15s %15s %d",a1,a2,a3,&v)==4) {
+					static char *tiers[]={"","magic","rare","epic"}, *metal[]={"bronze","steel","golden","emerald","crystal","titanium"};
+					r->type=RW_TIER; r->w=v; r->a=0; r->b=-1; r->c=0;
+					for (n=1; n<4; n++) if (!strcmp(a1,tiers[n])) r->a=n;
+					for (n=0; n<6; n++) if (!strcmp(a2,metal[n])) r->b=n;
+					r->c=!strcmp(a3,"helm") ? 1 : !strcmp(a3,"armor") ? 2 : 0;
+					if (!r->a) r->type=0;
+				}
+				if (r->type && r->w>0) ch_->nr++; else bad++;
+				continue;
+			}
+			bad++; continue;
 		}
 		if (!strcmp(w1,"npc")) { temp=atoi(q); ax=ay=0; e=NULL; continue; }
 		if (!strcmp(w1,"at")) { if (sscanf(q,"%d %d",&ax,&ay)!=2) ax=ay=0; temp=0; e=NULL; continue; }
@@ -591,6 +652,117 @@ int talk_test_use(int co,int x,int y)
 	int in;
 	if (x<1 || y<1 || x>=MAPX || y>=MAPY || !(in=map[x+y*MAPX].it)) return -1;
 	return talk_custom_use(co,in);
+}
+
+/* ---- chests ---- */
+static void chestlog_load(void)
+{
+	FILE *f;
+	char line[128];
+	int x,y,c,st,t;
+	chestlog_loaded=1;
+	if (!(f=fopen(CHESTLOG,"r"))) return;
+	while (fgets(line,sizeof(line),f)) {
+		if (sscanf(line,"P %d %d %d %d",&x,&y,&c,&st)==4) {
+			if (nopened>=maxopened) { maxopened=maxopened ? maxopened*2 : 1024; opened=realloc(opened,maxopened*sizeof(*opened)); }
+			opened[nopened].x=x; opened[nopened].y=y; opened[nopened].cn=c; opened[nopened].stamp=st; nopened++;
+		} else if (sscanf(line,"U %d",&t)==1 && ngiven<512) given_unique[ngiven++]=t;
+	}
+	fclose(f);
+}
+
+static void chestlog_add(char *line)
+{
+	FILE *f=fopen(CHESTLOG,"a");
+	if (f) { fputs(line,f); fclose(f); }
+}
+
+static int chest_opened_by(struct chest *c,int co)
+{
+	int n;
+	for (n=0; n<nopened; n++) if (opened[n].x==c->x && opened[n].y==c->y && opened[n].cn==co && opened[n].stamp==(int)ch[co].creation_date) return 1;
+	return 0;
+}
+
+static int unique_given(int t)
+{
+	int n;
+	for (n=0; n<ngiven; n++) if (given_unique[n]==t) return 1;
+	return 0;
+}
+
+static int item_exists(int t)	// a copy of this template anywhere (like the game's check for Unique items)
+{
+	int n;
+	for (n=1; n<MAXITEM; n++) if (it[n].used!=USE_EMPTY && it[n].temp==t) return 1;
+	return 0;
+}
+
+static int reward_possible(struct reward *r)
+{
+	switch (r->type) {
+		case RW_ITEM:   return r->a>0 && r->a<MAXTITEM && it_temp[r->a].used && !((it_temp[r->a].flags&IF_UNIQUE) && item_exists(r->a));
+		case RW_UNIQUE: return r->a>0 && r->a<MAXTITEM && it_temp[r->a].used && !unique_given(r->a) &&
+				       !((it_temp[r->a].flags&IF_UNIQUE) && item_exists(r->a));	// (a Unique item also: none may exist)
+		case RW_GOLD: case RW_TIER: case RW_NOTHING: return 1;
+	}
+	return 0;
+}
+
+/* a player opens a MyV2 chest (driver 75): 1 = it opens */
+int talk_chest_open(int cn,int in)
+{
+	struct chest *c=NULL;
+	int n,tot=0,r,in2=0;
+	char buf[160];
+
+	if (!talk_loaded) talk_load();
+	if (!chestlog_loaded) chestlog_load();
+	if (!cn || !IS_SANEITEM(in) || it[in].carried) return 0;
+	if (it[in].active) { do_char_log(cn,1,"It's open - and empty.\n"); return 0; }
+	for (n=0; n<nchest; n++) if (chests[n].x==it[in].x && chests[n].y==it[in].y) { c=&chests[n]; break; }
+	if (!c) { do_char_log(cn,1,"It's empty...\n"); return 1; }
+	if (c->refill>0) it[in].duration=c->refill*TICKS;
+
+	if (c->once && chest_opened_by(c,cn)) { do_char_log(cn,1,"You already took what was in it for you.\n"); return 0; }
+
+	for (n=0; n<c->nr; n++) if (reward_possible(&c->r[n])) tot+=c->r[n].w;
+	if (!tot) { do_char_log(cn,1,"It's empty...\n"); return 1; }
+	r=RANDOM(tot);
+	for (n=0; n<c->nr; n++) { if (!reward_possible(&c->r[n])) continue; if (r<c->r[n].w) break; r-=c->r[n].w; }
+	if (n>=c->nr) return 1;
+
+	switch (c->r[n].type) {
+		case RW_NOTHING: do_char_log(cn,1,"It's empty...\n"); break;
+		case RW_GOLD:
+			ch[cn].gold+=c->r[n].a; do_update_char(cn);
+			do_char_log(cn,1,"You found %dG %dS.\n",c->r[n].a/100,c->r[n].a%100);
+			chlog(cn,"Got %dG %dS from %s",c->r[n].a/100,c->r[n].a%100,it[in].name);
+			break;
+		case RW_ITEM: case RW_UNIQUE: case RW_TIER:
+			if (c->r[n].type==RW_TIER) in2=tier_chest_reward(c->r[n].a,c->r[n].b,c->r[n].c);
+			else in2=god_create_item(c->r[n].a);
+			if (!in2) { do_char_log(cn,1,"It's empty...\n"); break; }
+			if (!god_give_char(in2,cn)) {
+				do_char_log(cn,0,"Your backpack is full, so you can't take the %s.\n",it[in2].reference);
+				it[in2].used=USE_EMPTY;
+				return 0;			// stays closed: they can come back
+			}
+			do_char_log(cn,1,"You got %s.\n",it[in2].reference);
+			chlog(cn,"Got %s from %s at %d,%d",it[in2].name,it[in].name,it[in].x,it[in].y);
+			if (c->r[n].type==RW_UNIQUE) {
+				if (ngiven<512) given_unique[ngiven++]=c->r[n].a;
+				sprintf(buf,"U %d %s got it at %d,%d\n",c->r[n].a,ch[cn].name,it[in].x,it[in].y); chestlog_add(buf);
+				xlog("Unique chest reward: %s got %s (template %d) at %d,%d",ch[cn].name,it[in2].name,c->r[n].a,it[in].x,it[in].y);
+			}
+			break;
+	}
+	if (c->once) {
+		if (nopened>=maxopened) { maxopened=maxopened ? maxopened*2 : 1024; opened=realloc(opened,maxopened*sizeof(*opened)); }
+		opened[nopened].x=c->x; opened[nopened].y=c->y; opened[nopened].cn=cn; opened[nopened].stamp=ch[cn].creation_date; nopened++;
+		sprintf(buf,"P %d %d %d %d %s\n",c->x,c->y,cn,(int)ch[cn].creation_date,ch[cn].name); chestlog_add(buf);
+	}
+	return 1;
 }
 
 /* the NPC co was killed by cn: the player behind the kill (a companion's master), and their group

@@ -184,6 +184,17 @@ static void con_cmd(char *line)
 		if (!r) out("  (no line took it%s)\n",w[0][4]=='n' ? ": the normal greeting" : ": it refuses the money");
 		return;
 	}
+	if (!strcmp(w[0],"chesttest")) {	// chesttest <player> <x> <y>: as if the player opened the chest there
+		int x=atoi(w[2]),y=atoi(w[3]),in;
+		if (!(co=con_player(w[1]))) return;
+		if (x<1 || y<1 || x>=MAPX || y>=MAPY || !(in=map[x+y*MAPX].it)) { out("  No item on %d,%d.\n",x,y); return; }
+		if (it[in].driver!=75) { out("  %s on %d,%d is not a MyV2 chest (driver %d).\n",it[in].name,x,y,it[in].driver); return; }
+		v=it[in].active; it[in].active=0;
+		n=talk_chest_open(co,in);
+		it[in].active=v;
+		out("  %s (the result went to %s's log)\n",n ? "opened" : "did not open",ch[co].name);
+		return;
+	}
 	if (!strcmp(w[0],"talkreload")) {
 		n=talk_load();
 		out("  NPC dialogue loaded: %d entries%s.\n",talk_entries(),n ? " (some lines were not understood)" : "");
