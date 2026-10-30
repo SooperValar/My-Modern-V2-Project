@@ -14,6 +14,8 @@ In order:
 
 7. **Ice set sprites**: the Helmet, Armor, Leggings, Boots and Gloves of Ice (unique, templates 1272-1276) use sprites 18100-18104, which don't exist in the client ("Sprite ... is missing"). They need pictures (new ones or recoloured).
 
+8. **Lab shrine keys for missed lab shrines**: a way for players to get a key for a labyrinth shrine they missed. Price: 100 gold per shrine times the lab level (e.g. a missed shrine in lab 5 costs 500 gold).
+
 Later (ideas, not decided):
 
 - Prestige: what triggers it and what it gives (the Final Test's Shrine of Change will be used).
