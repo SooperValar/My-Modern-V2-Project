@@ -42,8 +42,9 @@
    refill <seconds>               how long it stays open (empty) before it can be opened again
    once player                    each player gets something from it only once (else "It's empty")
    first <t>                      the first time each player opens it, they get this item instead of a
-                                  draw (the chest stays closed for the others); after that, it draws from its rewards as usual -
-                                  but for that player only once the refill time has passed since the first-time item
+                                  draw. Players who haven't had theirs can take it even while the chest is open
+                                  (empty); if it was closed, it opens and stays empty for its refill time, like a
+                                  normal opening. After that, the player gets the normal draws like everyone else.
    reward item <t> <weight>       a reward, chosen at random by weight
    reward gold <silver> <weight>
    reward tier <tiers> <metals> <helm|armor|any> <level from> <level to> <weight>
@@ -748,12 +749,15 @@ int talk_chest_open(int cn,int in)
 	if (!talk_loaded) talk_load();
 	if (!chestlog_loaded) chestlog_load();
 	if (!cn || !IS_SANEITEM(in) || it[in].carried) return 0;
-	if (it[in].active) { do_char_log(cn,1,"It's open - and empty.\n"); return 0; }
 	for (n=0; n<nchest; n++) if (chests[n].x==it[in].x && chests[n].y==it[in].y) { c=&chests[n]; break; }
-	if (!c) { do_char_log(cn,1,"It's empty...\n"); return 1; }
+	if (!c) {
+		if (it[in].active) { do_char_log(cn,1,"It's open - and empty.\n"); return 0; }
+		do_char_log(cn,1,"It's empty...\n"); return 1;
+	}
 	if (c->refill>0) it[in].duration=c->refill*TICKS;
 
-	// the first time this player opens it: the special first reward (if it can be given), and the chest stays closed for the others
+	// the first time this player opens it: the special first reward (if it can be given) - also while the chest is
+	// open (empty). A closed chest opens (and stays empty for its refill time); an open one keeps its timer.
 	if (c->first>0 && c->first<MAXTITEM && it_temp[c->first].used && !chest_opened_by(c,cn,'F') &&
 	    !((it_temp[c->first].flags&IF_UNIQUE) && item_exists(c->first))) {
 		if (!(in2=god_create_item(c->first))) return 0;
@@ -765,14 +769,10 @@ int talk_chest_open(int cn,int in)
 		do_char_log(cn,1,"You got %s.\n",it[in2].reference);
 		chlog(cn,"Got %s (first reward) from %s at %d,%d",it[in2].name,it[in].name,it[in].x,it[in].y);
 		chest_mark(c,cn,'F');
-		return 0;
+		return it[in].active ? 0 : 1;
 	}
 
-	// after the first-time item: this player waits the chest's refill time before a normal draw
-	if (c->first>0 && c->refill>0 && (n=chest_opened_by(c,cn,'F')) && opened[n-1].when && time(NULL)-opened[n-1].when<c->refill) {
-		do_char_log(cn,1,"You already took what was in it for you. Come back later.\n");
-		return 0;
-	}
+	if (it[in].active) { do_char_log(cn,1,"It's open - and empty.\n"); return 0; }
 
 	if (c->once && chest_opened_by(c,cn,'P')) { do_char_log(cn,1,"You already took what was in it for you.\n"); return 0; }
 

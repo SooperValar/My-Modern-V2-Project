@@ -119,12 +119,12 @@ static void con_echo(char *s) { out("  says: %s\n",s); }
 
 static void con_cmd(char *line)
 {
-	char copy[1024],*w[4],*p;
+	char copy[1024],*w[5],*p;
 	int n,co,v;
 
 	strncpy(copy,line,sizeof(copy)-1); copy[sizeof(copy)-1]=0;
-	for (n=0; n<4; n++) w[n]="";
-	for (n=0,p=strtok(copy," \t"); n<4 && p; n++,p=strtok(NULL," \t")) w[n]=p;
+	for (n=0; n<5; n++) w[n]="";
+	for (n=0,p=strtok(copy," \t"); n<5 && p; n++,p=strtok(NULL," \t")) w[n]=p;
 	if (!*w[0]) return;
 	for (p=w[0]; *p; p++) *p=tolower(*p);
 
@@ -184,11 +184,18 @@ static void con_cmd(char *line)
 		if (!r) out("  (no line took it%s)\n",w[0][4]=='n' ? ": the normal greeting" : ": it refuses the money");
 		return;
 	}
-	if (!strcmp(w[0],"chesttest")) {	// chesttest <player> <x> <y>: as if the player opened the chest there
+	if (!strcmp(w[0],"chesttest")) {	// chesttest <player> <x> <y> [real]: as if the player opened the chest there (real: with its open/closed state)
 		int x=atoi(w[2]),y=atoi(w[3]),in;
 		if (!(co=con_player(w[1]))) return;
 		if (x<1 || y<1 || x>=MAPX || y>=MAPY || !(in=map[x+y*MAPX].it)) { out("  No item on %d,%d.\n",x,y); return; }
 		if (it[in].driver!=75) { out("  %s on %d,%d is not a MyV2 chest (driver %d).\n",it[in].name,x,y,it[in].driver); return; }
+		if (!strcmp(w[4],"real")) {	// as in the game: an open chest stays open, an opened one starts its timer
+			v=it[in].active;
+			n=talk_chest_open(co,in);
+			if (n && !v) it[in].active=it[in].duration;
+			out("  %s · chest is %s (%d s left)\n",n ? "opened" : "did not open",it[in].active ? "open" : "closed",it[in].active/TICKS);
+			return;
+		}
 		v=it[in].active; it[in].active=0;
 		n=talk_chest_open(co,in);
 		it[in].active=v;
