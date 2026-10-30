@@ -5,8 +5,9 @@ chest sprites 220/221 (lock facing south) and 222/223 (lock facing west).
 Writes 18130 (north, closed), 18131 (north, open), 18132 (east, closed), 18133 (east, open).
 
 Turned around, the lock is on the far side: the long side we see is the chest's back, so the lock
-plate is painted over with the planks next to it. The open chest is hinged at the back, which now
-faces us, so its lid stands over the front edge instead of the far one."""
+plate is painted over with the planks next to it. The open ones keep the game's lid at the back:
+a first try with the lid standing over the front edge (lid_to_front, kept below) looked like one
+box stacked on another in the game."""
 import os, sys
 from PIL import Image
 
@@ -56,7 +57,7 @@ SHIFT = (9, 4)                # from the far long edge to the near one
 
 def north(closed, open_):
     c = unlock(closed, LOCK, DX, DY)
-    o = lid_to_front(unlock(open_, LOCK, DX, DY), EDGE, SHIFT)
+    o = unlock(open_, LOCK, DX, DY)
     return c, o
 
 
@@ -70,7 +71,7 @@ def east(closed, open_):
     c = unlock(closed, (l0, LOCK[1], l1, LOCK[3]), -DX, DY)
     l0, l1 = sorted((mirror_x(LOCK[0], 1), mirror_x(LOCK[2], 1)))
     edge = ((mirror_x(EDGE[0][0], 1), EDGE[0][1]), (mirror_x(EDGE[1][0], 1), EDGE[1][1]))
-    o = lid_to_front(unlock(open_, (l0, LOCK[1], l1, LOCK[3]), -DX, DY), edge, (-SHIFT[0], SHIFT[1]))
+    o = unlock(open_, (l0, LOCK[1], l1, LOCK[3]), -DX, DY)
     return c, o
 
 
