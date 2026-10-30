@@ -43,7 +43,12 @@
    once player                    each player gets something from it only once (else "It's empty")
    reward item <t> <weight>       a reward, chosen at random by weight
    reward gold <silver> <weight>
-   reward tier <magic|rare|epic> <metal|any> <helm|armor|any> <weight>   a tiered piece, made new
+   reward tier <tiers> <metals> <helm|armor|any> <level from> <level to> <weight>
+                                  a tiered piece, made new. tiers: magic,rare,epic (one or more; with several,
+                                  the odds of monster drops: 70:22:8); metals: fit (a metal that fits the
+                                  level) or bronze,steel,golden,emerald,crystal,titanium (one or more);
+                                  the level (1-20, also the rank needed) is picked in the range
+                                  (the older form "<tier> <metal|any> <piece> <weight>" still works)
    reward unique <t> <weight>     an item this chest gives only once on the whole server
    reward nothing <weight>        "It's empty..."
    end
@@ -107,7 +112,7 @@ struct qrow { int stamp; unsigned short v[QVARS]; };
 #define MAXCHEST 600
 #define MAXREW 16
 enum { RW_ITEM=1, RW_GOLD, RW_TIER, RW_UNIQUE, RW_NOTHING };
-struct reward { char type; int a, b, c, d, w; };
+struct reward { char type; int a, b, c, d, e, w; };
 struct chest { int x, y, refill, once; struct reward r[MAXREW]; int nr; };
 static struct chest chests[MAXCHEST];
 static int nchest=0;
@@ -195,7 +200,7 @@ int talk_load(void)
 			continue;
 		}
 		if (ch_) {
-			char a1[16],a2[16],a3[16];
+			char a1[64],a2[64],a3[16];
 			if (!strcmp(w1,"end")) { ch_=NULL; continue; }
 			if (!strcmp(w1,"refill")) { ch_->refill=atoi(q); continue; }
 			if (!strcmp(w1,"once")) { ch_->once=1; continue; }
@@ -206,12 +211,19 @@ int talk_load(void)
 				else if (sscanf(q,"gold %d %d",&n,&v)==2) { r->type=RW_GOLD; r->a=n; r->w=v; }
 				else if (sscanf(q,"unique %d %d",&n,&v)==2) { r->type=RW_UNIQUE; r->a=n; r->w=v; }
 				else if (sscanf(q,"nothing %d",&v)==1) { r->type=RW_NOTHING; r->w=v; }
-				else if (sscanf(q,"tier %15s %15s %15s %d",a1,a2,a3,&v)==4) {
+				else if (!strncmp(q,"tier ",5)) {
 					static char *tiers[]={"","magic","rare","epic"}, *metal[]={"bronze","steel","golden","emerald","crystal","titanium"};
-					r->type=RW_TIER; r->w=v; r->a=0; r->b=-1; r->c=0;
-					for (n=1; n<4; n++) if (!strcmp(a1,tiers[n])) r->a=n;
-					for (n=0; n<6; n++) if (!strcmp(a2,metal[n])) r->b=n;
+					char *tok,*sp2,list[64];
+					int lo=0,hi=0,k=sscanf(q,"tier %63s %63s %15s %d %d %d",a1,a2,a3,&lo,&hi,&v);
+					r->type=RW_TIER; r->a=r->b=0;
+					if (k==4) { v=lo; lo=hi=0; }				// the older form: tier metal piece weight
+					else if (k!=6) { r->type=0; }
+					strncpy(list,a1,63); list[63]=0;
+					for (tok=strtok_r(list,",",&sp2); tok; tok=strtok_r(NULL,",",&sp2)) for (n=1; n<4; n++) if (!strcmp(tok,tiers[n])) r->a|=1<<n;
+					strncpy(list,a2,63); list[63]=0;
+					for (tok=strtok_r(list,",",&sp2); tok; tok=strtok_r(NULL,",",&sp2)) for (n=0; n<6; n++) if (!strcmp(tok,metal[n])) r->b|=1<<n;
 					r->c=!strcmp(a3,"helm") ? 1 : !strcmp(a3,"armor") ? 2 : 0;
+					r->d=lo; r->e=hi; r->w=v;
 					if (!r->a) r->type=0;
 				}
 				if (r->type && r->w>0) ch_->nr++; else bad++;
@@ -740,7 +752,7 @@ int talk_chest_open(int cn,int in)
 			chlog(cn,"Got %dG %dS from %s",c->r[n].a/100,c->r[n].a%100,it[in].name);
 			break;
 		case RW_ITEM: case RW_UNIQUE: case RW_TIER:
-			if (c->r[n].type==RW_TIER) in2=tier_chest_reward(c->r[n].a,c->r[n].b,c->r[n].c);
+			if (c->r[n].type==RW_TIER) in2=tier_chest_reward(c->r[n].a,c->r[n].b,c->r[n].c,c->r[n].d,c->r[n].e);
 			else in2=god_create_item(c->r[n].a);
 			if (!in2) { do_char_log(cn,1,"It's empty...\n"); break; }
 			if (!god_give_char(in2,cn)) {

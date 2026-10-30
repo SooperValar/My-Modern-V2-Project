@@ -179,7 +179,12 @@ def talk_parse(text):
                 elif k == 'reward' and a:
                     if a[0] in ('item', 'unique', 'gold'): chest['rewards'].append({'type': a[0], 'v': int(a[1]), 'w': int(a[2])})
                     elif a[0] == 'nothing': chest['rewards'].append({'type': 'nothing', 'w': int(a[1])})
-                    elif a[0] == 'tier': chest['rewards'].append({'type': 'tier', 'tier': a[1], 'metal': a[2], 'piece': a[3], 'w': int(a[4])})
+                    elif a[0] == 'tier' and len(a) >= 7:
+                        chest['rewards'].append({'type': 'tier', 'tiers': a[1].split(','), 'metals': 'fit' if a[2] in ('fit', 'any') else a[2].split(','),
+                                                 'piece': a[3], 'lo': int(a[4]), 'hi': int(a[5]), 'w': int(a[6])})
+                    elif a[0] == 'tier':        # the older form: tier metal piece weight (its level: the metal's own range)
+                        chest['rewards'].append({'type': 'tier', 'tiers': [a[1]], 'metals': 'fit' if a[2] == 'any' else [a[2]],
+                                                 'piece': a[3], 'lo': 0, 'hi': 0, 'w': int(a[4])})
                 continue
             if k == 'chest' and len(a) >= 2:
                 chest = {'refill': 0, 'once': 0, 'rewards': []}
@@ -259,7 +264,12 @@ def talk_text(quests, npcs, names):
             w = max(1, int(r.get('w', 1)))
             if r['type'] in ('item', 'unique', 'gold'): out.append('reward %s %d %d' % (r['type'], int(r['v']), w))
             elif r['type'] == 'nothing': out.append('reward nothing %d' % w)
-            elif r['type'] == 'tier': out.append('reward tier %s %s %s %d' % (r.get('tier', 'magic'), r.get('metal', 'any'), r.get('piece', 'any'), w))
+            elif r['type'] == 'tier':
+                tiers = [t for t in (r.get('tiers') or ['magic']) if t in ('magic', 'rare', 'epic')] or ['magic']
+                mets = r.get('metals') or 'fit'
+                mets = 'fit' if mets == 'fit' else ','.join(m for m in mets if m in ('bronze', 'steel', 'golden', 'emerald', 'crystal', 'titanium')) or 'fit'
+                lo, hi = int(r.get('lo') or 0), int(r.get('hi') or 0)
+                out.append('reward tier %s %s %s %d %d %d' % (','.join(tiers), mets, r.get('piece', 'any') if r.get('piece') in ('helm', 'armor') else 'any', lo, max(lo, hi), w))
         out.append('end')
     for t in sorted(npcs, key=lambda k: (isinstance(k, str), str(k).zfill(12))):
         if not npcs[t]:
@@ -2409,6 +2419,10 @@ table.pl button:hover { color: var(--text); border-color: var(--gold); }
 #tile .chestg input[type=number] { width: 64px; padding: 3px 6px; }
 #tile .chestg select { padding: 3px 6px; max-width: 100%; }
 #tile .chestg .hint { color: var(--dim2); font-size: 11px; }
+#tile .chestg .chips { display: flex; flex-wrap: wrap; gap: 3px; }
+#tile .chestg .chip { padding: 2px 7px; border-radius: 10px; font-size: 11px; color: #a8987a; border: 1px solid #40362a; background: #221d16; }
+#tile .chestg .chip:hover { color: #fff3d6; border-color: #8a7140; }
+#tile .chestg .chip.on { color: #ffe39a; border-color: #d6a443; background: #3a2f17; }
 #tile .flg { display: grid; grid-template-columns: 1fr 1fr; gap: 3px 8px; margin-top: 8px; }
 .chk { display: flex; align-items: center; gap: 8px; padding: 3px 0; cursor: pointer; user-select: none; }
 .chk .dot { width: 9px; height: 9px; border-radius: 3px; flex: none; }
@@ -3386,14 +3400,15 @@ function legacyRewards(it) {     // what an old-style loot item gives, as editor
   if (it.driver === 59) out.push({ type: 'gold', v: d[0] * 100, w: 1 });
   else if (it.driver === 42) {
     const cnt = {}; for (const v of d) if (v) cnt[v] = (cnt[v] || 0) + 1;
-    for (const [t, w] of Object.entries(cnt)) { const lt = LEGACY_TIER[t]; out.push(lt ? { type: 'tier', tier: 'magic', metal: lt[0], piece: lt[1], w } : { type: 'item', v: +t, w }); }
+    const LV = { bronze: 3, steel: 6, golden: 9, emerald: 12, crystal: 15, titanium: 18 };     // as the old chests made them
+    for (const [t, w] of Object.entries(cnt)) { const lt = LEGACY_TIER[t]; out.push(lt ? { type: 'tier', tiers: ['magic'], metals: [lt[0]], piece: lt[1], lo: LV[lt[0]] - 1, hi: LV[lt[0]] + 1, w } : { type: 'item', v: +t, w }); }
   } else if (d[0]) out.push({ type: 'item', v: d[0], w: 1 });
   return out;
 }
 function rewardText(r) {
   if (r.type === 'gold') return `${Math.floor(r.v / 100)}G ${r.v % 100}S`;
   if (r.type === 'nothing') return 'nothing ("It\'s empty...")';
-  if (r.type === 'tier') return `a new ${r.tier} ${r.metal === 'any' ? '' : r.metal + ' '}${r.piece === 'any' ? 'helmet or armor' : r.piece === 'helm' ? 'helmet' : 'body armor'}`;
+  if (r.type === 'tier') return `a new ${(r.tiers || ['magic']).join('/')} ${r.metals === 'fit' || !r.metals ? '' : r.metals.join('/') + ' '}${r.piece === 'any' ? 'helmet or armor' : r.piece === 'helm' ? 'helmet' : 'body armor'}${r.lo ? `, level ${r.lo}${r.hi > r.lo ? '-' + r.hi : ''}` : ''}`;
   return (iname(r.v) || 'template ' + r.v) + (r.type === 'unique' ? ' (only once on the server)' : '');
 }
 async function lootEditor(el, r, x, y, ro) {
@@ -3432,15 +3447,30 @@ async function lootEditor(el, r, x, y, ro) {
       const row2 = document.createElement('div'); row2.className = 'rw';
       const ty = document.createElement('select');
       ty.innerHTML = [['item', 'Item'], ['gold', 'Gold'], ['tier', 'Tier armor'], ['unique', 'Item, once on the server'], ['nothing', 'Nothing']].map(([v, l]) => `<option value="${v}">${l}</option>`).join('');
-      ty.value = q.type; ty.onchange = () => { C.rewards[i] = ty.value === 'tier' ? { type: 'tier', tier: 'magic', metal: 'any', piece: 'any', w: q.w } : ty.value === 'gold' ? { type: 'gold', v: 1000, w: q.w } : ty.value === 'nothing' ? { type: 'nothing', w: q.w } : { type: ty.value, v: 0, w: q.w }; render(); };
+      ty.value = q.type; ty.onchange = () => { C.rewards[i] = ty.value === 'tier' ? { type: 'tier', tiers: ['magic'], metals: 'fit', piece: 'any', lo: 1, hi: 6, w: q.w } : ty.value === 'gold' ? { type: 'gold', v: 1000, w: q.w } : ty.value === 'nothing' ? { type: 'nothing', w: q.w } : { type: ty.value, v: 0, w: q.w }; render(); };
       row2.append(ty);
       if (q.type === 'item' || q.type === 'unique') row2.append(ipick(() => q.v, v => q.v = v, { filter: t => t[3] }));
       else if (q.type === 'gold') { const d2 = document.createElement('div'); d2.className = 'ipick'; d2.append(num(() => Math.floor(q.v / 100), v => q.v = v * 100 + q.v % 100, 0), 'G', num(() => q.v % 100, v => q.v = Math.floor(q.v / 100) * 100 + v, 0, 99), 'S'); row2.append(d2); }
       else if (q.type === 'tier') {
-        const d2 = document.createElement('div'); d2.className = 'ipick';
-        const sl = (opts, k) => { const e2 = document.createElement('select'); e2.innerHTML = opts.map(([v, l]) => `<option value="${v}">${l}</option>`).join(''); e2.value = q[k]; e2.onchange = () => q[k] = e2.value; return e2; };
-        d2.append(sl([['magic', 'Magic'], ['rare', 'Rare'], ['epic', 'Epic']], 'tier'), sl(METALS, 'metal'), sl([['any', 'helmet or armor'], ['helm', 'helmet'], ['armor', 'body armor']], 'piece'));
-        row2.append(d2);
+        const chips = (opts, has, toggle) => { const d2 = document.createElement('div'); d2.className = 'chips';
+          for (const [v, l] of opts) { const b2 = document.createElement('button'); b2.className = 'chip' + (has(v) ? ' on' : ''); b2.textContent = l; b2.onclick = () => { toggle(v); render(); }; d2.append(b2); }
+          return d2; };
+        q.tiers = q.tiers || ['magic'];
+        row2.append(chips([['magic', 'Magic'], ['rare', 'Rare'], ['epic', 'Epic']], v => q.tiers.includes(v),
+          v => { q.tiers = q.tiers.includes(v) ? q.tiers.filter(x => x !== v) : [...q.tiers, v]; if (!q.tiers.length) q.tiers = [v]; }));
+        const lv = document.createElement('div'); lv.className = 'ipick';
+        if (!q.lo) { q.lo = 0; }
+        lv.append('level ', num(() => q.lo || 1, v => { q.lo = v; if ((q.hi || 0) < v) q.hi = v; render(); }, 1, 20), ' to ', num(() => q.hi || q.lo || 1, v => { q.hi = Math.max(v, q.lo || 1); if (!q.lo) q.lo = 1; render(); }, 1, 20));
+        row2.append(lv);
+        const ms = METALS.slice(1);
+        row2.append(chips([['fit', 'fits the level'], ...ms], v => v === 'fit' ? q.metals === 'fit' : Array.isArray(q.metals) && q.metals.includes(v),
+          v => { if (v === 'fit') q.metals = 'fit'; else { const cur = Array.isArray(q.metals) ? q.metals : []; q.metals = cur.includes(v) ? cur.filter(x => x !== v) : [...cur, v]; if (!q.metals.length) q.metals = 'fit'; } }));
+        const pc = document.createElement('select'); pc.innerHTML = [['any', 'helmet or body armor'], ['helm', 'helmet'], ['armor', 'body armor']].map(([v, l]) => `<option value="${v}">${l}</option>`).join('');
+        pc.value = q.piece || 'any'; pc.onchange = () => q.piece = pc.value; row2.append(pc);
+        const tip = document.createElement('div'); tip.className = 'hint';
+        tip.textContent = (q.tiers.length > 1 ? 'Several tiers: drawn like monster drops (Magic 70 : Rare 22 : Epic 8). ' : '') +
+          (q.metals === 'fit' ? 'Metal: one that fits the level, like monster drops.' : 'Metal: one of these, at the level you set.') + (q.lo ? '' : ' Level: the old chest\'s own range (set one to change it).');
+        row2.append(tip);
       }
       const wt = document.createElement('div'); wt.className = 'ipick';
       wt.append('weight ', num(() => q.w, v => { q.w = v; render(); }, 1, 1000), document.createTextNode(` ${Math.round((+q.w || 0) / tot * 100)}%`));

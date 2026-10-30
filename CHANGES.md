@@ -309,7 +309,13 @@ The design is in `docs/ITEM_TIERS.md`. This first part builds the core:
   - Once opened it stays open for its duration (Treasure Chests: 1 hour), then anyone can open it again.
   - Items marked Unique (`IF_UNIQUE`: Helm of Shadows, god weapons, the Fire and Ice sets) can't be created while a copy exists anywhere (`god_create_item`).
 - **MyV2 chest** (new driver 75, `talk_chest_open` in `npctalk.c`, set up in `.dat/npctalk.dat` as `chest <x> <y> ... end`):
-  - **Rewards:** weighted, drawn by weight each time it is opened. They can mix items, gold, **tier armor** (Magic/Rare/Epic, a metal or any, helmet/armor/either: made new by `tier_chest_reward` in `tier.c`, its level picked inside the metal's range), **items given only once on the whole server**, and "nothing".
+  - **Rewards:** weighted, drawn by weight each time it is opened. They can mix items, gold, **tier armor**, **items given only once on the whole server**, and "nothing".
+  - **Tier armor** (`reward tier <tiers> <metals> <piece> <level from> <level to> <weight>`, made new by `tier_chest_reward` in `tier.c`):
+    - **Tiers:** one or more of Magic/Rare/Epic. With several, the odds of monster drops apply, 70:22:8.
+    - **Level:** a range from–to (1-20), which is also the rank needed.
+    - **Metal:** "fits the level" (the game's own rule, like monster drops) or one or more chosen metals, at the level set.
+    - **Piece:** helmet, body armor or either.
+    - The older simple form (`tier metal piece weight`, level in the metal's own range) still works; converted old chests get their old metal and level range.
   - **Once per player:** each player gets something from it only once.
   - **Refill:** its own refill time.
   - Rewards that can't be given any more are left out of the draw; if nothing is left, it's empty. A full backpack keeps it closed so the player can come back.
@@ -320,6 +326,7 @@ The design is in `docs/ITEM_TIERS.md`. This first part builds the core:
   - **Convert to an editor chest:** keeps those rewards (the old tier armor numbers become Magic pieces of that metal). Drivers 30, 53 and 54 lose their special part, and it asks first.
   - **Editor chests:** refill time, once per player, and the reward list (item / gold / tier armor / item once on the server / nothing) with weights and the chance of each.
 - Tested with the real server:
+  - tier lines with a level range and fitting metals (levels 3-6 in Bronze/Steel/Golden, Golden only at 5-6), with chosen metals at level 16-18, and in the older form (a list of six metals once failed to read, being longer than its buffer; fixed);
   - a Bronze armor of Magic tier made new;
   - gold;
   - once per player refusing the second try;

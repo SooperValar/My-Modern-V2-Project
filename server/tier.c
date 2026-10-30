@@ -464,16 +464,29 @@ int tier_chest_item(int temp)
 	return tier_create(temp,TIER_MAGIC,0,level);
 }
 
-/* MyV2 chests: a new tiered helmet or body armor. metal: 0 Bronze .. 5 Titanium, -1 any;
- * piece: 1 helmet, 2 body armor, 0 either. Its level is picked inside that metal's range. */
-int tier_chest_reward(int tier,int metal,int piece)
+/* MyV2 chests: a new tiered helmet or body armor.
+ * tiers: bit 1 Magic, 2 Rare, 3 Epic (with several, the odds of monster drops 70:22:8);
+ * metals: bit 0 Bronze .. 5 Titanium, 0 = a metal that fits the level; piece: 1 helmet, 2 body armor, 0 either;
+ * level from lo to hi (1-20); lo 0 = a level inside the metal's own range (older chest lines) */
+int tier_chest_reward(int tiers,int metals_mask,int piece,int lo,int hi)
 {
-	int m,level,helm;
+	static int odds[4]={0,70,22,8};
+	int n,tot=0,r,tier=TIER_MAGIC,level,helm,cand[NMETAL],nc=0,m;
 
-	if (tier<TIER_MAGIC || tier>TIER_EPIC) tier=TIER_MAGIC;
-	m=(metal>=0 && metal<NMETAL) ? metal : RANDOM(NMETAL);
+	for (n=TIER_MAGIC; n<=TIER_EPIC; n++) if (tiers&(1<<n)) tot+=odds[n];
+	if (tot) { r=RANDOM(tot); for (n=TIER_MAGIC; n<=TIER_EPIC; n++) if (tiers&(1<<n)) { if (r<odds[n]) { tier=n; break; } r-=odds[n]; } }
 	helm=piece==1 ? 1 : piece==2 ? 0 : RANDOM(2);
-	level=metals[m].from+RANDOM(metals[m].to-metals[m].from+1);
+	for (n=0; n<NMETAL; n++) if (metals_mask&(1<<n)) cand[nc++]=n;
+
+	if (lo<=0) {					// a level that fits the metal
+		m=nc ? cand[RANDOM(nc)] : RANDOM(NMETAL);
+		level=metals[m].from+RANDOM(metals[m].to-metals[m].from+1);
+		return tier_create(helm ? metals[m].helm : metals[m].body,tier,0,level);
+	}
+	lo=max(1,min(20,lo)); hi=max(lo,min(20,hi));
+	level=lo+RANDOM(hi-lo+1);
+	if (!nc) return tier_create(tier_pick_template(level,helm),tier,0,level);	// the metal fits the level
+	m=cand[RANDOM(nc)];
 	return tier_create(helm ? metals[m].helm : metals[m].body,tier,0,level);
 }
 

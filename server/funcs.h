@@ -272,7 +272,7 @@ void talk_set_echo(void (*f)(char *));
 void talk_custom_kill(int cn,int co);
 int talk_custom_near(int cn,int co);
 int talk_chest_open(int cn,int in);
-int tier_chest_reward(int tier,int metal,int piece);
+int tier_chest_reward(int tiers,int metals_mask,int piece,int lo,int hi);
 int talk_has_near(int cn);
 int talk_near_due(int cn,int co);
 int talk_custom_money(int cn,int co,int money);
