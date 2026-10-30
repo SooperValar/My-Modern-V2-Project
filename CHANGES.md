@@ -321,10 +321,12 @@ The design is in `docs/ITEM_TIERS.md`. This first part builds the core:
   - Rewards that can't be given any more are left out of the draw; if nothing is left, it's empty. A full backpack keeps it closed so the player can come back.
   - `.dat/chestlog.dat` keeps who opened which once-per-player chest and which once-only rewards went to whom; `server.log` names every once-only reward.
   - Console: `chesttest <player> <x> <y>`.
-- **Chest editor** in the tile panel for every loot item:
-  - **Old-style ones:** shows what they give, in words, with each one's chance and when they open again.
-  - **Convert to an editor chest:** keeps those rewards (the old tier armor numbers become Magic pieces of that metal). Drivers 30, 53 and 54 lose their special part, and it asks first.
-  - **Editor chests:** refill time, once per player, and the reward list (item / gold / tier armor / item once on the server / nothing) with weights and the chance of each.
+- **Chest editor** for every loot item:
+  - **Tile panel:** a short summary (what it gives, each chance, when it opens again) and a button, **Edit chest…** or **Convert to an editor chest…**.
+  - **The editor itself opens in the big window** (like the NPC and player editors), so the editor's periodic refresh while the server runs no longer closes it halfway (it used to wipe the tile panel; the tile panel also isn't redrawn now while you are typing in it).
+  - **Old-style ones:** shows what they give, then **Convert…** fills in those rewards (the old tier armor numbers become Magic pieces of that metal). Drivers 30, 53 and 54 lose their special part, and it asks first.
+  - **Editor chests:** the name players see, how long it stays empty, once per player, a chance bar, and one card per reward (Item / Gold / Tier armor / Once on the server / Nothing, chosen with buttons) with its weight and %, move up, copy and remove; tier armor has Tier, Level from-to, Metal and Piece as chips. **+ Item / + Gold / + Tier armor / + Once on the server / + Nothing** add one.
+- **+ Chest** (top of the Builder and Objects tabs): one plain chest for the whole map. The first click makes an item template **Chest** (a copy of Treasure Chest with driver 75, no data); after that it is a normal brush. Every chest placed with it is its own chest: the rewards belong to its spot, and the chest window opens as soon as one is placed (a single click).
 - Tested with the real server:
   - tier lines with a level range and fitting metals (levels 3-6 in Bronze/Steel/Golden, Golden only at 5-6), with chosen metals at level 16-18, and in the older form (a list of six metals once failed to read, being longer than its buffer; fixed);
   - a Bronze armor of Magic tier made new;

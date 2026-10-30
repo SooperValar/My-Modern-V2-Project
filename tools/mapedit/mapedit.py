@@ -2455,6 +2455,26 @@ table.pl button:hover { color: var(--text); border-color: var(--gold); }
 #tpl .mtabs button { padding: 9px 12px; color: var(--dim); border-bottom: 2px solid transparent; white-space: nowrap; }
 #tpl .mtabs button.on { color: var(--gold2); border-bottom-color: var(--gold); }
 #tpl .mbody { overflow-y: auto; padding: 14px 18px 24px; }
+#tpl .cbar { display: flex; height: 22px; border-radius: 6px; overflow: hidden; margin: 2px 0 12px; border: 1px solid var(--line); }
+#tpl .cbar div { min-width: 18px; display: grid; place-items: center; font-size: 11px; color: #15120d; font-weight: 700; border-right: 1px solid rgba(0,0,0,.35); }
+#tpl .rwl { display: flex; flex-direction: column; gap: 10px; }
+#tpl .rwc { border: 1px solid #40362a; border-left: 4px solid; border-radius: 8px; background: #1c1913; padding: 10px 12px; display: flex; flex-direction: column; gap: 10px; }
+#tpl .rwh { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+#tpl .rwh > b { color: var(--dim); min-width: 14px; }
+#tpl .rwh .sp { flex: 1; }
+#tpl .rwh .pct { color: var(--gold2); font-weight: 650; min-width: 38px; }
+#tpl .rwh .ipick input { width: 64px; }
+#tpl .seg2 { display: flex; border: 1px solid #40362a; border-radius: 7px; overflow: hidden; }
+#tpl .seg2 button { padding: 4px 10px; color: #a8987a; background: #221d16; border-right: 1px solid #40362a; font-size: 12px; }
+#tpl .seg2 button:last-child { border-right: 0; }
+#tpl .seg2 button.on { color: #ffe39a; background: #3a2f17; }
+#tpl .chips { display: flex; flex-wrap: wrap; gap: 4px; }
+#tpl .chip { padding: 3px 10px; border-radius: 12px; font-size: 12px; color: #a8987a; border: 1px solid #40362a; background: #221d16; }
+#tpl .chip:hover { color: #fff3d6; border-color: #8a7140; }
+#tpl .chip.on { color: #ffe39a; border-color: #d6a443; background: #3a2f17; }
+#tpl .rwadd { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 14px; }
+#tpl .note2 { line-height: 1.6; }
+#tpl .grid2 > label { display: flex; gap: 8px; align-items: center; }
 #tpl .mft { display: flex; gap: 10px; align-items: center; padding: 10px 16px; border-top: 1px solid var(--line); flex-wrap: wrap; }
 #tpl .mft .sp { flex: 1; }
 #tpl .grid2 { display: grid; grid-template-columns: 170px 1fr; gap: 8px 14px; align-items: center; }
@@ -3149,6 +3169,7 @@ function leftUI() {
   if (mode === 'map') {
     const C = cats();
     if (tab === 'builder') {
+      if (match('chest', '')) { sect('Chests'); grid().appendChild(cellChest()); }
       if (recent.length) { sect('Recently used'); lazy(grid(), recent.filter(b => match(b.kind === 'place' ? b.t[1] : b.kind === 'flag' ? FLAGS[b.bit] : b.kind === 'mix' ? (b.name || 'mix') : '', b.kind === 'place' ? b.t[0] : b.s ?? '')), cellRecent); }
       mixSection();
       sect('Floors and flags');
@@ -3236,6 +3257,7 @@ function leftUI() {
       sect('Paint a flag on tiles'); lazy(grid(), FLAGS.map((f, i) => i).filter(i => match(FLAGS[i], '')), cellFlag);
     } else {
       const list = C[tab].filter(t => match(t[1], t[0]));
+      if (tab === 'objects' && match('chest', '')) { sect('Chests · put one in and choose what it gives'); grid().appendChild(cellChest()); }
       sect({ walls: 'Walls · drawn into the tile, they block', objects: 'Objects · furniture, decoration, doors, chests…', items: 'Items · things players can pick up' }[tab]);
       lazy(grid(), list, cellTemp);
     }
@@ -3411,88 +3433,196 @@ function rewardText(r) {
   if (r.type === 'tier') return `a new ${(r.tiers || ['magic']).join('/')} ${r.metals === 'fit' || !r.metals ? '' : r.metals.join('/') + ' '}${r.piece === 'any' ? 'helmet or armor' : r.piece === 'helm' ? 'helmet' : 'body armor'}${r.lo ? `, level ${r.lo}${r.hi > r.lo ? '-' + r.hi : ''}` : ''}`;
   return (iname(r.v) || 'template ' + r.v) + (r.type === 'unique' ? ' (only once on the server)' : '');
 }
+// the chest on a tile: a short summary in the side panel; the editing happens in the big window (openChest)
 async function lootEditor(el, r, x, y, ro) {
   const it = r.item;
   if (!(it.driver in LOOT)) return;
   const box = document.createElement('div'); box.className = 'ied'; el.appendChild(box);
   const tk = await api(`/api/chest?x=${x}&y=${y}`);
+  if (!box.isConnected) return;
+  const isNew = it.driver === 75, C = isNew ? tk.chest : null;
+  const rw = C ? C.rewards : legacyRewards(it), tot = rw.reduce((a, b) => a + (+b.w || 0), 0) || 1;
+  box.innerHTML = `<div class="lb" style="color:var(--gold2)">${isNew ? 'Chest' : 'Loot · ' + esc(LOOT[it.driver])}</div><div class="note"></div>`;
+  const ul = box.querySelector('.note');
+  ul.innerHTML = rw.length ? rw.map(q => `${esc(rewardText(q))}${rw.length > 1 ? ` <span class="hint">· ${Math.round((+q.w || 0) / tot * 100)}%</span>` : ''}`).join('<br>')
+    : `<span class="hint">${isNew ? 'no rewards set yet: it is empty' : 'nothing set'}</span>`;
+  if (it.driver === 30) ul.innerHTML += `<br><span class="hint">takes: ${esc(iname(it.data[1]) || 'template ' + it.data[1])}</span>`;
+  ul.innerHTML += `<br><span class="hint">opens again after ${C ? durText((C.refill || 0) * 18) : durText(it.duration)}${C && C.once ? ' · once per player' : ''}</span>`;
+  const b = document.createElement('button'); b.className = 'sm'; b.style.marginTop = '6px';
+  b.textContent = isNew ? 'Edit chest…' : 'Convert to an editor chest…';
+  b.title = 'Opens the chest editor: weighted rewards with items, gold, tier armor, once-only items, once per player, its own refill time';
+  b.onclick = () => openChest(x, y);
+  box.append(b);
+}
+
+async function openChest(x, y) {
+  if (tplDirty() && !confirm('You have changes here you did not apply. Leave them?')) return;
+  const [r, tk] = await Promise.all([api(`/api/tile?x=${x}&y=${y}`), api(`/api/chest?x=${x}&y=${y}`)]);
+  const it = r.item;
+  if (!it || !(it.driver in LOOT)) return toast(`There is no chest on ${x}, ${y}.`, true);
   const isNew = it.driver === 75;
   let C = isNew && tk.chest ? JSON.parse(JSON.stringify(tk.chest)) : null;
-  const render = () => {
-    box.innerHTML = `<div class="lb" style="color:var(--gold2)">Loot · ${esc(LOOT[it.driver])}</div>`;
-    if (!C) {        // an old-style one: what it gives, and Convert
-      const rw = legacyRewards(it), tot = rw.reduce((a, b) => a + b.w, 0);
-      const ul = document.createElement('div'); ul.className = 'note';
-      ul.innerHTML = rw.length ? rw.map(q => `${esc(rewardText(q))}${rw.length > 1 ? ` <span class="hint">· ${Math.round(q.w / tot * 100)}%</span>` : ''}`).join('<br>') : '<span class="hint">nothing set</span>';
-      if (it.driver === 30) ul.innerHTML += `<br><span class="hint">takes: ${esc(iname(it.data[1]) || 'template ' + it.data[1])}</span>`;
-      ul.innerHTML += `<br><span class="hint">opens again after ${durText(it.duration)}</span>`;
-      box.appendChild(ul);
-      const cv = document.createElement('button'); cv.className = 'sm'; cv.disabled = ro;
-      cv.textContent = isNew ? 'Set up its rewards' : 'Convert to an editor chest';
-      cv.title = 'Then: weighted rewards with gold, tier armor, once-only items, once per player, its own refill time';
-      cv.onclick = () => {
-        if ([30, 53, 54].includes(it.driver) && !confirm('Converting drops its special part (' + LOOT[it.driver] + '). Convert anyway?')) return;
-        C = { refill: Math.round(it.duration / 18), once: 0, rewards: rw.length ? rw : [{ type: 'item', v: 0, w: 1 }] }; render();
-      };
-      box.appendChild(cv);
-      return;
-    }
-    const g = document.createElement('div'); g.className = 'chestg';
-    const rf = document.createElement('div'); rf.className = 'ipick';
-    rf.append('Opens again after ', num(() => Math.round((C.refill || 0) / 60), v => C.refill = v * 60, 0, 100000), ' min');
-    g.append(rf);
-    g.append(chk('Once per player (each gets something from it only once)', () => !!C.once, on => C.once = on ? 1 : 0));
-    const tot = C.rewards.reduce((a, b) => a + (+b.w || 0), 0) || 1;
-    C.rewards.forEach((q, i) => {
-      const row2 = document.createElement('div'); row2.className = 'rw';
-      const ty = document.createElement('select');
-      ty.innerHTML = [['item', 'Item'], ['gold', 'Gold'], ['tier', 'Tier armor'], ['unique', 'Item, once on the server'], ['nothing', 'Nothing']].map(([v, l]) => `<option value="${v}">${l}</option>`).join('');
-      ty.value = q.type; ty.onchange = () => { C.rewards[i] = ty.value === 'tier' ? { type: 'tier', tiers: ['magic'], metals: 'fit', piece: 'any', lo: 1, hi: 6, w: q.w } : ty.value === 'gold' ? { type: 'gold', v: 1000, w: q.w } : ty.value === 'nothing' ? { type: 'nothing', w: q.w } : { type: ty.value, v: 0, w: q.w }; render(); };
-      row2.append(ty);
-      if (q.type === 'item' || q.type === 'unique') row2.append(ipick(() => q.v, v => q.v = v, { filter: t => t[3] }));
-      else if (q.type === 'gold') { const d2 = document.createElement('div'); d2.className = 'ipick'; d2.append(num(() => Math.floor(q.v / 100), v => q.v = v * 100 + q.v % 100, 0), 'G', num(() => q.v % 100, v => q.v = Math.floor(q.v / 100) * 100 + v, 0, 99), 'S'); row2.append(d2); }
-      else if (q.type === 'tier') {
-        const chips = (opts, has, toggle) => { const d2 = document.createElement('div'); d2.className = 'chips';
-          for (const [v, l] of opts) { const b2 = document.createElement('button'); b2.className = 'chip' + (has(v) ? ' on' : ''); b2.textContent = l; b2.onclick = () => { toggle(v); render(); }; d2.append(b2); }
-          return d2; };
-        q.tiers = q.tiers || ['magic'];
-        row2.append(chips([['magic', 'Magic'], ['rare', 'Rare'], ['epic', 'Epic']], v => q.tiers.includes(v),
-          v => { q.tiers = q.tiers.includes(v) ? q.tiers.filter(x => x !== v) : [...q.tiers, v]; if (!q.tiers.length) q.tiers = [v]; }));
-        const lv = document.createElement('div'); lv.className = 'ipick';
-        if (!q.lo) { q.lo = 0; }
-        lv.append('level ', num(() => q.lo || 1, v => { q.lo = v; if ((q.hi || 0) < v) q.hi = v; render(); }, 1, 20), ' to ', num(() => q.hi || q.lo || 1, v => { q.hi = Math.max(v, q.lo || 1); if (!q.lo) q.lo = 1; render(); }, 1, 20));
-        row2.append(lv);
-        const ms = METALS.slice(1);
-        row2.append(chips([['fit', 'fits the level'], ...ms], v => v === 'fit' ? q.metals === 'fit' : Array.isArray(q.metals) && q.metals.includes(v),
-          v => { if (v === 'fit') q.metals = 'fit'; else { const cur = Array.isArray(q.metals) ? q.metals : []; q.metals = cur.includes(v) ? cur.filter(x => x !== v) : [...cur, v]; if (!q.metals.length) q.metals = 'fit'; } }));
-        const pc = document.createElement('select'); pc.innerHTML = [['any', 'helmet or body armor'], ['helm', 'helmet'], ['armor', 'body armor']].map(([v, l]) => `<option value="${v}">${l}</option>`).join('');
-        pc.value = q.piece || 'any'; pc.onchange = () => q.piece = pc.value; row2.append(pc);
-        const tip = document.createElement('div'); tip.className = 'hint';
-        tip.textContent = (q.tiers.length > 1 ? 'Several tiers: drawn like monster drops (Magic 70 : Rare 22 : Epic 8). ' : '') +
-          (q.metals === 'fit' ? 'Metal: one that fits the level, like monster drops.' : 'Metal: one of these, at the level you set.') + (q.lo ? '' : ' Level: the old chest\'s own range (set one to change it).');
-        row2.append(tip);
-      }
-      const wt = document.createElement('div'); wt.className = 'ipick';
-      wt.append('weight ', num(() => q.w, v => { q.w = v; render(); }, 1, 1000), document.createTextNode(` ${Math.round((+q.w || 0) / tot * 100)}%`));
-      const xx = document.createElement('button'); xx.className = 'sm'; xx.textContent = '×'; xx.onclick = () => { C.rewards.splice(i, 1); render(); }; wt.append(xx);
-      row2.append(wt);
-      g.append(row2);
-    });
-    const ad = document.createElement('button'); ad.className = 'sm'; ad.textContent = '+ reward'; ad.onclick = () => { C.rewards.push({ type: 'item', v: 0, w: 1 }); render(); };
-    g.append(ad);
-    g.insertAdjacentHTML('beforeend', '<div class="hint">One reward is drawn by weight each time it is opened. "Once on the server": only one player ever gets it; after that it is left out of the draw (as are items marked Unique while one exists). If nothing can be given, it is empty.</div>');
-    const sv = document.createElement('button'); sv.className = 'btn pri'; sv.style.padding = '5px 12px'; sv.textContent = isNew ? 'Save chest' : 'Save and convert'; sv.disabled = ro;
-    sv.onclick = async () => {
-      if (C.rewards.some(q => (q.type === 'item' || q.type === 'unique') && !q.v)) return toast('Pick an item for every item reward.', true);
-      const r2 = await api('/api/chest', { x, y, chest: C });
-      if (r2.error) return toast(r2.error, true);
-      if (!isNew) await edit([{ op: 'itemedit', x, y, driver: 75 }], `converted ${it.name} at ${x},${y} to an editor chest`, true);
-      toast('Chest: ' + r2.msg);
+  if (isNew && !C) C = { refill: 3600, once: 0, rewards: [] };
+  TP = { kind: 'chest', t: x + ',' + y, x, y, it, isNew, name: it.name, C, orig: {}, cur: {}, tab: 'chest' };
+  TP.Corig = JSON.stringify(C) + '|' + it.name;
+  $('#tpl').classList.add('on'); $('#tpl').classList.remove('picking'); tplRender();
+}
+function chestDirty() { return TP && TP.kind === 'chest' && JSON.stringify(TP.C) + '|' + TP.name !== TP.Corig; }
+
+const RW_TYPES = [['item', 'Item', 'One item from a template'], ['gold', 'Gold', 'A sum of money'], ['tier', 'Tier armor', 'A newly made magic, rare or epic helmet or body armor'],
+  ['unique', 'Once on the server', 'An item only one player ever gets'], ['nothing', 'Nothing', '"It\'s empty..." (makes the good things rarer)']];
+const RW_COL = { item: '#8fb6d8', gold: '#e2b84a', tier: '#b58be0', unique: '#e0775a', nothing: '#6f675a' };
+function newReward(type, w) {
+  return type === 'tier' ? { type, tiers: ['magic'], metals: 'fit', piece: 'any', lo: 1, hi: 6, w } : type === 'gold' ? { type, v: 1000, w } : type === 'nothing' ? { type, w } : { type, v: 0, w };
+}
+function chestRender(el) {
+  const it = TP.it, ro = RO();
+  el.querySelector('.ttl').innerHTML = '';
+  el.querySelector('.ttl').append(thumb(it.sprite, 34));
+  el.querySelector('.ttl').insertAdjacentHTML('beforeend', '<span style="vertical-align:middle;margin-left:8px"></span><small></small>');
+  el.querySelector('.ttl span').textContent = TP.name || 'Chest';
+  el.querySelector('.ttl small').textContent = `chest on ${TP.x}, ${TP.y}${TP.isNew ? '' : ' · ' + LOOT[it.driver]}`;
+  el.querySelector('.mtabs').innerHTML = '<button class="on">Rewards</button>';
+  const body = el.querySelector('.mbody'); body.innerHTML = '';
+  const again = () => { const st = body.scrollTop; chestRender(el); el.querySelector('.mbody').scrollTop = st; };
+  const ft = el.querySelector('.mft');
+  if (!TP.C) {        // an old-style one: what it gives now, and Convert
+    const rw = legacyRewards(it), tot = rw.reduce((a, b) => a + b.w, 0);
+    body.innerHTML = `<h4>What it gives now</h4><div class="note2"></div>
+      <h4>Make it an editor chest</h4><div class="hint" style="max-width:640px">Then you choose its rewards here: items, gold, newly made tier armor and items only one player ever gets, each with a chance.
+      You also set how long it stays empty after it is opened, and whether each player gets something from it only once. What it gives now is filled in to start with.</div>`;
+    const n2 = body.querySelector('.note2');
+    n2.innerHTML = (rw.length ? rw.map(q => `${esc(rewardText(q))}${rw.length > 1 ? ` <span class="hint">· ${Math.round(q.w / tot * 100)}%</span>` : ''}`).join('<br>') : '<span class="hint">nothing set</span>')
+      + (it.driver === 30 ? `<br><span class="hint">takes: ${esc(iname(it.data[1]) || 'template ' + it.data[1])}</span>` : '')
+      + `<br><span class="hint">opens again after ${durText(it.duration)}</span>`;
+    ft.innerHTML = '<span class="sp"></span><button class="btn ghost" id="tcancel">Close</button><button class="btn pri" id="tconv">Convert…</button>';
+    $('#tcancel').onclick = closeTemplate;
+    $('#tconv').disabled = ro;
+    $('#tconv').onclick = () => {
+      if ([30, 53, 54].includes(it.driver) && !confirm('Converting drops its special part (' + LOOT[it.driver] + '). Convert anyway?')) return;
+      TP.C = { refill: Math.round(it.duration / 18), once: 0, rewards: rw.length ? rw : [newReward('item', 1)] }; again();
     };
-    g.append(sv);
-    box.append(g);
+    return;
+  }
+  const C = TP.C;
+  // --- how it opens
+  body.insertAdjacentHTML('beforeend', '<h4>The chest</h4>');
+  const g = document.createElement('div'); g.className = 'grid2'; body.append(g);
+  const nm = document.createElement('input'); nm.type = 'text'; nm.maxLength = 39; nm.value = TP.name; nm.oninput = () => { TP.name = nm.value; };
+  const rf = document.createElement('div'); rf.className = 'ipick';
+  rf.append(num(() => Math.round((C.refill || 0) / 60), v => { C.refill = v * 60; }, 0, 100000), 'minutes', Object.assign(document.createElement('span'), { className: 'hint', textContent: '(0 = right away; 60 = an hour)' }));
+  g.append(Object.assign(document.createElement('div'), { className: 'lb', textContent: 'Name players see' }), nm,
+    Object.assign(document.createElement('div'), { className: 'lb', textContent: 'Stays empty for' }), rf,
+    Object.assign(document.createElement('div'), { className: 'lb', textContent: 'Once per player' }),
+    chk('Each player gets something from it only once (others still can)', () => !!C.once, on => C.once = on ? 1 : 0));
+  // --- the chances
+  const tot = C.rewards.reduce((a, b) => a + (+b.w || 0), 0) || 1;
+  body.insertAdjacentHTML('beforeend', `<h4>Rewards <span class="hint" style="font-weight:400">· one is drawn by its chance each time it is opened</span></h4>`);
+  if (C.rewards.length) {
+    const bar = document.createElement('div'); bar.className = 'cbar';
+    C.rewards.forEach((q, i) => { const s = document.createElement('div'); s.style.flex = String(+q.w || 0); s.style.background = RW_COL[q.type]; s.title = `${i + 1}. ${rewardText(q)} · ${Math.round((+q.w || 0) / tot * 100)}%`; s.textContent = i + 1; bar.append(s); });
+    body.append(bar);
+  } else body.insertAdjacentHTML('beforeend', '<div class="hint">No rewards yet: it is empty. Add one below.</div>');
+  const list = document.createElement('div'); list.className = 'rwl'; body.append(list);
+  C.rewards.forEach((q, i) => {
+    const card = document.createElement('div'); card.className = 'rwc'; card.style.borderLeftColor = RW_COL[q.type];
+    const hd = document.createElement('div'); hd.className = 'rwh';
+    hd.insertAdjacentHTML('beforeend', `<b>${i + 1}</b>`);
+    const ty = document.createElement('div'); ty.className = 'seg2';
+    for (const [v, l, tip] of RW_TYPES) {
+      const b = document.createElement('button'); b.textContent = l; b.title = tip; b.className = q.type === v ? 'on' : '';
+      b.onclick = () => { if (q.type !== v) { C.rewards[i] = (v === 'unique' && q.type === 'item') || (v === 'item' && q.type === 'unique') ? { ...q, type: v } : newReward(v, q.w); again(); } };
+      ty.append(b);
+    }
+    hd.append(ty, Object.assign(document.createElement('span'), { className: 'sp' }));
+    const wt = document.createElement('div'); wt.className = 'ipick';
+    wt.append('chance weight', num(() => q.w, v => { q.w = v; again(); }, 1, 1000), Object.assign(document.createElement('span'), { className: 'pct', textContent: Math.round((+q.w || 0) / tot * 100) + '%' }));
+    const up = document.createElement('button'); up.className = 'sm'; up.textContent = '↑'; up.title = 'Move up'; up.disabled = !i;
+    up.onclick = () => { C.rewards.splice(i - 1, 0, C.rewards.splice(i, 1)[0]); again(); };
+    const cp = document.createElement('button'); cp.className = 'sm'; cp.textContent = 'Copy'; cp.title = 'Add a copy of this reward';
+    cp.onclick = () => { C.rewards.splice(i + 1, 0, JSON.parse(JSON.stringify(q))); again(); };
+    const xx = document.createElement('button'); xx.className = 'sm'; xx.textContent = '×'; xx.title = 'Remove this reward';
+    xx.onclick = () => { C.rewards.splice(i, 1); again(); };
+    hd.append(wt, up, cp, xx); card.append(hd);
+    const bd = document.createElement('div'); bd.className = 'grid2'; card.append(bd);
+    const row = (l, e) => { bd.append(Object.assign(document.createElement('div'), { className: 'lb', textContent: l }), e); };
+    if (q.type === 'item' || q.type === 'unique') {
+      row('Item', ipick(() => q.v, v => { q.v = v; }, { filter: t => t[3], none: 'pick one' }));
+      if (q.type === 'unique') bd.append(document.createElement('div'), Object.assign(document.createElement('div'), { className: 'hint', textContent: 'Only one player ever gets it from this chest; after that it is left out of the draw. (Items marked Unique are also left out while a copy exists anywhere.)' }));
+    } else if (q.type === 'gold') {
+      const d2 = document.createElement('div'); d2.className = 'ipick';
+      d2.append(num(() => Math.floor(q.v / 100), v => { q.v = v * 100 + q.v % 100; }, 0), 'gold', num(() => q.v % 100, v => { q.v = Math.floor(q.v / 100) * 100 + v; }, 0, 99), 'silver');
+      row('Amount', d2);
+    } else if (q.type === 'tier') {
+      const chips = (opts, has, toggle) => { const d2 = document.createElement('div'); d2.className = 'chips';
+        for (const [v, l] of opts) { const b2 = document.createElement('button'); b2.className = 'chip' + (has(v) ? ' on' : ''); b2.textContent = l; b2.onclick = () => { toggle(v); again(); }; d2.append(b2); }
+        return d2; };
+      q.tiers = q.tiers || ['magic'];
+      row('Tier', chips([['magic', 'Magic'], ['rare', 'Rare'], ['epic', 'Epic']], v => q.tiers.includes(v),
+        v => { q.tiers = q.tiers.includes(v) ? q.tiers.filter(x => x !== v) : [...q.tiers, v]; if (!q.tiers.length) q.tiers = [v]; }));
+      const lv = document.createElement('div'); lv.className = 'ipick';
+      lv.append(num(() => q.lo || 1, v => { q.lo = v; if ((q.hi || 0) < v) q.hi = v; again(); }, 1, 20), 'to', num(() => q.hi || q.lo || 1, v => { q.hi = Math.max(v, q.lo || 1); if (!q.lo) q.lo = 1; again(); }, 1, 20));
+      row('Level', lv);
+      row('Metal', chips([['fit', 'Fits the level'], ...METALS.slice(1)], v => v === 'fit' ? q.metals === 'fit' : Array.isArray(q.metals) && q.metals.includes(v),
+        v => { if (v === 'fit') q.metals = 'fit'; else { const cur = Array.isArray(q.metals) ? q.metals : []; q.metals = cur.includes(v) ? cur.filter(x => x !== v) : [...cur, v]; if (!q.metals.length) q.metals = 'fit'; } }));
+      row('Piece', chips([['any', 'Helmet or body armor'], ['helm', 'Helmet'], ['armor', 'Body armor']], v => (q.piece || 'any') === v, v => { q.piece = v; }));
+      bd.append(document.createElement('div'), Object.assign(document.createElement('div'), { className: 'hint',
+        textContent: (q.tiers.length > 1 ? 'Several tiers: drawn like monster drops (Magic 70 : Rare 22 : Epic 8). ' : '') +
+          (q.metals === 'fit' ? 'Metal: one that fits the level, like monster drops (Bronze 1-6, Steel 1-20, Golden 5-14, Emerald 9-17, Crystal 11-20, Titanium 16-20).' : 'Metal: one of these, at a level in your range.') + (q.lo ? '' : ' Level: the old chest\'s own range (set one to change it).') }));
+    } else row('', Object.assign(document.createElement('div'), { className: 'hint', textContent: 'The player gets nothing ("It\'s empty..."). Use it to make the other rewards rarer.' }));
+    list.append(card);
+  });
+  const ad = document.createElement('div'); ad.className = 'rwadd';
+  ad.append(Object.assign(document.createElement('span'), { className: 'hint', textContent: 'Add:' }));
+  for (const [v, l, tip] of RW_TYPES) { const b = document.createElement('button'); b.className = 'btn sec'; b.textContent = '+ ' + l; b.title = tip; b.onclick = () => { C.rewards.push(newReward(v, 1)); again(); setTimeout(() => { const m = el.querySelector('.mbody'); m.scrollTop = m.scrollHeight; }, 0); }; ad.append(b); }
+  body.append(ad);
+  ft.innerHTML = `<span class="hint">${TP.isNew ? '' : 'Saving makes it an editor chest. '}${info.running ? 'Live: goes straight into the running game.' : ''}</span><span class="sp"></span><button class="btn ghost" id="tcancel">Close</button><button class="btn pri" id="tapply">${TP.isNew ? 'Save chest' : 'Save and convert'}</button>`;
+  $('#tcancel').onclick = closeTemplate;
+  $('#tapply').disabled = ro;
+  $('#tapply').onclick = async () => {
+    if (C.rewards.some(q => (q.type === 'item' || q.type === 'unique') && !q.v)) return toast('Pick an item for every item reward.', true);
+    const r2 = await api('/api/chest', { x: TP.x, y: TP.y, chest: C });
+    if (r2.error) return toast(r2.error, true);
+    const op = { op: 'itemedit', x: TP.x, y: TP.y };
+    if (!TP.isNew) op.driver = 75;
+    if (TP.name !== TP.it.name) op.name = TP.name;
+    if (Object.keys(op).length > 3) await edit([op], `${TP.isNew ? 'chest' : 'converted ' + TP.it.name + ' to an editor chest'} at ${TP.x},${TP.y}`, false);
+    TP.isNew = true; TP.it = { ...TP.it, driver: 75, name: TP.name };
+    TP.Corig = JSON.stringify(C) + '|' + TP.name;
+    toast('Chest: ' + r2.msg); chestRender(el);
+    if (selTile && selTile.x === TP.x && selTile.y === TP.y) selectTile(TP.x, TP.y);
   };
-  render();
+}
+
+// ---- + Chest: one plain chest for the whole map; each one placed gets its own rewards
+async function chestBrush() {
+  let row = pal.templates.find(t => t[4] === 75 && t[1] === 'Chest') || pal.templates.find(t => t[4] === 75);
+  if (!row) {
+    if (RO()) return toast('The game server is running and live editing is not available.', true);
+    const src = pal.templates.find(t => t[1] === 'Treasure Chest' && t[4] === 42) || pal.templates.find(t => /chest/i.test(t[1]) && !t[3]);
+    if (!src) return toast('No chest template found to start from.', true);
+    const r = await api('/api/edit', { ops: [{ op: 'itempnew', from: src[0], name: 'Chest' }], label: 'new item template Chest' });
+    if (r.error || !r.made) return toast(r.error || (r.msgs || []).join('\n') || 'Could not make it.', true);
+    const t = r.made[1];
+    await edit([{ op: 'itempset', t, fields: { driver: 75, data: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0] }, update_map: false }], 'Chest template ' + t + ' is an editor chest');
+    const it = await api('/api/itemp?t=' + t);
+    row = [t, it.name, it.sprite[0], bit(it.flags, 2) ? 1 : 0, it.driver, (bit(it.flags, 0) ? 1 : 0) | (bit(it.flags, 1) ? 2 : 0),
+      (bit(it.flags, 2) || bit(it.flags, 4) || bit(it.flags, 5) || bit(it.flags, 9) || bit(it.flags, 10)) ? 1 : 0];
+    pal.templates.push(row);
+  }
+  setBrush({ kind: 'place', t: row });
+  if (mode === 'map') leftUI();
+  toast('Chest brush ready: click a free spot on the map; its rewards window opens.');
+}
+function cellChest() {
+  const c = document.createElement('div'); c.className = 'cell chestcell';
+  const row = pal.templates.find(t => t[4] === 75 && t[1] === 'Chest');
+  c.dataset.k = row ? 'place:' + row[0] : 'chest:new';
+  if (brushKey(brush) === c.dataset.k) c.classList.add('sel');
+  c.title = 'A plain chest. Click a spot on the map to put one there, then choose what it gives. Every chest you place has its own rewards.';
+  c.appendChild(thumb(row ? row[2] : 220, 64, 64)); const l = document.createElement('div'); l.className = 'lab'; l.textContent = '+ Chest'; c.appendChild(l);
+  c.onclick = chestBrush;
+  return c;
 }
 
 // ---- the NPC on the selected tile: facing, move, remove
@@ -3625,7 +3755,7 @@ const pos = v => v ? [v % 1024, Math.floor(v / 1024)] : null;
 
 let TP = null;   // {kind: 'npc'|'item', t, orig, cur, tab}
 function talkDirty() { return TP && TP.talk && JSON.stringify(TP.talk) !== TP.talkOrig; }
-function tplDirty() { return TP && (Object.keys(tplChanged()).length || (TP.kind === 'player' && TP.nopass) || talkDirty() || (TP.kind === 'npc' && JSON.stringify(TP.cur.text) !== JSON.stringify(TP.orig.text))); }
+function tplDirty() { return TP && (chestDirty() || Object.keys(tplChanged()).length || (TP.kind === 'player' && TP.nopass) || talkDirty() || (TP.kind === 'npc' && JSON.stringify(TP.cur.text) !== JSON.stringify(TP.orig.text))); }
 function openTemplate(kind, t) {
   if (tplDirty() && !(TP.kind === kind && TP.t === t) && !confirm('You have changes here you did not apply. Leave them?')) return;
   if (kind === 'use') {    // quest rules of the item on a tile: t = [x, y, name]
@@ -3654,6 +3784,7 @@ function tplTabs() {
 }
 function tplRender() {
   const c = TP.cur, el = $('#tpl');
+  if (TP.kind === 'chest') return chestRender(el);
   if (TP.kind === 'use') {
     el.querySelector('.ttl').innerHTML = '<span style="vertical-align:middle"></span><small></small>';
     el.querySelector('.ttl span').textContent = 'Quest rules: ' + (c.name || 'item');
@@ -3717,7 +3848,7 @@ function tplRender() {
 }
 function tplChanged() {
   const out = {}, o = TP.orig, c = TP.cur;
-  if (TP.kind === 'use') return out;
+  if (TP.kind === 'use' || TP.kind === 'chest') return out;
   for (const k of Object.keys(c)) {
     if (['t', 'count', 'pending', 'made', 'names', 'onmap', 'text', 'items', 'item', 'worn', 'depot', 'citem', 'rank', 'kin_name', 'ip', 'quests', 'online', 'c'].includes(k)) continue;
     if (JSON.stringify(c[k]) !== JSON.stringify(o[k])) out[k] = c[k];
@@ -4395,6 +4526,10 @@ async function edit(ops, lbl, reselect) {
   if (r.ok !== false && ops.some(o => o.op.startsWith('npc'))) api('/api/npcs').then(n => { if (Array.isArray(n) && pal) { pal.npcs = n; if (mode === 'map' && tab === 'npcs') leftUI(); } });
   if (selTile && (reselect || ops.some(o => o.x === selTile.x && o.y === selTile.y))) selectTile(selTile.x, selTile.y);
   if (mode === 'history') leftUI();
+  if (ops.length === 1 && ops[0].op === 'place' && !r.error && !(r.msgs && r.msgs.length)) {
+    const pt = pal.templates.find(t => t[0] === ops[0].t);
+    if (pt && pt[4] === 75) { selectTile(ops[0].x, ops[0].y); openChest(ops[0].x, ops[0].y); }
+  }
 }
 async function undoRedo(w) {
   if (RO()) return;
@@ -4701,7 +4836,7 @@ async function refreshInfo() {
   const r = await api('/api/info');
   const first = !info.areas.length, gen = info.gen;
   Object.assign(info, r); status();
-  if (gen && r.gen !== gen) { chunks.clear(); redraw(); if (selTile) selectTile(selTile.x, selTile.y); }
+  if (gen && r.gen !== gen) { chunks.clear(); redraw(); if (selTile && !$('#tile').contains(document.activeElement)) selectTile(selTile.x, selTile.y); }
   if (r.minimap && !miniOk && !mini.src) { mini.onload = () => { miniOk = true; $('#mini').style.display = 'block'; redraw(); }; mini.src = '/minimap.png'; }
   if (first) redraw();
 }
