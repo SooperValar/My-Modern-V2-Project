@@ -176,6 +176,8 @@ def talk_parse(text):
                     chest['refill'] = int(a[0])
                 elif k == 'once':
                     chest['once'] = 1
+                elif k == 'first' and a:
+                    chest['first'] = int(a[0])
                 elif k == 'reward' and a:
                     if a[0] in ('item', 'unique', 'gold'): chest['rewards'].append({'type': a[0], 'v': int(a[1]), 'w': int(a[2])})
                     elif a[0] == 'nothing': chest['rewards'].append({'type': 'nothing', 'w': int(a[1])})
@@ -254,12 +256,13 @@ def talk_text(quests, npcs, names):
             if str(t).strip():
                 out.append('step %d %d %s' % (n, int(v), ' '.join(str(t).split())))
     for key, c in sorted(quests.get('chests', {}).items()):
-        if not c.get('rewards'):
+        if not c.get('rewards') and not c.get('first'):
             continue
         x, y = key.split(',')
         out += ['', 'chest %d %d %s' % (int(x), int(y), names.get('chest ' + key, ''))]
         if int(c.get('refill', 0) or 0) > 0: out.append('refill %d' % int(c['refill']))
         if c.get('once'): out.append('once player')
+        if int(c.get('first', 0) or 0) > 0: out.append('first %d' % int(c['first']))
         for r in c['rewards']:
             w = max(1, int(r.get('w', 1)))
             if r['type'] in ('item', 'unique', 'gold'): out.append('reward %s %d %d' % (r['type'], int(r['v']), w))
@@ -3447,6 +3450,7 @@ async function lootEditor(el, r, x, y, ro) {
   ul.innerHTML = rw.length ? rw.map(q => `${esc(rewardText(q))}${rw.length > 1 ? ` <span class="hint">· ${Math.round((+q.w || 0) / tot * 100)}%</span>` : ''}`).join('<br>')
     : `<span class="hint">${isNew ? 'no rewards set yet: it is empty' : 'nothing set'}</span>`;
   if (it.driver === 30) ul.innerHTML += `<br><span class="hint">takes: ${esc(iname(it.data[1]) || 'template ' + it.data[1])}</span>`;
+  if (C && C.first) ul.innerHTML = `<span class="hint">first time for each player:</span> ${esc(iname(C.first) || 'template ' + C.first)}<br>` + ul.innerHTML;
   ul.innerHTML += `<br><span class="hint">opens again after ${C ? durText((C.refill || 0) * 18) : durText(it.duration)}${C && C.once ? ' · once per player' : ''}</span>`;
   const b = document.createElement('button'); b.className = 'sm'; b.style.marginTop = '6px';
   b.textContent = isNew ? 'Edit chest…' : 'Convert to an editor chest…';
@@ -3514,7 +3518,14 @@ function chestRender(el) {
   g.append(Object.assign(document.createElement('div'), { className: 'lb', textContent: 'Name players see' }), nm,
     Object.assign(document.createElement('div'), { className: 'lb', textContent: 'Stays empty for' }), rf,
     Object.assign(document.createElement('div'), { className: 'lb', textContent: 'Once per player' }),
-    chk('Each player gets something from it only once (others still can)', () => !!C.once, on => C.once = on ? 1 : 0));
+    chk('Each player gets something from it only once (others still can)', () => !!C.once, on => C.once = on ? 1 : 0),
+    Object.assign(document.createElement('div'), { className: 'lb', textContent: 'First-time reward' }),
+    chk('The first time each player opens it, they get a special item', () => C.first !== undefined && C.first !== null, on => { if (on) C.first = C.first || 0; else delete C.first; again(); }));
+  if (C.first !== undefined && C.first !== null) {
+    g.append(document.createElement('div'), ipick(() => C.first, v => { C.first = v; }, { filter: t => t[3], none: 'pick one' }),
+      document.createElement('div'), Object.assign(document.createElement('div'), { className: 'hint',
+        textContent: 'Every player gets this once, the first time they open the chest, instead of a draw. The chest stays closed for the others. After that it gives from the rewards below as usual.' + (C.once ? ' With "once per player" on, that is one draw after the first-time item.' : '') }));
+  }
   // --- the chances
   const tot = C.rewards.reduce((a, b) => a + (+b.w || 0), 0) || 1;
   body.insertAdjacentHTML('beforeend', `<h4>Rewards <span class="hint" style="font-weight:400">· one is drawn by its chance each time it is opened</span></h4>`);
@@ -3581,6 +3592,7 @@ function chestRender(el) {
   $('#tapply').disabled = ro;
   $('#tapply').onclick = async () => {
     if (C.rewards.some(q => (q.type === 'item' || q.type === 'unique') && !q.v)) return toast('Pick an item for every item reward.', true);
+    if (C.first === 0) return toast('Pick the first-time item (or untick First-time reward).', true);
     const r2 = await api('/api/chest', { x: TP.x, y: TP.y, chest: C });
     if (r2.error) return toast(r2.error, true);
     const op = { op: 'itemedit', x: TP.x, y: TP.y };

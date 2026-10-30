@@ -41,6 +41,8 @@
    chest <x> <y> [comment]        the item on that tile (driver 75) is a MyV2 chest; its lines:
    refill <seconds>               how long it stays open (empty) before it can be opened again
    once player                    each player gets something from it only once (else "It's empty")
+   first <t>                      the first time each player opens it, they get this item instead of a
+                                  draw (the chest stays closed for the others); after that, it draws from its rewards as usual
    reward item <t> <weight>       a reward, chosen at random by weight
    reward gold <silver> <weight>
    reward tier <tiers> <metals> <helm|armor|any> <level from> <level to> <weight>
@@ -113,11 +115,11 @@ struct qrow { int stamp; unsigned short v[QVARS]; };
 #define MAXREW 16
 enum { RW_ITEM=1, RW_GOLD, RW_TIER, RW_UNIQUE, RW_NOTHING };
 struct reward { char type; int a, b, c, d, e, w; };
-struct chest { int x, y, refill, once; struct reward r[MAXREW]; int nr; };
+struct chest { int x, y, refill, once, first; struct reward r[MAXREW]; int nr; };
 static struct chest chests[MAXCHEST];
 static int nchest=0;
 #define CHESTLOG DATDIR"/chestlog.dat"
-static struct { int x, y, cn, stamp; } *opened=NULL;	// once-per-player chests already opened
+static struct { int x, y, cn, stamp; char kind; } *opened=NULL;	// once-per-player chests already opened (P), first rewards given (F)
 static int nopened=0, maxopened=0;
 static int given_unique[512], ngiven=0;
 static int chestlog_loaded=0;
@@ -204,6 +206,7 @@ int talk_load(void)
 			if (!strcmp(w1,"end")) { ch_=NULL; continue; }
 			if (!strcmp(w1,"refill")) { ch_->refill=atoi(q); continue; }
 			if (!strcmp(w1,"once")) { ch_->once=1; continue; }
+			if (!strcmp(w1,"first")) { ch_->first=atoi(q); continue; }
 			if (!strcmp(w1,"reward") && ch_->nr<MAXREW) {
 				struct reward *r=&ch_->r[ch_->nr];
 				memset(r,0,sizeof(*r));
@@ -675,9 +678,9 @@ static void chestlog_load(void)
 	chestlog_loaded=1;
 	if (!(f=fopen(CHESTLOG,"r"))) return;
 	while (fgets(line,sizeof(line),f)) {
-		if (sscanf(line,"P %d %d %d %d",&x,&y,&c,&st)==4) {
+		if ((line[0]=='P' || line[0]=='F') && sscanf(line+1," %d %d %d %d",&x,&y,&c,&st)==4) {
 			if (nopened>=maxopened) { maxopened=maxopened ? maxopened*2 : 1024; opened=realloc(opened,maxopened*sizeof(*opened)); }
-			opened[nopened].x=x; opened[nopened].y=y; opened[nopened].cn=c; opened[nopened].stamp=st; nopened++;
+			opened[nopened].x=x; opened[nopened].y=y; opened[nopened].cn=c; opened[nopened].stamp=st; opened[nopened].kind=line[0]; nopened++;
 		} else if (sscanf(line,"U %d",&t)==1 && ngiven<512) given_unique[ngiven++]=t;
 	}
 	fclose(f);
@@ -689,11 +692,19 @@ static void chestlog_add(char *line)
 	if (f) { fputs(line,f); fclose(f); }
 }
 
-static int chest_opened_by(struct chest *c,int co)
+static int chest_opened_by(struct chest *c,int co,char kind)
 {
 	int n;
-	for (n=0; n<nopened; n++) if (opened[n].x==c->x && opened[n].y==c->y && opened[n].cn==co && opened[n].stamp==(int)ch[co].creation_date) return 1;
+	for (n=0; n<nopened; n++) if (opened[n].kind==kind && opened[n].x==c->x && opened[n].y==c->y && opened[n].cn==co && opened[n].stamp==(int)ch[co].creation_date) return 1;
 	return 0;
+}
+
+static void chest_mark(struct chest *c,int cn,char kind)
+{
+	char buf[160];
+	if (nopened>=maxopened) { maxopened=maxopened ? maxopened*2 : 1024; opened=realloc(opened,maxopened*sizeof(*opened)); }
+	opened[nopened].x=c->x; opened[nopened].y=c->y; opened[nopened].cn=cn; opened[nopened].stamp=ch[cn].creation_date; opened[nopened].kind=kind; nopened++;
+	sprintf(buf,"%c %d %d %d %d %s\n",kind,c->x,c->y,cn,(int)ch[cn].creation_date,ch[cn].name); chestlog_add(buf);
 }
 
 static int unique_given(int t)
@@ -736,7 +747,22 @@ int talk_chest_open(int cn,int in)
 	if (!c) { do_char_log(cn,1,"It's empty...\n"); return 1; }
 	if (c->refill>0) it[in].duration=c->refill*TICKS;
 
-	if (c->once && chest_opened_by(c,cn)) { do_char_log(cn,1,"You already took what was in it for you.\n"); return 0; }
+	// the first time this player opens it: the special first reward (if it can be given), and the chest stays closed for the others
+	if (c->first>0 && c->first<MAXTITEM && it_temp[c->first].used && !chest_opened_by(c,cn,'F') &&
+	    !((it_temp[c->first].flags&IF_UNIQUE) && item_exists(c->first))) {
+		if (!(in2=god_create_item(c->first))) return 0;
+		if (!god_give_char(in2,cn)) {
+			do_char_log(cn,0,"Your backpack is full, so you can't take the %s.\n",it[in2].reference);
+			it[in2].used=USE_EMPTY;
+			return 0;
+		}
+		do_char_log(cn,1,"You got %s.\n",it[in2].reference);
+		chlog(cn,"Got %s (first reward) from %s at %d,%d",it[in2].name,it[in].name,it[in].x,it[in].y);
+		chest_mark(c,cn,'F');
+		return 0;
+	}
+
+	if (c->once && chest_opened_by(c,cn,'P')) { do_char_log(cn,1,"You already took what was in it for you.\n"); return 0; }
 
 	for (n=0; n<c->nr; n++) if (reward_possible(&c->r[n])) tot+=c->r[n].w;
 	if (!tot) { do_char_log(cn,1,"It's empty...\n"); return 1; }
@@ -769,11 +795,7 @@ int talk_chest_open(int cn,int in)
 			}
 			break;
 	}
-	if (c->once) {
-		if (nopened>=maxopened) { maxopened=maxopened ? maxopened*2 : 1024; opened=realloc(opened,maxopened*sizeof(*opened)); }
-		opened[nopened].x=c->x; opened[nopened].y=c->y; opened[nopened].cn=cn; opened[nopened].stamp=ch[cn].creation_date; nopened++;
-		sprintf(buf,"P %d %d %d %d %s\n",c->x,c->y,cn,(int)ch[cn].creation_date,ch[cn].name); chestlog_add(buf);
-	}
+	if (c->once) chest_mark(c,cn,'P');
 	return 1;
 }
 

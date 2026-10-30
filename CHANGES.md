@@ -319,6 +319,7 @@ The design is in `docs/ITEM_TIERS.md`. This first part builds the core:
   - **Once per player:** each player gets something from it only once.
   - **Refill:** its own refill time.
   - Rewards that can't be given any more are left out of the draw; if nothing is left, it's empty. A full backpack keeps it closed so the player can come back.
+  - **First-time reward** (`first <t>`): the first time each player opens the chest, they get this item instead of a draw, and the chest stays closed for the others. After that it draws from its rewards as usual. Skipped (normal draw) if it is a Unique item that already exists; a full backpack leaves it for later. Logged as `F x y cn stamp name` in `chestlog.dat`. In the chest window: the **First-time reward** checkbox with an item picker.
   - `.dat/chestlog.dat` keeps who opened which once-per-player chest and which once-only rewards went to whom; `server.log` names every once-only reward.
   - Console: `chesttest <player> <x> <y>`.
 - **Chest editor** for every loot item:
