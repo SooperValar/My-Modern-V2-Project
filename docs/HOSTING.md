@@ -11,7 +11,7 @@ Checked already:
 
 ## 1. Let people reach the server
 - [x] Check the internet connection has its own public address (no shared "carrier-grade NAT"): the router's WAN IP must match the address whatismyip.com shows. Done: it does (AT&T gateway, 192.168.1.254).
-- [ ] Give the PC a fixed address on the home network (DHCP reservation in the router).
+- [ ] Give the PC a fixed address on the home network (DHCP reservation in the router). Next: on the gateway, Home Network → IP Allocation → Allocate the PC (Ethernet, now 192.168.1.197) as private fixed; needs the access code on the gateway's sticker.
 - [ ] Forward TCP port 5555 (only that one) on the router to the PC.
 - [ ] Let the traffic from Windows reach Ubuntu (WSL): mirrored networking, or a port proxy, plus a Windows Firewall rule for TCP 5555.
 - [ ] A free server name that follows the home address (e.g. DuckDNS), kept up to date automatically.
