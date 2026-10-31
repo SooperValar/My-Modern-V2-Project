@@ -13,8 +13,12 @@ Checked already:
 - [x] Check the internet connection has its own public address (no shared "carrier-grade NAT"): the router's WAN IP must match the address whatismyip.com shows. Done: it does (AT&T gateway, 192.168.1.254).
 - [x] Give the PC a fixed address on the home network (DHCP reservation in the router). Done: Home Network → IP Allocation, the PC (Ethernet, 192.168.1.197) is private fixed.
 - [x] Forward TCP port 5555 (only that one) on the router to the PC. Done: Firewall → NAT/Gaming, custom service "Astonia" TCP 5555.
-- [ ] **Next:** Let the traffic from Windows reach Ubuntu (WSL): mirrored networking, or a port proxy, plus a Windows Firewall rule for TCP 5555.
-- [ ] A free server name that follows the home address (e.g. DuckDNS), kept up to date automatically.
+- [x] Let the traffic from Windows reach Ubuntu (WSL). Done:
+  - Mirrored networking: `%USERPROFILE%\.wslconfig` has `[wsl2]` / `networkingMode=mirrored` (so the server sees players' real addresses; a port proxy would show them all as this PC).
+  - Windows Firewall rule "Astonia server 5555" (inbound TCP 5555) and the Hyper-V firewall rule "AstoniaWSL" (the gate between Windows and WSL), both made in an administrator PowerShell with `New-NetFirewallRule` / `New-NetFirewallHyperVRule`.
+  - Side effect: with mirrored networking Ubuntu obeys Windows' reserved port ranges, and 8080 is in one, so the MyV2 Editor runs on another port (8090; it now picks a free one by itself).
+- [x] Port check from outside: portchecker.co with the home address and port 5555 says "open". (Enter the address by hand; the site's own guess can be a proxy's address.)
+- [ ] **Next:** A free server name that follows the home address (e.g. DuckDNS), kept up to date automatically.
 - [ ] Test from outside (a friend, or a phone on mobile data).
 
 ## 2. A client to hand out

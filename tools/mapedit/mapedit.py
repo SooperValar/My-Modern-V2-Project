@@ -2379,7 +2379,17 @@ def main():
     page = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'mapedit.html'), 'rb').read() \
         if os.path.exists(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'mapedit.html')) else PAGE.encode()
     ctl = ServerCtl(world.server_dir, a.control if a.control and os.path.isdir(os.path.dirname(a.control)) else None, world)
-    httpd = ThreadingHTTPServer((a.host, a.port), make_handler(world, sprites, page, a.minimap, ctl))
+    handler = make_handler(world, sprites, page, a.minimap, ctl)
+    httpd = None
+    for port in [a.port] + [p for p in range(8090, 8100) if p != a.port]:
+        try:
+            httpd = ThreadingHTTPServer((a.host, port), handler)
+            break
+        except OSError as e:          # in use, or reserved by Windows (WSL mirrored networking reserves 8080 on some PCs)
+            print('Port %d is not available (%s), trying another.' % (port, e.strerror or e))
+    if httpd is None:
+        sys.exit('No free port for the editor between 8090 and 8099: start it with --port <number>.')
+    a.port = port
     print('MyV2 Editor: open http://localhost:%d in your browser.%s Ctrl+C to quit.' %
           (a.port, ' (The game server is running: view only.)' if server_running() else ''))
     try:
