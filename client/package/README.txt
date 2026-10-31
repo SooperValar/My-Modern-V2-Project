@@ -4,7 +4,8 @@ MyV2 Astonia
 STARTING THE GAME
 1. Unzip the whole "MyV2 Astonia" folder somewhere you like (for example your Desktop
    or Documents). Keep all the files together.
-2. Double-click merc.exe.
+2. Double-click Launcher.exe (always start the game this way).
+   It checks for updates, downloads anything new, then starts the game (merc.exe).
    The first time, Windows may say "Windows protected your PC". That is because the game
    isn't signed by a big company. Click "More info", then "Run anyway".
 3. The "Game Setup" window opens.
@@ -28,7 +29,13 @@ THE WINDOW
 - Alt+Enter switches to full screen and back.
 - Display settings are in client.ini in this folder (it is made the first time you play).
 
+UPDATES
+The launcher keeps the game up to date by itself. If it says the update site can't be
+reached, it starts the game anyway and tries again next time. If it asks you to close the
+game first, close it and start Launcher.exe again.
+
 PROBLEMS?
 - If the game can't connect, the server may be down for a moment; try again later.
-- If something goes wrong, the file client.log in this folder says what happened.
+- If something goes wrong, the files client.log and launcher.log in this folder say what
+  happened.
   Send it along when you ask for help.

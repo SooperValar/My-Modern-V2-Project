@@ -52,6 +52,11 @@ Getting the original client to run on modern Windows. The original `merc.exe` wo
 - `-m` lets a second client run at the same time (normally only one may run). `-o <file>` gives a client its own options / login file instead of `merc.dat`, so two clients don't share or overwrite each other's character.
 - `play2.bat` starts the second client: `merc.exe -h 127.0.0.1 -p 5555 -m -o merc2.dat`. Start the first one as usual (`play.bat`), then `play2.bat`, and log in a different character there. The server allows several connections from one computer already.
 
+**Launcher and updates** (`client/launcher/`, `tools/release/publish_client.py`)
+- **Launcher.exe**, what players start: it reads `manifest.txt` from the project's `client-dist` branch on GitHub (over HTTPS), compares each listed file's SHA-256 with the player's copy, downloads what is missing or different, checks it and puts it in place, then starts `merc.exe`. If the site can't be reached it just starts the game. It updates itself too (renames itself to `Launcher.old.exe`, which it deletes on the next start). It never touches the player's own files (`merc.dat`, `client.ini`, `*.moa`, logs) and refuses paths outside the game folder. If the game is open, it asks to close it first. Log: `launcher.log`. `client.ini [update] base=` points it elsewhere (testing), `off=1` turns updates off. WinHTTP is loaded at run time and SHA-256 is built in, so it needs nothing beyond Windows.
+- **Publishing an update**: `python3 tools/release/publish_client.py <Client folder> <project> "<version>"` copies the player files (`merc.exe`, `Launcher.exe`, `pnglib.*`, `README.txt`, `GFX/`, `sfx/`) to the `client-dist` branch with a fresh `manifest.txt`, using a temporary index, so the working copy isn't touched; then `git push origin client-dist`. `gx00.dat/.idx` (96 MB, never change) are listed as "base" (must exist) and come only with the zip.
+- **Player zip**: the "MyV2 Astonia" folder with the launcher, the game, its graphics and sounds, and `README.txt` (`client/package/`): start with Launcher.exe, the Windows warning, making a character, saving it as a .moa, updates, problems.
+
 ## HUD changes
 
 **800×600 HUD (first pass)**

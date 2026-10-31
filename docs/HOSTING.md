@@ -27,8 +27,9 @@ Checked already:
 - [x] A short "how to start" note: `README.txt` in the zip (copy in `client/package/`): starting, the Windows warning, making a character, saving it as a .moa, the window, problems.
 
 ## 3. A self-updating client
-- [ ] **Next:** A small launcher players open: it reads a list of the current files (version, sizes, checksums), downloads only what changed, can update itself, then starts the game.
-- [ ] The files on GitHub Releases (free, HTTPS, doesn't use the home connection); one upload per client update.
+- [x] A small launcher players open: `Launcher.exe` (source `client/launcher/`). Reads the file list, downloads only what changed, updates itself, then starts the game.
+- [x] The files on GitHub: the `client-dist` branch of this (public) project, read from raw.githubusercontent.com. To publish an update: `python3 tools/release/publish_client.py <Client folder> <project> "<version>"`, then `git push origin client-dist`.
+- [ ] **Next:** First push of `client-dist`, then test the launcher (a copy of the zip on this PC: it should say "up to date"; publish a small change and it should download just that).
 - [ ] Raising `MINVERSION` on the server makes old clients say "please update".
 
 ## 4. Before strangers play
