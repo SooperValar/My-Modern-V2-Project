@@ -1478,7 +1478,7 @@ class World:
                     pr = self.area_get(op.get('a', ''))
                     if not pr:
                         msgs.append('no area brush called %s' % op.get('a')); continue
-                    if op.get('floor', True) and pr.get('floors') and t[0] != 1008:
+                    if op.get('floor', True) and pr.get('floors'):     # also on the black void (new ground)
                         fs = pr['floors']
                         t[0] = int(random.choices([f for f, w in fs], weights=[max(0.01, float(w)) for f, w in fs])[0])
                         self.set_tile(x, y, t)
@@ -3921,7 +3921,7 @@ function areasTab(w, sect, grid, match) {
   const cb = top.querySelector('input'); cb.checked = areaFloor; cb.onchange = () => { setAreaFloor(cb.checked); card(); };
   top.querySelector('button').onclick = startAreaLearn;
   w.appendChild(top);
-  w.insertAdjacentHTML('beforeend', '<div class="hint" style="padding:0 2px 6px">Paint with brush, rectangle or fill: each tile gets the area\'s floor (if ticked) and, on free tiles, now and then one of its trees, plants or rocks. Alt+paint removes pieces. Walls, items and NPCs are left alone.</div>');
+  w.insertAdjacentHTML('beforeend', '<div class="hint" style="padding:0 2px 6px">Paint with brush, rectangle or fill: each tile gets the area\'s floor (if ticked) and, on free tiles, now and then one of its trees, plants or rocks. Alt+paint removes pieces. Walls, items and NPCs are left alone. On the black void, tick "Also lay the floor" (pieces need ground to stand on).</div>');
   const list = areas.filter(a => match(a.name, ''));
   const mine = list.filter(a => !a.builtin), game = list.filter(a => a.builtin);
   if (game.length) { sect('From the game\'s own areas'); const g = grid(); game.forEach(a => g.appendChild(cellArea(a))); }
@@ -4924,6 +4924,7 @@ async function edit(ops, lbl, reselect) {
   const r = await api('/api/edit', { ops, label: lbl });
   if (r.error) toast(r.error, true);
   else if (r.msgs && r.msgs.length) toast([...new Set(r.msgs)].slice(0, 3).join('\n'), true);
+  else if (ops.length && ops[0].op === 'area' && r.changed !== undefined && !r.undo_added && (r.undo ?? 0) === info.undo) toast(ops[0].floor ? 'Nothing changed there.' : 'Nothing changed: with "Also lay the floor" off, the brush only adds pieces on free ground (not on the black void).', true);
   Object.assign(info, { dirty: r.dirty ?? info.dirty, undo: r.undo ?? info.undo, redo: r.redo ?? info.redo }); status();
   if (r.live && ops.some(o => o.op.startsWith('npc') || o.op.includes('temp'))) { chunks.clear(); redraw(); }
   refetch(ops.filter(o => o.x !== undefined).flatMap(o => o.tx !== undefined ? [[o.x, o.y], [o.tx, o.ty]] : [[o.x, o.y]]));
