@@ -23,11 +23,11 @@ Checked already:
 
 ## 2. A client to hand out
 - [x] Server name and port in `client.ini` (`[server] host=`, `port=`), and the name built in as the default, so no `.bat` file is needed.
-- [ ] One zip with everything the client needs (exe, data, GFX).
-- [ ] A short "how to start" note (Windows warns about an unknown program the first time).
+- [x] One zip with everything the client needs: `merc.exe`, `gx00.dat/.idx`, `pnglib.dat/.idx`, `GFX/`, `sfx/` in a folder "MyV2 Astonia" (22 MB). Never `merc.dat` (your own character logins) or your `client.ini`.
+- [x] A short "how to start" note: `README.txt` in the zip (copy in `client/package/`): starting, the Windows warning, making a character, saving it as a .moa, the window, problems.
 
 ## 3. A self-updating client
-- [ ] A small launcher players open: it reads a list of the current files (version, sizes, checksums), downloads only what changed, can update itself, then starts the game.
+- [ ] **Next:** A small launcher players open: it reads a list of the current files (version, sizes, checksums), downloads only what changed, can update itself, then starts the game.
 - [ ] The files on GitHub Releases (free, HTTPS, doesn't use the home connection); one upload per client update.
 - [ ] Raising `MINVERSION` on the server makes old clients say "please update".
 
