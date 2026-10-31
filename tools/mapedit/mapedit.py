@@ -3481,9 +3481,8 @@ async function openChest(x, y) {
   TP.Corig = JSON.stringify(C) + '|' + it.name;
   $('#tpl').classList.add('on'); $('#tpl').classList.remove('picking'); tplRender();
 }
-// a chest's facing: where its lock points (north = smaller x, up-left on the map). 220-223 are the game's own,
-// 18130-18133 the same chest turned around (tools/sprites/draw_chest_back.py)
-const CHEST_FACES = [[18130, 18131, 'N', 'north'], [18132, 18133, 'E', 'east'], [220, 221, 'S', 'south'], [222, 223, 'W', 'west']];
+// a chest's facing: the game's own chest in its two looks (220/221 lock facing south, 222/223 lock facing west)
+const CHEST_FACES = [[220, 221, 'S', 'south'], [222, 223, 'W', 'west']];
 function chestFacing(x, y, it, ro, after) {
   const cur = CHEST_FACES.findIndex(f => f[0] === it.sprite || f[1] === it.sprite);
   if (cur < 0) return null;
