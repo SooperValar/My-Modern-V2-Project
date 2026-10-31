@@ -1,0 +1,36 @@
+CHEST SPRITE PROMPT (use chest_reference_closed_open.png or chest_reference_all_four.png as the inspiration image)
+
+--- Main prompt: one sheet with all 8 ---
+
+A sprite sheet of one wooden treasure chest for a classic 1990s isometric fantasy RPG, in the style of the reference image. Same chest in every picture: a sturdy rectangular box with a rounded barrel-top lid, dark reddish-brown wooden planks, thick black wrought-iron bands on every edge and corner, three iron straps arching over the lid (one at each end, one in the middle), a small dark iron lock plate in the middle of the front, and two iron hinge straps on the back.
+
+Camera: fixed isometric view from above at about 30 degrees, the box edges running diagonally at a 2:1 slope, exactly like the reference. Light comes from the upper left: the left-facing sides are lit warm orange-brown, the right-facing sides are in shadow, the lid top is brightest, with a few small silver highlights on the iron.
+
+Lay out 8 pictures in a 4 x 2 grid, evenly spaced, each centred in its cell, all the same size and scale:
+Top row (closed):
+1. Lock facing bottom-right (front long side toward the lower right).
+2. Lock facing bottom-left (front long side toward the lower left).
+3. Lock facing top-left (the chest turned around: we see its back with the two hinge straps, no lock visible).
+4. Lock facing top-right (turned around the other way: back with hinges toward the lower left, no lock visible).
+Bottom row (open, the same four directions in the same order):
+5. and 6. Lid swung open away from the viewer, standing up behind the box, showing the dark empty inside of the box and the inside of the lid.
+7. and 8. Hinges face the viewer, so the lid has swung open toward the viewer, falling forward past upright, its curved outside with the iron straps facing us, while the dark empty inside of the box is visible above and behind it.
+
+Pixel-art friendly: bold simple shapes, thick dark outlines, chunky iron bands, strong contrast, no fine detail, no text, no gems or gold. Flat plain background (solid light grey or transparent), no floor, no ground shadow, no other objects.
+
+--- If the generator makes one picture at a time ---
+
+Use the same description, then end with only one of these:
+- "closed, lock facing bottom-right"
+- "closed, lock facing bottom-left"
+- "closed, turned around: back with two hinge straps toward the lower right, lock facing top-left (not visible)"
+- "closed, turned around: back with two hinge straps toward the lower left, lock facing top-right (not visible)"
+- "open, lock facing bottom-right, lid standing up behind the box"
+- "open, lock facing bottom-left, lid standing up behind the box"
+- "open, back toward the lower right: the lid has fallen open toward the viewer, past upright, the empty box visible behind it"
+- "open, back toward the lower left: the lid has fallen open toward the viewer, past upright, the empty box visible behind it"
+
+--- Notes ---
+- The finished sprites are tiny (about 25 x 30 pixels on a 32 x 64 sprite), so bold shapes matter more than detail.
+- Keep the camera angle and light direction identical in every picture, or the chests won't match when turned.
+- Directions in the game: lock facing bottom-right = south, bottom-left = west, top-left = north, top-right = east.
