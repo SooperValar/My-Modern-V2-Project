@@ -1,5 +1,6 @@
 MyV2 Astonia
 ============
+Server: myv2astonia.duckdns.org (port 5555)
 
 STARTING THE GAME
 1. Unzip the whole "MyV2 Astonia" folder somewhere you like (for example your Desktop
