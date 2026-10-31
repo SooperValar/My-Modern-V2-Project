@@ -319,7 +319,7 @@ def talk_text(quests, npcs, names):
 
 
 # ---------------------------------------------------------------- world
-BUILTIN_AREAS = [{"name":"City Park","floors":[[553,22.2],[551,18.6],[554,17.5],[552,17.4],[549,7.2],[545,4.0],[544,2.3],[550,1.0]],"scatter":[{"k":"o","s":1114,"b":3,"p":0.00985},
+BUILTIN_AREAS = [{"name":"City Park","floors":[[553,22.2],[551,18.6],[554,17.5],[552,17.4]],"scatter":[{"k":"o","s":1114,"b":3,"p":0.00985},
     {"k":"o","s":1238,"b":3,"p":0.00923},
     {"k":"o","s":1112,"b":3,"p":0.00862},
     {"k":"o","s":1240,"b":3,"p":0.00492},
@@ -342,7 +342,7 @@ BUILTIN_AREAS = [{"name":"City Park","floors":[[553,22.2],[551,18.6],[554,17.5],
     {"k":"t","t":1133,"p":0.00289},
     {"k":"t","t":45,"p":0.00148},
     {"k":"t","t":16,"p":0.00115}],"apart":True,"from":[480,300,600,400]},
-    {"name":"Dense Forest","floors":[[1118,92.5],[1158,4.2]],"scatter":[{"k":"o","s":1238,"b":3,"p":0.07616},
+    {"name":"Dense Forest","floors":[[1118,92.5]],"scatter":[{"k":"o","s":1238,"b":3,"p":0.07616},
     {"k":"o","s":1240,"b":3,"p":0.04572}],"apart":False,"from":[24,600,120,696]},
     {"name":"Jungle","floors":[[1006,26.1],[1003,25.4],[1007,24.1],[1005,23.6]],"scatter":[{"k":"o","s":358,"b":3,"p":0.01528},
     {"k":"o","s":340,"b":0,"p":0.01445},
@@ -1391,7 +1391,7 @@ class World:
         if delete:
             user = [a for a in user if a['name'] != delete]
         if preset:
-            keep = ('name', 'floors', 'scatter', 'apart', 'from')
+            keep = ('name', 'floors', 'scatter', 'apart', 'from', 'dens')
             p = {k: preset[k] for k in keep if k in preset}
             user = [a for a in user if a['name'] != p['name']] + [p]
         json.dump(user, open(self.areas_path(), 'w', encoding='utf-8'), indent=1)
@@ -1406,9 +1406,11 @@ class World:
         """what an area brush puts on a free tile: None, ('o', sprite, block) or ('t', template)"""
         if t[1] or t[2] or t[3] or (t[4] and self.it_u8(t[4], I_USED)) or t[7] & MF_MOVEBLOCK or t[0] in (0, 1008):
             return None
-        r, acc = random.random(), 0.0
+        r, acc, dens = random.random(), 0.0, float(pr.get('dens', 1) or 0)
         for e in pr.get('scatter', []):
-            acc += float(e.get('p', 0))
+            if e.get('off'):
+                continue
+            acc += float(e.get('p', 0)) * dens
             if r < acc:
                 if e['k'] == 'o':
                     b = int(e.get('b', 0)); pick = ('o', int(e['s']), b)
@@ -1479,8 +1481,8 @@ class World:
                     if not pr:
                         msgs.append('no area brush called %s' % op.get('a')); continue
                     if op.get('floor', True) and pr.get('floors'):     # also on the black void (new ground)
-                        fs = pr['floors']
-                        t[0] = int(random.choices([f for f, w in fs], weights=[max(0.01, float(w)) for f, w in fs])[0])
+                        fs = [f for f in pr['floors'] if not (len(f) > 2 and f[2])] or pr['floors']     # [floor, weight, off]
+                        t[0] = int(random.choices([f[0] for f in fs], weights=[max(0.01, float(f[1])) for f in fs])[0])
                         self.set_tile(x, y, t)
                     pick = self.area_pick(pr, x, y, t)
                     if not pick:
@@ -2682,6 +2684,10 @@ table.pl button:hover { color: var(--text); border-color: var(--gold); }
 #tpl .arow .an { min-width: 200px; flex: 1; }
 #tpl .arow input[type=number] { width: 72px; }
 #tpl .arow .pct { color: var(--gold2); min-width: 36px; }
+#tpl .arow input[type=range] { width: 160px; accent-color: #d6a443; }
+#tpl .arow .tag { min-width: 92px; }
+#tpl .arow.off { opacity: .45; }
+#tpl .arow.dens .an { min-width: 200px; flex: 0 0 auto; }
 .athumb { position: relative; flex: none; }
 .athumb canvas { position: absolute; flex: none; min-height: 0; }
 .athumb .af { left: 0; top: 0; width: 100%; height: 100%; opacity: .9; }
@@ -3965,17 +3971,41 @@ function areaRender(el) {
     gt.onclick = () => { centerOn(Math.round((A.from[0] + A.from[2]) / 2), Math.round((A.from[1] + A.from[3]) / 2)); };
     g.append(document.createElement('div'), gt);
   }
+  // overall density
+  if (A.dens === undefined) A.dens = 1;
+  const dn = document.createElement('div'); dn.className = 'arow dens';
+  const dr = document.createElement('input'); dr.type = 'range'; dr.min = 0; dr.max = 300; dr.step = 5; dr.value = Math.round(A.dens * 100);
+  const dl = Object.assign(document.createElement('span'), { className: 'pct' });
+  const showD = () => { dl.textContent = Math.round(A.dens * 100) + '%'; };
+  dr.oninput = () => { A.dens = +dr.value / 100; showD(); }; showD();
+  dn.append(Object.assign(document.createElement('span'), { className: 'an', textContent: 'Overall amount of pieces' }), dr, dl,
+    Object.assign(document.createElement('span'), { className: 'hint', textContent: '100% = as in the real area' }));
+  body.insertAdjacentHTML('beforeend', '<h4>Amount</h4>'); body.append(dn);
+  // a row: on/off, picture, name, slider + number, %, remove
+  const row = (list, i, spr, name, tag, get, set, max, step, unit, pctOf) => {
+    const it = list[i], r = document.createElement('div'); r.className = 'arow' + (isOff(it) ? ' off' : '');
+    const cb = document.createElement('input'); cb.type = 'checkbox'; cb.checked = !isOff(it); cb.title = 'On / off (off: never painted, kept in the list)';
+    cb.onchange = () => { setOff(it, !cb.checked); again(); };
+    const sl = document.createElement('input'); sl.type = 'range'; sl.min = 0; sl.max = max; sl.step = step; sl.value = Math.min(max, get());
+    const nb = document.createElement('input'); nb.type = 'number'; nb.min = 0; nb.step = step; nb.value = +get().toFixed(2);
+    const pc = Object.assign(document.createElement('span'), { className: 'pct' });
+    const showP = () => { pc.textContent = pctOf ? pctOf() : ''; };
+    sl.oninput = () => { set(+sl.value); nb.value = +(+sl.value).toFixed(2); showP(); };
+    sl.onchange = () => again();
+    nb.onchange = () => { set(Math.max(0, +nb.value || 0)); again(); };
+    const x = document.createElement('button'); x.className = 'sm'; x.textContent = '×'; x.title = 'Take it out of the list'; x.onclick = () => { list.splice(i, 1); again(); };
+    r.append(cb, thumb(spr, 34), Object.assign(document.createElement('span'), { className: 'an', textContent: name }),
+      Object.assign(document.createElement('span'), { className: 'hint tag', textContent: tag }), sl, nb, unit, pc, x);
+    showP(); return r;
+  };
+  const isOff = it => Array.isArray(it) ? !!it[2] : !!it.off;
+  const setOff = (it, on) => { if (Array.isArray(it)) { if (on) it[2] = 1; else it.length = 2; } else if (on) it.off = 1; else delete it.off; };
   // floors
-  const ftot = (A.floors || []).reduce((s, f) => s + (+f[1] || 0), 0) || 1;
+  const ftot = () => (A.floors || []).filter(f => !f[2]).reduce((s2, f) => s2 + (+f[1] || 0), 0) || 1;
   body.insertAdjacentHTML('beforeend', '<h4>Floors <span class="hint" style="font-weight:400">· painted at random by weight (when "Also lay the floor" is ticked)</span></h4>');
   const fl = document.createElement('div'); fl.className = 'arows'; body.append(fl);
-  (A.floors || []).forEach((f, i) => {
-    const r = document.createElement('div'); r.className = 'arow';
-    r.append(thumb(f[0], 34), Object.assign(document.createElement('span'), { className: 'an', textContent: 'Floor ' + f[0] }),
-      'weight', num(() => f[1], v => { f[1] = v; again(); }, 0, 1000), Object.assign(document.createElement('span'), { className: 'pct', textContent: Math.round((+f[1] || 0) / ftot * 100) + '%' }));
-    const x = document.createElement('button'); x.className = 'sm'; x.textContent = '×'; x.title = 'Take it out'; x.onclick = () => { A.floors.splice(i, 1); again(); }; r.append(x);
-    fl.append(r);
-  });
+  (A.floors || []).forEach((f, i) => fl.append(row(A.floors, i, f[0], 'Floor ' + f[0], '', () => +f[1] || 0, v => { f[1] = v; }, 100, 0.5, 'weight',
+    () => f[2] ? 'off' : Math.round((+f[1] || 0) / ftot() * 100) + '%')));
   const af = document.createElement('button'); af.className = 'btn sec'; af.textContent = '+ Add the floor brush';
   af.title = 'Pick a floor in the Floors tab first'; af.onclick = () => {
     const ss = brush.kind === 'floor' ? [brush.s] : brush.kind === 'mix' ? brush.items.map(i => i.s) : [];
@@ -3984,27 +4014,19 @@ function areaRender(el) {
   };
   body.append(af);
   // pieces
-  const dens = (A.scatter || []).reduce((s, e) => s + (+e.p || 0), 0);
-  body.insertAdjacentHTML('beforeend', `<h4>Pieces <span class="hint" style="font-weight:400">· how many per 100 free tiles · together ${(dens * 100).toFixed(1)}</span></h4>`);
+  const dens = () => (A.scatter || []).filter(e => !e.off).reduce((s2, e) => s2 + (+e.p || 0), 0) * A.dens;
+  body.insertAdjacentHTML('beforeend', `<h4>Pieces <span class="hint" style="font-weight:400">· how many per 100 free tiles · together about ${(dens() * 100).toFixed(1)}</span></h4>`);
   const sl = document.createElement('div'); sl.className = 'arows'; body.append(sl);
-  (A.scatter || []).forEach((e, i) => {
-    const r = document.createElement('div'); r.className = 'arow';
-    const n2 = num(() => +(e.p * 100).toFixed(2), v => { e.p = v / 100; again(); }, 0, 100); n2.step = '0.1';
-    n2.onchange = () => { const v = Math.max(0, Math.min(100, +n2.value || 0)); e.p = v / 100; again(); };
-    const tag = e.k === 'o' ? ((e.b & 1) ? 'blocks walking' : 'walk through') : 'item';
-    r.append(thumb(scatterSprite(e), 34), Object.assign(document.createElement('span'), { className: 'an', textContent: scatterName(e) }),
-      Object.assign(document.createElement('span'), { className: 'hint', textContent: tag }), n2, 'per 100');
-    const x = document.createElement('button'); x.className = 'sm'; x.textContent = '×'; x.title = 'Take it out'; x.onclick = () => { A.scatter.splice(i, 1); again(); }; r.append(x);
-    sl.append(r);
-  });
+  (A.scatter || []).forEach((e, i) => sl.append(row(A.scatter, i, scatterSprite(e), scatterName(e),
+    e.k === 'o' ? ((e.b & 1) ? 'blocks walking' : 'walk through') : 'item',
+    () => (+e.p || 0) * 100, v => { e.p = v / 100; }, 5, 0.05, 'per 100', () => e.off ? 'off' : '')));
   const ap = document.createElement('button'); ap.className = 'btn sec'; ap.textContent = '+ Add the current brush';
   ap.title = 'Pick a tree, plant, rock or item in the Objects / Items tabs (or with the eye dropper) first';
   ap.onclick = () => {
     A.scatter = A.scatter || [];
-    if (brush.kind === 'place') A.scatter.push({ k: 't', t: brush.t[0], p: 0.01 });
+    if (brush.kind === 'place') A.scatter.push(brush.t[6] ? { k: 't', t: brush.t[0], p: 0.01 } : { k: 'o', s: brush.t[2], b: brush.t[5] & 3, p: 0.01 });
     else if (brush.kind === 'object') A.scatter.push({ k: 'o', s: brush.s, b: brush.block || 0, p: 0.01 });
     else return toast('Pick a piece (Objects, Items, or the eye dropper) as the brush first, then press this.', true);
-    if (brush.kind === 'place' && !brush.t[6]) { const e = A.scatter.pop(); A.scatter.push({ k: 'o', s: brush.t[2], b: brush.t[5] & 3, p: e.p }); }
     again();
   };
   body.append(ap);
