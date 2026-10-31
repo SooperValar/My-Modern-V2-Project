@@ -29,8 +29,10 @@ Checked already:
 ## 3. A self-updating client
 - [x] A small launcher players open: `Launcher.exe` (source `client/launcher/`). Reads the file list, downloads only what changed, updates itself, then starts the game.
 - [x] The files on GitHub: the `client-dist` branch of this (public) project, read from raw.githubusercontent.com. To publish an update: `python3 tools/release/publish_client.py <Client folder> <project> "<version>"`, then `git push origin client-dist`.
-- [ ] **Next:** First push of `client-dist`, then test the launcher (a copy of the zip on this PC: it should say "up to date"; publish a small change and it should download just that).
-- [ ] Raising `MINVERSION` on the server makes old clients say "please update".
+- [x] Launcher tested: a fresh copy of the zip checked all files and started the game (version 1); after publishing version 2 (one README line) it downloaded just that file and started the game.
+- [x] The player download: `MyV2-Astonia.zip` in the Client folder (the "MyV2 Astonia" folder: Launcher.exe, merc.exe, graphics, sounds, README.txt). Rebuild it now and then so new players start close to the newest version; the launcher fetches the rest.
+- **Whenever player files change** (a new `merc.exe`, new or changed sprites in `GFX/`, sounds, the README): run `publish_client.py`, then `git push origin client-dist`. Players get it the next time they start the launcher (GitHub's cache: a few minutes).
+- [ ] Raising `MINVERSION` on the server makes old clients say "please update" (only needed when a client change must be in place before playing; the launcher usually updates first anyway).
 
 ## 4. Before strangers play
 - [ ] Automatic daily backups of the game data, with a copy off the PC.
