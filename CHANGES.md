@@ -352,6 +352,7 @@ The map page (rail: Map).
 
 **Tabs of the piece library**
 - **Builder**: recently used pieces, chests, floor mixes, floors and flags, walls and objects.
+- **Areas**: area brushes (see below).
 - **Floors** (by how often they are used), **Walls** (drawn into the tile, they block), **Objects** (furniture, decoration, doors, chests…), **Items** (things players can pick up), **NPCs** (see [NPC editor](#npc-editor)), **Flags** (paint a flag on tiles).
 - Right-click an item, object or wall in the library to edit its template.
 
@@ -374,6 +375,13 @@ The map page (rail: Map).
 - **Edit its template…** and **Quest rules…** (what happens when a player uses it, see [Conversation editor](#conversation-editor)).
 - **Chests**: a summary and **Edit chest…** (see [Chest editor](#chest-editor)).
 - **NPCs**: turn, move or remove, **Edit NPC…** (see [NPC editor](#npc-editor)).
+
+**Area brushes** (the **Areas** tab, next to Floors)
+- Paint a whole landscape at once with brush, rectangle or fill: each tile gets the area's floor mix (tick **Also lay the floor**, or untick it to keep the floor), and free tiles now and then get one of its trees, plants, rocks or decorations, at the same density as the real area. Walls, items, NPCs and blocked tiles are left alone; with **keep pieces apart**, two pieces that block walking never stand side by side. Alt+paint removes pieces (the floor stays). Undo, saving and live editing work as for any edit.
+- Seven ready-made brushes, learned from the game's own areas: **City Park** (Memorial Park), **Forest** (Strange Forest), **Dense Forest** (the labyrinth's Forest Gorge), **Jungle** (north of Strange Forest), **Cave**, **Fire Cave** and **Ice Cave** (the pentagram caves; no pentagrams, enemies or walls).
+- **+ Learn from the map**: drag over any part of the map and its floors and loose pieces become a new brush. Walls are recognised by shape (blocking pieces in lines, with blocking neighbours on two sides) and left out, as are things that belong to buildings (doors, chests, signs, lights, candles, shrines…) and anything players can pick up.
+- **Edit…** (or right-click a brush): its name, floors with weights, each piece with how many per 100 free tiles (with **+ Add the current brush** for a tree, plant, rock or item you picked), and the spacing rule. Your brushes are kept in `.dat/mapedit-areas.json`; saving one of the editor's own keeps your version under its name.
+- Server side: a new edit op `area` (`area_learn`, `area_pick` in `mapedit.py`), built on the existing floor, object and place ops.
 
 **Item templates** (right-click a piece in the library, "Edit template…" on the brush card, or "Edit its template…" on an item on a tile): name, reference, description, both looks, value, minimum rank, driver, flags in groups, where it is worn, all modifiers (when worn / when active / needed), armor, weapon, light, damage to attackers, ages, damage, duration, and the driver values. By default the copies lying on the map get the change, but only where they still had the template's old value, so a portal's destination or a sign's own text stays. "Save as a new item…" makes a copy.
 

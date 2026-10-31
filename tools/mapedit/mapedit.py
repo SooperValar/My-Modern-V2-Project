@@ -16,6 +16,7 @@ Files read: .dat/map.dat, item.dat, titem.dat, char.dat (written: map.dat,
 item.dat), area.c (zone names), the client's GFX/, pnglib.dat/.idx and
 gx00.dat/.idx (sprites), and optionally a minimap picture (world_minimap.png).
 """
+from collections import Counter
 import argparse, glob, io, json, mmap, os, re, shutil, struct, subprocess, sys, threading, time, zlib, random
 from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
 from urllib.parse import urlparse, parse_qs
@@ -318,6 +319,60 @@ def talk_text(quests, npcs, names):
 
 
 # ---------------------------------------------------------------- world
+BUILTIN_AREAS = [{"name":"City Park","floors":[[553,22.2],[551,18.6],[554,17.5],[552,17.4],[549,7.2],[545,4.0],[544,2.3],[550,1.0]],"scatter":[{"k":"o","s":1114,"b":3,"p":0.00985},
+    {"k":"o","s":1238,"b":3,"p":0.00923},
+    {"k":"o","s":1112,"b":3,"p":0.00862},
+    {"k":"o","s":1240,"b":3,"p":0.00492},
+    {"k":"o","s":880,"b":3,"p":0.00308},
+    {"k":"t","t":16,"p":0.01415},
+    {"k":"t","t":17,"p":0.01292},
+    {"k":"t","t":45,"p":0.01108},
+    {"k":"t","t":47,"p":0.01046},
+    {"k":"t","t":1133,"p":0.00554}],"apart":True,"from":[578,566,633,596]},
+    {"name":"Forest","floors":[[1118,98.1],[989,1.1]],"scatter":[{"k":"o","s":1114,"b":3,"p":0.01212},
+    {"k":"o","s":1112,"b":3,"p":0.01204},
+    {"k":"o","s":1238,"b":3,"p":0.01122},
+    {"k":"o","s":880,"b":3,"p":0.00817},
+    {"k":"o","s":1240,"b":3,"p":0.00718},
+    {"k":"o","s":882,"b":3,"p":0.00454},
+    {"k":"o","s":1116,"b":3,"p":0.00214},
+    {"k":"o","s":884,"b":3,"p":0.00099},
+    {"k":"t","t":47,"p":0.00899},
+    {"k":"t","t":17,"p":0.00775},
+    {"k":"t","t":1133,"p":0.00289},
+    {"k":"t","t":45,"p":0.00148},
+    {"k":"t","t":16,"p":0.00115}],"apart":True,"from":[480,300,600,400]},
+    {"name":"Dense Forest","floors":[[1118,92.5],[1158,4.2]],"scatter":[{"k":"o","s":1238,"b":3,"p":0.07616},
+    {"k":"o","s":1240,"b":3,"p":0.04572}],"apart":False,"from":[24,600,120,696]},
+    {"name":"Jungle","floors":[[1006,26.1],[1003,25.4],[1007,24.1],[1005,23.6]],"scatter":[{"k":"o","s":358,"b":3,"p":0.01528},
+    {"k":"o","s":340,"b":0,"p":0.01445},
+    {"k":"o","s":360,"b":3,"p":0.01321},
+    {"k":"o","s":350,"b":0,"p":0.01156},
+    {"k":"o","s":356,"b":3,"p":0.01115},
+    {"k":"o","s":354,"b":0,"p":0.00991},
+    {"k":"o","s":342,"b":0,"p":0.0095},
+    {"k":"o","s":352,"b":0,"p":0.00826},
+    {"k":"t","t":201,"p":0.01404},
+    {"k":"t","t":203,"p":0.00867},
+    {"k":"t","t":202,"p":0.00702}],"apart":True,"from":[500,145,540,205]},
+    {"name":"Cave","floors":[[1014,97.5]],"scatter":[{"k":"o","s":1274,"b":1,"p":0.01981},
+    {"k":"o","s":1282,"b":0,"p":0.00696},
+    {"k":"o","s":1280,"b":0,"p":0.00634},
+    {"k":"o","s":1278,"b":1,"p":0.00608},
+    {"k":"o","s":1276,"b":1,"p":0.00452},
+    {"k":"t","t":171,"p":0.00506}],"apart":False,"from":[215,445,405,595]},
+    {"name":"Fire Cave","floors":[[704,25.5],[659,25.5],[688,25.0],[660,24.1]],"scatter":[{"k":"o","s":674,"b":1,"p":0.00651},
+    {"k":"o","s":678,"b":1,"p":0.00359},
+    {"k":"o","s":682,"b":1,"p":0.00219},
+    {"k":"o","s":686,"b":1,"p":0.0014},
+    {"k":"t","t":522,"p":0.00322}],"apart":True,"from":[275,305,405,435]},
+    {"name":"Ice Cave","floors":[[16672,21.9],[16670,21.6],[16673,20.7],[16671,20.6]],"scatter":[{"k":"o","s":16696,"b":1,"p":0.00698},
+    {"k":"o","s":16690,"b":1,"p":0.00537},
+    {"k":"o","s":16692,"b":1,"p":0.00322},
+    {"k":"o","s":16694,"b":1,"p":0.00269},
+    {"k":"t","t":812,"p":0.00725}],"apart":True,"from":[330,246,408,299]}]     # learned from the game's own areas (area_learn), walls and stray pieces left out
+
+
 class World:
     FILES = ('map.dat', 'item.dat', 'char.dat', 'tchar.dat', 'effect.dat', 'titem.dat')
     KIND_FILE = {'m': 'map.dat', 'i': 'item.dat', 'c': 'char.dat', 't': 'tchar.dat', 'f': 'effect.dat', 'T': 'titem.dat'}
@@ -1259,6 +1314,123 @@ class World:
                 return i
         return 0
 
+    # --- area brushes: a floor mix plus scattered trees, plants, rocks... learned from a real area
+    AREA_STOP = ('candle', 'shield', 'sign', 'torch', 'lamp', 'street', 'shrine', 'inscription', 'hole', 'door',
+                 'chest', 'portal', 'book', 'table', 'chair', 'bed', 'lever', 'statue', 'pentagram', 'grave')
+
+    def area_learn(self, x0, y0, x1, y1, name=''):
+        """measure an area: its floors (weights), and how often each loose piece stands on a free tile"""
+        x0, x1 = sorted((max(1, int(x0)), min(MAPX - 2, int(x1))))
+        y0, y1 = sorted((max(1, int(y0)), min(MAPY - 2, int(y1))))
+        with self.lock:
+            T = {(x, y): self.tile(x, y) for y in range(y0 - 1, y1 + 2) for x in range(x0 - 1, x1 + 2)}
+            blk = lambda x, y: (x, y) in T and T[(x, y)][1] and (T[(x, y)][7] & MF_MOVEBLOCK)
+            # wall-like sprites: most of them have blocking pieces on two or more sides (walls run in lines)
+            seen, walled = Counter(), Counter()
+            for y in range(y0, y1 + 1):
+                for x in range(x0, x1 + 1):
+                    s = T[(x, y)][1]
+                    if s and T[(x, y)][7] & MF_MOVEBLOCK:
+                        seen[s] += 1
+                        if sum(1 for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)) if blk(x + dx, y + dy)) >= 2:
+                            walled[s] += 1
+            walls = {s for s in seen if walled[s] >= 0.5 * seen[s]}
+            floors, objs, items, blockers = Counter(), Counter(), Counter(), []
+            open_tiles = 0
+            for y in range(y0, y1 + 1):
+                for x in range(x0, x1 + 1):
+                    t = T[(x, y)]
+                    if t[1] in walls or t[0] in (0, 1008):
+                        continue
+                    open_tiles += 1
+                    floors[t[0]] += 1
+                    if t[1]:
+                        objs[(t[1], t[7] & 3)] += 1
+                        if t[7] & MF_MOVEBLOCK:
+                            blockers.append((x, y))
+                    i = t[4]
+                    if i and 0 < i < MAXITEM and self.it_u8(i, I_USED):
+                        tp = self.it_u16(i, I_TEMP)
+                        if not (0 < tp < MAXTITEM) or not self.titem[tp * ITEM_SIZE + I_USED]:
+                            continue
+                        fl, drv = self.ti_u64(tp, I_FLAGS), self.titem[tp * ITEM_SIZE + I_DRIVER]
+                        nm = self.titem[tp * ITEM_SIZE + I_NAME:tp * ITEM_SIZE + I_NAME + 40].split(b'\0')[0].decode('latin-1')
+                        if fl & IF_TAKE or drv not in (0, 1, 42) or (drv == 0 and fl & IF_USE) or any(w in nm.lower() for w in self.AREA_STOP):
+                            continue
+                        items[tp] += 1
+                        if fl & IF_MOVEBLOCK:
+                            blockers.append((x, y))
+            bset = set(blockers)
+            close = sum(1 for x, y in blockers if any((x + dx, y + dy) in bset for dx in (-1, 0, 1) for dy in (-1, 0, 1) if dx or dy))
+            n = max(1, open_tiles)
+            scatter = [{'k': 'o', 's': s, 'b': b, 'p': round(c / n, 5), 'n': c} for (s, b), c in objs.most_common() if c >= 2]
+            scatter += [{'k': 't', 't': tp, 'p': round(c / n, 5), 'n': c} for tp, c in items.most_common() if c >= 2]
+            fl_tot = sum(floors.values()) or 1
+            return {'name': name or self.zone((x0 + x1) // 2, (y0 + y1) // 2) or 'New area',
+                    'floors': [[f, round(c * 100 / fl_tot, 1)] for f, c in floors.most_common(12) if c * 100 >= fl_tot],
+                    'scatter': scatter, 'apart': close < 0.25 * max(1, len(blockers)),
+                    'from': [x0, y0, x1, y1], 'tiles': open_tiles, 'walls': sorted(walls)}
+
+    def areas_path(self):
+        return os.path.join(self.dat, 'mapedit-areas.json')
+
+    def area_presets(self):
+        user = {}
+        try:
+            user = {a['name']: a for a in json.load(open(self.areas_path(), encoding='utf-8'))}
+        except (OSError, ValueError):
+            pass
+        out = [dict(a, builtin=1) for a in BUILTIN_AREAS if a['name'] not in user]
+        return out + [dict(a, builtin=0) for a in user.values()]
+
+    def area_save(self, preset=None, delete=None):
+        try:
+            user = json.load(open(self.areas_path(), encoding='utf-8'))
+        except (OSError, ValueError):
+            user = []
+        if delete:
+            user = [a for a in user if a['name'] != delete]
+        if preset:
+            keep = ('name', 'floors', 'scatter', 'apart', 'from')
+            p = {k: preset[k] for k in keep if k in preset}
+            user = [a for a in user if a['name'] != p['name']] + [p]
+        json.dump(user, open(self.areas_path(), 'w', encoding='utf-8'), indent=1)
+        self._areas = None
+
+    def area_get(self, name):
+        if getattr(self, '_areas', None) is None:
+            self._areas = {a['name']: a for a in self.area_presets()}
+        return self._areas.get(name)
+
+    def area_pick(self, pr, x, y, t):
+        """what an area brush puts on a free tile: None, ('o', sprite, block) or ('t', template)"""
+        if t[1] or t[2] or t[3] or (t[4] and self.it_u8(t[4], I_USED)) or t[7] & MF_MOVEBLOCK or t[0] in (0, 1008):
+            return None
+        r, acc = random.random(), 0.0
+        for e in pr.get('scatter', []):
+            acc += float(e.get('p', 0))
+            if r < acc:
+                if e['k'] == 'o':
+                    b = int(e.get('b', 0)); pick = ('o', int(e['s']), b)
+                else:
+                    tp = int(e['t'])
+                    if not (0 < tp < MAXTITEM) or not self.titem[tp * ITEM_SIZE + I_USED]:
+                        return None
+                    b = 1 if self.ti_u64(tp, I_FLAGS) & IF_MOVEBLOCK else 0; pick = ('t', tp)
+                if b & 1 and pr.get('apart'):
+                    for dx in (-1, 0, 1):
+                        for dy in (-1, 0, 1):
+                            if not (dx or dy):
+                                continue
+                            n = self.tile(x + dx, y + dy)
+                            if n[7] & MF_MOVEBLOCK:
+                                return None
+                            i = n[4]
+                            if i and 0 < i < MAXITEM and self.it_u8(i, I_USED) and self.it_u64(i, I_FLAGS) & IF_MOVEBLOCK:
+                                return None
+                return pick
+        return None
+
     def _remove_item(self, rec, x, y):
         t = self.tile(x, y)
         i = t[4]
@@ -1302,6 +1474,21 @@ class World:
                     continue
                 self._save_map(rec, x, y)
                 t = self.tile(x, y)
+                if k == 'area':               # an area brush: its floor mix, and maybe one of its loose pieces
+                    pr = self.area_get(op.get('a', ''))
+                    if not pr:
+                        msgs.append('no area brush called %s' % op.get('a')); continue
+                    if op.get('floor', True) and pr.get('floors') and t[0] != 1008:
+                        fs = pr['floors']
+                        t[0] = int(random.choices([f for f, w in fs], weights=[max(0.01, float(w)) for f, w in fs])[0])
+                        self.set_tile(x, y, t)
+                    pick = self.area_pick(pr, x, y, t)
+                    if not pick:
+                        n += 1; continue
+                    if pick[0] == 'o':
+                        k, op = 'object', {'op': 'object', 'x': x, 'y': y, 's': pick[1], 'block': pick[2]}
+                    else:
+                        k, op = 'place', {'op': 'place', 'x': x, 'y': y, 't': pick[1]}
                 if k == 'floor':
                     s = int(op['s'])
                     t[0] = random.choice(FLOOR_SETS[s]) if s in FLOOR_SETS and op.get('set', True) else s
@@ -2057,6 +2244,8 @@ def make_handler(world, sprites, page, minimap, ctl):
                 self.end_headers()
                 self.wfile.write(b)
                 return
+            if u.path == '/api/areas':
+                return self.js(world.area_presets())
             if u.path == '/api/chest':
                 qs, npcs = world.talk_load()
                 return self.js({'chest': qs['chests'].get('%d,%d' % (int(q['x']), int(q['y'])))})
@@ -2101,6 +2290,15 @@ def make_handler(world, sprites, page, minimap, ctl):
                                 'dirty': world.dirty, 'undo': len(world.undo), 'redo': len(world.redo)})
             if u.path in ('/api/save', '/api/relight', '/api/restore') and server_running():
                 return self.js({'error': 'The game server is running: live edits are already in the game, there is nothing to save.'})
+            if u.path == '/api/areas':
+                if body.get('learn'):
+                    return self.js(world.area_learn(*body['learn'][:4], name=body.get('name', '')))
+                if body.get('save') or body.get('delete'):
+                    if body.get('save') and not str(body['save'].get('name', '')).strip():
+                        return self.js({'error': 'Give the area brush a name.'})
+                    world.area_save(body.get('save'), body.get('delete'))
+                    return self.js({'msg': 'saved', 'areas': world.area_presets()})
+                return self.js({'error': 'nothing to do'})
             if u.path == '/api/chest':
                 qs, npcs = world.talk_load()
                 key = '%d,%d' % (int(body['x']), int(body['y']))
@@ -2479,6 +2677,18 @@ table.pl button:hover { color: var(--text); border-color: var(--gold); }
 #tpl .chip.on { color: #ffe39a; border-color: #d6a443; background: #3a2f17; }
 #tpl .rwadd { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 14px; }
 #tpl .note2 { line-height: 1.6; }
+#tpl .arows { display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px; }
+#tpl .arow { display: flex; align-items: center; gap: 10px; padding: 4px 8px; border: 1px solid #40362a; border-radius: 8px; background: #1c1913; }
+#tpl .arow .an { min-width: 200px; flex: 1; }
+#tpl .arow input[type=number] { width: 72px; }
+#tpl .arow .pct { color: var(--gold2); min-width: 36px; }
+.athumb { position: relative; flex: none; }
+.athumb canvas { position: absolute; flex: none; min-height: 0; }
+.athumb .af { left: 0; top: 0; width: 100%; height: 100%; opacity: .9; }
+.athumb .as { width: 62%; height: 62%; }
+.athumb .as0 { left: 2%; bottom: 4%; } .athumb .as1 { right: 0; bottom: 14%; }
+.cell .athumb { width: 100% !important; height: auto !important; flex: 1; min-height: 0; }
+.areatop { display: flex; gap: 8px; align-items: center; justify-content: space-between; padding: 4px 2px 8px; flex-wrap: wrap; }
 .faces { display: flex; gap: 8px; margin: 4px 0; }
 .faces .face { padding: 3px; border: 1px solid #40362a; border-radius: 8px; background: #221d16; position: relative; }
 .faces .face .fl { position: absolute; left: 4px; top: 2px; font-size: 11px; font-weight: 700; color: #a8987a; }
@@ -2938,7 +3148,7 @@ function toggleWorld(on) {
 
 // ---------------------------------------------------------------- left panel
 let npcSub = 'world', newNpc = null;    // NPCs tab: In the world / Blueprints; the + New NPC form
-const TABS = { builder: 'Builder', floors: 'Floors', walls: 'Walls', objects: 'Objects', items: 'Items', npcs: 'NPCs', flags: 'Flags' };
+const TABS = { builder: 'Builder', floors: 'Floors', areas: 'Areas', walls: 'Walls', objects: 'Objects', items: 'Items', npcs: 'NPCs', flags: 'Flags' };
 const TAB_ICONS = {      // the editor's own icons, same set as the toolbar
   builder: '<path d="M14 4l6 6-3 3-6-6z"/><path d="M11 7 3.5 14.5a2 2 0 0 0 0 2.8l3.2 3.2a2 2 0 0 0 2.8 0L17 13"/>',
   floors: '<path d="M12 4 21 9.5 12 15 3 9.5z" fill="currentColor" fill-opacity=".25"/><path d="M12 4 21 9.5 12 15 3 9.5z"/><path d="M3 13.5 12 19l9-5.5" opacity=".6"/>',
@@ -2947,6 +3157,7 @@ const TAB_ICONS = {      // the editor's own icons, same set as the toolbar
   items: '<path d="M19 3l-9.5 9.5M19 3v4l-8 8M19 3h-4l-8 8"/><path d="M6.5 13.5l4 4M4 20l3.5-3.5"/>',
   npcs: '<path d="M12 3c-4 0-6.5 3.5-6.5 8.5V21h13v-9.5C18.5 6.5 16 3 12 3z"/><path d="M8.5 13c.5-3 1.8-4.5 3.5-4.5s3 1.5 3.5 4.5c-1 1.5-2.2 2-3.5 2s-2.5-.5-3.5-2z"/>',
   flags: '<path d="M5 21V3"/><path d="M5 4h13l-3 4 3 4H5"/>',
+  areas: '<path d="M7 3 3.5 10h7z"/><path d="M7 10v4"/><circle cx="16.5" cy="8" r="3.5"/><path d="M16.5 11.5V15"/><path d="M2 18c3-2 6-2 10 0s7 2 10 0" opacity=".7"/><path d="M2 21.5c3-2 6-2 10 0s7 2 10 0" opacity=".4"/>',
   title: '<path d="M12 3 21 12 12 21 3 12z"/>',
 };
 // facing, named the way the minimap shows it (north = smaller x, west = smaller y); the game's DX_ numbers
@@ -2967,7 +3178,7 @@ function cats() {
     items: t.filter(x => x[3]),
   };
 }
-function brushKey(b) { return b.kind + ':' + (b.kind === 'place' || b.kind === 'npc' ? b.t[0] : b.kind === 'flag' ? b.bit : b.kind === 'mix' ? b.items.map(i => i.s + 'x' + i.w).join(',') : b.s); }
+function brushKey(b) { return b.kind + ':' + (b.kind === 'area' ? b.name : b.kind === 'place' || b.kind === 'npc' ? b.t[0] : b.kind === 'flag' ? b.bit : b.kind === 'mix' ? b.items.map(i => i.s + 'x' + i.w).join(',') : b.s); }
 // ---- floor mixes: several floors painted at random, each with a weight
 let mixes = [];
 try { mixes = JSON.parse(localStorage.getItem('myv2.mixes') || '[]'); } catch (e) {}
@@ -3028,6 +3239,18 @@ function setBrush(b, keepTool) {
 function card() {
   const c = $('#card'); c.innerHTML = ''; c.classList.toggle('mix', brush.kind === 'mix');
   if (brush.kind === 'mix') return mixCard(c);
+  if (brush.kind === 'area') {
+    const a = areaByName(brush.name) || { name: brush.name, floors: [], scatter: [] };
+    c.appendChild(areaThumb(a, 40));
+    const d = document.createElement('div'); d.innerHTML = '<div class="t"></div><div class="s"></div>';
+    d.firstChild.textContent = 'Area: ' + a.name;
+    d.lastChild.textContent = `${areaFloor ? 'Lays its floor and scatters' : 'Keeps the floor, scatters'} ${a.scatter.length} kinds of pieces · Alt+paint removes pieces`;
+    const m = document.createElement('div'); m.className = 'mixbtns'; m.style.marginTop = '6px';
+    m.innerHTML = '<label class="chk" style="margin-right:6px"><input type="checkbox"><span>Floor too</span></label><button>Edit…</button>';
+    const cb = m.querySelector('input'); cb.checked = areaFloor; cb.onchange = () => { setAreaFloor(cb.checked); card(); if (mode === 'map' && tab === 'areas') leftUI(); };
+    m.querySelector('button').onclick = () => openArea(a); d.appendChild(m); c.appendChild(d);
+    return;
+  }
   let spr = 0, t = '', s = '';
   if (brush.kind === 'floor') { spr = brush.s; t = 'Floor ' + brush.s; s = brush.set && pal && pal.sets[brush.s] ? 'Floor sprite ' + brush.s + ' (random variants ' + pal.sets[brush.s].join(', ') + ')' : 'Floor sprite ' + brush.s; }
   else if (brush.kind === 'place') { spr = brush.t[2]; t = brush.t[1]; s = `Template ${brush.t[0]} · ${brush.t[6] ? 'item' : 'drawn into the tile'}${brush.t[5] & 1 ? ' · blocks walking' : ''}`; }
@@ -3142,6 +3365,7 @@ function cellNpc(t) {
   return c;
 }
 function cellRecent(b) {
+  if (b.kind === 'area') { const a = areaByName(b.name); if (a) return cellArea(a); }
   if (b.kind === 'npc') return cellNpc(b.t);
   if (b.kind === 'mix') return cellMix(b, false);
   if (b.kind === 'floor') return cellFloor(b.s, 0);
@@ -3264,6 +3488,8 @@ function leftUI() {
         if (game.length) { sect("The game's own · spawned by its code (pentagrams, labyrinth, summons…)"); lazy(grid(), game.sort((a, b) => a[1].localeCompare(b[1])), cellNpc); }
         if (!mine.length && !game.length) w.insertAdjacentHTML('beforeend', '<div class="empty">Nothing matches.</div>');
       }
+    } else if (tab === 'areas') {
+      areasTab(w, sect, grid, match);
     } else if (tab === 'flags') {
       sect('Paint a flag on tiles'); lazy(grid(), FLAGS.map((f, i) => i).filter(i => match(FLAGS[i], '')), cellFlag);
     } else {
@@ -3664,6 +3890,142 @@ function cellChest() {
   return c;
 }
 
+// ---- area brushes: a floor mix plus scattered trees, plants, rocks... (Areas tab)
+let areas = [], areaLearn = false;
+let areaFloor = true;
+try { areaFloor = localStorage.getItem('myv2.areafloor') !== '0'; } catch (e) {}
+function setAreaFloor(on) { areaFloor = on; try { localStorage.setItem('myv2.areafloor', on ? '1' : '0'); } catch (e) {} }
+function loadAreas() { return api('/api/areas').then(a => { if (Array.isArray(a)) areas = a; return areas; }); }
+const areaByName = n => areas.find(a => a.name === n);
+function scatterSprite(e) { if (e.k === 'o') return e.s; const r = pal && pal.templates.find(t => t[0] === e.t); return r ? r[2] : 0; }
+function scatterName(e) { return e.k === 'o' ? 'Piece ' + e.s : (iname(e.t) || 'template ' + e.t); }
+function areaThumb(a, w) {          // its floor with its two most common pieces on it
+  const c = document.createElement('div'); c.className = 'athumb'; c.style.width = c.style.height = w + 'px';
+  const f = thumb(a.floors && a.floors[0] ? a.floors[0][0] : 0, w, w); f.classList.add('af'); c.appendChild(f);
+  (a.scatter || []).slice(0, 2).forEach((e, i) => { const s = thumb(scatterSprite(e), Math.round(w * .62), Math.round(w * .62)); s.classList.add('as', 'as' + i); c.appendChild(s); });
+  return c;
+}
+function cellArea(a) {
+  const c = document.createElement('div'); c.className = 'cell'; c.dataset.k = 'area:' + a.name;
+  if (brushKey(brush) === c.dataset.k) c.classList.add('sel');
+  c.title = `${a.name} · ${(a.floors || []).length} floors, ${(a.scatter || []).length} kinds of pieces · right-click to edit`;
+  c.appendChild(areaThumb(a, 64)); const l = document.createElement('div'); l.className = 'lab'; l.textContent = a.name; c.appendChild(l);
+  c.onclick = () => setBrush({ kind: 'area', name: a.name });
+  c.oncontextmenu = e => { e.preventDefault(); openArea(a); };
+  return c;
+}
+function areasTab(w, sect, grid, match) {
+  const top = document.createElement('div'); top.className = 'areatop';
+  top.innerHTML = `<label class="chk"><input type="checkbox"><span>Also lay the floor</span></label>
+    <button class="btn sec" title="Drag over a part of the map: its floors and loose pieces (trees, plants, rocks…) become a new area brush">+ Learn from the map</button>`;
+  const cb = top.querySelector('input'); cb.checked = areaFloor; cb.onchange = () => { setAreaFloor(cb.checked); card(); };
+  top.querySelector('button').onclick = startAreaLearn;
+  w.appendChild(top);
+  w.insertAdjacentHTML('beforeend', '<div class="hint" style="padding:0 2px 6px">Paint with brush, rectangle or fill: each tile gets the area\'s floor (if ticked) and, on free tiles, now and then one of its trees, plants or rocks. Alt+paint removes pieces. Walls, items and NPCs are left alone.</div>');
+  const list = areas.filter(a => match(a.name, ''));
+  const mine = list.filter(a => !a.builtin), game = list.filter(a => a.builtin);
+  if (game.length) { sect('From the game\'s own areas'); const g = grid(); game.forEach(a => g.appendChild(cellArea(a))); }
+  if (mine.length) { sect('Your area brushes'); const g = grid(); mine.forEach(a => g.appendChild(cellArea(a))); }
+  if (!list.length) w.insertAdjacentHTML('beforeend', '<div class="empty">' + (areas.length ? 'Nothing matches.' : 'Loading…') + '</div>');
+}
+function startAreaLearn() {
+  areaLearn = true; cv.style.cursor = 'crosshair';
+  toast('Drag over the part of the map to learn from (trees, plants and floors inside it). Esc cancels.');
+}
+async function finishAreaLearn(x0, y0, x1, y1) {
+  areaLearn = false; setTool(tool);
+  if ((x1 - x0 + 1) * (y1 - y0 + 1) < 25) return toast('Drag over a bigger part (at least 5×5).', true);
+  const a = await api('/api/areas', { learn: [x0, y0, x1, y1] });
+  if (a.error) return toast(a.error, true);
+  if (!a.scatter.length && !a.floors.length) return toast('Nothing to learn there.', true);
+  a.isNew = true; openArea(a);
+}
+function openArea(a) {
+  if (tplDirty() && !confirm('You have changes here you did not apply. Leave them?')) return;
+  TP = { kind: 'area', t: a.name, A: JSON.parse(JSON.stringify(a)), orig: {}, cur: {}, tab: 'area' };
+  TP.Aorig = a.isNew ? '' : JSON.stringify(TP.A);
+  $('#tpl').classList.add('on'); $('#tpl').classList.remove('picking'); tplRender();
+}
+function areaDirty() { return TP && TP.kind === 'area' && JSON.stringify(TP.A) !== TP.Aorig; }
+function areaRender(el) {
+  const A = TP.A, again = () => { const st = el.querySelector('.mbody').scrollTop; areaRender(el); el.querySelector('.mbody').scrollTop = st; };
+  el.querySelector('.ttl').innerHTML = ''; el.querySelector('.ttl').append(areaThumb(A, 34));
+  el.querySelector('.ttl').insertAdjacentHTML('beforeend', '<span style="vertical-align:middle;margin-left:8px"></span><small></small>');
+  el.querySelector('.ttl span').textContent = 'Area brush: ' + (A.name || 'new');
+  el.querySelector('.ttl small').textContent = A.from ? `learned from ${A.from[0]},${A.from[1]} – ${A.from[2]},${A.from[3]}` : '';
+  el.querySelector('.mtabs').innerHTML = '<button class="on">Area brush</button>';
+  const body = el.querySelector('.mbody'); body.innerHTML = '';
+  const g = document.createElement('div'); g.className = 'grid2'; body.append(g);
+  const nm = document.createElement('input'); nm.type = 'text'; nm.maxLength = 40; nm.value = A.name || ''; nm.oninput = () => { A.name = nm.value; };
+  g.append(Object.assign(document.createElement('div'), { className: 'lb', textContent: 'Name' }), nm,
+    Object.assign(document.createElement('div'), { className: 'lb', textContent: 'Spacing' }),
+    chk('Keep pieces that block walking apart (never two side by side)', () => !!A.apart, on => { A.apart = on; }));
+  if (A.from) {
+    const gt = document.createElement('button'); gt.className = 'sm'; gt.textContent = 'Go to where it was learned';
+    gt.onclick = () => { centerOn(Math.round((A.from[0] + A.from[2]) / 2), Math.round((A.from[1] + A.from[3]) / 2)); };
+    g.append(document.createElement('div'), gt);
+  }
+  // floors
+  const ftot = (A.floors || []).reduce((s, f) => s + (+f[1] || 0), 0) || 1;
+  body.insertAdjacentHTML('beforeend', '<h4>Floors <span class="hint" style="font-weight:400">· painted at random by weight (when "Also lay the floor" is ticked)</span></h4>');
+  const fl = document.createElement('div'); fl.className = 'arows'; body.append(fl);
+  (A.floors || []).forEach((f, i) => {
+    const r = document.createElement('div'); r.className = 'arow';
+    r.append(thumb(f[0], 34), Object.assign(document.createElement('span'), { className: 'an', textContent: 'Floor ' + f[0] }),
+      'weight', num(() => f[1], v => { f[1] = v; again(); }, 0, 1000), Object.assign(document.createElement('span'), { className: 'pct', textContent: Math.round((+f[1] || 0) / ftot * 100) + '%' }));
+    const x = document.createElement('button'); x.className = 'sm'; x.textContent = '×'; x.title = 'Take it out'; x.onclick = () => { A.floors.splice(i, 1); again(); }; r.append(x);
+    fl.append(r);
+  });
+  const af = document.createElement('button'); af.className = 'btn sec'; af.textContent = '+ Add the floor brush';
+  af.title = 'Pick a floor in the Floors tab first'; af.onclick = () => {
+    const ss = brush.kind === 'floor' ? [brush.s] : brush.kind === 'mix' ? brush.items.map(i => i.s) : [];
+    if (!ss.length) return toast('Pick a floor (or floor mix) as the brush first, then press this.', true);
+    A.floors = A.floors || []; for (const s2 of ss) if (!A.floors.some(f => f[0] === s2)) A.floors.push([s2, 10]); again();
+  };
+  body.append(af);
+  // pieces
+  const dens = (A.scatter || []).reduce((s, e) => s + (+e.p || 0), 0);
+  body.insertAdjacentHTML('beforeend', `<h4>Pieces <span class="hint" style="font-weight:400">· how many per 100 free tiles · together ${(dens * 100).toFixed(1)}</span></h4>`);
+  const sl = document.createElement('div'); sl.className = 'arows'; body.append(sl);
+  (A.scatter || []).forEach((e, i) => {
+    const r = document.createElement('div'); r.className = 'arow';
+    const n2 = num(() => +(e.p * 100).toFixed(2), v => { e.p = v / 100; again(); }, 0, 100); n2.step = '0.1';
+    n2.onchange = () => { const v = Math.max(0, Math.min(100, +n2.value || 0)); e.p = v / 100; again(); };
+    const tag = e.k === 'o' ? ((e.b & 1) ? 'blocks walking' : 'walk through') : 'item';
+    r.append(thumb(scatterSprite(e), 34), Object.assign(document.createElement('span'), { className: 'an', textContent: scatterName(e) }),
+      Object.assign(document.createElement('span'), { className: 'hint', textContent: tag }), n2, 'per 100');
+    const x = document.createElement('button'); x.className = 'sm'; x.textContent = '×'; x.title = 'Take it out'; x.onclick = () => { A.scatter.splice(i, 1); again(); }; r.append(x);
+    sl.append(r);
+  });
+  const ap = document.createElement('button'); ap.className = 'btn sec'; ap.textContent = '+ Add the current brush';
+  ap.title = 'Pick a tree, plant, rock or item in the Objects / Items tabs (or with the eye dropper) first';
+  ap.onclick = () => {
+    A.scatter = A.scatter || [];
+    if (brush.kind === 'place') A.scatter.push({ k: 't', t: brush.t[0], p: 0.01 });
+    else if (brush.kind === 'object') A.scatter.push({ k: 'o', s: brush.s, b: brush.block || 0, p: 0.01 });
+    else return toast('Pick a piece (Objects, Items, or the eye dropper) as the brush first, then press this.', true);
+    if (brush.kind === 'place' && !brush.t[6]) { const e = A.scatter.pop(); A.scatter.push({ k: 'o', s: brush.t[2], b: brush.t[5] & 3, p: e.p }); }
+    again();
+  };
+  body.append(ap);
+  const ft = el.querySelector('.mft');
+  ft.innerHTML = `${!A.isNew && !A.builtin ? '<button class="btn ghost" id="adel">Delete</button>' : ''}${A.builtin && !A.isNew ? '<span class="hint">One of the editor\'s own; saving keeps your version under its name.</span>' : ''}<span class="sp"></span><button class="btn ghost" id="tcancel">Close</button><button class="btn pri" id="tapply">${A.isNew ? 'Save as a new area brush' : 'Save'}</button>`;
+  $('#tcancel').onclick = closeTemplate;
+  if ($('#adel')) $('#adel').onclick = async () => {
+    if (!confirm(`Delete the area brush "${A.name}"?` + (areas.some(a => a.builtin && a.name === TP.t) ? ' (The editor\'s own one with this name comes back.)' : ''))) return;
+    const r = await api('/api/areas', { delete: TP.t }); if (r.error) return toast(r.error, true);
+    areas = r.areas; TP.Aorig = JSON.stringify(TP.A); closeTemplate(); if (mode === 'map') leftUI(); toast('Deleted.');
+  };
+  $('#tapply').onclick = async () => {
+    if (!(A.name || '').trim()) return toast('Give it a name.', true);
+    if (A.name !== TP.t && areas.some(a => a.name === A.name) && !confirm(`There is already one called "${A.name}". Replace it?`)) return;
+    const r = await api('/api/areas', { save: A }); if (r.error) return toast(r.error, true);
+    if (TP.t && TP.t !== A.name && !A.isNew && !A.builtin) await api('/api/areas', { delete: TP.t });
+    areas = (await loadAreas()); delete A.isNew; TP.t = A.name; TP.Aorig = JSON.stringify(A);
+    toast('Area brush saved: ' + A.name); setBrush({ kind: 'area', name: A.name }); if (mode === 'map') leftUI(); areaRender(el);
+  };
+}
+
 // ---- the NPC on the selected tile: facing, move, remove
 let npcPick = null;    // {x, y}: the next click on the map moves this NPC there
 function npcEditor(el, r, x, y, ro) {
@@ -3794,7 +4156,7 @@ const pos = v => v ? [v % 1024, Math.floor(v / 1024)] : null;
 
 let TP = null;   // {kind: 'npc'|'item', t, orig, cur, tab}
 function talkDirty() { return TP && TP.talk && JSON.stringify(TP.talk) !== TP.talkOrig; }
-function tplDirty() { return TP && (chestDirty() || Object.keys(tplChanged()).length || (TP.kind === 'player' && TP.nopass) || talkDirty() || (TP.kind === 'npc' && JSON.stringify(TP.cur.text) !== JSON.stringify(TP.orig.text))); }
+function tplDirty() { return TP && (chestDirty() || areaDirty() || Object.keys(tplChanged()).length || (TP.kind === 'player' && TP.nopass) || talkDirty() || (TP.kind === 'npc' && JSON.stringify(TP.cur.text) !== JSON.stringify(TP.orig.text))); }
 function openTemplate(kind, t) {
   if (tplDirty() && !(TP.kind === kind && TP.t === t) && !confirm('You have changes here you did not apply. Leave them?')) return;
   if (kind === 'use') {    // quest rules of the item on a tile: t = [x, y, name]
@@ -3824,6 +4186,7 @@ function tplTabs() {
 function tplRender() {
   const c = TP.cur, el = $('#tpl');
   if (TP.kind === 'chest') return chestRender(el);
+  if (TP.kind === 'area') return areaRender(el);
   if (TP.kind === 'use') {
     el.querySelector('.ttl').innerHTML = '<span style="vertical-align:middle"></span><small></small>';
     el.querySelector('.ttl span').textContent = 'Quest rules: ' + (c.name || 'item');
@@ -3887,7 +4250,7 @@ function tplRender() {
 }
 function tplChanged() {
   const out = {}, o = TP.orig, c = TP.cur;
-  if (TP.kind === 'use' || TP.kind === 'chest') return out;
+  if (TP.kind === 'use' || TP.kind === 'chest' || TP.kind === 'area') return out;
   for (const k of Object.keys(c)) {
     if (['t', 'count', 'pending', 'made', 'names', 'onmap', 'text', 'items', 'item', 'worn', 'depot', 'citem', 'rank', 'kin_name', 'ip', 'quests', 'online', 'c'].includes(k)) continue;
     if (JSON.stringify(c[k]) !== JSON.stringify(o[k])) out[k] = c[k];
@@ -4526,13 +4889,14 @@ function footprint(x, y) {
 }
 function opFor(x, y, alt) {
   const b = brush;
-  if (tool === 'erase' || (alt && (b.kind === 'place' || b.kind === 'object'))) return { op: 'erase', x, y };
+  if (tool === 'erase' || (alt && (b.kind === 'place' || b.kind === 'object' || b.kind === 'area'))) return { op: 'erase', x, y };
   if (b.kind === 'flag') return { op: 'flag', x, y, bit: b.bit, mode: alt ? 0 : 1 };
   if (alt) return null;
   if (b.kind === 'floor') return { op: 'floor', x, y, s: b.s, set: b.set };
   if (b.kind === 'mix') return { op: 'floor', x, y, s: mixPick(b.items), set: false };
   if (b.kind === 'object') return { op: 'object', x, y, s: b.s, block: b.block };
   if (b.kind === 'place') return { op: 'place', x, y, t: b.t[0] };
+  if (b.kind === 'area') return { op: 'area', x, y, a: b.name, floor: areaFloor };
   return null;
 }
 function label(alt) {
@@ -4540,6 +4904,7 @@ function label(alt) {
   const b = brush;
   if (b.kind === 'flag') return (alt ? 'cleared ' : 'set ') + FLAGS[b.bit];
   if (alt) return 'erase';
+  if (b.kind === 'area') return 'area ' + b.name + (areaFloor ? '' : ' (pieces only)');
   return b.kind === 'floor' ? 'floor ' + b.s : b.kind === 'mix' ? (b.name ? 'mix ' + b.name : 'floor mix ' + b.items.map(i => i.s).join('/')) : b.kind === 'place' ? b.t[1] : 'object ' + b.s;
 }
 function preview(op) {
@@ -4668,6 +5033,7 @@ cv.addEventListener('mousedown', e => {
   const r = cv.getBoundingClientRect(), sx = e.clientX - r.left, sy = e.clientY - r.top, t = screenToTile(sx, sy);
   if (e.button === 1 || e.button === 2 || (e.button === 0 && (spaceDown || tool === 'pan'))) { panning = { sx, sy, cx: cam.x, cy: cam.y }; cv.style.cursor = 'grabbing'; e.preventDefault(); return; }
   if (e.button !== 0) return;
+  if (areaLearn) { rect = { a: t, b: t, learn: true }; redrawTop(); return; }
   if (destPick) { if (RO()) { destPick = null; return toast('The game server is running: editing is off.', true); } setDestination(t); return; }
   if (tplPick) { tplPicked(t); return; }
   if (npcPick) { if (RO()) { npcPick = null; return toast('The game server is running: editing is off.', true); } moveNpc(t); return; }
@@ -4715,6 +5081,7 @@ window.addEventListener('mouseup', () => {
   if (panning) { panning = null; setTool(tool); return; }
   if (rect) {
     const x0 = Math.min(rect.a.x, rect.b.x), x1 = Math.max(rect.a.x, rect.b.x), y0 = Math.min(rect.a.y, rect.b.y), y1 = Math.max(rect.a.y, rect.b.y), alt = rect.alt;
+    if (rect.learn) { rect = null; redrawTop(); finishAreaLearn(x0, y0, x1, y1); return; }
     rect = null;
     if ((x1 - x0 + 1) * (y1 - y0 + 1) > 40000) { toast('That area is too big (at most 200×200 at once).', true); redrawTop(); return; }
     const ops = [];
@@ -4748,7 +5115,8 @@ window.addEventListener('keydown', e => {
     return;
   }
   if (k === ' ') { spaceDown = true; cv.style.cursor = 'grab'; e.preventDefault(); return; }
-  if (k === 'escape') { if (destPick || npcPick) { destPick = npcPick = null; setTool(tool); toast('Cancelled.'); return; } toggleWorld(false); rect = null; selTile = null; redrawTop(); return; }
+  if (k === 'escape') { if (areaLearn) { areaLearn = false; rect = null; setTool(tool); redrawTop(); toast('Cancelled.'); return; }
+    if (destPick || npcPick) { destPick = npcPick = null; setTool(tool); toast('Cancelled.'); return; } toggleWorld(false); rect = null; selTile = null; redrawTop(); return; }
   const map = { v: 'select', b: 'brush', u: 'rect', f: 'fill', e: 'erase', i: 'pick', h: 'pan' };
   if (map[k]) return setTool(map[k]);
   if (k === '[') return stepSize(-1);
@@ -4979,6 +5347,7 @@ setInterval(() => logRefresh(false), 3000);
   layersUI(); setTool('brush'); leftUI();
   await refreshInfo();
   pal = await api('/api/palette');
+  await loadAreas();
   card(); leftUI();
   const m = location.hash.match(/(\d+),(\d+)/);
   if (m) centerOn(+m[1], +m[2]); else centerOn(512, 512);
