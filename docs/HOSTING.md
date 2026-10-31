@@ -19,7 +19,7 @@ Checked already:
   - Side effect: with mirrored networking Ubuntu obeys Windows' reserved port ranges, and 8080 is in one, so the MyV2 Editor runs on another port (8090; it now picks a free one by itself).
 - [x] Port check from outside: portchecker.co with the home address and port 5555 says "open". (Enter the address by hand; the site's own guess can be a proxy's address.)
 - [x] A free server name that follows the home address: **myv2astonia.duckdns.org** (DuckDNS). Kept up to date by the Windows scheduled task "DuckDNS myv2astonia" every 15 minutes (`%USERPROFILE%\duckdns\duckdns-update.ps1`, log in `duckdns.log`; the token stays in that folder, never in the project).
-- [x] Test from outside with a real client: a laptop on a phone's hotspot connected with the test zip and played. (The window size on the laptop needs fixing.)
+- [x] Test from outside with a real client: a laptop on a phone's hotspot connected with the test zip and played. (On the laptop the first window was cramped (4:3); the client now opens wide, up to 16:9.)
 
 ## 2. A client to hand out
 - [x] Server name and port in `client.ini` (`[server] host=`, `port=`), and the name built in as the default, so no `.bat` file is needed.

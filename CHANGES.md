@@ -29,6 +29,7 @@ Getting the original client to run on modern Windows. The original `merc.exe` wo
 
 **DirectDraw → software rendering + GDI**
 - The game always drew 16-bit RGB565 pixels itself; DirectDraw was only used for the exclusive 800×600×16 mode and surface memory. Surfaces are now plain memory buffers (same pixel code), and the finished frame is converted to 32-bit and scaled into a normal window with GDI (`StretchDIBits`).
+- **First start opens wide**: as large as fits, up to 16:9 (it was 4:3, which cramped the HUD panels on a laptop; the world stays 4:3 in the middle and the panels use the room at the sides). After that the window keeps the size and place it was left at.
 - Resizable window, remembered position, **Alt+Enter** borderless fullscreen (no display mode switch), DPI aware, 1 ms timer resolution.
 - Mouse coordinates are mapped back from window space to game space.
 

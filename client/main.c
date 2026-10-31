@@ -658,15 +658,17 @@ int win_show(void)
 
 	SystemParametersInfo(SPI_GETWORKAREA,0,&wa,0);
 
-	// as large as fits on the desktop (4:3), a little margin around it
+	// first start: as large as fits on the desktop, a little margin around it, and wide (up to 16:9):
+	// the world stays 4:3 in the middle, the HUD panels use the room at the sides (4:3 cramped them on laptops)
 	{
 		RECT fr={0,0,400,300};
 		int fw,fh,ch,cw;
 		AdjustWindowRect(&fr,WS_OVERLAPPEDWINDOW,FALSE);
 		fw=(fr.right-fr.left)-400; fh=(fr.bottom-fr.top)-300;
 		ch=((wa.bottom-wa.top)-fh)*96/100;
-		cw=ch*4/3;
-		if (cw>((wa.right-wa.left)-fw)*96/100) { cw=((wa.right-wa.left)-fw)*96/100; ch=cw*3/4; }
+		cw=((wa.right-wa.left)-fw)*96/100;
+		if (cw>ch*16/9) cw=ch*16/9;		// very wide screens: not wider than 16:9
+		if (cw<ch*4/3) ch=cw*3/4;		// narrow screens: at least 4:3
 		SetRect(&r,0,0,cw,ch);
 	}
 	(void)scale;
