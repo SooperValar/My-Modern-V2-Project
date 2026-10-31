@@ -44,6 +44,7 @@ Getting the original client to run on modern Windows. The original `merc.exe` wo
 **Diagnostics and options**
 - `crash.c`: unhandled-exception filter (code + faulting offset in `merc.exe`), invalid-parameter, abort and pure-call handlers. Everything goes to `client.log`.
 - New `-h <host>` option (the server address used to be compiled in), plus `-p`, `-d`, `-f`, `-w`.
+- **Server name and port in `client.ini`**: `[server] host=` and `port=`; the built-in default is now `myv2astonia.duckdns.org` port 5555 (was the original game's `mercaston.dnsalias.net`), so a handed-out client needs no `.bat` file. `-h` / `-p` on the command line still win (`play.bat` uses `-h 127.0.0.1` to play on this PC).
 - The client already loads `gfx/NNNNN.png` before its packed files, so new sprites are just PNGs in the client's `gfx` folder.
 
 **Two clients at once (testing)**

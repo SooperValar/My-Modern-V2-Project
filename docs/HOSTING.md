@@ -18,11 +18,11 @@ Checked already:
   - Windows Firewall rule "Astonia server 5555" (inbound TCP 5555) and the Hyper-V firewall rule "AstoniaWSL" (the gate between Windows and WSL), both made in an administrator PowerShell with `New-NetFirewallRule` / `New-NetFirewallHyperVRule`.
   - Side effect: with mirrored networking Ubuntu obeys Windows' reserved port ranges, and 8080 is in one, so the MyV2 Editor runs on another port (8090; it now picks a free one by itself).
 - [x] Port check from outside: portchecker.co with the home address and port 5555 says "open". (Enter the address by hand; the site's own guess can be a proxy's address.)
-- [ ] **Next:** A free server name that follows the home address (e.g. DuckDNS), kept up to date automatically.
-- [ ] Test from outside (a friend, or a phone on mobile data).
+- [x] A free server name that follows the home address: **myv2astonia.duckdns.org** (DuckDNS). Kept up to date by the Windows scheduled task "DuckDNS myv2astonia" every 15 minutes (`%USERPROFILE%\duckdns\duckdns-update.ps1`, log in `duckdns.log`; the token stays in that folder, never in the project).
+- [ ] **Next:** Test from outside with a real client (a friend's PC, or a laptop on a phone's hotspot).
 
 ## 2. A client to hand out
-- [ ] Server name and port in `client.ini` (`[server] host=`, `port=`), and the name built in as the default, so no `.bat` file is needed.
+- [x] Server name and port in `client.ini` (`[server] host=`, `port=`), and the name built in as the default, so no `.bat` file is needed.
 - [ ] One zip with everything the client needs (exe, data, GFX).
 - [ ] A short "how to start" note (Windows warns about an unknown program the first time).
 

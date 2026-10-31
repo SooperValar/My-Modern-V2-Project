@@ -1,7 +1,7 @@
 #define MNAME	"Asguard"
 #define MHELP	"http://mercaston.dnsalias.net/help.html"
 #define MNEWS	"http://mercaston.dnsalias.net/news.html"
-#define MHOST	"mercaston.dnsalias.net"
+#define MHOST	"myv2astonia.duckdns.org"	// MyV2: the server name; client.ini [server] host= overrides it
 
 /*#define MNAME	"Revolution"
 #define MHELP	"http://192.168.0.5/help.html"

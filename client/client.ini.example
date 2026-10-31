@@ -1,3 +1,8 @@
+[server]
+; the game server to connect to (built in: myv2astonia.duckdns.org, 5555); -h / -p on the command line win
+host=myv2astonia.duckdns.org
+port=5555
+
 [display]
 fullscreen=0
 smooth=1

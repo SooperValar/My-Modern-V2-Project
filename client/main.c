@@ -33,6 +33,7 @@ void cmd(int cmd,int x,int y);
 int quit=0;
 char host_addr[84]={MHOST};
 int host_port=5555;
+static int host_from_cmd=0,port_from_cmd=0;	// -h / -p given: they win over client.ini
 
 extern char path[];
 extern int tricky_flag;
@@ -617,6 +618,14 @@ static void load_display_settings(void)
 	hud_font=GetPrivateProfileInt("display","hud_font",1,ini_file)!=0;
 	GetPrivateProfileStringA("display","hud_fontface","Consolas",hud_fontface,sizeof(hud_fontface),ini_file);
 	hud_theme=GetPrivateProfileInt("display","hud_theme",2,ini_file);
+
+	// the server: client.ini [server] host= / port= (the command line's -h / -p win; else the built-in MHOST:5555)
+	if (!host_from_cmd) {
+		char h[84];
+		GetPrivateProfileString("server","host","",h,sizeof(h),ini_file);
+		if (h[0]) { strncpy(host_addr,h,83); host_addr[83]=0; }
+	}
+	if (!port_from_cmd) host_port=GetPrivateProfileInt("server","port",host_port,ini_file);
 }
 
 static void save_display_settings(void)
@@ -1111,6 +1120,7 @@ int parse_cmd(char *s)
 				while (isspace(*s)) s++;
 				n=0; while (n<80 && *s && !isspace(*s)) host_addr[n++]=*s++;
 				host_addr[n]=0;
+				host_from_cmd=1;
 			} else if (tolower(*s)=='f') {	// PORT: -f start in fullscreen
 				s++;
 				fullscreen=1;
@@ -1129,6 +1139,7 @@ int parse_cmd(char *s)
 				s++;
 				while (isspace(*s)) s++;
 				host_port=atoi(s);
+				port_from_cmd=1;
 				while (*s && !isspace(*s)) s++;
 			} else return -1;
 		} else return -2;
