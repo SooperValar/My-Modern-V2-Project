@@ -1381,7 +1381,8 @@ class World:
         except (OSError, ValueError):
             pass
         out = [dict(a, builtin=1) for a in BUILTIN_AREAS if a['name'] not in user]
-        return out + [dict(a, builtin=0) for a in user.values()]
+        own = {a['name'] for a in BUILTIN_AREAS}
+        return out + [dict(a, builtin=0, hasdefault=1 if a['name'] in own else 0) for a in user.values()]
 
     def area_save(self, preset=None, delete=None):
         try:
@@ -2247,7 +2248,7 @@ def make_handler(world, sprites, page, minimap, ctl):
                 self.wfile.write(b)
                 return
             if u.path == '/api/areas':
-                return self.js(world.area_presets())
+                return self.js(BUILTIN_AREAS if q.get('defaults') else world.area_presets())
             if u.path == '/api/chest':
                 qs, npcs = world.talk_load()
                 return self.js({'chest': qs['chests'].get('%d,%d' % (int(q['x']), int(q['y'])))})
@@ -3901,7 +3902,7 @@ let areas = [], areaLearn = false;
 let areaFloor = true;
 try { areaFloor = localStorage.getItem('myv2.areafloor') !== '0'; } catch (e) {}
 function setAreaFloor(on) { areaFloor = on; try { localStorage.setItem('myv2.areafloor', on ? '1' : '0'); } catch (e) {} }
-function loadAreas() { return api('/api/areas').then(a => { if (Array.isArray(a)) areas = a; return areas; }); }
+function loadAreas() { return api('/api/areas').then(a => { if (Array.isArray(a)) { a.forEach(x => { if (x.dens === undefined) x.dens = 1; }); areas = a; } return areas; }); }
 const areaByName = n => areas.find(a => a.name === n);
 function scatterSprite(e) { if (e.k === 'o') return e.s; const r = pal && pal.templates.find(t => t[0] === e.t); return r ? r[2] : 0; }
 function scatterName(e) { return e.k === 'o' ? 'Piece ' + e.s : (iname(e.t) || 'template ' + e.t); }
@@ -3949,6 +3950,7 @@ async function finishAreaLearn(x0, y0, x1, y1) {
 function openArea(a) {
   if (tplDirty() && !confirm('You have changes here you did not apply. Leave them?')) return;
   TP = { kind: 'area', t: a.name, A: JSON.parse(JSON.stringify(a)), orig: {}, cur: {}, tab: 'area' };
+  if (TP.A.dens === undefined) TP.A.dens = 1;
   TP.Aorig = a.isNew ? '' : JSON.stringify(TP.A);
   $('#tpl').classList.add('on'); $('#tpl').classList.remove('picking'); tplRender();
 }
@@ -4031,20 +4033,55 @@ function areaRender(el) {
   };
   body.append(ap);
   const ft = el.querySelector('.mft');
-  ft.innerHTML = `${!A.isNew && !A.builtin ? '<button class="btn ghost" id="adel">Delete</button>' : ''}${A.builtin && !A.isNew ? '<span class="hint">One of the editor\'s own; saving keeps your version under its name.</span>' : ''}<span class="sp"></span><button class="btn ghost" id="tcancel">Close</button><button class="btn pri" id="tapply">${A.isNew ? 'Save as a new area brush' : 'Save'}</button>`;
+  const own = !!(A.builtin || A.hasdefault);       // one of the editor's own (or your version of one)
+  ft.innerHTML = `${!A.isNew && !A.builtin && !A.hasdefault ? '<button class="btn ghost" id="adel">Delete</button>' : ''}
+    <button class="btn ghost" id="areset" title="${own ? 'Back to the editor\'s own settings for this area' : A.from ? 'Learn it again from the part of the map it came from' : ''}">Reset to defaults</button>
+    <span class="hint">${own ? 'One of the editor\'s own: Save keeps your version under its name.' : ''}</span>
+    <span class="sp"></span><button class="btn ghost" id="tcancel">Close</button>
+    ${A.isNew ? '' : '<button class="btn sec" id="anew" title="Keep these settings as another area type; this one stays as it is">Save as new area type…</button>'}
+    <button class="btn pri" id="tapply">${A.isNew ? 'Save as a new area type' : 'Save'}</button>`;
+  $('#areset').disabled = !own && !A.from;
   $('#tcancel').onclick = closeTemplate;
   if ($('#adel')) $('#adel').onclick = async () => {
-    if (!confirm(`Delete the area brush "${A.name}"?` + (areas.some(a => a.builtin && a.name === TP.t) ? ' (The editor\'s own one with this name comes back.)' : ''))) return;
+    if (!confirm(`Delete the area type "${A.name}"?`)) return;
     const r = await api('/api/areas', { delete: TP.t }); if (r.error) return toast(r.error, true);
     areas = r.areas; TP.Aorig = JSON.stringify(TP.A); closeTemplate(); if (mode === 'map') leftUI(); toast('Deleted.');
+  };
+  $('#areset').onclick = async () => {
+    if (own) {
+      const defs = await api('/api/areas?defaults=1'), d = Array.isArray(defs) && defs.find(x => x.name === TP.t);
+      if (!d) return toast('The editor has no default for "' + TP.t + '".', true);
+      if (!confirm(`Reset "${TP.t}" to the editor's own settings?` + (A.hasdefault ? ' Your saved version is removed.' : ' Your changes here are dropped.'))) return;
+      if (A.hasdefault) { const r = await api('/api/areas', { delete: TP.t }); if (r.error) return toast(r.error, true); }
+      areas = await loadAreas();
+      TP.A = JSON.parse(JSON.stringify(Object.assign({ dens: 1 }, d, { builtin: 1 }))); TP.Aorig = JSON.stringify(TP.A);
+      if (mode === 'map') leftUI(); card(); areaRender(el); toast('Reset to the editor\'s own settings.');
+    } else {
+      if (!confirm(`Learn "${A.name}" again from ${A.from[0]},${A.from[1]} – ${A.from[2]},${A.from[3]}? Your changes to its floors, pieces and amount are dropped (click Save to keep the result).`)) return;
+      const n = await api('/api/areas', { learn: A.from });
+      if (n.error) return toast(n.error, true);
+      TP.A = Object.assign(n, { name: A.name, builtin: 0, dens: 1 }); areaRender(el); toast('Learned again. Click Save to keep it.');
+    }
+  };
+  if ($('#anew')) $('#anew').onclick = async () => {
+    let name = prompt('Name for the new area type:', (A.name || 'Area') + ' 2');
+    if (!name || !(name = name.trim())) return;
+    if (areas.some(a => a.name === name)) return toast(`There is already one called "${name}". Pick another name.`, true);
+    const copy = JSON.parse(JSON.stringify(A)); copy.name = name; delete copy.builtin; delete copy.hasdefault; delete copy.isNew;
+    const r = await api('/api/areas', { save: copy }); if (r.error) return toast(r.error, true);
+    areas = await loadAreas();
+    const was = areaByName(TP.t);           // the one you started from stays as it was saved
+    TP.A = JSON.parse(JSON.stringify(areaByName(name) || copy)); TP.t = name; TP.Aorig = JSON.stringify(TP.A);
+    setBrush({ kind: 'area', name }); if (mode === 'map') leftUI(); areaRender(el);
+    toast(`Saved as a new area type: ${name}` + (was ? ` ("${was.name}" is unchanged)` : ''));
   };
   $('#tapply').onclick = async () => {
     if (!(A.name || '').trim()) return toast('Give it a name.', true);
     if (A.name !== TP.t && areas.some(a => a.name === A.name) && !confirm(`There is already one called "${A.name}". Replace it?`)) return;
     const r = await api('/api/areas', { save: A }); if (r.error) return toast(r.error, true);
-    if (TP.t && TP.t !== A.name && !A.isNew && !A.builtin) await api('/api/areas', { delete: TP.t });
-    areas = (await loadAreas()); delete A.isNew; TP.t = A.name; TP.Aorig = JSON.stringify(A);
-    toast('Area brush saved: ' + A.name); setBrush({ kind: 'area', name: A.name }); if (mode === 'map') leftUI(); areaRender(el);
+    if (TP.t && TP.t !== A.name && !A.isNew && !A.builtin && !A.hasdefault) await api('/api/areas', { delete: TP.t });
+    areas = (await loadAreas()); delete A.isNew; TP.t = A.name; TP.A = JSON.parse(JSON.stringify(areaByName(A.name) || A)); TP.Aorig = JSON.stringify(TP.A);
+    toast('Area type saved: ' + A.name); setBrush({ kind: 'area', name: A.name }); if (mode === 'map') leftUI(); areaRender(el);
   };
 }
 
