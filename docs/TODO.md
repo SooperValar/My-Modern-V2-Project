@@ -18,6 +18,8 @@ In order:
 
 9. **#quest list: order and rewards**: the new `#quest` (built, committed, not live yet) lists the quest givers easiest first by their experience reward. Cody wants to go through the list and adjust the order and the rewards (skill / item / experience: the NPC editor's Talk & quest tab). Maybe a separate "difficulty" number per quest so the order doesn't have to follow the experience. Also: keep `#journal` only for temporary / seasonal quests?
 
+10. **Odd-shaped zones**: a zone doesn't have to be one box. Several boxes with the same name act as ONE zone (e.g. a 3x3 square plus one tile off its bottom-right corner is one zone, not two). Now: `server/area.c` is a list of boxes (`x1,y1,x2,y2,name,flag`), and `get_area` / `get_area_m` add every box that contains the spot, so two touching or overlapping boxes with one name give "Elysium, Elysium", and `get_area_street` treats each box as its own building (size = that box only). To do: group boxes by name (list a name once; size and edges of a building from all its boxes), let the editor draw and show a zone as one shape made of boxes (add/remove a box or tiles, one name and flag for all), and keep the minimap / zone maps right.
+
 Later (ideas, not decided):
 
 - Item tiers part 5: Legendaries (hand-designed named pieces; the current special armors move here), see `docs/ITEM_TIERS.md`.
