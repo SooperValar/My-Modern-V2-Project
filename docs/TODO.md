@@ -20,6 +20,12 @@ In order:
 
 10. **Odd-shaped zones**: a zone doesn't have to be one box. Several boxes with the same name act as ONE zone (e.g. a 3x3 square plus one tile off its bottom-right corner is one zone, not two). Now: `server/area.c` is a list of boxes (`x1,y1,x2,y2,name,flag`), and `get_area` / `get_area_m` add every box that contains the spot, so two touching or overlapping boxes with one name give "Elysium, Elysium", and `get_area_street` treats each box as its own building (size = that box only). To do: group boxes by name (list a name once; size and edges of a building from all its boxes), let the editor draw and show a zone as one shape made of boxes (add/remove a box or tiles, one name and flag for all), and keep the minimap / zone maps right.
 
+11. **Weapon, ring and Harakim rebalance** (idea 2, to design first):
+    - **Two-handed sword around Agility, two-handed axe around Strength.** Now both skills use Agility/Strength/Strength (`skill.c`), and both specials are a flat 1 in 8 (`WP2H_SPECIAL`, `data.h`): sword = deflect 1 in 8 melee hits against you, axe = critical hit (double damage) 1 in 8 of your hits (`do_attack`, `svr_do.c`). Idea: sword Agility-heavy with a deflect/parry chance that grows with Agility; axe Strength-heavy with a crit chance that grows with Strength. Update the tooltips (`svr_tick.c`) and `#weapons` (`svr_do.c`).
+    - **Rings**: Agility rings on par with the Strength emerald rings; look over the whole ring list.
+    - **Harakim**: dagger / spell book for casters, staff for summoners. Spells Willpower-focused, summoning (Ghost Companion) Intelligence-focused. Now every spell uses Braveness/Intelligence/Willpower (`skill.c`), and the Staff skill uses Agility/Strength/Strength.
+    - **Ghost Companion follows its Harakim through portals and teleports** (also recall, lab exits, `#recall`?).
+
 Later (ideas, not decided):
 
 - Item tiers part 5: Legendaries (hand-designed named pieces; the current special armors move here), see `docs/ITEM_TIERS.md`.
