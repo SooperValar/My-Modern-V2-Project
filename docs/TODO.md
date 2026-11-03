@@ -16,6 +16,8 @@ In order:
 
 8. **Lab shrine keys for missed lab shrines**: a way for players to get a key for a labyrinth shrine they missed. Price: 100 gold per shrine times the lab level (e.g. a missed shrine in lab 5 costs 500 gold).
 
+9. **#quest list: order and rewards**: the new `#quest` (built, committed, not live yet) lists the quest givers easiest first by their experience reward. Cody wants to go through the list and adjust the order and the rewards (skill / item / experience: the NPC editor's Talk & quest tab). Maybe a separate "difficulty" number per quest so the order doesn't have to follow the experience. Also: keep `#journal` only for temporary / seasonal quests?
+
 Later (ideas, not decided):
 
 - Prestige: what triggers it and what it gives (the Final Test's Shrine of Change will be used).
