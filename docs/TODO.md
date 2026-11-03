@@ -30,6 +30,8 @@ In order:
 
 13. **Waypoints** (idea 4; Cody gives an example of the window when we start): like portals, but using one opens a new window (client GUI) listing the destinations to pick from. A player must find (visit) each waypoint before travel to it is unlocked; travel is free. Needs: waypoint items placed in the world, a per-character list of found waypoints (saved with the character), a server message that opens the window with the list and one that sends the choice back (new SV_/CL_ messages, client and server, so a client update and maybe a MINVERSION raise), and placing them in the editor.
 
+14. **Stacking consumables** (idea 5): potions, scrolls and other common consumables stack in one slot and can be split again. The game has no stacking at all now (one item per slot; only gold is a number). Needs: a stack count on the item (a spare field, like the tier fields), which items may stack (same template and same state; not tiered/identified-different/once-only items), merging when picked up or dropped on a matching stack, using one from the stack, splitting (e.g. Shift+click, or a "how many" prompt), the count drawn on the item in the client (backpack, shops, graves), shops buying/selling stacks, and a check of every place that creates, moves or destroys items (graves, give, trade, depots, `#create`). Client and server update.
+
 Later (ideas, not decided):
 
 - Item tiers part 5: Legendaries (hand-designed named pieces; the current special armors move here), see `docs/ITEM_TIERS.md`.
