@@ -26,6 +26,8 @@ In order:
     - **Harakim**: dagger / spell book for casters, staff for summoners. Spells Willpower-focused, summoning (Ghost Companion) Intelligence-focused. Now every spell uses Braveness/Intelligence/Willpower (`skill.c`), and the Staff skill uses Agility/Strength/Strength.
     - **Ghost Companion follows its Harakim through portals and teleports** (also recall, lab exits, `#recall`?).
 
+12. **Area completion bonuses** (idea 3, an early-game experience boost): kill all of an area's set creatures (e.g. the Haunted Castle 588,530-623,554, Skeleton Lord 590,467-610,488, and other buildings in and around Aston) and get an experience bonus. Not for spawner areas (the Abandoned Clan Halls). To decide: which areas and their bonus; the list of creatures per area (their placed NPCs, e.g. picked in the editor); once per character or again after a cooldown; does a group share it (kills by party members / companions count); how far the player must have taken part (e.g. at least one kill, or in the area); a message on completion and maybe a "#areas" list of done/not done. Uses the zone boxes (see 10, odd-shaped zones).
+
 Later (ideas, not decided):
 
 - Item tiers part 5: Legendaries (hand-designed named pieces; the current special armors move here), see `docs/ITEM_TIERS.md`.
