@@ -32,6 +32,8 @@ In order:
 
 14. **Stacking consumables** (idea 5): potions, scrolls and other common consumables stack in one slot and can be split again. The game has no stacking at all now (one item per slot; only gold is a number). Needs: a stack count on the item (a spare field, like the tier fields), which items may stack (same template and same state; not tiered/identified-different/once-only items), merging when picked up or dropped on a matching stack, using one from the stack, splitting (e.g. Shift+click, or a "how many" prompt), the count drawn on the item in the client (backpack, shops, graves), shops buying/selling stacks, and a check of every place that creates, moves or destroys items (graves, give, trade, depots, `#create`). Client and server update.
 
+15. **Send the Ghost Companion at a chosen enemy** (idea 6, goes with the Harakim part of 11): a command or spell aimed at one enemy (picked by clicking it, or the current target) makes the player's Ghost Companion attack that enemy if it can. Now: saying "<companion name>, attack <name>" works (`answer_attack`, `talk.c`), but it goes by name and picks the one nearest the companion (within 40 tiles), so with several "Skeleton"s it may pick the wrong one, and it needs typing. Options: a `#gc` / `#sic` command that uses the player's current attack target or the character under the mouse, a click mode in the client (new message), or a cheap spell. Same checks as now (not the master, not itself, `may_attack_msg`).
+
 Later (ideas, not decided):
 
 - Item tiers part 5: Legendaries (hand-designed named pieces; the current special armors move here), see `docs/ITEM_TIERS.md`.
