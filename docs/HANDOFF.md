@@ -135,8 +135,9 @@ is the project's `client/` folder.
 
 ## Open items (details in docs/TODO.md and docs/HOSTING.md)
 
-- **#quest** (built and committed, not live; it goes live with the next server code update):
-  Cody wants to review the order and rewards first; maybe a separate difficulty number per quest
+- **#quest** (IN PROGRESS, not final; built and committed, not live; it goes live with the next
+  server code update): Cody reviews how it looks in the game before it is finalized, and the order
+  and rewards; maybe a separate difficulty number per quest
   giver. `#journal` maybe only for temporary / seasonal quests.
 - **Hosting section 4**: daily backups of the world data with a copy off the PC (next);
   the server and editor starting with Windows (a scheduled task; note the "only after login"
