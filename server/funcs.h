@@ -433,6 +433,7 @@ void strlower(char *str);
 // --- area ---
 char *get_area(int cn,int verbose);
 char *get_area_m(int x,int y,int verbose);
+char *get_area_street(int x,int y);
 
 // --- path.c ---
 int init_node(void);

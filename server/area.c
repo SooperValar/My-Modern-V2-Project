@@ -231,6 +231,51 @@ char *get_area(int cn,int verbose)
 }
 
 //return the area description for x,y
+/* where someone lives, as players would say it: "Aston, New Street". The building they stand in
+ * (the smallest area around them), the street its front door opens onto (doors are items with
+ * driver 2 on the building's edge; else the street closest to the building), with the town around
+ * it. Outside town: the area's own name. Streets are the areas with flag 2. Used by #quest. */
+static int area_gap(int x1,int y1,int x2,int y2,int n)	// rectangle to area n, in tiles (0 = touching)
+{
+	int dx=0,dy=0;
+	if (area[n].x1>x2) dx=area[n].x1-x2; else if (x1>area[n].x2) dx=x1-area[n].x2;
+	if (area[n].y1>y2) dy=area[n].y1-y2; else if (y1>area[n].y2) dy=y1-area[n].y2;
+	return dx>dy ? dx : dy;
+}
+
+char *get_area_street(int x,int y)
+{
+	static char buf[200];
+	int n,h=-1,hs=0,town=-1,best=-1,bd=99,d,xx,yy,in,size;
+	int cnt=sizeof(area)/sizeof(area[0]);
+
+	buf[0]=0;
+	for (n=0; n<cnt; n++) {
+		if (x<area[n].x1 || y<area[n].y1 || x>area[n].x2 || y>area[n].y2) continue;
+		if (town<0) town=n;
+		size=(area[n].x2-area[n].x1+1)*(area[n].y2-area[n].y1+1);
+		if (h<0 || size<hs) { h=n; hs=size; }
+	}
+	if (h<0) return buf;
+	if (area[h].flag==2) best=h;			// standing on a street
+	else if (hs<=2500) {				// a building: the street in front of its doors
+		for (yy=area[h].y1-1; yy<=area[h].y2+1; yy++) for (xx=area[h].x1-1; xx<=area[h].x2+1; xx++) {
+			if (xx<1 || yy<1 || xx>=MAPX || yy>=MAPY) continue;
+			in=map[xx+yy*MAPX].it;
+			if (in<=0 || in>=MAXITEM || it[in].used==USE_EMPTY || (it[in].driver!=2 && it[in].driver!=20)) continue;
+			for (n=0; n<cnt; n++) if (area[n].flag==2 && (d=area_gap(xx,yy,xx,yy,n))<bd && d<=12) { bd=d; best=n; }
+		}
+		if (best<0) for (n=0; n<cnt; n++) if (area[n].flag==2 && (d=area_gap(area[h].x1,area[h].y1,area[h].x2,area[h].y2,n))<bd && d<=6) { bd=d; best=n; }
+	} else {					// out in the open: a street close by
+		for (n=0; n<cnt; n++) if (area[n].flag==2 && (d=area_gap(x,y,x,y,n))<bd && d<=6) { bd=d; best=n; }
+	}
+	if (best>=0) {
+		if (town>=0 && town!=best && town!=h && strcmp(area[town].name,area[best].name)) snprintf(buf,sizeof(buf),"%s, %s",area[town].name,area[best].name);
+		else snprintf(buf,sizeof(buf),"%s",area[best].name);
+	} else snprintf(buf,sizeof(buf),"%s",area[h].name);
+	return buf;
+}
+
 char *get_area_m(int x,int y,int verbose)
 {
         int n,flag=0;

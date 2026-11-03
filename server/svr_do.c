@@ -2066,7 +2066,7 @@ void do_quest(int cn,char *a)
 	if (pick) {
 		if (pick<1 || pick>cnt) { do_char_log(cn,0,"There is no quest %d. Type #quest for the list.\n",pick); return; }
 		t=q[pick-1].t;
-		strncpy(area,get_area_m(ch_temp[t].x,ch_temp[t].y,1),99); area[99]=0;
+		strncpy(area,get_area_street(ch_temp[t].x,ch_temp[t].y),99); area[99]=0;
 		do_char_log(cn,1,"Quest %d: %s%s%s\n",pick,ch_temp[t].name,area[0] ? " - " : "",area);
 		if (q[pick-1].skill>=0) {
 			do_char_log(cn,1,"Reward: the skill %s and %s experience.\n",skilltab[q[pick-1].skill].name,qol_num(ch_temp[t].data[51],exp));
@@ -2091,7 +2091,7 @@ void do_quest(int cn,char *a)
 	do_char_log(cn,1,"Quests%s, easiest first:\n",all ? " (all of them)" : "");
 	for (n=0; n<cnt; n++) {
 		t=q[n].t;
-		strncpy(area,get_area_m(ch_temp[t].x,ch_temp[t].y,1),99); area[99]=0;
+		strncpy(area,get_area_street(ch_temp[t].x,ch_temp[t].y),99); area[99]=0;
 		if (q[n].skill>=0) snprintf(rew,sizeof(rew),"Skill: %s",skilltab[q[n].skill].name);
 		else snprintf(rew,sizeof(rew),"Item: %s",it_temp[ch_temp[t].data[66]].name);
 		if (ch_temp[t].data[51]) { qol_num(ch_temp[t].data[51],exp); strcat(exp," exp"); } else strcpy(exp,"no exp");
