@@ -28,6 +28,8 @@ In order:
 
 12. **Area completion bonuses** (idea 3, an early-game experience boost): kill all of an area's set creatures (e.g. the Haunted Castle 588,530-623,554, Skeleton Lord 590,467-610,488, and other buildings in and around Aston) and get an experience bonus. Not for spawner areas (the Abandoned Clan Halls). To decide: which areas and their bonus; the list of creatures per area (their placed NPCs, e.g. picked in the editor); once per character or again after a cooldown; does a group share it (kills by party members / companions count); how far the player must have taken part (e.g. at least one kill, or in the area); a message on completion and maybe a "#areas" list of done/not done. Uses the zone boxes (see 10, odd-shaped zones).
 
+13. **Waypoints** (idea 4; Cody gives an example of the window when we start): like portals, but using one opens a new window (client GUI) listing the destinations to pick from. A player must find (visit) each waypoint before travel to it is unlocked; travel is free. Needs: waypoint items placed in the world, a per-character list of found waypoints (saved with the character), a server message that opens the window with the list and one that sends the choice back (new SV_/CL_ messages, client and server, so a client update and maybe a MINVERSION raise), and placing them in the editor.
+
 Later (ideas, not decided):
 
 - Item tiers part 5: Legendaries (hand-designed named pieces; the current special armors move here), see `docs/ITEM_TIERS.md`.
