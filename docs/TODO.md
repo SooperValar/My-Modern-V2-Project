@@ -3,9 +3,9 @@
 In order:
 
 1. ~~**Lab 11 arena deaths**~~ (done): every death in Lab 11 counts as an arena death (items kept) until the lab is finished. Two signs, one on each side of the entrance to the first underwater section, saying the lab is still being worked on and deaths there are arena deaths for now.
-2. ~~**God item shop**~~ (built: `#godshop`, merchants in Elysium; next: the Elysium layout, which must cover everything built there, not only the 'Elysium' zone): a shop only gods can use, with every item template in the game, free. It needs pages (a shop window holds 62 items), e.g. next/previous buttons or a category or search filter.
+2. ~~**God item shop**~~ (done: `#godshop`, merchants in Elysium, and the Elysium layout): a shop only gods can use, with every item template in the game, free. It needs pages (a shop window holds 62 items), e.g. next/previous buttons or a category or search filter.
 
-3. **Item tiers** for helmets and body armor (Common/Magic/Rare/Epic/Legendary, white/blue/yellow/purple/orange, random drops, soulstone upgrade and reroll): see `docs/ITEM_TIERS.md`.
+3. ~~**Item tiers**~~ (done: parts 1-4) for helmets and body armor (Common/Magic/Rare/Epic/Legendary, white/blue/yellow/purple/orange, random drops, soulstone upgrade and reroll): see `docs/ITEM_TIERS.md`. Part 5, Legendaries, is under "Later".
 
 4. ~~**Pentagram enemies leave no grave**~~ (done) unless they carry something besides their weapon.
 5. ~~**Pentagram solve balance**~~ (done: 5 + 2-3 per player who activated one in the last 10 minutes): look at how the solve count works (now: players online + three random 0-19, so about 28 + players online; 54 right after a server start; every active pentagram in the world counts) and make it work for a solo player as well as for groups. **Base it on the players actually doing pentagrams** (e.g. those in the pentagram area or who activated one recently), not everyone online; usually 1-5 people.
@@ -20,6 +20,7 @@ In order:
 
 Later (ideas, not decided):
 
+- Item tiers part 5: Legendaries (hand-designed named pieces; the current special armors move here), see `docs/ITEM_TIERS.md`.
 - Prestige: what triggers it and what it gives (the Final Test's Shrine of Change will be used).
 - Unused recolors of the exploration point post: green 1012, blue 1019/1020, purple 1144 (gold 1090 is the exploration point). Nothing uses them yet; maybe for prestige (e.g. points or markers only prestiged characters can use).
 - Swimming skill: a river south of Aston and a flooded mine quest like Lab 11 (without the darkness).
