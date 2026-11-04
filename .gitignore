@@ -23,3 +23,4 @@ client/merc.dat
 client.ini
 client.log
 *.moa
+__pycache__/
