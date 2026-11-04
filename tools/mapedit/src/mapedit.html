@@ -3254,12 +3254,13 @@ async function questsLoad() {
   QS.forEach(q => { q.o0 = q.listed; q.r0 = JSON.stringify(q.rew); });
   QSorig = JSON.stringify(QS.map(q => [q.t, q.listed, q.rew]));
   QC = JSON.parse(JSON.stringify(r.chain)); QCorig = JSON.stringify(QC.map(c => [c.n, c.name, c.steps]));
+  QA = JSON.parse(JSON.stringify(r.clears || [])); QAorig = JSON.stringify(QA); zoneNpcCache = {};
   questsRender();
 }
 const qDirtyRows = () => (QS || []).filter(q => JSON.stringify(qdata(q)) !== q.o);
 const qOrderDirty = () => QS && JSON.stringify(QS.map(q => [q.t, q.listed, q.rew])) !== QSorig;
 const qChainDirty = () => QC && JSON.stringify(QC.map(c => [c.n, c.name, c.steps])) !== QCorig;
-const qAnyDirty = () => !!QS && (qDirtyRows().length > 0 || qOrderDirty() || qChainDirty());
+const qAnyDirty = () => !!QS && (qDirtyRows().length > 0 || qOrderDirty() || qChainDirty() || qaDirty());
 function gotoNpc(t, tabk) {     // the NPC editor works over the map page
   const b = document.querySelector('nav button[data-m="map"]'); if (b) b.click();
   openTemplate('npc', t);
@@ -3384,6 +3385,7 @@ function questsRender() {
       });
     }
   }
+  clearsBox(el);
 }
 function goldIn(get, set) {         // gold in G (decimals = silver); kept in silver
   const i = document.createElement('input'); i.type = 'number'; i.min = 0; i.step = 1; i.className = 'gold'; i.value = get() ? get() / 100 : 0;
@@ -3478,6 +3480,80 @@ function repRow(q) {                  // the Times settings under a quest's row:
 function qSpecial(q) {              // rewards built into the game's code (driver.c), shown so the row doesn't look empty
   if (q.t === 518 && q.data[49] === 740) return 'built in: +25 Stronghold points (spent by asking him POINTS / BUY …)';
   return '';
+}
+// ---- area clears (Quests page, third box): kill every chosen NPC of a zone for an experience bonus
+let QA = null, QAorig = '', zoneNpcCache = {};
+const qaDirty = () => QA && JSON.stringify(QA) !== QAorig;
+async function zoneNpcs(zone) {
+  if (!zoneNpcCache[zone]) zoneNpcCache[zone] = await api('/api/zonenpcs?zone=' + encodeURIComponent(zone));
+  return zoneNpcCache[zone];
+}
+function clearsBox(el) {
+  const cb = document.createElement('div'); cb.className = 'box'; el.appendChild(cb);
+  const d = qaDirty();
+  const zones = [...new Set((info.areas || []).map(a => a[4]))].sort((a, b) => a.localeCompare(b));
+  cb.innerHTML = `<div class="qhd"><h3>Area clears · #areas</h3>
+      <input type="text" class="anew" list="clearzones" placeholder="Search a zone to add…" style="min-width:240px">
+      <datalist id="clearzones">${zones.map(z => `<option value="${esc(z)}">`).join('')}</datalist>
+      <button class="btn sec aadd">+ Add area</button>
+      <button class="btn sec aund" ${d ? '' : 'disabled'}>Undo changes</button>
+      <button class="btn pri asave" ${d ? '' : 'disabled'}>Save</button></div>
+    <div class="hint">Kill every ticked NPC of a zone for an experience bonus. Players see "4 of 12 Skeletons in this area" with each new kill and their progress with #areas. A kill counts for the killer (a Ghost Companion's master) and their group members who are in the zone at that moment. Once per character; "again as Seyan'Du" allows a second time after becoming a Seyan'Du. Changing an area's NPC list starts everyone's progress there again. Saving goes into the game at once.</div>`;
+  const add = async () => {
+    const z = cb.querySelector('.anew').value.trim();
+    const zone = zones.find(x => x.toLowerCase() === z.toLowerCase());
+    if (!zone) return toast('Pick a zone from the list (type part of its name).', true);
+    if (QA.some(c => c.zone.toLowerCase() === zone.toLowerCase())) return toast(zone + ' is in the list already.', true);
+    let id = 1; while (QA.some(c => c.id === id)) id++;
+    if (id > 64) return toast('At most 64 area clears.', true);
+    const list = await zoneNpcs(zone);
+    const en = list.filter(n => n.kind === 'enemy');
+    const common = Object.entries(en.reduce((m, n) => (m[n.name] = (m[n.name] || 0) + 1, m), {})).sort((a, b) => b[1] - a[1])[0];
+    QA.push({ id, zone, exp: 1000, seyan: 1, label: common ? common[0] + 's' : 'enemies', npcs: en.map(n => n.t) });
+    questsRender();
+    toast(`${zone}: ${en.length} enemies ticked of ${list.length} NPCs there. Set the experience, then Save.`);
+  };
+  cb.querySelector('.aadd').onclick = add;
+  cb.querySelector('.anew').onkeydown = e => { if (e.key === 'Enter') add(); };
+  cb.querySelector('.aund').onclick = () => { if (confirm('Forget your changes to the area clears?')) { QA = JSON.parse(QAorig); questsRender(); } };
+  cb.querySelector('.asave').onclick = async () => {
+    const bad = QA.find(c => !c.npcs.length); if (bad) return toast(bad.zone + ' has no NPC ticked.', true);
+    const r = await api('/api/clears', { clears: QA }); toast(r.error || 'Area clears: ' + r.msg, !!r.error); if (!r.error) QAorig = JSON.stringify(QA); questsRender();
+  };
+  if (!QA.length) cb.insertAdjacentHTML('beforeend', '<div class="empty">No area clears yet: search a zone above and Add it.</div>');
+  for (const c of QA) {
+    const d2 = document.createElement('div'); d2.className = 'qchain'; cb.appendChild(d2);
+    d2.innerHTML = `<div class="qch"><span class="qn" style="min-width:0">${esc(c.zone)}</span><span class="hint" style="margin:0">counter says</span>
+        <input type="text" class="al" maxlength="38" style="flex:none;width:150px;min-width:0" title="e.g. Skeletons: '4 of 12 Skeletons in this area'">
+        <span class="hint" style="margin:0">exp</span><input type="number" class="ae" min="0" style="flex:none;width:100px;min-width:0"><span style="flex:1"></span>
+        <label class="chk" title="A Seyan'Du may do it once more"><input type="checkbox" class="as"><span>again as Seyan'Du</span></label>
+        <button class="sm aall">All enemies</button><button class="sm anone">None</button><button class="sm adel">Delete</button></div>
+      <div class="hint ac" style="margin:6px 0"></div><div class="anpcs" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:4px 10px"></div>`;
+    const lab = d2.querySelector('.al'); lab.value = c.label; lab.onchange = () => { c.label = lab.value.trim(); questsRender(); };
+    const ex = d2.querySelector('.ae'); ex.value = c.exp; ex.onchange = () => { c.exp = Math.max(0, Math.round(+ex.value || 0)); questsRender(); };
+    const sy = d2.querySelector('.as'); sy.checked = !!c.seyan; sy.onchange = () => { c.seyan = sy.checked ? 1 : 0; questsRender(); };
+    d2.querySelector('.adel').onclick = () => { if (confirm(`Delete the area clear for ${c.zone}?`)) { QA.splice(QA.indexOf(c), 1); questsRender(); } };
+    const box = d2.querySelector('.anpcs'), cnt = d2.querySelector('.ac');
+    zoneNpcs(c.zone).then(list => {
+      const known = new Set(list.map(n => n.t));
+      const extra = c.npcs.filter(t => !known.has(t)).map(t => ({ t, name: 'template ' + t, x: 0, y: 0, sprite: 0, kind: 'not in this zone' }));
+      const all = [...list, ...extra];
+      d2.querySelector('.aall').onclick = () => { c.npcs = all.filter(n => n.kind === 'enemy').map(n => n.t); questsRender(); };
+      d2.querySelector('.anone').onclick = () => { c.npcs = []; questsRender(); };
+      cnt.textContent = `${c.npcs.length} of ${all.length} NPCs ticked · players see "1 of ${c.npcs.length} ${c.label || 'enemies'} in this area"`;
+      for (const n of all) {
+        const l = document.createElement('label'); l.className = 'chk'; l.style.cssText = 'display:flex;gap:6px;align-items:center';
+        l.innerHTML = '<input type="checkbox"><span></span>';
+        const th = thumb(n.sprite || 0, 22, 22); l.insertBefore(th, l.lastChild);
+        l.lastChild.textContent = `${n.name} · ${n.t}${n.kind !== 'enemy' ? ' · ' + n.kind : ''}`;
+        l.title = n.x || n.y ? `spawns at ${n.x}, ${n.y}` : '';
+        const ck = l.firstChild; ck.checked = c.npcs.includes(n.t);
+        ck.onchange = () => { if (ck.checked) { if (!c.npcs.includes(n.t)) c.npcs.push(n.t); } else c.npcs = c.npcs.filter(t => t !== n.t); questsRender(); };
+        box.appendChild(l);
+      }
+      if (!all.length) box.innerHTML = '<div class="empty">No NPC spawns in this zone.</div>';
+    });
+  }
 }
 function qpick(get, set, none) {     // an item: its picture and name (click to pick), × to empty
   const d = document.createElement('div'); d.className = 'qpick';

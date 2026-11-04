@@ -161,7 +161,7 @@ OPS = ('=', '!=', '<', '>', '<=', '>=')
 
 def talk_parse(text):
     quests, npcs, cur, e = {}, {}, None, None
-    steps, chests, chest, order, qrew = {}, {}, None, {}, {}
+    steps, chests, chest, order, qrew, clears = {}, {}, None, {}, {}, {}
     for line in text.splitlines():
         line = line.strip()
         if not line or line.startswith('#'):
@@ -193,6 +193,16 @@ def talk_parse(text):
                 chest = {'refill': 0, 'once': 0, 'rewards': []}
                 chests['%d,%d' % (int(a[0]), int(a[1]))] = chest
                 cur, e = None, None
+                continue
+            if k == 'clear' and len(a) >= 4:          # area clears (Quests page): id, exp, again as Seyan'Du, zone name
+                c = clears.setdefault(int(a[0]), {'id': int(a[0]), 'label': '', 'npcs': []})
+                c.update({'exp': int(a[1]), 'seyan': int(a[2]), 'zone': rest.split(None, 3)[3].strip()})
+                continue
+            if k == 'clearlabel' and a:
+                clears.setdefault(int(a[0]), {'id': int(a[0]), 'npcs': [], 'exp': 0, 'seyan': 1, 'zone': ''})['label'] = rest.split(None, 1)[1].strip() if len(a) > 1 else ''
+                continue
+            if k == 'clearnpc' and a:
+                clears.setdefault(int(a[0]), {'id': int(a[0]), 'npcs': [], 'exp': 0, 'seyan': 1, 'zone': '', 'label': ''})['npcs'] += [int(v) for v in a[1:] if v.isdigit()]
                 continue
             if k == 'qreward' and len(a) >= 4:        # item quest: times, first times, gold (Quests page); then qstage lines
                 v = [int(x) for x in a[1:7] if x.lstrip('-').isdigit()]
@@ -258,7 +268,7 @@ def talk_parse(text):
                 e['acts'].append({'type': k})
         except (IndexError, ValueError):
             continue
-    return {'names': quests, 'steps': steps, 'chests': chests, 'order': order, 'qrew': qrew}, npcs
+    return {'names': quests, 'steps': steps, 'chests': chests, 'order': order, 'qrew': qrew, 'clears': clears}, npcs
 
 
 def talk_text(quests, npcs, names):
@@ -282,6 +292,20 @@ def talk_text(quests, npcs, names):
                 out.append('qstage %d %d %d %d %d' % (t, *[max(0, int(v)) for v in (list(st) + [0] * 4)[:4]]))
             if r.get('rmin', -1) >= 0 or r.get('rmax', -1) >= 0:
                 out.append('qrank %d %d %d' % (t, int(r.get('rmin', -1)), int(r.get('rmax', -1))))
+        out.append('')
+    cl = quests.get('clears') or {}
+    if cl:
+        out.append('# area clears: clear <id> <exp> <again as Seyan\'Du 0/1> <zone>; clearlabel <id> <text>; clearnpc <id> <NPC templates> - the Quests page')
+        for i in sorted(cl, key=int):
+            c = cl[i]
+            if not str(c.get('zone', '')).strip():
+                continue
+            out.append('clear %d %d %d %s' % (int(i), int(c.get('exp', 0)), 1 if c.get('seyan') else 0, ' '.join(str(c['zone']).split())))
+            if str(c.get('label', '')).strip():
+                out.append('clearlabel %d %s' % (int(i), ' '.join(str(c['label']).split())))
+            cnp = [int(t) for t in c.get('npcs', []) if int(t) > 0][:64]
+            for k in range(0, len(cnp), 16):
+                out.append('clearnpc %d %s' % (int(i), ' '.join(str(t) for t in cnp[k:k + 16])))
         out.append('')
     for n in sorted(set(qn) | set(qs)):
         out.append('quest %d %s' % (n, ' '.join(str(qn.get(n, '')).split())))
@@ -941,7 +965,7 @@ class World:
         try:
             return talk_parse(open(self.talk_path(), encoding='latin-1').read())
         except OSError:
-            return {'names': {}, 'steps': {}, 'chests': {}, 'order': {}, 'qrew': {}}, {}
+            return {'names': {}, 'steps': {}, 'chests': {}, 'order': {}, 'qrew': {}, 'clears': {}}, {}
 
     def talk_save(self, quests, npcs, ctl=None):
         p = self.talk_path()
@@ -1000,7 +1024,35 @@ class World:
         for n in sorted(set(qs['names']) | set(qs['steps']) | set(refs)):
             chain.append({'n': n, 'name': qs['names'].get(n, ''), 'steps': sorted(qs['steps'].get(n, []), key=lambda v: int(v[0])),
                           'refs': [{'who': r['who'], 'label': r['label'], 'kinds': sorted(r['kinds'])} for r in refs.get(n, {}).values()]})
-        return {'simple': simple, 'chain': chain}
+        clears = sorted(qs.get('clears', {}).values(), key=lambda c: c['id'])
+        return {'simple': simple, 'chain': chain, 'clears': clears}
+
+    def zone_npcs(self, zone):
+        """NPC templates whose spawn spot is inside the zone (any of its boxes): the candidates for an area clear"""
+        boxes = [a for a in self.areas if a[4].lower() == str(zone).lower()]
+        out = []
+        if self.tchar is None or not boxes:
+            return out
+        for t in range(1, MAXTCHARS):
+            o = t * CHAR_SIZE
+            if not self.tchar[o + C_USED]:
+                continue
+            x, y = struct.unpack_from('<hh', self.tchar, o + C_X)
+            if not (x or y) or not any(b[0] <= x <= b[2] and b[1] <= y <= b[3] for b in boxes):
+                continue
+            fl = struct.unpack_from('<Q', self.tchar, o + C_FLAGS)[0]
+            al = struct.unpack_from('<h', self.tchar, o + C_ALIGN)[0]
+            out.append({'t': t, 'name': self.tname(t), 'x': x, 'y': y, 'sprite': self.tchar_sprite(t, 4),
+                        'kind': 'merchant' if fl & CF_MERCHANT else 'enemy' if al < 0 else 'friendly'})
+        return out
+
+    def clears_save(self, clears, ctl=None):
+        qs, npcs = self.talk_load()
+        qs['clears'] = {int(c['id']): {'id': int(c['id']), 'exp': max(0, int(c.get('exp', 0))), 'seyan': 1 if c.get('seyan') else 0,
+                                       'zone': str(c.get('zone', ''))[:45], 'label': str(c.get('label', ''))[:38],
+                                       'npcs': [int(t) for t in c.get('npcs', [])][:64]}
+                        for c in clears if 1 <= int(c.get('id', 0)) <= 64 and str(c.get('zone', '')).strip()}
+        return self.talk_save(qs, npcs, ctl)
 
     def quests_order_save(self, order, rewards=None, ctl=None):
         qs, npcs = self.talk_load()
@@ -2460,6 +2512,8 @@ def make_handler(world, sprites, page, minimap, ctl):
                 return self.js(world.ctemp(int(q['t'])) or {'error': 'no such NPC template'})
             if u.path == '/api/quests':
                 return self.js(world.quests_view())
+            if u.path == '/api/zonenpcs':
+                return self.js(world.zone_npcs(q.get('zone', '')))
             if u.path == '/api/itemp':
                 return self.js(world.itemp(int(q['t'])) or {'error': 'no such item template'})
             if u.path == '/api/history':
@@ -2500,6 +2554,8 @@ def make_handler(world, sprites, page, minimap, ctl):
                 if body.get('save') and not str(body['save'].get('name', '')).strip():
                     return self.js({'error': 'Give the rug a name.'})
                 return self.js({'rugs': world.rug_save(body.get('save'), body.get('delete'), body.get('rename'))})
+            if u.path == '/api/clears':
+                return self.js({'msg': world.clears_save(body.get('clears') or [], ctl)})
             if u.path == '/api/questorder':
                 return self.js({'msg': world.quests_order_save(body.get('order') or {}, body.get('rewards'), ctl)})
             if u.path == '/api/zones':
@@ -5874,12 +5930,13 @@ async function questsLoad() {
   QS.forEach(q => { q.o0 = q.listed; q.r0 = JSON.stringify(q.rew); });
   QSorig = JSON.stringify(QS.map(q => [q.t, q.listed, q.rew]));
   QC = JSON.parse(JSON.stringify(r.chain)); QCorig = JSON.stringify(QC.map(c => [c.n, c.name, c.steps]));
+  QA = JSON.parse(JSON.stringify(r.clears || [])); QAorig = JSON.stringify(QA); zoneNpcCache = {};
   questsRender();
 }
 const qDirtyRows = () => (QS || []).filter(q => JSON.stringify(qdata(q)) !== q.o);
 const qOrderDirty = () => QS && JSON.stringify(QS.map(q => [q.t, q.listed, q.rew])) !== QSorig;
 const qChainDirty = () => QC && JSON.stringify(QC.map(c => [c.n, c.name, c.steps])) !== QCorig;
-const qAnyDirty = () => !!QS && (qDirtyRows().length > 0 || qOrderDirty() || qChainDirty());
+const qAnyDirty = () => !!QS && (qDirtyRows().length > 0 || qOrderDirty() || qChainDirty() || qaDirty());
 function gotoNpc(t, tabk) {     // the NPC editor works over the map page
   const b = document.querySelector('nav button[data-m="map"]'); if (b) b.click();
   openTemplate('npc', t);
@@ -6004,6 +6061,7 @@ function questsRender() {
       });
     }
   }
+  clearsBox(el);
 }
 function goldIn(get, set) {         // gold in G (decimals = silver); kept in silver
   const i = document.createElement('input'); i.type = 'number'; i.min = 0; i.step = 1; i.className = 'gold'; i.value = get() ? get() / 100 : 0;
@@ -6098,6 +6156,80 @@ function repRow(q) {                  // the Times settings under a quest's row:
 function qSpecial(q) {              // rewards built into the game's code (driver.c), shown so the row doesn't look empty
   if (q.t === 518 && q.data[49] === 740) return 'built in: +25 Stronghold points (spent by asking him POINTS / BUY …)';
   return '';
+}
+// ---- area clears (Quests page, third box): kill every chosen NPC of a zone for an experience bonus
+let QA = null, QAorig = '', zoneNpcCache = {};
+const qaDirty = () => QA && JSON.stringify(QA) !== QAorig;
+async function zoneNpcs(zone) {
+  if (!zoneNpcCache[zone]) zoneNpcCache[zone] = await api('/api/zonenpcs?zone=' + encodeURIComponent(zone));
+  return zoneNpcCache[zone];
+}
+function clearsBox(el) {
+  const cb = document.createElement('div'); cb.className = 'box'; el.appendChild(cb);
+  const d = qaDirty();
+  const zones = [...new Set((info.areas || []).map(a => a[4]))].sort((a, b) => a.localeCompare(b));
+  cb.innerHTML = `<div class="qhd"><h3>Area clears · #areas</h3>
+      <input type="text" class="anew" list="clearzones" placeholder="Search a zone to add…" style="min-width:240px">
+      <datalist id="clearzones">${zones.map(z => `<option value="${esc(z)}">`).join('')}</datalist>
+      <button class="btn sec aadd">+ Add area</button>
+      <button class="btn sec aund" ${d ? '' : 'disabled'}>Undo changes</button>
+      <button class="btn pri asave" ${d ? '' : 'disabled'}>Save</button></div>
+    <div class="hint">Kill every ticked NPC of a zone for an experience bonus. Players see "4 of 12 Skeletons in this area" with each new kill and their progress with #areas. A kill counts for the killer (a Ghost Companion's master) and their group members who are in the zone at that moment. Once per character; "again as Seyan'Du" allows a second time after becoming a Seyan'Du. Changing an area's NPC list starts everyone's progress there again. Saving goes into the game at once.</div>`;
+  const add = async () => {
+    const z = cb.querySelector('.anew').value.trim();
+    const zone = zones.find(x => x.toLowerCase() === z.toLowerCase());
+    if (!zone) return toast('Pick a zone from the list (type part of its name).', true);
+    if (QA.some(c => c.zone.toLowerCase() === zone.toLowerCase())) return toast(zone + ' is in the list already.', true);
+    let id = 1; while (QA.some(c => c.id === id)) id++;
+    if (id > 64) return toast('At most 64 area clears.', true);
+    const list = await zoneNpcs(zone);
+    const en = list.filter(n => n.kind === 'enemy');
+    const common = Object.entries(en.reduce((m, n) => (m[n.name] = (m[n.name] || 0) + 1, m), {})).sort((a, b) => b[1] - a[1])[0];
+    QA.push({ id, zone, exp: 1000, seyan: 1, label: common ? common[0] + 's' : 'enemies', npcs: en.map(n => n.t) });
+    questsRender();
+    toast(`${zone}: ${en.length} enemies ticked of ${list.length} NPCs there. Set the experience, then Save.`);
+  };
+  cb.querySelector('.aadd').onclick = add;
+  cb.querySelector('.anew').onkeydown = e => { if (e.key === 'Enter') add(); };
+  cb.querySelector('.aund').onclick = () => { if (confirm('Forget your changes to the area clears?')) { QA = JSON.parse(QAorig); questsRender(); } };
+  cb.querySelector('.asave').onclick = async () => {
+    const bad = QA.find(c => !c.npcs.length); if (bad) return toast(bad.zone + ' has no NPC ticked.', true);
+    const r = await api('/api/clears', { clears: QA }); toast(r.error || 'Area clears: ' + r.msg, !!r.error); if (!r.error) QAorig = JSON.stringify(QA); questsRender();
+  };
+  if (!QA.length) cb.insertAdjacentHTML('beforeend', '<div class="empty">No area clears yet: search a zone above and Add it.</div>');
+  for (const c of QA) {
+    const d2 = document.createElement('div'); d2.className = 'qchain'; cb.appendChild(d2);
+    d2.innerHTML = `<div class="qch"><span class="qn" style="min-width:0">${esc(c.zone)}</span><span class="hint" style="margin:0">counter says</span>
+        <input type="text" class="al" maxlength="38" style="flex:none;width:150px;min-width:0" title="e.g. Skeletons: '4 of 12 Skeletons in this area'">
+        <span class="hint" style="margin:0">exp</span><input type="number" class="ae" min="0" style="flex:none;width:100px;min-width:0"><span style="flex:1"></span>
+        <label class="chk" title="A Seyan'Du may do it once more"><input type="checkbox" class="as"><span>again as Seyan'Du</span></label>
+        <button class="sm aall">All enemies</button><button class="sm anone">None</button><button class="sm adel">Delete</button></div>
+      <div class="hint ac" style="margin:6px 0"></div><div class="anpcs" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:4px 10px"></div>`;
+    const lab = d2.querySelector('.al'); lab.value = c.label; lab.onchange = () => { c.label = lab.value.trim(); questsRender(); };
+    const ex = d2.querySelector('.ae'); ex.value = c.exp; ex.onchange = () => { c.exp = Math.max(0, Math.round(+ex.value || 0)); questsRender(); };
+    const sy = d2.querySelector('.as'); sy.checked = !!c.seyan; sy.onchange = () => { c.seyan = sy.checked ? 1 : 0; questsRender(); };
+    d2.querySelector('.adel').onclick = () => { if (confirm(`Delete the area clear for ${c.zone}?`)) { QA.splice(QA.indexOf(c), 1); questsRender(); } };
+    const box = d2.querySelector('.anpcs'), cnt = d2.querySelector('.ac');
+    zoneNpcs(c.zone).then(list => {
+      const known = new Set(list.map(n => n.t));
+      const extra = c.npcs.filter(t => !known.has(t)).map(t => ({ t, name: 'template ' + t, x: 0, y: 0, sprite: 0, kind: 'not in this zone' }));
+      const all = [...list, ...extra];
+      d2.querySelector('.aall').onclick = () => { c.npcs = all.filter(n => n.kind === 'enemy').map(n => n.t); questsRender(); };
+      d2.querySelector('.anone').onclick = () => { c.npcs = []; questsRender(); };
+      cnt.textContent = `${c.npcs.length} of ${all.length} NPCs ticked · players see "1 of ${c.npcs.length} ${c.label || 'enemies'} in this area"`;
+      for (const n of all) {
+        const l = document.createElement('label'); l.className = 'chk'; l.style.cssText = 'display:flex;gap:6px;align-items:center';
+        l.innerHTML = '<input type="checkbox"><span></span>';
+        const th = thumb(n.sprite || 0, 22, 22); l.insertBefore(th, l.lastChild);
+        l.lastChild.textContent = `${n.name} · ${n.t}${n.kind !== 'enemy' ? ' · ' + n.kind : ''}`;
+        l.title = n.x || n.y ? `spawns at ${n.x}, ${n.y}` : '';
+        const ck = l.firstChild; ck.checked = c.npcs.includes(n.t);
+        ck.onchange = () => { if (ck.checked) { if (!c.npcs.includes(n.t)) c.npcs.push(n.t); } else c.npcs = c.npcs.filter(t => t !== n.t); questsRender(); };
+        box.appendChild(l);
+      }
+      if (!all.length) box.innerHTML = '<div class="empty">No NPC spawns in this zone.</div>';
+    });
+  }
 }
 function qpick(get, set, none) {     // an item: its picture and name (click to pick), × to empty
   const d = document.createElement('div'); d.className = 'qpick';

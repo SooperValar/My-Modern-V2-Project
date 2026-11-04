@@ -161,7 +161,7 @@ OPS = ('=', '!=', '<', '>', '<=', '>=')
 
 def talk_parse(text):
     quests, npcs, cur, e = {}, {}, None, None
-    steps, chests, chest, order, qrew = {}, {}, None, {}, {}
+    steps, chests, chest, order, qrew, clears = {}, {}, None, {}, {}, {}
     for line in text.splitlines():
         line = line.strip()
         if not line or line.startswith('#'):
@@ -193,6 +193,16 @@ def talk_parse(text):
                 chest = {'refill': 0, 'once': 0, 'rewards': []}
                 chests['%d,%d' % (int(a[0]), int(a[1]))] = chest
                 cur, e = None, None
+                continue
+            if k == 'clear' and len(a) >= 4:          # area clears (Quests page): id, exp, again as Seyan'Du, zone name
+                c = clears.setdefault(int(a[0]), {'id': int(a[0]), 'label': '', 'npcs': []})
+                c.update({'exp': int(a[1]), 'seyan': int(a[2]), 'zone': rest.split(None, 3)[3].strip()})
+                continue
+            if k == 'clearlabel' and a:
+                clears.setdefault(int(a[0]), {'id': int(a[0]), 'npcs': [], 'exp': 0, 'seyan': 1, 'zone': ''})['label'] = rest.split(None, 1)[1].strip() if len(a) > 1 else ''
+                continue
+            if k == 'clearnpc' and a:
+                clears.setdefault(int(a[0]), {'id': int(a[0]), 'npcs': [], 'exp': 0, 'seyan': 1, 'zone': '', 'label': ''})['npcs'] += [int(v) for v in a[1:] if v.isdigit()]
                 continue
             if k == 'qreward' and len(a) >= 4:        # item quest: times, first times, gold (Quests page); then qstage lines
                 v = [int(x) for x in a[1:7] if x.lstrip('-').isdigit()]
@@ -258,7 +268,7 @@ def talk_parse(text):
                 e['acts'].append({'type': k})
         except (IndexError, ValueError):
             continue
-    return {'names': quests, 'steps': steps, 'chests': chests, 'order': order, 'qrew': qrew}, npcs
+    return {'names': quests, 'steps': steps, 'chests': chests, 'order': order, 'qrew': qrew, 'clears': clears}, npcs
 
 
 def talk_text(quests, npcs, names):
@@ -282,6 +292,20 @@ def talk_text(quests, npcs, names):
                 out.append('qstage %d %d %d %d %d' % (t, *[max(0, int(v)) for v in (list(st) + [0] * 4)[:4]]))
             if r.get('rmin', -1) >= 0 or r.get('rmax', -1) >= 0:
                 out.append('qrank %d %d %d' % (t, int(r.get('rmin', -1)), int(r.get('rmax', -1))))
+        out.append('')
+    cl = quests.get('clears') or {}
+    if cl:
+        out.append('# area clears: clear <id> <exp> <again as Seyan\'Du 0/1> <zone>; clearlabel <id> <text>; clearnpc <id> <NPC templates> - the Quests page')
+        for i in sorted(cl, key=int):
+            c = cl[i]
+            if not str(c.get('zone', '')).strip():
+                continue
+            out.append('clear %d %d %d %s' % (int(i), int(c.get('exp', 0)), 1 if c.get('seyan') else 0, ' '.join(str(c['zone']).split())))
+            if str(c.get('label', '')).strip():
+                out.append('clearlabel %d %s' % (int(i), ' '.join(str(c['label']).split())))
+            cnp = [int(t) for t in c.get('npcs', []) if int(t) > 0][:64]
+            for k in range(0, len(cnp), 16):
+                out.append('clearnpc %d %s' % (int(i), ' '.join(str(t) for t in cnp[k:k + 16])))
         out.append('')
     for n in sorted(set(qn) | set(qs)):
         out.append('quest %d %s' % (n, ' '.join(str(qn.get(n, '')).split())))
@@ -941,7 +965,7 @@ class World:
         try:
             return talk_parse(open(self.talk_path(), encoding='latin-1').read())
         except OSError:
-            return {'names': {}, 'steps': {}, 'chests': {}, 'order': {}, 'qrew': {}}, {}
+            return {'names': {}, 'steps': {}, 'chests': {}, 'order': {}, 'qrew': {}, 'clears': {}}, {}
 
     def talk_save(self, quests, npcs, ctl=None):
         p = self.talk_path()
@@ -1000,7 +1024,35 @@ class World:
         for n in sorted(set(qs['names']) | set(qs['steps']) | set(refs)):
             chain.append({'n': n, 'name': qs['names'].get(n, ''), 'steps': sorted(qs['steps'].get(n, []), key=lambda v: int(v[0])),
                           'refs': [{'who': r['who'], 'label': r['label'], 'kinds': sorted(r['kinds'])} for r in refs.get(n, {}).values()]})
-        return {'simple': simple, 'chain': chain}
+        clears = sorted(qs.get('clears', {}).values(), key=lambda c: c['id'])
+        return {'simple': simple, 'chain': chain, 'clears': clears}
+
+    def zone_npcs(self, zone):
+        """NPC templates whose spawn spot is inside the zone (any of its boxes): the candidates for an area clear"""
+        boxes = [a for a in self.areas if a[4].lower() == str(zone).lower()]
+        out = []
+        if self.tchar is None or not boxes:
+            return out
+        for t in range(1, MAXTCHARS):
+            o = t * CHAR_SIZE
+            if not self.tchar[o + C_USED]:
+                continue
+            x, y = struct.unpack_from('<hh', self.tchar, o + C_X)
+            if not (x or y) or not any(b[0] <= x <= b[2] and b[1] <= y <= b[3] for b in boxes):
+                continue
+            fl = struct.unpack_from('<Q', self.tchar, o + C_FLAGS)[0]
+            al = struct.unpack_from('<h', self.tchar, o + C_ALIGN)[0]
+            out.append({'t': t, 'name': self.tname(t), 'x': x, 'y': y, 'sprite': self.tchar_sprite(t, 4),
+                        'kind': 'merchant' if fl & CF_MERCHANT else 'enemy' if al < 0 else 'friendly'})
+        return out
+
+    def clears_save(self, clears, ctl=None):
+        qs, npcs = self.talk_load()
+        qs['clears'] = {int(c['id']): {'id': int(c['id']), 'exp': max(0, int(c.get('exp', 0))), 'seyan': 1 if c.get('seyan') else 0,
+                                       'zone': str(c.get('zone', ''))[:45], 'label': str(c.get('label', ''))[:38],
+                                       'npcs': [int(t) for t in c.get('npcs', [])][:64]}
+                        for c in clears if 1 <= int(c.get('id', 0)) <= 64 and str(c.get('zone', '')).strip()}
+        return self.talk_save(qs, npcs, ctl)
 
     def quests_order_save(self, order, rewards=None, ctl=None):
         qs, npcs = self.talk_load()
@@ -2460,6 +2512,8 @@ def make_handler(world, sprites, page, minimap, ctl):
                 return self.js(world.ctemp(int(q['t'])) or {'error': 'no such NPC template'})
             if u.path == '/api/quests':
                 return self.js(world.quests_view())
+            if u.path == '/api/zonenpcs':
+                return self.js(world.zone_npcs(q.get('zone', '')))
             if u.path == '/api/itemp':
                 return self.js(world.itemp(int(q['t'])) or {'error': 'no such item template'})
             if u.path == '/api/history':
@@ -2500,6 +2554,8 @@ def make_handler(world, sprites, page, minimap, ctl):
                 if body.get('save') and not str(body['save'].get('name', '')).strip():
                     return self.js({'error': 'Give the rug a name.'})
                 return self.js({'rugs': world.rug_save(body.get('save'), body.get('delete'), body.get('rename'))})
+            if u.path == '/api/clears':
+                return self.js({'msg': world.clears_save(body.get('clears') or [], ctl)})
             if u.path == '/api/questorder':
                 return self.js({'msg': world.quests_order_save(body.get('order') or {}, body.get('rewards'), ctl)})
             if u.path == '/api/zones':

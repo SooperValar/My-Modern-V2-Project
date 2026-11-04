@@ -380,3 +380,12 @@ char *get_area_m(int x,int y,int verbose)
 	area_text(buf,x,y,verbose,0);
 	return buf;
 }
+
+/* is x,y inside the zone called name (any of its boxes)? For area clears (npctalk.c). */
+int zone_has(const char *name,int x,int y)
+{
+	int n;
+	if (!zones_loaded) zone_load();
+	for (n=0; n<area_cnt; n++) if (in_box(n,x,y) && !strcasecmp(area[n].name,name)) return 1;
+	return 0;
+}

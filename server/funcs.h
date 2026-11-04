@@ -447,6 +447,10 @@ int talk_quest_maxed(int cn,int co);
 int quest_rank_check(int t,int co,int *lo,int *hi);
 int wp2h_chance(int cn,int axe);
 int gc_staff(int cn);
+int zone_has(const char *name,int x,int y);
+void clear_kill(int cn,int co);
+void do_areas(int cn);
+int clear_test(int co,int t);
 int zone_count(void);
 int zone_boxes(void);
 

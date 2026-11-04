@@ -153,6 +153,12 @@ static void con_cmd(char *line)
 		talk_set_echo(NULL);
 		return;
 	}
+	if (!strcmp(w[0],"cleartest")) {	// cleartest <player> <NPC template>: as if the player killed that NPC (area clears)
+		if (!(co=con_player(w[1]))) return;
+		if (!clear_test(co,atoi(w[2]))) out("  No NPC of template %d in the world.\n",atoi(w[2]));
+		else out("  done (see the player's log; #areas)\n");
+		return;
+	}
 	if (!strcmp(w[0],"questgive")) {	// questgive <player> <NPC template>: the player hands that NPC the item it wants
 		int t=atoi(w[2]),cn=0,in,e0,g0;
 		extern int npc_give(int cn,int co,int in,int money);
@@ -255,6 +261,7 @@ static void con_cmd(char *line)
 		    "  talknear <npc template> <player>          try a player coming close\n"
 		    "  talkmoney <npc template> <player> <silver>   try handing money over\n"
 		    "  questgive <player> <npc template>         hand that NPC the item it wants\n"
+		    "  cleartest <player> <npc template>         as if the player killed it (area clears)\n"
 		    "  shutdown                      save and stop the server\n");
 	} else if (!strcmp(w[0],"quest")) {
 		if (!(co=con_player(w[1]))) return;

@@ -134,6 +134,20 @@ struct qstage { int times, item, exp, gold; };
 struct qrew { int limit, first, gold1, nst; struct qstage st[QSTAGES]; int rmin1, rmax1; };	// rmin1/rmax1: rank + 1, 0 = none
 static struct qrew qrew[MAXTCHARS];	// item quests: repeats and later rewards ("qreward")
 static short qorder[MAXTCHARS];		// #quest: place in the list ("order <template> <n>", the editor's Quests page); 0 = by exp, -1 = not listed
+
+/* ---- area clears (the editor's Quests page): kill every listed NPC of an area for an experience bonus.
+ *   clear <id> <exp> <again as Seyan'Du 0/1> <zone name>      the area (a zone, any of its boxes)
+ *   clearlabel <id> <text>                                    what the counter calls them ("Ghosts")
+ *   clearnpc <id> <template>...                               the NPCs to kill (each placed NPC has its own template)
+ * Progress per character in .dat/clears.dat. A kill counts for the killer (or a companion's master) and the members
+ * of their group, each only while standing in the area. Once per character; with "again as Seyan'Du" once more
+ * after becoming a Seyan'Du. A changed NPC list starts everyone's progress in that area again (not the done flag). */
+#define MAXCLEAR	64
+#define CLEARNPC	64
+#define CLEAR_FILE	DATDIR"/clears.dat"
+struct clear { int used, exp, seyan, n, t[CLEARNPC]; char zone[48], label[40]; unsigned short hash; };
+static struct clear clears[MAXCLEAR+1];
+static void clear_hashes(void);
 static struct tstep step[MAXSTEP];
 static int qname[QVARS+1];
 static int nent=0, nstep=0, talk_loaded=0;
@@ -183,6 +197,7 @@ int talk_load(void)
 	memset(hasnear,0,sizeof(hasnear));
 	memset(qorder,0,sizeof(qorder));
 	memset(qrew,0,sizeof(qrew));
+	memset(clears,0,sizeof(clears));
 	memset(qname,0,sizeof(qname));
 	f=fopen(TALK_FILE,"r");
 	if (!f) return 0;
@@ -208,6 +223,19 @@ int talk_load(void)
 				qrew[n].rmin1=r1; qrew[n].rmax1=r2;
 				qrew[n].limit=a[1]; qrew[n].first=a[2]; qrew[n].gold1=a[3];
 				if (k==7 && (a[4] || a[5] || a[6])) { qrew[n].st[0].item=a[4]>0 && a[4]<MAXTITEM ? a[4] : 0; qrew[n].st[0].exp=a[5]>0 ? a[5] : 0; qrew[n].st[0].gold=a[6]>0 ? a[6] : 0; qrew[n].nst=1; }
+			} else bad++;
+			continue;
+		}
+		if (!strcmp(w1,"clear") || !strcmp(w1,"clearlabel") || !strcmp(w1,"clearnpc")) {	// area clears
+			int id=0,ex=0,sy=0,k2=0;
+			if (!strcmp(w1,"clear") && sscanf(q,"%d %d %d %n",&id,&ex,&sy,&k2)>=3 && id>=1 && id<=MAXCLEAR && q[k2]) {
+				clears[id].used=1; clears[id].exp=ex; clears[id].seyan=sy;
+				strncpy(clears[id].zone,q+k2,sizeof(clears[id].zone)-1); clears[id].zone[sizeof(clears[id].zone)-1]=0;
+			} else if (!strcmp(w1,"clearlabel") && sscanf(q,"%d %n",&id,&k2)>=1 && id>=1 && id<=MAXCLEAR) {
+				strncpy(clears[id].label,q+k2,sizeof(clears[id].label)-1); clears[id].label[sizeof(clears[id].label)-1]=0;
+			} else if (!strcmp(w1,"clearnpc") && sscanf(q,"%d %n",&id,&k2)>=1 && id>=1 && id<=MAXCLEAR) {
+				char *e2,*p2=q+k2; long tv;
+				for (;;) { tv=strtol(p2,&e2,10); if (e2==p2) break; p2=e2; if (tv>0 && tv<MAXTCHARS && clears[id].n<CLEARNPC) clears[id].t[clears[id].n++]=tv; }
 			} else bad++;
 			continue;
 		}
@@ -331,6 +359,7 @@ int talk_load(void)
 	}
 	fclose(f);
 	for (n=0; n<nent; n++) if (ent[n].trig==T_NEAR && ent[n].temp>0 && ent[n].temp<MAXTCHARS) hasnear[ent[n].temp]=1;
+	clear_hashes();
 	xlog("NPC dialogue: %d entries, %d quest steps loaded from %s%s",nent,nstep,TALK_FILE,bad ? " (some lines not understood)" : "");
 	return bad;
 }
@@ -1047,5 +1076,127 @@ int quest_rank_check(int t,int co,int *lo,int *hi)
 	r=points2rank(ch[co].points_tot);
 	if (*lo>=0 && r<*lo) return -1;
 	if (*hi>=0 && r>*hi) return 1;
+	return 0;
+}
+struct clrow { int stamp; unsigned long long mask[MAXCLEAR+1]; unsigned char fl[MAXCLEAR+1]; unsigned short hash[MAXCLEAR+1]; };
+#define CLR_DONE	1	// done (before Seyan'Du)
+#define CLR_DONE2	2	// done as Seyan'Du
+#define CLR_RUN2	4	// the progress now is the Seyan'Du run
+static int clfd=-2;
+
+static void clear_hashes(void)
+{
+	int a,k; unsigned h;
+	for (a=1; a<=MAXCLEAR; a++) {
+		for (h=5381,k=0; k<clears[a].n; k++) h=h*33+clears[a].t[k];
+		clears[a].hash=(unsigned short)(h ? h : 1);
+	}
+}
+
+static void clopen(void)
+{
+	char hdr[QHDR];
+	clfd=open(CLEAR_FILE,O_RDWR|O_CREAT,0600);
+	if (clfd<0) { xlog("cannot open %s",CLEAR_FILE); return; }
+	if (pread(clfd,hdr,QHDR,0)==QHDR && !memcmp(hdr,"MYV2CLR1",8)) return;
+	memset(hdr,0,QHDR); memcpy(hdr,"MYV2CLR1",8); *(int*)(hdr+8)=MAXCLEAR;
+	if (pwrite(clfd,hdr,QHDR,0)!=QHDR) xlog("cannot write %s",CLEAR_FILE);
+}
+
+static void clrow_get(int co,struct clrow *r)
+{
+	if (clfd==-2) clopen();
+	memset(r,0,sizeof(*r));
+	if (clfd>=0 && pread(clfd,r,sizeof(*r),QHDR+(off_t)co*sizeof(*r))!=sizeof(*r)) memset(r,0,sizeof(*r));
+	if (r->stamp!=(int)ch[co].creation_date) { memset(r,0,sizeof(*r)); r->stamp=ch[co].creation_date; }
+}
+
+static void clrow_put(int co,struct clrow *r)
+{
+	if (clfd>=0 && pwrite(clfd,r,sizeof(*r),QHDR+(off_t)co*sizeof(*r))!=sizeof(*r)) xlog("cannot write %s",CLEAR_FILE);
+}
+
+static int popcount64(unsigned long long m) { int c=0; while (m) { m&=m-1; c++; } return c; }
+
+/* bring a row up to date for area a: a changed NPC list starts the progress again; a Seyan'Du who did it before
+ * (and the area allows it) starts a second run. Returns 0 if this character can't get it (done). */
+static int clear_ready(int co,int a,struct clrow *r)
+{
+	int seyan=(ch[co].kindred&KIN_SEYAN_DU)!=0;
+	if (r->hash[a]!=clears[a].hash) { r->hash[a]=clears[a].hash; r->mask[a]=0; }
+	if (r->fl[a]&CLR_DONE2) return 0;
+	if (r->fl[a]&CLR_DONE) {
+		if (!seyan || !clears[a].seyan) return 0;
+		if (!(r->fl[a]&CLR_RUN2)) { r->fl[a]|=CLR_RUN2; r->mask[a]=0; }
+	}
+	return 1;
+}
+
+static void clear_credit(int p,int a,int k)
+{
+	struct clrow r;
+	int cnt;
+	if (!zone_has(clears[a].zone,ch[p].x,ch[p].y)) return;	// only while standing in the area
+	clrow_get(p,&r);
+	if (!clear_ready(p,a,&r)) { clrow_put(p,&r); return; }
+	if (r.mask[a]&(1ULL<<k)) return;			// this one counted already
+	r.mask[a]|=1ULL<<k;
+	cnt=popcount64(r.mask[a]);
+	do_char_log(p,2,"%d of %d %s in this area.\n",cnt,clears[a].n,clears[a].label[0] ? clears[a].label : "enemies");
+	if (cnt>=clears[a].n) {
+		r.fl[a]|=(r.fl[a]&CLR_RUN2) ? CLR_DONE2 : CLR_DONE;
+		do_char_log(p,2,"You cleared %s!\n",clears[a].zone);
+		if (clears[a].exp>0) do_give_exp(p,clears[a].exp,0,-1);
+		chlog(p,"Cleared area %d (%s)%s, %d exp",a,clears[a].zone,(r.fl[a]&CLR_RUN2) ? " as Seyan'Du" : "",clears[a].exp);
+	}
+	clrow_put(p,&r);
+}
+
+/* the NPC co was killed by cn: every area clear that lists its template */
+void clear_kill(int cn,int co)
+{
+	int p=0,a,k,n,m;
+	if (!talk_loaded) talk_load();
+	if (!IS_SANECHAR(cn) || !IS_SANECHAR(co) || (ch[co].flags&CF_PLAYER)) return;
+	if (ch[cn].flags&CF_PLAYER) p=cn;
+	else if ((m=ch[cn].data[63])>0 && m<MAXCHARS && (ch[m].flags&CF_PLAYER)) p=m;	// a companion: its master
+	if (!p) return;
+	for (a=1; a<=MAXCLEAR; a++) {
+		if (!clears[a].used) continue;
+		for (k=0; k<clears[a].n; k++) if (clears[a].t[k]==ch[co].temp) break;
+		if (k==clears[a].n) continue;
+		clear_credit(p,a,k);
+		for (n=1; n<10; n++)
+			if ((m=ch[p].data[n])>0 && m<MAXCHARS && m!=p && (ch[m].flags&CF_PLAYER) && ch[m].used==USE_ACTIVE && isgroup(m,p))
+				clear_credit(m,a,k);
+	}
+}
+
+/* #areas: every area clear and how far this character is */
+void do_areas(int cn)
+{
+	struct clrow r;
+	int a,shown=0,cnt,can;
+	if (!talk_loaded) talk_load();
+	clrow_get(cn,&r);
+	for (a=1; a<=MAXCLEAR; a++) {
+		if (!clears[a].used) continue;
+		if (!shown) do_char_log(cn,1,"Areas to clear:\n");
+		shown++;
+		can=clear_ready(cn,a,&r);
+		cnt=popcount64(r.mask[a]);
+		if (!can) do_char_log(cn,3,"  %-24.24s cleared\n",clears[a].zone);
+		else if (r.fl[a]&CLR_RUN2) do_char_log(cn,1,"  %-24.24s %d of %d %s (again as Seyan'Du)\n",clears[a].zone,cnt,clears[a].n,clears[a].label[0] ? clears[a].label : "enemies");
+		else do_char_log(cn,1,"  %-24.24s %d of %d %s\n",clears[a].zone,cnt,clears[a].n,clears[a].label[0] ? clears[a].label : "enemies");
+	}
+	if (!shown) do_char_log(cn,1,"There are no areas to clear yet.\n");
+}
+
+/* console: as if player co killed the NPC of template t (it must be in the world) */
+int clear_test(int co,int t)
+{
+	int n;
+	if (!talk_loaded) talk_load();
+	for (n=1; n<MAXCHARS; n++) if (ch[n].used==USE_ACTIVE && ch[n].temp==t && !(ch[n].flags&(CF_PLAYER|CF_BODY))) { clear_kill(co,n); return 1; }
 	return 0;
 }
