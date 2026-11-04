@@ -5913,11 +5913,13 @@ function questsRender() {
     }
     const nc = td('num'), gives = q.data[50] || q.data[66] || q.data[51] || q.rew.gold || q.rew.st.some(x => x[1] || x[2] || x[3]);
     if (!q.puzzle && q.listed && gives) nc.textContent = ++nr;
-    else if (!q.puzzle && q.listed) { nc.textContent = '–'; nc.title = '#quest leaves it out: it gives nothing (a special NPC, e.g. the Cityguard\'s black candle)'; }
+    else if (!q.puzzle && q.listed) { nc.textContent = '–'; nc.title = qSpecial(q) ? '#quest leaves it out: its reward is built into the game (' + qSpecial(q) + ')' : '#quest leaves it out: it gives nothing'; }
     const who = td(); const w = document.createElement('div'); w.className = 'who'; w.appendChild(thumb(q.sprite || 0, 30, 30));
     const nmd = document.createElement('div'); nmd.innerHTML = '<a></a><div class="n"></div>'; nmd.firstChild.textContent = q.name; nmd.firstChild.title = 'Open this NPC in the NPC editor';
     nmd.firstChild.onclick = () => gotoNpc(q.t, 'talk');
     nmd.lastChild.textContent = `template ${q.t}${q.count ? '' : ' · not in the world'}`; w.appendChild(nmd); who.appendChild(w);
+    const special = qSpecial(q);
+    if (special) { const sp = document.createElement('div'); sp.className = 'n'; sp.style.color = 'var(--gold2)'; sp.textContent = special; sp.title = 'Built into the game\'s code, not set here'; nmd.appendChild(sp); }
     const wh = td('where'); wh.textContent = (q.where || '–').replace(/^Aston, /, ''); if (/^Aston, /.test(q.where || '')) wh.title = q.where; if (q.x || q.y) { wh.style.cursor = 'pointer'; wh.title = 'Show it on the map'; wh.onclick = () => { const b = document.querySelector('nav button[data-m="map"]'); if (b) b.click(); setTimeout(() => { centerOn(q.x, q.y); selectTile(q.x, q.y); }, 50); }; }
     const re = () => questsRender();
     td().appendChild(qpick(() => q.data[49], v => { q.data[49] = v; re(); }, 'pick one!'));
@@ -6059,6 +6061,10 @@ function repRow(q) {                  // the Times settings under a quest's row:
   }
   if (R.lim) note(`After ${R.lim} times the NPC says it doesn't need any more and hands the item back. #quest shows players how many times are left.`);
   return tr;
+}
+function qSpecial(q) {              // rewards built into the game's code (driver.c), shown so the row doesn't look empty
+  if (q.t === 518 && q.data[49] === 740) return 'built in: +25 Stronghold points (spent by asking him POINTS / BUY …)';
+  return '';
 }
 function qpick(get, set, none) {     // an item: its picture and name (click to pick), × to empty
   const d = document.createElement('div'); d.className = 'qpick';

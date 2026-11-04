@@ -38,6 +38,8 @@ In order:
 
 17. **Revisit logout-at-shutdown in server.c (players online during a stop/restart)**: the logout loop at shutdown is bypassed (a WSL / live-server workaround, see CHANGES.md "Server modernization"); check what happens to players online when the server stops or restarts (saved position, items, their character staying "online"), and bring back a safe logout if needed.
 
+18. **Expand the Black Stronghold points system** (Cody wants to build on it later). How it works now (`talk.c`, `driver.c`): a character's points = kills in the Stronghold area below their rank / 25 + at their rank + above their rank x 2 (`data[26..28]`) + 25 per Black Candle given to the Cityguard (`data[43]`, the candle hack in `npc_give`) - points already spent (`data[41]`). Spent with the Cityguard (template 518) by saying POINTS, BUY GOLD (1G a point, at most 100 at once), BUY HEALING (6), BUY MANA (9), BUY EXP (`stronghold_exp_per_pt`: points_tot / 45,123, 1-125 exp a point). Ideas to decide: more things to buy (items, tier armor, keys, a Stronghold title), points as a reward type on the Quests page, a #stronghold command showing your points, the candle's 25 points editable. Related: the Black Stronghold Coin pieces (Star 761 from Damor for a Black Candle, Circle 762 from Shiva, Empty 763 from Malte and two Gargoyles) open the two star doors (3 Empty + Star / 3 Empty + Circle laid at 423-424,335-336, `sub_door_driver`); all three pieces have the same description ("showing a star"), to fix in the item editor.
+
 Later (ideas, not decided):
 
 - Item tiers part 5: Legendaries (hand-designed named pieces; the current special armors move here), see `docs/ITEM_TIERS.md`.
