@@ -116,10 +116,14 @@ New sprites: write them to `Client\GFX` (new numbers), then `tools/release/publi
 
 ## The client and the launcher
 
-- Source: `client/` (Visual Studio C, GDI). Build on Windows with `client\build.bat` (needs Visual
-  Studio with "Desktop development with C++"), or cross-build in a Linux workspace with
-  clang-cl + lld-link against an MSVC/Windows SDK copy (`tools/build/`; the SDK itself is not in
-  the project).
+- Source: `client/` (Visual Studio C, GDI). **Claude builds `merc.exe` itself with the BuildKit**:
+  `Client\BuildKit\myv2-buildkit.tar.gz` (Microsoft's Windows SDK / MSVC files + `build_client.sh`; read
+  `Client\BuildKit\README.txt` first). **Private: never add it to git, never publish it, never copy it into the
+  project folder** (Microsoft's files may not be redistributed). Build in the cloud workspace (the PC's Linux shell has
+  no compiler, and the cloud can't download the SDK): stage the tarball and every file of the project's `client\`,
+  `tar xzf`, `apt-get install -y clang lld llvm` if missing, `bash myv2-buildkit/build_client.sh <source folder>`,
+  then SendUserFile the merc.exe and commit it by fileUuid to `Client\merc_new.exe`; Cody swaps it in with the
+  game closed. On Windows, `client\build.bat` (Visual Studio "Desktop development with C++") does the same.
 - The client reads `client.ini`: `[server] host=` / `port=` (built-in default
   `myv2astonia.duckdns.org`, 5555; `-h` / `-p` on the command line win: `play.bat` uses
   `-h 127.0.0.1`), `[display]`, `[window_v2]`, `[update] base=` / `off=1` (launcher).
@@ -160,7 +164,8 @@ New sprites: write them to `Client\GFX` (new numbers), then `tools/release/publi
 server code update plus the world update (new item templates 1378-1406 from `tools/world/rings_books.txt`, all five books to
 Damor; the Greataxe names from `tools/world/greataxe.txt` plus `rename_items <dat> <t> "Two-Handed Axe" Greataxe write`
 for 1364-1368) in one stop, as in "Changing the world data" above, and Cody pushing `client-dist` (client update 3:
-sprites 18240-18287; and a rebuilt merc.exe for the Greataxe skill name, `client\build.bat` on Windows). Then: the summoner's staff (design in `docs/REBALANCE.md`). Cody is also going through the quests
+sprites 18240-18287; and the new merc.exe with the Greataxe skill name: `Client\merc_new.exe`, 2.15.01, built with
+the BuildKit; Cody tests it, then publish). Then: the summoner's staff (design in `docs/REBALANCE.md`). Cody is also going through the quests
 on the Quests page. The DuckDNS PowerShell window: switched to a hidden launcher; check with Cody that it stopped.
 
 - **#quest** (IN PROGRESS, not final; live since the zones update; built and committed): the look is approved (column table, 15 a page); still open: the order
