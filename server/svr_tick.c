@@ -374,6 +374,12 @@ void plr_cmd_inv(int nr)
                         if (tmp>0) ch[cn].gold+=tmp;
                         ch[cn].citem=0;
                         return;
+                } else if (ch[cn].citem && tmp && !IS_BUILDING(cn) && stack_same(tmp,ch[cn].citem)) {
+                        // MyV2: the stack / scroll in the hand goes onto the matching one (what doesn't fit stays in the hand)
+                        if (stack_merge(tmp,ch[cn].citem)) ch[cn].citem=0;
+                        else if (stack_kind(tmp)==1 && stack_count(tmp)>=STACK_MAX) do_char_log(cn,0,"That stack is full (%d).\n",STACK_MAX);
+                        do_update_char(cn);
+                        return;
                 } else {
                         if (!IS_BUILDING(cn))
                                 ch[cn].item[n]=ch[cn].citem;
@@ -383,6 +389,22 @@ void plr_cmd_inv(int nr)
                         }
                 }
                 ch[cn].citem=tmp;
+                return;
+        }
+        if (what==9) { // MyV2: Ctrl+click on the backpack: one from a stack into the hand (or onto the stack in the hand)
+                int hand=ch[cn].citem,one;
+                if (n<0 || n>39 || ch[cn].stunned) return;
+                if (!(in=ch[cn].item[n])) return;
+                if (stack_kind(in)!=1) return;
+                if (!hand) {
+                        if (stack_count(in)<2) { ch[cn].citem=in; ch[cn].item[n]=0; }
+                        else if ((one=stack_split(in,1))) { ch[cn].citem=one; it[one].carried=cn; }
+                } else if (!(hand&0x80000000) && stack_same(hand,in)) {
+                        if (stack_count(hand)>=STACK_MAX) { do_char_log(cn,0,"The stack in your hand is full (%d).\n",STACK_MAX); return; }
+                        IT_STACK(hand)=stack_count(hand)+1; it[hand].flags|=IF_UPDATE;
+                        if (!stack_use_one(in)) { it[in].used=USE_EMPTY; ch[cn].item[n]=0; }
+                }
+                do_update_char(cn);
                 return;
         }
         if (what==1) { // big inventory
@@ -838,6 +860,8 @@ void plr_cmd_iteminfo(int nr)
 		act=it[in].active ? 1 : 0;
 		tip_div=0;
 		tip_line(nr,where,slot,&line,tier_font(in),"%s",tier_name(in));
+		if (stack_count(in)>1) tip_line(nr,where,slot,&line,1,"A stack of %d (Ctrl+click: take one)",stack_count(in));
+		else if (stack_kind(in)==1) tip_line(nr,where,slot,&line,1,"Stacks up to %d",STACK_MAX);
 		if (IT_TIER(in)) { char t1[80],t2[80]; tier_tip_lines(in,t1,t2); tip_line(nr,where,slot,&line,1,"%s",t1); }
 		tip_sep();
 

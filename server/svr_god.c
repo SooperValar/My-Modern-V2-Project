@@ -436,6 +436,7 @@ int god_give_char(int in,int cn)
         int n;
 
         if (!IS_SANEITEM(in) || !IS_LIVINGCHAR(cn)) return 0;
+        if (stack_into_backpack(cn,in)) { do_update_char(cn); return 1; }	// MyV2: onto a matching stack
         for (n=0; n<40; n++)
                 if (!ch[cn].item[n]) break;
         if (n==40) return 0;

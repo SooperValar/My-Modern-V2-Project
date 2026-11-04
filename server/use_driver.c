@@ -2918,8 +2918,10 @@ void use_driver(int cn,int in,int carried)
 
                                 if (it[in].duration) spell_from_item(cn,in);
 
-                                it[in].used=USE_EMPTY;
-                                god_take_from_char(in,cn);
+                                if (!stack_use_one(in)) {	// MyV2: a stack of potions loses one
+                                        it[in].used=USE_EMPTY;
+                                        god_take_from_char(in,cn);
+                                }
 
                                 if (ch[cn].a_hp<500) {
                                 	do_area_log(cn,0,ch[cn].x,ch[cn].y,0,"%s was killed by %s.\n",

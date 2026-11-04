@@ -341,6 +341,9 @@ int mouse_inventory(int x,int y,int mode)
 			else if (mode==MS_RB_UP) cmd3(CL_CMD_INV_LOOK,nr+inv_pos,0,selected_char);
 			if (pl.item[nr+inv_pos]) cursor_type=CT_USE;
 			else cursor_type=CT_NONE;
+		} else if (keys==2) {	// MyV2: Ctrl+click takes one from a stack
+			if (mode==MS_LB_UP) cmd3(CL_CMD_INV,9,nr+inv_pos,selected_char);
+			cursor_type=pl.item[nr+inv_pos] ? CT_TAKE : CT_NONE;
 		} else cursor_type=CT_NONE;
 		hightlight=HL_BACKPACK;
 		hightlight_sub=nr+inv_pos;
@@ -1098,6 +1101,9 @@ static void hud_backpack(int nr,int mode)
 		if (mode==MS_LB_UP) cmd3(CL_CMD_INV,6,nr,selected_char);
 		else if (mode==MS_RB_UP) cmd3(CL_CMD_INV_LOOK,nr,0,selected_char);
 		cursor_type=pl.item[nr] ? CT_USE : CT_NONE;
+	} else if (keys==2) {	// MyV2: Ctrl+click takes one from a stack (onto the stack in the hand)
+		if (mode==MS_LB_UP) cmd3(CL_CMD_INV,9,nr,selected_char);
+		cursor_type=pl.item[nr] ? CT_TAKE : CT_NONE;
 	} else cursor_type=CT_NONE;
 	hightlight=HL_BACKPACK;
 	hightlight_sub=nr;

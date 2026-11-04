@@ -292,6 +292,13 @@ The design is in `docs/ITEM_TIERS.md`.
 - **Soulstones from any enemy**: any enemy a player (or their companion) kills can now drop a soulstone; before, only "Strong" pentagram enemies carried one. The chance follows the player's rank, so new players find them often: 1 in (20 + 6 x rank) kills - 1 in 20 at rank 0, 1 in 50 at rank 5, 1 in 80 at rank 10, 1 in 110 at rank 15, 1 in 158 at rank 23. The stone is made like a Strong enemy's (10-15% of the enemy's experience value, its level from that); Strong enemies keep their own stone and don't roll again. Logged. A grave holding a soulstone glows.
 - **Grave glow only for something worth a look**: every NPC grave glowed, because every NPC dies holding the weapon and armor it fought with. Now an NPC's body or grave glows only when it holds something special: a Magic/Rare/Epic/Legendary piece, a unique item, or a magic item in its backpack (potions, scrolls, rings...). Its own fighting gear and gold don't count. A player's body/grave still glows while it holds anything, so players can find their belongings.
 
+### Stacks of potions, combined spell scrolls (TODO 14)
+- **Potions stack**, up to 20 of the same kind in one backpack slot (anything used up when used that has no special driver: healing, mana and other potions, Ratling Eye Essence...). The count shows on the item, the tooltip says "A stack of 7 (Ctrl+click: take one)".
+- Getting one (buying, a reward, a quest) puts it on a matching stack; putting a stack from the hand on a matching one merges them (what doesn't fit stays in the hand). **Ctrl+click** a stack takes one into the hand, or adds one to the matching stack in the hand (client 2.15.02). Shift+click still moves the whole stack. Using one takes one off the stack. **Selling sells the whole stack** (price x count).
+- **Spell scrolls combine their charges**: a scroll put on another of the same spell and power becomes one scroll with both charges (up to 254).
+- Kept on the item (`IT_STACK`, a spare field; `stack_*` in `tier.c`). Console: `give <player> <item template> [count]`, `items <player>` (backpack with counts), `useslot <player> <slot>`.
+- **Client 2.15.02**: Ctrl+click on the backpack; the Greataxe skill name (built with the BuildKit). Old clients still play (no Ctrl+click), so MINVERSION stays 2.15.01.
+
 ### Ice set pictures
 - The Helmet, Armor, Leggings, Boots and Gloves of Ice (unique, templates 1272-1276) showed "Sprite ... is missing": they now have pictures, the Fire set recoloured to ice blue with frost-white flecks (sprites 18100-18104, `tools/sprites/ice_set.py`). Players get them with the next client update.
 

@@ -938,6 +938,7 @@ void item_marks(int in,unsigned char *letter,unsigned char *number)
 {
 	*letter=0; *number=255;		// 255: no number
 	if (!IS_SANEITEM(in) || it[in].used==USE_EMPTY) return;
+	if (stack_count(in)>1) { *number=(unsigned char)min(254,stack_count(in)); return; }	// a stack of potions
 	if (it[in].driver==48) {	// spell scroll: data[1] power, data[2] charges
 		int p=it[in].data[1];
 		if (p>=300) *letter='S';
@@ -945,4 +946,88 @@ void item_marks(int in,unsigned char *letter,unsigned char *number)
 		else if (p>=75) *letter='A';
 		*number=(unsigned char)min(254,(int)it[in].data[2]);
 	}
+}
+
+/* ---- MyV2: stacks of potions, combined spell scrolls (TODO 14)
+ * A potion (used up when used, no special driver) can hold up to STACK_MAX of the same kind in one backpack slot:
+ * IT_STACK(in) = how many (0 = one). Spell scrolls (driver 48) of the same spell and power combine their charges.
+ * Putting a stack or scroll on a matching one in the backpack (or getting one: shop, reward) merges them; Ctrl+click
+ * on a stack takes one into the hand (or adds one to the matching stack in the hand). Selling sells the whole stack. */
+int stack_kind(int in)		// 1 potion stack, 2 spell scroll (charges), 0 neither
+{
+	if (!IS_SANEITEM(in) || it[in].used==USE_EMPTY || IT_TIER(in)) return 0;
+	if (it[in].driver==48 && (it[in].flags&IF_USESPECIAL)) return 2;
+	if ((it[in].flags&IF_USEDESTROY) && !(it[in].flags&IF_USESPECIAL) && (it[in].flags&IF_TAKE) && !it[in].placement) return 1;
+	return 0;
+}
+
+int stack_count(int in)
+{
+	return stack_kind(in)==1 && IT_STACK(in)>1 ? IT_STACK(in) : 1;
+}
+
+int stack_same(int a,int b)
+{
+	int k=stack_kind(a);
+	if (!k || a==b || k!=stack_kind(b) || it[a].temp!=it[b].temp) return 0;
+	if (k==2) return it[a].data[0]==it[b].data[0] && it[a].data[1]==it[b].data[1];	// same spell, same power
+	return !strcmp(it[a].name,it[b].name) && it[a].hp[0]==it[b].hp[0] && it[a].end[0]==it[b].end[0] && it[a].mana[0]==it[b].mana[0];
+}
+
+/* move what fits of src onto dst; returns 1 if src is used up (then it is destroyed) */
+int stack_merge(int dst,int src)
+{
+	int room,mv;
+	if (!stack_same(dst,src)) return 0;
+	if (stack_kind(dst)==2) {
+		it[dst].data[2]=min(STACK_CHARGES,(int)(it[dst].data[2]+it[src].data[2]));
+		it[dst].flags|=IF_UPDATE;
+		it[src].used=USE_EMPTY;
+		return 1;
+	}
+	room=STACK_MAX-stack_count(dst);
+	if (room<=0) return 0;
+	mv=min(room,stack_count(src));
+	IT_STACK(dst)=stack_count(dst)+mv;
+	it[dst].flags|=IF_UPDATE;
+	if (mv>=stack_count(src)) { it[src].used=USE_EMPTY; return 1; }
+	IT_STACK(src)=stack_count(src)-mv;
+	it[src].flags|=IF_UPDATE;
+	return 0;
+}
+
+/* take k off the stack in (k < its count): a new item with k of them, or 0 */
+int stack_split(int in,int k)
+{
+	int nw;
+	if (stack_kind(in)!=1 || k<1 || k>=stack_count(in)) return 0;
+	if (!(nw=get_free_item())) return 0;
+	it[nw]=it[in];
+	IT_STACK(nw)=k>1 ? k : 0;
+	IT_STACK(in)=stack_count(in)-k;
+	if (IT_STACK(in)<2) IT_STACK(in)=0;
+	it[nw].flags|=IF_UPDATE; it[in].flags|=IF_UPDATE;
+	return nw;
+}
+
+/* using one from a stack: 1 if one was taken off (the item stays), 0 if it was the last one */
+int stack_use_one(int in)
+{
+	if (stack_kind(in)!=1 || stack_count(in)<2) return 0;
+	IT_STACK(in)=stack_count(in)-1;
+	if (IT_STACK(in)<2) IT_STACK(in)=0;
+	it[in].flags|=IF_UPDATE;
+	return 1;
+}
+
+/* a player gets item in: merge it into matching stacks in the backpack first. 1 if it was used up. */
+int stack_into_backpack(int cn,int in)
+{
+	int n,m;
+	if (!IS_SANEPLAYER(cn) || !stack_kind(in)) return 0;
+	for (n=0; n<40; n++) {
+		if (!(m=ch[cn].item[n]) || !stack_same(m,in)) continue;
+		if (stack_merge(m,in)) return 1;
+	}
+	return 0;
 }

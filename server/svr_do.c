@@ -4299,7 +4299,7 @@ int do_raise_skill(int cn,int nr)
 int do_item_value(int in)
 {
         if (in<1 || in>=MAXITEM) return 0;
-        return it[in].value;
+        return it[in].value*stack_count(in);		// MyV2: a stack sells (and is bought) whole
 }
 
 

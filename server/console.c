@@ -153,6 +153,33 @@ static void con_cmd(char *line)
 		talk_set_echo(NULL);
 		return;
 	}
+	if (!strcmp(w[0],"give")) {	// give <player> <item template> [count]: new items into the backpack (stacks merge)
+		int t=atoi(w[2]),k,cnt=w[3][0] ? atoi(w[3]) : 1,in,given=0;
+		if (!(co=con_player(w[1]))) return;
+		if (t<1 || t>=MAXTITEM || it_temp[t].used==USE_EMPTY) { out("  No item template %d.\n",t); return; }
+		for (k=0; k<cnt && k<100; k++) {
+			if (!(in=god_create_item(t))) break;
+			if (!god_give_char(in,co)) { it[in].used=USE_EMPTY; out("  The backpack is full.\n"); break; }
+			given++;
+		}
+		out("  Gave %s %d x %s.\n",ch[co].name,given,it_temp[t].name);
+		return;
+	}
+	if (!strcmp(w[0],"items")) {	// items <player>: the backpack and the hand, with stack counts
+		int k,in;
+		if (!(co=con_player(w[1]))) return;
+		for (k=0; k<40; k++) if ((in=ch[co].item[k])) out("  %2d  %s%s%d\n",k,it[in].name,stack_count(in)>1 ? "  x" : (stack_kind(in)==2 ? "  charges " : "  "),stack_count(in)>1 ? stack_count(in) : (stack_kind(in)==2 ? (int)it[in].data[2] : 1));
+		if ((in=ch[co].citem) && !(in&0x80000000)) out("  hand: %s x%d\n",it[in].name,stack_count(in));
+		return;
+	}
+	if (!strcmp(w[0],"useslot")) {	// useslot <player> <slot>: use the item in that backpack slot (as the player)
+		int k=atoi(w[2]),in;
+		if (!(co=con_player(w[1]))) return;
+		if (k<0 || k>39 || !(in=ch[co].item[k])) { out("  Nothing there.\n"); return; }
+		use_driver(co,in,1);
+		out("  used\n");
+		return;
+	}
 	if (!strcmp(w[0],"cleartest")) {	// cleartest <player> <NPC template>: as if the player killed that NPC (area clears)
 		if (!(co=con_player(w[1]))) return;
 		if (!clear_test(co,atoi(w[2]))) out("  No NPC of template %d in the world.\n",atoi(w[2]));
@@ -262,6 +289,9 @@ static void con_cmd(char *line)
 		    "  talkmoney <npc template> <player> <silver>   try handing money over\n"
 		    "  questgive <player> <npc template>         hand that NPC the item it wants\n"
 		    "  cleartest <player> <npc template>         as if the player killed it (area clears)\n"
+		    "  give <player> <item template> [count]     new items into the backpack\n"
+		    "  items <player>                            the backpack, with stack counts\n"
+		    "  useslot <player> <slot>                   use the item in that backpack slot\n"
 		    "  shutdown                      save and stop the server\n");
 	} else if (!strcmp(w[0],"quest")) {
 		if (!(co=con_player(w[1]))) return;

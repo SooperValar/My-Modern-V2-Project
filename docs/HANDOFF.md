@@ -122,7 +122,9 @@ New sprites: write them to `Client\GFX` (new numbers), then `tools/release/publi
   `Client\BuildKit\README.txt` first). **Private: never add it to git, never publish it, never copy it into the
   project folder** (Microsoft's files may not be redistributed). Build in the cloud workspace (the PC's Linux shell has
   no compiler, and the cloud can't download the SDK): stage the tarball and every file of the project's `client\`,
-  `tar xzf`, `apt-get install -y clang lld llvm` if missing, `bash myv2-buildkit/build_client.sh <source folder>`,
+  `tar xzf`, `apt-get install -y clang lld llvm` if missing, **`ln -sfn <unpacked>/myv2-buildkit/sdk /home/claude/sdk`**
+  (the kit's lowercase header names are links into /home/claude/sdk; without it: "windows.h not found"),
+  `bash myv2-buildkit/build_client.sh <source folder>`,
   then SendUserFile the merc.exe and commit it by fileUuid to `Client\merc_new.exe`; Cody swaps it in with the
   game closed. On Windows, `client\build.bat` (Visual Studio "Desktop development with C++") does the same.
 - The client reads `client.ini`: `[server] host=` / `port=` (built-in default
@@ -161,13 +163,12 @@ New sprites: write them to `Client\GFX` (new numbers), then `tools/release/publi
 
 ## Open items (details in docs/TODO.md and docs/HOSTING.md)
 
-**Where we left off (Nov 4):** the rebalance (TODO 11) is LIVE (server code + world update done Nov 4: items
-1378-1406, books at Damor, Greataxe names). Client: the new merc.exe (Greataxe in the skills list, 2.15.01) was swapped
-in on Cody's PC (old one: `Client\merc_old.exe`) but NOT published yet: Cody tries it at home, then publish with
-`publish_client.py`. The Ice set pictures (18100-18104) are in `Client\GFX` and go out with that same
-publish. client-dist already has update 3 (sprites 18240-18287); Cody pushes it. Next: the summoner's staff
-(design in `docs/REBALANCE.md`). Cody is also going through the quests on the Quests page. The DuckDNS PowerShell
-window: switched to a hidden launcher; check with Cody that it stopped.
+**Where we left off (Nov 4):** live: the rebalance, area clears. Built, not live yet: stacking (TODO 14, needs a
+server code update). Client: `Client\merc.exe` is now 2.15.02 (Greataxe skill name + Ctrl+click on stacks; earlier
+builds kept as `merc_2.15.01.exe` and `merc_old.exe`), NOT published: Cody tests at home, then `publish_client.py`
+(it also sends the Ice set pictures 18100-18104, which are in `Client\GFX`). Waiting for Cody at home: the summoner's
+staff and waypoints (TODO 13, pictures in `docs/ref`). Cody is going through the quests and area clears. The DuckDNS
+PowerShell window: switched to a hidden launcher; check with Cody that it stopped.
 
 - **#quest** (IN PROGRESS, not final; live since the zones update; built and committed): the look is approved (column table, 15 a page); still open: the order
   and rewards; maybe a separate difficulty number per quest
