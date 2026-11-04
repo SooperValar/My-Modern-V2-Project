@@ -129,6 +129,7 @@ static int chestlog_loaded=0;
 
 static struct tentry ent[MAXENT];
 static char hasnear[MAXTCHARS];		// templates with "when near" lines
+static short qorder[MAXTCHARS];		// #quest: place in the list ("order <template> <n>", the editor's Quests page); 0 = by exp, -1 = not listed
 static struct tstep step[MAXSTEP];
 static int qname[QVARS+1];
 static int nent=0, nstep=0, talk_loaded=0;
@@ -176,6 +177,7 @@ int talk_load(void)
 
 	nent=nstep=0; nchest=0; plen=1; pool[0]=0; talk_loaded=1;
 	memset(hasnear,0,sizeof(hasnear));
+	memset(qorder,0,sizeof(qorder));
 	memset(qname,0,sizeof(qname));
 	f=fopen(TALK_FILE,"r");
 	if (!f) return 0;
@@ -190,6 +192,10 @@ int talk_load(void)
 		if (!strcmp(w1,"quest")) {
 			n=atoi(q); while (*q && !isspace((unsigned char)*q)) q++; while (isspace((unsigned char)*q)) q++;
 			if (n>=1 && n<=QVARS) qname[n]=pool_add(q);
+			continue;
+		}
+		if (!strcmp(w1,"order")) {
+			if (sscanf(q,"%d %d",&n,&v)==2 && n>0 && n<MAXTCHARS && v>=-1 && v<=30000) qorder[n]=v; else bad++;
 			continue;
 		}
 		if (!strcmp(w1,"step")) {
@@ -851,3 +857,11 @@ int talk_test_kill(int co,int t,int *found)
 }
 
 int talk_entries(void) { if (!talk_loaded) talk_load(); return nent; }
+
+// #quest: where a quest giver goes in the list (0 = not set: by its exp, -1 = left out)
+int talk_quest_order(int t)
+{
+	if (!talk_loaded) talk_load();
+	if (t<1 || t>=MAXTCHARS) return 0;
+	return qorder[t];
+}

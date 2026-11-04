@@ -7,7 +7,7 @@ Each section lists its changes roughly in the order they were made, oldest first
 **Contents**
 - [Client](#client): [Modernization](#modernization-changes) · [HUD changes](#hud-changes) · [Game view](#changes-to-the-game-view) · [New HUD features](#new-features-in-the-hud)
 - [Gameplay](#gameplay): [God / imp / builder tools](#god--imp--builder-commands-and-in-game-tools) · [Commands for all players](#general-commands-for-all-players) · [New zones and areas](#new-zones-and-areas) · [New for players](#new-features-from-a-players-point-of-view) · [Balance and fixes](#balance-changes-and-fixes)
-- [Editor](#editor): [Overview](#overview) · [Server manager](#server-manager) · [Builder](#builder) · [Player editor](#player-editor) · [NPC editor](#npc-editor) · [Quest editor](#quest-editor) · [Conversation editor](#conversation-editor) · [Chest editor](#chest-editor) · [History and logs](#history-and-logs)
+- [Editor](#editor): [Overview](#overview) · [Server manager](#server-manager) · [Builder](#builder) · [Player editor](#player-editor) · [NPC editor](#npc-editor) · [Quest editor](#quest-editor) · [Conversation editor](#conversation-editor) · [Chest editor](#chest-editor) · [Quests page](#quests-page) · [History and logs](#history-and-logs)
 - [Server](#server): [Modernization](#server-modernization) · [Data changes](#data-changes) · [Server-side view changes](#server-side-view-changes) · [Tools](#tools)
 
 ---
@@ -495,6 +495,21 @@ For every loot item (chests, flowers, bookshelves…).
 - **Editor chests**: facing, the name players see, how long it stays empty, once per player, the **first-time reward** (a checkbox and an item picker), a chance bar, and one card per reward (Item / Gold / Tier armor / Once on the server / Nothing, chosen with buttons) with its weight and %, move up, copy and remove; tier armor has Tier, Level from-to, Metal and Piece as chips. **+ Item / + Gold / + Tier armor / + Once on the server / + Nothing** add one.
 - **Facing**: the game's own chest has two looks, lock facing south (220/221) or west (222/223); the tile panel and the chest window show both, marked S and W, and clicking one turns that chest.
 - **+ Chest** (top of the Builder and Objects tabs): one plain chest for the whole map. The first click makes an item template **Chest** (a copy of Treasure Chest as an editor chest); after that it is a normal brush. Every chest placed with it is its own chest: the rewards belong to its spot, and the chest window opens as soon as one is placed (a single click).
+
+## Quests page
+
+Rail: **Quests**. Every quest on one page.
+
+**Item quests** (the `#quest` list): one row for each NPC that wants an item: the NPC (click to open it in the NPC editor), where it is (click to see it on the map), what it **wants**, the skill it **teaches**, the item it **gives**, the **exp**, what it **says** (the hint `#quest <n>` shows), and **Listed**.
+- The rows are in the order players see them in `#quest`: move one with ▲ ▼; untick **Listed** to leave it out of `#quest`. The numbers are what `#quest` shows ("–" for an NPC that teaches no skill and gives no item, like the Cityguard's black candle, which `#quest` leaves out).
+- **+ New quest**: pick any NPC; it gets a row at the end to fill in. **Remove** makes an NPC an ordinary one again.
+- **Save** writes the changed NPCs like the NPC editor does (live into the running game, the NPCs respawn with their new reward; with the server stopped, into the editor, then **Save to the game**) and the order into `npctalk.dat` (`order <template> <place>`, -1 = not listed; the game reads it at once). Changed rows are highlighted; **Undo changes** forgets them.
+- Labyrinth and tower trades are puzzle steps that `#quest` never lists; they are under **Show** at the bottom.
+- The same fields are still on the NPC editor's Talk & quest tab; both change the same thing.
+
+**Chain quests** (`#journal`): each quest number with its name and journal texts (from which step on), **+ Step**, **Delete**, **+ New chain quest** (the next free number), and **Used by**: every NPC (or item tile) whose conversation lines check or move the quest on, with a click to open its Conversations. Saving goes into the game at once.
+
+**In the game**: `#quest` follows the order from the Quests page (quests placed there first, the rest after them as before: skill teachers by exp, then item trades). An item trade can now give experience as well (before, only a skill teacher gave the exp).
 
 ## History and logs
 

@@ -2011,11 +2011,13 @@ static int quest_skill(int cn,int nr)
  * give, then the item trades by the value of what they give). #quest <n>: one in detail, with the
  * giver's own words. #quest all: also skills this character knows or its class can't learn.
  * Labyrinth and tower trades are left out: they are puzzle steps, listing them would spoil them. */
-struct qent { int t, skill, score, known; };
+struct qent { int t, skill, score, known, ord; };
 
 static int quest_cmp(const void *a,const void *b)
 {
 	const struct qent *x=a,*y=b;
+	if ((x->ord>0)!=(y->ord>0)) return x->ord>0 ? -1 : 1;		// the ones placed on the editor's Quests page first
+	if (x->ord!=y->ord) return x->ord<y->ord ? -1 : 1;
 	return x->score!=y->score ? (x->score<y->score ? -1 : 1) : x->t-y->t;
 }
 
@@ -2025,6 +2027,8 @@ static int quest_build(int cn,struct qent *q,int max,int all)
 	char *area;
 	for (n=1; n<MAXTCHARS && cnt<max; n++) {
 		if (ch_temp[n].used==USE_EMPTY || !ch_temp[n].data[49]) continue;
+		if (talk_quest_order(n)<0) continue;		// left out on the Quests page
+		q[cnt].ord=talk_quest_order(n);
 		if (ch_temp[n].data[50]) {		// a skill teacher
 			nr=quest_skill(cn,ch_temp[n].data[50]);
 			if (nr<0 || nr>=50) continue;

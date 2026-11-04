@@ -544,6 +544,8 @@ int npc_give(int cn,int co,int in,int money)
                         it[in].used=USE_EMPTY;
                         in=god_create_item(nr);
                         god_give_char(in,co);
+                        // MyV2: an item trade can give experience too (a skill teacher gives it with the skill, above)
+                        if (!ch[cn].data[50] && ch[cn].data[51]>0 && IS_PLAYER(co)) do_give_exp(co,ch[cn].data[51],0,-1);
                 }
 
                 /* special for riddle givers */

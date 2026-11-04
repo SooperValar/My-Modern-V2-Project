@@ -90,6 +90,9 @@ is the project's `client/` folder.
   Playwright (installed in Claude's cloud workspace) for the page.
 - Live editing: while the game runs, edits go into it as patch files (`edpatch`, checked against
   what the server has, all or nothing). With the server stopped, "Save to the game" writes the files.
+- **Quests page** (rail: Quests): every item quest (`#quest`: wants / teaches / gives / exp / hint / order) and chain quest
+  (`#journal`: names, journal steps, which NPCs use them) on one page. The `#quest` order is kept in `npctalk.dat` as
+  `order <template> <place>` (-1 = not listed).
 - **Zones** (zone names) are kept in `.dat/zones.dat` (`x1 y1 x2 y2 flag name`, one box a line; boxes with the same
   name are one zone), drawn in the editor's Zones tab; the game reloads them live (`zonereload`). Without the file the
   server uses the built-in table in `area.c`. `tools/world/worldzones.py` draws `docs/world_zones.png/.md` from it.

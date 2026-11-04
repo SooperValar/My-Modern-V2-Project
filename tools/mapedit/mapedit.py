@@ -161,7 +161,7 @@ OPS = ('=', '!=', '<', '>', '<=', '>=')
 
 def talk_parse(text):
     quests, npcs, cur, e = {}, {}, None, None
-    steps, chests, chest = {}, {}, None
+    steps, chests, chest, order = {}, {}, None, {}
     for line in text.splitlines():
         line = line.strip()
         if not line or line.startswith('#'):
@@ -194,7 +194,9 @@ def talk_parse(text):
                 chests['%d,%d' % (int(a[0]), int(a[1]))] = chest
                 cur, e = None, None
                 continue
-            if k == 'quest' and a:
+            if k == 'order' and len(a) >= 2:          # #quest list order (Quests page): template, place (-1 = not listed)
+                order[int(a[0])] = int(a[1])
+            elif k == 'quest' and a:
                 quests[int(a[0])] = rest.split(None, 1)[1] if len(a) > 1 else ''
             elif k == 'step' and len(a) >= 2:
                 steps.setdefault(int(a[0]), []).append([int(a[1]), rest.split(None, 2)[2] if len(a) > 2 else ''])
@@ -245,12 +247,18 @@ def talk_parse(text):
                 e['acts'].append({'type': k})
         except (IndexError, ValueError):
             continue
-    return {'names': quests, 'steps': steps, 'chests': chests}, npcs
+    return {'names': quests, 'steps': steps, 'chests': chests, 'order': order}, npcs
 
 
 def talk_text(quests, npcs, names):
     out = ['# MyV2 custom NPC dialogue, kill tracking and quest steps - written by the MyV2 Editor (the server reads it: npctalk.c)', '']
     qn, qs = quests.get('names', {}), quests.get('steps', {})
+    od = {int(t): int(v) for t, v in (quests.get('order') or {}).items() if int(v)}
+    if od:
+        out.append('# #quest list: order <NPC template> <place> (-1 = not listed) - the Quests page')
+        for t in sorted(od, key=lambda t: (od[t] < 0, abs(od[t]), t)):
+            out.append('order %d %d %s' % (t, od[t], names.get(t, '')))
+        out.append('')
     for n in sorted(set(qn) | set(qs)):
         out.append('quest %d %s' % (n, ' '.join(str(qn.get(n, '')).split())))
         for v, t in sorted(qs.get(n, []), key=lambda x: int(x[0])):
@@ -901,7 +909,7 @@ class World:
         try:
             return talk_parse(open(self.talk_path(), encoding='latin-1').read())
         except OSError:
-            return {'names': {}, 'steps': {}, 'chests': {}}, {}
+            return {'names': {}, 'steps': {}, 'chests': {}, 'order': {}}, {}
 
     def talk_save(self, quests, npcs, ctl=None):
         p = self.talk_path()
@@ -909,7 +917,7 @@ class World:
             bk = os.path.join(self.dat, 'mapedit-backups')
             os.makedirs(bk, exist_ok=True)
             shutil.copy2(p, os.path.join(bk, 'npctalk-%s.dat' % time.strftime('%Y%m%d-%H%M%S')))
-        names = {t: self.tname(t) for t in npcs if isinstance(t, int) and self.tchar is not None and 0 < t < MAXTCHARS}
+        names = {t: self.tname(t) for t in list(npcs) + list((quests.get('order') or {}).keys()) if isinstance(t, int) and self.tchar is not None and 0 < t < MAXTCHARS}
         for key in quests.get('chests', {}):
             x, y = map(int, key.split(','))
             i = self.tile(x, y)[4] if 0 <= x < MAPX and 0 <= y < MAPY else 0
@@ -926,6 +934,46 @@ class World:
             r = ctl.console('talkreload', 5)
             return 'Saved; the game uses it now.' if r and 'loaded' in r else 'Saved. (The game reads it at its next start: the running server is older.)'
         return 'Saved. The game uses it when the server starts.'
+
+    def quests_view(self):
+        """the Quests page: every NPC that wants an item (the #quest list), and the chain quests of npctalk.dat"""
+        qs, npcs = self.talk_load()
+        order = qs.get('order', {})
+        simple = []
+        if self.tchar is not None:
+            for t in range(1, MAXTCHARS):
+                o = t * CHAR_SIZE
+                if not self.tchar[o + C_USED]:
+                    continue
+                d = list(struct.unpack_from('<100i', self.tchar, o + C_DATA))
+                if d[49] <= 0:
+                    continue
+                x, y = struct.unpack_from('<hh', self.tchar, o + C_X)
+                where = self.zone(x, y) if (x or y) else ''
+                simple.append({'t': t, 'name': self.tname(t), 'sprite': self.tchar_sprite(t, 4),
+                               'x': x, 'y': y, 'where': where, 'data': d, 'hint': cstr(self.tchar[o + CT_TEXT + 2 * 160:o + CT_TEXT + 3 * 160]),
+                               'order': order.get(t, 0), 'puzzle': bool(d[50] == 0 and ('Labyrinth' in where or 'Tower' in where)),
+                               'count': len(self.living(t)) + len([p for p in self.pending() if p[2] == t])})
+        refs = {}
+        for who, ents in npcs.items():
+            label = ('tile %s' % who[1:]) if isinstance(who, str) else self.tname(who) if self.tchar is not None and 0 < who < MAXTCHARS else str(who)
+            for e in ents:
+                for c in e.get('conds', []):
+                    if c.get('type') == 'quest':
+                        refs.setdefault(c['n'], {}).setdefault(str(who), {'who': who, 'label': label, 'kinds': set()})['kinds'].add('checks')
+                for a in e.get('acts', []):
+                    if a.get('type') in ('set', 'add'):
+                        refs.setdefault(a['n'], {}).setdefault(str(who), {'who': who, 'label': label, 'kinds': set()})['kinds'].add('moves it on' if a['type'] == 'add' else 'sets it')
+        chain = []
+        for n in sorted(set(qs['names']) | set(qs['steps']) | set(refs)):
+            chain.append({'n': n, 'name': qs['names'].get(n, ''), 'steps': sorted(qs['steps'].get(n, []), key=lambda v: int(v[0])),
+                          'refs': [{'who': r['who'], 'label': r['label'], 'kinds': sorted(r['kinds'])} for r in refs.get(n, {}).values()]})
+        return {'simple': simple, 'chain': chain}
+
+    def quests_order_save(self, order, ctl=None):
+        qs, npcs = self.talk_load()
+        qs['order'] = {int(t): int(v) for t, v in order.items() if int(v) and 0 < int(t) < MAXTCHARS and -1 <= int(v) <= 30000}
+        return self.talk_save(qs, npcs, ctl)
 
     def talk_copy(self, src, dst, ctl=None):
         """a copied NPC template gets the original's dialogue (and a freed number loses its own)"""
@@ -2322,6 +2370,8 @@ def make_handler(world, sprites, page, minimap, ctl):
                                 'givers': {str(t): len(v) for t, v in npcs.items() if v}})
             if u.path == '/api/ctemp':
                 return self.js(world.ctemp(int(q['t'])) or {'error': 'no such NPC template'})
+            if u.path == '/api/quests':
+                return self.js(world.quests_view())
             if u.path == '/api/itemp':
                 return self.js(world.itemp(int(q['t'])) or {'error': 'no such item template'})
             if u.path == '/api/history':
@@ -2356,6 +2406,8 @@ def make_handler(world, sprites, page, minimap, ctl):
                                 'dirty': world.dirty, 'undo': len(world.undo), 'redo': len(world.redo)})
             if u.path in ('/api/save', '/api/relight', '/api/restore') and server_running():
                 return self.js({'error': 'The game server is running: live edits are already in the game, there is nothing to save.'})
+            if u.path == '/api/questorder':
+                return self.js({'msg': world.quests_order_save(body.get('order') or {}, ctl)})
             if u.path == '/api/zones':
                 err = world.zones_save(body.get('zones') or [], ctl)
                 if err and err != 'later':
@@ -2639,6 +2691,55 @@ nav .grow { flex: 1; }
 #banner { position: absolute; left: 0; right: 0; top: 0; background: var(--badbg); color: #ffd6cf; border-bottom: 1px solid #5a2c26; padding: 7px 14px 7px 70px; z-index: 4; display: none; font-size: 12px; }
 #toast { position: absolute; left: 50%; transform: translateX(-50%); bottom: 16px; max-width: 70%; background: var(--panel); border: 1px solid var(--line); border-left: 3px solid var(--gold); padding: 8px 14px; border-radius: 7px; display: none; z-index: 12; white-space: pre-line; }
 
+#qp { grid-column: 4 / 5; grid-row: 2; overflow-y: auto; padding: 20px 24px 60px; display: none; background: var(--bg); min-width: 0; }
+#app.qmode { grid-template-columns: 64px 0 0 1fr; }
+#app.qmode #left, #app.qmode #right { display: none; }
+#app.qmode #qp { display: block; }
+#app.qmode #toast { position: fixed; left: calc(50% + 32px); }
+#qp .box { max-width: 1500px; margin-bottom: 16px; }
+#qp .qhd { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
+#qp .qhd h3 { margin: 0; flex: 1; }
+#qp .hint { color: var(--dim2); font-size: 12px; margin: 0 0 10px; }
+.qtab { width: 100%; border-collapse: collapse; font-size: 13px; }
+.qtab th { text-align: left; color: var(--dim2); font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: .06em; padding: 6px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+.qtab td { padding: 5px 6px; border-bottom: 1px solid #2a241b; vertical-align: middle; }
+.qtab tr.ch td { background: rgba(214,164,67,.08); }
+.qtab tr.off td:not(.keep) { opacity: .45; }
+.qtab .num { color: var(--gold2); font-weight: 650; text-align: right; width: 26px; }
+.qtab .mv { white-space: nowrap; }
+.qtab .mv button, .qtab button.sm, #qp button.sm { color: var(--dim); border: 1px solid var(--line); border-radius: 5px; padding: 1px 7px; font-size: 12px; white-space: nowrap; }
+.qtab .mv button:hover, #qp button.sm:hover { color: var(--text); border-color: var(--gold); }
+.qtab .mv button:disabled { opacity: .3; }
+.qtab .who { display: flex; gap: 8px; align-items: center; min-width: 150px; }
+.qtab .who canvas { width: 30px; height: 30px; flex: none; }
+.qtab .who .n { color: var(--dim2); font-size: 11px; }
+.qtab .who a { color: var(--text); cursor: pointer; }
+.qtab .who a:hover { color: var(--gold2); text-decoration: underline; }
+.qtab .where { color: var(--dim); font-size: 12px; max-width: 140px; }
+.qscroll { overflow-x: auto; }
+.qpick { display: flex; gap: 4px; align-items: center; }
+.qpick .pb { display: flex; gap: 6px; align-items: center; border: 1px solid var(--line); border-radius: 6px; padding: 2px 8px 2px 4px; background: var(--panel2); min-width: 150px; max-width: 200px; text-align: left; }
+.qpick .pb:hover { border-color: var(--gold); }
+.qpick .pb canvas { width: 24px; height: 24px; flex: none; }
+.qpick .pb span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.qpick .pb.none span { color: var(--dim2); }
+.qpick .x { color: var(--dim2); padding: 2px 4px; }
+.qpick .x:hover { color: var(--text); }
+.qtab input[type=number].exp { width: 86px; }
+.qtab select { max-width: 150px; }
+.qtab input.hintin { width: 100%; min-width: 160px; }
+.qtab td.hintc { width: 22%; }
+.qchain { border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; margin-bottom: 10px; background: var(--panel2); }
+.qchain .qch { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.qchain .qch .qn { color: var(--gold2); font-weight: 650; min-width: 64px; }
+.qchain .qch input { flex: 1; min-width: 200px; }
+.qchain .steps { display: grid; grid-template-columns: 70px 1fr auto; gap: 5px 8px; margin-top: 8px; align-items: center; }
+.qchain .steps .lb { color: var(--dim2); font-size: 11px; text-transform: uppercase; letter-spacing: .05em; }
+.qchain .steps input[type=number] { width: 70px; }
+.qchain .refs { margin-top: 8px; display: flex; gap: 6px; flex-wrap: wrap; align-items: center; color: var(--dim2); font-size: 12px; }
+.qchain .refs button { color: var(--text); border: 1px solid var(--line); border-radius: 12px; padding: 2px 10px; font-size: 12px; background: var(--panel); }
+.qchain .refs button:hover { border-color: var(--gold); color: var(--gold2); }
+.qchain .refs button small { color: var(--dim2); margin-left: 4px; }
 #srv { grid-column: 3 / 5; overflow-y: auto; padding: 20px 24px 40px; display: none; background: var(--bg); }
 #app.srvmode #view, #app.srvmode #right { display: none; }
 #app.srvmode #srv { display: block; }
@@ -2838,6 +2939,7 @@ table.pl button:hover { color: var(--text); border-color: var(--gold); }
   <button data-m="map" class="on" title="Build the map"><span class="ico"><svg viewBox="0 0 24 24"><path d="M4 5c3-1.5 5 1.5 8 0s5-1.5 8 0v14c-3-1.5-5 1.5-8 0s-5-1.5-8 0z"/><path d="M7 9.5l2 1.5 3-2 2 2.5" stroke-dasharray="1.6 1.6"/><path d="M15.5 13.5l3 3M18.5 13.5l-3 3"/></svg></span>Map</button>
   <button data-m="players" title="Player characters: stats, backpack, depot, history, character file"><span class="ico"><svg viewBox="0 0 24 24"><path d="M5 13c0-5 3-9 7-9s7 4 7 9v5l-2 2H7l-2-2z"/><path d="M5 12.5h14M12 12.5V20M8.5 15.5h1.5M14 15.5h1.5"/></svg></span>Players</button>
   <button data-m="npcs" title="Every NPC and player in the world"><span class="ico"><svg viewBox="0 0 24 24"><path d="M12 3c-4 0-6.5 3.5-6.5 8.5V21h13v-9.5C18.5 6.5 16 3 12 3z"/><path d="M8.5 13c.5-3 1.8-4.5 3.5-4.5s3 1.5 3.5 4.5c-1 1.5-2.2 2-3.5 2s-2.5-.5-3.5-2z"/></svg></span>NPCs</button>
+  <button data-m="quests" title="Every quest on one page: item quests (#quest) and chain quests (#journal)"><span class="ico"><svg viewBox="0 0 24 24"><path d="M6 3h10l3 3v15H6z"/><path d="M16 3v3h3"/><path d="M9 10h7M9 14h7M9 18h4"/><path d="M3.5 7.5l1.2 1.2 2-2.4" stroke-width="1.6"/></svg></span>Quests</button>
   <button data-m="history" title="What you changed, and the saves"><span class="ico"><svg viewBox="0 0 24 24"><path d="M6 3h12M6 21h12"/><path d="M7 3c0 5 5 6 5 9s-5 4-5 9M17 3c0 5-5 6-5 9s5 4 5 9"/><path d="M9.5 18.5h5" opacity=".6"/></svg></span>History</button>
   <button data-m="server" title="Run and control the game server"><span class="ico"><svg viewBox="0 0 24 24"><path d="M5 21V8h2V5h2v3h2V5h2v3h2V5h2v3h2v13z"/><path d="M10 21v-4a2 2 0 0 1 4 0v4M8 12h2M14 12h2"/></svg></span>Server</button>
   <div class="grow"></div>
@@ -2911,6 +3013,7 @@ table.pl button:hover { color: var(--text); border-color: var(--gold); }
   </div>
 </aside>
 
+<section id="qp"></section>
 <section id="srv">
   <div class="sgrid">
     <div class="box">
@@ -3677,7 +3780,9 @@ $('#lsearch').oninput = () => leftUI();
 document.querySelectorAll('nav button').forEach(b => b.onclick = () => {
   mode = b.dataset.m; document.querySelectorAll('nav button').forEach(x => x.classList.toggle('on', x === b)); $('#lsearch').value = '';
   $('#app').classList.toggle('srvmode', mode === 'server');
+  $('#app').classList.toggle('qmode', mode === 'quests');
   if (mode === 'server') { srvRefresh(); logRefresh(true); return; }
+  if (mode === 'quests') { if (!qAnyDirty()) { QS = null; questsRender(); questsLoad(); } else questsRender(); return; }
   leftUI(); setTimeout(resize, 0);
 });
 
@@ -5537,6 +5642,213 @@ async function refreshInfo() {
   if (gen && r.gen !== gen) { softReload(); if (selTile && !$('#tile').contains(document.activeElement)) selectTile(selTile.x, selTile.y); }
   if (r.minimap && !miniOk && !mini.src) { mini.onload = () => { miniOk = true; $('#mini').style.display = 'block'; redraw(); }; mini.src = '/minimap.png'; }
   if (first) redraw();
+}
+
+// ---------------------------------------------------------------- Quests page (rail: Quests)
+// Item quests: NPCs that want an item and teach a skill / give an item (+ exp) - the #quest list, its order.
+// Chain quests: the quest numbers of npctalk.dat (names, journal steps) and which NPCs use them.
+let QV = null, QS = null, QSorig = '', QC = null, QCorig = '', QPuz = false;
+const qdata = r => [r.data[49], r.data[50], r.data[51], r.data[66], r.hint];
+function qSort(list) {          // the order #quest uses: placed ones first, then skill teachers by exp, then item trades
+  const key = r => r.order > 0 ? [0, r.order, 0] : [1, r.data[50] ? 0 : 1, r.data[50] ? r.data[51] : r.t];
+  return list.sort((a, b) => { const x = key(a), y = key(b); return x[0] - y[0] || x[1] - y[1] || x[2] - y[2] || a.t - b.t; });
+}
+async function questsLoad() {
+  const r = await api('/api/quests');
+  if (r.error) return toast(r.error, true);
+  QV = r;
+  QS = r.simple.map(q => ({ ...q, listed: q.order >= 0, o: JSON.stringify(qdata(q)) }));
+  qSort(QS);
+  QS.forEach(q => { q.o0 = q.listed; });
+  QSorig = JSON.stringify(QS.map(q => [q.t, q.listed]));
+  QC = JSON.parse(JSON.stringify(r.chain)); QCorig = JSON.stringify(QC.map(c => [c.n, c.name, c.steps]));
+  questsRender();
+}
+const qDirtyRows = () => (QS || []).filter(q => JSON.stringify(qdata(q)) !== q.o);
+const qOrderDirty = () => QS && JSON.stringify(QS.map(q => [q.t, q.listed])) !== QSorig;
+const qChainDirty = () => QC && JSON.stringify(QC.map(c => [c.n, c.name, c.steps])) !== QCorig;
+const qAnyDirty = () => !!QS && (qDirtyRows().length > 0 || qOrderDirty() || qChainDirty());
+function gotoNpc(t, tabk) {     // the NPC editor works over the map page
+  const b = document.querySelector('nav button[data-m="map"]'); if (b) b.click();
+  openTemplate('npc', t);
+  if (tabk) setTimeout(() => { if (TP && TP.t === t) { TP.tab = tabk; tplRender(); } }, 400);
+}
+function qSkillName(n) { return n ? (SKILLS[n] || 'skill ' + n) : ''; }
+function questsRender() {
+  const el = $('#qp'); el.innerHTML = '';
+  if (!QS) { el.innerHTML = '<div class="empty">Loading…</div>'; return; }
+  const ro = RO();
+  // ---- item quests
+  const box = document.createElement('div'); box.className = 'box'; el.appendChild(box);
+  const nd = qDirtyRows().length, od = qOrderDirty();
+  box.innerHTML = `<div class="qhd"><h3>Item quests · the #quest list</h3>
+      <button class="btn sec qnew">+ New quest</button>
+      <button class="btn sec qund" ${nd || od ? '' : 'disabled'}>Undo changes</button>
+      <button class="btn pri qsave" ${(nd || od) && !ro ? '' : 'disabled'}>Save${nd || od ? ' (' + (nd + (od ? 1 : 0)) + ')' : ''}</button></div>
+    <div class="hint">An NPC that <b>wants</b> an item and, for it, <b>teaches a skill</b> and/or <b>gives an item</b>, plus <b>experience</b>. Players see this list with #quest, top to bottom in this order: move a quest with ▲ ▼; untick "Listed" to leave it out. "Says" is the hint #quest &lt;n&gt; shows. ${info.running ? (ro ? '<b style="color:var(--bad)">The game is running without live editing: saving is off.</b>' : 'Saving changes the running game at once (the NPCs respawn with their new reward).') : 'Saving puts the changes in the editor; then <b>Save to the game</b> on the Map page writes them (the order is written at once).'} Changed rows are highlighted.</div>`;
+  box.querySelector('.qnew').onclick = questNew;
+  box.querySelector('.qund').onclick = () => { if (confirm('Forget your changes to the item quests?')) questsLoad(); };
+  box.querySelector('.qsave').onclick = questsSave;
+  const sc = document.createElement('div'); sc.className = 'qscroll'; box.appendChild(sc);
+  const tb = document.createElement('table'); tb.className = 'qtab'; sc.appendChild(tb);
+  tb.innerHTML = '<thead><tr><th></th><th>#</th><th>NPC</th><th>Where</th><th>Wants</th><th>Teaches</th><th>Gives item</th><th>Exp</th><th>Says (#quest &lt;n&gt;)</th><th>Listed</th><th></th></tr></thead>';
+  const body = document.createElement('tbody'); tb.appendChild(body);
+  const main = QS.filter(q => !q.puzzle), puz = QS.filter(q => q.puzzle);
+  let nr = 0;
+  const rowFor = (q, i, list) => {
+    const tr = document.createElement('tr');
+    if (JSON.stringify(qdata(q)) !== q.o || q.listed !== q.o0) tr.classList.add('ch');
+    if (!q.listed || q.puzzle) tr.classList.add('off');
+    const td = (cls) => { const c = document.createElement('td'); if (cls) c.className = cls; tr.appendChild(c); return c; };
+    const mv = td('mv keep');
+    if (!q.puzzle) {
+      const up = document.createElement('button'); up.textContent = '▲'; up.title = 'Earlier in the list'; up.disabled = i === 0;
+      const dn = document.createElement('button'); dn.textContent = '▼'; dn.title = 'Later in the list'; dn.disabled = i === list.length - 1;
+      const sw = (a, b) => { const ia = QS.indexOf(list[a]), ib = QS.indexOf(list[b]); [QS[ia], QS[ib]] = [QS[ib], QS[ia]]; questsRender(); };
+      up.onclick = () => sw(i, i - 1); dn.onclick = () => sw(i, i + 1);
+      mv.append(up, ' ', dn);
+    }
+    const nc = td('num'), gives = q.data[50] || q.data[66];
+    if (!q.puzzle && q.listed && gives) nc.textContent = ++nr;
+    else if (!q.puzzle && q.listed) { nc.textContent = '–'; nc.title = '#quest leaves it out: it teaches no skill and gives no item (a special NPC, e.g. the Cityguard\'s black candle)'; }
+    const who = td(); const w = document.createElement('div'); w.className = 'who'; w.appendChild(thumb(q.sprite || 0, 30, 30));
+    const nmd = document.createElement('div'); nmd.innerHTML = '<a></a><div class="n"></div>'; nmd.firstChild.textContent = q.name; nmd.firstChild.title = 'Open this NPC in the NPC editor';
+    nmd.firstChild.onclick = () => gotoNpc(q.t, 'talk');
+    nmd.lastChild.textContent = `template ${q.t}${q.count ? '' : ' · not in the world'}`; w.appendChild(nmd); who.appendChild(w);
+    const wh = td('where'); wh.textContent = (q.where || '–').replace(/^Aston, /, ''); if (/^Aston, /.test(q.where || '')) wh.title = q.where; if (q.x || q.y) { wh.style.cursor = 'pointer'; wh.title = 'Show it on the map'; wh.onclick = () => { const b = document.querySelector('nav button[data-m="map"]'); if (b) b.click(); setTimeout(() => { centerOn(q.x, q.y); selectTile(q.x, q.y); }, 50); }; }
+    const re = () => questsRender();
+    td().appendChild(qpick(() => q.data[49], v => { q.data[49] = v; re(); }, 'pick one!'));
+    td().appendChild(sel([[0, '–'], ...SKILLS.map((s, k) => [k, s]).filter(x => x[0] > 0)], () => q.data[50], v => { q.data[50] = v; re(); }));
+    td().appendChild(qpick(() => q.data[66], v => { q.data[66] = v; re(); }, 'nothing'));
+    const ex = num(() => q.data[51], v => { q.data[51] = v; re(); }, 0, 99999999); ex.className = 'exp'; td().appendChild(ex);
+    const hi = document.createElement('input'); hi.type = 'text'; hi.className = 'hintin'; hi.maxLength = 159; hi.value = q.hint; hi.placeholder = '(nothing)';
+    hi.title = '%s = the player\'s name; a text starting with # is a code, not shown'; hi.onchange = () => { q.hint = hi.value; re(); }; td('hintc').appendChild(hi);
+    const ls = td('keep');
+    if (!q.puzzle) { const c = document.createElement('input'); c.type = 'checkbox'; c.checked = q.listed; c.onchange = () => { q.listed = c.checked; re(); }; ls.appendChild(c); }
+    else ls.innerHTML = '<span class="hint" title="Labyrinth and tower trades are puzzle steps: #quest never lists them">puzzle</span>';
+    const rm = td('keep'); const x = document.createElement('button'); x.className = 'sm'; x.textContent = 'Remove'; x.title = 'Make this NPC an ordinary one again (wants nothing, gives nothing)';
+    x.onclick = () => { if (!confirm(`Take the quest away from ${q.name}? (It will want nothing and give nothing.)`)) return; q.data[49] = q.data[50] = q.data[51] = q.data[66] = 0; re(); };
+    rm.appendChild(x);
+    if (!q.data[49]) tr.title = 'Wants nothing: saving takes the quest away from this NPC';
+    return tr;
+  };
+  main.forEach((q, i) => body.appendChild(rowFor(q, i, main)));
+  if (puz.length) {
+    const h = document.createElement('tr'); h.innerHTML = `<td colspan="11" class="keep" style="padding-top:14px;color:var(--dim2);font-size:12px"><button class="sm">${QPuz ? 'Hide' : 'Show'}</button> Labyrinth and tower trades · puzzle steps, never in #quest (${puz.length})</td>`; body.appendChild(h);
+    h.querySelector('button').onclick = () => { QPuz = !QPuz; questsRender(); };
+    if (QPuz) puz.forEach((q, i) => body.appendChild(rowFor(q, i, puz)));
+  }
+  // ---- chain quests
+  const cb = document.createElement('div'); cb.className = 'box'; el.appendChild(cb);
+  const cd = qChainDirty();
+  cb.innerHTML = `<div class="qhd"><h3>Chain quests · #journal</h3>
+      <button class="btn sec cnew">+ New chain quest</button>
+      <button class="btn sec cund" ${cd ? '' : 'disabled'}>Undo changes</button>
+      <button class="btn pri csave" ${cd ? '' : 'disabled'}>Save</button></div>
+    <div class="hint">Quests made of steps with NPC conversations (each player has 255 quest numbers, all starting at 0). Here: each quest's <b>name</b> and the <b>journal text</b> players read with #journal from that step on. What moves a quest on lives in the NPCs' conversation lines: click an NPC to open its <b>Conversations</b>. Saving goes into the game at once.</div>`;
+  cb.querySelector('.cnew').onclick = () => {
+    let n = 1; while (QC.some(c => c.n === n)) n++;
+    if (n > 255) return toast('All 255 quest numbers are in use.', true);
+    QC.push({ n, name: '', steps: [[1, '']], refs: [] }); QC.sort((a, b) => a.n - b.n); questsRender();
+    const d = [...document.querySelectorAll('#qp .qchain')].find(x => x.dataset.n == n); if (d) { d.scrollIntoView({ block: 'center' }); d.querySelector('.qch input').focus(); }
+  };
+  cb.querySelector('.cund').onclick = () => { if (confirm('Forget your changes to the chain quests?')) { QC = JSON.parse(JSON.stringify(QV.chain)); questsRender(); } };
+  cb.querySelector('.csave').onclick = chainSave;
+  if (!QC.length) cb.insertAdjacentHTML('beforeend', '<div class="empty">No chain quests yet.</div>');
+  for (const c of QC) {
+    const d = document.createElement('div'); d.className = 'qchain'; d.dataset.n = c.n; cb.appendChild(d);
+    d.innerHTML = `<div class="qch"><span class="qn">Quest ${c.n}</span><input type="text" maxlength="60" placeholder="Name players see in #journal"><button class="sm add">+ Step</button><button class="sm del">Delete</button></div>
+      <div class="steps"><span class="lb">From step</span><span class="lb">Journal text</span><span></span></div><div class="refs"></div>`;
+    const ni = d.querySelector('.qch input'); ni.value = c.name; ni.onchange = () => { c.name = ni.value; questsRender(); };
+    d.querySelector('.add').onclick = () => { const m = c.steps.reduce((a, s) => Math.max(a, +s[0]), 0); c.steps.push([m + 1, '']); questsRender(); };
+    d.querySelector('.del').onclick = () => {
+      if (c.refs.length && !confirm(`Quest ${c.n} is still used by ${c.refs.map(r => r.label).join(', ')}. Delete its name and journal texts anyway? (Their conversation lines stay.)`)) return;
+      if (!c.refs.length && !confirm(`Delete quest ${c.n} (${c.name})?`)) return;
+      QC.splice(QC.indexOf(c), 1); questsRender();
+    };
+    const st = d.querySelector('.steps');
+    c.steps.forEach((s, k) => {
+      const v = document.createElement('input'); v.type = 'number'; v.min = 0; v.value = s[0]; v.onchange = () => { s[0] = Math.max(0, +v.value || 0); questsRender(); };
+      const t = document.createElement('input'); t.type = 'text'; t.maxLength = 300; t.value = s[1]; t.placeholder = 'What the journal says from this step on'; t.onchange = () => { s[1] = t.value; questsRender(); };
+      const x = document.createElement('button'); x.className = 'sm'; x.textContent = '×'; x.title = 'Remove this step text'; x.onclick = () => { c.steps.splice(k, 1); questsRender(); };
+      st.append(v, t, x);
+    });
+    const rf = d.querySelector('.refs');
+    if (!c.refs.length) rf.textContent = 'No NPC uses this quest yet: add lines to an NPC\'s Conversations (set / add to quest ' + c.n + ').';
+    else {
+      rf.append('Used by:');
+      c.refs.forEach(r => {
+        const b = document.createElement('button'); b.textContent = r.label; const sm = document.createElement('small'); sm.textContent = r.kinds.join(', '); b.appendChild(sm);
+        if (typeof r.who === 'number') { b.title = 'Open its Conversations'; b.onclick = () => gotoNpc(r.who, 'conv'); }
+        else { const [x, y] = String(r.who).slice(1).split(',').map(Number); b.title = 'Quest rules on the item at ' + x + ',' + y; b.onclick = () => { const nb = document.querySelector('nav button[data-m="map"]'); if (nb) nb.click(); setTimeout(() => { centerOn(x, y); selectTile(x, y); openTemplate('use', [x, y, r.label]); }, 50); }; }
+        rf.appendChild(b);
+      });
+    }
+  }
+}
+function qpick(get, set, none) {     // an item: its picture and name (click to pick), × to empty
+  const d = document.createElement('div'); d.className = 'qpick';
+  const b = document.createElement('button'); b.className = 'pb'; const th = thumb(0, 24, 24); const nm = document.createElement('span'); b.append(th, nm);
+  const show = () => { const v = get(), x = v && pal.templates.find(r => r[0] === v); nm.textContent = v ? (x ? x[1] : 'template ' + v + ' (empty!)') : none; b.classList.toggle('none', !v); b.title = v ? `item template ${v} · click to pick another` : 'Click to pick an item'; th.dataset.spr = x ? x[2] : 0; paintThumb(th); };
+  b.onclick = () => itemPopup(b, v => { set(v); });
+  const x = document.createElement('button'); x.className = 'x'; x.textContent = '×'; x.title = 'Empty'; x.onclick = () => set(0);
+  d.append(b, x); show(); return d;
+}
+function questNew() {
+  const p = $('#ipop'), anchor = $('#qp .qnew'), r = anchor.getBoundingClientRect();
+  p.style.display = 'flex'; p.style.left = Math.min(window.innerWidth - 350, r.left) + 'px'; p.style.top = Math.min(window.innerHeight - 390, r.bottom + 4) + 'px';
+  const q = p.querySelector('input'), lst = p.querySelector('.lst'); q.value = ''; q.placeholder = 'Which NPC gives the quest? Name or template number';
+  const fill = () => {
+    const s = q.value.trim().toLowerCase();
+    const have = new Set(QS.map(x => x.t));
+    const rows = (pal.npcs || []).filter(t => !have.has(t[0]) && (!s || t[1].toLowerCase().includes(s) || String(t[0]) === s)).slice(0, 80);
+    lst.innerHTML = '';
+    for (const t of rows) {
+      const e = document.createElement('div'); e.className = 'r'; e.append(thumb(t[2], 26));
+      const a = document.createElement('span'); a.textContent = t[1]; e.append(a);
+      const b = document.createElement('span'); b.className = 'n'; b.textContent = t[0]; e.append(b);
+      e.onmousedown = async ev => {
+        ev.preventDefault(); p.style.display = 'none';
+        const c = await api('/api/ctemp?t=' + t[0]);
+        if (c.error) return toast(c.error, true);
+        const row = { t: t[0], name: c.name, sprite: t[2], x: c.x, y: c.y, where: '', data: c.data, hint: c.text[2] || '', order: 0, puzzle: false, count: c.count + c.pending, listed: true, o0: false };
+        row.o = JSON.stringify([0, 0, 0, 0, row.hint]);
+        QS.push(row); questsRender(); toast(`${c.name} added at the end: pick what it wants and what it gives, then Save.`);
+      };
+      lst.append(e);
+    }
+    if (!rows.length) lst.innerHTML = '<div class="hint" style="padding:6px">Nothing matches (NPCs that already give a quest are in the list).</div>';
+  };
+  q.oninput = fill; fill(); setTimeout(() => q.focus(), 0);
+}
+async function questsSave() {
+  if (RO()) return toast('The game server is running and live editing is not available.', true);
+  const bad = QS.find(q => (q.data[50] || q.data[66] || q.data[51]) && !q.data[49]);
+  if (bad) return toast(`${bad.name} gives something but wants nothing: pick what it wants (or Remove the quest).`, true);
+  const none = qDirtyRows().find(q => q.data[49] && !q.data[50] && !q.data[66]);
+  if (none && !confirm(`${none.name} wants an item but teaches no skill and gives no item, so #quest won't list it (and experience alone isn't given). Save anyway?`)) return;
+  const rows = qDirtyRows();
+  if (rows.length) {
+    const ops = rows.map(q => ({ op: 'ctempset', t: q.t, fields: { data: q.data }, text: [null, null, q.hint], respawn: true }));
+    await edit(ops, `quests: ${rows.map(q => q.name).join(', ')}`.slice(0, 120));
+  }
+  // the order: every listed quest gets its place, unticked ones -1 (not listed)
+  const order = {}; let k = 0;
+  for (const q of QS) { if (q.puzzle || !q.data[49]) continue; order[q.t] = q.listed ? ++k : -1; }
+  const r = await api('/api/questorder', { order });
+  toast((rows.length ? `${rows.length} quest${rows.length === 1 ? '' : 's'} changed${info.running ? '' : ' (Save to the game on the Map page writes them)'}. ` : '') + 'Order: ' + (r.msg || r.error || ''), !!r.error);
+  await questsLoad();
+}
+async function chainSave() {
+  const names = {}, steps = {};
+  for (const c of QC) {
+    if (c.name.trim()) names[c.n] = c.name.trim();
+    const s = c.steps.filter(x => String(x[1]).trim()).map(x => [+x[0], String(x[1]).trim()]);
+    if (s.length) steps[c.n] = s;
+  }
+  const r = await api('/api/talk', { quests: names, steps });
+  toast(r.error || 'Chain quests: ' + r.msg, !!r.error);
+  await questsLoad();
 }
 
 // ---------------------------------------------------------------- server page

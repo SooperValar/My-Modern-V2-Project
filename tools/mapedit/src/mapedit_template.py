@@ -161,7 +161,7 @@ OPS = ('=', '!=', '<', '>', '<=', '>=')
 
 def talk_parse(text):
     quests, npcs, cur, e = {}, {}, None, None
-    steps, chests, chest = {}, {}, None
+    steps, chests, chest, order = {}, {}, None, {}
     for line in text.splitlines():
         line = line.strip()
         if not line or line.startswith('#'):
@@ -194,7 +194,9 @@ def talk_parse(text):
                 chests['%d,%d' % (int(a[0]), int(a[1]))] = chest
                 cur, e = None, None
                 continue
-            if k == 'quest' and a:
+            if k == 'order' and len(a) >= 2:          # #quest list order (Quests page): template, place (-1 = not listed)
+                order[int(a[0])] = int(a[1])
+            elif k == 'quest' and a:
                 quests[int(a[0])] = rest.split(None, 1)[1] if len(a) > 1 else ''
             elif k == 'step' and len(a) >= 2:
                 steps.setdefault(int(a[0]), []).append([int(a[1]), rest.split(None, 2)[2] if len(a) > 2 else ''])
@@ -245,12 +247,18 @@ def talk_parse(text):
                 e['acts'].append({'type': k})
         except (IndexError, ValueError):
             continue
-    return {'names': quests, 'steps': steps, 'chests': chests}, npcs
+    return {'names': quests, 'steps': steps, 'chests': chests, 'order': order}, npcs
 
 
 def talk_text(quests, npcs, names):
     out = ['# MyV2 custom NPC dialogue, kill tracking and quest steps - written by the MyV2 Editor (the server reads it: npctalk.c)', '']
     qn, qs = quests.get('names', {}), quests.get('steps', {})
+    od = {int(t): int(v) for t, v in (quests.get('order') or {}).items() if int(v)}
+    if od:
+        out.append('# #quest list: order <NPC template> <place> (-1 = not listed) - the Quests page')
+        for t in sorted(od, key=lambda t: (od[t] < 0, abs(od[t]), t)):
+            out.append('order %d %d %s' % (t, od[t], names.get(t, '')))
+        out.append('')
     for n in sorted(set(qn) | set(qs)):
         out.append('quest %d %s' % (n, ' '.join(str(qn.get(n, '')).split())))
         for v, t in sorted(qs.get(n, []), key=lambda x: int(x[0])):
@@ -901,7 +909,7 @@ class World:
         try:
             return talk_parse(open(self.talk_path(), encoding='latin-1').read())
         except OSError:
-            return {'names': {}, 'steps': {}, 'chests': {}}, {}
+            return {'names': {}, 'steps': {}, 'chests': {}, 'order': {}}, {}
 
     def talk_save(self, quests, npcs, ctl=None):
         p = self.talk_path()
@@ -909,7 +917,7 @@ class World:
             bk = os.path.join(self.dat, 'mapedit-backups')
             os.makedirs(bk, exist_ok=True)
             shutil.copy2(p, os.path.join(bk, 'npctalk-%s.dat' % time.strftime('%Y%m%d-%H%M%S')))
-        names = {t: self.tname(t) for t in npcs if isinstance(t, int) and self.tchar is not None and 0 < t < MAXTCHARS}
+        names = {t: self.tname(t) for t in list(npcs) + list((quests.get('order') or {}).keys()) if isinstance(t, int) and self.tchar is not None and 0 < t < MAXTCHARS}
         for key in quests.get('chests', {}):
             x, y = map(int, key.split(','))
             i = self.tile(x, y)[4] if 0 <= x < MAPX and 0 <= y < MAPY else 0
@@ -926,6 +934,46 @@ class World:
             r = ctl.console('talkreload', 5)
             return 'Saved; the game uses it now.' if r and 'loaded' in r else 'Saved. (The game reads it at its next start: the running server is older.)'
         return 'Saved. The game uses it when the server starts.'
+
+    def quests_view(self):
+        """the Quests page: every NPC that wants an item (the #quest list), and the chain quests of npctalk.dat"""
+        qs, npcs = self.talk_load()
+        order = qs.get('order', {})
+        simple = []
+        if self.tchar is not None:
+            for t in range(1, MAXTCHARS):
+                o = t * CHAR_SIZE
+                if not self.tchar[o + C_USED]:
+                    continue
+                d = list(struct.unpack_from('<100i', self.tchar, o + C_DATA))
+                if d[49] <= 0:
+                    continue
+                x, y = struct.unpack_from('<hh', self.tchar, o + C_X)
+                where = self.zone(x, y) if (x or y) else ''
+                simple.append({'t': t, 'name': self.tname(t), 'sprite': self.tchar_sprite(t, 4),
+                               'x': x, 'y': y, 'where': where, 'data': d, 'hint': cstr(self.tchar[o + CT_TEXT + 2 * 160:o + CT_TEXT + 3 * 160]),
+                               'order': order.get(t, 0), 'puzzle': bool(d[50] == 0 and ('Labyrinth' in where or 'Tower' in where)),
+                               'count': len(self.living(t)) + len([p for p in self.pending() if p[2] == t])})
+        refs = {}
+        for who, ents in npcs.items():
+            label = ('tile %s' % who[1:]) if isinstance(who, str) else self.tname(who) if self.tchar is not None and 0 < who < MAXTCHARS else str(who)
+            for e in ents:
+                for c in e.get('conds', []):
+                    if c.get('type') == 'quest':
+                        refs.setdefault(c['n'], {}).setdefault(str(who), {'who': who, 'label': label, 'kinds': set()})['kinds'].add('checks')
+                for a in e.get('acts', []):
+                    if a.get('type') in ('set', 'add'):
+                        refs.setdefault(a['n'], {}).setdefault(str(who), {'who': who, 'label': label, 'kinds': set()})['kinds'].add('moves it on' if a['type'] == 'add' else 'sets it')
+        chain = []
+        for n in sorted(set(qs['names']) | set(qs['steps']) | set(refs)):
+            chain.append({'n': n, 'name': qs['names'].get(n, ''), 'steps': sorted(qs['steps'].get(n, []), key=lambda v: int(v[0])),
+                          'refs': [{'who': r['who'], 'label': r['label'], 'kinds': sorted(r['kinds'])} for r in refs.get(n, {}).values()]})
+        return {'simple': simple, 'chain': chain}
+
+    def quests_order_save(self, order, ctl=None):
+        qs, npcs = self.talk_load()
+        qs['order'] = {int(t): int(v) for t, v in order.items() if int(v) and 0 < int(t) < MAXTCHARS and -1 <= int(v) <= 30000}
+        return self.talk_save(qs, npcs, ctl)
 
     def talk_copy(self, src, dst, ctl=None):
         """a copied NPC template gets the original's dialogue (and a freed number loses its own)"""
@@ -2322,6 +2370,8 @@ def make_handler(world, sprites, page, minimap, ctl):
                                 'givers': {str(t): len(v) for t, v in npcs.items() if v}})
             if u.path == '/api/ctemp':
                 return self.js(world.ctemp(int(q['t'])) or {'error': 'no such NPC template'})
+            if u.path == '/api/quests':
+                return self.js(world.quests_view())
             if u.path == '/api/itemp':
                 return self.js(world.itemp(int(q['t'])) or {'error': 'no such item template'})
             if u.path == '/api/history':
@@ -2356,6 +2406,8 @@ def make_handler(world, sprites, page, minimap, ctl):
                                 'dirty': world.dirty, 'undo': len(world.undo), 'redo': len(world.redo)})
             if u.path in ('/api/save', '/api/relight', '/api/restore') and server_running():
                 return self.js({'error': 'The game server is running: live edits are already in the game, there is nothing to save.'})
+            if u.path == '/api/questorder':
+                return self.js({'msg': world.quests_order_save(body.get('order') or {}, ctl)})
             if u.path == '/api/zones':
                 err = world.zones_save(body.get('zones') or [], ctl)
                 if err and err != 'later':

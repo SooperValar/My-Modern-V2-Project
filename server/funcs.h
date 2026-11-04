@@ -435,6 +435,7 @@ char *get_area(int cn,int verbose);
 char *get_area_m(int x,int y,int verbose);
 char *get_area_street(int x,int y);
 int zone_load(void);
+int talk_quest_order(int t);
 int zone_count(void);
 int zone_boxes(void);
 
