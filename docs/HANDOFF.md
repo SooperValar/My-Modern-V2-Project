@@ -90,6 +90,9 @@ is the project's `client/` folder.
   Playwright (installed in Claude's cloud workspace) for the page.
 - Live editing: while the game runs, edits go into it as patch files (`edpatch`, checked against
   what the server has, all or nothing). With the server stopped, "Save to the game" writes the files.
+- **Quests page** reward rules live in `npctalk.dat` too: `qreward` / `qstage` (gold, times, rewards per turn-in),
+  `qrank` (lowest / highest rank); per-player counts in `.dat/questcount.dat`. Console `questgive <player> <template>`
+  tests a hand-in. **Rugs** (Floors tab): `.dat/mapedit-rugs.json`; the Red and Blue rug are built in.
 - **Quests page** (rail: Quests): every item quest (`#quest`: wants / teaches / gives / exp / hint / order) and chain quest
   (`#journal`: names, journal steps, which NPCs use them) on one page. The `#quest` order is kept in `npctalk.dat` as
   `order <template> <place>` (-1 = not listed).
@@ -140,6 +143,12 @@ is the project's `client/` folder.
 - `merc.exe` can't be replaced while the game is open.
 
 ## Open items (details in docs/TODO.md and docs/HOSTING.md)
+
+**Where we left off (Nov 3):** Cody is going through the quests on the Quests page (rewards, order, ranks).
+Next ideas waiting: hosting section 4 (daily world backups first), TODO 11-18 (rebalance, waypoints, stacking,
+Ghost Companion targeting, Underground III, Stronghold points). The DuckDNS task was switched to a hidden
+launcher (`%USERPROFILE%\duckdns\duckdns-hidden.vbs` via wscript) to stop the PowerShell window flashing -
+check with Cody that it stopped.
 
 - **#quest** (IN PROGRESS, not final; live since the zones update; built and committed): the look is approved (column table, 15 a page); still open: the order
   and rewards; maybe a separate difficulty number per quest
