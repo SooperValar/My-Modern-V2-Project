@@ -3012,7 +3012,7 @@ table.pl button:hover { color: var(--text); border-color: var(--gold); }
   <div id="banner">The game server is running: you can look around, but editing is off. Stop the server to edit.</div>
   <div id="coords">–</div>
   <div id="mini"><span class="t">MAP</span><canvas id="mcv" width="1024" height="1024" title="Click to go there · M for the big map"></canvas></div>
-  <div id="tpl"><div class="mbox"><div class="mhd"><div class="ttl"></div><button class="btn ghost" onclick="closeTemplate()">✕</button></div><div class="mtabs"></div><div class="mbody"></div><div class="mft"></div></div></div>
+  <div id="tpl"><div class="mbox"><div class="mhd"><div class="ttl"></div><button class="btn sec" id="tgoto" style="display:none" title="Close this and show it on the map">Go to</button><button class="btn ghost" onclick="closeTemplate()">✕</button></div><div class="mtabs"></div><div class="mbody"></div><div class="mft"></div></div></div>
   <div id="ipop"><input type="text" placeholder="Search an item by name or number"><div class="lst"></div></div>
   <div id="world"><span class="t">World map — click to go there · M or Esc to close</span><canvas id="wcv" width="1024" height="1024"></canvas></div>
   <div id="toast"></div>
@@ -4596,6 +4596,31 @@ function openTemplate(kind, t) {
     tplRender();
   });
 }
+// "Go to" in the window's top right: close it and show the NPC / player / tile on the map.
+// An NPC: the living ones of that template in turn (each click the next), else its spawn spot.
+function tplGotoButton() {
+  const b = $('#tgoto'); if (!b) return;
+  const k = TP && TP.kind;
+  b.style.display = k === 'npc' || k === 'player' || k === 'use' ? '' : 'none';
+  b.textContent = 'Go to'; b.onclick = tplGoto;
+}
+const gotoTurn = {};       // NPC template -> which of its living ones is next
+async function tplGoto() {
+  if (!TP) return;
+  let x, y, what = '';
+  if (TP.kind === 'use') { x = TP.x; y = TP.y; }
+  else if (TP.kind === 'player') { x = TP.cur.x; y = TP.cur.y; what = TP.cur.name; }
+  else if (TP.kind === 'npc') {
+    const t = TP.t, list = (await api('/api/npcworld')).filter(c => c[4] === t && (c[2] || c[3]));
+    list.sort((a, b) => (a[6] === 'waiting') - (b[6] === 'waiting'));
+    if (list.length) { const i = (gotoTurn[t] || 0) % list.length, c = list[i]; gotoTurn[t] = i + 1; x = c[2]; y = c[3]; what = `${c[1]}${list.length > 1 ? ` (${i + 1} of ${list.length}; Go to on it again shows the next)` : ''}${c[6] === 'waiting' ? ' · respawning there' : ''}`; }
+    else if (TP.cur.x || TP.cur.y) { x = TP.cur.x; y = TP.cur.y; what = TP.cur.name + ' · not in the world now: its spawn spot'; }
+  }
+  if (!x && !y) return toast('It is not anywhere on the map.', true);
+  closeTemplate(); if (TP) return;              // kept open: unapplied changes
+  if (mode !== 'map') { const nb = document.querySelector('nav button[data-m="map"]'); if (nb) nb.click(); }
+  setTimeout(() => { centerOn(x, y); selectTile(x, y); if (what) toast(what + ` · ${x}, ${y}`); }, 60);
+}
 function closeTemplate() { if (tplDirty() && !confirm('Close without applying your changes?')) return; TP = null; $('#tpl').classList.remove('on', 'picking'); $('#ipop').style.display = 'none'; }
 function tplTabs() {
   if (TP.kind === 'use') return { conv: 'Quest rules' };
@@ -4606,6 +4631,7 @@ function tplTabs() {
 }
 function tplRender() {
   const c = TP.cur, el = $('#tpl');
+  tplGotoButton();
   if (TP.kind === 'chest') return chestRender(el);
   if (TP.kind === 'area') return areaRender(el);
   if (TP.kind === 'use') {

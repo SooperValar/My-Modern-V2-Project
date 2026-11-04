@@ -451,6 +451,8 @@ The **Players** page (rail) lists every player character, online ones first, wit
 - **Apply** writes the template, and by default respawns the NPCs of that template with the changes (as the game's own reset does). **Save as a new NPC…** makes a copy with a new name (numbers from 2000 up); it is not placed until you click a tile with the NPC brush, and that first placement uses it directly. Copying an NPC template copies its conversations; a removed editor-made NPC loses them.
 - Fix: "Save as a new NPC" kept the original's respawning, though the copy has no spawn spot until it is placed. The game then kept trying to spawn it at 0,0 ("Could not drop char 2000" every 5 minutes in the log), and because of that spawn timer, the first placement made yet another copy instead of using it. A new NPC now respawns only once it is placed, and the first placement uses it (a stale spawn timer of it is removed).
 
+**Go to** (top right of the NPC, player and quest-rules windows): closes the window and shows that NPC, player or tile on the map, selected. An NPC: where it is now (with several of that template, each Go to on it shows the next one); not in the world: its spawn spot.
+
 ## Quest editor
 
 Under the NPC editor's **Conversations** tab.
