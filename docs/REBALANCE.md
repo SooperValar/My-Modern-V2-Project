@@ -33,8 +33,18 @@ name stays white (these are plain items, not Magic / Rare / Epic).
 armor piece of its level (Rare budget = 2 x max(level, 8): 16, 16, 20, 28, 36), a bit more at the top because it takes
 the place of a shield.
 
-Decided: six spells (+ Protection and Enhance Weapon), the numbers above; sold by Damor (Initiate, Apprentice) and lab
-merchants (Adept: Light&Dark Gorge, Mage: Riddle Gorge, Archmage: Seasons Gorge, Spring). Not dropped (yet).
+Decided: six spells (+ Protection and Enhance Weapon), the numbers above; **all five sold by Damor**. Later: a second
+merchant who sells only spell books and staffs. Not dropped (yet).
+
+**Two-Handed Axe skill renamed Greataxe** (Cody, Nov 4).
+
+## Ghost Companion buff (to design)
+
+Cody wants the Ghost Companion a bit stronger depending on whether a Harakim summons it, whether it is summoned with a
+staff, and the caster's stats. Now (`skill_ghost`, `skill_driver.c`): power = Ghost Companion skill x 4 / 11, times the
+class factor of `spell_race_mod` (the same for every spell: Harakim 1.00, Arch-Harakim 1.05, Sorcerer 1.10, Warrior 1.10,
+Mercenary 1.05, Seyan 0.95, Arch-Templar 0.95, Templar 0.90; new moon -0.15, full moon +0.15); its attributes, skills,
+hitpoints (power x 5) and endurance come from that power, its weapon / armor from its Agility and Strength.
 
 
 ## Curve options (deflect for the sword from Agility, crit for the axe from Strength)

@@ -123,7 +123,7 @@ struct skilltab _skilltab[50]={
 	{33,    'G',    "Surround Hit", "Hit all your enemies at once.",                {AT_BRAVE,AT_AGIL,AT_STREN}},
 	{34,    'G',    "Concentrate",  "Reduces mana cost for all spells.",            {AT_WILL,AT_WILL,AT_WILL}},
 	{35,    'G',    "Warcry",       "Frighten all enemies in hearing distance.",    {AT_BRAVE,AT_BRAVE,AT_STREN}},
-	{36,    'C',    "Two-Handed Axe", "Fighting with two-handed axes.",            {AT_AGIL,AT_STREN,AT_STREN}},
+	{36,    'C',    "Greataxe",     "Fighting with greataxes (two-handed axes).",  {AT_STREN,AT_STREN,AT_AGIL}},
 
 	{37,   'Z',   "", "", {0,0,0,}},
 	{38,   'Z',   "", "", {0,0,0,}},

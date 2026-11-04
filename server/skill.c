@@ -9,7 +9,7 @@ All rights reserved.
 #include "server.h"
 
 /* MyV2 rebalance (docs/REBALANCE.md): spells Willpower/Willpower/Intelligence, Ghost Companion Intelligence/Intelligence/Willpower
- * (were Braveness/Intelligence/Willpower); Two-Handed Agility/Agility/Strength, Two-Handed Axe Strength/Strength/Agility. */
+ * (were Braveness/Intelligence/Willpower); Two-Handed Agility/Agility/Strength, Greataxe (was Two-Handed Axe) Strength/Strength/Agility. */
 struct s_skilltab skilltab[MAXSKILL]={
         {0,     'C',    "Hand to Hand", "Fighting without weapons.",                    {AT_BRAVE,AT_AGIL,AT_STREN}},
 /*u*/   {1,     'C',    "Karate",       "Fighting without weapons and doing damage.",   {AT_BRAVE,AT_AGIL,AT_STREN}},
@@ -55,5 +55,5 @@ struct s_skilltab skilltab[MAXSKILL]={
         {33,    'G',    "Surround Hit", "Hit all your enemies at once.",                {AT_BRAVE,AT_AGIL,AT_STREN}},
         {34,    'G',    "Concentrate",  "Reduces mana cost for all spells.",            {AT_WILL,AT_WILL,AT_WILL}},
         {35,    'G',    "Warcry", 	"Frighten all enemies in hearing distance.",    {AT_BRAVE,AT_BRAVE,AT_STREN}},
-        {36,    'C',    "Two-Handed Axe", "Fighting with two-handed axes.",            {AT_STREN,AT_STREN,AT_AGIL}}
+        {36,    'C',    "Greataxe",     "Fighting with greataxes (two-handed axes).",  {AT_STREN,AT_STREN,AT_AGIL}}
 };

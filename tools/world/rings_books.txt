@@ -266,9 +266,5 @@ it 1406 mana 50
 it 1406 minrank 18
 it 1406 value 60000
 
-# who sells the books: Damor (Initiate, Apprentice) and lab merchants (Adept: Light&Dark Gorge, Mage: Riddle Gorge,
-# Archmage: Seasons Gorge, Spring)
-ch 72 additems 1402 1403
-ch 419 additems 1404
-ch 902 additems 1405
-ch 1092 additems 1406
+# who sells the books: Damor, all five (a spell book and staff merchant may come later)
+ch 72 additems 1402 1403 1404 1405 1406

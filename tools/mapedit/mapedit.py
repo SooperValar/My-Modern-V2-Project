@@ -4663,7 +4663,7 @@ const ATTRS = ['Braveness', 'Willpower', 'Intuition', 'Agility', 'Strength'];
 const SKILLS = ['Hand to Hand', 'Karate', 'Dagger', 'Sword', 'Axe', 'Staff', 'Two-Handed', 'Lock-Picking', 'Stealth', 'Perception',
   'Swimming', 'Magic Shield', 'Bartering', 'Repair', 'Light', 'Recall', 'Guardian Angel', 'Protection', 'Enhance Weapon', 'Stun',
   'Curse', 'Bless', 'Identify', 'Resistance', 'Blast', 'Dispel Magic', 'Heal', 'Ghost Companion', 'Regenerate', 'Rest',
-  'Meditate', 'Sense Magic', 'Immunity', 'Surround Hit', 'Concentrate', 'Warcry', 'Two-Handed Axe'];
+  'Meditate', 'Sense Magic', 'Immunity', 'Surround Hit', 'Concentrate', 'Warcry', 'Greataxe'];
 const WEAR = ['Head', 'Neck', 'Body', 'Arms', 'Belt', 'Legs', 'Feet', 'Left hand (shield)', 'Right hand (weapon)', 'Cloak', 'Left ring', 'Right ring'];
 const CTEXT = [
   [2, 'Greeting', 'said when a player comes close (needs "Greets players" on the Behaviour tab)'],

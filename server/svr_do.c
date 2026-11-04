@@ -1622,8 +1622,8 @@ void do_info_twohand(int cn)
 void do_info_axe2h(int cn)
 {
 	static int t[]={AXE2H_T_BRONZE,AXE2H_T_BRONZE+1,AXE2H_T_BRONZE+2,AXE2H_T_BRONZE+3,AXE2H_T_BRONZE+4};
-	info_weapon_table(cn,"two-handed axes","2Axe",SK_AXE2H,t,5);
-	{ int c=wp2h_chance(cn,1); do_char_log(cn,2,"* Two-handed axes take both hands: no shield. Critical hits: some of your hits do double damage: %d%% to %d%%, more with Strength (you: %d.%d%%).\n",WP2H_MIN/10,WP2H_MAX/10,c/10,c%10); }
+	info_weapon_table(cn,"greataxes","GrAxe",SK_AXE2H,t,5);
+	{ int c=wp2h_chance(cn,1); do_char_log(cn,2,"* Greataxes take both hands: no shield. Critical hits: some of your hits do double damage: %d%% to %d%%, more with Strength (you: %d.%d%%).\n",WP2H_MIN/10,WP2H_MAX/10,c/10,c%10); }
 }
 
 void do_info_axe(int cn)
@@ -1642,7 +1642,7 @@ static void info_needs(int t,char *out)
 	out[0]=0;
 	for (n=0; n<5; n++) if (it_temp[t].attrib[n][2]>1) { sprintf(buf,"%s%s %d",out[0] ? ", " : "",info_attr[n],it_temp[t].attrib[n][2]); strcat(out,buf); }
 	for (n=0; n<7; n++) if (it_temp[t].skill[n][2]>1) { sprintf(buf,"%s%s %d",out[0] ? ", " : "",sn[n],it_temp[t].skill[n][2]); strcat(out,buf); }
-	if (it_temp[t].skill[SK_AXE2H][2]>1) { sprintf(buf,"%sTwo-Handed Axe %d",out[0] ? ", " : "",it_temp[t].skill[SK_AXE2H][2]); strcat(out,buf); }
+	if (it_temp[t].skill[SK_AXE2H][2]>1) { sprintf(buf,"%sGreataxe %d",out[0] ? ", " : "",it_temp[t].skill[SK_AXE2H][2]); strcat(out,buf); }
 	if (it_temp[t].min_rank>0) { sprintf(buf,"%srank %s",out[0] ? ", " : "",rank_name[(int)it_temp[t].min_rank]); strcat(out,buf); }
 	if (!out[0]) strcpy(out,"nothing");
 }
@@ -1688,7 +1688,7 @@ void do_info_specialw(int cn)
 		name[17]=0;
 
 		// weapon type and the skill it uses
-		if ((it_temp[tn].flags&(IF_WP_AXE|IF_WP_TWOHAND))==(IF_WP_AXE|IF_WP_TWOHAND)) { strcpy(typ,"2Axe"); sk=SK_AXE2H; }
+		if ((it_temp[tn].flags&(IF_WP_AXE|IF_WP_TWOHAND))==(IF_WP_AXE|IF_WP_TWOHAND)) { strcpy(typ,"GrAxe"); sk=SK_AXE2H; }
 		else if (it_temp[tn].flags&IF_WP_TWOHAND) { strcpy(typ,"2Hand"); sk=SK_TWOHAND; }
 		else if (it_temp[tn].flags&IF_WP_STAFF) { strcpy(typ,"Staff"); sk=SK_STAFF; }
 		else if (it_temp[tn].flags&IF_WP_AXE) { strcpy(typ,"Axe"); sk=SK_AXE; }
@@ -1726,7 +1726,7 @@ void do_info_weapon(int cn)
 	do_char_log(cn,1,"#sword                 lists swords\n");
 	do_char_log(cn,1,"#twohand               lists two-handed swords\n");
 	do_char_log(cn,1,"#axe                   lists axes\n");
-	do_char_log(cn,1,"#axe2h                 lists two-handed axes\n");
+	do_char_log(cn,1,"#axe2h                 lists greataxes\n");
 	do_char_log(cn,1,"#specialw              lists special weapons\n");
 	do_char_log(cn,1," \n");
 	do_char_log(cn,2,"* Weapon value (WV) only counts if your skill for that weapon type is high enough.\n");

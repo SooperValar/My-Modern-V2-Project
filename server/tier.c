@@ -248,7 +248,7 @@ static char *short_skill(int s)
 	switch(s) {
 		case SK_RESIST:		return "Resist";
 		case SK_GHOST:		return "Companion";
-		case SK_AXE2H:		return "2H Axe";
+		case SK_AXE2H:		return "Greataxe";
 		case SK_TWOHAND:	return "2H";
 		case SK_SURROUND:	return "Surround";
 		case SK_ENHANCE:	return "Enhance";
