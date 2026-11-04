@@ -1,6 +1,33 @@
 # Rebalance: two-handed weapons, rings, Harakim (TODO 11) - design
 
-Status: **proposal, waiting for Cody's choices** (the questions at the end). Nothing built yet except where it says so.
+Status: **partly decided** (Nov 4), nothing built yet.
+
+## Decisions so far
+
+- **Attributes: yes.** Two-handed sword Agility, Agility, Strength; two-handed axe Strength, Strength, Agility.
+- **Deflect / crit curve: to rethink.** Cody wants a minimum and a maximum with a scale between them: felt at low
+  levels, without making things too easy at high ranks (so the gain should flatten out). See "Curve options" below.
+- **Rings: Topaz (Agility), Amethyst (Intelligence) and Diamond (Braveness)**, each Small / Medium / Big / Huge at
+  +3 / +6 / +9 / +12 like the Emerald.
+- **Spells Willpower, Willpower, Intelligence; Ghost Companion Intelligence, Intelligence, Willpower - for every class.**
+- **Spell book and staff: to talk through** (Cody has his own ideas).
+
+## Curve options (deflect for the sword from Agility, crit for the axe from Strength)
+
+chance = min + (max - min) x A / (A + K), A = the attribute. Grows fast early, then flattens towards max and never
+reaches it. Example with min 8 %, max 20 %:
+
+| Attribute | K = 30 | K = 50 | K = 80 |
+|---|---|---|---|
+| 10 | 11.0 % | 10.0 % | 9.3 % |
+| 25 | 13.5 % | 12.0 % | 10.9 % |
+| 50 | 15.5 % | 14.0 % | 12.6 % |
+| 75 | 16.6 % | 15.2 % | 13.8 % |
+| 100 | 17.2 % | 16.0 % | 14.7 % |
+| 150 | 18.0 % | 17.1 % | 15.8 % |
+
+(Today: a flat 12.5 % everywhere.)
+
 
 ## How it works now (from the code)
 
