@@ -2116,18 +2116,27 @@ void do_quest(int cn,char *a,char *b)
 			quest_reward_text(buf,sizeof(buf),0,ch_temp[t].data[51],g);
 			do_char_log(cn,1,"  Reward: %s%s%s\n",rew,buf[0] ? ", " : "",buf);
 		} else {
-			int it1,ex1,g1,left,later,lim,first,g0,i2,e2,g2;
+			int it1,ex1,g1,left,later,qc,k,lim,pi,pe,pg,ni,ne,ng,st,shown=0;
+			char later_txt[300];
 			quest_reward_now(t,cn,&it1,&ex1,&g1,&left,&later);
-			quest_reward_info(t,&lim,&first,&g0,&i2,&e2,&g2);
 			quest_reward_text(buf,sizeof(buf),it1,ex1,g1);
 			do_char_log(cn,1,"  Reward: %s\n",buf[0] ? buf : "nothing");
-			if (first && !later) {
-				quest_reward_text(buf,sizeof(buf),i2,e2,g2);
-				do_char_log(cn,1,"          (the first %d time%s; after that: %s)\n",first,first==1 ? "" : "s",buf[0] ? buf : "nothing");
+			if (quest_reward_steps(t)>1 && left!=0) {	// diminishing rewards: what the next turn-ins give, where it changes
+				qc=quest_count(cn,t); lim=quest_reward_limit(t);
+				pi=it1; pe=ex1; pg=g1; later_txt[0]=0;
+				for (k=qc+1; k<qc+200 && shown<4 && (!lim || k<lim); k++) {
+					quest_reward_at(t,k,&ni,&ne,&ng,&st);
+					if (ni==pi && ne==pe && ng==pg) continue;
+					quest_reward_text(buf,sizeof(buf),ni,ne,ng);
+					snprintf(later_txt+strlen(later_txt),sizeof(later_txt)-strlen(later_txt),"%sfrom the %d%s time: %s",shown ? "; " : "",k+1,
+						(k+1)%10==1 && (k+1)%100!=11 ? "st" : (k+1)%10==2 && (k+1)%100!=12 ? "nd" : (k+1)%10==3 && (k+1)%100!=13 ? "rd" : "th",buf[0] ? buf : "nothing");
+					pi=ni; pe=ne; pg=ng; shown++;
+				}
+				if (shown) do_char_log(cn,1,"  Later:  %s\n",later_txt);
 			}
 			if (left==0) do_char_log(cn,3,"You have done this one as often as it can be done.\n");
 			else if (left>0) do_char_log(cn,1,"  Times:  %d more time%s\n",left,left==1 ? "" : "s");
-			else if (first || ch_temp[t].data[66]) do_char_log(cn,1,"  Times:  as often as you like\n");
+			else if (quest_reward_steps(t)>1 || ch_temp[t].data[66]) do_char_log(cn,1,"  Times:  as often as you like\n");
 		}
 		if (ch_temp[t].text[2][0] && ch_temp[t].text[2][0]!='#') {
 			quest_words(cn,ch_temp[t].text[2],buf,sizeof(buf));

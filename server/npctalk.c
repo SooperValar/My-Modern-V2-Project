@@ -129,7 +129,9 @@ static int chestlog_loaded=0;
 
 static struct tentry ent[MAXENT];
 static char hasnear[MAXTCHARS];		// templates with "when near" lines
-struct qrew { int limit, first, gold1, item2, exp2, gold2; };
+#define QSTAGES 8
+struct qstage { int times, item, exp, gold; };
+struct qrew { int limit, first, gold1, nst; struct qstage st[QSTAGES]; };
 static struct qrew qrew[MAXTCHARS];	// item quests: repeats and later rewards ("qreward")
 static short qorder[MAXTCHARS];		// #quest: place in the list ("order <template> <n>", the editor's Quests page); 0 = by exp, -1 = not listed
 static struct tstep step[MAXSTEP];
@@ -197,11 +199,22 @@ int talk_load(void)
 			if (n>=1 && n<=QVARS) qname[n]=pool_add(q);
 			continue;
 		}
-		if (!strcmp(w1,"qreward")) {
-			struct qrew r;
-			if (sscanf(q,"%d %d %d %d %d %d %d",&n,&r.limit,&r.first,&r.gold1,&r.item2,&r.exp2,&r.gold2)==7 && n>0 && n<MAXTCHARS &&
-			    r.limit>=0 && r.first>=0 && r.gold1>=0 && r.item2>=0 && r.item2<MAXTITEM && r.exp2>=0 && r.gold2>=0) qrew[n]=r;
-			else bad++;
+		if (!strcmp(w1,"qreward")) {		// qreward <t> <limit> <first> <gold> [<item2> <exp2> <gold2>: the older one-step form]
+			int a[7],k=sscanf(q,"%d %d %d %d %d %d %d",&a[0],&a[1],&a[2],&a[3],&a[4],&a[5],&a[6]);
+			n=a[0];
+			if ((k==4 || k==7) && n>0 && n<MAXTCHARS && a[1]>=0 && a[2]>=0 && a[3]>=0) {
+				memset(&qrew[n],0,sizeof(qrew[n]));
+				qrew[n].limit=a[1]; qrew[n].first=a[2]; qrew[n].gold1=a[3];
+				if (k==7 && (a[4] || a[5] || a[6])) { qrew[n].st[0].item=a[4]>0 && a[4]<MAXTITEM ? a[4] : 0; qrew[n].st[0].exp=a[5]>0 ? a[5] : 0; qrew[n].st[0].gold=a[6]>0 ? a[6] : 0; qrew[n].nst=1; }
+			} else bad++;
+			continue;
+		}
+		if (!strcmp(w1,"qstage")) {		// qstage <t> <times, 0 = every time after> <item> <exp> <gold>: the next reward step
+			int a[5];
+			if (sscanf(q,"%d %d %d %d %d",&a[0],&a[1],&a[2],&a[3],&a[4])==5 && a[0]>0 && a[0]<MAXTCHARS && qrew[a[0]].nst<QSTAGES && a[1]>=0) {
+				struct qstage *st=&qrew[a[0]].st[qrew[a[0]].nst++];
+				st->times=a[1]; st->item=a[2]>0 && a[2]<MAXTITEM ? a[2] : 0; st->exp=a[3]>0 ? a[3] : 0; st->gold=a[4]>0 ? a[4] : 0;
+			} else bad++;
 			continue;
 		}
 		if (!strcmp(w1,"order")) {
@@ -877,9 +890,10 @@ int talk_quest_order(int t)
 }
 
 /* ---- item quests: rewards, repeats (the editor's Quests page; "qreward" lines in npctalk.dat)
- * qreward <template> <limit> <first> <gold> <item2> <exp2> <gold2>
+ * qreward <template> <limit> <first> <gold>, then qstage <template> <times> <item> <exp> <gold> lines
  *   limit: how often one character may do it (0 = forever); first: how many times the first reward
- *   (the template's item + exp, plus gold) is given (0 = always); after that: item2 + exp2 + gold2.
+ *   (the template's item + exp, plus gold) is given (0 = always); then each step in turn for its times,
+ *   the last step from then on (e.g. 10,000 exp, 7,500, 5,000, then only the potion).
  * Gold in silver (100 = 1G). How often each character did it: questcount.dat, a row per character. */
 #define QCOUNT_FILE DATDIR"/questcount.dat"
 #define QCMAX 64
@@ -941,18 +955,38 @@ int quest_reward_now(int t,int co,int *item,int *exp,int *gold,int *left,int *la
 	r=&qrew[t];
 	cnt=(r->limit || r->first) && co ? quest_count(co,t) : 0;
 	if (r->limit) *left=cnt>=r->limit ? 0 : r->limit-cnt;
-	if (!r->first || cnt<r->first) { *item=ch_temp[t].data[66]; *exp=ch_temp[t].data[51]; *gold=r->gold1; }
-	else { *item=r->item2; *exp=r->exp2; *gold=r->gold2; *later=1; }
+	quest_reward_at(t,cnt,item,exp,gold,later);
 	if (*item<0 || *item>=MAXTITEM) *item=0;
 	return *item || *exp>0 || *gold>0;
 }
 
-int quest_reward_info(int t,int *limit,int *first,int *gold1,int *item2,int *exp2,int *gold2)
+int quest_reward_limit(int t)
 {
 	if (!talk_loaded) talk_load();
-	if (t<1 || t>=MAXTCHARS) return 0;
-	*limit=qrew[t].limit; *first=qrew[t].first; *gold1=qrew[t].gold1; *item2=qrew[t].item2; *exp2=qrew[t].exp2; *gold2=qrew[t].gold2;
-	return 1;
+	return t>0 && t<MAXTCHARS ? qrew[t].limit : 0;
+}
+
+/* the reward of template t's item quest at turn-in number cnt+1 (cnt = times done before);
+ * step: 0 = the first reward, 1.. = the steps after it */
+void quest_reward_at(int t,int cnt,int *item,int *exp,int *gold,int *stp)
+{
+	struct qrew *r=&qrew[t];
+	int k,c;
+	*stp=0;
+	if (!r->nst || !r->first || cnt<r->first) { *item=ch_temp[t].data[66]; *exp=ch_temp[t].data[51]; *gold=r->gold1; return; }
+	c=cnt-r->first;
+	for (k=0; k<r->nst-1; k++) {
+		if (!r->st[k].times || c<r->st[k].times) break;
+		c-=r->st[k].times;
+	}
+	*item=r->st[k].item; *exp=r->st[k].exp; *gold=r->st[k].gold; *stp=k+1;
+}
+
+int quest_reward_steps(int t)		// how many different rewards (1 = always the same)
+{
+	if (!talk_loaded) talk_load();
+	if (t<1 || t>=MAXTCHARS || !qrew[t].first) return 1;
+	return 1+qrew[t].nst;
 }
 
 int quest_gold_first(int t)		// a skill teacher's gold (given with the skill)
