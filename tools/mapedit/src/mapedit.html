@@ -596,6 +596,15 @@ function refetch(tiles) {
     api(`/api/region?x0=${cx * CH}&y0=${cy * CH}&x1=${cx * CH + CH - 1}&y1=${cy * CH + CH - 1}`).then(d => { c.data = d; redraw(); });
   }
 }
+function softReload() {     // the game's data changed: fetch what is on screen again, showing the old picture until the new one is here (no black flash)
+  const v = visible();
+  for (const [k, c] of [...chunks]) {
+    const [cx, cy] = k.split(',').map(Number);
+    if (cx * CH > v.x1 + CH || cx * CH + CH - 1 < v.x0 - CH || cy * CH > v.y1 + CH || cy * CH + CH - 1 < v.y0 - CH || !c.data) { chunks.delete(k); continue; }
+    const n = { data: c.data }; chunks.set(k, n);
+    api(`/api/region?x0=${cx * CH}&y0=${cy * CH}&x1=${cx * CH + CH - 1}&y1=${cy * CH + CH - 1}`).then(d => { if (chunks.get(k) === n && d && !d.error) { n.data = d; redraw(); } });
+  }
+}
 function T(x, y) {
   if (x < 0 || y < 0 || x >= MAPX || y >= MAPX) return null;
   const d = chunk(Math.floor(x / CH), Math.floor(y / CH));
@@ -2727,7 +2736,7 @@ async function edit(ops, lbl, reselect) {
   else if (r.msgs && r.msgs.length) toast([...new Set(r.msgs)].slice(0, 3).join('\n'), true);
   else if (ops.length && ops[0].op === 'area' && r.changed !== undefined && !r.undo_added && (r.undo ?? 0) === info.undo) toast(ops[0].floor ? 'Nothing changed there.' : 'Nothing changed: with "Also lay the floor" off, the brush only adds pieces on free ground (not on the black void).', true);
   Object.assign(info, { dirty: r.dirty ?? info.dirty, undo: r.undo ?? info.undo, redo: r.redo ?? info.redo }); status();
-  if (r.live && ops.some(o => o.op.startsWith('npc') || o.op.includes('temp'))) { chunks.clear(); redraw(); }
+  if (r.live && ops.some(o => o.op.startsWith('npc') || o.op.includes('temp'))) softReload();
   refetch(ops.filter(o => o.x !== undefined).flatMap(o => o.tx !== undefined ? [[o.x, o.y], [o.tx, o.ty]] : [[o.x, o.y]]));
   if (r.ok !== false && ops.some(o => o.op.startsWith('npc'))) api('/api/npcs').then(n => { if (Array.isArray(n) && pal) { pal.npcs = n; if (mode === 'map' && tab === 'npcs') leftUI(); } });
   if (selTile && (reselect || ops.some(o => o.x === selTile.x && o.y === selTile.y))) selectTile(selTile.x, selTile.y);
@@ -3051,7 +3060,7 @@ async function refreshInfo() {
   const r = await api('/api/info');
   const first = !info.areas.length, gen = info.gen;
   Object.assign(info, r); status();
-  if (gen && r.gen !== gen) { chunks.clear(); redraw(); if (selTile && !$('#tile').contains(document.activeElement)) selectTile(selTile.x, selTile.y); }
+  if (gen && r.gen !== gen) { softReload(); if (selTile && !$('#tile').contains(document.activeElement)) selectTile(selTile.x, selTile.y); }
   if (r.minimap && !miniOk && !mini.src) { mini.onload = () => { miniOk = true; $('#mini').style.display = 'block'; redraw(); }; mini.src = '/minimap.png'; }
   if (first) redraw();
 }

@@ -371,6 +371,8 @@ The map page (rail: Map).
 - **Save zones** writes `.dat/zones.dat` (the old one goes to `mapedit-backups/`) and the running game reloads it; **Undo changes** forgets what wasn't saved. Works while the game runs.
 - Boxes of one name that said different things ("in" / "in the") take the word most of them use.
 
+**No black flash while the game runs**: the editor re-reads the running game every few seconds (NPCs moving, live edits). It used to throw the whole map picture away and redraw it from nothing, so the map blinked black. Now it fetches what is on screen again and keeps showing the old picture until the new one is there; parts off screen are just dropped and fetched when you go there.
+
 **Tools** (the hotbar across the top of the map, with the key letter on each slot)
 - **Select** (V): click a tile to see and change it in the right panel.
 - **Brush** (B, drag), **Rectangle** (U, or Shift+drag), **Fill** (F: a room up to its walls and the void, indoors or outdoors like the clicked tile, not past doors; with a floor: the patch of the same floor).
