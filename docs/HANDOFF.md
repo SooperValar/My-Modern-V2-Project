@@ -163,8 +163,7 @@ New sprites: write them to `Client\GFX` (new numbers), then `tools/release/publi
 
 ## Open items (details in docs/TODO.md and docs/HOSTING.md)
 
-**Where we left off (Nov 4):** live: the rebalance, area clears. Built, not live yet: stacking (TODO 14) and the Cloak of Ice
-(template 1407, `tools/world/ice_cloak.txt`): one stop with the world update (stop-send, build_lab, get, update-world). Client: `Client\merc.exe` is now 2.15.02 (Greataxe skill name + Ctrl+click on stacks; earlier
+**Where we left off (Nov 4):** live: the rebalance, area clears, stacking (TODO 14), the Cloak of Ice (template 1407). Client: `Client\merc.exe` is now 2.15.02 (Greataxe skill name + Ctrl+click on stacks; earlier
 builds kept as `merc_2.15.01.exe` and `merc_old.exe`), NOT published: Cody tests at home, then `publish_client.py`
 (it also sends the Ice set pictures 18100-18105, which are in `Client\GFX`). Waiting for Cody at home: the summoner's
 staff and waypoints (TODO 13, pictures in `docs/ref`). Cody is going through the quests and area clears. The DuckDNS
