@@ -305,9 +305,9 @@ The design is in `docs/ITEM_TIERS.md`.
 
 ### Fire set for melee, Ice set for casters (`tools/world/fire_ice_sets.txt`)
 - **Fire set** (623-628): armor 9 per piece (= Titanium), Braveness +1, Agility +2, Strength +2 per piece (full set: +6 / +12 / +12).
-  Needs Braveness, Willpower, Intelligence 30 and Agility, Strength 70. Stealth -15 per piece as before.
+  Needs Braveness, Willpower, Intelligence 30 and Agility, Strength 70. Stealth -7 per piece.
 - **Ice set** (1272-1276, 1407): armor 5 per piece (= Steel +1), Braveness +1, Willpower +2, Intelligence +2 per piece.
-  Needs Braveness, Agility, Strength 30 and Willpower, Intelligence 70. Stealth -10 per piece as before.
+  Needs Braveness, Agility, Strength 30 and Willpower, Intelligence 70. Stealth -7 per piece.
 - Pieces already in the world get the new numbers with the new tool `tools/world/refresh_items.c`.
 - The old **Ice Cloak** (909, traded for an ice gargoyle egg, temporary) is not part of the set and stays as it is, on purpose.
 
