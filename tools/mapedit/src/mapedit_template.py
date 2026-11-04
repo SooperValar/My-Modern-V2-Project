@@ -196,9 +196,13 @@ def talk_parse(text):
                 continue
             if k == 'qreward' and len(a) >= 4:        # item quest: times, first times, gold (Quests page); then qstage lines
                 v = [int(x) for x in a[1:7] if x.lstrip('-').isdigit()]
-                r = qrew[int(a[0])] = {'lim': v[0], 'first': v[1], 'gold': v[2], 'st': []}
+                old = qrew.get(int(a[0]), {})
+                r = qrew[int(a[0])] = {'lim': v[0], 'first': v[1], 'gold': v[2], 'st': [], 'rmin': old.get('rmin', -1), 'rmax': old.get('rmax', -1)}
                 if len(v) >= 6 and any(v[3:6]):      # the older one-step form
                     r['st'].append([0, v[3], v[4], v[5]])
+            elif k == 'qrank' and len(a) >= 3:         # who may do it: lowest and highest rank, -1 = none
+                r = qrew.setdefault(int(a[0]), {'lim': 0, 'first': 0, 'gold': 0, 'st': []})
+                r['rmin'], r['rmax'] = int(a[1]), int(a[2])
             elif k == 'qstage' and len(a) >= 5 and int(a[0]) in qrew:
                 qrew[int(a[0])]['st'].append([int(x) for x in a[1:5]])
             elif k == 'order' and len(a) >= 2:          # #quest list order (Quests page): template, place (-1 = not listed)
@@ -266,7 +270,8 @@ def talk_text(quests, npcs, names):
         for t in sorted(od, key=lambda t: (od[t] < 0, abs(od[t]), t)):
             out.append('order %d %d %s' % (t, od[t], names.get(t, '')))
         out.append('')
-    qr = {int(t): r for t, r in (quests.get('qrew') or {}).items() if r.get('lim') or r.get('first') or r.get('gold') or r.get('st')}
+    qr = {int(t): r for t, r in (quests.get('qrew') or {}).items() if r.get('lim') or r.get('first') or r.get('gold') or r.get('st')
+          or r.get('rmin', -1) >= 0 or r.get('rmax', -1) >= 0}
     if qr:
         out.append('# item quests: qreward <NPC template> <times, 0 = forever> <the first reward for the first n times> <its gold>,')
         out.append('# then qstage <NPC template> <times, 0 = every time after> <item> <exp> <gold> for each later reward (gold in silver)')
@@ -275,6 +280,8 @@ def talk_text(quests, npcs, names):
             out.append('qreward %d %d %d %d %s' % (t, int(r.get('lim', 0)), int(r.get('first', 0)), int(r.get('gold', 0)), names.get(t, '')))
             for st in (r.get('st') or [])[:7]:
                 out.append('qstage %d %d %d %d %d' % (t, *[max(0, int(v)) for v in (list(st) + [0] * 4)[:4]]))
+            if r.get('rmin', -1) >= 0 or r.get('rmax', -1) >= 0:
+                out.append('qrank %d %d %d' % (t, int(r.get('rmin', -1)), int(r.get('rmax', -1))))
         out.append('')
     for n in sorted(set(qn) | set(qs)):
         out.append('quest %d %s' % (n, ' '.join(str(qn.get(n, '')).split())))
@@ -977,7 +984,7 @@ class World:
                 where = self.zone(x, y) if (x or y) else ''
                 simple.append({'t': t, 'name': self.tname(t), 'sprite': self.tchar_sprite(t, 4),
                                'x': x, 'y': y, 'where': where, 'data': d, 'hint': cstr(self.tchar[o + CT_TEXT + 2 * 160:o + CT_TEXT + 3 * 160]),
-                               'order': order.get(t, 0), 'rew': qrew.get(t, {'lim': 0, 'first': 0, 'gold': 0, 'st': []}), 'puzzle': bool(d[50] == 0 and ('Labyrinth' in where or 'Tower' in where)),
+                               'order': order.get(t, 0), 'rew': dict({'lim': 0, 'first': 0, 'gold': 0, 'st': [], 'rmin': -1, 'rmax': -1}, **qrew.get(t, {})), 'puzzle': bool(d[50] == 0 and ('Labyrinth' in where or 'Tower' in where)),
                                'count': len(self.living(t)) + len([p for p in self.pending() if p[2] == t])})
         refs = {}
         for who, ents in npcs.items():
@@ -1000,8 +1007,10 @@ class World:
         qs['order'] = {int(t): int(v) for t, v in order.items() if int(v) and 0 < int(t) < MAXTCHARS and -1 <= int(v) <= 30000}
         if rewards is not None:
             cl = lambda v: max(0, min(int(v or 0), 2000000000))
+            rk = lambda v: max(-1, min(23, int(-1 if v is None else v)))
             qs['qrew'] = {int(t): {'lim': cl(r.get('lim')), 'first': cl(r.get('first')), 'gold': cl(r.get('gold')),
-                                   'st': [[cl(v) for v in (list(x) + [0] * 4)[:4]] for x in (r.get('st') or [])[:7]]}
+                                   'st': [[cl(v) for v in (list(x) + [0] * 4)[:4]] for x in (r.get('st') or [])[:7]],
+                                   'rmin': rk(r.get('rmin')), 'rmax': rk(r.get('rmax'))}
                           for t, r in rewards.items() if 0 < int(t) < MAXTCHARS}
         return self.talk_save(qs, npcs, ctl)
 

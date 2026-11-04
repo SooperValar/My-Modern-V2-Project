@@ -491,6 +491,18 @@ int npc_give(int cn,int co,int in,int money)
         if (in && talk_custom_give(cn,co,in)) return 0;
 
         if (in && ch[cn].data[49]==it[in].temp) {
+                // MyV2: the quest is only for some ranks (Quests page)
+                {
+                        int lo,hi,rk;
+                        if (IS_PLAYER(co) && (rk=quest_rank_check(ch[cn].temp,co,&lo,&hi))!=0) {
+                                if (rk<0) do_sayx(cn,"You are not ready for this yet, %s. Come back when you are a %s.",ch[co].name,rank_name[lo]);
+                                else do_sayx(cn,"This task is not for one of your rank, %s.",ch[co].name);
+                                god_take_from_char(in,cn);
+                                god_give_char(in,co);
+                                do_char_log(co,1,"%s did not accept the %s.\n",ch[cn].reference,it[in].name);
+                                return 0;
+                        }
+                }
                 // MyV2: an item trade this player has done as often as it can be done (Quests page: "times")
                 if (!ch[cn].data[50] && talk_quest_maxed(cn,co)) {
                         do_sayx(cn,"Thank you, %s, but I don't need any more of those.",ch[co].name);

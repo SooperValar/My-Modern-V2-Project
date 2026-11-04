@@ -2028,6 +2028,7 @@ static int quest_build(int cn,struct qent *q,int max,int all)
 	for (n=1; n<MAXTCHARS && cnt<max; n++) {
 		if (ch_temp[n].used==USE_EMPTY || !ch_temp[n].data[49]) continue;
 		if (talk_quest_order(n)<0) continue;		// left out on the Quests page
+		{ int lo,hi; if (quest_rank_check(n,cn,&lo,&hi) && !all) continue; }	// not for this rank
 		q[cnt].ord=talk_quest_order(n);
 		if (ch_temp[n].data[50]) {		// a skill teacher
 			nr=quest_skill(cn,ch_temp[n].data[50]);
@@ -2035,6 +2036,7 @@ static int quest_build(int cn,struct qent *q,int max,int all)
 			if (!ch[cn].skill[nr][2] && !all) continue;	// not for this class
 			if (ch[cn].skill[nr][0] && !all) continue;	// learned already
 			q[cnt].t=n; q[cnt].skill=nr; q[cnt].known=ch[cn].skill[nr][0]!=0; q[cnt].score=ch_temp[n].data[51];
+			{ int lo,hi; if (quest_rank_check(n,cn,&lo,&hi)) q[cnt].known=1; }
 			cnt++;
 		} else {				// an item for an item, exp or gold (first times / later, how often: npctalk.c)
 			int it1,ex1,g1,left,later;
@@ -2043,6 +2045,7 @@ static int quest_build(int cn,struct qent *q,int max,int all)
 			area=get_area_m(ch_temp[n].x,ch_temp[n].y,1);
 			if (strstr(area,"Labyrinth") || strstr(area,"Tower")) continue;
 			q[cnt].t=n; q[cnt].skill=-1; q[cnt].known=left==0;
+			{ int lo,hi; if (quest_rank_check(n,cn,&lo,&hi)) q[cnt].known=1; }
 			q[cnt].score=1000000+(ch_temp[n].data[66]>0 && ch_temp[n].data[66]<MAXTITEM ? it_temp[ch_temp[n].data[66]].value/100 : 0);
 			cnt++;
 		}
@@ -2138,6 +2141,14 @@ void do_quest(int cn,char *a,char *b)
 			else if (left>0) do_char_log(cn,1,"  Times:  %d more time%s\n",left,left==1 ? "" : "s");
 			else if (quest_reward_steps(t)>1 || ch_temp[t].data[66]) do_char_log(cn,1,"  Times:  as often as you like\n");
 		}
+		{
+			int lo,hi,rk=quest_rank_check(t,cn,&lo,&hi);
+			if (lo>=0 && hi>=0) do_char_log(cn,1,"  Rank:   %s to %s\n",rank_name[lo],rank_name[hi]);
+			else if (lo>=0) do_char_log(cn,1,"  Rank:   %s or higher\n",rank_name[lo]);
+			else if (hi>=0) do_char_log(cn,1,"  Rank:   up to %s\n",rank_name[hi]);
+			if (rk<0) do_char_log(cn,0,"You are not ready for this one yet.\n");
+			else if (rk>0) do_char_log(cn,0,"This one is below your rank.\n");
+		}
 		if (ch_temp[t].text[2][0] && ch_temp[t].text[2][0]!='#') {
 			quest_words(cn,ch_temp[t].text[2],buf,sizeof(buf));
 			do_char_log(cn,2,"%s says: \"%s\"\n",ch_temp[t].name,buf);
@@ -2178,7 +2189,7 @@ void do_quest(int cn,char *a,char *b)
 	if (page<pages) snprintf(buf,sizeof(buf),"  #quest%s p%d: next page",all ? " all" : "",page+1);
 	else buf[0]=0;
 	do_char_log(cn,2,"#quest%s <n>: details%s%s\n",all ? " all" : "",buf,!all && page>=pages ? "  #quest all: every one" : "");
-	if (all) do_char_log(cn,3,"Blue: learned already, or not for your class.\n");
+	if (all) do_char_log(cn,3,"Blue: done, not for your class, or not for your rank.\n");
 }
 
 /* #repair (worn gear) and #repairinv (backpack): the Repair skill on every damaged item */

@@ -131,7 +131,7 @@ static struct tentry ent[MAXENT];
 static char hasnear[MAXTCHARS];		// templates with "when near" lines
 #define QSTAGES 8
 struct qstage { int times, item, exp, gold; };
-struct qrew { int limit, first, gold1, nst; struct qstage st[QSTAGES]; };
+struct qrew { int limit, first, gold1, nst; struct qstage st[QSTAGES]; int rmin1, rmax1; };	// rmin1/rmax1: rank + 1, 0 = none
 static struct qrew qrew[MAXTCHARS];	// item quests: repeats and later rewards ("qreward")
 static short qorder[MAXTCHARS];		// #quest: place in the list ("order <template> <n>", the editor's Quests page); 0 = by exp, -1 = not listed
 static struct tstep step[MAXSTEP];
@@ -203,9 +203,18 @@ int talk_load(void)
 			int a[7],k=sscanf(q,"%d %d %d %d %d %d %d",&a[0],&a[1],&a[2],&a[3],&a[4],&a[5],&a[6]);
 			n=a[0];
 			if ((k==4 || k==7) && n>0 && n<MAXTCHARS && a[1]>=0 && a[2]>=0 && a[3]>=0) {
+				int r1=qrew[n].rmin1,r2=qrew[n].rmax1;
 				memset(&qrew[n],0,sizeof(qrew[n]));
+				qrew[n].rmin1=r1; qrew[n].rmax1=r2;
 				qrew[n].limit=a[1]; qrew[n].first=a[2]; qrew[n].gold1=a[3];
 				if (k==7 && (a[4] || a[5] || a[6])) { qrew[n].st[0].item=a[4]>0 && a[4]<MAXTITEM ? a[4] : 0; qrew[n].st[0].exp=a[5]>0 ? a[5] : 0; qrew[n].st[0].gold=a[6]>0 ? a[6] : 0; qrew[n].nst=1; }
+			} else bad++;
+			continue;
+		}
+		if (!strcmp(w1,"qrank")) {		// qrank <t> <lowest rank> <highest rank> (-1 = none): who may do the quest
+			int a[3];
+			if (sscanf(q,"%d %d %d",&a[0],&a[1],&a[2])==3 && a[0]>0 && a[0]<MAXTCHARS && a[1]>=-1 && a[1]<=23 && a[2]>=-1 && a[2]<=23) {
+				qrew[a[0]].rmin1=a[1]+1; qrew[a[0]].rmax1=a[2]+1;
 			} else bad++;
 			continue;
 		}
@@ -1023,4 +1032,20 @@ int talk_quest_maxed(int cn,int co)	// this player has done the item trade as of
 	if (!talk_loaded) talk_load();
 	if (t<1 || t>=MAXTCHARS || !qrew[t].limit || !IS_PLAYER(co)) return 0;
 	return quest_count(co,t)>=qrew[t].limit;
+}
+
+/* the ranks that may do template t's quest: 0 = this character may, -1 = rank too low, 1 = too high.
+ * lo / hi: the lowest / highest rank (-1 = none) */
+int quest_rank_check(int t,int co,int *lo,int *hi)
+{
+	int r;
+	if (!talk_loaded) talk_load();
+	*lo=*hi=-1;
+	if (t<1 || t>=MAXTCHARS) return 0;
+	*lo=qrew[t].rmin1-1; *hi=qrew[t].rmax1-1;
+	if (co<1 || co>=MAXCHARS) return 0;
+	r=points2rank(ch[co].points_tot);
+	if (*lo>=0 && r<*lo) return -1;
+	if (*hi>=0 && r>*hi) return 1;
+	return 0;
 }

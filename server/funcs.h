@@ -444,6 +444,7 @@ int quest_reward_steps(int t);
 int quest_gold_first(int t);
 int talk_quest_trade(int cn,int co,int in);
 int talk_quest_maxed(int cn,int co);
+int quest_rank_check(int t,int co,int *lo,int *hi);
 int zone_count(void);
 int zone_boxes(void);
 
