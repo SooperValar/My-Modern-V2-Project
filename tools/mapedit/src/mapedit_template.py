@@ -17,7 +17,7 @@ item.dat), area.c (zone names), the client's GFX/, pnglib.dat/.idx and
 gx00.dat/.idx (sprites), and optionally a minimap picture (world_minimap.png).
 """
 from collections import Counter
-import argparse, glob, io, json, mmap, os, re, shutil, struct, subprocess, sys, threading, time, zlib, random
+import argparse, collections, glob, io, json, mmap, os, re, shutil, struct, subprocess, sys, threading, time, zlib, random
 from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
 from urllib.parse import urlparse, parse_qs
 
@@ -344,6 +344,14 @@ def talk_text(quests, npcs, names):
 
 
 # ---------------------------------------------------------------- world
+# rugs: corners and sides placed by position, the middle filled at random (found on the game's own map).
+# Directions as the minimap: north = smaller x, west = smaller y.
+BUILTIN_RUGS = [
+    {"name": "Red rug", "nw": 523, "n": 524, "ne": 525, "w": 530, "e": 526, "sw": 529, "s": 528, "se": 527, "fill": [[520, 312], [521, 249], [522, 264]], "from": [22, 596]},
+    {"name": "Blue rug", "nw": 534, "n": 535, "ne": 536, "w": 541, "e": 537, "sw": 540, "s": 539, "se": 538, "fill": [[531, 57], [532, 21], [533, 51]], "from": [27, 522]},
+]
+RUG_KEYS = ('nw', 'n', 'ne', 'w', 'e', 'sw', 's', 'se')
+
 BUILTIN_AREAS = [{"name":"City Park","floors":[[553,22.2],[551,18.6],[554,17.5],[552,17.4]],"scatter":[{"k":"o","s":1114,"b":3,"p":0.00985},
     {"k":"o","s":1238,"b":3,"p":0.00923},
     {"k":"o","s":1112,"b":3,"p":0.00862},
@@ -1517,6 +1525,53 @@ class World:
         own = {a['name'] for a in BUILTIN_AREAS}
         return out + [dict(a, builtin=0, hasdefault=1 if a['name'] in own else 0) for a in user.values()]
 
+    # --- rugs (Floors tab): a rectangle's corners and sides by position, the middle at random
+    def rugs_path(self):
+        return os.path.join(self.dat, 'mapedit-rugs.json')
+
+    def rugs(self):
+        user = []
+        try:
+            user = json.load(open(self.rugs_path(), encoding='utf-8'))
+        except (OSError, ValueError):
+            pass
+        names = {r['name'] for r in user}
+        return [dict(r, builtin=1) for r in BUILTIN_RUGS if r['name'] not in names] + [dict(r, builtin=0) for r in user]
+
+    def rug_save(self, rug=None, delete=None, rename=None):
+        try:
+            user = json.load(open(self.rugs_path(), encoding='utf-8'))
+        except (OSError, ValueError):
+            user = []
+        if delete:
+            user = [r for r in user if r['name'] != delete]
+        if rename and rename[0] != rename[1]:
+            for r in user:
+                if r['name'] == rename[0]:
+                    r['name'] = rename[1]
+        if rug:
+            r = {k: int(rug[k]) for k in RUG_KEYS}
+            r['name'] = str(rug['name']).strip()[:40]
+            r['fill'] = [[int(a), max(1, int(b))] for a, b in rug.get('fill', []) if int(a)]
+            if rug.get('from'): r['from'] = [int(v) for v in rug['from'][:2]]
+            user = [u for u in user if u['name'] != r['name']] + [r]
+        json.dump(user, open(self.rugs_path(), 'w', encoding='utf-8'), indent=1)
+        return self.rugs()
+
+    def rug_learn(self, x0, y0, x1, y1):
+        """a rug from the map: the rectangle's corner tiles, its sides (the most common floor on each), its middle"""
+        x0, x1, y0, y1 = min(x0, x1), max(x0, x1), min(y0, y1), max(y0, y1)
+        if x1 - x0 < 2 or y1 - y0 < 2:
+            return {'error': 'Drag over the whole rug, its border included (at least 3 × 3).'}
+        g = lambda x, y: self.tile(x, y)[0]
+        most = lambda vals: collections.Counter(vals).most_common(1)[0][0]
+        r = {'nw': g(x0, y0), 'ne': g(x0, y1), 'sw': g(x1, y0), 'se': g(x1, y1),
+             'n': most([g(x0, y) for y in range(y0 + 1, y1)]), 's': most([g(x1, y) for y in range(y0 + 1, y1)]),
+             'w': most([g(x, y0) for x in range(x0 + 1, x1)]), 'e': most([g(x, y1) for x in range(x0 + 1, x1)]),
+             'fill': [[a, b] for a, b in collections.Counter(g(x, y) for x in range(x0 + 1, x1) for y in range(y0 + 1, y1)).most_common(8)],
+             'from': [x0, y0], 'name': ''}
+        return r
+
     def area_save(self, preset=None, delete=None):
         try:
             user = json.load(open(self.areas_path(), encoding='utf-8'))
@@ -2382,6 +2437,8 @@ def make_handler(world, sprites, page, minimap, ctl):
                 return
             if u.path == '/api/areas':
                 return self.js(BUILTIN_AREAS if q.get('defaults') else world.area_presets())
+            if u.path == '/api/rugs':
+                return self.js(world.rugs())
             if u.path == '/api/chest':
                 qs, npcs = world.talk_load()
                 return self.js({'chest': qs['chests'].get('%d,%d' % (int(q['x']), int(q['y'])))})
@@ -2428,6 +2485,12 @@ def make_handler(world, sprites, page, minimap, ctl):
                                 'dirty': world.dirty, 'undo': len(world.undo), 'redo': len(world.redo)})
             if u.path in ('/api/save', '/api/relight', '/api/restore') and server_running():
                 return self.js({'error': 'The game server is running: live edits are already in the game, there is nothing to save.'})
+            if u.path == '/api/rugs':
+                if body.get('learn'):
+                    return self.js(world.rug_learn(*[int(v) for v in body['learn'][:4]]))
+                if body.get('save') and not str(body['save'].get('name', '')).strip():
+                    return self.js({'error': 'Give the rug a name.'})
+                return self.js({'rugs': world.rug_save(body.get('save'), body.get('delete'), body.get('rename'))})
             if u.path == '/api/questorder':
                 return self.js({'msg': world.quests_order_save(body.get('order') or {}, body.get('rewards'), ctl)})
             if u.path == '/api/zones':

@@ -365,6 +365,11 @@ The map page (rail: Map).
 - **Floors** (by how often they are used), **Walls** (drawn into the tile, they block), **Objects** (furniture, decoration, doors, chests…), **Items** (things players can pick up), **NPCs** (see [NPC editor](#npc-editor)), **Flags** (paint a flag on tiles).
 - Right-click an item, object or wall in the library to edit its template.
 
+**Rugs** (Floors tab, at the top)
+- A rug brush: pick one and drag a rectangle (at least 2 × 2): the corners and sides go where they belong, the middle is filled at random from its middle pieces (weighted by how often they appear). Brush, rectangle and the other drawing tools all lay it as a rectangle; Alt or the eraser work as usual.
+- Two come from the game's own map: the **Red rug** (border 523-530, middle 520/521/522) and the **Blue rug** (border 534-541, middle 531/532/533).
+- **+ Learn a rug from the map**: drag over a whole rug, its border included (at least 3 × 3); its corners, its sides (the most common piece on each) and its middle become a new rug, named by you. Right-click your own rug to rename or delete it. Kept in `.dat/mapedit-rugs.json`.
+
 **Zones tab** (draws the game's zones; see [Zone names](#new-zones-and-areas))
 - Lists every zone in the order the game names them (search filters); click one to pick it and go there, or click the map to pick the smallest zone at that spot. The picked zone's boxes are shaded blue on the map, the others outlined in gold.
 - The picked zone: its name (renaming it to another zone's name offers to join the two), what the game says ("in", "in the", "on" for streets, "at"), its boxes (go to, remove) and **Delete zone**. **+ Add box** and drag on the map (a click adds a single tile) adds boxes until "Done" or Esc; Alt+click removes the picked zone's box under the mouse. **+ New zone** starts one and goes straight to adding boxes.

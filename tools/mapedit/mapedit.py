@@ -17,7 +17,7 @@ item.dat), area.c (zone names), the client's GFX/, pnglib.dat/.idx and
 gx00.dat/.idx (sprites), and optionally a minimap picture (world_minimap.png).
 """
 from collections import Counter
-import argparse, glob, io, json, mmap, os, re, shutil, struct, subprocess, sys, threading, time, zlib, random
+import argparse, collections, glob, io, json, mmap, os, re, shutil, struct, subprocess, sys, threading, time, zlib, random
 from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
 from urllib.parse import urlparse, parse_qs
 
@@ -344,6 +344,14 @@ def talk_text(quests, npcs, names):
 
 
 # ---------------------------------------------------------------- world
+# rugs: corners and sides placed by position, the middle filled at random (found on the game's own map).
+# Directions as the minimap: north = smaller x, west = smaller y.
+BUILTIN_RUGS = [
+    {"name": "Red rug", "nw": 523, "n": 524, "ne": 525, "w": 530, "e": 526, "sw": 529, "s": 528, "se": 527, "fill": [[520, 312], [521, 249], [522, 264]], "from": [22, 596]},
+    {"name": "Blue rug", "nw": 534, "n": 535, "ne": 536, "w": 541, "e": 537, "sw": 540, "s": 539, "se": 538, "fill": [[531, 57], [532, 21], [533, 51]], "from": [27, 522]},
+]
+RUG_KEYS = ('nw', 'n', 'ne', 'w', 'e', 'sw', 's', 'se')
+
 BUILTIN_AREAS = [{"name":"City Park","floors":[[553,22.2],[551,18.6],[554,17.5],[552,17.4]],"scatter":[{"k":"o","s":1114,"b":3,"p":0.00985},
     {"k":"o","s":1238,"b":3,"p":0.00923},
     {"k":"o","s":1112,"b":3,"p":0.00862},
@@ -1517,6 +1525,53 @@ class World:
         own = {a['name'] for a in BUILTIN_AREAS}
         return out + [dict(a, builtin=0, hasdefault=1 if a['name'] in own else 0) for a in user.values()]
 
+    # --- rugs (Floors tab): a rectangle's corners and sides by position, the middle at random
+    def rugs_path(self):
+        return os.path.join(self.dat, 'mapedit-rugs.json')
+
+    def rugs(self):
+        user = []
+        try:
+            user = json.load(open(self.rugs_path(), encoding='utf-8'))
+        except (OSError, ValueError):
+            pass
+        names = {r['name'] for r in user}
+        return [dict(r, builtin=1) for r in BUILTIN_RUGS if r['name'] not in names] + [dict(r, builtin=0) for r in user]
+
+    def rug_save(self, rug=None, delete=None, rename=None):
+        try:
+            user = json.load(open(self.rugs_path(), encoding='utf-8'))
+        except (OSError, ValueError):
+            user = []
+        if delete:
+            user = [r for r in user if r['name'] != delete]
+        if rename and rename[0] != rename[1]:
+            for r in user:
+                if r['name'] == rename[0]:
+                    r['name'] = rename[1]
+        if rug:
+            r = {k: int(rug[k]) for k in RUG_KEYS}
+            r['name'] = str(rug['name']).strip()[:40]
+            r['fill'] = [[int(a), max(1, int(b))] for a, b in rug.get('fill', []) if int(a)]
+            if rug.get('from'): r['from'] = [int(v) for v in rug['from'][:2]]
+            user = [u for u in user if u['name'] != r['name']] + [r]
+        json.dump(user, open(self.rugs_path(), 'w', encoding='utf-8'), indent=1)
+        return self.rugs()
+
+    def rug_learn(self, x0, y0, x1, y1):
+        """a rug from the map: the rectangle's corner tiles, its sides (the most common floor on each), its middle"""
+        x0, x1, y0, y1 = min(x0, x1), max(x0, x1), min(y0, y1), max(y0, y1)
+        if x1 - x0 < 2 or y1 - y0 < 2:
+            return {'error': 'Drag over the whole rug, its border included (at least 3 × 3).'}
+        g = lambda x, y: self.tile(x, y)[0]
+        most = lambda vals: collections.Counter(vals).most_common(1)[0][0]
+        r = {'nw': g(x0, y0), 'ne': g(x0, y1), 'sw': g(x1, y0), 'se': g(x1, y1),
+             'n': most([g(x0, y) for y in range(y0 + 1, y1)]), 's': most([g(x1, y) for y in range(y0 + 1, y1)]),
+             'w': most([g(x, y0) for x in range(x0 + 1, x1)]), 'e': most([g(x, y1) for x in range(x0 + 1, x1)]),
+             'fill': [[a, b] for a, b in collections.Counter(g(x, y) for x in range(x0 + 1, x1) for y in range(y0 + 1, y1)).most_common(8)],
+             'from': [x0, y0], 'name': ''}
+        return r
+
     def area_save(self, preset=None, delete=None):
         try:
             user = json.load(open(self.areas_path(), encoding='utf-8'))
@@ -2382,6 +2437,8 @@ def make_handler(world, sprites, page, minimap, ctl):
                 return
             if u.path == '/api/areas':
                 return self.js(BUILTIN_AREAS if q.get('defaults') else world.area_presets())
+            if u.path == '/api/rugs':
+                return self.js(world.rugs())
             if u.path == '/api/chest':
                 qs, npcs = world.talk_load()
                 return self.js({'chest': qs['chests'].get('%d,%d' % (int(q['x']), int(q['y'])))})
@@ -2428,6 +2485,12 @@ def make_handler(world, sprites, page, minimap, ctl):
                                 'dirty': world.dirty, 'undo': len(world.undo), 'redo': len(world.redo)})
             if u.path in ('/api/save', '/api/relight', '/api/restore') and server_running():
                 return self.js({'error': 'The game server is running: live edits are already in the game, there is nothing to save.'})
+            if u.path == '/api/rugs':
+                if body.get('learn'):
+                    return self.js(world.rug_learn(*[int(v) for v in body['learn'][:4]]))
+                if body.get('save') and not str(body['save'].get('name', '')).strip():
+                    return self.js({'error': 'Give the rug a name.'})
+                return self.js({'rugs': world.rug_save(body.get('save'), body.get('delete'), body.get('rename'))})
             if u.path == '/api/questorder':
                 return self.js({'msg': world.quests_order_save(body.get('order') or {}, body.get('rewards'), ctl)})
             if u.path == '/api/zones':
@@ -2910,6 +2973,8 @@ table.pl button:hover { color: var(--text); border-color: var(--gold); }
 .athumb .as { width: 62%; height: 62%; }
 .athumb .as0 { left: 2%; bottom: 4%; } .athumb .as1 { right: 0; bottom: 14%; }
 .cell .athumb { width: 100% !important; height: auto !important; flex: 1; min-height: 0; }
+.rugthumb { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; flex: none; margin: 0 auto; }
+.rugthumb canvas { width: 100%; height: auto; aspect-ratio: 1; }
 .areatop { display: flex; gap: 8px; align-items: center; justify-content: space-between; padding: 4px 2px 8px; flex-wrap: wrap; }
 .faces { display: flex; gap: 8px; margin: 4px 0; }
 .faces .face { padding: 3px; border: 1px solid #40362a; border-radius: 8px; background: #221d16; position: relative; }
@@ -3413,7 +3478,7 @@ function cats() {
     items: t.filter(x => x[3]),
   };
 }
-function brushKey(b) { return b.kind + ':' + (b.kind === 'area' ? b.name : b.kind === 'place' || b.kind === 'npc' ? b.t[0] : b.kind === 'flag' ? b.bit : b.kind === 'mix' ? b.items.map(i => i.s + 'x' + i.w).join(',') : b.s); }
+function brushKey(b) { return b.kind + ':' + (b.kind === 'area' || b.kind === 'rug' ? b.name : b.kind === 'place' || b.kind === 'npc' ? b.t[0] : b.kind === 'flag' ? b.bit : b.kind === 'mix' ? b.items.map(i => i.s + 'x' + i.w).join(',') : b.s); }
 // ---- floor mixes: several floors painted at random, each with a weight
 let mixes = [];
 try { mixes = JSON.parse(localStorage.getItem('myv2.mixes') || '[]'); } catch (e) {}
@@ -3474,6 +3539,7 @@ function setBrush(b, keepTool) {
 function card() {
   const c = $('#card'); c.innerHTML = ''; c.classList.toggle('mix', brush.kind === 'mix');
   if (brush.kind === 'mix') return mixCard(c);
+  if (brush.kind === 'rug') return rugCard(c);
   if (brush.kind === 'area') {
     const a = areaByName(brush.name) || { name: brush.name, floors: [], scatter: [] };
     c.appendChild(areaThumb(a, 40));
@@ -3652,6 +3718,7 @@ function leftUI() {
     } else if (tab === 'floors') {
       const list = pal.floors.filter(([s]) => match('', s));
       if (/^\d+$/.test(q) && !list.some(([s]) => String(s) === q)) list.unshift([+q, 0]);
+      rugSection(w, sect, grid, match);
       if (!q) mixSection(true);
       sect('Floors · by how often they are used · Ctrl+click to mix'); lazy(grid(), list, f => cellFloor(f[0], f[1]));
     } else if (tab === 'npcs') {
@@ -4134,6 +4201,71 @@ let areas = [], areaLearn = false;
 let areaFloor = true;
 try { areaFloor = localStorage.getItem('myv2.areafloor') !== '0'; } catch (e) {}
 function setAreaFloor(on) { areaFloor = on; try { localStorage.setItem('myv2.areafloor', on ? '1' : '0'); } catch (e) {} }
+// ---- rugs (Floors tab): drag a rectangle; corners and sides go where they belong, the middle at random.
+// Slots by the minimap: north = smaller x (the first row), west = smaller y.
+let rugs = [], rugLearn = false;
+function loadRugs() { return api('/api/rugs').then(r => { if (Array.isArray(r)) rugs = r; return rugs; }); }
+const rugByName = n => rugs.find(r => r.name === n);
+function rugOps(R, x0, y0, x1, y1) {
+  const ops = [], fill = (R.fill && R.fill.length ? R.fill : [[R.n, 1]]).map(([s, w]) => ({ s, w }));
+  for (let x = x0; x <= x1; x++) for (let y = y0; y <= y1; y++) {
+    const N = x === x0, S = x === x1, W = y === y0, E = y === y1;
+    const s = N && W ? R.nw : N && E ? R.ne : S && W ? R.sw : S && E ? R.se : N ? R.n : S ? R.s : W ? R.w : E ? R.e : mixPick(fill);
+    ops.push({ op: 'floor', x, y, s, set: false });
+  }
+  return ops;
+}
+function rugThumb(R, w) {          // the rug as a small 3 x 3 (its corners, sides and middle)
+  const c = document.createElement('div'); c.className = 'rugthumb'; c.style.width = c.style.height = w + 'px';
+  const grid = [[R.nw, R.n, R.ne], [R.w, (R.fill && R.fill[0] || [R.n])[0], R.e], [R.sw, R.s, R.se]];
+  grid.forEach(row => row.forEach(s => c.appendChild(thumb(s, Math.floor(w / 3), Math.floor(w / 3)))));
+  return c;
+}
+function cellRug(R) {
+  const c = document.createElement('div'); c.className = 'cell'; c.dataset.k = 'rug:' + R.name;
+  if (brush.kind === 'rug' && brush.name === R.name) c.classList.add('sel');
+  c.title = `${R.name} · drag a rectangle on the map${R.builtin ? ' · from the game\'s own map' : ' · right-click to rename or delete'}`;
+  c.appendChild(rugThumb(R, 60)); const l = document.createElement('div'); l.className = 'lab'; l.textContent = R.name; c.appendChild(l);
+  c.onclick = () => setBrush({ kind: 'rug', name: R.name });
+  c.oncontextmenu = e => { e.preventDefault(); rugMenu(R); };
+  return c;
+}
+async function rugMenu(R) {
+  if (R.builtin) return toast('This rug comes from the game\'s own map. Learn your own with "+ Learn a rug from the map".');
+  const n = prompt(`Rename "${R.name}" (empty = delete it):`, R.name);
+  if (n === null) return;
+  if (!n.trim()) { if (!confirm(`Delete the rug "${R.name}"?`)) return; const r = await api('/api/rugs', { delete: R.name }); rugs = r.rugs || rugs; }
+  else { const r = await api('/api/rugs', { rename: [R.name, n.trim()] }); rugs = r.rugs || rugs; if (brush.kind === 'rug' && brush.name === R.name) brush.name = n.trim(); }
+  leftUI(); card();
+}
+function rugSection(w, sect, grid, match) {
+  const list = rugs.filter(r => match(r.name, ''));
+  const top = document.createElement('div'); top.className = 'areatop';
+  top.innerHTML = `<span class="sect" style="padding:0">Rugs · drag a rectangle</span><button class="btn sec" title="Drag over a rug on the map, its border included: its corners, sides and middle become a rug brush">+ Learn a rug from the map</button>`;
+  top.querySelector('button').onclick = () => { rugLearn = true; cv.style.cursor = 'crosshair'; toast('Drag over a whole rug on the map, its border included. Esc cancels.'); };
+  w.appendChild(top);
+  if (list.length) { const g = grid(); list.forEach(r => g.appendChild(cellRug(r))); }
+}
+async function finishRugLearn(x0, y0, x1, y1) {
+  rugLearn = false; setTool(tool);
+  const r = await api('/api/rugs', { learn: [x0, y0, x1, y1] });
+  if (r.error) return toast(r.error, true);
+  const name = prompt('Name for this rug:', 'Rug ' + (rugs.filter(x => !x.builtin).length + 1));
+  if (!name || !name.trim()) return toast('Not saved.');
+  r.name = name.trim();
+  const s = await api('/api/rugs', { save: r });
+  if (s.error) return toast(s.error, true);
+  rugs = s.rugs; setBrush({ kind: 'rug', name: r.name }); if (mode === 'map') leftUI();
+  toast(`Rug "${r.name}" saved: drag a rectangle on the map to lay it.`);
+}
+function rugCard(c) {
+  const R = rugByName(brush.name) || { name: brush.name };
+  c.appendChild(rugThumb(R, 42));
+  const d = document.createElement('div'); d.innerHTML = '<div class="t"></div><div class="s"></div>';
+  d.firstChild.textContent = 'Rug: ' + R.name;
+  d.lastChild.textContent = `Drag a rectangle (at least 2 × 2): corners and sides at the edge, the middle ${R.fill && R.fill.length > 1 ? 'at random from ' + R.fill.map(f => f[0]).join(', ') : 'filled'}.`;
+  c.appendChild(d);
+}
 function loadAreas() { return api('/api/areas').then(a => { if (Array.isArray(a)) { a.forEach(x => { if (x.dens === undefined) x.dens = 1; }); areas = a; } return areas; }); }
 const areaByName = n => areas.find(a => a.name === n);
 function scatterSprite(e) { if (e.k === 'o') return e.s; const r = pal && pal.templates.find(t => t[0] === e.t); return r ? r[2] : 0; }
@@ -5482,6 +5614,7 @@ cv.addEventListener('mousedown', e => {
   if (e.button === 1 || e.button === 2 || (e.button === 0 && (spaceDown || tool === 'pan'))) { panning = { sx, sy, cx: cam.x, cy: cam.y }; cv.style.cursor = 'grabbing'; e.preventDefault(); return; }
   if (e.button !== 0) return;
   if (areaLearn) { rect = { a: t, b: t, learn: true }; redrawTop(); return; }
+  if (rugLearn) { rect = { a: t, b: t, rug: true }; redrawTop(); return; }
   if (mode === 'map' && tab === 'zones' && Z && !destPick && !tplPick && !npcPick) {
     if (e.altKey && !zoneDraw) zoneAltClick(t.x, t.y); else { rect = { a: t, b: t, zone: true }; redrawTop(); }
     return;
@@ -5497,6 +5630,7 @@ cv.addEventListener('mousedown', e => {
     else edit([{ op: 'npcplace', x: t.x, y: t.y, t: brush.t[0], dir: brush.dir || 4 }], `placed ${brush.t[1]} (facing ${FACEN[brush.dir || 4]})`);
     return;
   }
+  if (brush.kind === 'rug' && tool !== 'erase' && !e.altKey) { if (tool === 'fill') return toast('A rug is laid with a rectangle: drag on the map.', true); rect = { a: t, b: t }; redrawTop(); return; }
   if (tool === 'fill') { fill(t.x, t.y, e.altKey); return; }
   if (tool === 'rect' || e.shiftKey) { rect = { a: t, b: t, alt: e.altKey }; redrawTop(); return; }
   stroke = { ops: [], seen: new Set(), alt: e.altKey };
@@ -5534,6 +5668,16 @@ window.addEventListener('mouseup', () => {
   if (rect) {
     const x0 = Math.min(rect.a.x, rect.b.x), x1 = Math.max(rect.a.x, rect.b.x), y0 = Math.min(rect.a.y, rect.b.y), y1 = Math.max(rect.a.y, rect.b.y), alt = rect.alt;
     if (rect.learn) { rect = null; redrawTop(); finishAreaLearn(x0, y0, x1, y1); return; }
+    if (rect.rug) { rect = null; redrawTop(); finishRugLearn(x0, y0, x1, y1); return; }
+    if (brush.kind === 'rug' && !alt && tool !== 'erase') {
+      rect = null;
+      const R = rugByName(brush.name);
+      if (!R) { redrawTop(); return toast('That rug is gone: pick another.', true); }
+      if (x1 === x0 || y1 === y0) { redrawTop(); return toast('A rug needs at least 2 × 2 tiles.', true); }
+      if ((x1 - x0 + 1) * (y1 - y0 + 1) > 40000) { redrawTop(); return toast('That rug is too big (at most 200×200 at once).', true); }
+      const ops = rugOps(R, x0, y0, x1, y1); ops.forEach(preview);
+      edit(ops, `rug ${R.name} (${x1 - x0 + 1}×${y1 - y0 + 1})`); return;
+    }
     if (rect.zone) { rect = null; redrawTop(); zoneMouseUp(x0, y0, x1, y1); return; }
     rect = null;
     if ((x1 - x0 + 1) * (y1 - y0 + 1) > 40000) { toast('That area is too big (at most 200×200 at once).', true); redrawTop(); return; }
@@ -5569,6 +5713,7 @@ window.addEventListener('keydown', e => {
   }
   if (k === ' ') { spaceDown = true; cv.style.cursor = 'grab'; e.preventDefault(); return; }
   if (k === 'escape') { if (zoneDraw) { zoneArm(false); rect = null; leftUI(); redrawTop(); toast('Stopped adding boxes.'); return; }
+    if (rugLearn) { rugLearn = false; rect = null; setTool(tool); redrawTop(); toast('Cancelled.'); return; }
     if (areaLearn) { areaLearn = false; rect = null; setTool(tool); redrawTop(); toast('Cancelled.'); return; }
     if (destPick || npcPick) { destPick = npcPick = null; setTool(tool); toast('Cancelled.'); return; } toggleWorld(false); rect = null; selTile = null; redrawTop(); return; }
   const map = { v: 'select', b: 'brush', u: 'rect', f: 'fill', e: 'erase', i: 'pick', h: 'pan' };
@@ -6080,7 +6225,7 @@ setInterval(() => logRefresh(false), 3000);
   layersUI(); setTool('brush'); leftUI();
   await refreshInfo();
   pal = await api('/api/palette');
-  await loadAreas();
+  await loadAreas(); await loadRugs();
   card(); leftUI();
   const m = location.hash.match(/(\d+),(\d+)/);
   if (m) centerOn(+m[1], +m[2]); else centerOn(512, 512);
