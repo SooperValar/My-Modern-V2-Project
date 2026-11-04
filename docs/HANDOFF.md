@@ -71,7 +71,7 @@ is the project's `client/` folder.
   changed Windows source into Ubuntu with a backup in `~/claude-backups/`, then `make`), starts.
 - Console commands (control port 127.0.0.1:5556, or the editor's console): `who`, `status`,
   `announce`, `tell`, `kick`, `raise`, `lower`, `gold`, `quest`, `talkreload`, `talktest`,
-  `talkkill`, `talkuse`, `talknear`, `talkmoney`, `chesttest <player> <x> <y> [real]`, `edpatch`.
+  `talkkill`, `talkuse`, `talknear`, `talkmoney`, `zonereload`, `zone <x> <y>`, `chesttest <player> <x> <y> [real]`, `edpatch`.
 - **Test server** (for trying server changes without touching the live game): in Claude's device
   shell, `~/ctest` holds a copy of the server source and data. Copy the changed files there,
   `make server` (a full build may need two runs within the 3-minute limit). **Always check port
@@ -90,6 +90,9 @@ is the project's `client/` folder.
   Playwright (installed in Claude's cloud workspace) for the page.
 - Live editing: while the game runs, edits go into it as patch files (`edpatch`, checked against
   what the server has, all or nothing). With the server stopped, "Save to the game" writes the files.
+- **Zones** (zone names) are kept in `.dat/zones.dat` (`x1 y1 x2 y2 flag name`, one box a line; boxes with the same
+  name are one zone), drawn in the editor's Zones tab; the game reloads them live (`zonereload`). Without the file the
+  server uses the built-in table in `area.c`. `tools/world/worldzones.py` draws `docs/world_zones.png/.md` from it.
 - Area brushes are kept in `.dat/mapedit-areas.json`; NPC dialogue, quests and chests in
   `.dat/npctalk.dat` (`quest.dat`, `chestlog.dat` beside it).
 
@@ -135,6 +138,7 @@ is the project's `client/` folder.
 
 ## Open items (details in docs/TODO.md and docs/HOSTING.md)
 
+- **Zones of any shape** (built and committed, not live; goes live with the next server code update).
 - **#quest** (IN PROGRESS, not final; built and committed, not live; it goes live with the next
   server code update): Cody reviews how it looks in the game before it is finalized, and the order
   and rewards; maybe a separate difficulty number per quest

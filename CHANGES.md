@@ -237,6 +237,8 @@ A new labyrinth part after Lab 10 (map 180,900 - 299,999). The labyrinth gate af
 - **Ice Pentagram Quest** was one rectangle that also took in part of the water next to it; it is now two rectangles around the ice only, and the water is named **Underwater Pentagram Quest**.
 - The second "Thieves House I" rectangle (20,20 - 49,69) is the thieves' underground area, now named **Thieves Basement**.
 - Note: the small "Aston" box at 1,1 - 20,20 is deliberate. Gods are parked at 10,10 while they take over an NPC (`#usurp`), and naming it "Aston" keeps `/who` from showing that.
+- **Zones of any shape**: a zone is a name made of one or more boxes. Every box with the same name is part of one zone (e.g. a 3x3 square plus one tile off its corner is one zone, not two), and the game names it once ("in the Aston Hall", never "Aston Hall, Aston Hall"). The zones are now kept in `.dat/zones.dat` (one box a line: `x1 y1 x2 y2 flag name`), drawn in the editor's **Zones** tab; a running game reads them again at once (`zonereload`), no restart. Until the first save there the server uses its built-in table in `area.c` as before. Boxes running past the map edge (Underground I ended at 1024) are cut to the map.
+- Zone wording fixed: a zone with "at" after another one said "in Aston, in at Skeleton Lord"; now "in Aston, at Skeleton Lord" (and "on Temple Street").
 
 ## New features from a player's point of view
 
@@ -362,6 +364,12 @@ The map page (rail: Map).
 - **Areas**: area brushes (see below).
 - **Floors** (by how often they are used), **Walls** (drawn into the tile, they block), **Objects** (furniture, decoration, doors, chests…), **Items** (things players can pick up), **NPCs** (see [NPC editor](#npc-editor)), **Flags** (paint a flag on tiles).
 - Right-click an item, object or wall in the library to edit its template.
+
+**Zones tab** (draws the game's zones; see [Zone names](#new-zones-and-areas))
+- Lists every zone in the order the game names them (search filters); click one to pick it and go there, or click the map to pick the smallest zone at that spot. The picked zone's boxes are shaded blue on the map, the others outlined in gold.
+- The picked zone: its name (renaming it to another zone's name offers to join the two), what the game says ("in", "in the", "on" for streets, "at"), its boxes (go to, remove) and **Delete zone**. **+ Add box** and drag on the map (a click adds a single tile) adds boxes until "Done" or Esc; Alt+click removes the picked zone's box under the mouse. **+ New zone** starts one and goes straight to adding boxes.
+- **Save zones** writes `.dat/zones.dat` (the old one goes to `mapedit-backups/`) and the running game reloads it; **Undo changes** forgets what wasn't saved. Works while the game runs.
+- Boxes of one name that said different things ("in" / "in the") take the word most of them use.
 
 **Tools** (the hotbar across the top of the map, with the key letter on each slot)
 - **Select** (V): click a tile to see and change it in the right panel.
@@ -515,6 +523,7 @@ The server source assumed a 32-bit Linux, where `long` and `time_t` are 4 bytes.
 - **Control port**: the server also takes its console commands on 127.0.0.1:5556 (this computer only), one line in, the answer back ending with a "." line. Machine-readable commands for it: `status` (online, ticker, uptime, pid) and `whotab` (one tab-separated line per player online).
 - **Live editing**: `edpatch <file>` applies a patch from the editor (see [Data changes](#data-changes)).
 - **Quest and chest testing**: `quest <player> [<n> <value>]` shows or sets a player's steps; `talktest <NPC template> <player> <text>` tries a conversation without logging in; `talkreload` reads `npctalk.dat` again; `talkkill <player> <template>`, `talkuse <player> <x> <y>`, `talknear <npc> <player>`, `talkmoney <npc> <player> <silver>`; `chesttest <player> <x> <y>` opens a chest as that player; `chesttest <player> <x> <y> real` with its real open/closed state.
+- **Zones**: `zonereload` reads `.dat/zones.dat` again (or the built-in `area.c` table if there is none); `zone <x> <y>` shows the zone names at a spot and the place `#quest` would give.
 
 ## Data changes
 

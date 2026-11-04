@@ -1,7 +1,7 @@
 # Zones
 
-Zone names come from the `area[]` table in `server/area.c`: rectangles of map x1,y1 - x2,y2.
-Shown by `/who`, by NPCs when asked where you are, and in server logs. A spot inside several rectangles shows every matching name, in table order.
+Zones come from the `area[]` table in `server/area.c`: boxes of map x1,y1 - x2,y2. Every box with the same name is part of one zone (odd shapes are several boxes).
+Shown by `/who`, by NPCs when asked where you are, and in server logs. A spot inside several zones shows each name once, in table order.
 
 ![zones](world_zones.png)
 

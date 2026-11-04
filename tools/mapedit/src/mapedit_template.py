@@ -474,7 +474,7 @@ class World:
         if m:
             out.append({'type': 'place', 'name': 'Position %s, %s' % m.groups(), 'x': int(m.group(1)), 'y': int(m.group(2))})
         seen = set()
-        for a, b, c, d, n in self.areas:
+        for a, b, c, d, n, f in self.areas:
             if q in n.lower() and n not in seen:
                 seen.add(n)
                 out.append({'type': 'place', 'name': n, 'x': (a + c) // 2, 'y': (b + d) // 2})
@@ -495,18 +495,81 @@ class World:
                     break
         return out[:100]
 
+    # --- zones: names made of one or more boxes (every box with the same name is one zone).
+    # .dat/zones.dat ("x1 y1 x2 y2 flag name", one box a line) when it exists, else the server's area.c table.
+    def zones_path(self):
+        return os.path.join(self.dat, 'zones.dat')
+
     def read_areas(self):
+        out = []
+        try:
+            for line in open(self.zones_path(), encoding='latin-1'):
+                m = re.match(r'\s*(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+([0-3])\s+(.+?)\s*$', line)
+                if m and not line.lstrip().startswith('#'):
+                    out.append([int(m.group(i)) for i in range(1, 5)] + [m.group(6), int(m.group(5))])
+            if out:
+                self.zone_src = 'zones.dat'
+                return out
+        except OSError:
+            pass
+        self.zone_src = 'area.c'
         try:
             src = open(self.area_file, encoding='latin-1').read()
         except OSError:
             return []
-        out = []
-        for a, b, c, d, n in re.findall(r'\{\s*(\d+),\s*(\d+),\s*(\d+),\s*(\d+),\s*"([^"]+)"', src):
-            out.append((int(a), int(b), int(c), int(d), n))
+        for a, b, c, d, n, f in re.findall(r'\{\s*(\d+),\s*(\d+),\s*(\d+),\s*(\d+),\s*"([^"]+)",\s*(\d)\s*\}', src):
+            out.append([int(a), int(b), int(c), int(d), n, int(f)])
         return out
 
     def zone(self, x, y):
-        return ', '.join(n for a, b, c, d, n in self.areas if a <= x <= c and b <= y <= d)
+        names = []
+        for a, b, c, d, n, f in self.areas:
+            if a <= x <= c and b <= y <= d and n not in names:
+                names.append(n)
+        return ', '.join(names)
+
+    def zones_save(self, zones, ctl=None):
+        """zones: [{name, flag, boxes: [[x1, y1, x2, y2], ...]}, ...] in the order the game lists them"""
+        rows, seen = [], set()
+        for z in zones:
+            n = re.sub(r'\s+', ' ', str(z.get('name', ''))).strip()
+            if not n:
+                return 'A zone has no name.'
+            if len(n) > 45:
+                return 'The name "%s" is too long (at most 45 letters).' % n
+            if n.lower() in seen:
+                return 'Two zones are called "%s": give one another name (or join their boxes).' % n
+            seen.add(n.lower())
+            f = int(z.get('flag', 0))
+            if not 0 <= f <= 3:
+                return 'Bad flag for "%s".' % n
+            if not z.get('boxes'):
+                return 'The zone "%s" has no boxes: draw one, or delete the zone.' % n
+            for bx in z['boxes']:
+                x1, y1, x2, y2 = [int(v) for v in bx[:4]]
+                x1, x2, y1, y2 = min(x1, x2), max(x1, x2), min(y1, y2), max(y1, y2)
+                x2, y2 = min(x2, MAPX - 1), min(y2, MAPY - 1)      # area.c had some boxes ending at 1024
+                if x1 < 0 or y1 < 0 or x1 > x2 or y1 > y2:
+                    return 'A box of "%s" is off the map.' % n
+                rows.append([x1, y1, x2, y2, n, f])
+        p = self.zones_path()
+        if os.path.exists(p):
+            bk = os.path.join(self.dat, 'mapedit-backups')
+            os.makedirs(bk, exist_ok=True)
+            shutil.copy2(p, os.path.join(bk, 'zones-%s.dat' % time.strftime('%Y%m%d-%H%M%S')))
+        with open(p + '.tmp', 'w', encoding='latin-1', errors='replace') as fh:
+            fh.write('# Zones: x1 y1 x2 y2 flag name - one box a line; boxes with the same name are one zone.\n'
+                     '# flag: 0 "in", 1 "in the", 2 "on" (a street), 3 "at". Written by the MyV2 Editor.\n')
+            for r in rows:
+                fh.write('%d %d %d %d %d %s\n' % (r[0], r[1], r[2], r[3], r[5], r[4]))
+        os.replace(p + '.tmp', p)
+        self.areas = self.read_areas()
+        if ctl and server_running():
+            r = ctl.console('zonereload', 5)
+            if r and 'Zones loaded' in r:
+                return ''
+            return 'later'
+        return ''
 
     # --- raw access
     def tile(self, x, y):
@@ -2214,7 +2277,7 @@ def make_handler(world, sprites, page, minimap, ctl):
                 if running:
                     world.refresh_live()
                 return self.js({'running': running, 'live': bool(running and ctl and ctl.port_ok()), 'online': world.online(), 'gen': world.gen, 'dirty': world.dirty,
-                                'undo': len(world.undo), 'redo': len(world.redo), 'areas': world.areas,
+                                'undo': len(world.undo), 'redo': len(world.redo), 'areas': world.areas, 'zonesrc': world.zone_src,
                                 'minimap': bool(minimap and os.path.exists(minimap)), 'dat': os.path.abspath(world.dat),
                                 'backups': len(world.backups())})
             if u.path == '/api/srv/status':
@@ -2293,6 +2356,15 @@ def make_handler(world, sprites, page, minimap, ctl):
                                 'dirty': world.dirty, 'undo': len(world.undo), 'redo': len(world.redo)})
             if u.path in ('/api/save', '/api/relight', '/api/restore') and server_running():
                 return self.js({'error': 'The game server is running: live edits are already in the game, there is nothing to save.'})
+            if u.path == '/api/zones':
+                err = world.zones_save(body.get('zones') or [], ctl)
+                if err and err != 'later':
+                    return self.js({'error': err})
+                n = len({a[4] for a in world.areas})
+                return self.js({'areas': world.areas, 'msg': 'Zones saved: %d zones in %d boxes. %s' % (n, len(world.areas),
+                                'The game uses them now.' if server_running() and not err else
+                                'The game reads them at its next start (the running server is older).' if err else
+                                'The game uses them when the server starts.')})
             if u.path == '/api/areas':
                 if body.get('learn'):
                     return self.js(world.area_learn(*body['learn'][:4], name=body.get('name', '')))

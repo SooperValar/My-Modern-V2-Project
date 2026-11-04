@@ -202,6 +202,20 @@ static void con_cmd(char *line)
 		out("  %s (the result went to %s's log)\n",n ? "opened" : "did not open",ch[co].name);
 		return;
 	}
+	if (!strcmp(w[0],"zone")) {
+		int x=atoi(w[1]),y=atoi(w[2]);
+		if (!w[1][0] || !w[2][0] || x<0 || y<0 || x>=MAPX || y>=MAPY) { out("  zone <x> <y>\n"); return; }
+		out("  %d,%d: %s\n",x,y,get_area_m(x,y,1)[0] ? get_area_m(x,y,1) : "no zone");
+		out("  #quest place: %s\n",get_area_street(x,y)[0] ? get_area_street(x,y) : "-");
+		return;
+	}
+	if (!strcmp(w[0],"zonereload")) {
+		n=zone_load();
+		if (n>0) out("  Zones loaded: %d zones in %d boxes.\n",zone_count(),zone_boxes());
+		else if (n==0) out("  No zones.dat: the built-in zones are used (%d zones in %d boxes).\n",zone_count(),zone_boxes());
+		else out("  zones.dat could not be read; the zones stay as they were.\n");
+		return;
+	}
 	if (!strcmp(w[0],"talkreload")) {
 		n=talk_load();
 		out("  NPC dialogue loaded: %d entries%s.\n",talk_entries(),n ? " (some lines were not understood)" : "");
@@ -218,6 +232,8 @@ static void con_cmd(char *line)
 		    "  kick <player>                 log a player out\n"
 		    "  quest <player> [<n> <value>]  show or set a player's quest steps\n"
 		    "  talkreload                    read the NPC dialogue file again\n"
+		    "  zonereload                    read the zones (.dat/zones.dat) again\n"
+		    "  zone <x> <y>                  the zone names at a spot\n"
 		    "  talktest <npc template> <player> <text>   try a conversation\n"
 		    "  talkkill <player> <npc template>          try a quest kill\n"
 		    "  talkuse <player> <x> <y>                  try using the item there\n"

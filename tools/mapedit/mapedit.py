@@ -474,7 +474,7 @@ class World:
         if m:
             out.append({'type': 'place', 'name': 'Position %s, %s' % m.groups(), 'x': int(m.group(1)), 'y': int(m.group(2))})
         seen = set()
-        for a, b, c, d, n in self.areas:
+        for a, b, c, d, n, f in self.areas:
             if q in n.lower() and n not in seen:
                 seen.add(n)
                 out.append({'type': 'place', 'name': n, 'x': (a + c) // 2, 'y': (b + d) // 2})
@@ -495,18 +495,81 @@ class World:
                     break
         return out[:100]
 
+    # --- zones: names made of one or more boxes (every box with the same name is one zone).
+    # .dat/zones.dat ("x1 y1 x2 y2 flag name", one box a line) when it exists, else the server's area.c table.
+    def zones_path(self):
+        return os.path.join(self.dat, 'zones.dat')
+
     def read_areas(self):
+        out = []
+        try:
+            for line in open(self.zones_path(), encoding='latin-1'):
+                m = re.match(r'\s*(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+([0-3])\s+(.+?)\s*$', line)
+                if m and not line.lstrip().startswith('#'):
+                    out.append([int(m.group(i)) for i in range(1, 5)] + [m.group(6), int(m.group(5))])
+            if out:
+                self.zone_src = 'zones.dat'
+                return out
+        except OSError:
+            pass
+        self.zone_src = 'area.c'
         try:
             src = open(self.area_file, encoding='latin-1').read()
         except OSError:
             return []
-        out = []
-        for a, b, c, d, n in re.findall(r'\{\s*(\d+),\s*(\d+),\s*(\d+),\s*(\d+),\s*"([^"]+)"', src):
-            out.append((int(a), int(b), int(c), int(d), n))
+        for a, b, c, d, n, f in re.findall(r'\{\s*(\d+),\s*(\d+),\s*(\d+),\s*(\d+),\s*"([^"]+)",\s*(\d)\s*\}', src):
+            out.append([int(a), int(b), int(c), int(d), n, int(f)])
         return out
 
     def zone(self, x, y):
-        return ', '.join(n for a, b, c, d, n in self.areas if a <= x <= c and b <= y <= d)
+        names = []
+        for a, b, c, d, n, f in self.areas:
+            if a <= x <= c and b <= y <= d and n not in names:
+                names.append(n)
+        return ', '.join(names)
+
+    def zones_save(self, zones, ctl=None):
+        """zones: [{name, flag, boxes: [[x1, y1, x2, y2], ...]}, ...] in the order the game lists them"""
+        rows, seen = [], set()
+        for z in zones:
+            n = re.sub(r'\s+', ' ', str(z.get('name', ''))).strip()
+            if not n:
+                return 'A zone has no name.'
+            if len(n) > 45:
+                return 'The name "%s" is too long (at most 45 letters).' % n
+            if n.lower() in seen:
+                return 'Two zones are called "%s": give one another name (or join their boxes).' % n
+            seen.add(n.lower())
+            f = int(z.get('flag', 0))
+            if not 0 <= f <= 3:
+                return 'Bad flag for "%s".' % n
+            if not z.get('boxes'):
+                return 'The zone "%s" has no boxes: draw one, or delete the zone.' % n
+            for bx in z['boxes']:
+                x1, y1, x2, y2 = [int(v) for v in bx[:4]]
+                x1, x2, y1, y2 = min(x1, x2), max(x1, x2), min(y1, y2), max(y1, y2)
+                x2, y2 = min(x2, MAPX - 1), min(y2, MAPY - 1)      # area.c had some boxes ending at 1024
+                if x1 < 0 or y1 < 0 or x1 > x2 or y1 > y2:
+                    return 'A box of "%s" is off the map.' % n
+                rows.append([x1, y1, x2, y2, n, f])
+        p = self.zones_path()
+        if os.path.exists(p):
+            bk = os.path.join(self.dat, 'mapedit-backups')
+            os.makedirs(bk, exist_ok=True)
+            shutil.copy2(p, os.path.join(bk, 'zones-%s.dat' % time.strftime('%Y%m%d-%H%M%S')))
+        with open(p + '.tmp', 'w', encoding='latin-1', errors='replace') as fh:
+            fh.write('# Zones: x1 y1 x2 y2 flag name - one box a line; boxes with the same name are one zone.\n'
+                     '# flag: 0 "in", 1 "in the", 2 "on" (a street), 3 "at". Written by the MyV2 Editor.\n')
+            for r in rows:
+                fh.write('%d %d %d %d %d %s\n' % (r[0], r[1], r[2], r[3], r[5], r[4]))
+        os.replace(p + '.tmp', p)
+        self.areas = self.read_areas()
+        if ctl and server_running():
+            r = ctl.console('zonereload', 5)
+            if r and 'Zones loaded' in r:
+                return ''
+            return 'later'
+        return ''
 
     # --- raw access
     def tile(self, x, y):
@@ -2214,7 +2277,7 @@ def make_handler(world, sprites, page, minimap, ctl):
                 if running:
                     world.refresh_live()
                 return self.js({'running': running, 'live': bool(running and ctl and ctl.port_ok()), 'online': world.online(), 'gen': world.gen, 'dirty': world.dirty,
-                                'undo': len(world.undo), 'redo': len(world.redo), 'areas': world.areas,
+                                'undo': len(world.undo), 'redo': len(world.redo), 'areas': world.areas, 'zonesrc': world.zone_src,
                                 'minimap': bool(minimap and os.path.exists(minimap)), 'dat': os.path.abspath(world.dat),
                                 'backups': len(world.backups())})
             if u.path == '/api/srv/status':
@@ -2293,6 +2356,15 @@ def make_handler(world, sprites, page, minimap, ctl):
                                 'dirty': world.dirty, 'undo': len(world.undo), 'redo': len(world.redo)})
             if u.path in ('/api/save', '/api/relight', '/api/restore') and server_running():
                 return self.js({'error': 'The game server is running: live edits are already in the game, there is nothing to save.'})
+            if u.path == '/api/zones':
+                err = world.zones_save(body.get('zones') or [], ctl)
+                if err and err != 'later':
+                    return self.js({'error': err})
+                n = len({a[4] for a in world.areas})
+                return self.js({'areas': world.areas, 'msg': 'Zones saved: %d zones in %d boxes. %s' % (n, len(world.areas),
+                                'The game uses them now.' if server_running() and not err else
+                                'The game reads them at its next start (the running server is older).' if err else
+                                'The game uses them when the server starts.')})
             if u.path == '/api/areas':
                 if body.get('learn'):
                     return self.js(world.area_learn(*body['learn'][:4], name=body.get('name', '')))
@@ -3084,6 +3156,7 @@ function draw() {
     for (let y = Math.min(rect.a.y, rect.b.y); y <= Math.max(rect.a.y, rect.b.y); y++)
       for (let x = Math.min(rect.a.x, rect.b.x); x <= Math.max(rect.a.x, rect.b.x); x++) { diamond(x, y, ctx); ctx.fill(); }
   }
+  zonesOverlay(ctx);
   if (hover && tool !== 'pan') {
     ctx.lineWidth = 1.6 / zoom; ctx.strokeStyle = '#ffd36a';
     for (const [x, y] of footprint(hover.x, hover.y)) { diamond(x, y, ctx); ctx.stroke(); }
@@ -3165,7 +3238,7 @@ function toggleWorld(on) {
 
 // ---------------------------------------------------------------- left panel
 let npcSub = 'world', newNpc = null;    // NPCs tab: In the world / Blueprints; the + New NPC form
-const TABS = { builder: 'Builder', floors: 'Floors', areas: 'Areas', walls: 'Walls', objects: 'Objects', items: 'Items', npcs: 'NPCs', flags: 'Flags' };
+const TABS = { builder: 'Builder', floors: 'Floors', areas: 'Areas', walls: 'Walls', objects: 'Objects', items: 'Items', npcs: 'NPCs', flags: 'Flags', zones: 'Zones' };
 const TAB_ICONS = {      // the editor's own icons, same set as the toolbar
   builder: '<path d="M14 4l6 6-3 3-6-6z"/><path d="M11 7 3.5 14.5a2 2 0 0 0 0 2.8l3.2 3.2a2 2 0 0 0 2.8 0L17 13"/>',
   floors: '<path d="M12 4 21 9.5 12 15 3 9.5z" fill="currentColor" fill-opacity=".25"/><path d="M12 4 21 9.5 12 15 3 9.5z"/><path d="M3 13.5 12 19l9-5.5" opacity=".6"/>',
@@ -3175,6 +3248,7 @@ const TAB_ICONS = {      // the editor's own icons, same set as the toolbar
   npcs: '<path d="M12 3c-4 0-6.5 3.5-6.5 8.5V21h13v-9.5C18.5 6.5 16 3 12 3z"/><path d="M8.5 13c.5-3 1.8-4.5 3.5-4.5s3 1.5 3.5 4.5c-1 1.5-2.2 2-3.5 2s-2.5-.5-3.5-2z"/>',
   flags: '<path d="M5 21V3"/><path d="M5 4h13l-3 4 3 4H5"/>',
   areas: '<path d="M7 3 3.5 10h7z"/><path d="M7 10v4"/><circle cx="16.5" cy="8" r="3.5"/><path d="M16.5 11.5V15"/><path d="M2 18c3-2 6-2 10 0s7 2 10 0" opacity=".7"/><path d="M2 21.5c3-2 6-2 10 0s7 2 10 0" opacity=".4"/>',
+  zones: '<path d="M3 4h9v6h9v10H3z" fill="currentColor" fill-opacity=".22"/><path d="M3 4h9v6h9v10H3z"/><path d="M12 10v4H3" stroke-dasharray="2 2" opacity=".7"/>',
   title: '<path d="M12 3 21 12 12 21 3 12z"/>',
 };
 // facing, named the way the minimap shows it (north = smaller x, west = smaller y); the game's DX_ numbers
@@ -3507,6 +3581,8 @@ function leftUI() {
       }
     } else if (tab === 'areas') {
       areasTab(w, sect, grid, match);
+    } else if (tab === 'zones') {
+      zonesTab(w, sect, match);
     } else if (tab === 'flags') {
       sect('Paint a flag on tiles'); lazy(grid(), FLAGS.map((f, i) => i).filter(i => match(FLAGS[i], '')), cellFlag);
     } else {
@@ -3944,6 +4020,136 @@ function areasTab(w, sect, grid, match) {
   if (game.length) { sect('From the game\'s own areas'); const g = grid(); game.forEach(a => g.appendChild(cellArea(a))); }
   if (mine.length) { sect('Your area brushes'); const g = grid(); mine.forEach(a => g.appendChild(cellArea(a))); }
   if (!list.length) w.insertAdjacentHTML('beforeend', '<div class="empty">' + (areas.length ? 'Nothing matches.' : 'Loading…') + '</div>');
+}
+// ---- zones (Zones tab): a zone is one name made of one or more boxes; the game lists it once.
+// Saved to .dat/zones.dat; a running game reads it at once ("zonereload").
+let Z = null, zoneSel = -1, zoneDirty = false, zoneDraw = false;
+const ZFLAG = ['in', 'in the', 'on', 'at'];
+function zonesFromInfo() {
+  const m = new Map();
+  for (const a of info.areas || []) {
+    if (!m.has(a[4])) m.set(a[4], { name: a[4], flag: a[5] || 0, boxes: [], fc: [0, 0, 0, 0] });
+    const z = m.get(a[4]); z.boxes.push([a[0], a[1], a[2], a[3]]); z.fc[(a[5] || 0) & 3]++;
+  }
+  // boxes of one name with different words ("in" / "in the"): the zone takes the one most of its boxes have
+  return [...m.values()].map(z => { const f = z.fc.indexOf(Math.max(...z.fc)); delete z.fc; z.flag = f; return z; });
+}
+const zoneSize = z => z.boxes.reduce((t, b) => t + (b[2] - b[0] + 1) * (b[3] - b[1] + 1), 0);
+const inBox = (b, x, y) => b[0] <= x && x <= b[2] && b[1] <= y && y <= b[3];
+function zoneAt(x, y) {          // the smallest zone there
+  let best = -1, bs = Infinity;
+  Z.forEach((z, i) => { if (z.boxes.some(b => inBox(b, x, y))) { const s = zoneSize(z); if (s < bs) { bs = s; best = i; } } });
+  return best;
+}
+function zoneGo(z) {
+  if (!z.boxes.length) return;
+  const b = z.boxes.reduce((p, c) => (c[2] - c[0] + 1) * (c[3] - c[1] + 1) > (p[2] - p[0] + 1) * (p[3] - p[1] + 1) ? c : p);
+  centerOn((b[0] + b[2]) >> 1, (b[1] + b[3]) >> 1);
+}
+function zoneChanged() { zoneDirty = true; leftUI(); redrawTop(); }
+function zoneArm(on) {
+  zoneDraw = on; if (on) cv.style.cursor = 'crosshair'; else setTool(tool);
+  if (on) toast(`Drag on the map to add a box to ${Z[zoneSel].name} (a click adds one tile). Esc or "Done" stops.`);
+}
+function zoneBoxPath(b, c) {      // the outline of box b: left, top, right and bottom corner tiles
+  const P = (x, y, dx, dy) => [wx(x, y) + 32 + dx, wy(x, y) + 56 + dy];
+  c.beginPath(); c.moveTo(...P(b[0], b[1], -16, 0)); c.lineTo(...P(b[0], b[3], 0, -8)); c.lineTo(...P(b[2], b[3], 16, 0)); c.lineTo(...P(b[2], b[1], 0, 8)); c.closePath();
+}
+function zonesOverlay(c) {
+  if (mode !== 'map' || tab !== 'zones' || !Z) return;
+  c.lineWidth = 1.2 / zoom; c.strokeStyle = 'rgba(255,211,106,.38)';
+  Z.forEach((z, i) => { if (i !== zoneSel) z.boxes.forEach(b => { zoneBoxPath(b, c); c.stroke(); }); });
+  const z = Z[zoneSel];
+  if (z) {
+    c.fillStyle = 'rgba(111,176,255,.20)';
+    z.boxes.forEach(b => { zoneBoxPath(b, c); c.fill(); });
+    c.lineWidth = 2 / zoom; c.strokeStyle = '#6fb0ff';
+    z.boxes.forEach(b => { zoneBoxPath(b, c); c.stroke(); });
+  }
+}
+function zoneMouseUp(x0, y0, x1, y1) {
+  if (zoneDraw && Z[zoneSel]) {
+    Z[zoneSel].boxes.push([x0, y0, x1, y1]); zoneChanged();
+    toast(`Box ${x0},${y0} – ${x1},${y1} added to ${Z[zoneSel].name}.`);
+    return;
+  }
+  const i = zoneAt(x0, y0);
+  zoneSel = i; leftUI(); redrawTop();
+  if (i < 0) toast('No zone there.');
+}
+function zoneAltClick(x, y) {
+  const z = Z[zoneSel];
+  if (!z) return toast('Pick a zone first.', true);
+  const k = z.boxes.findIndex(b => inBox(b, x, y));
+  if (k < 0) return toast(`No box of ${z.name} there.`, true);
+  z.boxes.splice(k, 1); zoneChanged(); toast('Box removed.' + (z.boxes.length ? '' : ' The zone has no boxes left: draw one or delete it.'));
+}
+function zonesTab(w, sect, match) {
+  if (!zoneDirty || !Z) Z = zonesFromInfo();
+  if (zoneSel >= Z.length) zoneSel = -1;
+  const top = document.createElement('div'); top.className = 'areatop';
+  top.innerHTML = `<button class="btn sec nz">+ New zone</button><span style="flex:1"></span>
+    <button class="btn sec rv" ${zoneDirty ? '' : 'disabled'} title="Forget the changes since the last save">Undo changes</button>
+    <button class="btn pri sv" ${zoneDirty ? '' : 'disabled'}>Save zones</button>`;
+  top.querySelector('.nz').onclick = () => {
+    let n = 'New zone', k = 2; while (Z.some(z => z.name.toLowerCase() === n.toLowerCase())) n = 'New zone ' + k++;
+    Z.push({ name: n, flag: 1, boxes: [] }); zoneSel = Z.length - 1; zoneDirty = true; leftUI(); zoneArm(true);
+  };
+  top.querySelector('.rv').onclick = () => { if (!confirm('Forget your zone changes?')) return; zoneDirty = false; Z = null; zoneSel = -1; if (zoneDraw) zoneArm(false); leftUI(); redrawTop(); };
+  top.querySelector('.sv').onclick = async () => {
+    const r = await api('/api/zones', { zones: Z });
+    if (r.error) return toast(r.error, true);
+    info.areas = r.areas; info.zonesrc = 'zones.dat'; zoneDirty = false; if (zoneDraw) zoneArm(false);
+    const n = Z[zoneSel] && Z[zoneSel].name; Z = zonesFromInfo(); zoneSel = Z.findIndex(z => z.name === n);
+    leftUI(); redraw(); toast(r.msg);
+  };
+  w.appendChild(top);
+  w.insertAdjacentHTML('beforeend', `<div class="hint" style="padding:0 2px 8px">A zone is a name made of one or more boxes: all its boxes are one place, named once (odd shapes are several boxes). Click the map to pick the zone there; with a zone picked, <b>Add box</b> and drag on the map. Alt+click removes the picked zone's box under the mouse.${info.zonesrc === 'area.c' ? ' Now read from the server\'s area.c; the first save makes .dat/zones.dat, which the game uses from then on.' : ''}</div>`);
+  const z = Z[zoneSel];
+  if (z) {
+    const ed = document.createElement('div'); ed.className = 'newnpc'; ed.style.marginBottom = '10px';
+    ed.innerHTML = `<div class="lb">Name</div><input type="text" maxlength="45" class="zn">
+      <div class="lb">The game says</div><div class="seg zf">${ZFLAG.map((f, i) => `<button data-f="${i}" class="${i === z.flag ? 'on' : ''}">${f}</button>`).join('')}</div>
+      <div class="hint zs"></div>
+      <div style="display:flex;gap:6px;margin:6px 0"><button class="btn ${zoneDraw ? 'pri' : 'sec'} ab" style="flex:1">${zoneDraw ? 'Done adding boxes' : '+ Add box (drag on the map)'}</button><button class="btn sec danger dz">Delete zone</button></div>
+      <div class="list zb"></div>`;
+    const zn = ed.querySelector('.zn'); zn.value = z.name;
+    const say = () => ed.querySelector('.zs').textContent = `"You are ${ZFLAG[z.flag]} ${z.name}" · ${z.boxes.length} box${z.boxes.length === 1 ? '' : 'es'}, ${zoneSize(z)} tiles`;
+    say();
+    zn.onchange = () => {
+      const n = zn.value.replace(/\s+/g, ' ').trim();
+      if (!n) { zn.value = z.name; return toast('A zone needs a name.', true); }
+      const o = Z.findIndex(q => q !== z && q.name.toLowerCase() === n.toLowerCase());
+      if (o >= 0) {
+        if (!confirm(`There is already a zone called ${Z[o].name}. Join this zone's boxes into it?`)) { zn.value = z.name; return; }
+        Z[o].boxes.push(...z.boxes); Z.splice(zoneSel, 1); zoneSel = Z.indexOf(Z[o > zoneSel ? o - 1 : o]); zoneChanged(); return;
+      }
+      z.name = n; zoneChanged();
+    };
+    ed.querySelectorAll('.zf button').forEach(b => b.onclick = () => { z.flag = +b.dataset.f; zoneChanged(); });
+    ed.querySelector('.ab').onclick = () => { zoneArm(!zoneDraw); leftUI(); };
+    ed.querySelector('.dz').onclick = () => { if (!confirm(`Delete the zone ${z.name} (${z.boxes.length} boxes)?`)) return; Z.splice(zoneSel, 1); zoneSel = -1; if (zoneDraw) zoneArm(false); zoneChanged(); };
+    const bl = ed.querySelector('.zb');
+    z.boxes.forEach((b, k) => {
+      const r = document.createElement('div'); r.className = 'row';
+      r.innerHTML = `<div style="flex:1;min-width:0"><div>${b[0]},${b[1]} – ${b[2]},${b[3]}</div><div class="n">${b[2] - b[0] + 1} × ${b[3] - b[1] + 1} tiles</div></div><button class="sm">Remove</button>`;
+      r.onclick = () => centerOn((b[0] + b[2]) >> 1, (b[1] + b[3]) >> 1);
+      r.querySelector('button').onclick = e => { e.stopPropagation(); z.boxes.splice(k, 1); zoneChanged(); };
+      bl.appendChild(r);
+    });
+    w.appendChild(ed);
+  }
+  const list = Z.map((z, i) => [z, i]).filter(([z]) => match(z.name, ''));
+  sect(`${list.length} zone${list.length === 1 ? '' : 's'} · in the order the game names them · click to pick and go there`);
+  const box = document.createElement('div'); box.className = 'list'; w.appendChild(box);
+  lazy(box, list, ([z, i]) => {
+    const r = document.createElement('div'); r.className = 'row' + (i === zoneSel ? ' sel' : '');
+    r.innerHTML = '<div style="flex:1;min-width:0"><div></div><div class="n"></div></div>';
+    r.firstChild.firstChild.textContent = z.name;
+    r.firstChild.lastChild.textContent = `${ZFLAG[z.flag]} · ${z.boxes.length} box${z.boxes.length === 1 ? '' : 'es'}`;
+    r.onclick = () => { zoneSel = i; if (zoneDraw) zoneArm(false); leftUI(); zoneGo(z); redrawTop(); };
+    return r;
+  });
 }
 function startAreaLearn() {
   areaLearn = true; cv.style.cursor = 'crosshair';
@@ -5104,6 +5310,10 @@ cv.addEventListener('mousedown', e => {
   if (e.button === 1 || e.button === 2 || (e.button === 0 && (spaceDown || tool === 'pan'))) { panning = { sx, sy, cx: cam.x, cy: cam.y }; cv.style.cursor = 'grabbing'; e.preventDefault(); return; }
   if (e.button !== 0) return;
   if (areaLearn) { rect = { a: t, b: t, learn: true }; redrawTop(); return; }
+  if (mode === 'map' && tab === 'zones' && Z && !destPick && !tplPick && !npcPick) {
+    if (e.altKey && !zoneDraw) zoneAltClick(t.x, t.y); else { rect = { a: t, b: t, zone: true }; redrawTop(); }
+    return;
+  }
   if (destPick) { if (RO()) { destPick = null; return toast('The game server is running: editing is off.', true); } setDestination(t); return; }
   if (tplPick) { tplPicked(t); return; }
   if (npcPick) { if (RO()) { npcPick = null; return toast('The game server is running: editing is off.', true); } moveNpc(t); return; }
@@ -5152,6 +5362,7 @@ window.addEventListener('mouseup', () => {
   if (rect) {
     const x0 = Math.min(rect.a.x, rect.b.x), x1 = Math.max(rect.a.x, rect.b.x), y0 = Math.min(rect.a.y, rect.b.y), y1 = Math.max(rect.a.y, rect.b.y), alt = rect.alt;
     if (rect.learn) { rect = null; redrawTop(); finishAreaLearn(x0, y0, x1, y1); return; }
+    if (rect.zone) { rect = null; redrawTop(); zoneMouseUp(x0, y0, x1, y1); return; }
     rect = null;
     if ((x1 - x0 + 1) * (y1 - y0 + 1) > 40000) { toast('That area is too big (at most 200×200 at once).', true); redrawTop(); return; }
     const ops = [];
@@ -5185,7 +5396,8 @@ window.addEventListener('keydown', e => {
     return;
   }
   if (k === ' ') { spaceDown = true; cv.style.cursor = 'grab'; e.preventDefault(); return; }
-  if (k === 'escape') { if (areaLearn) { areaLearn = false; rect = null; setTool(tool); redrawTop(); toast('Cancelled.'); return; }
+  if (k === 'escape') { if (zoneDraw) { zoneArm(false); rect = null; leftUI(); redrawTop(); toast('Stopped adding boxes.'); return; }
+    if (areaLearn) { areaLearn = false; rect = null; setTool(tool); redrawTop(); toast('Cancelled.'); return; }
     if (destPick || npcPick) { destPick = npcPick = null; setTool(tool); toast('Cancelled.'); return; } toggleWorld(false); rect = null; selTile = null; redrawTop(); return; }
   const map = { v: 'select', b: 'brush', u: 'rect', f: 'fill', e: 'erase', i: 'pick', h: 'pan' };
   if (map[k]) return setTool(map[k]);

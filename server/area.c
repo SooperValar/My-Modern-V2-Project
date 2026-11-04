@@ -20,7 +20,7 @@ struct area {
         int flag;       // 0=in, 1=the, 2=on, 3=at
 };
 
-struct area area[]={
+static struct area builtin_area[]={
         {481,407,       633,596,        "Aston",                        0},
         {497,205,       537,233,        "Lizard Temple",                1},
         {480,234,       634,405,        "Strange Forest",               1},
@@ -198,44 +198,127 @@ struct area area[]={
 
 };
 
+/* Zones. A zone is one name made of one or more boxes: every box with the same name is part of
+ * the same zone (so odd shapes are several boxes), and the zone is listed once. The zones come from
+ * .dat/zones.dat ("x1 y1 x2 y2 flag name", one box per line, # for comments; written by the MyV2
+ * Editor) when it exists; else from the table above. "zonereload" on the console reads it again. */
+
+#define ZONE_FILE DATDIR"/zones.dat"
+#define MAXZONEBOX 2000
+
+static struct area *area=builtin_area;
+static int area_cnt=sizeof(builtin_area)/sizeof(builtin_area[0]);
+static int zones_loaded=0;
+static struct area zbox[MAXZONEBOX];
+static char *zname=NULL;		// the names of zbox[], one block
+
+// read zones.dat; returns the number of boxes, 0 = no file (the built-in table is used), -1 = error (kept as it was)
+int zone_load(void)
+{
+	FILE *f;
+	char line[256],*p,*pool;
+	int cnt=0,x1,y1,x2,y2,fl,k,len=0,bad=0;
+	static struct area tmp[MAXZONEBOX];
+
+	zones_loaded=1;
+	if (!(f=fopen(ZONE_FILE,"r"))) { area=builtin_area; area_cnt=sizeof(builtin_area)/sizeof(builtin_area[0]); return 0; }
+	if (!(pool=malloc(MAXZONEBOX*48))) { fclose(f); return -1; }
+	while (fgets(line,sizeof(line),f)) {
+		for (p=line; *p==' ' || *p=='\t'; p++) ;
+		if (*p=='#' || *p=='\n' || *p=='\r' || !*p) continue;
+		if (sscanf(p,"%d %d %d %d %d %n",&x1,&y1,&x2,&y2,&fl,&k)<5 || cnt>=MAXZONEBOX) { bad++; continue; }
+		p+=k;
+		k=strcspn(p,"\r\n"); while (k>0 && (p[k-1]==' ' || p[k-1]=='\t')) k--;
+		if (x2>=MAPX) x2=MAPX-1;
+		if (y2>=MAPY) y2=MAPY-1;
+		if (k<1 || k>45 || x1>x2 || y1>y2 || x1<0 || y1<0 || fl<0 || fl>3) { bad++; continue; }
+		memcpy(pool+len,p,k); pool[len+k]=0;
+		tmp[cnt].x1=x1; tmp[cnt].y1=y1; tmp[cnt].x2=x2; tmp[cnt].y2=y2; tmp[cnt].flag=fl;
+		tmp[cnt].name=(char*)(long)len;
+		len+=k+1; cnt++;
+	}
+	fclose(f);
+	if (cnt<1) { free(pool); return -1; }
+	for (k=0; k<cnt; k++) { zbox[k]=tmp[k]; zbox[k].name=pool+(long)tmp[k].name; }
+	if (zname) free(zname);
+	zname=pool; area=zbox; area_cnt=cnt;
+	if (bad) xlog("zones.dat: %d line(s) not understood",bad);
+	return cnt;
+}
+
+int zone_count(void)
+{
+	int n,m,cnt=0;
+	if (!zones_loaded) zone_load();
+	for (n=0; n<area_cnt; n++) {
+		for (m=0; m<n; m++) if (!strcmp(area[m].name,area[n].name)) break;
+		if (m==n) cnt++;
+	}
+	return cnt;
+}
+
+int zone_boxes(void)
+{
+	if (!zones_loaded) zone_load();
+	return area_cnt;
+}
+
+static int in_box(int n,int x,int y)
+{
+	return x>=area[n].x1 && y>=area[n].y1 && x<=area[n].x2 && y<=area[n].y2;
+}
+
+// box n contains x,y and is the first box of its zone that does (so a zone is listed once)
+static int first_hit(int n,int x,int y)
+{
+	int m;
+	if (!in_box(n,x,y)) return 0;
+	for (m=0; m<n; m++) if (in_box(m,x,y) && !strcmp(area[m].name,area[n].name)) return 0;
+	return 1;
+}
+
+static void area_text(char *buf,int x,int y,int verbose,int cap)
+{
+	int n,flag=0;
+
+	buf[0]=0;
+	if (!zones_loaded) zone_load();
+	for (n=0; n<area_cnt; n++) {
+		if (!first_hit(n,x,y)) continue;
+		if (strlen(buf)+strlen(area[n].name)+12>500) break;
+		if (verbose) {		// "In Aston, in the Bank", "on Temple Street", "at Skeleton Lord"
+			static char *pre[4]={"in ","in the ","on ","at "};
+			char *w=pre[area[n].flag&3];
+			if (flag) strcat(buf,", ");
+			strcat(buf,w);
+			if (!flag && cap) buf[0]=toupper(buf[0]);
+			flag=1;
+			strcat(buf,area[n].name);
+		} else {
+			if (!flag) flag=1;
+			else strcat(buf,", ");
+			strcat(buf,area[n].name);
+		}
+	}
+}
+
 // return a description of the area character cn is in
 char *get_area(int cn,int verbose)
 {
-        int n,flag=0;
-        static char buf[512];
+	static char buf[512];
 
-        buf[0]=0;
-
-        if (cn<1 || cn>=MAXCHARS) return buf;
-
-        for (n=0; n<sizeof(area)/sizeof(area[0]); n++) {
-                if (ch[cn].x>=area[n].x1 && ch[cn].y>=area[n].y1 &&
-                    ch[cn].x<=area[n].x2 && ch[cn].y<=area[n].y2) {
-                        if (verbose) {
-                                if (!flag) {
-                                        strcat(buf,"In "); flag=1;
-                                } else strcat(buf,", in ");
-                                if (area[n].flag==1) strcat(buf,"the ");
-                                else if (area[n].flag==2) strcat(buf,"on ");
-                                else if (area[n].flag==3) strcat(buf,"at ");
-                                strcat(buf,area[n].name);
-                        } else {
-                                if (!flag) flag=1;
-                                else strcat(buf,", ");
-                                strcat(buf,area[n].name);
-                        }
-                }
-        }
-
-        return buf;
+	buf[0]=0;
+	if (cn<1 || cn>=MAXCHARS) return buf;
+	area_text(buf,ch[cn].x,ch[cn].y,verbose,1);
+	return buf;
 }
 
-//return the area description for x,y
 /* where someone lives, as players would say it: "Aston, New Street". The building they stand in
- * (the smallest area around them), the street its front door opens onto (doors are items with
- * driver 2 on the building's edge; else the street closest to the building), with the town around
- * it. Outside town: the area's own name. Streets are the areas with flag 2. Used by #quest. */
-static int area_gap(int x1,int y1,int x2,int y2,int n)	// rectangle to area n, in tiles (0 = touching)
+ * (the smallest zone around them, all its boxes), the street its front door opens onto (doors are
+ * items with driver 2 on the edge of the building's boxes; else the street closest to the building),
+ * with the town around it. Outside town: the area's own name. Streets are the zones with flag 2.
+ * Used by #quest. */
+static int area_gap(int x1,int y1,int x2,int y2,int n)	// rectangle to box n, in tiles (0 = touching)
 {
 	int dx=0,dy=0;
 	if (area[n].x1>x2) dx=area[n].x1-x2; else if (x1>area[n].x2) dx=x1-area[n].x2;
@@ -243,64 +326,57 @@ static int area_gap(int x1,int y1,int x2,int y2,int n)	// rectangle to area n, i
 	return dx>dy ? dx : dy;
 }
 
+static int zone_size(int h)	// tiles in all the boxes of h's zone (overlaps counted twice; only used to compare)
+{
+	int n,size=0;
+	for (n=0; n<area_cnt; n++) if (!strcmp(area[n].name,area[h].name)) size+=(area[n].x2-area[n].x1+1)*(area[n].y2-area[n].y1+1);
+	return size;
+}
+
 char *get_area_street(int x,int y)
 {
 	static char buf[200];
-	int n,h=-1,hs=0,town=-1,best=-1,bd=99,d,xx,yy,in,size;
-	int cnt=sizeof(area)/sizeof(area[0]);
+	int n,b,h=-1,hs=0,town=-1,best=-1,bd=99,d,xx,yy,in,size;
 
 	buf[0]=0;
-	for (n=0; n<cnt; n++) {
-		if (x<area[n].x1 || y<area[n].y1 || x>area[n].x2 || y>area[n].y2) continue;
+	if (!zones_loaded) zone_load();
+	for (n=0; n<area_cnt; n++) {
+		if (!in_box(n,x,y)) continue;
 		if (town<0) town=n;
-		size=(area[n].x2-area[n].x1+1)*(area[n].y2-area[n].y1+1);
+		size=zone_size(n);
 		if (h<0 || size<hs) { h=n; hs=size; }
 	}
 	if (h<0) return buf;
 	if (area[h].flag==2) best=h;			// standing on a street
 	else if (hs<=2500) {				// a building: the street in front of its doors
-		for (yy=area[h].y1-1; yy<=area[h].y2+1; yy++) for (xx=area[h].x1-1; xx<=area[h].x2+1; xx++) {
-			if (xx<1 || yy<1 || xx>=MAPX || yy>=MAPY) continue;
-			in=map[xx+yy*MAPX].it;
-			if (in<=0 || in>=MAXITEM || it[in].used==USE_EMPTY || (it[in].driver!=2 && it[in].driver!=20)) continue;
-			for (n=0; n<cnt; n++) if (area[n].flag==2 && (d=area_gap(xx,yy,xx,yy,n))<bd && d<=12) { bd=d; best=n; }
+		for (b=0; b<area_cnt; b++) {
+			if (strcmp(area[b].name,area[h].name)) continue;
+			for (yy=area[b].y1-1; yy<=area[b].y2+1; yy++) for (xx=area[b].x1-1; xx<=area[b].x2+1; xx++) {
+				if (xx<1 || yy<1 || xx>=MAPX || yy>=MAPY) continue;
+				in=map[xx+yy*MAPX].it;
+				if (in<=0 || in>=MAXITEM || it[in].used==USE_EMPTY || (it[in].driver!=2 && it[in].driver!=20)) continue;
+				for (n=0; n<area_cnt; n++) if (area[n].flag==2 && (d=area_gap(xx,yy,xx,yy,n))<bd && d<=12) { bd=d; best=n; }
+			}
 		}
-		if (best<0) for (n=0; n<cnt; n++) if (area[n].flag==2 && (d=area_gap(area[h].x1,area[h].y1,area[h].x2,area[h].y2,n))<bd && d<=6) { bd=d; best=n; }
+		if (best<0) for (b=0; b<area_cnt; b++) {
+			if (strcmp(area[b].name,area[h].name)) continue;
+			for (n=0; n<area_cnt; n++) if (area[n].flag==2 && (d=area_gap(area[b].x1,area[b].y1,area[b].x2,area[b].y2,n))<bd && d<=6) { bd=d; best=n; }
+		}
 	} else {					// out in the open: a street close by
-		for (n=0; n<cnt; n++) if (area[n].flag==2 && (d=area_gap(x,y,x,y,n))<bd && d<=6) { bd=d; best=n; }
+		for (n=0; n<area_cnt; n++) if (area[n].flag==2 && (d=area_gap(x,y,x,y,n))<bd && d<=6) { bd=d; best=n; }
 	}
 	if (best>=0) {
-		if (town>=0 && town!=best && town!=h && strcmp(area[town].name,area[best].name)) snprintf(buf,sizeof(buf),"%s, %s",area[town].name,area[best].name);
+		if (town>=0 && strcmp(area[town].name,area[best].name) && strcmp(area[town].name,area[h].name)) snprintf(buf,sizeof(buf),"%s, %s",area[town].name,area[best].name);
 		else snprintf(buf,sizeof(buf),"%s",area[best].name);
 	} else snprintf(buf,sizeof(buf),"%s",area[h].name);
 	return buf;
 }
 
+//return the area description for x,y
 char *get_area_m(int x,int y,int verbose)
 {
-        int n,flag=0;
-        static char buf[512];
+	static char buf[512];
 
-        buf[0]=0;
-
-        for (n=0; n<sizeof(area)/sizeof(area[0]); n++) {
-                if (x>=area[n].x1 && y>=area[n].y1 &&
-                    x<=area[n].x2 && y<=area[n].y2) {
-                        if (verbose) {
-                                if (!flag) {
-                                        strcat(buf,"in "); flag=1;
-                                } else strcat(buf,", in ");
-                                if (area[n].flag==1) strcat(buf,"the ");
-                                else if (area[n].flag==2) strcat(buf,"on ");
-                                else if (area[n].flag==3) strcat(buf,"at ");
-                                strcat(buf,area[n].name);
-                        } else {
-                                if (!flag) flag=1;
-                                else strcat(buf,", ");
-                                strcat(buf,area[n].name);
-                        }
-                }
-        }
-
-        return buf;
+	area_text(buf,x,y,verbose,0);
+	return buf;
 }
