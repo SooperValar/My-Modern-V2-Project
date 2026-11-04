@@ -446,6 +446,8 @@ int talk_quest_trade(int cn,int co,int in);
 int talk_quest_maxed(int cn,int co);
 int quest_rank_check(int t,int co,int *lo,int *hi);
 int wp2h_chance(int cn,int axe);
+int set_pieces(int cn,int set);
+int weapon_special_bonus(int cn);
 int gc_staff(int cn);
 int stack_kind(int in);
 int stack_count(int in);

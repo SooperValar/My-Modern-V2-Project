@@ -296,6 +296,17 @@ extern unsigned int mapmarker;
 #define WP2H_MIN	80	// 8 %
 #define WP2H_MAX	250	// 25 % (never quite reached)
 #define WP2H_K		40
+// Fire / Ice set bonuses (svr_do.c set_pieces): Fire = melee, Ice = casters; bonus at 4 and at 6 pieces worn
+#define SET_FIRE		1
+#define SET_ICE			2
+#define SET_SPECIALTY		40	// Fire 4: + to the wielded weapon's special (deflect / critical), tenths of a percent
+#define SET_BURN_PCT		10	// Fire 6: melee hits burn for this % of the damage done, extra (instant)
+#define SET_SPELLS		5	// Ice 4: + to every spell skill
+#define SET_FROST_CHANCE	20	// Ice 6: % of melee hits against the wearer that chill the attacker
+#define SET_FROST_ATTR		10	// Chilled: Agility and Strength minus this
+#define SET_FROST_TICKS		(5*TICKS)	// Chilled: how long
+#define SET_FROST_COLD_PCT	5	// Chilled: cold damage back, % of the hit taken
+#define SPELL_CHILL		199	// spell item template number of "Chilled" (not a skill)
 #define AXE2H_T_BRONZE	1364	// item templates 1364-1368: Bronze, Steel, Golden, Crystal, Titanium Two-Handed Axe
 
 /* ch.data[] definitions */

@@ -165,6 +165,44 @@ static void con_cmd(char *line)
 		out("  Gave %s %d x %s.\n",ch[co].name,given,it_temp[t].name);
 		return;
 	}
+	if (!strcmp(w[0],"wear")) {	// wear <player> <item template>|off: a new item straight into its worn slot (test), or take all off
+		int t=atoi(w[2]),in,k=-1,pl;
+		if (!(co=con_player(w[1]))) return;
+		if (!strcmp(w[2],"off")) { for (k=0; k<20; k++) if ((in=ch[co].worn[k])) { it[in].used=USE_EMPTY; ch[co].worn[k]=0; } really_update_char(co); out("  All worn items removed.\n"); return; }
+		if (t<1 || t>=MAXTITEM || it_temp[t].used==USE_EMPTY) { out("  No item template %d.\n",t); return; }
+		pl=it_temp[t].placement;
+		if (pl&PL_HEAD) k=WN_HEAD; else if (pl&PL_BODY) k=WN_BODY; else if (pl&PL_ARMS) k=WN_ARMS; else if (pl&PL_LEGS) k=WN_LEGS;
+		else if (pl&PL_FEET) k=WN_FEET; else if (pl&PL_CLOAK) k=WN_CLOAK; else if (pl&(PL_WEAPON|PL_TWOHAND)) k=WN_RHAND; else if (pl&PL_SHIELD) k=WN_LHAND;
+		if (k<0) { out("  Not wearable this way.\n"); return; }
+		if (!(in=god_create_item(t))) return;
+		if (ch[co].worn[k]) it[ch[co].worn[k]].used=USE_EMPTY;
+		ch[co].worn[k]=in; it[in].carried=co;
+		really_update_char(co);
+		out("  %s wears %s. Fire %d/6, Ice %d/6. AV %d, Agi %d, Str %d, Wil %d, Int %d, Blast %d, Stealth %d, 2H deflect %d.%d%%, crit %d.%d%%\n",
+		    ch[co].name,it[in].name,set_pieces(co,SET_FIRE),set_pieces(co,SET_ICE),ch[co].armor,ch[co].attrib[AT_AGIL][5],ch[co].attrib[AT_STREN][5],
+		    ch[co].attrib[AT_WILL][5],ch[co].attrib[AT_INT][5],ch[co].skill[SK_BLAST][5],ch[co].skill[SK_STEALTH][5],
+		    wp2h_chance(co,0)/10,wp2h_chance(co,0)%10,wp2h_chance(co,1)/10,wp2h_chance(co,1)%10);
+		return;
+	}
+	if (!strcmp(w[0],"fighttest")) {	// fighttest <player> <NPC template> <rounds> [back]: the player hits the NPC (or "back": the NPC hits the player); damage total (test server only)
+		int t=atoi(w[2]),r=atoi(w[3]),back=!strcmp(w[4],"back"),cn=0,k,ii,chill=0,before; long long total=0;
+		if (!(co=con_player(w[1]))) return;
+		for (n=1; n<MAXCHARS; n++) if (ch[n].used==USE_ACTIVE && !(ch[n].flags&(CF_PLAYER|CF_BODY)) && ch[n].temp==t) { cn=n; break; }
+		if (!cn) { out("  No NPC of template %d in the world.\n",t); return; }
+		if (r<1) r=1;
+		if (r>5000) r=5000;
+		for (k=0; k<r; k++) {
+			ch[co].a_hp=ch[co].hp[5]*1000; ch[cn].a_hp=ch[cn].hp[5]*1000;
+			before=back ? ch[co].a_hp : ch[cn].a_hp;
+			if (back) do_attack(cn,co,0); else do_attack(co,cn,0);
+			total+=before-(back ? ch[co].a_hp : ch[cn].a_hp);
+			for (ii=0; ii<20; ii++) if (ch[cn].spell[ii] && it[ch[cn].spell[ii]].temp==SPELL_CHILL) { chill++; it[ch[cn].spell[ii]].used=USE_EMPTY; ch[cn].spell[ii]=0; really_update_char(cn); }
+		}
+		ch[co].a_hp=ch[co].hp[5]*1000; ch[cn].a_hp=ch[cn].hp[5]*1000;
+		out("  %d rounds, damage %s: %lld.%03lld hp (%lld.%03lld a round), %s chilled %d times.\n",r,back ? "taken by the player" : "done to the NPC",
+		    total/1000,total%1000,total/r/1000,total/r%1000,ch[cn].name,chill);
+		return;
+	}
 	if (!strcmp(w[0],"items")) {	// items <player>: the backpack and the hand, with stack counts
 		int k,in;
 		if (!(co=con_player(w[1]))) return;

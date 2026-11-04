@@ -308,6 +308,17 @@ The design is in `docs/ITEM_TIERS.md`.
   Needs Braveness, Willpower, Intelligence 30 and Agility, Strength 70. Stealth -7 per piece.
 - **Ice set** (1272-1276, 1407): armor 5 per piece (= Steel +1), Braveness +1, Willpower +2, Intelligence +2 per piece.
   Needs Braveness, Agility, Strength 30 and Willpower, Intelligence 70. Stealth -7 per piece.
+- **Set bonuses** (server code, `set_pieces` in `svr_do.c`, numbers in `data.h` `SET_*`):
+  - Fire, 4 pieces: **weapon specialty**, +4 % to the wielded weapon's special (two-handed sword deflect, greataxe
+    critical; `weapon_special_bonus()`, so specials added later for other weapons get it too).
+  - Fire, 6 pieces: **burning hits**, each melee hit that does damage burns for an extra 10 % at once (no lasting burn).
+  - Ice, 4 pieces: **+5 to every spell skill**.
+  - Ice, 6 pieces: **frost armor**, 20 % of the melee hits that land on the wearer chill the attacker (spell "Chilled":
+    Agility and Strength -10 for 5 seconds) and hurt it with a little cold (5 % of the hit).
+  - Item tooltips show "Fire set: x of 6 worn" and the two bonuses (green when they apply); `#specialarmor` explains them.
+  - Tested on the test server (`fighttest`): Fire 6 = about +11 % melee damage, Ice 6 chills on about 1 in 5 landed hits.
+- New console commands (testing): `wear <player> <template>|off` (puts a new item straight into its worn slot and shows
+  the main values), `fighttest <player> <NPC template> <rounds> [back]` (damage totals; test server only, it really fights).
 - Pieces already in the world get the new numbers with the new tool `tools/world/refresh_items.c`.
 - The old **Ice Cloak** (909, traded for an ice gargoyle egg, temporary) is not part of the set and stays as it is, on purpose.
 

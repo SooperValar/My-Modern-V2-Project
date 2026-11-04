@@ -1831,6 +1831,8 @@ void do_info_specialarmor(int cn)
 	}
 	do_char_log(cn,1," \n");
 	for (n=0; n<note; n++) do_char_log(cn,2,"%s\n",notes[n]);
+	do_char_log(cn,2,"* Fire set bonus (melee): 4 pieces: your weapon's special +%d%% (two-handed sword deflect, greataxe critical hits). 6 pieces: your melee hits burn for %d%% extra damage.\n",SET_SPECIALTY/10,SET_BURN_PCT);
+	do_char_log(cn,2,"* Ice set bonus (casters): 4 pieces: +%d to all spells. 6 pieces: frost armor, %d%% of the melee hits that land on you chill the attacker (Agility and Strength -%d for %d seconds) and hurt it with a little cold.\n",SET_SPELLS,SET_FROST_CHANCE,SET_FROST_ATTR,SET_FROST_TICKS/TICKS);
 	do_char_log(cn,2,"* Needs: \"all 30\" = 30 in every attribute, HEM = Hitpoints, Endurance and Mana.\n");
 }
 
@@ -3332,7 +3334,56 @@ int wp2h_chance(int cn,int axe)
         if (!IS_SANECHAR(cn)) return WP2H_MIN;
         a=ch[cn].attrib[axe ? AT_STREN : AT_AGIL][5];
         if (a<0) a=0;
-        return WP2H_MIN+(WP2H_MAX-WP2H_MIN)*a/(a+WP2H_K);
+        return WP2H_MIN+(WP2H_MAX-WP2H_MIN)*a/(a+WP2H_K)+weapon_special_bonus(cn);
+}
+
+/* Fire / Ice sets: how many pieces of the set does cn wear (0-6) */
+int set_pieces(int cn,int set)
+{
+        static int fire[]={623,624,625,626,627,628,0}, ice[]={1272,1273,1274,1275,1276,1407,0};
+        int n,k,in,cnt=0,*t=(set==SET_FIRE ? fire : ice);
+
+        if (!IS_SANECHAR(cn)) return 0;
+        for (n=0; n<20; n++) {
+                if (!(in=ch[cn].worn[n])) continue;
+                for (k=0; t[k]; k++) if (it[in].temp==t[k]) { cnt++; break; }
+        }
+        return cnt;
+}
+
+/* extra chance for the wielded weapon's special (two-handed sword deflect, greataxe critical, and any weapon
+ * special added later), tenths of a percent: the Fire set's 4-piece bonus */
+int weapon_special_bonus(int cn)
+{
+        return set_pieces(cn,SET_FIRE)>=4 ? SET_SPECIALTY : 0;
+}
+
+/* Ice set, 6 pieces: the attacker cn of wearer co may get chilled (Agility / Strength down for a few seconds)
+ * and takes a little cold damage. dam = the damage co took, in hitpoints (0 if the armor stopped it all). */
+static void frost_armor(int co,int cn,int dam)
+{
+        int in,c,cold;
+
+        if (!IS_SANECHAR(cn) || cn==co || (ch[cn].flags&(CF_IMMORTAL|CF_BODY))) return;
+
+        if ((in=god_create_item(1))) {
+                strcpy(it[in].name,"Chilled");
+                it[in].flags|=IF_SPELL;
+                it[in].attrib[AT_AGIL][1]=-SET_FROST_ATTR;
+                it[in].attrib[AT_STREN][1]=-SET_FROST_ATTR;
+                it[in].sprite[1]=89;
+                it[in].duration=it[in].active=SET_FROST_TICKS;
+                it[in].temp=SPELL_CHILL;
+                it[in].power=SET_FROST_ATTR;
+                if (add_spell(cn,in)) {
+                        do_char_log(co,1,"Your armor of ice chills %s.\n",ch[cn].reference);
+                        if (ch[cn].flags&CF_PLAYER) do_char_log(cn,0,"%s's armor of ice chills you.\n",ch[co].name);
+                }
+        }
+
+        c=dam*SET_FROST_COLD_PCT;
+        cold=c/100+(RANDOM(100)<c%100 ? 1 : 0);
+        if (cold>0) do_hurt(co,cn,cold,3);
 }
 
 /* does player cn wield a two-handed axe (axe=1) or two-handed sword (axe=0)?
@@ -3352,7 +3403,7 @@ static int wields_2h(int cn,int axe)
 
 void do_attack(int cn,int co,int surround)
 {
-        int hit,dam=0,die,m,odam=0;
+        int hit,dam=0,die,m,odam=0,tx,ty;
         int chance,s1,s2,bonus=0,diff;
 
         if (!may_attack_msg(cn,co,1)) {
@@ -3450,7 +3501,19 @@ void do_attack(int cn,int co,int surround)
 
                 if (ch[cn].flags&(CF_PLAYER)) item_damage_weapon(cn,dam);
 
+                tx=ch[co].x; ty=ch[co].y;
                 dam=do_hurt(cn,co,dam,0);
+
+                // Fire set, 6 pieces: the hit burns for an extra SET_BURN_PCT % (instant; not if the hit killed or moved co)
+                // Ice set, 6 pieces: a landed melee hit may chill the attacker (also when the armor stopped the damage)
+                if (set_pieces(co,SET_ICE)>=6 && ch[co].used!=USE_EMPTY && !(ch[co].flags&CF_BODY) && ch[co].x==tx && ch[co].y==ty
+                    && RANDOM(100)<SET_FROST_CHANCE) frost_armor(co,cn,dam);
+
+                if (dam>0 && set_pieces(cn,SET_FIRE)>=6 && ch[co].used!=USE_EMPTY && !(ch[co].flags&CF_BODY) && ch[co].x==tx && ch[co].y==ty) {
+                        int b=dam*SET_BURN_PCT;
+                        b=b/100+(RANDOM(100)<b%100 ? 1 : 0);
+                        if (b>0) do_hurt(cn,co,b,3);
+                }
 
                 if (dam<1) {
                         do_area_sound(co,0,ch[co].x,ch[co].y,ch[cn].sound+3);
@@ -3772,6 +3835,10 @@ void really_update_char(int cn)
                         else if (it[m].light[0]<0) sublight-=it[m].light[0];
                 }
         }
+
+        // Ice set, 4 pieces: + to every spell skill
+        if (!(ch[cn].flags&CF_NOMAGIC) && set_pieces(cn,SET_ICE)>=4)
+                for (z=0; z<50; z++) if (skilltab[z].sortkey=='R') skill[z]+=SET_SPELLS;
 
         armor+=ch[cn].armor_bonus;
         weapon+=ch[cn].weapon_bonus;

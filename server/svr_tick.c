@@ -883,6 +883,23 @@ void plr_cmd_iteminfo(int nr)
 			if (it[in].mana[act]) tip_line(nr,where,slot,&line,it[in].mana[act]<0 ? 0 : 2,"%+5d Mana",it[in].mana[act]);
 			tip_sep();
 			for (n=0; n<50; n++) if (it[in].skill[n][act]) tip_line(nr,where,slot,&line,it[in].skill[n][act]<0 ? 0 : 2,"%+5d %s",it[in].skill[n][act],skilltab[n].name);
+			{	// Fire / Ice set bonus: how many the player wears, and the bonuses (green when they apply)
+				int t=it[in].temp,set=0,w;
+				if ((t>=623 && t<=628)) set=SET_FIRE;
+				else if ((t>=1272 && t<=1276) || t==1407) set=SET_ICE;
+				if (set) {
+					w=set_pieces(player[nr].usnr,set);
+					tip_sep();
+					tip_line(nr,where,slot,&line,1,"%s set: %d of 6 worn",set==SET_FIRE ? "Fire" : "Ice",w);
+					if (set==SET_FIRE) {
+						tip_line(nr,where,slot,&line,w>=4 ? 2 : 1,"4: weapon special +%d%%",SET_SPECIALTY/10);
+						tip_line(nr,where,slot,&line,w>=6 ? 2 : 1,"6: hits burn +%d%% damage",SET_BURN_PCT);
+					} else {
+						tip_line(nr,where,slot,&line,w>=4 ? 2 : 1,"4: all spells +%d",SET_SPELLS);
+						tip_line(nr,where,slot,&line,w>=6 ? 2 : 1,"6: frost armor (%d%% chill)",SET_FROST_CHANCE);
+					}
+				}
+			}
 			if (IT_TIER(in) && IT_TEFFECT(in)) {	// the Epic effect: its name in purple, then what it does
 				char el[4][60]; int k,cnt=tier_tip_effect(in,el);
 				if (cnt) tip_sep();
