@@ -1616,14 +1616,14 @@ void do_info_twohand(int cn)
 	static int t[]={35,36,37,38,125};
 	info_weapon_table(cn,"two-handed swords","2Hand",SK_TWOHAND,t,5);
 	info_blessed(cn);
-	do_char_log(cn,2,"* Two-handed swords take both hands: no shield. Deflect: while you wield one, 1 in %d melee hits against you is deflected.\n",WP2H_SPECIAL);
+	{ int c=wp2h_chance(cn,0); do_char_log(cn,2,"* Two-handed swords take both hands: no shield. Deflect: while you wield one, some melee hits against you are deflected: %d%% to %d%%, more with Agility (you: %d.%d%%).\n",WP2H_MIN/10,WP2H_MAX/10,c/10,c%10); }
 }
 
 void do_info_axe2h(int cn)
 {
 	static int t[]={AXE2H_T_BRONZE,AXE2H_T_BRONZE+1,AXE2H_T_BRONZE+2,AXE2H_T_BRONZE+3,AXE2H_T_BRONZE+4};
 	info_weapon_table(cn,"two-handed axes","2Axe",SK_AXE2H,t,5);
-	do_char_log(cn,2,"* Two-handed axes take both hands: no shield. Critical hits: 1 in %d of your hits does double damage.\n",WP2H_SPECIAL);
+	{ int c=wp2h_chance(cn,1); do_char_log(cn,2,"* Two-handed axes take both hands: no shield. Critical hits: some of your hits do double damage: %d%% to %d%%, more with Strength (you: %d.%d%%).\n",WP2H_MIN/10,WP2H_MAX/10,c/10,c%10); }
 }
 
 void do_info_axe(int cn)
@@ -1850,10 +1850,11 @@ static void info_ringbonus(int t,int act,char *out)
 void do_info_rings(int cn)
 {
 	// plain ring + stone -> ring (see build_ring() in use_driver.c)
-	static char *stone[3]={"Ruby","Emerald","Sapphire"};
+	static char *stone[6]={"Ruby","Emerald","Sapphire","Topaz","Amethyst","Diamond"};
 	static char *size[4]={"Small","Medium","Big","Huge"};
-	static int gold[3][4]={{362,363,364,490},{365,366,367,491},{368,369,370,492}};
-	static int silver[3][4]={{348,349,350,0},{351,352,353,0},{354,355,356,0}};
+	static int gold[6][4]={{362,363,364,490},{365,366,367,491},{368,369,370,492},
+		{RING_NEW,RING_NEW+1,RING_NEW+2,RING_NEW+3},{RING_NEW+4,RING_NEW+5,RING_NEW+6,RING_NEW+7},{RING_NEW+8,RING_NEW+9,RING_NEW+10,RING_NEW+11}};
+	static int silver[6][4]={{348,349,350,0},{351,352,353,0},{354,355,356,0},{0,0,0,0},{0,0,0,0},{0,0,0,0}};
 	int s,z,tg,ts;
 	char name[30],sv[30],gv[40],tmp[30],rank[8];
 
@@ -1861,7 +1862,7 @@ void do_info_rings(int cn)
 	do_char_log(cn,1," \n");
 	do_char_log(cn,1," Stone           | Rank | Silver ring  | Golden ring\n");
 	do_char_log(cn,1,"-----------------+------+--------------+-------------------\n");
-	for (s=0; s<3; s++) {
+	for (s=0; s<6; s++) {
 		for (z=0; z<4; z++) {
 			tg=gold[s][z]; ts=silver[s][z];
 			if (it_temp[tg].used==USE_EMPTY) continue;
@@ -3320,6 +3321,17 @@ int do_hurt(int cn,int co,int dam,int type)
         return dam/1000;
 }
 
+/* chance of the two-handed specials for character cn, in tenths of a percent: the sword's deflect grows with
+ * Agility, the axe's critical hit with Strength, fast at first and then flattening (WP2H_MIN..WP2H_MAX, data.h) */
+int wp2h_chance(int cn,int axe)
+{
+        int a;
+        if (!IS_SANECHAR(cn)) return WP2H_MIN;
+        a=ch[cn].attrib[axe ? AT_STREN : AT_AGIL][5];
+        if (a<0) a=0;
+        return WP2H_MIN+(WP2H_MAX-WP2H_MIN)*a/(a+WP2H_K);
+}
+
 /* does player cn wield a two-handed axe (axe=1) or two-handed sword (axe=0)?
  * Only players get the weapon specials, so monsters stay as they were. */
 static int wields_2h(int cn,int axe)
@@ -3414,7 +3426,7 @@ void do_attack(int cn,int co,int surround)
         else hit=0;
 
         // two-handed sword: a player wielding one deflects some melee hits
-        if (hit && wields_2h(co,0) && !RANDOM(WP2H_SPECIAL)) {
+        if (hit && wields_2h(co,0) && RANDOM(1000)<wp2h_chance(co,0)) {
                 hit=0;
                 do_char_log(co,1,"You deflect %s's blow.\n",ch[cn].reference);
                 if (ch[cn].flags&CF_PLAYER) do_char_log(cn,1,"%s deflects your blow.\n",ch[co].name);
@@ -3426,7 +3438,7 @@ void do_attack(int cn,int co,int surround)
                 if (die==2) dam+=RANDOM(6)+1;
                 if (die==1) dam+=RANDOM(6)+RANDOM(6)+2;
                 // two-handed axe: a player wielding one sometimes lands a critical hit
-                if (wields_2h(cn,1) && !RANDOM(WP2H_SPECIAL)) {
+                if (wields_2h(cn,1) && RANDOM(1000)<wp2h_chance(cn,1)) {
                         dam*=2;
                         do_char_log(cn,1,"Critical hit!\n");
                 }

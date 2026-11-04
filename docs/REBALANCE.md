@@ -1,6 +1,6 @@
 # Rebalance: two-handed weapons, rings, Harakim (TODO 11) - design
 
-Status: **partly decided** (Nov 4), nothing built yet.
+Status: **built** (Nov 4): attributes, curve, spells, rings and stones, spell books, Ghost Companion following. Waiting to go live (server code + world update). **Staff: still to design.** Changes listed in `CHANGES.md` (Rebalance).
 
 ## Decisions so far
 
@@ -33,8 +33,8 @@ name stays white (these are plain items, not Magic / Rare / Epic).
 armor piece of its level (Rare budget = 2 x max(level, 8): 16, 16, 20, 28, 36), a bit more at the top because it takes
 the place of a shield.
 
-Open: which spells (these four, or others such as Protect / Enhance / Curse / Stun), who sells them (Damor's magic
-shop for the first two, lab merchants for the rest?) and whether they also drop.
+Decided: six spells (+ Protection and Enhance Weapon), the numbers above; sold by Damor (Initiate, Apprentice) and lab
+merchants (Adept: Light&Dark Gorge, Mage: Riddle Gorge, Archmage: Seasons Gorge, Spring). Not dropped (yet).
 
 
 ## Curve options (deflect for the sword from Agility, crit for the axe from Strength)

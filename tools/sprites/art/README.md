@@ -68,3 +68,21 @@ the low block for walls but the same tree again for trees; the client (`hide_spr
 | Stump | 18190 | 18191 | 18192 | 18193 | 18194 | 18195 | 18196 | 18197 | 18198 | 18199 | 18200 | 18201 | 18202 |
 
 These are every tree used on the map. A new tree sprite needs a stump and an entry in that list.
+
+## Rings, stones and spell books - 18240-18287 (`rings_books.py`, sources in `rings_books/`)
+
+Recoloured from the game's own sprites: the Golden Emerald rings (182, 185, 188, 629 and the huge ring's glow
+1925-1929) and loose emeralds (236, 235, 234, 632) become Topaz (Agility, orange-gold), Amethyst (Intelligence,
+purple) and Diamond (Braveness, white); the Book of Wisdom (16912) becomes the five spell books, its numeral replaced
+by a small gold emblem.
+
+| | Small | Medium | Big | Huge | Huge glow |
+|---|---|---|---|---|---|
+| Topaz ring | 18240 | 18241 | 18242 | 18243 | 18244-18248 |
+| Amethyst ring | 18250 | 18251 | 18252 | 18253 | 18254-18258 |
+| Diamond ring | 18260 | 18261 | 18262 | 18263 | 18264-18268 |
+| Topaz / Amethyst / Diamond stone | 18276 / 18280 / 18284 | +1 | +2 | +3 | |
+
+Spell books: 18270 red (Initiate), 18271 yellow (Apprentice), 18272 green (Adept), 18273 blue (Mage), 18274 purple
+(Archmage). Free after these: 18288 and up.
+

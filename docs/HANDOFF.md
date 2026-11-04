@@ -81,6 +81,16 @@ is the project's `client/` folder.
   `(./server > out.txt 2>&1 &)`, talk to it on 5556, kill it at the end (`pkill -f "^./server"`).
   Background processes die when the shell call ends.
 
+## Changing the world data (item / NPC templates, merchant stock)
+
+The live world is in Ubuntu (`~/.dat`); `Server\.dat` on Windows is only a copy (may be old). For a template change:
+1. `{"action":"stop-send"}` (Cody's "go": the game stops) - the current world is copied to `Server\.dat`.
+2. In Claude's device shell: build `tools/world/build_lab.c` (`gcc -I server`) and run it on `$HOME/mnt/Server/.dat`
+   with the spec (`tools/world/*.txt`).
+3. `{"action":"get"}` if the code changed too (rebuild, no start), then `{"action":"update-world"}` (takes the world from
+   Windows, starts the game), then `{"action":"reload-editor"}`.
+New sprites: write them to `Client\GFX` (new numbers), then `tools/release/publish_client.py`; Cody pushes `client-dist`.
+
 ## The MyV2 Editor
 
 - Runs as one file, `mapedit.py` (in the Server folder; a copy in `tools/mapedit/`).
@@ -146,11 +156,11 @@ is the project's `client/` folder.
 
 ## Open items (details in docs/TODO.md and docs/HOSTING.md)
 
-**Where we left off (Nov 3):** Cody is going through the quests on the Quests page (rewards, order, ranks).
-Next ideas waiting: hosting section 4 (daily world backups first), TODO 11-18 (rebalance, waypoints, stacking,
-Ghost Companion targeting, Underground III, Stronghold points). The DuckDNS task was switched to a hidden
-launcher (`%USERPROFILE%\duckdns\duckdns-hidden.vbs` via wscript) to stop the PowerShell window flashing -
-check with Cody that it stopped.
+**Where we left off (Nov 4):** the rebalance (TODO 11) is built and committed but NOT live yet: it needs the
+server code update plus the world update (new item templates 1378-1406 from `tools/world/rings_books.txt`, books added
+to merchants) in one stop, as in "Changing the world data" above, and Cody pushing `client-dist` (client update 3:
+sprites 18240-18287). Then: the summoner's staff (design in `docs/REBALANCE.md`). Cody is also going through the quests
+on the Quests page. The DuckDNS PowerShell window: switched to a hidden launcher; check with Cody that it stopped.
 
 - **#quest** (IN PROGRESS, not final; live since the zones update; built and committed): the look is approved (column table, 15 a page); still open: the order
   and rewards; maybe a separate difficulty number per quest

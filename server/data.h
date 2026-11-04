@@ -280,7 +280,17 @@ extern unsigned int mapmarker;
 #define SK_WARCRY2	(SK_WARCRY+100)
 #define SK_AXE2H	36	// two-handed axes (items with IF_WP_AXE and IF_WP_TWOHAND)
 #define AXE2H_SLOW	0	// was 3 (attacked slower); now the same speed as two-handed swords
-#define WP2H_SPECIAL	8	// 2H axe: 1 in 8 hits is a critical (double damage); 2H sword: deflects 1 in 8 melee hits
+#define WP2H_SPECIAL	8	// (old: a flat 1 in 8; now wp2h_chance in svr_do.c)
+// MyV2 rebalance (docs/REBALANCE.md): the 2H sword's deflect (from Agility) and the 2H axe's critical hit (from
+// Strength): chance = MIN + (MAX - MIN) x A / (A + K), in tenths of a percent
+// MyV2 rebalance: new gems and golden rings (tools/world/rings_books.txt): Topaz = Agility, Amethyst = Intelligence,
+// Diamond = Braveness. Each: small, medium, big, huge. Golden rings 1378-1389, gems 1390-1401, spell books 1402-1406.
+#define RING_NEW	1378	// + stone*4 + size (stone 0 topaz, 1 amethyst, 2 diamond; size 0 small .. 3 huge)
+#define GEM_NEW		1390
+#define SPELLBOOK_FIRST	1402	// Initiate, Apprentice, Adept, Mage, Archmage
+#define WP2H_MIN	80	// 8 %
+#define WP2H_MAX	250	// 25 % (never quite reached)
+#define WP2H_K		40
 #define AXE2H_T_BRONZE	1364	// item templates 1364-1368: Bronze, Steel, Golden, Crystal, Titanium Two-Handed Axe
 
 /* ch.data[] definitions */

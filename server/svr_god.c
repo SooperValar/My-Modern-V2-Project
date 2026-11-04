@@ -477,10 +477,31 @@ int god_take_from_char(int in,int cn)
         return 1;
 }
 
+/* MyV2: a player's Ghost Companion goes along through portals, teleports, recall and scrolls: to a free tile
+ * next to its master. Not when it was far away (more than 20 steps), not when the player died (moved to the
+ * temple), not into an arena. */
+static void companion_follow(int cn,int ox,int oy)
+{
+        int cc;
+
+        if (!IS_SANEPLAYER(cn) || ch[cn].a_hp<500) return;
+        cc=ch[cn].data[64];
+        if (!IS_SANENPC(cc) || !IS_COMPANION(cc) || ch[cc].data[63]!=cn || ch[cc].used!=USE_ACTIVE) return;
+        if (abs(ch[cc].x-ox)+abs(ch[cc].y-oy)>20) return;
+        if (map[ch[cn].x+ch[cn].y*MAPX].flags&MF_ARENA) return;
+        if (god_transfer_char(cc,ch[cn].x,ch[cn].y)) {
+                ch[cc].goto_x=0; ch[cc].attack_cn=0;
+                fx_add_effect(12,0,ch[cc].x,ch[cc].y,0);
+        }
+}
+
 int god_transfer_char(int cn,int x,int y)
 {
+        int ox,oy;
+
         if (!IS_SANECHAR(cn) || !SANEXY(x,y)) return 0;
 
+        ox=ch[cn].x; oy=ch[cn].y;
         ch[cn].status=0;
         ch[cn].attack_cn=0;
         ch[cn].skill_nr=0;
@@ -488,11 +509,12 @@ int god_transfer_char(int cn,int x,int y)
 
         plr_map_remove(cn);
 
-        if (god_drop_char_fuzzy_large(cn,x,y,x,y)) return 1;
-        if (god_drop_char_fuzzy_large(cn,x+3,y,x,y)) return 1;
-        if (god_drop_char_fuzzy_large(cn,x-3,y,x,y)) return 1;
-        if (god_drop_char_fuzzy_large(cn,x,y+3,x,y)) return 1;
-        if (god_drop_char_fuzzy_large(cn,x,y-3,x,y)) return 1;
+        if (god_drop_char_fuzzy_large(cn,x,y,x,y) || god_drop_char_fuzzy_large(cn,x+3,y,x,y) ||
+            god_drop_char_fuzzy_large(cn,x-3,y,x,y) || god_drop_char_fuzzy_large(cn,x,y+3,x,y) ||
+            god_drop_char_fuzzy_large(cn,x,y-3,x,y)) {
+                companion_follow(cn,ox,oy);
+                return 1;
+        }
 
         plr_map_set(cn);
 

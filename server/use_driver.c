@@ -1419,17 +1419,20 @@ int use_pile(int cn,int in)
 {
         int in2,x,y,m,level,tmp,chance;
         static int find[]={
-                361,361,339,342,345,339,342,345,359,359,        // silver, small jewels, skeleton
-                361,361,339,342,345,339,342,345,359,359,        // silver, small jewels, skeleton
-                361,361,339,342,345,339,342,345,359,359,        // silver, small jewels, skeleton
+                // MyV2 rebalance: six kinds of stone (ruby, emerald, sapphire, topaz, amethyst, diamond)
+                361,361,339,342,345,1390,1394,1398,359,359,     // silver, small jewels, skeleton
+                361,361,339,342,345,1390,1394,1398,359,359,     // silver, small jewels, skeleton
+                361,361,339,342,345,1390,1394,1398,359,359,     // silver, small jewels, skeleton
 
-                361,361,361,340,343,346,371,371,371,371,        // silver, med jewels, golem
-                361,361,361,340,343,346,371,371,371,371,        // silver, med jewels, golem
-                361,361,361,340,343,346,371,371,371,371,        // silver, med jewels, golem
+                361,361,340,343,346,1391,1395,1399,371,371,     // silver, med jewels, golem
+                361,361,340,343,346,1391,1395,1399,371,371,     // silver, med jewels, golem
+                361,361,371,371,371,371,371,371,371,371,        // silver, golem
 
-                360,341,344,347,372,372,372,487,372,372,        // gold, big jewels, gargoyle
-                360,341,344,347,372,372,372,488,372,372,        // gold, big jewels, gargoyle
-                360,341,344,347,372,372,372,489,372,372};       // gold, big jewels, gargoyle
+                360,341,344,347,1392,1396,1400,487,372,372,     // gold, big jewels, huge, gargoyle
+                360,341,344,347,1392,1396,1400,488,1393,372,    // gold, big jewels, huge, gargoyle
+                360,372,372,372,372,1397,489,1401,372,372};     // gold, huge, gargoyle
+                // per level of 30: small 3 of each stone (as many stones as before); medium 2 of each (silver 9 -> 6,
+                // stones 9 -> 12); big 2 of each, huge 1 of each (gargoyles 15 -> 9, stones 12 -> 18)
 
         if (it[in].active) return 0;
 
@@ -1625,9 +1628,13 @@ int build_ring(int cn,int in)
                         case    487:    r=490; break; // huge ruby
                         case    488:    r=491; break; // huge emerald
                         case    489:    r=492; break; // huge saphire
-                        default:        return 0;
+                        default:
+                                // MyV2: topaz, amethyst, diamond (small .. huge) -> the matching golden ring
+                                if (t2>=GEM_NEW && t2<GEM_NEW+12) { r=RING_NEW+(t2-GEM_NEW); break; }
+                                return 0;
                 }
         } else if (t1==338) { // plain silver ring
+                if (t2>=GEM_NEW && t2<GEM_NEW+12) { do_char_log(cn,0,"This stone needs a golden ring.\n"); return 0; }
                 switch(t2) {
                         case    339:    r=348; break; // small ruby
                         case    340:    r=349; break; // med ruby

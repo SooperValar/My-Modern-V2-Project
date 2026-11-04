@@ -9,6 +9,10 @@
  *   it <temp> spr <s0> <s1> | flags <hex> | light <l0> <l1> | dur <ticks> | value <v>
  *   it <temp> d <i> <value>                        data[i]
  *   it <temp> wv <v> | atreq <attrib 0-4> <v> | skreq <skill> <v>   weapon value and requirements
+ *   it <temp> attr <attrib 0-4> <bonus> [<bonus while active>]  attribute bonus (attrib[i][0] / [1])
+ *   it <temp> skill <skill> <bonus>                 skill bonus (skill[n][0])
+ *   it <temp> hp|end|mana <bonus>                   hitpoints / endurance / mana bonus
+ *   it <temp> minrank <rank> | placement <n> | armor <av>
  *   it <temp> driver <n>                           item driver
  *   it <temp> status <s0> <s1>                     animation (client): 0/1 still, 16 = 4-frame loop, ...
  *   place <temp> <x> <y>                           put a copy of the item template there
@@ -25,6 +29,7 @@
  *   ch <temp> d <i> <value>                        data[i]
  *   ch <temp> setflags <hex> | clrflags <hex>
  *   ch <temp> items <temp>...                      backpack (also a merchant's stock)
+ *   ch <temp> additems <temp>...                   add to the backpack / stock (free slots; skips ones already there)
  *   ch <temp> worn <slot> <temp>                   worn item (slot: 0 head, 2 body, 3 arms, 5 legs, 6 feet, 8 weapon, 9 cloak, ...)
  *   ch <temp> gold <silver>                        money it starts with (100 = 1 gold)
  *   ch <temp> text <i> <text...>
@@ -104,6 +109,14 @@ int main(int argc,char **argv)
 			else if (!strcmp(word,"atreq") && sscanf(text,"%d %d",&i,&b)==2 && i>=0 && i<5) ti[a].attrib[i][2]=b;
 			else if (!strcmp(word,"skreq") && sscanf(text,"%d %d",&i,&b)==2 && i>=0 && i<MAXSKILL) ti[a].skill[i][2]=b;
 			else if (!strcmp(word,"d") && sscanf(text,"%d %d",&i,&b)==2 && i>=0 && i<10) ti[a].data[i]=b;
+			else if (!strcmp(word,"attr") && sscanf(text,"%d %d",&i,&b)==2 && i>=0 && i<5) { int act=0; ti[a].attrib[i][0]=b; if (sscanf(text,"%*d %*d %d",&act)==1) ti[a].attrib[i][1]=act; }
+			else if (!strcmp(word,"skill") && sscanf(text,"%d %d",&i,&b)==2 && i>=0 && i<MAXSKILL) ti[a].skill[i][0]=b;
+			else if (!strcmp(word,"hp")) ti[a].hp[0]=atoi(text);
+			else if (!strcmp(word,"end")) ti[a].end[0]=atoi(text);
+			else if (!strcmp(word,"mana")) ti[a].mana[0]=atoi(text);
+			else if (!strcmp(word,"minrank")) ti[a].min_rank=atoi(text);
+			else if (!strcmp(word,"placement")) ti[a].placement=atoi(text);
+			else if (!strcmp(word,"armor")) ti[a].armor[0]=atoi(text);
 			else printf("line %d not understood: %s\n",ln,line);
 
 		} else if (sscanf(line,"place %d %d %d",&a,&b,&c)==3) {
@@ -227,6 +240,16 @@ int main(int argc,char **argv)
 			else if (!strcmp(word,"worn") && sscanf(text,"%d %d",&i,&b)==2 && i>=0 && i<20) t->worn[i]=b;	// worn slot (WN_*) = item template
 			else if (!strcmp(word,"gold")) t->gold=atoi(text);	// in silver: 100 = 1G
 			else if (!strcmp(word,"items")) { char *p=text; for (i=0; i<40; i++) { t->item[i]=(int)strtol(p,&p,10); } }
+			else if (!strcmp(word,"additems")) {
+				char *p=text,*e; int v,k;
+				for (;;) {
+					v=(int)strtol(p,&e,10); if (e==p) break; p=e;
+					for (k=0; k<40; k++) if (t->item[k]==(unsigned)v) break;
+					if (k<40) continue;
+					for (k=0; k<40; k++) if (!t->item[k]) { t->item[k]=v; break; }
+					if (k==40) printf("line %d: no free slot for %d in template %d\n",ln,v,a);
+				}
+			}
 			else if (!strcmp(word,"text") && sscanf(text,"%d %n",&i,&off)==1 && i>=0 && i<10) { strncpy(t->text[i],text+off,sizeof(t->text[i])-1); t->text[i][sizeof(t->text[i])-1]=0; }
 			else printf("line %d not understood: %s\n",ln,line);
 

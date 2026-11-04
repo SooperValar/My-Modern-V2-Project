@@ -1,0 +1,274 @@
+# MyV2 rebalance (docs/REBALANCE.md): Topaz (Agility), Amethyst (Intelligence), Diamond (Braveness) stones and
+# golden rings, copied from the emerald ones (same values and ranks); and the five spell books (left hand).
+# Rings 1378-1389, stones 1390-1401, books 1402-1406 (RING_NEW / GEM_NEW / SPELLBOOK_FIRST in server/data.h).
+# Sprites: tools/sprites/rings_books.py. Apply: build_lab <.dat> rings_books.txt (server stopped).
+
+it 1390 copy 342
+it 1390 name Small Topaz
+it 1390 ref small topaz
+it 1390 desc A small topaz.
+it 1390 spr 18276 0
+
+it 1378 copy 365
+it 1378 name Golden Small Topaz Ring
+it 1378 ref golden small topaz ring
+it 1378 desc A golden ring adorned with a small topaz.
+it 1378 spr 18240 0
+it 1378 attr 4 0 0
+it 1378 attr 3 3
+
+it 1391 copy 343
+it 1391 name Medium Topaz
+it 1391 ref medium topaz
+it 1391 desc A medium topaz.
+it 1391 spr 18277 0
+
+it 1379 copy 366
+it 1379 name Golden Medium Topaz Ring
+it 1379 ref golden medium topaz ring
+it 1379 desc A golden ring adorned with a medium topaz.
+it 1379 spr 18241 0
+it 1379 attr 4 0 0
+it 1379 attr 3 6
+
+it 1392 copy 344
+it 1392 name Big Topaz
+it 1392 ref big topaz
+it 1392 desc A big topaz.
+it 1392 spr 18278 0
+
+it 1380 copy 367
+it 1380 name Golden Big Topaz Ring
+it 1380 ref golden big topaz ring
+it 1380 desc A golden ring adorned with a big topaz.
+it 1380 spr 18242 0
+it 1380 attr 4 0 0
+it 1380 attr 3 9
+
+it 1393 copy 488
+it 1393 name Huge Topaz
+it 1393 ref huge topaz
+it 1393 desc A huge topaz.
+it 1393 spr 18279 0
+
+it 1381 copy 491
+it 1381 name Golden Huge Topaz Ring
+it 1381 ref golden huge topaz ring
+it 1381 desc A golden ring adorned with a huge topaz.
+it 1381 spr 18243 18244
+it 1381 attr 4 0 0
+it 1381 attr 3 12 24
+
+it 1394 copy 342
+it 1394 name Small Amethyst
+it 1394 ref small amethyst
+it 1394 desc A small amethyst.
+it 1394 spr 18280 0
+
+it 1382 copy 365
+it 1382 name Golden Small Amethyst Ring
+it 1382 ref golden small amethyst ring
+it 1382 desc A golden ring adorned with a small amethyst.
+it 1382 spr 18250 0
+it 1382 attr 4 0 0
+it 1382 attr 2 3
+
+it 1395 copy 343
+it 1395 name Medium Amethyst
+it 1395 ref medium amethyst
+it 1395 desc A medium amethyst.
+it 1395 spr 18281 0
+
+it 1383 copy 366
+it 1383 name Golden Medium Amethyst Ring
+it 1383 ref golden medium amethyst ring
+it 1383 desc A golden ring adorned with a medium amethyst.
+it 1383 spr 18251 0
+it 1383 attr 4 0 0
+it 1383 attr 2 6
+
+it 1396 copy 344
+it 1396 name Big Amethyst
+it 1396 ref big amethyst
+it 1396 desc A big amethyst.
+it 1396 spr 18282 0
+
+it 1384 copy 367
+it 1384 name Golden Big Amethyst Ring
+it 1384 ref golden big amethyst ring
+it 1384 desc A golden ring adorned with a big amethyst.
+it 1384 spr 18252 0
+it 1384 attr 4 0 0
+it 1384 attr 2 9
+
+it 1397 copy 488
+it 1397 name Huge Amethyst
+it 1397 ref huge amethyst
+it 1397 desc A huge amethyst.
+it 1397 spr 18283 0
+
+it 1385 copy 491
+it 1385 name Golden Huge Amethyst Ring
+it 1385 ref golden huge amethyst ring
+it 1385 desc A golden ring adorned with a huge amethyst.
+it 1385 spr 18253 18254
+it 1385 attr 4 0 0
+it 1385 attr 2 12 24
+
+it 1398 copy 342
+it 1398 name Small Diamond
+it 1398 ref small diamond
+it 1398 desc A small diamond.
+it 1398 spr 18284 0
+
+it 1386 copy 365
+it 1386 name Golden Small Diamond Ring
+it 1386 ref golden small diamond ring
+it 1386 desc A golden ring adorned with a small diamond.
+it 1386 spr 18260 0
+it 1386 attr 4 0 0
+it 1386 attr 0 3
+
+it 1399 copy 343
+it 1399 name Medium Diamond
+it 1399 ref medium diamond
+it 1399 desc A medium diamond.
+it 1399 spr 18285 0
+
+it 1387 copy 366
+it 1387 name Golden Medium Diamond Ring
+it 1387 ref golden medium diamond ring
+it 1387 desc A golden ring adorned with a medium diamond.
+it 1387 spr 18261 0
+it 1387 attr 4 0 0
+it 1387 attr 0 6
+
+it 1400 copy 344
+it 1400 name Big Diamond
+it 1400 ref big diamond
+it 1400 desc A big diamond.
+it 1400 spr 18286 0
+
+it 1388 copy 367
+it 1388 name Golden Big Diamond Ring
+it 1388 ref golden big diamond ring
+it 1388 desc A golden ring adorned with a big diamond.
+it 1388 spr 18262 0
+it 1388 attr 4 0 0
+it 1388 attr 0 9
+
+it 1401 copy 488
+it 1401 name Huge Diamond
+it 1401 ref huge diamond
+it 1401 desc A huge diamond.
+it 1401 spr 18287 0
+
+it 1389 copy 491
+it 1389 name Golden Huge Diamond Ring
+it 1389 ref golden huge diamond ring
+it 1389 desc A golden ring adorned with a huge diamond.
+it 1389 spr 18263 18264
+it 1389 attr 4 0 0
+it 1389 attr 0 12 24
+
+# Initiate: rank 2, Willpower +1, spells +2, mana +10
+it 1402 copy 365
+it 1402 name Initiate's Spell Book
+it 1402 ref initiate's spell book
+it 1402 desc A red spell book for the initiate. Held in the left hand, it strengthens Willpower and the spells Blast, Heal, Bless, Magic Shield, Protection and Enhance Weapon.
+it 1402 spr 18270 0
+it 1402 placement 512
+it 1402 attr 4 0 0
+it 1402 attr 1 1
+it 1402 skill 24 2
+it 1402 skill 26 2
+it 1402 skill 21 2
+it 1402 skill 11 2
+it 1402 skill 17 2
+it 1402 skill 18 2
+it 1402 mana 10
+it 1402 minrank 2
+it 1402 value 1000
+
+# Apprentice: rank 6, Willpower +2, spells +3, mana +20
+it 1403 copy 365
+it 1403 name Apprentice's Spell Book
+it 1403 ref apprentice's spell book
+it 1403 desc A yellow spell book for the apprentice. Held in the left hand, it strengthens Willpower and the spells Blast, Heal, Bless, Magic Shield, Protection and Enhance Weapon.
+it 1403 spr 18271 0
+it 1403 placement 512
+it 1403 attr 4 0 0
+it 1403 attr 1 2
+it 1403 skill 24 3
+it 1403 skill 26 3
+it 1403 skill 21 3
+it 1403 skill 11 3
+it 1403 skill 17 3
+it 1403 skill 18 3
+it 1403 mana 20
+it 1403 minrank 6
+it 1403 value 4000
+
+# Adept: rank 10, Willpower +3, spells +5, mana +30
+it 1404 copy 365
+it 1404 name Adept's Spell Book
+it 1404 ref adept's spell book
+it 1404 desc A green spell book for the adept. Held in the left hand, it strengthens Willpower and the spells Blast, Heal, Bless, Magic Shield, Protection and Enhance Weapon.
+it 1404 spr 18272 0
+it 1404 placement 512
+it 1404 attr 4 0 0
+it 1404 attr 1 3
+it 1404 skill 24 5
+it 1404 skill 26 5
+it 1404 skill 21 5
+it 1404 skill 11 5
+it 1404 skill 17 5
+it 1404 skill 18 5
+it 1404 mana 30
+it 1404 minrank 10
+it 1404 value 12000
+
+# Mage: rank 14, Willpower +4, spells +6, mana +40
+it 1405 copy 365
+it 1405 name Mage's Spell Book
+it 1405 ref mage's spell book
+it 1405 desc A blue spell book for the mage. Held in the left hand, it strengthens Willpower and the spells Blast, Heal, Bless, Magic Shield, Protection and Enhance Weapon.
+it 1405 spr 18273 0
+it 1405 placement 512
+it 1405 attr 4 0 0
+it 1405 attr 1 4
+it 1405 skill 24 6
+it 1405 skill 26 6
+it 1405 skill 21 6
+it 1405 skill 11 6
+it 1405 skill 17 6
+it 1405 skill 18 6
+it 1405 mana 40
+it 1405 minrank 14
+it 1405 value 30000
+
+# Archmage: rank 18, Willpower +5, spells +8, mana +50
+it 1406 copy 365
+it 1406 name Archmage's Spell Book
+it 1406 ref archmage's spell book
+it 1406 desc A purple spell book for the archmage. Held in the left hand, it strengthens Willpower and the spells Blast, Heal, Bless, Magic Shield, Protection and Enhance Weapon.
+it 1406 spr 18274 0
+it 1406 placement 512
+it 1406 attr 4 0 0
+it 1406 attr 1 5
+it 1406 skill 24 8
+it 1406 skill 26 8
+it 1406 skill 21 8
+it 1406 skill 11 8
+it 1406 skill 17 8
+it 1406 skill 18 8
+it 1406 mana 50
+it 1406 minrank 18
+it 1406 value 60000
+
+# who sells the books: Damor (Initiate, Apprentice) and lab merchants (Adept: Light&Dark Gorge, Mage: Riddle Gorge,
+# Archmage: Seasons Gorge, Spring)
+ch 72 additems 1402 1403
+ch 419 additems 1404
+ch 902 additems 1405
+ch 1092 additems 1406
