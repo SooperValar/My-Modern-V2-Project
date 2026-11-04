@@ -38,6 +38,8 @@ is the project's `client/` folder.
 ## Cody's standing rules
 
 - Always end with clear **"▶ Do this now"** steps.
+- **Keep the hand-off documents current as we go** (this file, `docs/TODO.md`, `CHANGES.md`): Cody starts a new chat
+  only about once a week, so every session should leave them complete enough for a cold start.
 - Keep `CHANGES.md` up to date with every change; commit every change (in the project folder);
   remind Cody to `git push` (Claude doesn't push).
 - **Server source is changed in BOTH places and kept identical**: the Windows Server folder and
