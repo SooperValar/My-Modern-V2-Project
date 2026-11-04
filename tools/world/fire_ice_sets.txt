@@ -1,0 +1,129 @@
+# Fire set = melee, Ice set = casters (Cody, 2026-11-04). Apply: build_lab <.dat> fire_ice_sets.txt,
+# then refresh_items <.dat> 623 624 625 626 627 628 1272 1273 1274 1275 1276 1407 write (items already in the world).
+# Attributes: 0 Braveness, 1 Willpower, 2 Intelligence, 3 Agility, 4 Strength. Stealth (skill 8) penalties unchanged.
+# The old Ice Cloak (909, egg trade, temporary) is NOT part of the set and stays as it is.
+#
+# Fire: armor 9 (= Titanium), Braveness +1, Agility +2, Strength +2;
+#       needs Braveness / Willpower / Intelligence 30, Agility / Strength 70.
+# Ice:  armor 5 (= Steel +1), Braveness +1, Willpower +2, Intelligence +2;
+#       needs Braveness / Agility / Strength 30, Willpower / Intelligence 70.
+
+it 623 armor 9
+it 623 attr 0 1
+it 623 attr 3 2
+it 623 attr 4 2
+it 623 atreq 0 30
+it 623 atreq 1 30
+it 623 atreq 2 30
+it 623 atreq 3 70
+it 623 atreq 4 70
+
+it 624 armor 9
+it 624 attr 0 1
+it 624 attr 3 2
+it 624 attr 4 2
+it 624 atreq 0 30
+it 624 atreq 1 30
+it 624 atreq 2 30
+it 624 atreq 3 70
+it 624 atreq 4 70
+
+it 625 armor 9
+it 625 attr 0 1
+it 625 attr 3 2
+it 625 attr 4 2
+it 625 atreq 0 30
+it 625 atreq 1 30
+it 625 atreq 2 30
+it 625 atreq 3 70
+it 625 atreq 4 70
+
+it 626 armor 9
+it 626 attr 0 1
+it 626 attr 3 2
+it 626 attr 4 2
+it 626 atreq 0 30
+it 626 atreq 1 30
+it 626 atreq 2 30
+it 626 atreq 3 70
+it 626 atreq 4 70
+
+it 627 armor 9
+it 627 attr 0 1
+it 627 attr 3 2
+it 627 attr 4 2
+it 627 atreq 0 30
+it 627 atreq 1 30
+it 627 atreq 2 30
+it 627 atreq 3 70
+it 627 atreq 4 70
+
+it 628 armor 9
+it 628 attr 0 1
+it 628 attr 3 2
+it 628 attr 4 2
+it 628 atreq 0 30
+it 628 atreq 1 30
+it 628 atreq 2 30
+it 628 atreq 3 70
+it 628 atreq 4 70
+
+it 1272 armor 5
+it 1272 attr 0 1
+it 1272 attr 1 2
+it 1272 attr 2 2
+it 1272 atreq 0 30
+it 1272 atreq 1 70
+it 1272 atreq 2 70
+it 1272 atreq 3 30
+it 1272 atreq 4 30
+
+it 1273 armor 5
+it 1273 attr 0 1
+it 1273 attr 1 2
+it 1273 attr 2 2
+it 1273 atreq 0 30
+it 1273 atreq 1 70
+it 1273 atreq 2 70
+it 1273 atreq 3 30
+it 1273 atreq 4 30
+
+it 1274 armor 5
+it 1274 attr 0 1
+it 1274 attr 1 2
+it 1274 attr 2 2
+it 1274 atreq 0 30
+it 1274 atreq 1 70
+it 1274 atreq 2 70
+it 1274 atreq 3 30
+it 1274 atreq 4 30
+
+it 1275 armor 5
+it 1275 attr 0 1
+it 1275 attr 1 2
+it 1275 attr 2 2
+it 1275 atreq 0 30
+it 1275 atreq 1 70
+it 1275 atreq 2 70
+it 1275 atreq 3 30
+it 1275 atreq 4 30
+
+it 1276 armor 5
+it 1276 attr 0 1
+it 1276 attr 1 2
+it 1276 attr 2 2
+it 1276 atreq 0 30
+it 1276 atreq 1 70
+it 1276 atreq 2 70
+it 1276 atreq 3 30
+it 1276 atreq 4 30
+
+it 1407 armor 5
+it 1407 attr 0 1
+it 1407 attr 1 2
+it 1407 attr 2 2
+it 1407 atreq 0 30
+it 1407 atreq 1 70
+it 1407 atreq 2 70
+it 1407 atreq 3 30
+it 1407 atreq 4 30

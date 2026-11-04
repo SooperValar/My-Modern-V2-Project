@@ -301,7 +301,15 @@ The design is in `docs/ITEM_TIERS.md`.
 
 ### Ice set pictures
 - The Helmet, Armor, Leggings, Boots and Gloves of Ice (unique, templates 1272-1276) showed "Sprite ... is missing": they now have pictures, the Fire set recoloured to ice blue with frost-white flecks (sprites 18100-18104, `tools/sprites/ice_set.py`). Players get them with the next client update.
-- **Cloak of Ice** (new, template 1407, sprite 18105 from the Cloak of Fire): the Ice set is now a complete set of six like the Fire set (armor 6, Stealth -10, unique; `tools/world/ice_cloak.txt`). The older **Ice Cloak** (909, Syleia's reward) stays as it is. `#specialarmor` says "Ice set (6 pieces)".
+- **Cloak of Ice** (new, template 1407, sprite 18105 from the Cloak of Fire): the Ice set is now a complete set of six like the Fire set (armor 6, Stealth -10, unique; `tools/world/ice_cloak.txt`). The older **Ice Cloak** (909, traded for an ice gargoyle egg, temporary) stays as it is, unique and on its own (Cody's wish). `#specialarmor` says "Ice set (6 pieces)".
+
+### Fire set for melee, Ice set for casters (`tools/world/fire_ice_sets.txt`)
+- **Fire set** (623-628): armor 9 per piece (= Titanium), Braveness +1, Agility +2, Strength +2 per piece (full set: +6 / +12 / +12).
+  Needs Braveness, Willpower, Intelligence 30 and Agility, Strength 70. Stealth -15 per piece as before.
+- **Ice set** (1272-1276, 1407): armor 5 per piece (= Steel +1), Braveness +1, Willpower +2, Intelligence +2 per piece.
+  Needs Braveness, Agility, Strength 30 and Willpower, Intelligence 70. Stealth -10 per piece as before.
+- Pieces already in the world get the new numbers with the new tool `tools/world/refresh_items.c`.
+- The old **Ice Cloak** (909, traded for an ice gargoyle egg, temporary) is not part of the set and stays as it is, on purpose.
 
 ### Rebalance: two-handed weapons, rings, spells, Harakim (design: `docs/REBALANCE.md`)
 - **Two-handed sword around Agility, two-handed axe around Strength.** The Two-Handed skill now uses Agility, Agility, Strength (was Agility, Strength, Strength); Two-Handed Axe Strength, Strength, Agility.

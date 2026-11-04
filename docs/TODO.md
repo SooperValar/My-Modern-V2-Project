@@ -51,3 +51,5 @@ Later (ideas, not decided):
 
 ## ~~MyV2 Editor: redo the view-switch icons (round buttons top right of the map)~~ (done)
 Cody wants to revisit these five, like the tool symbols: grid, see through walls, light from lamps, reload the world, show/hide the right panel. Same gold-on-wood style.
+
+19. **Fire / Ice set stats** (Nov 4): new numbers in `tools/world/fire_ice_sets.txt` (Fire = melee: armor 9, Brv +1 Agi +2 Str +2, needs Agi/Str 70; Ice = casters: armor 5, Brv +1 Wil +2 Int +2, needs Wil/Int 70). Apply with the next world update: `build_lab <.dat> tools/world/fire_ice_sets.txt`, then `refresh_items <.dat> 623 624 625 626 627 628 1272 1273 1274 1275 1276 1407 write`. Still to decide: a small extra bonus or a set bonus (all six pieces worn) for each set. Leave the Ice Cloak 909 alone.
