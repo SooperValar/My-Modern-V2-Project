@@ -655,7 +655,7 @@ void do_help(int cn,char *topic)
 	do_char_log(cn,1,"#noshout               you won't hear shouts.\n");
 	do_char_log(cn,1,"#played                time played, created.\n");
 	do_char_log(cn,1,"#journal               your quests.\n");
-	do_char_log(cn,1,"#quest [n|all]         quests, easiest first; n: details.\n");
+	do_char_log(cn,1,"#quest [n|p2|all]      quests, easiest first; n: details.\n");
 	do_char_log(cn,1,"#repair                repair all worn gear.\n");
 	do_char_log(cn,1,"#repairinv             repair backpack gear.\n");
 	do_char_log(cn,1,"#rings                 all rings and gems.\n");
@@ -2054,28 +2054,45 @@ static void quest_words(int cn,char *s,char *out,int max)	// an NPC text with %s
 	*d=0;
 }
 
-void do_quest(int cn,char *a)
+#define QUEST_PAGE 15
+
+static char *quest_place(int t,char *area)	// where the giver is, without the town for Aston's streets
+{
+	strncpy(area,get_area_street(ch_temp[t].x,ch_temp[t].y),99); area[99]=0;
+	if (!strncmp(area,"Aston, ",7)) memmove(area,area+7,strlen(area+7)+1);
+	return area;
+}
+
+/* #quest [p<page>]: the list, 15 a page, in columns (the chat is 64 fixed-width letters a line).
+ * #quest <n>: quest n in detail. "all" with either: every quest, also learned and other classes'. */
+void do_quest(int cn,char *a,char *b)
 {
 	static struct qent q[400];
-	int n,cnt,all=0,pick=0,t;
-	char area[100],rew[80],exp[40],buf[300];
+	int n,cnt,all=0,pick=0,page=1,pages,t,i;
+	char area[100],rew[80],exp[40],buf[300],*w[2];
 
-	if (a && *a) { if (!strcasecmp(a,"all")) all=1; else pick=atoi(a); }
+	w[0]=a; w[1]=b;
+	for (i=0; i<2; i++) {
+		if (!w[i] || !*w[i]) continue;
+		if (!strcasecmp(w[i],"all")) all=1;
+		else if (!strcasecmp(w[i],"page") && i==0 && b && isdigit(*b)) { page=atoi(b); break; }
+		else if ((w[i][0]=='p' || w[i][0]=='P') && isdigit(w[i][1])) page=atoi(w[i]+1);
+		else if (isdigit(*w[i])) pick=atoi(w[i]);
+	}
 	cnt=quest_build(cn,q,400,all);
 
 	if (pick) {
-		if (pick<1 || pick>cnt) { do_char_log(cn,0,"There is no quest %d. Type #quest for the list.\n",pick); return; }
+		if (pick<1 || pick>cnt) { do_char_log(cn,0,"There is no quest %d. Type #quest%s for the list.\n",pick,all ? " all" : ""); return; }
 		t=q[pick-1].t;
-		strncpy(area,get_area_street(ch_temp[t].x,ch_temp[t].y),99); area[99]=0;
-		do_char_log(cn,1,"Quest %d: %s%s%s\n",pick,ch_temp[t].name,area[0] ? " - " : "",area);
-		if (q[pick-1].skill>=0) {
-			do_char_log(cn,1,"Reward: the skill %s and %s experience.\n",skilltab[q[pick-1].skill].name,qol_num(ch_temp[t].data[51],exp));
-		} else {
-			do_char_log(cn,1,"Reward: %s%s%s experience.\n",it_temp[ch_temp[t].data[66]].name,
-				ch_temp[t].data[51] ? " and " : ", no",ch_temp[t].data[51] ? qol_num(ch_temp[t].data[51],exp) : "");
-		}
+		quest_place(t,area);
+		do_char_log(cn,1,"Quest %d of %d: %s\n",pick,cnt,ch_temp[t].name);
+		do_char_log(cn,1,"  Where:  %s\n",area[0] ? area : "?");
 		if (ch_temp[t].data[49]>0 && ch_temp[t].data[49]<MAXTITEM)
-			do_char_log(cn,1,"%s wants: %s.\n",ch_temp[t].name,it_temp[ch_temp[t].data[49]].name);
+			do_char_log(cn,1,"  Wants:  %s\n",it_temp[ch_temp[t].data[49]].name);
+		if (q[pick-1].skill>=0) snprintf(rew,sizeof(rew),"%s (skill)",skilltab[q[pick-1].skill].name);
+		else snprintf(rew,sizeof(rew),"%s",it_temp[ch_temp[t].data[66]].name);
+		if (ch_temp[t].data[51]) do_char_log(cn,1,"  Reward: %s and %s exp\n",rew,qol_num(ch_temp[t].data[51],exp));
+		else do_char_log(cn,1,"  Reward: %s (no exp)\n",rew);
 		if (ch_temp[t].text[2][0] && ch_temp[t].text[2][0]!='#') {
 			quest_words(cn,ch_temp[t].text[2],buf,sizeof(buf));
 			do_char_log(cn,2,"%s says: \"%s\"\n",ch_temp[t].name,buf);
@@ -2084,22 +2101,31 @@ void do_quest(int cn,char *a)
 			if (!ch[cn].skill[q[pick-1].skill][2]) do_char_log(cn,0,"Your class can't learn %s.\n",skilltab[q[pick-1].skill].name);
 			else if (q[pick-1].known) do_char_log(cn,3,"You know %s already.\n",skilltab[q[pick-1].skill].name);
 		}
-		do_char_log(cn,3,"Give %s the item to finish it.\n",ch_temp[t].name);
+		if (ch_temp[t].data[49]>0 && ch_temp[t].data[49]<MAXTITEM)
+			do_char_log(cn,3,"Give %s the %s to finish it.\n",ch_temp[t].name,it_temp[ch_temp[t].data[49]].name);
+		else do_char_log(cn,3,"Give %s the item to finish it.\n",ch_temp[t].name);
 		return;
 	}
 
-	do_char_log(cn,1,"Quests%s, easiest first:\n",all ? " (all of them)" : "");
-	for (n=0; n<cnt; n++) {
+	if (!cnt) { do_char_log(cn,1,"None left for you. #quest all lists every one.\n"); return; }
+	pages=(cnt+QUEST_PAGE-1)/QUEST_PAGE;
+	if (page<1) page=1;
+	if (page>pages) page=pages;
+	do_char_log(cn,1,"Quests%s, easiest first (page %d of %d):\n",all ? " (all)" : "",page,pages);
+	do_char_log(cn,2," #  %-12s %-16s %-14s %7s\n","Giver","Where","Reward","Exp");
+	for (n=(page-1)*QUEST_PAGE; n<cnt && n<page*QUEST_PAGE; n++) {
 		t=q[n].t;
-		strncpy(area,get_area_street(ch_temp[t].x,ch_temp[t].y),99); area[99]=0;
-		if (q[n].skill>=0) snprintf(rew,sizeof(rew),"Skill: %s",skilltab[q[n].skill].name);
-		else snprintf(rew,sizeof(rew),"Item: %s",it_temp[ch_temp[t].data[66]].name);
-		if (ch_temp[t].data[51]) { qol_num(ch_temp[t].data[51],exp); strcat(exp," exp"); } else strcpy(exp,"no exp");
-		do_char_log(cn,q[n].known || (q[n].skill>=0 && !ch[cn].skill[q[n].skill][2]) ? 3 : 1,"%2d. %s - %s - %s - %s%s\n",n+1,ch_temp[t].name,area[0] ? area : "?",rew,exp,
-			q[n].known ? " (learned)" : q[n].skill>=0 && !ch[cn].skill[q[n].skill][2] ? " (not your class)" : "");
+		quest_place(t,area);
+		if (q[n].skill>=0) snprintf(rew,sizeof(rew),"%s",skilltab[q[n].skill].name);
+		else snprintf(rew,sizeof(rew),"%s",it_temp[ch_temp[t].data[66]].name);
+		if (ch_temp[t].data[51]) qol_num(ch_temp[t].data[51],exp); else strcpy(exp,"-");
+		do_char_log(cn,q[n].known || (q[n].skill>=0 && !ch[cn].skill[q[n].skill][2]) ? 3 : 1,"%2d  %-12.12s %-16.16s %-14.14s %7s\n",
+			n+1,ch_temp[t].name,area[0] ? area : "?",rew,exp);
 	}
-	if (!cnt) do_char_log(cn,1,"None left for you. #quest all lists every one.\n");
-	else do_char_log(cn,2,"Type #quest <number> for details%s.\n",all ? "" : ", #quest all for every one");
+	if (page<pages) snprintf(buf,sizeof(buf),"  #quest%s p%d: next page",all ? " all" : "",page+1);
+	else buf[0]=0;
+	do_char_log(cn,2,"#quest%s <n>: details%s%s\n",all ? " all" : "",buf,!all && page>=pages ? "  #quest all: every one" : "");
+	if (all) do_char_log(cn,3,"Blue: learned already, or not for your class.\n");
 }
 
 /* #repair (worn gear) and #repairinv (backpack): the Repair skill on every damaged item */
@@ -2367,7 +2393,7 @@ void do_command(int cn, char *ptr)
 		if (prefix(cmd,"pktcl") && f_g) 	{ cl_list(); return; };
                 break;
         case 'q':
-                if (prefix(cmd,"quest") && f_p)         { do_quest(cn,arg[1]); return; };
+                if (prefix(cmd,"quest") && f_p)         { do_quest(cn,arg[1],arg[2]); return; };
                 break;
         case 'r':
                 if (prefix(cmd,"rac"))                  { break; };
