@@ -446,6 +446,7 @@ int talk_quest_trade(int cn,int co,int in);
 int talk_quest_maxed(int cn,int co);
 int quest_rank_check(int t,int co,int *lo,int *hi);
 int wp2h_chance(int cn,int axe);
+int gc_staff(int cn);
 int zone_count(void);
 int zone_boxes(void);
 

@@ -1480,6 +1480,12 @@ void skill_dispel(int cn)
 //      ch[cn].errno=ERR_SUCCESS;
 }
 
+int gc_staff(int cn)	// is cn holding a staff (for the Ghost Companion bonus)?
+{
+        int in=ch[cn].worn[WN_RHAND];
+        return in && IS_SANEITEM(in) && (it[in].flags&IF_WP_STAFF);
+}
+
 void skill_ghost(int cn)
 {
         int co,cc,n,base=0,tmp,pts=0,z,m,idx;
@@ -1548,6 +1554,12 @@ void skill_ghost(int cn)
 
         base=spell_race_mod(base,ch[cn].kindred);
 
+        // MyV2 rebalance (docs/REBALANCE.md): a Harakim summoning with a staff in hand calls a stronger ghost
+        // (GC_STAFF_HARAKIM / GC_STAFF_ARCH percent), and the caster's Intelligence adds 1 % per 10 points
+        if ((ch[cn].flags&CF_PLAYER) && (ch[cn].kindred&(KIN_HARAKIM|KIN_ARCHHARAKIM)) && gc_staff(cn))
+                base=base*((ch[cn].kindred&KIN_ARCHHARAKIM) ? GC_STAFF_ARCH : GC_STAFF_HARAKIM)/100;
+        if (ch[cn].flags&CF_PLAYER) base=base*(1000+ch[cn].attrib[AT_INT][5])/1000;
+
         ch[cc].data[29]=0;                              // reset experience earned
         ch[cc].data[42]=65536+cn;                       // set group
         ch[cc].kindred&=~(KIN_MONSTER);
@@ -1583,6 +1595,8 @@ void skill_ghost(int cn)
         }
 
         ch[cc].hp[0]=max(50,min(ch[cc].hp[2],base*5));
+        // MyV2: the caster's Willpower holds the ghost together: GC_HP_PER_WIL hitpoints per point
+        if (ch[cn].flags&CF_PLAYER) ch[cc].hp[0]=min(30000,ch[cc].hp[0]+GC_HP_PER_WIL*ch[cn].attrib[AT_WILL][5]);
         ch[cc].end[0]=max(50,min(ch[cc].end[2],base*5));
         ch[cc].mana[0]=0;
 

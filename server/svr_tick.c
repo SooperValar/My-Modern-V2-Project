@@ -848,6 +848,7 @@ void plr_cmd_iteminfo(int nr)
 			if (it[in].weapon[act]) tip_line(nr,where,slot,&line,2,"%+5d WV",it[in].weapon[act]);
 			if ((it[in].flags&(IF_WP_TWOHAND|IF_WP_AXE))==(IF_WP_TWOHAND|IF_WP_AXE)) { int c=wp2h_chance(player[nr].usnr,1); tip_line(nr,where,slot,&line,3,"Critical hits: %d.%d%% of your",c/10,c%10); tip_line(nr,where,slot,&line,3,"hits (more with Strength)"); }
 			else if (it[in].flags&IF_WP_TWOHAND) { int c=wp2h_chance(player[nr].usnr,0); tip_line(nr,where,slot,&line,3,"Deflects %d.%d%% of melee hits",c/10,c%10); tip_line(nr,where,slot,&line,3,"(more with Agility)"); }
+			if ((it[in].flags&IF_WP_STAFF) && (it[in].placement&(PL_WEAPON|PL_TWOHAND))) { tip_line(nr,where,slot,&line,3,"Harakim: Ghost Companion +%d%%",GC_STAFF_HARAKIM-100); tip_line(nr,where,slot,&line,3,"(Arch-Harakim +%d%%)",GC_STAFF_ARCH-100); }
 			if (it[in].armor[act]) tip_line(nr,where,slot,&line,2,"%+5d AV",it[in].armor[act]);
 			if (it[in].light[act]>0) tip_line(nr,where,slot,&line,2,"%+5d Light",it[in].light[act]);
 			if (it[in].gethit_dam[act]) tip_line(nr,where,slot,&line,2," 1-%d Damage to attackers",it[in].gethit_dam[act]);	// do_hurt: RANDOM(d)+1

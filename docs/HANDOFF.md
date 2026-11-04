@@ -157,9 +157,10 @@ New sprites: write them to `Client\GFX` (new numbers), then `tools/release/publi
 ## Open items (details in docs/TODO.md and docs/HOSTING.md)
 
 **Where we left off (Nov 4):** the rebalance (TODO 11) is built and committed but NOT live yet: it needs the
-server code update plus the world update (new item templates 1378-1406 from `tools/world/rings_books.txt`, books added
-to merchants) in one stop, as in "Changing the world data" above, and Cody pushing `client-dist` (client update 3:
-sprites 18240-18287). Then: the summoner's staff (design in `docs/REBALANCE.md`). Cody is also going through the quests
+server code update plus the world update (new item templates 1378-1406 from `tools/world/rings_books.txt`, all five books to
+Damor; the Greataxe names from `tools/world/greataxe.txt` plus `rename_items <dat> <t> "Two-Handed Axe" Greataxe write`
+for 1364-1368) in one stop, as in "Changing the world data" above, and Cody pushing `client-dist` (client update 3:
+sprites 18240-18287; and a rebuilt merc.exe for the Greataxe skill name, `client\build.bat` on Windows). Then: the summoner's staff (design in `docs/REBALANCE.md`). Cody is also going through the quests
 on the Quests page. The DuckDNS PowerShell window: switched to a hidden launcher; check with Cody that it stopped.
 
 - **#quest** (IN PROGRESS, not final; live since the zones update; built and committed): the look is approved (column table, 15 a page); still open: the order

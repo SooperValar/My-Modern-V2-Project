@@ -1,0 +1,22 @@
+# The Two-Handed Axe skill is now Greataxe: the five weapons get the name too (templates; the items already in
+# the world: tools/world/rename_items.c). Apply: build_lab <.dat> greataxe.txt (server stopped).
+
+it 1364 name Bronze Greataxe
+it 1364 ref bronze greataxe
+it 1364 desc A huge, heavy greataxe made of bronze.
+
+it 1365 name Steel Greataxe
+it 1365 ref steel greataxe
+it 1365 desc A huge, heavy greataxe made of steel.
+
+it 1366 name Golden Greataxe
+it 1366 ref golden greataxe
+it 1366 desc A huge, heavy greataxe made of gold.
+
+it 1367 name Crystal Greataxe
+it 1367 ref crystal greataxe
+it 1367 desc A huge, heavy greataxe made of crystal.
+
+it 1368 name Titanium Greataxe
+it 1368 ref titanium greataxe
+it 1368 desc A huge, heavy greataxe. It's made of titanium, the material of the gods.

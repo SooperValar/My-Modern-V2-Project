@@ -288,6 +288,11 @@ extern unsigned int mapmarker;
 #define RING_NEW	1378	// + stone*4 + size (stone 0 topaz, 1 amethyst, 2 diamond; size 0 small .. 3 huge)
 #define GEM_NEW		1390
 #define SPELLBOOK_FIRST	1402	// Initiate, Apprentice, Adept, Mage, Archmage
+// MyV2 rebalance: the Ghost Companion of a Harakim holding a staff (percent of its power), hitpoints per point of the
+// caster's Willpower (skill_ghost, skill_driver.c)
+#define GC_STAFF_HARAKIM	115
+#define GC_STAFF_ARCH		120
+#define GC_HP_PER_WIL		2
 #define WP2H_MIN	80	// 8 %
 #define WP2H_MAX	250	// 25 % (never quite reached)
 #define WP2H_K		40

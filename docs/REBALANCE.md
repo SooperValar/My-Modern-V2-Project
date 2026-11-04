@@ -38,7 +38,14 @@ merchant who sells only spell books and staffs. Not dropped (yet).
 
 **Two-Handed Axe skill renamed Greataxe** (Cody, Nov 4).
 
-## Ghost Companion buff (to design)
+## Ghost Companion buff (decided and built, Nov 4)
+
+- **Staff**: a Harakim holding a staff summons with +15 % power, an Arch-Harakim +20 % (instead of a class bonus on
+  every summon; every staff's tooltip lists it). Other classes: no staff bonus.
+- **Intelligence**: +1 % power per 10 points of the caster's Intelligence (every class).
+- **Willpower**: +2 hitpoints per point of the caster's Willpower for the ghost (every class).
+
+Before:
 
 Cody wants the Ghost Companion a bit stronger depending on whether a Harakim summons it, whether it is summoned with a
 staff, and the caster's stats. Now (`skill_ghost`, `skill_driver.c`): power = Ghost Companion skill x 4 / 11, times the
