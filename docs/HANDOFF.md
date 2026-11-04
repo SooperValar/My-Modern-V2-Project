@@ -164,7 +164,8 @@ New sprites: write them to `Client\GFX` (new numbers), then `tools/release/publi
 **Where we left off (Nov 4):** the rebalance (TODO 11) is LIVE (server code + world update done Nov 4: items
 1378-1406, books at Damor, Greataxe names). Client: the new merc.exe (Greataxe in the skills list, 2.15.01) was swapped
 in on Cody's PC (old one: `Client\merc_old.exe`) but NOT published yet: Cody tries it at home, then publish with
-`publish_client.py`. client-dist already has update 3 (sprites 18240-18287); Cody pushes it. Next: the summoner's staff
+`publish_client.py`. The Ice set pictures (18100-18104) are in `Client\GFX` and go out with that same
+publish. client-dist already has update 3 (sprites 18240-18287); Cody pushes it. Next: the summoner's staff
 (design in `docs/REBALANCE.md`). Cody is also going through the quests on the Quests page. The DuckDNS PowerShell
 window: switched to a hidden launcher; check with Cody that it stopped.
 

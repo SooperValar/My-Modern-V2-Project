@@ -12,7 +12,7 @@ In order:
 
 6. ~~**Equipment compare**~~ (done: differences in the tooltip, Shift shows the worn piece): when hovering an item, show how it compares to what is worn in that slot (e.g. a second tooltip with the worn piece, or +/- differences in green and red).
 
-7. **Ice set sprites**: the Helmet, Armor, Leggings, Boots and Gloves of Ice (unique, templates 1272-1276) use sprites 18100-18104, which don't exist in the client ("Sprite ... is missing"). They need pictures (new ones or recoloured).
+7. ~~**Ice set sprites**~~ (done Nov 4: the Fire set recoloured, 18100-18104; published with the next client update): the Helmet, Armor, Leggings, Boots and Gloves of Ice (unique, templates 1272-1276) use sprites 18100-18104, which don't exist in the client ("Sprite ... is missing"). They need pictures (new ones or recoloured).
 
 8. **Lab shrine keys for missed lab shrines**: a way for players to get a key for a labyrinth shrine they missed. Price: 100 gold per shrine times the lab level (e.g. a missed shrine in lab 5 costs 500 gold).
 

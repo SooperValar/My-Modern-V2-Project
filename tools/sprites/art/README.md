@@ -86,3 +86,10 @@ by a small gold emblem.
 Spell books: 18270 red (Initiate), 18271 yellow (Apprentice), 18272 green (Adept), 18273 blue (Mage), 18274 purple
 (Archmage). Free after these: 18288 and up.
 
+## Ice set - 18100-18104 (`ice_set.py`, sources in `ice_set/`)
+
+The Helmet, Armor, Leggings, Boots and Gloves of Ice (templates 1272-1276) had no pictures. Recoloured from the Fire
+set: red-orange to ice blue, the yellow flecks to frost white, the texture kept (the Ice Cloak, 16770, is the colour
+reference). 18100 Boots (from 890), 18101 Armor (894), 18102 Gloves (Sleeves of Fire 891), 18103 Helmet (893),
+18104 Leggings (892).
+
