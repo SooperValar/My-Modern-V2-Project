@@ -161,7 +161,7 @@ OPS = ('=', '!=', '<', '>', '<=', '>=')
 
 def talk_parse(text):
     quests, npcs, cur, e = {}, {}, None, None
-    steps, chests, chest, order = {}, {}, None, {}
+    steps, chests, chest, order, qrew = {}, {}, None, {}, {}
     for line in text.splitlines():
         line = line.strip()
         if not line or line.startswith('#'):
@@ -194,7 +194,9 @@ def talk_parse(text):
                 chests['%d,%d' % (int(a[0]), int(a[1]))] = chest
                 cur, e = None, None
                 continue
-            if k == 'order' and len(a) >= 2:          # #quest list order (Quests page): template, place (-1 = not listed)
+            if k == 'qreward' and len(a) >= 7:        # item quest: limit, first times, gold, then item, exp, gold (Quests page)
+                qrew[int(a[0])] = [int(v) for v in a[1:7]]
+            elif k == 'order' and len(a) >= 2:          # #quest list order (Quests page): template, place (-1 = not listed)
                 order[int(a[0])] = int(a[1])
             elif k == 'quest' and a:
                 quests[int(a[0])] = rest.split(None, 1)[1] if len(a) > 1 else ''
@@ -247,7 +249,7 @@ def talk_parse(text):
                 e['acts'].append({'type': k})
         except (IndexError, ValueError):
             continue
-    return {'names': quests, 'steps': steps, 'chests': chests, 'order': order}, npcs
+    return {'names': quests, 'steps': steps, 'chests': chests, 'order': order, 'qrew': qrew}, npcs
 
 
 def talk_text(quests, npcs, names):
@@ -258,6 +260,12 @@ def talk_text(quests, npcs, names):
         out.append('# #quest list: order <NPC template> <place> (-1 = not listed) - the Quests page')
         for t in sorted(od, key=lambda t: (od[t] < 0, abs(od[t]), t)):
             out.append('order %d %d %s' % (t, od[t], names.get(t, '')))
+        out.append('')
+    qr = {int(t): [max(0, int(v)) for v in r[:6]] for t, r in (quests.get('qrew') or {}).items() if any(int(v) for v in r[:6])}
+    if qr:
+        out.append('# item quests: qreward <NPC template> <times, 0 = forever> <first reward for the first n times, 0 = always> <gold> <later: item> <exp> <gold> (gold in silver)')
+        for t in sorted(qr):
+            out.append('qreward %d %s %s' % (t, ' '.join(str(v) for v in qr[t]), names.get(t, '')))
         out.append('')
     for n in sorted(set(qn) | set(qs)):
         out.append('quest %d %s' % (n, ' '.join(str(qn.get(n, '')).split())))
@@ -909,7 +917,7 @@ class World:
         try:
             return talk_parse(open(self.talk_path(), encoding='latin-1').read())
         except OSError:
-            return {'names': {}, 'steps': {}, 'chests': {}, 'order': {}}, {}
+            return {'names': {}, 'steps': {}, 'chests': {}, 'order': {}, 'qrew': {}}, {}
 
     def talk_save(self, quests, npcs, ctl=None):
         p = self.talk_path()
@@ -917,7 +925,7 @@ class World:
             bk = os.path.join(self.dat, 'mapedit-backups')
             os.makedirs(bk, exist_ok=True)
             shutil.copy2(p, os.path.join(bk, 'npctalk-%s.dat' % time.strftime('%Y%m%d-%H%M%S')))
-        names = {t: self.tname(t) for t in list(npcs) + list((quests.get('order') or {}).keys()) if isinstance(t, int) and self.tchar is not None and 0 < t < MAXTCHARS}
+        names = {t: self.tname(t) for t in list(npcs) + list((quests.get('order') or {}).keys()) + list((quests.get('qrew') or {}).keys()) if isinstance(t, int) and self.tchar is not None and 0 < t < MAXTCHARS}
         for key in quests.get('chests', {}):
             x, y = map(int, key.split(','))
             i = self.tile(x, y)[4] if 0 <= x < MAPX and 0 <= y < MAPY else 0
@@ -938,7 +946,7 @@ class World:
     def quests_view(self):
         """the Quests page: every NPC that wants an item (the #quest list), and the chain quests of npctalk.dat"""
         qs, npcs = self.talk_load()
-        order = qs.get('order', {})
+        order, qrew = qs.get('order', {}), qs.get('qrew', {})
         simple = []
         if self.tchar is not None:
             for t in range(1, MAXTCHARS):
@@ -952,7 +960,7 @@ class World:
                 where = self.zone(x, y) if (x or y) else ''
                 simple.append({'t': t, 'name': self.tname(t), 'sprite': self.tchar_sprite(t, 4),
                                'x': x, 'y': y, 'where': where, 'data': d, 'hint': cstr(self.tchar[o + CT_TEXT + 2 * 160:o + CT_TEXT + 3 * 160]),
-                               'order': order.get(t, 0), 'puzzle': bool(d[50] == 0 and ('Labyrinth' in where or 'Tower' in where)),
+                               'order': order.get(t, 0), 'rew': list(qrew.get(t, [0, 0, 0, 0, 0, 0])), 'puzzle': bool(d[50] == 0 and ('Labyrinth' in where or 'Tower' in where)),
                                'count': len(self.living(t)) + len([p for p in self.pending() if p[2] == t])})
         refs = {}
         for who, ents in npcs.items():
@@ -970,9 +978,11 @@ class World:
                           'refs': [{'who': r['who'], 'label': r['label'], 'kinds': sorted(r['kinds'])} for r in refs.get(n, {}).values()]})
         return {'simple': simple, 'chain': chain}
 
-    def quests_order_save(self, order, ctl=None):
+    def quests_order_save(self, order, rewards=None, ctl=None):
         qs, npcs = self.talk_load()
         qs['order'] = {int(t): int(v) for t, v in order.items() if int(v) and 0 < int(t) < MAXTCHARS and -1 <= int(v) <= 30000}
+        if rewards is not None:
+            qs['qrew'] = {int(t): [max(0, min(int(v), 2000000000)) for v in (list(r) + [0] * 6)[:6]] for t, r in rewards.items() if 0 < int(t) < MAXTCHARS}
         return self.talk_save(qs, npcs, ctl)
 
     def talk_copy(self, src, dst, ctl=None):
@@ -2407,7 +2417,7 @@ def make_handler(world, sprites, page, minimap, ctl):
             if u.path in ('/api/save', '/api/relight', '/api/restore') and server_running():
                 return self.js({'error': 'The game server is running: live edits are already in the game, there is nothing to save.'})
             if u.path == '/api/questorder':
-                return self.js({'msg': world.quests_order_save(body.get('order') or {}, ctl)})
+                return self.js({'msg': world.quests_order_save(body.get('order') or {}, body.get('rewards'), ctl)})
             if u.path == '/api/zones':
                 err = world.zones_save(body.get('zones') or [], ctl)
                 if err and err != 'later':
@@ -2726,6 +2736,15 @@ nav .grow { flex: 1; }
 .qpick .x { color: var(--dim2); padding: 2px 4px; }
 .qpick .x:hover { color: var(--text); }
 .qtab input[type=number].exp { width: 86px; }
+.qtab input[type=number].gold { width: 72px; }
+.qtab button.tm { color: var(--text); border: 1px solid var(--line); border-radius: 6px; padding: 3px 9px; font-size: 12px; white-space: nowrap; background: var(--panel2); }
+.qtab button.tm:hover, .qtab button.tm.on { border-color: var(--gold); color: var(--gold2); }
+.qtab tr.rep td { background: var(--panel2); border-bottom: 1px solid var(--line); padding: 10px 12px 12px 60px; }
+.qrep { display: grid; grid-template-columns: 200px 1fr; gap: 10px 14px; align-items: center; max-width: 900px; }
+.qrep .lb { color: var(--dim); font-size: 12px; }
+.qrep .seg { margin: 0; max-width: 330px; }
+.qrep .ln { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; color: var(--dim); font-size: 12px; }
+.qrep .ln input[type=number] { width: 72px; }
 .qtab select { max-width: 150px; }
 .qtab input.hintin { width: 100%; min-width: 160px; }
 .qtab td.hintc { width: 22%; }
@@ -5647,7 +5666,7 @@ async function refreshInfo() {
 // ---------------------------------------------------------------- Quests page (rail: Quests)
 // Item quests: NPCs that want an item and teach a skill / give an item (+ exp) - the #quest list, its order.
 // Chain quests: the quest numbers of npctalk.dat (names, journal steps) and which NPCs use them.
-let QV = null, QS = null, QSorig = '', QC = null, QCorig = '', QPuz = false;
+let QV = null, QS = null, QSorig = '', QC = null, QCorig = '', QPuz = false, QOpen = new Set();
 const qdata = r => [r.data[49], r.data[50], r.data[51], r.data[66], r.hint];
 function qSort(list) {          // the order #quest uses: placed ones first, then skill teachers by exp, then item trades
   const key = r => r.order > 0 ? [0, r.order, 0] : [1, r.data[50] ? 0 : 1, r.data[50] ? r.data[51] : r.t];
@@ -5659,13 +5678,13 @@ async function questsLoad() {
   QV = r;
   QS = r.simple.map(q => ({ ...q, listed: q.order >= 0, o: JSON.stringify(qdata(q)) }));
   qSort(QS);
-  QS.forEach(q => { q.o0 = q.listed; });
-  QSorig = JSON.stringify(QS.map(q => [q.t, q.listed]));
+  QS.forEach(q => { q.o0 = q.listed; q.r0 = JSON.stringify(q.rew); });
+  QSorig = JSON.stringify(QS.map(q => [q.t, q.listed, q.rew]));
   QC = JSON.parse(JSON.stringify(r.chain)); QCorig = JSON.stringify(QC.map(c => [c.n, c.name, c.steps]));
   questsRender();
 }
 const qDirtyRows = () => (QS || []).filter(q => JSON.stringify(qdata(q)) !== q.o);
-const qOrderDirty = () => QS && JSON.stringify(QS.map(q => [q.t, q.listed])) !== QSorig;
+const qOrderDirty = () => QS && JSON.stringify(QS.map(q => [q.t, q.listed, q.rew])) !== QSorig;
 const qChainDirty = () => QC && JSON.stringify(QC.map(c => [c.n, c.name, c.steps])) !== QCorig;
 const qAnyDirty = () => !!QS && (qDirtyRows().length > 0 || qOrderDirty() || qChainDirty());
 function gotoNpc(t, tabk) {     // the NPC editor works over the map page
@@ -5685,19 +5704,19 @@ function questsRender() {
       <button class="btn sec qnew">+ New quest</button>
       <button class="btn sec qund" ${nd || od ? '' : 'disabled'}>Undo changes</button>
       <button class="btn pri qsave" ${(nd || od) && !ro ? '' : 'disabled'}>Save${nd || od ? ' (' + (nd + (od ? 1 : 0)) + ')' : ''}</button></div>
-    <div class="hint">An NPC that <b>wants</b> an item and, for it, <b>teaches a skill</b> and/or <b>gives an item</b>, plus <b>experience</b>. Players see this list with #quest, top to bottom in this order: move a quest with ▲ ▼; untick "Listed" to leave it out. "Says" is the hint #quest &lt;n&gt; shows. ${info.running ? (ro ? '<b style="color:var(--bad)">The game is running without live editing: saving is off.</b>' : 'Saving changes the running game at once (the NPCs respawn with their new reward).') : 'Saving puts the changes in the editor; then <b>Save to the game</b> on the Map page writes them (the order is written at once).'} Changed rows are highlighted.</div>`;
+    <div class="hint">An NPC that <b>wants</b> an item and, for it, <b>teaches a skill</b> and/or <b>gives an item</b>, <b>experience</b> and <b>gold</b>. <b>Times</b>: how often a player can do it, and a smaller reward after the first times. Players see this list with #quest, top to bottom in this order: move a quest with ▲ ▼; untick "Listed" to leave it out. "Says" is the hint #quest &lt;n&gt; shows. ${info.running ? (ro ? '<b style="color:var(--bad)">The game is running without live editing: saving is off.</b>' : 'Saving changes the running game at once (the NPCs respawn with their new reward).') : 'Saving puts the changes in the editor; then <b>Save to the game</b> on the Map page writes them (the order is written at once).'} Changed rows are highlighted.</div>`;
   box.querySelector('.qnew').onclick = questNew;
   box.querySelector('.qund').onclick = () => { if (confirm('Forget your changes to the item quests?')) questsLoad(); };
   box.querySelector('.qsave').onclick = questsSave;
   const sc = document.createElement('div'); sc.className = 'qscroll'; box.appendChild(sc);
   const tb = document.createElement('table'); tb.className = 'qtab'; sc.appendChild(tb);
-  tb.innerHTML = '<thead><tr><th></th><th>#</th><th>NPC</th><th>Where</th><th>Wants</th><th>Teaches</th><th>Gives item</th><th>Exp</th><th>Says (#quest &lt;n&gt;)</th><th>Listed</th><th></th></tr></thead>';
+  tb.innerHTML = '<thead><tr><th></th><th>#</th><th>NPC</th><th>Where</th><th>Wants</th><th>Teaches</th><th>Gives item</th><th>Exp</th><th>Gold</th><th>Times</th><th>Says (#quest &lt;n&gt;)</th><th>Listed</th><th></th></tr></thead>';
   const body = document.createElement('tbody'); tb.appendChild(body);
   const main = QS.filter(q => !q.puzzle), puz = QS.filter(q => q.puzzle);
   let nr = 0;
   const rowFor = (q, i, list) => {
     const tr = document.createElement('tr');
-    if (JSON.stringify(qdata(q)) !== q.o || q.listed !== q.o0) tr.classList.add('ch');
+    if (JSON.stringify(qdata(q)) !== q.o || q.listed !== q.o0 || JSON.stringify(q.rew) !== q.r0) tr.classList.add('ch');
     if (!q.listed || q.puzzle) tr.classList.add('off');
     const td = (cls) => { const c = document.createElement('td'); if (cls) c.className = cls; tr.appendChild(c); return c; };
     const mv = td('mv keep');
@@ -5708,9 +5727,9 @@ function questsRender() {
       up.onclick = () => sw(i, i - 1); dn.onclick = () => sw(i, i + 1);
       mv.append(up, ' ', dn);
     }
-    const nc = td('num'), gives = q.data[50] || q.data[66];
+    const nc = td('num'), gives = q.data[50] || q.data[66] || q.data[51] || q.rew[2] || q.rew[3] || q.rew[4] || q.rew[5];
     if (!q.puzzle && q.listed && gives) nc.textContent = ++nr;
-    else if (!q.puzzle && q.listed) { nc.textContent = '–'; nc.title = '#quest leaves it out: it teaches no skill and gives no item (a special NPC, e.g. the Cityguard\'s black candle)'; }
+    else if (!q.puzzle && q.listed) { nc.textContent = '–'; nc.title = '#quest leaves it out: it gives nothing (a special NPC, e.g. the Cityguard\'s black candle)'; }
     const who = td(); const w = document.createElement('div'); w.className = 'who'; w.appendChild(thumb(q.sprite || 0, 30, 30));
     const nmd = document.createElement('div'); nmd.innerHTML = '<a></a><div class="n"></div>'; nmd.firstChild.textContent = q.name; nmd.firstChild.title = 'Open this NPC in the NPC editor';
     nmd.firstChild.onclick = () => gotoNpc(q.t, 'talk');
@@ -5721,22 +5740,27 @@ function questsRender() {
     td().appendChild(sel([[0, '–'], ...SKILLS.map((s, k) => [k, s]).filter(x => x[0] > 0)], () => q.data[50], v => { q.data[50] = v; re(); }));
     td().appendChild(qpick(() => q.data[66], v => { q.data[66] = v; re(); }, 'nothing'));
     const ex = num(() => q.data[51], v => { q.data[51] = v; re(); }, 0, 99999999); ex.className = 'exp'; td().appendChild(ex);
+    td().appendChild(goldIn(() => q.rew[2], v => { q.rew[2] = v; re(); }));
+    const tb2 = document.createElement('button'); tb2.className = 'tm' + (QOpen.has(q.t) ? ' on' : ''); tb2.textContent = qTimes(q);
+    tb2.title = 'How often a player can do it, and a different reward after the first times'; tb2.onclick = () => { QOpen.has(q.t) ? QOpen.delete(q.t) : QOpen.add(q.t); re(); };
+    td().appendChild(tb2);
     const hi = document.createElement('input'); hi.type = 'text'; hi.className = 'hintin'; hi.maxLength = 159; hi.value = q.hint; hi.placeholder = '(nothing)';
     hi.title = '%s = the player\'s name; a text starting with # is a code, not shown'; hi.onchange = () => { q.hint = hi.value; re(); }; td('hintc').appendChild(hi);
     const ls = td('keep');
     if (!q.puzzle) { const c = document.createElement('input'); c.type = 'checkbox'; c.checked = q.listed; c.onchange = () => { q.listed = c.checked; re(); }; ls.appendChild(c); }
     else ls.innerHTML = '<span class="hint" title="Labyrinth and tower trades are puzzle steps: #quest never lists them">puzzle</span>';
     const rm = td('keep'); const x = document.createElement('button'); x.className = 'sm'; x.textContent = 'Remove'; x.title = 'Make this NPC an ordinary one again (wants nothing, gives nothing)';
-    x.onclick = () => { if (!confirm(`Take the quest away from ${q.name}? (It will want nothing and give nothing.)`)) return; q.data[49] = q.data[50] = q.data[51] = q.data[66] = 0; re(); };
+    x.onclick = () => { if (!confirm(`Take the quest away from ${q.name}? (It will want nothing and give nothing.)`)) return; q.data[49] = q.data[50] = q.data[51] = q.data[66] = 0; q.rew = [0, 0, 0, 0, 0, 0]; re(); };
     rm.appendChild(x);
     if (!q.data[49]) tr.title = 'Wants nothing: saving takes the quest away from this NPC';
     return tr;
   };
-  main.forEach((q, i) => body.appendChild(rowFor(q, i, main)));
+  const add = (q, i, list) => { body.appendChild(rowFor(q, i, list)); if (QOpen.has(q.t)) body.appendChild(repRow(q)); };
+  main.forEach((q, i) => add(q, i, main));
   if (puz.length) {
-    const h = document.createElement('tr'); h.innerHTML = `<td colspan="11" class="keep" style="padding-top:14px;color:var(--dim2);font-size:12px"><button class="sm">${QPuz ? 'Hide' : 'Show'}</button> Labyrinth and tower trades · puzzle steps, never in #quest (${puz.length})</td>`; body.appendChild(h);
+    const h = document.createElement('tr'); h.innerHTML = `<td colspan="13" class="keep" style="padding-top:14px;color:var(--dim2);font-size:12px"><button class="sm">${QPuz ? 'Hide' : 'Show'}</button> Labyrinth and tower trades · puzzle steps, never in #quest (${puz.length})</td>`; body.appendChild(h);
     h.querySelector('button').onclick = () => { QPuz = !QPuz; questsRender(); };
-    if (QPuz) puz.forEach((q, i) => body.appendChild(rowFor(q, i, puz)));
+    if (QPuz) puz.forEach((q, i) => add(q, i, puz));
   }
   // ---- chain quests
   const cb = document.createElement('div'); cb.className = 'box'; el.appendChild(cb);
@@ -5786,6 +5810,47 @@ function questsRender() {
     }
   }
 }
+function goldIn(get, set) {         // gold in G (decimals = silver); kept in silver
+  const i = document.createElement('input'); i.type = 'number'; i.min = 0; i.step = 1; i.className = 'gold'; i.value = get() ? get() / 100 : 0;
+  i.title = 'Gold (1.5 = 1G 50S)'; i.onchange = () => { const v = Math.max(0, Math.round((+i.value || 0) * 100)); i.value = v / 100; set(v); }; return i;
+}
+function qTimes(q) {
+  if (q.data[50]) return 'once (skill)';
+  const [lim, first] = q.rew;
+  return (lim === 1 ? 'once' : lim ? lim + ' times' : 'forever') + (first && (!lim || first < lim) ? `, first ${first}` : '');
+}
+function repRow(q) {                  // the Times settings under a quest's row
+  const tr = document.createElement('tr'); tr.className = 'rep';
+  const td = document.createElement('td'); td.colSpan = 13; tr.appendChild(td);
+  const re = () => questsRender();
+  if (q.data[50]) {
+    td.innerHTML = '<div class="hint" style="margin:0">A skill teacher: each player can do it once (a player who knows the skill already is turned away). Its exp and gold are given with the skill.</div>';
+    return tr;
+  }
+  const g = document.createElement('div'); g.className = 'qrep'; td.appendChild(g);
+  const lim = q.rew[0], mode = lim === 1 ? 'once' : lim ? 'n' : 'ever';
+  const l1 = document.createElement('div'); l1.className = 'lb'; l1.textContent = 'How often can a player do it?'; g.appendChild(l1);
+  const r1 = document.createElement('div'); r1.className = 'ln'; g.appendChild(r1);
+  const seg = document.createElement('div'); seg.className = 'seg';
+  seg.innerHTML = `<button data-m="once" class="${mode === 'once' ? 'on' : ''}">Once</button><button data-m="n" class="${mode === 'n' ? 'on' : ''}">A number of times</button><button data-m="ever" class="${mode === 'ever' ? 'on' : ''}">Forever</button>`;
+  seg.querySelectorAll('button').forEach(b => b.onclick = () => { q.rew[0] = b.dataset.m === 'once' ? 1 : b.dataset.m === 'n' ? Math.max(2, q.rew[0] || 3) : 0; re(); });
+  r1.appendChild(seg);
+  if (mode === 'n') { const n = num(() => q.rew[0], v => { q.rew[0] = Math.max(2, v); re(); }, 2, 65000); r1.append(n, 'times per player'); }
+  if (lim === 1) { const h = document.createElement('div'); h.className = 'hint'; h.style.gridColumn = '1 / -1'; h.style.margin = 0; h.textContent = 'After that the NPC says it doesn\'t need any more and hands the item back.'; g.appendChild(h); return tr; }
+  const l2 = document.createElement('div'); l2.className = 'lb'; g.appendChild(l2);
+  const cb = chk('A different reward after the first', () => q.rew[1] > 0, v => { q.rew[1] = v ? 1 : 0; if (v && !q.rew[3] && !q.rew[4] && !q.rew[5]) q.rew[3] = q.data[66]; re(); });
+  l2.appendChild(cb);
+  const r2 = document.createElement('div'); r2.className = 'ln'; g.appendChild(r2);
+  if (q.rew[1] > 0) {
+    const n = num(() => q.rew[1], v => { q.rew[1] = Math.max(1, v); re(); }, 1, 65000); r2.append(n, 'time' + (q.rew[1] === 1 ? '' : 's') + ' (the reward in the row above); after that:');
+    const l3 = document.createElement('div'); l3.className = 'lb'; l3.textContent = 'Later reward'; g.appendChild(l3);
+    const r3 = document.createElement('div'); r3.className = 'ln'; g.appendChild(r3);
+    const ex = num(() => q.rew[4], v => { q.rew[4] = v; re(); }, 0, 99999999); ex.style.width = '86px';
+    r3.append('item', qpick(() => q.rew[3], v => { q.rew[3] = v; re(); }, 'nothing'), 'exp', ex, 'gold', goldIn(() => q.rew[5], v => { q.rew[5] = v; re(); }));
+  } else r2.textContent = 'Every time: the reward in the row above.';
+  if (lim) { const h = document.createElement('div'); h.className = 'hint'; h.style.gridColumn = '1 / -1'; h.style.margin = 0; h.textContent = `After ${lim} times the NPC says it doesn't need any more and hands the item back. #quest shows players how many times are left.`; g.appendChild(h); }
+  return tr;
+}
 function qpick(get, set, none) {     // an item: its picture and name (click to pick), × to empty
   const d = document.createElement('div'); d.className = 'qpick';
   const b = document.createElement('button'); b.className = 'pb'; const th = thumb(0, 24, 24); const nm = document.createElement('span'); b.append(th, nm);
@@ -5811,7 +5876,7 @@ function questNew() {
         ev.preventDefault(); p.style.display = 'none';
         const c = await api('/api/ctemp?t=' + t[0]);
         if (c.error) return toast(c.error, true);
-        const row = { t: t[0], name: c.name, sprite: t[2], x: c.x, y: c.y, where: '', data: c.data, hint: c.text[2] || '', order: 0, puzzle: false, count: c.count + c.pending, listed: true, o0: false };
+        const row = { t: t[0], name: c.name, sprite: t[2], x: c.x, y: c.y, where: '', data: c.data, hint: c.text[2] || '', order: 0, puzzle: false, count: c.count + c.pending, listed: true, o0: false, rew: [0, 0, 0, 0, 0, 0], r0: '[0,0,0,0,0,0]' };
         row.o = JSON.stringify([0, 0, 0, 0, row.hint]);
         QS.push(row); questsRender(); toast(`${c.name} added at the end: pick what it wants and what it gives, then Save.`);
       };
@@ -5823,10 +5888,10 @@ function questNew() {
 }
 async function questsSave() {
   if (RO()) return toast('The game server is running and live editing is not available.', true);
-  const bad = QS.find(q => (q.data[50] || q.data[66] || q.data[51]) && !q.data[49]);
+  const bad = QS.find(q => (q.data[50] || q.data[66] || q.data[51] || q.rew[2]) && !q.data[49]);
   if (bad) return toast(`${bad.name} gives something but wants nothing: pick what it wants (or Remove the quest).`, true);
-  const none = qDirtyRows().find(q => q.data[49] && !q.data[50] && !q.data[66]);
-  if (none && !confirm(`${none.name} wants an item but teaches no skill and gives no item, so #quest won't list it (and experience alone isn't given). Save anyway?`)) return;
+  const none = qDirtyRows().find(q => q.data[49] && !q.data[50] && !q.data[66] && !q.data[51] && !q.rew[2]);
+  if (none && !confirm(`${none.name} wants an item but gives nothing for it, so #quest won't list it. Save anyway?`)) return;
   const rows = qDirtyRows();
   if (rows.length) {
     const ops = rows.map(q => ({ op: 'ctempset', t: q.t, fields: { data: q.data }, text: [null, null, q.hint], respawn: true }));
@@ -5835,7 +5900,8 @@ async function questsSave() {
   // the order: every listed quest gets its place, unticked ones -1 (not listed)
   const order = {}; let k = 0;
   for (const q of QS) { if (q.puzzle || !q.data[49]) continue; order[q.t] = q.listed ? ++k : -1; }
-  const r = await api('/api/questorder', { order });
+  const rewards = {}; for (const q of QS) if (q.rew.some(v => v)) rewards[q.t] = q.rew;
+  const r = await api('/api/questorder', { order, rewards });
   toast((rows.length ? `${rows.length} quest${rows.length === 1 ? '' : 's'} changed${info.running ? '' : ' (Save to the game on the Map page writes them)'}. ` : '') + 'Order: ' + (r.msg || r.error || ''), !!r.error);
   await questsLoad();
 }

@@ -505,6 +505,8 @@ Rail: **Quests**. Every quest on one page.
 - **+ New quest**: pick any NPC; it gets a row at the end to fill in. **Remove** makes an NPC an ordinary one again.
 - **Save** writes the changed NPCs like the NPC editor does (live into the running game, the NPCs respawn with their new reward; with the server stopped, into the editor, then **Save to the game**) and the order into `npctalk.dat` (`order <template> <place>`, -1 = not listed; the game reads it at once). Changed rows are highlighted; **Undo changes** forgets them.
 - Labyrinth and tower trades are puzzle steps that `#quest` never lists; they are under **Show** at the bottom.
+- **Gold** as a reward (in G; 1.5 = 1G 50S), for skill teachers (given with the skill) and item trades.
+- **Times** (item trades): how often one player can do it, **Once**, **a number of times** or **Forever**, and **a different reward after the first N times** (item, exp, gold), e.g. exp with the first two potions, then just the potion. After the last time the NPC says it doesn't need any more and hands the item back. Kept in `npctalk.dat` as `qreward <template> <times> <first> <gold> <later item> <later exp> <later gold>` (gold in silver); how often each player did each one in `.dat/questcount.dat` (a row per character, reset when the character slot is reused). `#quest` shows each player the reward they get now, "(the first 2 times; after that: …)", and how many times are left, and leaves out the ones they have finished.
 - The same fields are still on the NPC editor's Talk & quest tab; both change the same thing.
 
 **Chain quests** (`#journal`): each quest number with its name and journal texts (from which step on), **+ Step**, **Delete**, **+ New chain quest** (the next free number), and **Used by**: every NPC (or item tile) whose conversation lines check or move the quest on, with a click to open its Conversations. Saving goes into the game at once.
@@ -546,6 +548,7 @@ The server source assumed a 32-bit Linux, where `long` and `time_t` are 4 bytes.
 - **Control port**: the server also takes its console commands on 127.0.0.1:5556 (this computer only), one line in, the answer back ending with a "." line. Machine-readable commands for it: `status` (online, ticker, uptime, pid) and `whotab` (one tab-separated line per player online).
 - **Live editing**: `edpatch <file>` applies a patch from the editor (see [Data changes](#data-changes)).
 - **Quest and chest testing**: `quest <player> [<n> <value>]` shows or sets a player's steps; `talktest <NPC template> <player> <text>` tries a conversation without logging in; `talkreload` reads `npctalk.dat` again; `talkkill <player> <template>`, `talkuse <player> <x> <y>`, `talknear <npc> <player>`, `talkmoney <npc> <player> <silver>`; `chesttest <player> <x> <y>` opens a chest as that player; `chesttest <player> <x> <y> real` with its real open/closed state.
+- **Quests**: `questgive <player> <NPC template>` hands that NPC the item it wants, as that player, and shows the exp and gold they got and how often they have done it.
 - **Zones**: `zonereload` reads `.dat/zones.dat` again (or the built-in `area.c` table if there is none); `zone <x> <y>` shows the zone names at a spot and the place `#quest` would give.
 
 ## Data changes

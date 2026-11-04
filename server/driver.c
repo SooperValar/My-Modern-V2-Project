@@ -491,6 +491,14 @@ int npc_give(int cn,int co,int in,int money)
         if (in && talk_custom_give(cn,co,in)) return 0;
 
         if (in && ch[cn].data[49]==it[in].temp) {
+                // MyV2: an item trade this player has done as often as it can be done (Quests page: "times")
+                if (!ch[cn].data[50] && talk_quest_maxed(cn,co)) {
+                        do_sayx(cn,"Thank you, %s, but I don't need any more of those.",ch[co].name);
+                        god_take_from_char(in,cn);
+                        god_give_char(in,co);
+                        do_char_log(co,1,"%s did not accept the %s.\n",ch[cn].reference,it[in].name);
+                        return 0;
+                }
                 if (ch[cn].data[49]==740 && ch[cn].temp==518) { // hack for black candle
 
                         ch[co].data[43]++;
@@ -532,20 +540,31 @@ int npc_give(int cn,int co,int in,int money)
                                         do_sayx(cn,"Now I'll teach you a bit about life, the world and everything, %s.",ch[co].name);
                                         do_give_exp(co,nr,0,-1);
                                 }
+                                if ((nr=quest_gold_first(ch[cn].temp))>0) {	// MyV2: gold with the skill (Quests page)
+                                        ch[co].gold+=nr; do_update_char(co);
+                                        do_char_log(co,1,"%s gives you %dG %dS.\n",ch[cn].reference,nr/100,nr%100);
+                                }
                                 god_take_from_char(in,cn);
                                 it[in].used=USE_EMPTY;  // silently destroy the item.
                         }
                 }
 
                 /* items with a return gift */
-                if ((nr=ch[cn].data[66])!=0) {
+                if (!ch[cn].data[50]) {
+                        // MyV2: item trades: item, exp and gold, first times / later, how often (npctalk.c, the Quests page)
+                        if (!talk_quest_trade(cn,co,in) && (nr=ch[cn].data[66])!=0) {	// not a player: the plain old trade
+                                do_sayx(cn,"Here is your %s in exchange.",it_temp[nr].reference);
+                                god_take_from_char(in,cn);
+                                it[in].used=USE_EMPTY;
+                                in=god_create_item(nr);
+                                god_give_char(in,co);
+                        }
+                } else if ((nr=ch[cn].data[66])!=0) {
                         do_sayx(cn,"Here is your %s in exchange.",it_temp[nr].reference);
                         god_take_from_char(in,cn);
                         it[in].used=USE_EMPTY;
                         in=god_create_item(nr);
                         god_give_char(in,co);
-                        // MyV2: an item trade can give experience too (a skill teacher gives it with the skill, above)
-                        if (!ch[cn].data[50] && ch[cn].data[51]>0 && IS_PLAYER(co)) do_give_exp(co,ch[cn].data[51],0,-1);
                 }
 
                 /* special for riddle givers */

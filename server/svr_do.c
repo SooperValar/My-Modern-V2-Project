@@ -2036,10 +2036,14 @@ static int quest_build(int cn,struct qent *q,int max,int all)
 			if (ch[cn].skill[nr][0] && !all) continue;	// learned already
 			q[cnt].t=n; q[cnt].skill=nr; q[cnt].known=ch[cn].skill[nr][0]!=0; q[cnt].score=ch_temp[n].data[51];
 			cnt++;
-		} else if (ch_temp[n].data[66]>0 && ch_temp[n].data[66]<MAXTITEM) {	// an item for an item
+		} else {				// an item for an item, exp or gold (first times / later, how often: npctalk.c)
+			int it1,ex1,g1,left,later;
+			if (!quest_reward_now(n,cn,&it1,&ex1,&g1,&left,&later) && left!=0) continue;
+			if (left==0 && !all) continue;		// done as often as it can be done
 			area=get_area_m(ch_temp[n].x,ch_temp[n].y,1);
 			if (strstr(area,"Labyrinth") || strstr(area,"Tower")) continue;
-			q[cnt].t=n; q[cnt].skill=-1; q[cnt].known=0; q[cnt].score=1000000+it_temp[ch_temp[n].data[66]].value/100;
+			q[cnt].t=n; q[cnt].skill=-1; q[cnt].known=left==0;
+			q[cnt].score=1000000+(ch_temp[n].data[66]>0 && ch_temp[n].data[66]<MAXTITEM ? it_temp[ch_temp[n].data[66]].value/100 : 0);
 			cnt++;
 		}
 	}
@@ -2059,6 +2063,19 @@ static void quest_words(int cn,char *s,char *out,int max)	// an NPC text with %s
 }
 
 #define QUEST_PAGE 15
+
+static void quest_reward_text(char *buf,int len,int item,int exp,int gold)	// "Ruby, 500 exp and 10G 50S"
+{
+	char p[3][80],e[40];
+	int k=0;
+	if (item>0 && item<MAXTITEM) snprintf(p[k++],80,"%s",it_temp[item].name);
+	if (exp>0) snprintf(p[k++],80,"%s exp",qol_num(exp,e));
+	if (gold>0) { if (gold%100) snprintf(p[k++],80,"%dG %dS",gold/100,gold%100); else snprintf(p[k++],80,"%dG",gold/100); }
+	if (k==0) buf[0]=0;
+	else if (k==1) snprintf(buf,len,"%s",p[0]);
+	else if (k==2) snprintf(buf,len,"%s and %s",p[0],p[1]);
+	else snprintf(buf,len,"%s, %s and %s",p[0],p[1],p[2]);
+}
 
 static char *quest_place(int t,char *area)	// where the giver is, without the town for Aston's streets
 {
@@ -2093,10 +2110,25 @@ void do_quest(int cn,char *a,char *b)
 		do_char_log(cn,1,"  Where:  %s\n",area[0] ? area : "?");
 		if (ch_temp[t].data[49]>0 && ch_temp[t].data[49]<MAXTITEM)
 			do_char_log(cn,1,"  Wants:  %s\n",it_temp[ch_temp[t].data[49]].name);
-		if (q[pick-1].skill>=0) snprintf(rew,sizeof(rew),"%s (skill)",skilltab[q[pick-1].skill].name);
-		else snprintf(rew,sizeof(rew),"%s",it_temp[ch_temp[t].data[66]].name);
-		if (ch_temp[t].data[51]) do_char_log(cn,1,"  Reward: %s and %s exp\n",rew,qol_num(ch_temp[t].data[51],exp));
-		else do_char_log(cn,1,"  Reward: %s (no exp)\n",rew);
+		if (q[pick-1].skill>=0) {
+			int g=quest_gold_first(t);
+			snprintf(rew,sizeof(rew),"%s (skill)",skilltab[q[pick-1].skill].name);
+			quest_reward_text(buf,sizeof(buf),0,ch_temp[t].data[51],g);
+			do_char_log(cn,1,"  Reward: %s%s%s\n",rew,buf[0] ? ", " : "",buf);
+		} else {
+			int it1,ex1,g1,left,later,lim,first,g0,i2,e2,g2;
+			quest_reward_now(t,cn,&it1,&ex1,&g1,&left,&later);
+			quest_reward_info(t,&lim,&first,&g0,&i2,&e2,&g2);
+			quest_reward_text(buf,sizeof(buf),it1,ex1,g1);
+			do_char_log(cn,1,"  Reward: %s\n",buf[0] ? buf : "nothing");
+			if (first && !later) {
+				quest_reward_text(buf,sizeof(buf),i2,e2,g2);
+				do_char_log(cn,1,"          (the first %d time%s; after that: %s)\n",first,first==1 ? "" : "s",buf[0] ? buf : "nothing");
+			}
+			if (left==0) do_char_log(cn,3,"You have done this one as often as it can be done.\n");
+			else if (left>0) do_char_log(cn,1,"  Times:  %d more time%s\n",left,left==1 ? "" : "s");
+			else if (first || ch_temp[t].data[66]) do_char_log(cn,1,"  Times:  as often as you like\n");
+		}
 		if (ch_temp[t].text[2][0] && ch_temp[t].text[2][0]!='#') {
 			quest_words(cn,ch_temp[t].text[2],buf,sizeof(buf));
 			do_char_log(cn,2,"%s says: \"%s\"\n",ch_temp[t].name,buf);
@@ -2120,9 +2152,17 @@ void do_quest(int cn,char *a,char *b)
 	for (n=(page-1)*QUEST_PAGE; n<cnt && n<page*QUEST_PAGE; n++) {
 		t=q[n].t;
 		quest_place(t,area);
-		if (q[n].skill>=0) snprintf(rew,sizeof(rew),"%s",skilltab[q[n].skill].name);
-		else snprintf(rew,sizeof(rew),"%s",it_temp[ch_temp[t].data[66]].name);
-		if (ch_temp[t].data[51]) qol_num(ch_temp[t].data[51],exp); else strcpy(exp,"-");
+		if (q[n].skill>=0) {
+			snprintf(rew,sizeof(rew),"%s",skilltab[q[n].skill].name);
+			if (ch_temp[t].data[51]) qol_num(ch_temp[t].data[51],exp); else strcpy(exp,"-");
+		} else {
+			int it1,ex1,g1,left,later;
+			quest_reward_now(t,cn,&it1,&ex1,&g1,&left,&later);
+			if (it1) snprintf(rew,sizeof(rew),"%s",it_temp[it1].name);
+			else if (g1>0) snprintf(rew,sizeof(rew),"%dG",g1/100);
+			else strcpy(rew,"-");
+			if (ex1>0) qol_num(ex1,exp); else strcpy(exp,"-");
+		}
 		do_char_log(cn,q[n].known || (q[n].skill>=0 && !ch[cn].skill[q[n].skill][2]) ? 3 : 1,"%2d  %-12.12s %-16.16s %-14.14s %7s\n",
 			n+1,ch_temp[t].name,area[0] ? area : "?",rew,exp);
 	}

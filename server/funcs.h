@@ -436,6 +436,12 @@ char *get_area_m(int x,int y,int verbose);
 char *get_area_street(int x,int y);
 int zone_load(void);
 int talk_quest_order(int t);
+int quest_count(int co,int t);
+int quest_reward_now(int t,int co,int *item,int *exp,int *gold,int *left,int *later);
+int quest_reward_info(int t,int *limit,int *first,int *gold1,int *item2,int *exp2,int *gold2);
+int quest_gold_first(int t);
+int talk_quest_trade(int cn,int co,int in);
+int talk_quest_maxed(int cn,int co);
 int zone_count(void);
 int zone_boxes(void);
 

@@ -129,6 +129,8 @@ static int chestlog_loaded=0;
 
 static struct tentry ent[MAXENT];
 static char hasnear[MAXTCHARS];		// templates with "when near" lines
+struct qrew { int limit, first, gold1, item2, exp2, gold2; };
+static struct qrew qrew[MAXTCHARS];	// item quests: repeats and later rewards ("qreward")
 static short qorder[MAXTCHARS];		// #quest: place in the list ("order <template> <n>", the editor's Quests page); 0 = by exp, -1 = not listed
 static struct tstep step[MAXSTEP];
 static int qname[QVARS+1];
@@ -178,6 +180,7 @@ int talk_load(void)
 	nent=nstep=0; nchest=0; plen=1; pool[0]=0; talk_loaded=1;
 	memset(hasnear,0,sizeof(hasnear));
 	memset(qorder,0,sizeof(qorder));
+	memset(qrew,0,sizeof(qrew));
 	memset(qname,0,sizeof(qname));
 	f=fopen(TALK_FILE,"r");
 	if (!f) return 0;
@@ -192,6 +195,13 @@ int talk_load(void)
 		if (!strcmp(w1,"quest")) {
 			n=atoi(q); while (*q && !isspace((unsigned char)*q)) q++; while (isspace((unsigned char)*q)) q++;
 			if (n>=1 && n<=QVARS) qname[n]=pool_add(q);
+			continue;
+		}
+		if (!strcmp(w1,"qreward")) {
+			struct qrew r;
+			if (sscanf(q,"%d %d %d %d %d %d %d",&n,&r.limit,&r.first,&r.gold1,&r.item2,&r.exp2,&r.gold2)==7 && n>0 && n<MAXTCHARS &&
+			    r.limit>=0 && r.first>=0 && r.gold1>=0 && r.item2>=0 && r.item2<MAXTITEM && r.exp2>=0 && r.gold2>=0) qrew[n]=r;
+			else bad++;
 			continue;
 		}
 		if (!strcmp(w1,"order")) {
@@ -864,4 +874,119 @@ int talk_quest_order(int t)
 	if (!talk_loaded) talk_load();
 	if (t<1 || t>=MAXTCHARS) return 0;
 	return qorder[t];
+}
+
+/* ---- item quests: rewards, repeats (the editor's Quests page; "qreward" lines in npctalk.dat)
+ * qreward <template> <limit> <first> <gold> <item2> <exp2> <gold2>
+ *   limit: how often one character may do it (0 = forever); first: how many times the first reward
+ *   (the template's item + exp, plus gold) is given (0 = always); after that: item2 + exp2 + gold2.
+ * Gold in silver (100 = 1G). How often each character did it: questcount.dat, a row per character. */
+#define QCOUNT_FILE DATDIR"/questcount.dat"
+#define QCMAX 64
+struct qcrow { int stamp; struct { unsigned short t, n; } e[QCMAX]; };
+static int qcfd=-2;
+
+static void qcopen(void)
+{
+	char hdr[QHDR];
+	qcfd=open(QCOUNT_FILE,O_RDWR|O_CREAT,0600);
+	if (qcfd<0) { xlog("cannot open %s",QCOUNT_FILE); return; }
+	if (pread(qcfd,hdr,QHDR,0)==QHDR && !memcmp(hdr,"MYV2QCN1",8)) return;
+	memset(hdr,0,QHDR); memcpy(hdr,"MYV2QCN1",8); *(int*)(hdr+8)=QCMAX;
+	if (pwrite(qcfd,hdr,QHDR,0)!=QHDR) xlog("cannot write %s",QCOUNT_FILE);
+}
+
+static void qcrow_get(int co,struct qcrow *r)
+{
+	if (qcfd==-2) qcopen();
+	memset(r,0,sizeof(*r));
+	if (qcfd>=0 && pread(qcfd,r,sizeof(*r),QHDR+(off_t)co*sizeof(*r))!=sizeof(*r)) memset(r,0,sizeof(*r));
+	if (r->stamp!=(int)ch[co].creation_date) { memset(r,0,sizeof(*r)); r->stamp=ch[co].creation_date; }
+}
+
+int quest_count(int co,int t)		// how often character co did template t's item quest
+{
+	struct qcrow r;
+	int n;
+	if (co<1 || co>=MAXCHARS || t<1 || t>=MAXTCHARS) return 0;
+	qcrow_get(co,&r);
+	for (n=0; n<QCMAX; n++) if (r.e[n].t==t) return r.e[n].n;
+	return 0;
+}
+
+static void quest_count_add(int co,int t)
+{
+	struct qcrow r;
+	int n,k=-1;
+	if (co<1 || co>=MAXCHARS || t<1 || t>=MAXTCHARS) return;
+	qcrow_get(co,&r);
+	for (n=0; n<QCMAX; n++) {
+		if (r.e[n].t==t) { if (r.e[n].n<65535) r.e[n].n++; k=n; break; }
+		if (!r.e[n].t && k<0) k=-2-n;		// the first free slot
+	}
+	if (k<-1) { n=-2-k; r.e[n].t=t; r.e[n].n=1; }
+	else if (k<0) { xlog("questcount: no room for template %d (character %d)",t,co); return; }
+	if (qcfd>=0 && pwrite(qcfd,&r,sizeof(r),QHDR+(off_t)co*sizeof(r))!=sizeof(r)) xlog("cannot write %s",QCOUNT_FILE);
+}
+
+/* what template t gives character co now: item, exp, gold (silver); left: times left (-1 = no limit).
+ * later: 1 when this is the "after the first times" reward. Returns 1 if it gives anything. */
+int quest_reward_now(int t,int co,int *item,int *exp,int *gold,int *left,int *later)
+{
+	struct qrew *r;
+	int cnt;
+	if (!talk_loaded) talk_load();
+	*item=*exp=*gold=0; *left=-1; *later=0;
+	if (t<1 || t>=MAXTCHARS) return 0;
+	r=&qrew[t];
+	cnt=(r->limit || r->first) && co ? quest_count(co,t) : 0;
+	if (r->limit) *left=cnt>=r->limit ? 0 : r->limit-cnt;
+	if (!r->first || cnt<r->first) { *item=ch_temp[t].data[66]; *exp=ch_temp[t].data[51]; *gold=r->gold1; }
+	else { *item=r->item2; *exp=r->exp2; *gold=r->gold2; *later=1; }
+	if (*item<0 || *item>=MAXTITEM) *item=0;
+	return *item || *exp>0 || *gold>0;
+}
+
+int quest_reward_info(int t,int *limit,int *first,int *gold1,int *item2,int *exp2,int *gold2)
+{
+	if (!talk_loaded) talk_load();
+	if (t<1 || t>=MAXTCHARS) return 0;
+	*limit=qrew[t].limit; *first=qrew[t].first; *gold1=qrew[t].gold1; *item2=qrew[t].item2; *exp2=qrew[t].exp2; *gold2=qrew[t].gold2;
+	return 1;
+}
+
+int quest_gold_first(int t)		// a skill teacher's gold (given with the skill)
+{
+	if (!talk_loaded) talk_load();
+	return t>0 && t<MAXTCHARS ? qrew[t].gold1 : 0;
+}
+
+/* the NPC cn got the item in it wants from player co, and teaches no skill: an item trade.
+ * Returns 1 if it handled it (rewards given), 0 = nothing to give (as before: the NPC just keeps it). */
+int talk_quest_trade(int cn,int co,int in)
+{
+	int t=ch[cn].temp,item,exp,gold,left,later,ni;
+
+	if (!IS_PLAYER(co) || !quest_reward_now(t,co,&item,&exp,&gold,&left,&later)) return 0;
+	if (left==0) return 0;
+	if (qrew[t].limit || qrew[t].first) quest_count_add(co,t);
+	god_take_from_char(in,cn);
+	it[in].used=USE_EMPTY;
+	if (item) {
+		do_sayx(cn,"Here is your %s in exchange.",it_temp[item].reference);
+		ni=god_create_item(item);
+		if (ni) god_give_char(ni,co);
+	}
+	if (exp>0) do_give_exp(co,exp,0,-1);
+	if (gold>0) { ch[co].gold+=gold; do_update_char(co); do_char_log(co,1,"%s gives you %dG %dS.\n",ch[cn].reference,gold/100,gold%100); }
+	if (left==1) do_sayx(cn,"That was the last one I needed, %s. Thank you!",ch[co].name);
+	return 1;
+}
+
+int talk_quest_maxed(int cn,int co)	// this player has done the item trade as often as it can be done
+{
+	int t=ch[cn].temp;
+	if (!talk_loaded) talk_load();
+	if (t<1 || t>=MAXTCHARS || !qrew[t].limit || !IS_PLAYER(co)) return 0;
+	return quest_count(co,t)>=qrew[t].limit;
 }

@@ -153,6 +153,21 @@ static void con_cmd(char *line)
 		talk_set_echo(NULL);
 		return;
 	}
+	if (!strcmp(w[0],"questgive")) {	// questgive <player> <NPC template>: the player hands that NPC the item it wants
+		int t=atoi(w[2]),cn=0,in,e0,g0;
+		extern int npc_give(int cn,int co,int in,int money);
+		if (!(co=con_player(w[1]))) return;
+		for (n=1; n<MAXCHARS; n++) if (ch[n].used==USE_ACTIVE && !(ch[n].flags&(CF_PLAYER|CF_BODY)) && ch[n].temp==t) { cn=n; break; }
+		if (!cn) { out("  No NPC of template %d in the world.\n",t); return; }
+		if (ch[cn].data[49]<=0 || !(in=god_create_item(ch[cn].data[49]))) { out("  %s wants nothing.\n",ch[cn].name); return; }
+		if (!god_give_char(in,cn)) { it[in].used=USE_EMPTY; out("  %s can't take it.\n",ch[cn].name); return; }
+		e0=ch[co].points_tot; g0=ch[co].gold;
+		talk_set_echo(con_echo);
+		npc_give(cn,co,in,0);
+		talk_set_echo(NULL);
+		out("  %s: +%d exp, +%dG %dS, done %d time(s)\n",ch[co].name,ch[co].points_tot-e0,(ch[co].gold-g0)/100,(ch[co].gold-g0)%100,quest_count(co,t));
+		return;
+	}
 	if (!strcmp(w[0],"talkkill")) {	// talkkill <player> <NPC template>: as if the player killed one
 		int found;
 		if (!(co=con_player(w[1]))) return;
@@ -239,6 +254,7 @@ static void con_cmd(char *line)
 		    "  talkuse <player> <x> <y>                  try using the item there\n"
 		    "  talknear <npc template> <player>          try a player coming close\n"
 		    "  talkmoney <npc template> <player> <silver>   try handing money over\n"
+		    "  questgive <player> <npc template>         hand that NPC the item it wants\n"
 		    "  shutdown                      save and stop the server\n");
 	} else if (!strcmp(w[0],"quest")) {
 		if (!(co=con_player(w[1]))) return;
