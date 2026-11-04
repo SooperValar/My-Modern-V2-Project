@@ -1,16 +1,18 @@
 #!/usr/bin/env python3
 """The Ice set (Helmet, Armor, Leggings, Boots, Gloves of Ice, templates 1272-1276): recoloured from the Fire set
-(art/ice_set/: Helmet 893, Armor 894, Sleeves 891, Leggings 892, Boots 890) towards the Ice Cloak's pale blue (16770).
+(art/ice_set/: Helmet 893, Armor 894, Sleeves 891, Leggings 892, Boots 890, Cloak 895) towards the Ice Cloak's pale
+blue (16770). The Cloak of Ice (template 1407, sprite 18105) completes the set; the older Ice Cloak (909) is separate.
 The fire's red-orange becomes ice blue, its bright yellow flecks frost white; the texture stays.
 
-    ice_set.py <client folder>      writes <client>/GFX/18100-18104.png
+    ice_set.py <client folder>      writes <client>/GFX/18100-18105.png
 """
 import colorsys, os, sys
 from PIL import Image
 
 ART = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'art', 'ice_set')
 KEY = (255, 0, 255)
-OUT = {18100: 890, 18101: 894, 18102: 891, 18103: 893, 18104: 892}   # boots, armor, gloves (sleeves), helmet, leggings
+OUT = {18100: 890, 18101: 894, 18102: 891, 18103: 893, 18104: 892,   # boots, armor, gloves (sleeves), helmet, leggings
+       18105: 895}                                                   # cloak (the set's own; the old Ice Cloak 16770 stays)
 
 
 def ice(im):

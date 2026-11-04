@@ -1,0 +1,10 @@
+# The Ice set's own cloak (Cloak of Ice), like the Cloak of Fire (625) but with the Ice set's numbers (armor 6,
+# Stealth -10, unique). The older Ice Cloak (909, sprite 16770) stays as it is. Apply: build_lab <.dat> ice_cloak.txt
+
+it 1407 copy 625
+it 1407 name Cloak of Ice
+it 1407 ref cloak of ice
+it 1407 desc A cloak of pure ice. It seems frigid, but it does not hurt you.
+it 1407 spr 18105 0
+it 1407 armor 6
+it 1407 skill 8 -10

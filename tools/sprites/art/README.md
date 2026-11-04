@@ -91,5 +91,6 @@ Spell books: 18270 red (Initiate), 18271 yellow (Apprentice), 18272 green (Adept
 The Helmet, Armor, Leggings, Boots and Gloves of Ice (templates 1272-1276) had no pictures. Recoloured from the Fire
 set: red-orange to ice blue, the yellow flecks to frost white, the texture kept (the Ice Cloak, 16770, is the colour
 reference). 18100 Boots (from 890), 18101 Armor (894), 18102 Gloves (Sleeves of Fire 891), 18103 Helmet (893),
-18104 Leggings (892).
+18104 Leggings (892), 18105 Cloak of Ice (the Cloak of Fire 895; template 1407). The older Ice Cloak (909) keeps its own
+picture 16770.
 

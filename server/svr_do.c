@@ -1805,7 +1805,7 @@ void do_info_specialarmor(int cn)
 	// a set is listed once (its body armor), with the number of pieces
 	static struct { int t; char *name; char *slot; } a[]={
 		{624,"Fire set (6 pieces)","each"},
-		{1273,"Ice set (5 pieces)","each"},
+		{1273,"Ice set (6 pieces)","each"},
 		{909,"Ice Cloak","cloak"},
 		{772,"Ti. Armor of Ankh","body"},
 		{907,"Winged Boots","feet"},
