@@ -5,12 +5,37 @@ Status: **partly decided** (Nov 4), nothing built yet.
 ## Decisions so far
 
 - **Attributes: yes.** Two-handed sword Agility, Agility, Strength; two-handed axe Strength, Strength, Agility.
-- **Deflect / crit curve: to rethink.** Cody wants a minimum and a maximum with a scale between them: felt at low
-  levels, without making things too easy at high ranks (so the gain should flatten out). See "Curve options" below.
+- **Deflect / crit curve: min 8 %, max 25 %, K = 40**: chance = 8 % + 17 % x A / (A + 40) (A = Agility for the
+  sword's deflect, Strength for the axe's crit): 10 -> 11.4 %, 25 -> 14.5 %, 50 -> 17.4 %, 75 -> 19.1 %, 100 -> 20.1 %,
+  150 -> 21.4 % (today a flat 12.5 %).
 - **Rings: Topaz (Agility), Amethyst (Intelligence) and Diamond (Braveness)**, each Small / Medium / Big / Huge at
   +3 / +6 / +9 / +12 like the Emerald.
 - **Spells Willpower, Willpower, Intelligence; Ghost Companion Intelligence, Intelligence, Willpower - for every class.**
-- **Spell book and staff: to talk through** (Cody has his own ideas).
+- **Spell books: tiers like armor / weapons, colour-coded covers, named Initiate, Apprentice, Adept, Mage, Archmage.**
+  Flat bonuses (like a soulstoned item's power, but the same stats every time, not random): Willpower and spells,
+  scaling from low to high. Proposal below, waiting for Cody's OK.
+- **Staff: later** (after the books).
+
+## Spell books (proposal)
+
+A spell book is held in the left hand (the shield slot) with a dagger. No armor. The cover colour shows the tier; the
+name stays white (these are plain items, not Magic / Rare / Epic).
+
+| Book | Cover | Rank needed | Willpower | Blast, Heal, Bless, Magic Shield (each) | Mana | Points* |
+|---|---|---|---|---|---|---|
+| Initiate's Spell Book | Red | 2 Lance Corporal | +1 | +2 | +10 | 10 |
+| Apprentice's Spell Book | Yellow | 6 Master Sergeant | +2 | +3 | +20 | 16 |
+| Adept's Spell Book | Green | 10 First Lieutenant | +3 | +5 | +30 | 26 |
+| Mage's Spell Book | Blue | 14 Colonel | +4 | +6 | +40 | 32 |
+| Archmage's Spell Book | Purple | 18 General | +5 | +8 | +50 | 42 |
+
+*Points as in `docs/ITEM_TIERS.md` (+1 skill = 1 point, +1 attribute = 2): a book is about as strong as a Rare tier
+armor piece of its level (Rare budget = 2 x max(level, 8): 16, 16, 20, 28, 36), a bit more at the top because it takes
+the place of a shield.
+
+Open: which spells (these four, or others such as Protect / Enhance / Curse / Stun), who sells them (Damor's magic
+shop for the first two, lab merchants for the rest?) and whether they also drop.
+
 
 ## Curve options (deflect for the sword from Agility, crit for the axe from Strength)
 
