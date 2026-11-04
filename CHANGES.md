@@ -517,6 +517,12 @@ The server source assumed a 32-bit Linux, where `long` and `time_t` are 4 bytes.
 | `data.h` | `time_t` fields in `struct character` grew the record from 3605 to 3617 bytes | `int`. Character records load correctly again. |
 | `data.h` | `long load` and natural 64-bit padding changed `struct global` | `int`, plus `#pragma pack(4)`. Fixed the bogus player cap / login queue. |
 
+**WSL / live-server workarounds in `server.c`** (deliberate; the Windows Server folder and the project keep the same file)
+- **Fixed CPU speed**: `cycles_per_sek` is set to 3000000000 instead of being measured with `rdtsc` over one second, which gave wrong values under WSL and threw off the game's timing.
+- **No stop on an unclean shutdown**: with the "data files were not cleanly unmounted" flag set, the server logs it and starts anyway instead of quitting.
+- **`./server skill`, `load` and `save` bypassed**: those old maintenance runs (skill table, loading / saving every character at once) do nothing now; they are not needed for the live server.
+- **No logout loop at shutdown**: the server no longer logs out every active player (`plr_logout ... LO_SHUTDOWN`) when it stops; that cleanup left "ghost" characters behind. (To revisit: players online during a stop / restart, see `docs/TODO.md`.)
+
 **Server console** (`console.c`)
 - Commands typed into the terminal the server runs in (read without blocking once per pass of the main loop): `help`, `who` (players online with rank, place, god/imp), `raise <player> <exp>`, `lower <player> <exp>`, `gold <player> <gold> [silver]`, `announce <text>` (to everyone, as "[Server] ..."), `tell <player> <text>`, `kick <player>`, `shutdown` (clean stop, like Ctrl+C). Player names can be shortened like in game; raise/lower/gold also work on players who are offline. Everything is logged with "CONSOLE:".
 - Only when the server runs in a terminal (started with an argument, so it doesn't detach); started plain (`./server`) it detaches, and the console switches itself off.

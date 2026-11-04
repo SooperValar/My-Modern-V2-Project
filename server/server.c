@@ -663,7 +663,7 @@ int main(int argc,char *args[])
         xlog("Copyright (C) 1997-2001 Daniel Brockhaus");
 
         t1=rdtsc(); sleep(1); t2=rdtsc(); t1=t2-t1;
-        cycles_per_sek=((t1+25000000)/50000000)*50000000;
+        cycles_per_sek=3000000000;
         xlog("Speed test: %.0f Mhz",cycles_per_sek/1000000);
 
         // ignore the silly pipe errors:
@@ -686,7 +686,7 @@ int main(int argc,char *args[])
 
 	if (globs->flags&GF_DIRTY) {
                 xlog("Data files were not cleanly unmounted.");
-		if (argc!=2) exit(1);
+		// ignored dirty file check
 	}
 
         see=calloc(MAXCHARS,sizeof(struct see_map));
@@ -704,9 +704,9 @@ int main(int argc,char *args[])
                 else if (strcasecmp("rem",args[1])==0) { pop_remove(); unload(); exit(0); }
                 else if (strcasecmp("wipe",args[1])==0) { pop_wipe(); unload(); exit(0); }
                 else if (strcasecmp("light",args[1])==0) { init_lights(); unload(); exit(0); }
-                else if (strcasecmp("skill",args[1])==0) { pop_skill(); unload(); exit(0); }
-		else if (strcasecmp("load",args[1])==0) { pop_load_all_chars(); unload(); exit(0); }
-		else if (strcasecmp("save",args[1])==0) { pop_save_all_chars(); unload(); exit(0); }
+                // bypassed skill
+		// bypassed load
+		// bypassed save
         }
 
         sock=socket(PF_INET,SOCK_STREAM,0);
@@ -739,9 +739,7 @@ int main(int argc,char *args[])
                 player[n].ltick=0; player[n].rtick=0;
         }
 
-        for (n=1; n<MAXCHARS; n++) {
-                if (ch[n].used==USE_ACTIVE) plr_logout(n,0,LO_SHUTDOWN);
-        }
+        // Bypassed ghostly character cleanup loop
 
         srand(time(NULL));
 

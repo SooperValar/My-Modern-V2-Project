@@ -36,6 +36,8 @@ In order:
 
 16. **Underground III** (idea 7): a third level below Underground I (840,0-1024,157) and Underground II (822,176-1020,333; reached by the hole at 925,101 -> 925,301). Theme: Deeplings or Firelings (to choose). To decide: theme, level range (above Underground II's monsters), size and where on the map it fits (free space), the way down from Underground II, new monsters (templates; sprites recoloured or new numbers), loot / a boss, and zone + minimap + zone maps.
 
+17. **Revisit logout-at-shutdown in server.c (players online during a stop/restart)**: the logout loop at shutdown is bypassed (a WSL / live-server workaround, see CHANGES.md "Server modernization"); check what happens to players online when the server stops or restarts (saved position, items, their character staying "online"), and bring back a safe logout if needed.
+
 Later (ideas, not decided):
 
 - Item tiers part 5: Legendaries (hand-designed named pieces; the current special armors move here), see `docs/ITEM_TIERS.md`.
