@@ -836,7 +836,7 @@ function toggleWorld(on) {
 
 // ---------------------------------------------------------------- left panel
 let npcSub = 'world', newNpc = null;    // NPCs tab: In the world / Blueprints; the + New NPC form
-const TABS = { builder: 'Builder', floors: 'Floors', areas: 'Areas', walls: 'Walls', objects: 'Objects', items: 'Items', npcs: 'NPCs', flags: 'Flags', zones: 'Zones' };
+const TABS = { builder: 'Builder', floors: 'Floors', areas: 'Areas', walls: 'Walls', objects: 'Objects', items: 'Items', npcs: 'NPCs', merchants: 'Merchants', flags: 'Flags', zones: 'Zones' };
 const TAB_ICONS = {      // the editor's own icons, same set as the toolbar
   builder: '<path d="M14 4l6 6-3 3-6-6z"/><path d="M11 7 3.5 14.5a2 2 0 0 0 0 2.8l3.2 3.2a2 2 0 0 0 2.8 0L17 13"/>',
   floors: '<path d="M12 4 21 9.5 12 15 3 9.5z" fill="currentColor" fill-opacity=".25"/><path d="M12 4 21 9.5 12 15 3 9.5z"/><path d="M3 13.5 12 19l9-5.5" opacity=".6"/>',
@@ -848,6 +848,7 @@ const TAB_ICONS = {      // the editor's own icons, same set as the toolbar
   areas: '<path d="M7 3 3.5 10h7z"/><path d="M7 10v4"/><circle cx="16.5" cy="8" r="3.5"/><path d="M16.5 11.5V15"/><path d="M2 18c3-2 6-2 10 0s7 2 10 0" opacity=".7"/><path d="M2 21.5c3-2 6-2 10 0s7 2 10 0" opacity=".4"/>',
   zones: '<path d="M3 4h9v6h9v10H3z" fill="currentColor" fill-opacity=".22"/><path d="M3 4h9v6h9v10H3z"/><path d="M12 10v4H3" stroke-dasharray="2 2" opacity=".7"/>',
   title: '<path d="M12 3 21 12 12 21 3 12z"/>',
+  merchants: '<path d="M5 8h14l-1.2 12H6.2z" fill="currentColor" fill-opacity=".22"/><path d="M5 8h14l-1.2 12H6.2z"/><path d="M9 8V6.5a3 3 0 0 1 6 0V8"/>',
 };
 // facing, named the way the minimap shows it (north = smaller x, west = smaller y); the game's DX_ numbers
 const FACE = [[2, 'N', 'north (−x)'], [4, 'E', 'east (+y)'], [1, 'S', 'south (+x)'], [3, 'W', 'west (−y)']];
@@ -1181,6 +1182,8 @@ function leftUI() {
       }
     } else if (tab === 'areas') {
       areasTab(w, sect, grid, match);
+    } else if (tab === 'merchants') {
+      merchantsTab(w, sect, q);
     } else if (tab === 'zones') {
       zonesTab(w, sect, match);
     } else if (tab === 'flags') {
@@ -2098,7 +2101,7 @@ const pos = v => v ? [v % 1024, Math.floor(v / 1024)] : null;
 
 let TP = null;   // {kind: 'npc'|'item', t, orig, cur, tab}
 function talkDirty() { return TP && TP.talk && JSON.stringify(TP.talk) !== TP.talkOrig; }
-function tplDirty() { return TP && (chestDirty() || areaDirty() || Object.keys(tplChanged()).length || (TP.kind === 'player' && TP.nopass) || talkDirty() || (TP.kind === 'npc' && JSON.stringify(TP.cur.text) !== JSON.stringify(TP.orig.text))); }
+function tplDirty() { return TP && ((TP.kind === 'merchant' && JSON.stringify(TP.cur) !== JSON.stringify(TP.orig)) || chestDirty() || areaDirty() || Object.keys(tplChanged()).length || (TP.kind === 'player' && TP.nopass) || talkDirty() || (TP.kind === 'npc' && JSON.stringify(TP.cur.text) !== JSON.stringify(TP.orig.text))); }
 function openTemplate(kind, t) {
   if (tplDirty() && !(TP.kind === kind && TP.t === t) && !confirm('You have changes here you did not apply. Leave them?')) return;
   if (kind === 'use') {    // quest rules of the item on a tile: t = [x, y, name]
@@ -2122,7 +2125,7 @@ function openTemplate(kind, t) {
 function tplGotoButton() {
   const b = $('#tgoto'); if (!b) return;
   const k = TP && TP.kind;
-  b.style.display = k === 'npc' || k === 'player' || k === 'use' ? '' : 'none';
+  b.style.display = k === 'npc' || k === 'player' || k === 'use' || k === 'merchant' ? '' : 'none';
   b.textContent = 'Go to'; b.onclick = tplGoto;
 }
 const gotoTurn = {};       // NPC template -> which of its living ones is next
@@ -2131,7 +2134,7 @@ async function tplGoto() {
   let x, y, what = '';
   if (TP.kind === 'use') { x = TP.x; y = TP.y; }
   else if (TP.kind === 'player') { x = TP.cur.x; y = TP.cur.y; what = TP.cur.name; }
-  else if (TP.kind === 'npc') {
+  else if (TP.kind === 'npc' || TP.kind === 'merchant') {
     const t = TP.t, list = (await api('/api/npcworld')).filter(c => c[4] === t && (c[2] || c[3]));
     list.sort((a, b) => (a[6] === 'waiting') - (b[6] === 'waiting'));
     if (list.length) { const i = (gotoTurn[t] || 0) % list.length, c = list[i]; gotoTurn[t] = i + 1; x = c[2]; y = c[3]; what = `${c[1]}${list.length > 1 ? ` (${i + 1} of ${list.length}; Go to on it again shows the next)` : ''}${c[6] === 'waiting' ? ' · respawning there' : ''}`; }
@@ -2154,6 +2157,7 @@ function tplRender() {
   const c = TP.cur, el = $('#tpl');
   tplGotoButton();
   if (TP.kind === 'chest') return chestRender(el);
+  if (TP.kind === 'merchant') return merchRender(el);
   if (TP.kind === 'area') return areaRender(el);
   if (TP.kind === 'use') {
     el.querySelector('.ttl').innerHTML = '<span style="vertical-align:middle"></span><small></small>';
@@ -2218,7 +2222,7 @@ function tplRender() {
 }
 function tplChanged() {
   const out = {}, o = TP.orig, c = TP.cur;
-  if (TP.kind === 'use' || TP.kind === 'chest' || TP.kind === 'area') return out;
+  if (TP.kind === 'use' || TP.kind === 'chest' || TP.kind === 'area' || TP.kind === 'merchant') return out;
   for (const k of Object.keys(c)) {
     if (['t', 'count', 'pending', 'made', 'names', 'onmap', 'text', 'items', 'item', 'worn', 'depot', 'citem', 'rank', 'kin_name', 'ip', 'quests', 'online', 'c'].includes(k)) continue;
     if (JSON.stringify(c[k]) !== JSON.stringify(o[k])) out[k] = c[k];
@@ -2296,6 +2300,108 @@ function chk(label, get, set) {
   l.lastChild.textContent = label; l.firstChild.checked = get(); l.firstChild.onchange = () => set(l.firstChild.checked); return l;
 }
 function chks(items) { const d = document.createElement('div'); d.className = 'chks'; items.forEach(i => d.append(i)); return d; }
+// ---- Merchants tab: what each merchant sells (with pages in the game when more than 40), what he buys, his prices
+const MK_KINDS = [[1, 'Armor'], [2, 'Weapons'], [4, 'Magic'], [8, 'Other']];
+function merchantsTab(w, sect, q) {
+  const box = document.createElement('div'); box.className = 'list'; w.appendChild(box);
+  box.innerHTML = '<div class="empty">Loading…</div>';
+  api('/api/merchants').then(list => {
+    if (mode !== 'map' || tab !== 'merchants') return;
+    if (list.error) { box.innerHTML = ''; box.append(Object.assign(document.createElement('div'), { className: 'empty', textContent: list.error })); return; }
+    list = list.filter(m => !q || m.name.toLowerCase().includes(q) || String(m.t) === q || (m.where && (m.where[2] || '').toLowerCase().includes(q)) || m.stock.some(t => iname(t).toLowerCase().includes(q)));
+    list.sort((a, b) => a.name.localeCompare(b.name) || a.t - b.t);
+    box.innerHTML = '';
+    const s2 = document.createElement('div'); s2.className = 'sect'; s2.style.padding = '2px 2px 8px';
+    s2.textContent = `${list.length} merchant${list.length === 1 ? '' : 's'} · click to edit the shop · right-click: the NPC`; box.append(s2);
+    lazy(box, list, m => {
+      const r = document.createElement('div'); r.className = 'row';
+      r.append(thumb(m.sprite, 34));
+      const d = document.createElement('div'); d.style.flex = '1'; d.style.minWidth = '0'; d.innerHTML = '<div></div><div class="n"></div>';
+      d.firstChild.textContent = m.name + (m.custom ? ' ✎' : '');
+      d.lastChild.textContent = `${m.stock.length} item${m.stock.length === 1 ? '' : 's'}${m.stock.length > 40 ? ' (' + Math.ceil(m.stock.length / 38) + ' pages)' : ''} · ${m.where ? (m.where[2] ? m.where[2] + ' · ' : '') + m.where[0] + ', ' + m.where[1] : 'not in the world'} · template ${m.t}`;
+      r.append(d);
+      r.onclick = () => openMerchant(m);
+      r.oncontextmenu = e => { e.preventDefault(); openTemplate('npc', m.t); };
+      return r;
+    });
+    if (!list.length) box.insertAdjacentHTML('beforeend', '<div class="empty">Nothing matches.</div>');
+  });
+}
+function openMerchant(m) {
+  if (tplDirty() && !(TP.kind === 'merchant' && TP.t === m.t) && !confirm('You have changes here you did not apply. Leave them?')) return;
+  const cur = { stock: [...m.stock], kinds: m.kinds, sell: m.sell, buy: m.buy, gold: m.gold };
+  TP = { kind: 'merchant', t: m.t, m, cur, orig: JSON.parse(JSON.stringify(cur)) };
+  $('#tpl').classList.add('on'); $('#tpl').classList.remove('picking'); tplRender();
+}
+function merchRender(el) {
+  const m = TP.m, c = TP.cur, ro = RO();
+  el.querySelector('.ttl').innerHTML = '';
+  el.querySelector('.ttl').append(thumb(m.sprite, 34));
+  el.querySelector('.ttl').insertAdjacentHTML('beforeend', '<span style="vertical-align:middle;margin-left:8px"></span><small></small>');
+  el.querySelector('.ttl span').textContent = m.name;
+  el.querySelector('.ttl small').textContent = `merchant · NPC template ${m.t}${m.where ? ' · ' + (m.where[2] ? m.where[2] + ', ' : '') + m.where[0] + ', ' + m.where[1] : ' · not in the world'}${m.custom ? ' · own settings' : ' · the game\'s own settings'}`;
+  el.querySelector('.mtabs').innerHTML = '<button class="on">Shop</button>';
+  const body = el.querySelector('.mbody'); body.innerHTML = '';
+  const again = () => { const st = body.scrollTop; merchRender(el); el.querySelector('.mbody').scrollTop = st; };
+  const g = document.createElement('div'); g.className = 'grid2'; body.append(g);
+  const row = (l, e, tip) => { const a = Object.assign(document.createElement('div'), { className: 'lb', textContent: l }); if (tip) a.title = tip; g.append(a, e); };
+  const pct = (get, set, word) => { const d = document.createElement('div'); d.className = 'ipick';
+    const i = document.createElement('input'); i.type = 'number'; i.min = 0; i.max = 1000; i.placeholder = 'normal'; i.value = get() || ''; i.style.width = '90px';
+    i.onchange = () => { let v = Math.round(+i.value || 0); v = Math.max(0, Math.min(1000, v)); i.value = v || ''; set(v); again(); };
+    d.append(i, '%', Object.assign(document.createElement('span'), { className: 'hint', textContent: get() ? (get() < 100 ? `${100 - get()}% ${word[0]}` : get() > 100 ? `${get() - 100}% ${word[1]}` : 'the same as normal') : 'empty = the normal price' }));
+    return d; };
+  row('Sells at', pct(() => c.sell, v => c.sell = v, ['cheaper', 'dearer']), 'Of the normal price (up to 4x the value, less with Bartering)');
+  row('Pays when buying', pct(() => c.buy, v => c.buy = v, ['less', 'more']), 'Of the normal price (a quarter of the value, more with Bartering)');
+  const kd = document.createElement('div'); kd.className = 'chips';
+  for (const [bit, l] of MK_KINDS) {
+    const b = document.createElement('button'); b.className = 'chip' + (c.kinds & bit ? ' on' : ''); b.textContent = l;
+    b.onclick = () => { c.kinds ^= bit; again(); }; kd.append(b);
+  }
+  row('Buys from players', kd, 'What players can sell him');
+  const gd = document.createElement('div'); gd.className = 'ipick';
+  gd.append(num(() => Math.floor(c.gold / 100), v => { c.gold = v * 100; again(); }, 0), 'gold',
+    Object.assign(document.createElement('span'), { className: 'hint', textContent: c.gold ? 'the most he pays for one item' : `0 = his own: ${Math.floor(m.tgold / 100)} gold` }));
+  row('Gold', gd, 'The most he can pay for one item');
+  body.insertAdjacentHTML('beforeend', `<h4 style="margin-top:18px">Stock · ${c.stock.length} item${c.stock.length === 1 ? '' : 's'}${c.stock.length > 40 ? ` · ${Math.ceil(c.stock.length / 38)} pages in the game (38 a page, arrows to turn)` : ''}</h4>
+    <div class="hint" style="margin:-4px 0 8px">Always in stock, in this order. After these come the things players sold him: the seller can buy one back for what he got until he deals with someone else (or 10 minutes); then the merchant keeps it at his normal price, or throws it away if he would not sell it (Fire / Ice pieces, damaged things).</div>`);
+  const ls = document.createElement('div'); ls.className = 'arows'; body.append(ls);
+  c.stock.forEach((t, i) => {
+    const r = document.createElement('div'); r.className = 'ipick';
+    const n = Object.assign(document.createElement('span'), { className: 'hint', textContent: String(i + 1) }); n.style.width = '24px';
+    const x = pal.templates.find(q => q[0] === t);
+    const nm = Object.assign(document.createElement('span'), { textContent: x ? x[1] : 'template ' + t + ' (empty!)' }); nm.style.flex = '1';
+    const tn = Object.assign(document.createElement('span'), { className: 'hint', textContent: '#' + t });
+    const up = document.createElement('button'); up.className = 'sm'; up.textContent = '↑'; up.disabled = !i; up.title = 'Move up';
+    up.onclick = () => { c.stock.splice(i - 1, 0, c.stock.splice(i, 1)[0]); again(); };
+    const dn = document.createElement('button'); dn.className = 'sm'; dn.textContent = '↓'; dn.disabled = i === c.stock.length - 1; dn.title = 'Move down';
+    dn.onclick = () => { c.stock.splice(i + 1, 0, c.stock.splice(i, 1)[0]); again(); };
+    const ed = document.createElement('button'); ed.className = 'sm'; ed.textContent = 'Edit'; ed.title = 'Open this item template'; ed.onclick = () => openTemplate('item', t);
+    const xx = document.createElement('button'); xx.className = 'sm'; xx.textContent = '×'; xx.title = 'Take it out of the stock';
+    xx.onclick = () => { c.stock.splice(i, 1); again(); };
+    r.append(n, thumb(x ? x[2] : 0, 26), nm, tn, up, dn, ed, xx); ls.append(r);
+  });
+  const add = document.createElement('div'); add.className = 'rwadd';
+  const ab = document.createElement('button'); ab.className = 'btn sec'; ab.textContent = '+ Add an item…';
+  ab.onclick = () => itemPopup(ab, v => { if (c.stock.includes(v)) return toast('He sells that already.', true); if (c.stock.length >= 240) return toast('At most 240 items.', true); c.stock.push(v); again(); }, t => t[3]);
+  const sb = document.createElement('button'); sb.className = 'btn ghost'; sb.textContent = 'Sort by name';
+  sb.onclick = () => { c.stock.sort((a, b) => iname(a).localeCompare(iname(b))); again(); };
+  add.append(ab, sb); body.append(add);
+  const ft = el.querySelector('.mft');
+  ft.innerHTML = `<button class="btn ghost" id="mreset" title="Forget this merchant's own settings: his stock follows his NPC backpack and sale list again, normal prices">Back to the game's own</button><span class="sp"></span><button class="btn ghost" id="tcancel">Close</button><button class="btn pri" id="tapply">Apply</button>`;
+  $('#tcancel').onclick = closeTemplate;
+  const save = async body2 => {
+    const r = await api('/api/merchants', body2);
+    if (r.error) return toast(r.error, true);
+    toast(m.name + ': ' + r.msg);
+    const list = await api('/api/merchants'), nm2 = list.find(x => x.t === m.t);
+    if (nm2) { TP = null; openMerchant(nm2); }
+    if (tab === 'merchants') leftUI();
+  };
+  $('#tapply').onclick = () => save({ t: m.t, stock: c.stock, kinds: c.kinds, sell: c.sell, buy: c.buy, gold: c.gold });
+  $('#mreset').onclick = () => { if (confirm(`Forget ${m.name}'s own shop settings?`)) save({ t: m.t, reset: 1 }); };
+  $('#mreset').disabled = !m.custom;
+  if (ro) { $('#tapply').disabled = $('#mreset').disabled = true; $('#tapply').title = 'The game server is running and live editing is not available.'; }
+}
 function iname(t) { const x = t && pal.templates.find(r => r[0] === t); return x ? x[1] : ''; }
 function ipick(get, set, opts) {   // an item template: number, name, Pick…, ×
   const d = document.createElement('div'); d.className = 'ipick';

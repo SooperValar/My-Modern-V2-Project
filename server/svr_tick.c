@@ -850,7 +850,7 @@ void plr_cmd_iteminfo(int nr)
 	else if (where==2 && co>0 && co<MAXCHARS && (ch[co].flags&(CF_MERCHANT|CF_BODY))) {
 		if ((ch[co].flags&CF_BODY) && abs(ch[cn].x-ch[co].x)+abs(ch[cn].y-ch[co].y)>1) in=0;
 		else if (!(ch[co].flags&CF_BODY) && !do_char_can_see(cn,co) && !(godshop_cat(co) && (ch[cn].flags&CF_GOD))) in=0;	// #godshop: from afar
-		else if (slot<40) in=ch[co].item[slot];
+		else if (slot<40) { if (ch[co].flags&CF_MERCHANT) merch_fill(cn,co); in=ch[co].item[slot]; }
 		else if (slot<60 && (ch[co].flags&CF_BODY)) in=ch[co].worn[slot-40];
 	}
 	if (in&0x80000000) in=0;
@@ -954,17 +954,13 @@ void plr_cmd_iteminfo(int nr)
 
 		// value: the price here depends on Bartering
 		if (where==2 && (ch[co].flags&CF_MERCHANT)) {
-			tip_line(nr,where,slot,&line,3,"Price: %s",tip_money(barter(cn,do_item_value(in),1),b2));
+			tip_line(nr,where,slot,&line,3,"Price: %s",tip_money(merch_sell_price(cn,co,in),b2));
+			if (merch_remorse(cn,in)) tip_line(nr,where,slot,&line,2,"You sold it: buy it back for that");
 		} else {
 			if (it[in].value>0) tip_line(nr,where,slot,&line,3,"Base value: %s",tip_money(it[in].value,b2));
 			if (co>0 && co<MAXCHARS && (ch[co].flags&CF_MERCHANT) && do_char_can_see(cn,co)) {
-				int in2=ch[co].data[0];
-				flag=0;
-				if ((it[in].flags&IF_ARMOR) && (it_temp[in2].flags&IF_ARMOR)) flag=1;
-				if ((it[in].flags&IF_WEAPON) && (it_temp[in2].flags&IF_WEAPON)) flag=1;
-				if ((it[in].flags&IF_MAGIC) && (it_temp[in2].flags&IF_MAGIC)) flag=1;
-				if ((it[in].flags&IF_MISC) && (it_temp[in2].flags&IF_MISC)) flag=1;
-				if (flag) tip_line(nr,where,slot,&line,3,"%s pays: %s",ch[co].name,tip_money(barter(cn,do_item_value(in),0),b2));
+				flag=merch_buys(co,in);
+				if (flag) tip_line(nr,where,slot,&line,3,"%s pays: %s",ch[co].name,tip_money(merch_buy_price(cn,co,in),b2));
 				else tip_line(nr,where,slot,&line,3,"%s doesn't buy these.",ch[co].name);
 			}
 		}

@@ -1054,6 +1054,122 @@ class World:
                         for c in clears if 1 <= int(c.get('id', 0)) <= 64 and str(c.get('zone', '')).strip()}
         return self.talk_save(qs, npcs, ctl)
 
+    # --- merchants: .dat/merchants.dat, read by the server (merch.c; console "merchreload")
+    MK = (('armor', 1, 1 << 8), ('weapons', 2, (1 << 16) | (1 << 17) | (1 << 18) | (1 << 19) | (1 << 20)), ('magic', 4, 1 << 24), ('other', 8, 1 << 25))
+
+    def merchants_path(self):
+        return os.path.join(self.dat, 'merchants.dat')
+
+    def merchants_file(self):
+        out = {}
+        try:
+            with open(self.merchants_path(), encoding='latin-1') as fh:
+                for line in fh:
+                    a = line.split()
+                    if len(a) < 2 or a[0] not in ('merchant', 'stock') or not a[1].isdigit():
+                        continue
+                    m = out.setdefault(int(a[1]), {'sell': 0, 'buy': 0, 'gold': 0, 'kinds': -1, 'stock': None})
+                    if a[0] == 'stock':
+                        m['stock'] = (m['stock'] or []) + [int(v) for v in a[2:] if v.isdigit()]
+                    else:
+                        for k, v in zip(a[2::2], a[3::2]):
+                            if k in ('sell', 'buy', 'gold', 'kinds'):
+                                try:
+                                    m[k] = int(v)
+                                except ValueError:
+                                    pass
+        except OSError:
+            pass
+        return out
+
+    def _it_u(self, t, field):
+        off, fmt = IT_FIELDS[field]
+        return struct.unpack_from(fmt, self.titem, t * ITEM_SIZE + off)[0]
+
+    def merchant_default(self, t):
+        """what the game does for a merchant that is not in merchants.dat: his stock and what he buys"""
+        r = tpl_read(self.tchar, t * CHAR_SIZE, {'data': CT_FIELDS['data'], 'item': CT_FIELDS['item']})
+        st = []
+        for v in list(r['data'][:10]) + list(r['item']):
+            if 0 < v < MAXTITEM and v not in st:
+                st.append(v)
+        st.sort(key=lambda v: -self._it_u(v, 'value'))
+        d0, kinds = r['data'][0], 0
+        if 0 < d0 < MAXTITEM:
+            fl = self._it_u(d0, 'flags')
+            for _, bit, f in self.MK:
+                if fl & f:
+                    kinds |= bit
+        return st, kinds
+
+    def merchants(self):
+        """every merchant template (not the gods' shops), with what he sells and buys"""
+        if self.tchar is None:
+            return []
+        f, where, out = self.merchants_file(), {}, []
+        for c in self.npc_world():
+            if c[7] == 'merchant' and c[4] not in where:
+                where[c[4]] = [c[2], c[3], c[8]]
+        for t in range(1, MAXTCHARS):
+            o = t * CHAR_SIZE
+            if t == 1 or not self.tchar[o + C_USED] or 1180 <= t < 1190 or not self.t_u64(t, C_FLAGS) & CF_MERCHANT:
+                continue
+            st, kinds = self.merchant_default(t)
+            m = f.get(t)
+            out.append({'t': t, 'name': self.tname(t), 'sprite': self.tchar_sprite(t), 'where': where.get(t), 'custom': m is not None,
+                        'stock': m['stock'] if m and m['stock'] is not None else st, 'dstock': st,
+                        'kinds': m['kinds'] if m and m['kinds'] >= 0 else kinds, 'dkinds': kinds,
+                        'sell': m['sell'] if m else 0, 'buy': m['buy'] if m else 0, 'gold': m['gold'] if m else 0,
+                        'tgold': struct.unpack_from('<i', self.tchar, o + CT_FIELDS['gold'][0])[0]})
+        return out
+
+    def merchants_save(self, body, ctl=None):
+        """one merchant's settings (or reset: back to the game's own); writes merchants.dat and has the game read it"""
+        t = int(body.get('t', 0))
+        if not (0 < t < MAXTCHARS) or self.tchar is None or not self.tchar[t * CHAR_SIZE + C_USED] or not self.t_u64(t, C_FLAGS) & CF_MERCHANT:
+            return {'error': 'That is not a merchant.'}
+        f = self.merchants_file()
+        if body.get('reset'):
+            f.pop(t, None)
+        else:
+            st, kinds = self.merchant_default(t)
+            stock = [int(v) for v in body.get('stock') or [] if 0 < int(v) < MAXTITEM and self.titem[int(v) * ITEM_SIZE + I_USED]][:240]
+            cl = lambda v, hi: max(0, min(int(v or 0), hi))
+            m = {'sell': cl(body.get('sell'), 1000), 'buy': cl(body.get('buy'), 1000), 'gold': cl(body.get('gold'), 2000000000),
+                 'kinds': cl(body.get('kinds'), 15), 'stock': stock}
+            if m['stock'] == st:
+                m['stock'] = None              # the game's own list: it follows the NPC's backpack again
+            if m['kinds'] == kinds:
+                m['kinds'] = -1
+            if m['stock'] is None and m['kinds'] < 0 and not m['sell'] and not m['buy'] and not m['gold']:
+                f.pop(t, None)
+            else:
+                f[t] = m
+        p = self.merchants_path()
+        if os.path.exists(p):
+            bk = os.path.join(self.dat, 'mapedit-backups')
+            os.makedirs(bk, exist_ok=True)
+            shutil.copy2(p, os.path.join(bk, 'merchants-%s.dat' % time.strftime('%Y%m%d-%H%M%S')))
+        with open(p + '.tmp', 'w', encoding='latin-1') as fh:
+            fh.write('# Merchants (MyV2 Editor, Merchants tab; the server: merch.c, console "merchreload").\n'
+                     '# merchant <template> sell <%> buy <%> gold <silver> kinds <1 armor, 2 weapons, 4 magic, 8 other; -1 the game\'s own>\n'
+                     '# stock <template> <item templates...> (lines add up, in the shop\'s order). 0 = normal.\n')
+            for k in sorted(f):
+                m = f[k]
+                fh.write('merchant %d sell %d buy %d gold %d kinds %d\n' % (k, m['sell'], m['buy'], m['gold'], m['kinds']))
+                if m['stock'] is not None:
+                    s = m['stock']
+                    if not s:
+                        fh.write('stock %d\n' % k)
+                    for i in range(0, len(s), 30):
+                        fh.write('stock %d %s\n' % (k, ' '.join(str(v) for v in s[i:i + 30])))
+        os.replace(p + '.tmp', p)
+        msg = 'saved'
+        if ctl and server_running():
+            r = ctl.console('merchreload', 5)
+            msg = 'saved; the game has it now' if r and 'Merchants loaded' in r else 'saved; the game reads it at its next start (it did not answer)'
+        return {'msg': msg}
+
     def quests_order_save(self, order, rewards=None, ctl=None):
         qs, npcs = self.talk_load()
         qs['order'] = {int(t): int(v) for t, v in order.items() if int(v) and 0 < int(t) < MAXTCHARS and -1 <= int(v) <= 30000}
@@ -2512,6 +2628,8 @@ def make_handler(world, sprites, page, minimap, ctl):
                 return self.js(world.ctemp(int(q['t'])) or {'error': 'no such NPC template'})
             if u.path == '/api/quests':
                 return self.js(world.quests_view())
+            if u.path == '/api/merchants':
+                return self.js(world.merchants())
             if u.path == '/api/zonenpcs':
                 return self.js(world.zone_npcs(q.get('zone', '')))
             if u.path == '/api/itemp':
@@ -2556,6 +2674,8 @@ def make_handler(world, sprites, page, minimap, ctl):
                 return self.js({'rugs': world.rug_save(body.get('save'), body.get('delete'), body.get('rename'))})
             if u.path == '/api/clears':
                 return self.js({'msg': world.clears_save(body.get('clears') or [], ctl)})
+            if u.path == '/api/merchants':
+                return self.js(world.merchants_save(body, ctl))
             if u.path == '/api/questorder':
                 return self.js({'msg': world.quests_order_save(body.get('order') or {}, body.get('rewards'), ctl)})
             if u.path == '/api/zones':

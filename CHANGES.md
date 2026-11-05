@@ -303,6 +303,19 @@ The design is in `docs/ITEM_TIERS.md`.
 - The Helmet, Armor, Leggings, Boots and Gloves of Ice (unique, templates 1272-1276) showed "Sprite ... is missing": they now have pictures, the Fire set recoloured to ice blue with frost-white flecks (sprites 18100-18104, `tools/sprites/ice_set.py`). Players get them with the next client update.
 - **Cloak of Ice** (new, template 1407, sprite 18105 from the Cloak of Fire): the Ice set is now a complete set of six like the Fire set (armor 6, Stealth -10, unique; `tools/world/ice_cloak.txt`). The older **Ice Cloak** (909, traded for an ice gargoyle egg, temporary) stays as it is, unique and on its own (Cody's wish). `#specialarmor` says "Ice set (6 pieces)".
 
+### Merchants: pages, own stock / prices / what they buy, seller's remorse (`server/merch.c`, editor Merchants tab)
+- **Editor, Merchants tab** (map mode, next to NPCs): every merchant, searchable (name, place, what he sells). Click one:
+  his stock (add with search, reorder, remove; up to 240), sells at % and pays at % of the normal price (empty =
+  normal), what he buys from players (Armor / Weapons / Magic / Other), the most gold he pays for one item, Go to,
+  "Back to the game's own". Apply writes `.dat/merchants.dat` and the running game reads it at once (`merchreload`).
+- **Pages**: with more than 40 things the shop shows 38 a page and the Previous / Next page arrows (like the god shop);
+  each player turns his own pages.
+- **Seller's remorse**: what a player sells shows after the stock; the seller can buy it back for what he got until he
+  looks at someone else (or 10 minutes). Then the merchant keeps it at his normal price, or throws it away if he
+  would not sell it (Fire / Ice pieces, shop-destroy items, damaged ones). Up to 62 such items a merchant (his depot).
+- Merchants without own settings work as before (stock = sale list + NPC backpack, buys what data[0] is, normal prices).
+- Console: `merchreload`, `shop <player> <merchant template> [buy <slot>|sell <backpack slot>|page <38/39>|leave]` (tests).
+
 ### Damage to attackers (thorns) on every landed blow
 - Items with "Damage to attackers" (and the Epic Thorns effect) now hurt the attacker on every melee blow that lands,
   also when your armor stops all of its damage (before: only blows that hurt you). Still adds up over the worn pieces

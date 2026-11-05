@@ -4529,6 +4529,11 @@ void do_shop_char(int cn,int co,int nr)
         if (!(ch[co].flags&CF_BODY) && !do_char_can_see(cn,co)) return;
         if ((ch[co].flags&CF_BODY) && abs(ch[cn].x-ch[co].x)+abs(ch[cn].y-ch[co].y)>1) return;
 
+        // MyV2 merchants (merch.c): selling, buying, pages, seller's remorse
+        if ((ch[co].flags&CF_MERCHANT) && ch[cn].citem) { merch_sell(cn,co); do_look_char(cn,co,0,0,1); return; }
+        if ((ch[co].flags&CF_MERCHANT) && nr<40) { merch_take(cn,co,nr); do_look_char(cn,co,0,0,1); return; }
+        if (ch[co].flags&CF_MERCHANT) merch_fill(cn,co);	// (looking at an item: nr 62+)
+
         if ((in=ch[cn].citem)!=0 && (ch[co].flags&CF_MERCHANT)) {
                 if (in&0x80000000) {
                         do_char_log(cn,0,"You want to sell money? Weird!\n");
@@ -4646,7 +4651,6 @@ void do_shop_char(int cn,int co,int nr)
                         }
                 }
         }
-        if (ch[co].flags&CF_MERCHANT) update_shop(co);
         do_look_char(cn,co,0,0,1);
 }
 
@@ -4782,7 +4786,8 @@ void do_look_char(int cn,int co,int godflag,int autoflag,int lootflag)
 
         // a merchant restocks whenever his shop is opened, not only after a trade
         // (do_shop_char already did it when lootflag is set)
-        else if ((ch[co].flags&CF_MERCHANT) && !autoflag && !lootflag) update_shop(co);
+        else if ((ch[co].flags&CF_MERCHANT) && !autoflag) merch_fill(cn,co);	// MyV2 merchants: this viewer's page (merch.c)
+        if (!autoflag) merch_look(cn,co);	// dealing with another merchant now: the last one keeps what was sold to him
 
         if (!autoflag && !(ch[co].flags&CF_MERCHANT) && !(ch[co].flags&CF_BODY)) {
 		if ((ch[cn].flags&CF_PLAYER) && !autoflag) {
@@ -4916,7 +4921,7 @@ void do_look_char(int cn,int co,int godflag,int autoflag,int lootflag)
                 *(unsigned char*)(buf+5)=1;
                 if ((in=ch[cn].citem)!=0) {
                         if (ch[co].flags&CF_MERCHANT) {
-                                pr=barter(cn,do_item_value(in),0);
+                                pr=(in&0x80000000) ? 0 : merch_buy_price(cn,co,in);
                         } else pr=0;
                 } else pr=0;
                 *(unsigned int*)(buf+6)=pr;
@@ -4959,7 +4964,7 @@ void do_look_char(int cn,int co,int godflag,int autoflag,int lootflag)
                                 if ((in=ch[co].item[m])!=0) {
                                         spr=it[in].sprite[0];
                                         if (ch[co].flags&CF_MERCHANT) {
-                                                pr=barter(cn,do_item_value(in),1);
+                                                pr=merch_sell_price(cn,co,in);
                                         } else pr=0;
                                 } else { spr=pr=0; }
                                 *(unsigned short*)(buf+2+(m-n)*6)=spr;

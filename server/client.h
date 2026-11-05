@@ -403,6 +403,7 @@ struct player
 	int changed_field[TILEX*TILEY];	// IDs of changed fields
 
 	int gs_page;			// godshop.c: the page this player is on in a gods' shop
+	int merch_co,merch_page;	// merch.c: the merchant this player deals with, and his page there
 };
 
 #define MAXPLAYER		250

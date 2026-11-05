@@ -3671,7 +3671,7 @@ void item_tick_gc(void)
                                 }
                                 if (z<20) continue;
                                 if (ch[cn].citem==n) continue;
-                                if (ch[cn].flags&CF_PLAYER) {
+                                if (ch[cn].flags&(CF_PLAYER|CF_MERCHANT)) {	// merchants: what players sold them (merch.c)
                                         for (z=0; z<62; z++)
                                                 if (ch[cn].depot[z]==n) break;
                                         if (z<62) continue;

@@ -303,6 +303,25 @@ static void con_cmd(char *line)
 		out("  #quest place: %s\n",get_area_street(x,y)[0] ? get_area_street(x,y) : "-");
 		return;
 	}
+	if (!strcmp(w[0],"merchreload")) {	// read .dat/merchants.dat again (the editor's Merchants tab)
+		n=merch_load();
+		out("  Merchants loaded: %d merchant%s with their own settings.\n",n,n==1 ? "" : "s");
+		return;
+	}
+	if (!strcmp(w[0],"shop")) {	// shop <player> <merchant template> [buy <slot> | sell <backpack slot> | page <slot 38/39> | leave]: test a shop
+		int t=atoi(w[2]),co=0,k,in,pl;
+		if (!(pl=con_player(w[1]))) return;
+		for (n=1; n<MAXCHARS; n++) if (ch[n].used==USE_ACTIVE && !(ch[n].flags&CF_BODY) && ch[n].temp==t && (ch[n].flags&CF_MERCHANT)) { co=n; break; }
+		if (!co) { out("  No merchant of template %d in the world.\n",t); return; }
+		if (!strcmp(w[3],"buy") || !strcmp(w[3],"page")) merch_take(pl,co,atoi(w[4]));
+		else if (!strcmp(w[3],"sell")) { k=atoi(w[4]); if (k<0 || k>39 || !(in=ch[pl].item[k])) { out("  Nothing in that backpack slot.\n"); return; } ch[pl].item[k]=0; ch[pl].citem=in; merch_sell(pl,co); if (ch[pl].citem==in) { ch[pl].citem=0; ch[pl].item[k]=in; } }
+		else if (!strcmp(w[3],"leave")) merch_leave(pl,co);
+		merch_fill(pl,co);
+		out("  %s (%d), buys %d, gold %dG; %s has %dG %dS:\n",ch[co].name,t,merch_kinds(co),ch[co].gold/100,ch[pl].name,ch[pl].gold/100,ch[pl].gold%100);
+		for (k=0; k<40; k++) if ((in=ch[co].item[k]) && !(in&0x80000000))
+			out("  %2d  %-34s %7dS%s\n",k,it[in].name,merch_sell_price(pl,co,in),merch_remorse(pl,in) ? "  (sold by you: buy back)" : "");
+		return;
+	}
 	if (!strcmp(w[0],"zonereload")) {
 		n=zone_load();
 		if (n>0) out("  Zones loaded: %d zones in %d boxes.\n",zone_count(),zone_boxes());
@@ -327,6 +346,8 @@ static void con_cmd(char *line)
 		    "  quest <player> [<n> <value>]  show or set a player's quest steps\n"
 		    "  talkreload                    read the NPC dialogue file again\n"
 		    "  zonereload                    read the zones (.dat/zones.dat) again\n"
+		    "  merchreload                   read the merchants (.dat/merchants.dat) again\n"
+		    "  shop <player> <merchant tpl> [buy <slot>|sell <bp slot>|page <38/39>|leave]   test a shop\n"
 		    "  zone <x> <y>                  the zone names at a spot\n"
 		    "  talktest <npc template> <player> <text>   try a conversation\n"
 		    "  talkkill <player> <npc template>          try a quest kill\n"
