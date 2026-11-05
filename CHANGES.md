@@ -306,7 +306,7 @@ The design is in `docs/ITEM_TIERS.md`.
 ### Damage to attackers (thorns) on every landed blow
 - Items with "Damage to attackers" (and the Epic Thorns effect) now hurt the attacker on every melee blow that lands,
   also when your armor stops all of its damage (before: only blows that hurt you). Still adds up over the worn pieces
-  (full Fire set 1-18, full Ice set 1-12). Being tested by Cody (TODO 22); may be toned down.
+  (full Fire set 1-18, full Ice set 1-12). Live Nov 4; Cody is testing it (TODO 22), may be toned down. Also live: the Burning Hits total on kills and `#burning`.
 - `fighttest ... back` also shows the damage done back to the monster (thorns, frost).
 
 ### Ice Gargoyle Cape (was the Ice Cloak) (`tools/world/ice_names.txt`)
