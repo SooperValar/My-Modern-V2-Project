@@ -234,6 +234,7 @@ extern unsigned int mapmarker;
 #define CF_SAVEME	(1ull<<44)	// save this player to disk
 #define CF_GREATERGOD	(1ull<<45)	// greater god
 #define CF_GREATERINV	(1ull<<46)	// no one sees me, ever
+#define CF_NOBURNMSG	(1ull<<47)	// #burning off: no "Burning Hits damage inflicted" line when a monster dies
 
 #define AT_BRAVE        0
 #define AT_WILL         1

@@ -184,13 +184,18 @@ static void con_cmd(char *line)
 		    wp2h_chance(co,0)/10,wp2h_chance(co,0)%10,wp2h_chance(co,1)/10,wp2h_chance(co,1)%10);
 		return;
 	}
-	if (!strcmp(w[0],"fighttest")) {	// fighttest <player> <NPC template> <rounds> [back]: the player hits the NPC (or "back": the NPC hits the player); damage total (test server only)
+	if (!strcmp(w[0],"fighttest")) {	// fighttest <player> <NPC template> <rounds> [back|kill]: the player hits the NPC (or "back": the NPC hits the player); damage total (test server only)
 		int t=atoi(w[2]),r=atoi(w[3]),back=!strcmp(w[4],"back"),cn=0,k,ii,chill=0,before; long long total=0;
 		if (!(co=con_player(w[1]))) return;
 		for (n=1; n<MAXCHARS; n++) if (ch[n].used==USE_ACTIVE && !(ch[n].flags&(CF_PLAYER|CF_BODY)) && ch[n].temp==t) { cn=n; break; }
 		if (!cn) { out("  No NPC of template %d in the world.\n",t); return; }
 		if (r<1) r=1;
 		if (r>5000) r=5000;
+		if (!strcmp(w[4],"kill")) {	// the player fights the NPC until it dies (its own messages go to the player's log)
+			for (k=0; k<r && ch[cn].used==USE_ACTIVE && !(ch[cn].flags&CF_BODY); k++) { ch[co].a_hp=ch[co].hp[5]*1000; do_attack(co,cn,0); }
+			out("  %s after %d blows.\n",(ch[cn].flags&CF_BODY) || ch[cn].used!=USE_ACTIVE ? "Killed" : "Still alive",k);
+			return;
+		}
 		for (k=0; k<r; k++) {
 			ch[co].a_hp=ch[co].hp[5]*1000; ch[cn].a_hp=ch[cn].hp[5]*1000;
 			before=back ? ch[co].a_hp : ch[cn].a_hp;

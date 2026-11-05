@@ -321,10 +321,12 @@ The design is in `docs/ITEM_TIERS.md`.
   - Ice, 4 pieces: **+5 to every spell skill**.
   - Ice, 6 pieces: **frost armor**, 20 % of the melee hits that land on the wearer chill the attacker (spell "Chilled":
     Agility and Strength -10 for 5 seconds) and hurt it with a little cold (5 % of the hit).
+  - When a monster you killed had taken Burning Hits damage from you, the log says "Burning Hits damage inflicted: N."
+    `#burning` turns that line off and on (saved with the character, flag `CF_NOBURNMSG`).
   - Item tooltips show "Fire set: x of 6 worn" and the two bonuses, e.g. "4: Weapon Specialization +4%", "6: Burning Hits (10% Damage)", "4: All Spells +5", "6: Frost Armor (20% Chill)" (green when they apply); `#specialarmor` explains them.
   - Tested on the test server (`fighttest`): Fire 6 = about +11 % melee damage, Ice 6 chills on about 1 in 5 landed hits.
 - New console commands (testing): `wear <player> <template>|off` (puts a new item straight into its worn slot and shows
-  the main values), `fighttest <player> <NPC template> <rounds> [back]` (damage totals; test server only, it really fights).
+  the main values), `fighttest <player> <NPC template> <rounds> [back|kill]` (damage totals, or fight until it dies; test server only, it really fights).
 - Every piece of both sets needs Hitpoints, Endurance and Mana 50 (were 150 Fire / 200 Ice; `tools/world/fire_ice_hem.txt`).
   They keep their Light (Fire 220, Ice 100; the Cloak of Ice had Fire's 220, now 100). Damage to attackers swapped:
   Fire 1-3, Ice 1-2 (were Fire 1-2, Ice 1-3). `build_lab` learned `gethit`, `hpreq`,

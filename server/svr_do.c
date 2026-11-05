@@ -639,6 +639,7 @@ void do_help(int cn,char *topic)
 	do_char_log(cn,1,"#armor                 armor tiers and sets.\n");
 	do_char_log(cn,1,"#belt                  all belts.\n");
 	do_char_log(cn,1,"#bow                   you'll bow.\n");
+	do_char_log(cn,1,"#burning               show/hide Burning Hits damage.\n");
 	do_char_log(cn,1,"#exp                   experience and exp/hour.\n");
 	do_char_log(cn,1,"#fightback             toggle auto-figtback.\n");
 	do_char_log(cn,1,"#follow <player>|self  you'll follow player.\n");
@@ -1016,6 +1017,13 @@ void do_follow(int cn,char *name)
         }
         ch[cn].data[10]=co;
         do_char_log(cn,1,"Now following %s.\n",ch[co].name);
+}
+
+void do_burning(int cn)	// #burning: show / hide the Burning Hits total when a monster dies
+{
+        ch[cn].flags^=CF_NOBURNMSG;
+        if (ch[cn].flags&CF_NOBURNMSG) do_char_log(cn,1,"Burning Hits damage will not be shown.\n");
+        else do_char_log(cn,1,"Burning Hits damage will be shown when a monster dies (Fire set, 6 pieces).\n");
 }
 
 void do_fightback(int cn)
@@ -2336,6 +2344,7 @@ void do_command(int cn, char *ptr)
 		if (prefix(cmd,"black") && f_g)		{ god_set_flag(cn,dbatoi(arg[1]),CF_BLACK); return; }
                 if (prefix(cmd,"build") && f_c)         { god_build_cmd(cn,arg[1]); return; }
                 if (prefix(cmd,"belt"))                 { do_info_belt(cn); return; };
+                if (prefix(cmd,"burning"))              { do_burning(cn); return; };
                 break;
         case 'c':
                 if (!strcmp(cmd,"clear") && f_c)        { build_clear_cmd(cn); return; };
@@ -3174,6 +3183,9 @@ void do_give_exp(int cn,int p,int gflag,int rank)
 
 // right now we know only four types: 0=normal, 1=blast, 2=holy water/staff of kill undead, 3=gethit
 // returns actual damage done
+// Fire set, 6 pieces: the Burning Hits damage a character did to its current victim (shown when the victim dies)
+static int burn_victim[MAXCHARS],burn_total[MAXCHARS];
+
 int do_hurt(int cn,int co,int dam,int type)
 {
         int tmp=0,n,in,rank=0,noexp=0;
@@ -3294,6 +3306,11 @@ int do_hurt(int cn,int co,int dam,int type)
         if (ch[co].a_hp<500) {
                 do_area_log(cn,co,ch[cn].x,ch[cn].y,0,"%s is dead!\n",ch[co].reference);
                 do_char_log(cn,0,"You killed %s.\n",ch[co].reference);
+                if (cn>0 && cn<MAXCHARS && burn_victim[cn]==co) {
+                        if (burn_total[cn]>0 && (ch[cn].flags&CF_PLAYER) && !(ch[cn].flags&CF_NOBURNMSG))
+                                do_char_log(cn,1,"Burning Hits damage inflicted: %d.\n",burn_total[cn]);
+                        burn_victim[cn]=burn_total[cn]=0;
+                }
                 if (ch[cn].flags&CF_INVISIBLE) do_char_log(co,0,"Oh dear, that blow was fatal. Somebody killed you...\n");
                 else do_char_log(co,0,"Oh dear, that blow was fatal. %s killed you...\n",ch[cn].name);
                 do_notify_char(cn,NT_DIDKILL,co,0,0,0);
@@ -3520,7 +3537,11 @@ void do_attack(int cn,int co,int surround)
                 if (dam>0 && set_pieces(cn,SET_FIRE)>=6 && ch[co].used!=USE_EMPTY && !(ch[co].flags&CF_BODY) && ch[co].x==tx && ch[co].y==ty) {
                         int b=dam*SET_BURN_PCT;
                         b=b/100+(RANDOM(100)<b%100 ? 1 : 0);
-                        if (b>0) do_hurt(cn,co,b,3);
+                        if (b>0) {
+                                if (burn_victim[cn]!=co) { burn_victim[cn]=co; burn_total[cn]=0; }
+                                burn_total[cn]+=b;
+                                do_hurt(cn,co,b,3);
+                        }
                 }
 
                 if (dam<1) {

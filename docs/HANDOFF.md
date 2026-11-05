@@ -73,7 +73,7 @@ is the project's `client/` folder.
   changed Windows source into Ubuntu with a backup in `~/claude-backups/`, then `make`), starts.
 - Console commands (control port 127.0.0.1:5556, or the editor's console): `who`, `status`,
   `announce`, `tell`, `kick`, `raise`, `lower`, `gold`, `quest`, `talkreload`, `talktest`,
-  `talkkill`, `talkuse`, `talknear`, `talkmoney`, `zonereload`, `zone <x> <y>`, `chesttest <player> <x> <y> [real]`, `edpatch`, `wear <player> <template>|off`, `fighttest <player> <NPC template> <rounds> [back]` (test server only).
+  `talkkill`, `talkuse`, `talknear`, `talkmoney`, `zonereload`, `zone <x> <y>`, `chesttest <player> <x> <y> [real]`, `edpatch`, `wear <player> <template>|off`, `fighttest <player> <NPC template> <rounds> [back|kill]` (test server only).
 - **Test server** (for trying server changes without touching the live game): in Claude's device
   shell, `~/ctest` holds a copy of the server source and data. Copy the changed files there,
   `make server` (a full build may need two runs within the 3-minute limit). **Always check port
