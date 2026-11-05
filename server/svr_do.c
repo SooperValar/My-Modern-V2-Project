@@ -3337,6 +3337,14 @@ int wp2h_chance(int cn,int axe)
         return WP2H_MIN+(WP2H_MAX-WP2H_MIN)*a/(a+WP2H_K)+weapon_special_bonus(cn);
 }
 
+/* Fire / Ice sets: which set item template t belongs to (SET_FIRE, SET_ICE or 0) */
+int set_of_temp(int t)
+{
+        if (t>=623 && t<=628) return SET_FIRE;
+        if ((t>=1272 && t<=1276) || t==1407) return SET_ICE;
+        return 0;
+}
+
 /* Fire / Ice sets: how many pieces of the set does cn wear (0-6) */
 int set_pieces(int cn,int set)
 {
@@ -4521,7 +4529,8 @@ void do_shop_char(int cn,int co,int nr)
 
                 ch[cn].gold+=pr;
 
-                god_give_char(in,co);
+                if (set_of_temp(it[in].temp)) it[in].used=USE_EMPTY;	// Fire / Ice pieces: only the god shop sells them, so merchants don't keep them
+                else god_give_char(in,co);
                 chlog(cn,"Sold %s",it[in].name);
                 do_char_log(cn,1,"You sold a %s for %dG %dS.\n",it[in].reference,pr/100,pr%100);
 
