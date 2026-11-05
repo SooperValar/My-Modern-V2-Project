@@ -2224,8 +2224,11 @@ function tplRender() {
 function tplChanged() {
   const out = {}, o = TP.orig, c = TP.cur;
   if (TP.kind === 'use' || TP.kind === 'chest' || TP.kind === 'area' || TP.kind === 'merchant') return out;
+  // a player's gear and depot change item by item (padditem / pitem), an NPC template's with the other fields
+  const skip = ['t', 'count', 'pending', 'made', 'names', 'onmap', 'text', 'items', 'depot', 'rank', 'kin_name', 'ip', 'quests', 'online', 'c'];
+  if (TP.kind === 'player') skip.push('item', 'worn', 'citem');
   for (const k of Object.keys(c)) {
-    if (['t', 'count', 'pending', 'made', 'names', 'onmap', 'text', 'items', 'item', 'worn', 'depot', 'citem', 'rank', 'kin_name', 'ip', 'quests', 'online', 'c'].includes(k)) continue;
+    if (skip.includes(k)) continue;
     if (JSON.stringify(c[k]) !== JSON.stringify(o[k])) out[k] = c[k];
   }
   return out;
@@ -2256,7 +2259,7 @@ async function tplApply(asNew) {
   if (TP.kind === 'item') {     // the palette and the map show the new name and look
     const i = pal.templates.findIndex(x => x[0] === t), r = await api('/api/itemp?t=' + t);
     const row = [t, r.name, r.sprite[0], bit(r.flags, 2) ? 1 : 0, r.driver, (bit(r.flags, 0) ? 1 : 0) | (bit(r.flags, 1) ? 2 : 0),
-      (bit(r.flags, 2) || bit(r.flags, 4) || bit(r.flags, 5) || bit(r.flags, 9) || bit(r.flags, 10)) ? 1 : 0];
+      (bit(r.flags, 2) || bit(r.flags, 4) || bit(r.flags, 5) || bit(r.flags, 9) || bit(r.flags, 10)) ? 1 : 0, r.placement || 0];
     if (i >= 0) pal.templates[i] = row; else pal.templates.push(row);
     chunks.clear(); redraw();
     if (asNew) setBrush({ kind: 'place', t: row });

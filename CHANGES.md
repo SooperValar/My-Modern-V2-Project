@@ -306,6 +306,8 @@ The design is in `docs/ITEM_TIERS.md`.
 ### Editor: NPC equipment picker fits the slot
 - In an NPC's "Equipment & stock" tab, Pick… on a worn slot lists only items that fit it (helmets for Head, weapons
   for the right hand, rings for the rings...); the backpack lists only things that can be picked up.
+- Fixed: changing an NPC's worn gear, backpack (merchant stock) or carried item and pressing Apply did nothing (the
+  editor left those fields out, as it must for players); now they are saved and the NPC respawns with them.
 
 ### Merchants: pages, own stock / prices / what they buy, seller's remorse (`server/merch.c`, editor Merchants tab)
 - **Editor, Merchants tab** (map mode, next to NPCs): every merchant, searchable (name, place, what he sells). Click one:
