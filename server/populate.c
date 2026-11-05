@@ -661,6 +661,17 @@ int pop_create_char(int n,int drop)
 		}
 /*	--end	*/
 
+		// MyV2: a rare Fire or Ice set piece for late-game monsters (no longer unique)
+		if (hasitems && ch[cn].points_tot>SET_DROP_EXP && RANDOM(SET_DROP_CHANCE)==0) {
+			static int setitem[]={623,624,625,626,627,628,1272,1273,1274,1275,1276,1407};
+			for (m=0; m<40; m++) {
+				if (ch[cn].item[m]==0) {
+					tmp=god_create_item(setitem[RANDOM(sizeof(setitem)/sizeof(int))]);
+					if (tmp) { it[tmp].carried=cn; ch[cn].item[m]=tmp; }
+					break;
+				}
+			}
+		}
 	}
 	
 	if (drop) {

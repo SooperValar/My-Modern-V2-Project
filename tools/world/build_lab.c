@@ -22,6 +22,7 @@
  *   dir <temp> <dx>                                resting direction (DX_RIGHT 1 = +x, LEFT 2 = -x, UP 3 = -y, DOWN 4 = +y)
  *                                                  of the template and its living NPC(s)
  *   settemp <x> <y> <temp>                         fix the template number of the item on that tile
+ *   itemdata <x> <y> <v0> [<v1>...]                data[0..9] of the item on that tile (the rest set to 0), e.g. a chest's contents
  *   ch <temp> copy <from>                          new character template = copy of another
  *   ch <temp> name|ref|desc <text...>
  *   ch <temp> pos <x> <y>                          spawn position (also the resting position)
@@ -205,6 +206,18 @@ int main(int argc,char **argv)
 			}
 			fclose(cf);
 			printf("template %d: facing %d (%d living)\n",a,b,cnt);
+
+		} else if (!strncmp(line,"itemdata ",9)) {	// itemdata <x> <y> <v0> [<v1> ...]: data[0..] of the item on that tile (rest 0)
+			int xx,yy,vals[10],nv=0,off=0,used=0;
+			if (sscanf(line+9,"%d %d%n",&xx,&yy,&off)<2) { printf("line %d not understood: %s\n",ln,line); continue; }
+			{ char *q=line+9+off; while (nv<10 && sscanf(q,"%d%n",&vals[nv],&used)==1) { q+=used; nv++; } }
+			long mpos=(long)(xx+yy*MAPX)*sizeof(struct map);
+			fseek(mf,mpos,SEEK_SET); fread(&m,sizeof(m),1,mf);
+			if (!m.it) { printf("line %d: no item at %d,%d\n",ln,xx,yy); continue; }
+			fseek(itf,(long)m.it*sizeof(it),SEEK_SET); fread(&it,sizeof(it),1,itf);
+			for (i=0; i<10; i++) it.data[i]=i<nv ? vals[i] : 0;
+			fseek(itf,(long)m.it*sizeof(it),SEEK_SET); fwrite(&it,sizeof(it),1,itf);
+			printf("%s at %d,%d: data set (%d values)\n",it.name,xx,yy,nv);
 
 		} else if (sscanf(line,"settemp %d %d %d",&a,&b,&c)==3) {
 			long mpos=(long)(a+b*MAPX)*sizeof(struct map);

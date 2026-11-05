@@ -320,6 +320,11 @@ The design is in `docs/ITEM_TIERS.md`.
 - New console commands (testing): `wear <player> <template>|off` (puts a new item straight into its worn slot and shows
   the main values), `fighttest <player> <NPC template> <rounds> [back]` (damage totals; test server only, it really fights).
 - Pieces already in the world get the new numbers with the new tool `tools/world/refresh_items.c`.
+- **No longer unique: rare late-game drops** (`tools/world/fire_ice_drops.txt`, `populate.c`): monsters worth over 1.5 million
+  exp carry a random Fire or Ice piece in 1 of 1000 spawns (`SET_DROP_EXP` / `SET_DROP_CHANCE` in `data.h`). Value 10000
+  (was 150000). Never sold in the god shop. The three chests that gave Fire pieces (Labyrinth Undead Gorge 27,467, Lizard
+  Temple 499,229, Pentagram Quest 330,304) now give a random Magic Emerald / Crystal helmet or body armor.
+  `build_lab` learned `itemdata <x> <y> <values...>` (a placed item's data, e.g. a chest's contents).
 - The old **Ice Cloak** (909, traded for an ice gargoyle egg, temporary) is not part of the set and stays as it is, on purpose.
 
 ### Rebalance: two-handed weapons, rings, spells, Harakim (design: `docs/REBALANCE.md`)

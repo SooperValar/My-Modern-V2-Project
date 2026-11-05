@@ -306,7 +306,9 @@ extern unsigned int mapmarker;
 #define SET_FROST_ATTR		10	// Chilled: Agility and Strength minus this
 #define SET_FROST_TICKS		(5*TICKS)	// Chilled: how long
 #define SET_FROST_COLD_PCT	5	// Chilled: cold damage back, % of the hit taken
-#define SPELL_CHILL		199	// spell item template number of "Chilled" (not a skill)
+#define SPELL_CHILL		199
+#define SET_DROP_EXP		1500000	// Fire / Ice pieces drop from monsters worth more than this (exp, the top two bonus tiers)
+#define SET_DROP_CHANCE		1000	// ... 1 in this many of their spawns carries a random piece (populate.c)	// spell item template number of "Chilled" (not a skill)
 #define AXE2H_T_BRONZE	1364	// item templates 1364-1368: Bronze, Steel, Golden, Crystal, Titanium Two-Handed Axe
 
 /* ch.data[] definitions */

@@ -1,0 +1,35 @@
+# Fire / Ice sets no longer unique: rare drops from late-game monsters (populate.c, SET_DROP_EXP / SET_DROP_CHANCE
+# in data.h: monsters worth over 1.5 million exp, 1 in 1000 spawns). Value 10000 (was 150000). (Cody, 2026-11-04)
+# The three chests that gave Fire pieces now give a random Magic Emerald / Crystal helmet or body armor.
+# Apply: build_lab <.dat> fire_ice_drops.txt, then refresh_items <.dat> 623 ... 1407 write (unique flag, value).
+# The old Ice Cloak (909) stays unique and as it is.
+
+it 623 flags 1000194
+it 623 value 10000
+it 624 flags 1000194
+it 624 value 10000
+it 625 flags 1000194
+it 625 value 10000
+it 626 flags 1000194
+it 626 value 10000
+it 627 flags 1000194
+it 627 value 10000
+it 628 flags 1000194
+it 628 value 10000
+it 1272 flags 1000194
+it 1272 value 10000
+it 1273 flags 1000194
+it 1273 value 10000
+it 1274 flags 1000194
+it 1274 value 10000
+it 1275 flags 1000194
+it 1275 value 10000
+it 1276 flags 1000194
+it 1276 value 10000
+it 1407 flags 1000194
+it 1407 value 10000
+
+# chests: Labyrinth Undead Gorge (was Cloak of Fire), Lizard Temple (was Helmet of Fire), Pentagram Quest (was Armor of Fire)
+itemdata 27 467 981 982 75 76
+itemdata 499 229 981 982 75 76
+itemdata 330 304 981 982 75 76
