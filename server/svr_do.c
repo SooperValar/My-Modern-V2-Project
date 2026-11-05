@@ -2042,8 +2042,8 @@ static int quest_build(int cn,struct qent *q,int max,int all)
 		if (talk_quest_order(n)<0) continue;		// left out on the Quests page
 		{ int lo,hi; if (quest_rank_check(n,cn,&lo,&hi) && !all) continue; }	// not for this rank
 		q[cnt].ord=talk_quest_order(n);
-		if (ch_temp[n].data[50]) {		// a skill teacher
-			nr=quest_skill(cn,ch_temp[n].data[50]);
+		if (quest_teach(n,cn)) {		// a skill teacher (for this class: class rewards)
+			nr=quest_teach(n,cn)==ch_temp[n].data[50] ? quest_skill(cn,ch_temp[n].data[50]) : quest_teach(n,cn);
 			if (nr<0 || nr>=50) continue;
 			if (!ch[cn].skill[nr][2] && !all) continue;	// not for this class
 			if (ch[cn].skill[nr][0] && !all) continue;	// learned already
@@ -2128,7 +2128,7 @@ void do_quest(int cn,char *a,char *b)
 		if (q[pick-1].skill>=0) {
 			int g=quest_gold_first(t);
 			snprintf(rew,sizeof(rew),"%s (skill)",skilltab[q[pick-1].skill].name);
-			quest_reward_text(buf,sizeof(buf),0,ch_temp[t].data[51],g);
+			quest_reward_text(buf,sizeof(buf),quest_class_item(t,cn,ch_temp[t].data[66],0),ch_temp[t].data[51],g);
 			do_char_log(cn,1,"  Reward: %s%s%s\n",rew,buf[0] ? ", " : "",buf);
 		} else {
 			int it1,ex1,g1,left,later,qc,k,lim,pi,pe,pg,ni,ne,ng,st,shown=0;
@@ -2141,6 +2141,7 @@ void do_quest(int cn,char *a,char *b)
 				pi=it1; pe=ex1; pg=g1; later_txt[0]=0;
 				for (k=qc+1; k<qc+200 && shown<4 && (!lim || k<lim); k++) {
 					quest_reward_at(t,k,&ni,&ne,&ng,&st);
+					ni=quest_class_item(t,cn,ni,st);		// class rewards
 					if (ni==pi && ne==pe && ng==pg) continue;
 					quest_reward_text(buf,sizeof(buf),ni,ne,ng);
 					snprintf(later_txt+strlen(later_txt),sizeof(later_txt)-strlen(later_txt),"%sfrom the %d%s time: %s",shown ? "; " : "",k+1,

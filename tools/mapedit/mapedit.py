@@ -224,6 +224,9 @@ def talk_parse(text):
             elif k == 'qrank' and len(a) >= 3:         # who may do it: lowest and highest rank, -1 = none
                 r = qrew.setdefault(int(a[0]), {'lim': 0, 'first': 0, 'gold': 0, 'st': []})
                 r['rmin'], r['rmax'] = int(a[1]), int(a[2])
+            elif k == 'qclass' and len(a) >= 4:        # class rewards: group 1-3 (Templar, Mercenary + Seyan'Du, Harakim), skill, item (-1 = as for everyone)
+                r = qrew.setdefault(int(a[0]), {'lim': 0, 'first': 0, 'gold': 0, 'st': []})
+                r.setdefault('cls', {})[str(int(a[1]))] = [int(a[2]), int(a[3])]
             elif k == 'qstage' and len(a) >= 5 and int(a[0]) in qrew:
                 qrew[int(a[0])]['st'].append([int(x) for x in a[1:5]])
             elif k == 'order' and len(a) >= 2:          # #quest list order (Quests page): template, place (-1 = not listed)
@@ -257,6 +260,8 @@ def talk_parse(text):
                 elif a[0] == 'area': e['conds'].append({'type': 'area', 's': rest.split(None, 1)[1] if len(a) > 1 else ''})
                 elif a[0] == 'skill': e['conds'].append({'type': 'skill', 'n': int(a[1]), 'op': a[2], 'v': int(a[3])})
                 elif a[0] == 'gold': e['conds'].append({'type': 'gold', 'op': a[1], 'v': int(a[2])})
+                elif a[0] in ('class', '!class') and len(a) > 1:   # the player's class: names joined by |
+                    e['conds'].append({'type': 'class', 'not': a[0] == '!class', 'c': a[1].lower()})
             elif k == 'answer':
                 e['answers'].append(rest)
             elif k in ('set', 'add') and a[0] == 'quest':
@@ -292,7 +297,7 @@ def talk_text(quests, npcs, names):
             out.append('order %d %d %s' % (t, od[t], names.get(t, '')))
         out.append('')
     qr = {int(t): r for t, r in (quests.get('qrew') or {}).items() if r.get('lim') or r.get('first') or r.get('gold') or r.get('st')
-          or r.get('rmin', -1) >= 0 or r.get('rmax', -1) >= 0}
+          or r.get('rmin', -1) >= 0 or r.get('rmax', -1) >= 0 or r.get('cls')}
     if qr:
         out.append('# item quests: qreward <NPC template> <times, 0 = forever> <the first reward for the first n times> <its gold>,')
         out.append('# then qstage <NPC template> <times, 0 = every time after> <item> <exp> <gold> for each later reward (gold in silver)')
@@ -303,6 +308,9 @@ def talk_text(quests, npcs, names):
                 out.append('qstage %d %d %d %d %d' % (t, *[max(0, int(v)) for v in (list(st) + [0] * 4)[:4]]))
             if r.get('rmin', -1) >= 0 or r.get('rmax', -1) >= 0:
                 out.append('qrank %d %d %d' % (t, int(r.get('rmin', -1)), int(r.get('rmax', -1))))
+            for g, v in sorted((r.get('cls') or {}).items()):
+                if int(g) in (1, 2, 3) and (int(v[0]) >= 0 or int(v[1]) >= 0):
+                    out.append('qclass %d %d %d %d   # %s' % (t, int(g), int(v[0]), int(v[1]), ('Templar line', 'Mercenary line and Seyan\'Du', 'Harakim line')[int(g) - 1]))
         out.append('')
     cl = quests.get('clears') or {}
     if cl:
@@ -367,6 +375,7 @@ def talk_text(quests, npcs, names):
                 elif ty == 'area' and clean(c.get('s', '')): out.append('if area ' + clean(c['s']).lower())
                 elif ty == 'skill' and c.get('op') in OPS: out.append('if skill %d %s %d' % (int(c['n']), c['op'], int(c['v'])))
                 elif ty == 'gold' and c.get('op') in OPS: out.append('if gold %s %d' % (c['op'], int(c['v'])))
+                elif ty == 'class' and re.fullmatch(r'[a-z|]+', str(c.get('c', ''))): out.append('if %sclass %s' % ('!' if c.get('not') else '', c['c']))
             for a in e.get('answers', []):
                 if clean(a):
                     out.append('answer ' + clean(a)[:400])
@@ -1200,7 +1209,9 @@ class World:
             rk = lambda v: max(-1, min(23, int(-1 if v is None else v)))
             qs['qrew'] = {int(t): {'lim': cl(r.get('lim')), 'first': cl(r.get('first')), 'gold': cl(r.get('gold')),
                                    'st': [[cl(v) for v in (list(x) + [0] * 4)[:4]] for x in (r.get('st') or [])[:7]],
-                                   'rmin': rk(r.get('rmin')), 'rmax': rk(r.get('rmax'))}
+                                   'rmin': rk(r.get('rmin')), 'rmax': rk(r.get('rmax')),
+                                   'cls': {str(g): [max(-1, min(49, int(v[0]))), max(-1, min(MAXTITEM - 1, int(v[1])))]
+                                           for g, v in (r.get('cls') or {}).items() if str(g) in ('1', '2', '3') and (int(v[0]) >= 0 or int(v[1]) >= 0)}}
                           for t, r in rewards.items() if 0 < int(t) < MAXTCHARS}
         return self.talk_save(qs, npcs, ctl)
 
@@ -5133,6 +5144,9 @@ async function tplApply(asNew) {
   openTemplate(TP.kind, t);
 }
 
+// the player's class in conversation conditions ("if class ...", npctalk.c): groups first, then each class
+const CLASS_OPTS = [['templar|archtemplar', 'Templar or Arch-Templar'], ['mercenary|warrior|sorcerer|seyan', "Mercenary, Warrior, Sorcerer or Seyan'Du"], ['harakim|archharakim', 'Harakim or Arch-Harakim'],
+  ['templar', 'Templar'], ['archtemplar', 'Arch-Templar'], ['mercenary', 'Mercenary'], ['warrior', 'Warrior-Mercenary'], ['sorcerer', 'Sorcerer-Mercenary'], ['seyan', "Seyan'Du"], ['harakim', 'Harakim'], ['archharakim', 'Arch-Harakim']];
 // ---- small form builders
 function row(box, label, input, hint) {
   const l = document.createElement('div'); l.className = 'lb'; l.textContent = label; box.appendChild(l);
@@ -5540,6 +5554,10 @@ const NPC_TABS = {
       if (k > 0) mk('↑', () => { [E[k - 1], E[k]] = [E[k], E[k - 1]]; }, 'Move up (checked earlier)');
       if (k < E.length - 1) mk('↓', () => { [E[k + 1], E[k]] = [E[k], E[k + 1]]; }, 'Move down');
       mk('Copy', () => E.splice(k + 1, 0, JSON.parse(JSON.stringify(e))), 'Duplicate this line');
+      mk('By class', () => {    // three copies of this line, one for each class group, to give each its own reward
+        const cp = CLASS_OPTS.slice(0, 3).map(([c]) => { const x = JSON.parse(JSON.stringify(e)); x.conds = x.conds.filter(q => q.type !== 'class'); x.conds.push({ type: 'class', not: false, c }); return x; });
+        E.splice(k, 1, ...cp); toast('Three lines now, one for each class group: change what each one gives (teach skill / give an item).');
+      }, 'Split this line into three, one for each class group (Templars, Mercenaries and Seyan\'Du, Harakim), to give each class its own reward');
       mk('Delete', () => { if (confirm('Delete this line?')) E.splice(k, 1); });
       card.append(hd);
       if (e.when === 'say') card.insertAdjacentHTML('beforeend', '<div class="hint">Every word must be in what they say. a|b = either word, ring* = ring, rings, ringmaster…</div>');
@@ -5549,14 +5567,15 @@ const NPC_TABS = {
       const h = (t) => { const d = document.createElement('div'); d.className = 'lb'; d.style.cssText = 'margin-top:10px;color:var(--dim)'; d.textContent = t; card.append(d); };
       h('Only if');
       e.conds.forEach((cd, i) => {
-        const ty = selS([['quest', 'quest step'], ['has', 'the player carries'], ['hasnot', 'the player does not carry'], ['rank', 'the player\'s rank'], ['skill', 'the player\'s skill'], ['gold', 'the player\'s money (silver)'], ['area', e.when === 'kill' ? 'it dies in the area' : 'the player is in the area']], () => cd.type,
-          v => { e.conds[i] = v === 'quest' ? { type: v, n: 1, op: '=', v: 0 } : v === 'rank' ? { type: v, op: '<=', v: 1 } : v === 'skill' ? { type: v, n: 12, op: '>', v: 0 } : v === 'gold' ? { type: v, op: '>=', v: 100 } : v === 'area' ? { type: v, s: '' } : { type: v, t: 0 }; tplRender(); });
+        const ty = selS([['quest', 'quest step'], ['has', 'the player carries'], ['hasnot', 'the player does not carry'], ['rank', 'the player\'s rank'], ['skill', 'the player\'s skill'], ['gold', 'the player\'s money (silver)'], ['class', 'the player\'s class'], ['area', e.when === 'kill' ? 'it dies in the area' : 'the player is in the area']], () => cd.type,
+          v => { e.conds[i] = v === 'quest' ? { type: v, n: 1, op: '=', v: 0 } : v === 'rank' ? { type: v, op: '<=', v: 1 } : v === 'skill' ? { type: v, n: 12, op: '>', v: 0 } : v === 'gold' ? { type: v, op: '>=', v: 100 } : v === 'class' ? { type: v, not: false, c: CLASS_OPTS[0][0] } : v === 'area' ? { type: v, s: '' } : { type: v, t: 0 }; tplRender(); });
         const parts = [ty];
         if (cd.type === 'quest') parts.push(sel(qopts(), () => cd.n, v => cd.n = v), selS(OPN, () => cd.op, v => cd.op = v), num(() => cd.v, v => cd.v = v, 0, 65535));
         else if (cd.type === 'rank') { parts.push(selS(OPN, () => cd.op, v => cd.op = v), sel(RANK_NAMES.map((n2, i2) => [i2, `${i2} · ${n2}`]), () => cd.v, v => cd.v = v)); }
         else if (cd.type === 'skill') parts.push(sel(SKILLS.map((s2, i2) => [i2, s2]), () => cd.n, v => cd.n = v), selS(OPN, () => cd.op, v => cd.op = v), num(() => cd.v, v => cd.v = v, 0, 255), '(0 = doesn\'t know it)');
         else if (cd.type === 'gold') parts.push(selS(OPN, () => cd.op, v => cd.op = v), num(() => cd.v, v => cd.v = v, 0));
         else if (cd.type === 'area') parts.push(areaIn(() => cd.s, v => cd.s = v));
+        else if (cd.type === 'class') parts.push(selS([['is', 'is'], ['not', 'is not']], () => cd.not ? 'not' : 'is', v => cd.not = v === 'not'), selS(CLASS_OPTS, () => cd.c, v => cd.c = v));
         else parts.push(ipick(() => cd.t, v => cd.t = v));
         parts.push(xb(() => e.conds.splice(i, 1)));
         card.append(line(parts));
@@ -6379,7 +6398,9 @@ function goldIn(get, set) {         // gold in G (decimals = silver); kept in si
   const i = document.createElement('input'); i.type = 'number'; i.min = 0; i.step = 1; i.className = 'gold'; i.value = get() ? get() / 100 : 0;
   i.title = 'Gold (1.5 = 1G 50S)'; i.onchange = () => { const v = Math.max(0, Math.round((+i.value || 0) * 100)); i.value = v / 100; set(v); }; return i;
 }
-const qRewNone = () => ({ lim: 0, first: 0, gold: 0, st: [], rmin: -1, rmax: -1 });
+const qRewNone = () => ({ lim: 0, first: 0, gold: 0, st: [], rmin: -1, rmax: -1, cls: {} });
+const QCLASS = [['1', 'Templar · Arch-Templar'], ['2', "Mercenary · Warrior · Sorcerer · Seyan'Du"], ['3', 'Harakim · Arch-Harakim']];
+const qHasCls = r => !!r.cls && Object.values(r.cls).some(v => v[0] >= 0 || v[1] >= 0);
 const RANK_SHORT = ['Pvt', 'PFC', 'LCpl', 'Cpl', 'Sgt', 'SSgt', 'MSgt', 'FSgt', 'SgtM', '2Lt', '1Lt', 'Capt', 'Maj', 'LtCol', 'Col', 'BGen', 'MGen', 'LtGen', 'Gen', 'FM', 'Knight', 'Baron', 'Earl', 'Warlord'];
 function qRankText(r) {
   const lo = r.rmin ?? -1, hi = r.rmax ?? -1, n = i => RANK_SHORT[i] || i;
@@ -6387,7 +6408,7 @@ function qRankText(r) {
 }
 function qTimes(q) {
   const rk = qRankText(q.rew);
-  return qTimes0(q) + (rk ? ' · ' + rk : '');
+  return qTimes0(q) + (rk ? ' · ' + rk : '') + (qHasCls(q.rew) ? ' · by class' : '');
 }
 function qTimes0(q) {
   if (q.data[50]) return 'once (skill)';
@@ -6411,6 +6432,30 @@ function repRow(q) {                  // the Times settings under a quest's row:
     if ((R.rmin ?? -1) >= 0 || (R.rmax ?? -1) >= 0) {
       const h = document.createElement('div'); h.className = 'hint'; h.style.gridColumn = '1 / -1'; h.style.margin = 0;
       h.textContent = 'Players of another rank are told it is not for them yet (or not for their rank) and get the item back; #quest leaves it out for them and shows the ranks in its details.';
+      g.appendChild(h);
+    }
+  }
+  { // rewards by class: a class group gets its own skill and / or item instead of the row's
+    const l = document.createElement('div'); l.className = 'lb'; l.textContent = 'Rewards by class'; g.appendChild(l);
+    const r = document.createElement('div'); r.className = 'ln'; g.appendChild(r);
+    R.cls = R.cls || {};
+    r.appendChild(chk('Some classes get a different skill or item', () => qHasCls(R), on => {
+      if (on) for (const [k] of QCLASS) R.cls[k] = [q.data[50] || 0, q.data[66] || 0]; else R.cls = {};
+      re(); }));
+    if (qHasCls(R)) {
+      for (const [k, label] of QCLASS) {
+        const v = R.cls[k] = R.cls[k] || [-1, -1], own = v[0] >= 0 || v[1] >= 0;
+        const l2 = document.createElement('div'); l2.className = 'lb'; l2.textContent = label; g.appendChild(l2);
+        const r2 = document.createElement('div'); r2.className = 'ln'; g.appendChild(r2);
+        r2.appendChild(chk('own reward', () => own, on => { R.cls[k] = on ? [q.data[50] || 0, q.data[66] || 0] : [-1, -1]; re(); }));
+        if (own) {
+          const sk = sel([[0, 'no skill'], ...SKILLS.map((n, i) => [i, n]).filter(([i]) => i > 0)], () => Math.max(0, v[0]), x => { v[0] = x; re(); });
+          const sp = t => { const e = document.createElement('span'); e.textContent = t; return e; };
+          r2.append(sp('teaches'), sk, sp('gives'), qpick(() => Math.max(0, v[1]), x => { v[1] = x; re(); }, 'nothing'));
+        } else r2.append(Object.assign(document.createElement('span'), { className: 'hint', textContent: 'the row\'s reward' }));
+      }
+      const h = document.createElement('div'); h.className = 'hint'; h.style.gridColumn = '1 / -1'; h.style.margin = 0;
+      h.textContent = 'A class with its own reward learns its skill instead of the row\'s (or none) and gets its item instead of the row\'s item (the first reward, and later steps that give the row\'s item). Exp, gold, times and ranks are the same for every class. #quest shows each player their own.';
       g.appendChild(h);
     }
   }
@@ -6592,7 +6637,7 @@ async function questsSave() {
   // the order: every listed quest gets its place, unticked ones -1 (not listed)
   const order = {}; let k = 0;
   for (const q of QS) { if (q.puzzle || !q.data[49]) continue; order[q.t] = q.listed ? ++k : -1; }
-  const rewards = {}; for (const q of QS) if (q.rew.lim || q.rew.first || q.rew.gold || q.rew.st.length || (q.rew.rmin ?? -1) >= 0 || (q.rew.rmax ?? -1) >= 0) rewards[q.t] = q.rew;
+  const rewards = {}; for (const q of QS) if (q.rew.lim || q.rew.first || q.rew.gold || q.rew.st.length || (q.rew.rmin ?? -1) >= 0 || (q.rew.rmax ?? -1) >= 0 || qHasCls(q.rew)) rewards[q.t] = q.rew;
   const r = await api('/api/questorder', { order, rewards });
   toast((rows.length ? `${rows.length} quest${rows.length === 1 ? '' : 's'} changed${info.running ? '' : ' (Save to the game on the Map page writes them)'}. ` : '') + 'Order: ' + (r.msg || r.error || ''), !!r.error);
   await questsLoad();

@@ -87,7 +87,38 @@
 #define MAXEFF 16
 #define POOL (768*1024)
 
-enum { C_QUEST=1, C_HAS, C_HASNOT, C_RANK, C_AREA, C_SKILL, C_GOLD };
+enum { C_QUEST=1, C_HAS, C_HASNOT, C_RANK, C_AREA, C_SKILL, C_GOLD, C_CLASS };
+
+/* classes, for "if class ..." lines and class rewards of item quests: the character's kindred bits */
+static struct { char *name; unsigned int kin; } classname[]={
+	{"templar",KIN_TEMPLAR},{"archtemplar",KIN_ARCHTEMPLAR},{"harakim",KIN_HARAKIM},{"archharakim",KIN_ARCHHARAKIM},
+	{"mercenary",KIN_MERCENARY},{"warrior",KIN_WARRIOR},{"sorcerer",KIN_SORCERER},{"seyan",KIN_SEYAN_DU},
+	{"templars",KIN_TEMPLAR|KIN_ARCHTEMPLAR},{"harakims",KIN_HARAKIM|KIN_ARCHHARAKIM},
+	{"mercenaries",KIN_MERCENARY|KIN_WARRIOR|KIN_SORCERER|KIN_SEYAN_DU},{NULL,0}};
+static const unsigned int class_groups[3]={KIN_TEMPLAR|KIN_ARCHTEMPLAR, KIN_MERCENARY|KIN_WARRIOR|KIN_SORCERER|KIN_SEYAN_DU, KIN_HARAKIM|KIN_ARCHHARAKIM};
+
+/* the class group of character co for class rewards: 0 Templar / Arch-Templar, 1 Mercenary / Warrior / Sorcerer / Seyan'Du,
+ * 2 Harakim / Arch-Harakim, -1 none */
+int class_group(int co)
+{
+	int g;
+	if (!IS_SANECHAR(co)) return -1;
+	for (g=0; g<3; g++) if (ch[co].kindred&class_groups[g]) return g;
+	return -1;
+}
+
+static unsigned int class_mask(char *s)		// "templar|archtemplar" -> kindred bits
+{
+	unsigned int m=0; int k; char w[32],*p=s;
+	while (*p) {
+		int n=0;
+		while (*p=='|' || isspace((unsigned char)*p)) p++;
+		while (*p && *p!='|' && !isspace((unsigned char)*p) && n<31) w[n++]=tolower((unsigned char)*p++);
+		w[n]=0; if (!n) break;
+		for (k=0; classname[k].name; k++) if (!strcmp(w,classname[k].name)) m|=classname[k].kin;
+	}
+	return m;
+}
 enum { E_ANSWER=1, E_SETQ, E_ADDQ, E_ITEM, E_EXP, E_GOLD, E_TAKE, E_KEEP, E_TELL, E_ANNOUNCE, E_LUCK, E_SKILL, E_TELEPORT, E_PASS, E_TAKEGOLD, E_CAST };
 enum { OP_EQ, OP_NE, OP_LT, OP_GT, OP_LE, OP_GE };
 enum { T_SAY, T_GIVE, T_KILL, T_USE, T_NEAR, T_MONEY };
@@ -132,7 +163,10 @@ static char hasnear[MAXTCHARS];		// templates with "when near" lines
 #define QSTAGES 8
 struct qstage { int times, item, exp, gold; };
 struct qrew { int limit, first, gold1, nst; struct qstage st[QSTAGES]; int rmin1, rmax1; };	// rmin1/rmax1: rank + 1, 0 = none
-static struct qrew qrew[MAXTCHARS];	// item quests: repeats and later rewards ("qreward")
+static struct qrew qrew[MAXTCHARS];
+/* item quests: what each class group gets instead ("qclass <t> <group 1-3> <skill> <item>": -1 = as for everyone, 0 = none) */
+struct qcls { int set, skill, item; };
+static struct qcls qcls[MAXTCHARS][3];	// item quests: repeats and later rewards ("qreward")
 static short qorder[MAXTCHARS];		// #quest: place in the list ("order <template> <n>", the editor's Quests page); 0 = by exp, -1 = not listed
 
 /* ---- area clears (the editor's Quests page): kill every listed NPC of an area for an experience bonus.
@@ -197,6 +231,7 @@ int talk_load(void)
 	memset(hasnear,0,sizeof(hasnear));
 	memset(qorder,0,sizeof(qorder));
 	memset(qrew,0,sizeof(qrew));
+	memset(qcls,0,sizeof(qcls));
 	memset(clears,0,sizeof(clears));
 	memset(qname,0,sizeof(qname));
 	f=fopen(TALK_FILE,"r");
@@ -243,6 +278,13 @@ int talk_load(void)
 			int a[3];
 			if (sscanf(q,"%d %d %d",&a[0],&a[1],&a[2])==3 && a[0]>0 && a[0]<MAXTCHARS && a[1]>=-1 && a[1]<=23 && a[2]>=-1 && a[2]<=23) {
 				qrew[a[0]].rmin1=a[1]+1; qrew[a[0]].rmax1=a[2]+1;
+			} else bad++;
+			continue;
+		}
+		if (!strcmp(w1,"qclass")) {		// qclass <t> <group 1-3> <skill, -1 = as for everyone, 0 = none> <item, -1 = as for everyone, 0 = none>
+			int a[4];
+			if (sscanf(q,"%d %d %d %d",&a[0],&a[1],&a[2],&a[3])==4 && a[0]>0 && a[0]<MAXTCHARS && a[1]>=1 && a[1]<=3 && a[2]>=-1 && a[2]<50 && a[3]>=-1 && a[3]<MAXTITEM) {
+				struct qcls *c=&qcls[a[0]][a[1]-1]; c->set=1; c->skill=a[2]; c->item=a[3];
 			} else bad++;
 			continue;
 		}
@@ -328,6 +370,8 @@ int talk_load(void)
 			else if (!strncmp(q,"area ",5)) { c->type=C_AREA; lower(q+5); c->n=pool_add(q+5); e->nc++; }
 			else if (sscanf(q,"skill %d %7s %d",&n,op,&v)==3 && n>=0 && n<50 && parse_op(op)>=0) { c->type=C_SKILL; c->n=n; c->op=parse_op(op); c->v=v; e->nc++; }
 			else if (sscanf(q,"gold %7s %d",op,&v)==2 && parse_op(op)>=0) { c->type=C_GOLD; c->op=parse_op(op); c->v=v; e->nc++; }
+			else if (!strncmp(q,"class ",6) && class_mask(q+6)) { c->type=C_CLASS; c->op=0; c->n=(int)class_mask(q+6); e->nc++; }
+			else if (!strncmp(q,"!class ",7) && class_mask(q+7)) { c->type=C_CLASS; c->op=1; c->n=(int)class_mask(q+7); e->nc++; }
 			else bad++;
 			continue;
 		}
@@ -524,6 +568,8 @@ static int conds_ok(struct tentry *e,int co,int x,int y)
 			case C_RANK:   if (!cmp_op(points2rank(ch[co].points_tot),c->op,c->v)) return 0; break;
 			case C_SKILL:  if (!cmp_op(ch[co].skill[c->n][0],c->op,c->v)) return 0; break;
 			case C_GOLD:   if (!cmp_op(ch[co].gold,c->op,c->v)) return 0; break;
+			case C_CLASS:  if (((ch[co].kindred&(unsigned int)c->n)!=0)==(c->op!=0)) return 0; break;	// op 1: "is not"
+
 			case C_AREA:
 				strncpy(area,get_area_m(x,y,0),511); area[511]=0;
 				for (s=area; *s; s++) *s=tolower((unsigned char)*s);
@@ -981,6 +1027,38 @@ static void quest_count_add(int co,int t)
 	if (qcfd>=0 && pwrite(qcfd,&r,sizeof(r),QHDR+(off_t)co*sizeof(r))!=sizeof(r)) xlog("cannot write %s",QCOUNT_FILE);
 }
 
+/* class rewards of item quests: the skill template t teaches character co (as data[50]: 0 = none) */
+int quest_teach(int t,int co)
+{
+	int g;
+	if (!talk_loaded) talk_load();
+	if (t<1 || t>=MAXTCHARS) return 0;
+	g=IS_PLAYER(co) ? class_group(co) : -1;
+	if (g>=0 && qcls[t][g].set && qcls[t][g].skill>=0) return qcls[t][g].skill;
+	return ch_temp[t].data[50];
+}
+
+/* ... and the item: the class's item replaces the quest's own item (the first reward, and later steps that give the same) */
+int quest_class_item(int t,int co,int item,int stp)
+{
+	int g;
+	if (!talk_loaded) talk_load();
+	if (t<1 || t>=MAXTCHARS) return item;
+	g=IS_PLAYER(co) ? class_group(co) : -1;
+	if (g<0 || !qcls[t][g].set || qcls[t][g].item<0) return item;
+	if (stp==0 || item==ch_temp[t].data[66]) return qcls[t][g].item;
+	return item;
+}
+
+int quest_has_class(int t)	// does template t's quest have class rewards?
+{
+	int g;
+	if (!talk_loaded) talk_load();
+	if (t<1 || t>=MAXTCHARS) return 0;
+	for (g=0; g<3; g++) if (qcls[t][g].set) return 1;
+	return 0;
+}
+
 /* what template t gives character co now: item, exp, gold (silver); left: times left (-1 = no limit).
  * later: 1 when this is the "after the first times" reward. Returns 1 if it gives anything. */
 int quest_reward_now(int t,int co,int *item,int *exp,int *gold,int *left,int *later)
@@ -994,6 +1072,7 @@ int quest_reward_now(int t,int co,int *item,int *exp,int *gold,int *left,int *la
 	cnt=(r->limit || r->first) && co ? quest_count(co,t) : 0;
 	if (r->limit) *left=cnt>=r->limit ? 0 : r->limit-cnt;
 	quest_reward_at(t,cnt,item,exp,gold,later);
+	*item=quest_class_item(t,co,*item,*later);
 	if (*item<0 || *item>=MAXTITEM) *item=0;
 	return *item || *exp>0 || *gold>0;
 }

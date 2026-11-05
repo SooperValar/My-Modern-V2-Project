@@ -482,7 +482,7 @@ int npc_seemiss(int cn,int cc,int co)
 
 int npc_give(int cn,int co,int in,int money)
 {
-        int nr, ar;
+        int nr, ar, teach;
 
         if (ch[co].flags&(CF_PLAYER|CF_USURP)) ch[cn].data[92]=TICKS*60;
         else if (!group_active(cn)) return 0;
@@ -491,6 +491,8 @@ int npc_give(int cn,int co,int in,int money)
         if (in && talk_custom_give(cn,co,in)) return 0;
 
         if (in && ch[cn].data[49]==it[in].temp) {
+                // MyV2: the skill it teaches this player's class (class rewards, Quests page; as data[50])
+                teach=quest_teach(ch[cn].temp,co);
                 // MyV2: the quest is only for some ranks (Quests page)
                 {
                         int lo,hi,rk;
@@ -504,7 +506,7 @@ int npc_give(int cn,int co,int in,int money)
                         }
                 }
                 // MyV2: an item trade this player has done as often as it can be done (Quests page: "times")
-                if (!ch[cn].data[50] && talk_quest_maxed(cn,co)) {
+                if (!teach && talk_quest_maxed(cn,co)) {
                         do_sayx(cn,"Thank you, %s, but I don't need any more of those.",ch[co].name);
                         god_take_from_char(in,cn);
                         god_give_char(in,co);
@@ -524,7 +526,7 @@ int npc_give(int cn,int co,int in,int money)
                 } else do_sayx(cn,"Thank you %s. That's the %s I wanted.",ch[co].name,it[in].reference);
 
                 /* quest-requested items */
-                if ((nr=ch[cn].data[50])!=0) {
+                if ((nr=teach)!=0) {
                         // hack for stun=bash and curse=surround:
                         if (nr==19 && (ch[co].kindred&(KIN_TEMPLAR|KIN_ARCHTEMPLAR))) nr=32;
                         if (nr==20 && (ch[co].kindred&(KIN_TEMPLAR|KIN_ARCHTEMPLAR))) nr=33;
@@ -562,7 +564,7 @@ int npc_give(int cn,int co,int in,int money)
                 }
 
                 /* items with a return gift */
-                if (!ch[cn].data[50]) {
+                if (!teach) {
                         // MyV2: item trades: item, exp and gold, first times / later, how often (npctalk.c, the Quests page)
                         if (!talk_quest_trade(cn,co,in) && (nr=ch[cn].data[66])!=0) {	// not a player: the plain old trade
                                 do_sayx(cn,"Here is your %s in exchange.",it_temp[nr].reference);
@@ -571,7 +573,7 @@ int npc_give(int cn,int co,int in,int money)
                                 in=god_create_item(nr);
                                 god_give_char(in,co);
                         }
-                } else if ((nr=ch[cn].data[66])!=0) {
+                } else if ((nr=quest_class_item(ch[cn].temp,co,ch[cn].data[66],0))!=0) {	// (class rewards: its item)
                         do_sayx(cn,"Here is your %s in exchange.",it_temp[nr].reference);
                         god_take_from_char(in,cn);
                         it[in].used=USE_EMPTY;
