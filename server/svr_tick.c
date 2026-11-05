@@ -892,11 +892,11 @@ void plr_cmd_iteminfo(int nr)
 					tip_sep();
 					tip_line(nr,where,slot,&line,1,"%s set: %d of 6 worn",set==SET_FIRE ? "Fire" : "Ice",w);
 					if (set==SET_FIRE) {
-						tip_line(nr,where,slot,&line,w>=4 ? 2 : 1,"4: weapon special +%d%%",SET_SPECIALTY/10);
-						tip_line(nr,where,slot,&line,w>=6 ? 2 : 1,"6: hits burn +%d%% damage",SET_BURN_PCT);
+						tip_line(nr,where,slot,&line,w>=4 ? 2 : 1,"4: Weapon Specialization +%d%%",SET_SPECIALTY/10);
+						tip_line(nr,where,slot,&line,w>=6 ? 2 : 1,"6: Burning Hits (%d%% Damage)",SET_BURN_PCT);
 					} else {
-						tip_line(nr,where,slot,&line,w>=4 ? 2 : 1,"4: all spells +%d",SET_SPELLS);
-						tip_line(nr,where,slot,&line,w>=6 ? 2 : 1,"6: frost armor (%d%% chill)",SET_FROST_CHANCE);
+						tip_line(nr,where,slot,&line,w>=4 ? 2 : 1,"4: All Spells +%d",SET_SPELLS);
+						tip_line(nr,where,slot,&line,w>=6 ? 2 : 1,"6: Frost Armor (%d%% Chill)",SET_FROST_CHANCE);
 					}
 				}
 			}

@@ -1831,8 +1831,8 @@ void do_info_specialarmor(int cn)
 	}
 	do_char_log(cn,1," \n");
 	for (n=0; n<note; n++) do_char_log(cn,2,"%s\n",notes[n]);
-	do_char_log(cn,2,"* Fire set bonus (melee): 4 pieces: your weapon's special +%d%% (two-handed sword deflect, greataxe critical hits). 6 pieces: your melee hits burn for %d%% extra damage.\n",SET_SPECIALTY/10,SET_BURN_PCT);
-	do_char_log(cn,2,"* Ice set bonus (casters): 4 pieces: +%d to all spells. 6 pieces: frost armor, %d%% of the melee hits that land on you chill the attacker (Agility and Strength -%d for %d seconds) and hurt it with a little cold.\n",SET_SPELLS,SET_FROST_CHANCE,SET_FROST_ATTR,SET_FROST_TICKS/TICKS);
+	do_char_log(cn,2,"* Fire set bonus (melee): 4 pieces: Weapon Specialization, your weapon's special +%d%% (two-handed sword deflect, greataxe critical hits). 6 pieces: Burning Hits, your melee hits burn for %d%% extra damage.\n",SET_SPECIALTY/10,SET_BURN_PCT);
+	do_char_log(cn,2,"* Ice set bonus (casters): 4 pieces: All Spells +%d. 6 pieces: Frost Armor, %d%% of the melee hits that land on you chill the attacker (Agility and Strength -%d for %d seconds) and hurt it with a little cold.\n",SET_SPELLS,SET_FROST_CHANCE,SET_FROST_ATTR,SET_FROST_TICKS/TICKS);
 	do_char_log(cn,2,"* Needs: \"all 30\" = 30 in every attribute, HEM = Hitpoints, Endurance and Mana.\n");
 }
 
