@@ -151,6 +151,9 @@ def weapon_skill(fl):
         if fl & (1 << bitn): return sk
     return -1
 
+# class names in npctalk.dat ("if class ...", "qclass ..."; npctalk.c classname[])
+CLASS_NAMES = ('templar', 'archtemplar', 'mercenary', 'warrior', 'sorcerer', 'seyan', 'harakim', 'archharakim')
+
 # the player classes whose maximums "Scale to this rank" can keep to (their male templates)
 CLASS_CAPS = [('Mercenary', 2), ('Templar', 3), ('Harakim', 4), ("Seyan'Du", 13), ('Warrior-Mercenary', 547),
               ('Sorcerer-Mercenary', 546), ('Arch-Templar', 544), ('Arch-Harakim', 545)]
@@ -224,9 +227,9 @@ def talk_parse(text):
             elif k == 'qrank' and len(a) >= 3:         # who may do it: lowest and highest rank, -1 = none
                 r = qrew.setdefault(int(a[0]), {'lim': 0, 'first': 0, 'gold': 0, 'st': []})
                 r['rmin'], r['rmax'] = int(a[1]), int(a[2])
-            elif k == 'qclass' and len(a) >= 4:        # class rewards: group 1-3 (Templar, Mercenary + Seyan'Du, Harakim), skill, item (-1 = as for everyone)
+            elif k == 'qclass' and len(a) >= 4 and not a[1].isdigit():   # class rewards: classes (joined by |), skill, item (-1 = as for everyone)
                 r = qrew.setdefault(int(a[0]), {'lim': 0, 'first': 0, 'gold': 0, 'st': []})
-                r.setdefault('cls', {})[str(int(a[1]))] = [int(a[2]), int(a[3])]
+                r.setdefault('cls', []).append({'c': a[1].lower(), 's': int(a[2]), 'i': int(a[3])})
             elif k == 'qstage' and len(a) >= 5 and int(a[0]) in qrew:
                 qrew[int(a[0])]['st'].append([int(x) for x in a[1:5]])
             elif k == 'order' and len(a) >= 2:          # #quest list order (Quests page): template, place (-1 = not listed)
@@ -308,9 +311,8 @@ def talk_text(quests, npcs, names):
                 out.append('qstage %d %d %d %d %d' % (t, *[max(0, int(v)) for v in (list(st) + [0] * 4)[:4]]))
             if r.get('rmin', -1) >= 0 or r.get('rmax', -1) >= 0:
                 out.append('qrank %d %d %d' % (t, int(r.get('rmin', -1)), int(r.get('rmax', -1))))
-            for g, v in sorted((r.get('cls') or {}).items()):
-                if int(g) in (1, 2, 3) and (int(v[0]) >= 0 or int(v[1]) >= 0):
-                    out.append('qclass %d %d %d %d   # %s' % (t, int(g), int(v[0]), int(v[1]), ('Templar line', 'Mercenary line and Seyan\'Du', 'Harakim line')[int(g) - 1]))
+            for c in (r.get('cls') or []):
+                out.append('qclass %d %s %d %d' % (t, c['c'], int(c['s']), int(c['i'])))
         out.append('')
     cl = quests.get('clears') or {}
     if cl:
@@ -1210,8 +1212,10 @@ class World:
             qs['qrew'] = {int(t): {'lim': cl(r.get('lim')), 'first': cl(r.get('first')), 'gold': cl(r.get('gold')),
                                    'st': [[cl(v) for v in (list(x) + [0] * 4)[:4]] for x in (r.get('st') or [])[:7]],
                                    'rmin': rk(r.get('rmin')), 'rmax': rk(r.get('rmax')),
-                                   'cls': {str(g): [max(-1, min(49, int(v[0]))), max(-1, min(MAXTITEM - 1, int(v[1])))]
-                                           for g, v in (r.get('cls') or {}).items() if str(g) in ('1', '2', '3') and (int(v[0]) >= 0 or int(v[1]) >= 0)}}
+                                   'cls': [{'c': '|'.join(n for n in str(c.get('c', '')).lower().split('|') if n in CLASS_NAMES),
+                                            's': max(-1, min(49, int(c.get('s', -1)))), 'i': max(-1, min(MAXTITEM - 1, int(c.get('i', -1))))}
+                                           for c in (r.get('cls') or []) if isinstance(c, dict)
+                                           and any(n in CLASS_NAMES for n in str(c.get('c', '')).lower().split('|'))][:16]}
                           for t, r in rewards.items() if 0 < int(t) < MAXTCHARS}
         return self.talk_save(qs, npcs, ctl)
 

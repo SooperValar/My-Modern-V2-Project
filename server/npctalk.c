@@ -164,9 +164,19 @@ static char hasnear[MAXTCHARS];		// templates with "when near" lines
 struct qstage { int times, item, exp, gold; };
 struct qrew { int limit, first, gold1, nst; struct qstage st[QSTAGES]; int rmin1, rmax1; };	// rmin1/rmax1: rank + 1, 0 = none
 static struct qrew qrew[MAXTCHARS];
-/* item quests: what each class group gets instead ("qclass <t> <group 1-3> <skill> <item>": -1 = as for everyone, 0 = none) */
-struct qcls { int set, skill, item; };
-static struct qcls qcls[MAXTCHARS][3];	// item quests: repeats and later rewards ("qreward")
+/* item quests: what some classes get instead ("qclass <t> <classes, joined by |> <skill> <item>": -1 = as for everyone,
+ * 0 = none); a quest's rules in file order, the first one that has the player's class counts */
+#define MAXQCLS 2048
+struct qcls { int t; unsigned int mask; int skill, item; };
+static struct qcls qcls[MAXQCLS];
+static int nqcls=0;
+static const struct qcls *qcls_find(int t,int co)
+{
+	int n;
+	if (!IS_PLAYER(co)) return NULL;
+	for (n=0; n<nqcls; n++) if (qcls[n].t==t && (ch[co].kindred&qcls[n].mask)) return &qcls[n];
+	return NULL;
+}	// item quests: repeats and later rewards ("qreward")
 static short qorder[MAXTCHARS];		// #quest: place in the list ("order <template> <n>", the editor's Quests page); 0 = by exp, -1 = not listed
 
 /* ---- area clears (the editor's Quests page): kill every listed NPC of an area for an experience bonus.
@@ -231,7 +241,7 @@ int talk_load(void)
 	memset(hasnear,0,sizeof(hasnear));
 	memset(qorder,0,sizeof(qorder));
 	memset(qrew,0,sizeof(qrew));
-	memset(qcls,0,sizeof(qcls));
+	nqcls=0;
 	memset(clears,0,sizeof(clears));
 	memset(qname,0,sizeof(qname));
 	f=fopen(TALK_FILE,"r");
@@ -281,10 +291,10 @@ int talk_load(void)
 			} else bad++;
 			continue;
 		}
-		if (!strcmp(w1,"qclass")) {		// qclass <t> <group 1-3> <skill, -1 = as for everyone, 0 = none> <item, -1 = as for everyone, 0 = none>
-			int a[4];
-			if (sscanf(q,"%d %d %d %d",&a[0],&a[1],&a[2],&a[3])==4 && a[0]>0 && a[0]<MAXTCHARS && a[1]>=1 && a[1]<=3 && a[2]>=-1 && a[2]<50 && a[3]>=-1 && a[3]<MAXTITEM) {
-				struct qcls *c=&qcls[a[0]][a[1]-1]; c->set=1; c->skill=a[2]; c->item=a[3];
+		if (!strcmp(w1,"qclass")) {		// qclass <t> <classes joined by |> <skill, -1 = as for everyone, 0 = none> <item, -1 = as for everyone, 0 = none>
+			int t2,sk,itm; char cl[200];
+			if (sscanf(q,"%d %199s %d %d",&t2,cl,&sk,&itm)==4 && t2>0 && t2<MAXTCHARS && class_mask(cl) && sk>=-1 && sk<50 && itm>=-1 && itm<MAXTITEM && nqcls<MAXQCLS) {
+				struct qcls *c=&qcls[nqcls++]; c->t=t2; c->mask=class_mask(cl); c->skill=sk; c->item=itm;
 			} else bad++;
 			continue;
 		}
@@ -1030,32 +1040,29 @@ static void quest_count_add(int co,int t)
 /* class rewards of item quests: the skill template t teaches character co (as data[50]: 0 = none) */
 int quest_teach(int t,int co)
 {
-	int g;
+	const struct qcls *c;
 	if (!talk_loaded) talk_load();
 	if (t<1 || t>=MAXTCHARS) return 0;
-	g=IS_PLAYER(co) ? class_group(co) : -1;
-	if (g>=0 && qcls[t][g].set && qcls[t][g].skill>=0) return qcls[t][g].skill;
+	if ((c=qcls_find(t,co)) && c->skill>=0) return c->skill;
 	return ch_temp[t].data[50];
 }
 
 /* ... and the item: the class's item replaces the quest's own item (the first reward, and later steps that give the same) */
 int quest_class_item(int t,int co,int item,int stp)
 {
-	int g;
+	const struct qcls *c;
 	if (!talk_loaded) talk_load();
 	if (t<1 || t>=MAXTCHARS) return item;
-	g=IS_PLAYER(co) ? class_group(co) : -1;
-	if (g<0 || !qcls[t][g].set || qcls[t][g].item<0) return item;
-	if (stp==0 || item==ch_temp[t].data[66]) return qcls[t][g].item;
+	if (!(c=qcls_find(t,co)) || c->item<0) return item;
+	if (stp==0 || item==ch_temp[t].data[66]) return c->item;
 	return item;
 }
 
 int quest_has_class(int t)	// does template t's quest have class rewards?
 {
-	int g;
+	int n;
 	if (!talk_loaded) talk_load();
-	if (t<1 || t>=MAXTCHARS) return 0;
-	for (g=0; g<3; g++) if (qcls[t][g].set) return 1;
+	for (n=0; n<nqcls; n++) if (qcls[n].t==t) return 1;
 	return 0;
 }
 

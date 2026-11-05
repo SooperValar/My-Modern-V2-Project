@@ -345,6 +345,10 @@ table.pl button:hover { color: var(--text); border-color: var(--gold); }
 #tpl .chip { padding: 3px 10px; border-radius: 12px; font-size: 12px; color: #a8987a; border: 1px solid #40362a; background: #221d16; }
 #tpl .chip:hover { color: #fff3d6; border-color: #8a7140; }
 #tpl .chip.on { color: #ffe39a; border-color: #d6a443; background: #3a2f17; }
+.cchips { display: inline-flex; flex-wrap: wrap; gap: 3px; }
+.cchip { padding: 2px 8px; border-radius: 11px; font-size: 11.5px; color: #a8987a; border: 1px solid #40362a; background: #221d16; cursor: pointer; }
+.cchip:hover { color: #fff3d6; border-color: #8a7140; }
+.cchip.on { color: #ffe39a; border-color: #d6a443; background: #3a2f17; }
 #tpl .rwadd { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 14px; }
 #tpl .note2 { line-height: 1.6; }
 #tpl .arows { display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px; }
@@ -2313,9 +2317,19 @@ async function tplApply(asNew) {
   openTemplate(TP.kind, t);
 }
 
-// the player's class in conversation conditions ("if class ...", npctalk.c): groups first, then each class
-const CLASS_OPTS = [['templar|archtemplar', 'Templar or Arch-Templar'], ['mercenary|warrior|sorcerer|seyan', "Mercenary, Warrior, Sorcerer or Seyan'Du"], ['harakim|archharakim', 'Harakim or Arch-Harakim'],
-  ['templar', 'Templar'], ['archtemplar', 'Arch-Templar'], ['mercenary', 'Mercenary'], ['warrior', 'Warrior-Mercenary'], ['sorcerer', 'Sorcerer-Mercenary'], ['seyan', "Seyan'Du"], ['harakim', 'Harakim'], ['archharakim', 'Arch-Harakim']];
+// the player's class in conversation conditions ("if class ...") and class rewards ("qclass ...", npctalk.c)
+const CLASS_LIST = [['templar', 'Templar'], ['archtemplar', 'Arch-Templar'], ['mercenary', 'Mercenary'], ['warrior', 'Warrior'], ['sorcerer', 'Sorcerer'], ['seyan', "Seyan'Du"], ['harakim', 'Harakim'], ['archharakim', 'Arch-Harakim']];
+const CLASS_OPTS = [['templar|archtemplar'], ['mercenary|warrior|sorcerer|seyan'], ['harakim|archharakim']];   // "By class": the three lines to start from
+function classChips(get, set) {     // click the classes (gold = picked); at least one stays picked
+  const d = document.createElement('div'); d.className = 'cchips';
+  const cur = () => String(get() || '').split('|').filter(Boolean);
+  for (const [k, l] of CLASS_LIST) {
+    const b = document.createElement('button'); b.type = 'button'; b.className = 'cchip' + (cur().includes(k) ? ' on' : ''); b.textContent = l;
+    b.onclick = () => { const c = cur(), n = c.includes(k) ? c.filter(x => x !== k) : [...c, k]; if (!n.length) return toast('Keep at least one class.', true); set(CLASS_LIST.map(x => x[0]).filter(x => n.includes(x)).join('|')); };
+    d.append(b);
+  }
+  return d;
+}
 // ---- small form builders
 function row(box, label, input, hint) {
   const l = document.createElement('div'); l.className = 'lb'; l.textContent = label; box.appendChild(l);
@@ -2744,7 +2758,7 @@ const NPC_TABS = {
         else if (cd.type === 'skill') parts.push(sel(SKILLS.map((s2, i2) => [i2, s2]), () => cd.n, v => cd.n = v), selS(OPN, () => cd.op, v => cd.op = v), num(() => cd.v, v => cd.v = v, 0, 255), '(0 = doesn\'t know it)');
         else if (cd.type === 'gold') parts.push(selS(OPN, () => cd.op, v => cd.op = v), num(() => cd.v, v => cd.v = v, 0));
         else if (cd.type === 'area') parts.push(areaIn(() => cd.s, v => cd.s = v));
-        else if (cd.type === 'class') parts.push(selS([['is', 'is'], ['not', 'is not']], () => cd.not ? 'not' : 'is', v => cd.not = v === 'not'), selS(CLASS_OPTS, () => cd.c, v => cd.c = v));
+        else if (cd.type === 'class') parts.push(selS([['is', 'is'], ['not', 'is not']], () => cd.not ? 'not' : 'is', v => cd.not = v === 'not'), classChips(() => cd.c, v => { cd.c = v; tplRender(); }));
         else parts.push(ipick(() => cd.t, v => cd.t = v));
         parts.push(xb(() => e.conds.splice(i, 1)));
         card.append(line(parts));
@@ -3567,9 +3581,8 @@ function goldIn(get, set) {         // gold in G (decimals = silver); kept in si
   const i = document.createElement('input'); i.type = 'number'; i.min = 0; i.step = 1; i.className = 'gold'; i.value = get() ? get() / 100 : 0;
   i.title = 'Gold (1.5 = 1G 50S)'; i.onchange = () => { const v = Math.max(0, Math.round((+i.value || 0) * 100)); i.value = v / 100; set(v); }; return i;
 }
-const qRewNone = () => ({ lim: 0, first: 0, gold: 0, st: [], rmin: -1, rmax: -1, cls: {} });
-const QCLASS = [['1', 'Templar · Arch-Templar'], ['2', "Mercenary · Warrior · Sorcerer · Seyan'Du"], ['3', 'Harakim · Arch-Harakim']];
-const qHasCls = r => !!r.cls && Object.values(r.cls).some(v => v[0] >= 0 || v[1] >= 0);
+const qRewNone = () => ({ lim: 0, first: 0, gold: 0, st: [], rmin: -1, rmax: -1, cls: [] });
+const qHasCls = r => Array.isArray(r.cls) && r.cls.length > 0;
 const RANK_SHORT = ['Pvt', 'PFC', 'LCpl', 'Cpl', 'Sgt', 'SSgt', 'MSgt', 'FSgt', 'SgtM', '2Lt', '1Lt', 'Capt', 'Maj', 'LtCol', 'Col', 'BGen', 'MGen', 'LtGen', 'Gen', 'FM', 'Knight', 'Baron', 'Earl', 'Warlord'];
 function qRankText(r) {
   const lo = r.rmin ?? -1, hi = r.rmax ?? -1, n = i => RANK_SHORT[i] || i;
@@ -3604,27 +3617,32 @@ function repRow(q) {                  // the Times settings under a quest's row:
       g.appendChild(h);
     }
   }
-  { // rewards by class: a class group gets its own skill and / or item instead of the row's
+  { // rewards by class: the classes you pick get their own skill and / or item instead of the row's
+    if (!Array.isArray(R.cls)) R.cls = [];
     const l = document.createElement('div'); l.className = 'lb'; l.textContent = 'Rewards by class'; g.appendChild(l);
     const r = document.createElement('div'); r.className = 'ln'; g.appendChild(r);
-    R.cls = R.cls || {};
-    r.appendChild(chk('Some classes get a different skill or item', () => qHasCls(R), on => {
-      if (on) for (const [k] of QCLASS) R.cls[k] = [q.data[50] || 0, q.data[66] || 0]; else R.cls = {};
-      re(); }));
-    if (qHasCls(R)) {
-      for (const [k, label] of QCLASS) {
-        const v = R.cls[k] = R.cls[k] || [-1, -1], own = v[0] >= 0 || v[1] >= 0;
-        const l2 = document.createElement('div'); l2.className = 'lb'; l2.textContent = label; g.appendChild(l2);
-        const r2 = document.createElement('div'); r2.className = 'ln'; g.appendChild(r2);
-        r2.appendChild(chk('own reward', () => own, on => { R.cls[k] = on ? [q.data[50] || 0, q.data[66] || 0] : [-1, -1]; re(); }));
-        if (own) {
-          const sk = sel([[0, 'no skill'], ...SKILLS.map((n, i) => [i, n]).filter(([i]) => i > 0)], () => Math.max(0, v[0]), x => { v[0] = x; re(); });
-          const sp = t => { const e = document.createElement('span'); e.textContent = t; return e; };
-          r2.append(sp('teaches'), sk, sp('gives'), qpick(() => Math.max(0, v[1]), x => { v[1] = x; re(); }, 'nothing'));
-        } else r2.append(Object.assign(document.createElement('span'), { className: 'hint', textContent: 'the row\'s reward' }));
-      }
+    if (!R.cls.length) r.appendChild(Object.assign(document.createElement('span'), { className: 'hint', textContent: 'every class gets the row\'s reward' }));
+    R.cls.forEach((c, k) => {
+      const l2 = document.createElement('div'); l2.className = 'lb'; l2.textContent = 'For'; g.appendChild(l2);
+      const r2 = document.createElement('div'); r2.className = 'ln'; r2.style.flexWrap = 'wrap'; g.appendChild(r2);
+      const sp = t => { const e = document.createElement('span'); e.textContent = t; return e; };
+      const sk = sel([[-1, 'the row\'s skill'], [0, 'no skill'], ...SKILLS.map((n, i) => [i, n]).filter(([i]) => i > 0)], () => c.s, x => { c.s = x; re(); });
+      const it = c.i < 0 ? Object.assign(document.createElement('button'), { className: 'sm', textContent: 'the row\'s item', title: 'Click to give these classes their own item',
+        onclick: () => { c.i = 0; re(); } }) : qpick(() => c.i, x => { c.i = x; re(); }, 'nothing');
+      const x = document.createElement('button'); x.className = 'sm'; x.textContent = '×'; x.title = 'Remove this class reward';
+      x.onclick = () => { R.cls.splice(k, 1); re(); };
+      r2.append(classChips(() => c.c, v => { c.c = v; re(); }), sp('teaches'), sk, sp('gives'), it);
+      if (c.i >= 0) { const b = document.createElement('button'); b.className = 'sm'; b.textContent = 'row\'s item'; b.title = 'Give these classes the row\'s item again'; b.onclick = () => { c.i = -1; re(); }; r2.append(b); }
+      r2.append(x);
+    });
+    const ad = document.createElement('button'); ad.className = 'sm'; ad.textContent = '+ Add a class reward';
+    ad.title = 'Pick the classes, then what they learn and get instead of the row\'s reward';
+    ad.onclick = () => { R.cls.push({ c: 'templar', s: -1, i: -1 }); re(); };
+    const l3 = document.createElement('div'); l3.className = 'lb'; g.appendChild(l3);
+    const r3 = document.createElement('div'); r3.className = 'ln'; g.appendChild(r3); r3.appendChild(ad);
+    if (R.cls.length) {
       const h = document.createElement('div'); h.className = 'hint'; h.style.gridColumn = '1 / -1'; h.style.margin = 0;
-      h.textContent = 'A class with its own reward learns its skill instead of the row\'s (or none) and gets its item instead of the row\'s item (the first reward, and later steps that give the row\'s item). Exp, gold, times and ranks are the same for every class. #quest shows each player their own.';
+      h.textContent = 'Click the classes a reward is for (gold = picked). The first rule with the player\'s class counts; other classes get the row\'s reward. Its skill is taught instead of the row\'s (or none), its item given instead of the row\'s item (the first reward, and later steps that give the row\'s item). Exp, gold, times and ranks are the same for every class. #quest shows each player their own.';
       g.appendChild(h);
     }
   }
