@@ -1,6 +1,6 @@
 /* Copy the stats of item templates onto the items of those templates that are already in the world
  * (lying around, carried, worn, in depots): armor, attribute / skill bonuses and requirements, hp / end / mana,
- * weapon value, value, the unique flag. Keeps everything else (where it is, who has it, its state).
+ * light, damage to attackers, weapon value, value, the unique flag. Keeps everything else (where it is, who has it, its state).
  *   refresh_items <.dat dir> <template>... [names] [write]   without "write" it only shows what it would do;
  *   "names" also copies the name, reference and description
  * Server stopped. Build: gcc -I server -o refresh_items tools/world/refresh_items.c */
@@ -31,6 +31,7 @@ int main(int argc,char **argv)
 		memcpy(I.skill,T.skill,sizeof I.skill);
 		memcpy(I.hp,T.hp,sizeof I.hp); memcpy(I.end,T.end,sizeof I.end); memcpy(I.mana,T.mana,sizeof I.mana);
 		memcpy(I.weapon,T.weapon,sizeof I.weapon);
+		memcpy(I.light,T.light,sizeof I.light); memcpy(I.gethit_dam,T.gethit_dam,sizeof I.gethit_dam);
 		I.value=T.value;
 		if (nm) { printf("  name %s -> %s\n",I.name,T.name); memcpy(I.name,T.name,sizeof I.name); memcpy(I.reference,T.reference,sizeof I.reference); memcpy(I.description,T.description,sizeof I.description); }
 		I.flags=(I.flags&~IF_UNIQUE)|(T.flags&IF_UNIQUE);	// unique or not, like the template

@@ -12,6 +12,8 @@
  *   it <temp> attr <attrib 0-4> <bonus> [<bonus while active>]  attribute bonus (attrib[i][0] / [1])
  *   it <temp> skill <skill> <bonus>                 skill bonus (skill[n][0])
  *   it <temp> hp|end|mana <bonus>                   hitpoints / endurance / mana bonus
+ *   it <temp> gethit <d>                           damage to attackers (1-d)
+ *   it <temp> hpreq|endreq|manareq <v>              hitpoints / endurance / mana needed to wear it
  *   it <temp> minrank <rank> | placement <n> | armor <av>
  *   it <temp> driver <n>                           item driver
  *   it <temp> status <s0> <s1>                     animation (client): 0/1 still, 16 = 4-frame loop, ...
@@ -115,6 +117,10 @@ int main(int argc,char **argv)
 			else if (!strcmp(word,"hp")) ti[a].hp[0]=atoi(text);
 			else if (!strcmp(word,"end")) ti[a].end[0]=atoi(text);
 			else if (!strcmp(word,"mana")) ti[a].mana[0]=atoi(text);
+			else if (!strcmp(word,"gethit")) ti[a].gethit_dam[0]=atoi(text);
+			else if (!strcmp(word,"hpreq")) ti[a].hp[2]=atoi(text);
+			else if (!strcmp(word,"endreq")) ti[a].end[2]=atoi(text);
+			else if (!strcmp(word,"manareq")) ti[a].mana[2]=atoi(text);
 			else if (!strcmp(word,"minrank")) ti[a].min_rank=atoi(text);
 			else if (!strcmp(word,"placement")) ti[a].placement=atoi(text);
 			else if (!strcmp(word,"armor")) ti[a].armor[0]=atoi(text);

@@ -1,0 +1,42 @@
+# Fire / Ice sets: Hitpoints, Endurance and Mana needed = 50 each on every piece (were 150 Fire / 200 Ice). (Cody, 2026-11-04)
+# Apply: build_lab <.dat> fire_ice_hem.txt, then refresh_items <.dat> 623 ... 1407 write.
+it 623 hpreq 50
+it 623 endreq 50
+it 623 manareq 50
+it 624 hpreq 50
+it 624 endreq 50
+it 624 manareq 50
+it 625 hpreq 50
+it 625 endreq 50
+it 625 manareq 50
+it 626 hpreq 50
+it 626 endreq 50
+it 626 manareq 50
+it 627 hpreq 50
+it 627 endreq 50
+it 627 manareq 50
+it 628 hpreq 50
+it 628 endreq 50
+it 628 manareq 50
+it 1272 hpreq 50
+it 1272 endreq 50
+it 1272 manareq 50
+it 1273 hpreq 50
+it 1273 endreq 50
+it 1273 manareq 50
+it 1274 hpreq 50
+it 1274 endreq 50
+it 1274 manareq 50
+it 1275 hpreq 50
+it 1275 endreq 50
+it 1275 manareq 50
+it 1276 hpreq 50
+it 1276 endreq 50
+it 1276 manareq 50
+it 1407 hpreq 50
+it 1407 endreq 50
+it 1407 manareq 50
+
+# The Cloak of Ice was copied from the Cloak of Fire and kept its light / damage to attackers: now like the other Ice pieces.
+it 1407 light 100 0
+it 1407 gethit 3
