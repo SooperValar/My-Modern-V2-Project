@@ -144,6 +144,17 @@ MF_MOVEBLOCK, MF_SIGHTBLOCK = 1, 2
 CF_PLAYER, CF_BODY = 1 << 5, 1 << 17
 IF_MOVEBLOCK, IF_SIGHTBLOCK, IF_TAKE, IF_LOOK, IF_LOOKSPECIAL, IF_USE, IF_USESPECIAL = 1, 2, 4, 16, 32, 512, 1024
 
+def weapon_skill(fl):
+    """the skill an item template is fought with when wielded (as get_fight_skill in svr_do.c), -1: not a weapon"""
+    if fl & (1 << 18) and fl & (1 << 20): return 36       # greataxe
+    for bitn, sk in ((16, 3), (17, 2), (18, 4), (19, 5), (20, 6)):
+        if fl & (1 << bitn): return sk
+    return -1
+
+# the player classes whose maximums "Scale to this rank" can keep to (their male templates)
+CLASS_CAPS = [('Mercenary', 2), ('Templar', 3), ('Harakim', 4), ("Seyan'Du", 13), ('Warrior-Mercenary', 547),
+              ('Sorcerer-Mercenary', 546), ('Arch-Templar', 544), ('Arch-Harakim', 545)]
+
 # build mode's random floors: picking one of these paints a random one of its set (same as the game)
 FLOOR_SETS = {1003: [1003, 1005, 1006, 1007], 542: list(range(542, 551)), 551: list(range(551, 555)),
               133: list(range(133, 142)), 142: [142, 143, 144, 145], 170: list(range(170, 176)),
@@ -854,7 +865,7 @@ class World:
                               1 if fl & IF_TAKE else 0, self.titem[o + I_DRIVER],
                               (1 if fl & IF_MOVEBLOCK else 0) | (2 if fl & IF_SIGHTBLOCK else 0),
                               1 if fl & (IF_TAKE | IF_LOOK | IF_LOOKSPECIAL | IF_USE | IF_USESPECIAL) else 0,
-                              struct.unpack_from('<H', self.titem, o + I_PLACEMENT)[0]])
+                              struct.unpack_from('<H', self.titem, o + I_PLACEMENT)[0], weapon_skill(fl)])
         fl_sorted = sorted(floors.items(), key=lambda a: -a[1])
         ob_sorted = sorted(objs.items(), key=lambda a: -a[1])
         return {'floors': fl_sorted, 'objects': ob_sorted, 'templates': temps, 'flags': MF, 'sets': FLOOR_SETS,
@@ -1056,6 +1067,17 @@ class World:
 
     # --- merchants: .dat/merchants.dat, read by the server (merch.c; console "merchreload")
     MK = (('armor', 1, 1 << 8), ('weapons', 2, (1 << 16) | (1 << 17) | (1 << 18) | (1 << 19) | (1 << 20)), ('magic', 4, 1 << 24), ('other', 8, 1 << 25))
+
+    def class_caps(self):
+        """the most a player of each class can have: attributes, hit points / endurance / mana, skills"""
+        out = []
+        for name, t in CLASS_CAPS:
+            r = self.ctemp(t)
+            if not r:
+                continue
+            out.append({'name': name, 'attrib': [r['attrib'][z * 6 + 2] for z in range(5)], 'hp': r['hp'][2], 'end': r['end'][2],
+                        'mana': r['mana'][2], 'skill': [r['skill'][z * 6 + 2] for z in range(50)]})
+        return out
 
     def merchants_path(self):
         return os.path.join(self.dat, 'merchants.dat')
@@ -2630,6 +2652,8 @@ def make_handler(world, sprites, page, minimap, ctl):
                 return self.js(world.quests_view())
             if u.path == '/api/merchants':
                 return self.js(world.merchants())
+            if u.path == '/api/classcaps':
+                return self.js(world.class_caps())
             if u.path == '/api/zonenpcs':
                 return self.js(world.zone_npcs(q.get('zone', '')))
             if u.path == '/api/itemp':
@@ -4897,6 +4921,8 @@ const setBit = (f, b, on) => bit(f, b) === on ? f : f + (on ? 1 : -1) * 2 ** b;
 const pos = v => v ? [v % 1024, Math.floor(v / 1024)] : null;
 
 let TP = null;   // {kind: 'npc'|'item', t, orig, cur, tab}
+let classCaps = null, scaleCls = null;   // "Scale to this rank": the player classes' maximums, and which one is picked
+const weaponSkill = fl => { const b = n => Math.floor(fl / 2 ** n) % 2 === 1; if (b(18) && b(20)) return 36; for (const [n, sk] of [[16, 3], [17, 2], [18, 4], [19, 5], [20, 6]]) if (b(n)) return sk; return -1; };
 function talkDirty() { return TP && TP.talk && JSON.stringify(TP.talk) !== TP.talkOrig; }
 function tplDirty() { return TP && ((TP.kind === 'merchant' && JSON.stringify(TP.cur) !== JSON.stringify(TP.orig)) || chestDirty() || areaDirty() || Object.keys(tplChanged()).length || (TP.kind === 'player' && TP.nopass) || talkDirty() || (TP.kind === 'npc' && JSON.stringify(TP.cur.text) !== JSON.stringify(TP.orig.text))); }
 function openTemplate(kind, t) {
@@ -5055,7 +5081,7 @@ async function tplApply(asNew) {
   if (TP.kind === 'item') {     // the palette and the map show the new name and look
     const i = pal.templates.findIndex(x => x[0] === t), r = await api('/api/itemp?t=' + t);
     const row = [t, r.name, r.sprite[0], bit(r.flags, 2) ? 1 : 0, r.driver, (bit(r.flags, 0) ? 1 : 0) | (bit(r.flags, 1) ? 2 : 0),
-      (bit(r.flags, 2) || bit(r.flags, 4) || bit(r.flags, 5) || bit(r.flags, 9) || bit(r.flags, 10)) ? 1 : 0, r.placement || 0];
+      (bit(r.flags, 2) || bit(r.flags, 4) || bit(r.flags, 5) || bit(r.flags, 9) || bit(r.flags, 10)) ? 1 : 0, r.placement || 0, weaponSkill(r.flags)];
     if (i >= 0) pal.templates[i] = row; else pal.templates.push(row);
     chunks.clear(); redraw();
     if (asNew) setBrush({ kind: 'place', t: row });
@@ -5283,26 +5309,43 @@ const NPC_TABS = {
     const rk = document.createElement('div'); rk.className = 'ipick';
     const now = npcPoints(c), cur = rankOf(now);
     const rs = sel(RANK_NAMES.map((n, i) => [i, `${i} · ${n}`]), () => cur, () => {});
+    // limits: the most a player of that class can have (a monster may have no limits)
+    if (!classCaps) { api('/api/classcaps').then(r => { classCaps = Array.isArray(r) ? r : []; if (TP && TP.tab === 'stats') tplRender(); }); }
+    if (scaleCls === null) scaleCls = c.alignment < 0 ? -1 : 3;     // enemies: no limits; others: Seyan'Du
+    const cs = sel([[-1, 'no limits (monsters)'], ...(classCaps || []).map((k, i) => [i, 'limits like ' + k.name])], () => scaleCls, v => { scaleCls = v; });
     const go2 = document.createElement('button'); go2.className = 'sm'; go2.textContent = 'Scale to this rank';
     go2.onclick = () => {
       const want = +rs.value, lo = want ? RANK_PTS[want - 1] : 0, hi = want < RANK_PTS.length ? RANK_PTS[want] : Infinity;
+      const caps = scaleCls >= 0 && classCaps ? classCaps[scaleCls] : null;
       const base = JSON.parse(JSON.stringify({ attrib: c.attrib, hp: c.hp, end: c.end, mana: c.mana, skill: c.skill }));
+      // it fights with the skill of the weapon in its right hand: its best fighting skill goes there
+      const WSK = [0, 1, 2, 3, 4, 5, 6, 36], wt = c.worn[8] && pal.templates.find(x => x[0] === c.worn[8]);
+      const main = wt && wt[8] >= 0 ? wt[8] : (base.skill[1 * 6] > base.skill[0] ? 1 : 0);
+      let moved = '';
+      const bestW = WSK.reduce((b, z) => base.skill[z * 6] > base.skill[b * 6] ? z : b, main);
+      if (bestW !== main) {
+        const v = base.skill[bestW * 6]; base.skill[bestW * 6] = base.skill[main * 6]; base.skill[main * 6] = v;
+        moved = ` ${SKILLS[bestW]} ${v} moved to ${SKILLS[main]} (what it fights with).`;
+      }
+      if (!base.skill[main * 6]) base.skill[main * 6] = 1;
+      const capA = z => caps ? caps.attrib[z] : 250, capS = z => caps ? (caps.skill[z] || base.skill[z * 6]) : 250;
+      const capH = k => caps ? caps[k] : 999;
       const scaled = f => {
         const t = JSON.parse(JSON.stringify(base)), cl = (v, m) => Math.max(0, Math.min(m, Math.round(v * f)));
-        for (let z = 0; z < 5; z++) { t.attrib[z * 6] = Math.max(1, cl(base.attrib[z * 6], 250)); t.attrib[z * 6 + 2] = Math.max(t.attrib[z * 6 + 2], t.attrib[z * 6]); }
-        for (const k of ['hp', 'end', 'mana']) { t[k][0] = cl(base[k][0], 999); t[k][2] = Math.max(t[k][2], t[k][0]); }
-        for (let z = 0; z < 50; z++) if (base.skill[z * 6]) { t.skill[z * 6] = Math.max(1, cl(base.skill[z * 6], 250)); t.skill[z * 6 + 2] = Math.max(t.skill[z * 6 + 2], t.skill[z * 6]); }
+        for (let z = 0; z < 5; z++) { t.attrib[z * 6] = Math.max(1, cl(base.attrib[z * 6], capA(z))); t.attrib[z * 6 + 2] = Math.max(t.attrib[z * 6 + 2], t.attrib[z * 6]); }
+        for (const k of ['hp', 'end', 'mana']) { t[k][0] = cl(base[k][0], capH(k)); t[k][2] = Math.max(t[k][2], t[k][0]); }
+        for (let z = 0; z < 50; z++) if (base.skill[z * 6]) { t.skill[z * 6] = Math.max(1, cl(base.skill[z * 6], capS(z))); t.skill[z * 6 + 2] = Math.max(t.skill[z * 6 + 2], t.skill[z * 6]); }
         return t;
       };
       let a = 0.02, z = 40, best = null;                // the smallest scale that reaches the rank
-      if (npcPoints(scaled(z)) < lo) return toast(`It can't reach ${RANK_NAMES[want]} by scaling (its stats hit the maximum). Give it more skills first.`, true);
+      if (npcPoints(scaled(z)) < lo) return toast(`It can't reach ${RANK_NAMES[want]} ${caps ? 'within the ' + caps.name + ' limits' : 'by scaling (its stats hit the maximum)'}. ${caps ? 'Pick a stronger class, or give it more skills first.' : 'Give it more skills first.'}`, true);
       for (let k = 0; k < 40; k++) { const m = (a + z) / 2, p = npcPoints(scaled(m)); if (p >= lo) { z = m; best = m; } else a = m; }
       const t = scaled(best ?? z), p = npcPoints(t);
       if (p >= hi) return toast(`Its stats can't be scaled finely enough to land exactly on ${RANK_NAMES[want]} (it jumps to ${RANK_NAMES[rankOf(p)]}). Try the rank next to it, or change a few values by hand.`, true);
       Object.assign(c, t); tplRender();
-      toast(`Now ${RANK_NAMES[rankOf(p)]} (${p.toLocaleString()} points, stats × ${(best ?? z).toFixed(2)}). Press Apply to keep it.`);
+      toast(`Now ${RANK_NAMES[rankOf(p)]} (${p.toLocaleString()} points, stats × ${(best ?? z).toFixed(2)}${caps ? ', ' + caps.name + ' limits' : ''}).${moved} Press Apply to keep it.`);
     };
-    rk.append(rs, go2);
+    rk.append(rs, cs, go2);
     row(g, 'Rank', rk, `Now ${RANK_NAMES[cur]} (${now.toLocaleString()} points). An NPC's rank comes from its stats; this scales them all until it is the rank you pick. It also sets the experience players get for killing it.`);
     row(g, 'Make it stronger or weaker', sc, 'Attributes, hit points, endurance, mana and skills together. 120 = 20% stronger.');
     const cols = document.createElement('div'); cols.className = 'cols'; b.append(cols);

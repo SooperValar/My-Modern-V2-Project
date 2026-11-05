@@ -144,6 +144,17 @@ MF_MOVEBLOCK, MF_SIGHTBLOCK = 1, 2
 CF_PLAYER, CF_BODY = 1 << 5, 1 << 17
 IF_MOVEBLOCK, IF_SIGHTBLOCK, IF_TAKE, IF_LOOK, IF_LOOKSPECIAL, IF_USE, IF_USESPECIAL = 1, 2, 4, 16, 32, 512, 1024
 
+def weapon_skill(fl):
+    """the skill an item template is fought with when wielded (as get_fight_skill in svr_do.c), -1: not a weapon"""
+    if fl & (1 << 18) and fl & (1 << 20): return 36       # greataxe
+    for bitn, sk in ((16, 3), (17, 2), (18, 4), (19, 5), (20, 6)):
+        if fl & (1 << bitn): return sk
+    return -1
+
+# the player classes whose maximums "Scale to this rank" can keep to (their male templates)
+CLASS_CAPS = [('Mercenary', 2), ('Templar', 3), ('Harakim', 4), ("Seyan'Du", 13), ('Warrior-Mercenary', 547),
+              ('Sorcerer-Mercenary', 546), ('Arch-Templar', 544), ('Arch-Harakim', 545)]
+
 # build mode's random floors: picking one of these paints a random one of its set (same as the game)
 FLOOR_SETS = {1003: [1003, 1005, 1006, 1007], 542: list(range(542, 551)), 551: list(range(551, 555)),
               133: list(range(133, 142)), 142: [142, 143, 144, 145], 170: list(range(170, 176)),
@@ -854,7 +865,7 @@ class World:
                               1 if fl & IF_TAKE else 0, self.titem[o + I_DRIVER],
                               (1 if fl & IF_MOVEBLOCK else 0) | (2 if fl & IF_SIGHTBLOCK else 0),
                               1 if fl & (IF_TAKE | IF_LOOK | IF_LOOKSPECIAL | IF_USE | IF_USESPECIAL) else 0,
-                              struct.unpack_from('<H', self.titem, o + I_PLACEMENT)[0]])
+                              struct.unpack_from('<H', self.titem, o + I_PLACEMENT)[0], weapon_skill(fl)])
         fl_sorted = sorted(floors.items(), key=lambda a: -a[1])
         ob_sorted = sorted(objs.items(), key=lambda a: -a[1])
         return {'floors': fl_sorted, 'objects': ob_sorted, 'templates': temps, 'flags': MF, 'sets': FLOOR_SETS,
@@ -1056,6 +1067,17 @@ class World:
 
     # --- merchants: .dat/merchants.dat, read by the server (merch.c; console "merchreload")
     MK = (('armor', 1, 1 << 8), ('weapons', 2, (1 << 16) | (1 << 17) | (1 << 18) | (1 << 19) | (1 << 20)), ('magic', 4, 1 << 24), ('other', 8, 1 << 25))
+
+    def class_caps(self):
+        """the most a player of each class can have: attributes, hit points / endurance / mana, skills"""
+        out = []
+        for name, t in CLASS_CAPS:
+            r = self.ctemp(t)
+            if not r:
+                continue
+            out.append({'name': name, 'attrib': [r['attrib'][z * 6 + 2] for z in range(5)], 'hp': r['hp'][2], 'end': r['end'][2],
+                        'mana': r['mana'][2], 'skill': [r['skill'][z * 6 + 2] for z in range(50)]})
+        return out
 
     def merchants_path(self):
         return os.path.join(self.dat, 'merchants.dat')
@@ -2630,6 +2652,8 @@ def make_handler(world, sprites, page, minimap, ctl):
                 return self.js(world.quests_view())
             if u.path == '/api/merchants':
                 return self.js(world.merchants())
+            if u.path == '/api/classcaps':
+                return self.js(world.class_caps())
             if u.path == '/api/zonenpcs':
                 return self.js(world.zone_npcs(q.get('zone', '')))
             if u.path == '/api/itemp':

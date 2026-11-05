@@ -303,6 +303,13 @@ The design is in `docs/ITEM_TIERS.md`.
 - The Helmet, Armor, Leggings, Boots and Gloves of Ice (unique, templates 1272-1276) showed "Sprite ... is missing": they now have pictures, the Fire set recoloured to ice blue with frost-white flecks (sprites 18100-18104, `tools/sprites/ice_set.py`). Players get them with the next client update.
 - **Cloak of Ice** (new, template 1407, sprite 18105 from the Cloak of Fire): the Ice set is now a complete set of six like the Fire set (armor 6, Stealth -10, unique; `tools/world/ice_cloak.txt`). The older **Ice Cloak** (909, traded for an ice gargoyle egg, temporary) stays as it is, unique and on its own (Cody's wish). `#specialarmor` says "Ice set (6 pieces)".
 
+### Editor: "Scale to this rank" keeps to a class's limits and fixes the weapon skill
+- Next to the rank: "limits like Mercenary / Templar / Harakim / Seyan'Du / Warrior- / Sorcerer-Mercenary / Arch-Templar /
+  Arch-Harakim" (each value stops at that player class's maximum, the rest goes into the other stats) or "no limits
+  (monsters)". Enemies start on no limits, other NPCs on Seyan'Du. The maximums come from the classes' player templates.
+- The NPC fights with the skill of the weapon in its right hand (Hand to Hand without one): its best fighting skill is
+  moved there first (e.g. Sword 40 -> Dagger when it wields a dagger), so scaling raises the right one.
+
 ### Editor: NPC equipment picker fits the slot
 - In an NPC's "Equipment & stock" tab, Pick… on a worn slot lists only items that fit it (helmets for Head, weapons
   for the right hand, rings for the rings...); the backpack lists only things that can be picked up.
