@@ -3941,6 +3941,14 @@ void really_update_char(int cn)
         // Heal cost fix: the female Templar template had Heal at cost class 7, males 3
         if ((ch[cn].kindred&(KIN_TEMPLAR|KIN_ARCHTEMPLAR)) && ch[cn].skill[SK_HEAL][3]==7) ch[cn].skill[SK_HEAL][3]=3;
 
+        // MyV2: Identify, Light and Recall are fixed at full strength for players who know them (learned, or known from
+        // the start): base 250 (the most a skill can be), maximum 1 so they can't be raised and the client lists them in
+        // red at the bottom like a Templar's Meditate
+        if (ch[cn].flags&CF_PLAYER) {
+                static const int fixed_full[]={SK_IDENT,SK_LIGHT,SK_RECALL};
+                for (z=0; z<3; z++) if (ch[cn].skill[fixed_full[z]][0]) { ch[cn].skill[fixed_full[z]][0]=FIXED_SKILL_VALUE; ch[cn].skill[fixed_full[z]][2]=1; }
+        }
+
         // Two-Handed Axe follows Two-Handed: same maximum and cost, known from the start
         if ((ch[cn].flags&CF_PLAYER) && ch[cn].skill[SK_TWOHAND][2]) {
                 if (ch[cn].skill[SK_AXE2H][2]<ch[cn].skill[SK_TWOHAND][2]) ch[cn].skill[SK_AXE2H][2]=ch[cn].skill[SK_TWOHAND][2];

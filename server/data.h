@@ -298,6 +298,7 @@ extern unsigned int mapmarker;
 #define WP2H_MAX	250	// 25 % (never quite reached)
 #define WP2H_K		40
 // Fire / Ice set bonuses (svr_do.c set_pieces): Fire = melee, Ice = casters; bonus at 4 and at 6 pieces worn
+#define FIXED_SKILL_VALUE	250	// Identify, Light, Recall: the fixed base of a player who knows them (really_update_char)
 #define SET_FIRE		1
 #define SET_ICE			2
 #define SET_SPECIALTY		40	// Fire 4: + to the wielded weapon's special (deflect / critical), tenths of a percent
