@@ -4843,6 +4843,7 @@ const SKILLS = ['Hand to Hand', 'Karate', 'Dagger', 'Sword', 'Axe', 'Staff', 'Tw
   'Swimming', 'Magic Shield', 'Bartering', 'Repair', 'Light', 'Recall', 'Guardian Angel', 'Protection', 'Enhance Weapon', 'Stun',
   'Curse', 'Bless', 'Identify', 'Resistance', 'Blast', 'Dispel Magic', 'Heal', 'Ghost Companion', 'Regenerate', 'Rest',
   'Meditate', 'Sense Magic', 'Immunity', 'Surround Hit', 'Concentrate', 'Warcry', 'Greataxe'];
+const WEAR_PL = [1, 2, 4, 8, 32, 64, 128, 512, 256 | 2048, 1024, 4096, 4096];   // what fits each worn slot (PL_ bits)
 const WEAR = ['Head', 'Neck', 'Body', 'Arms', 'Belt', 'Legs', 'Feet', 'Left hand (shield)', 'Right hand (weapon)', 'Cloak', 'Left ring', 'Right ring'];
 const CTEXT = [
   [2, 'Greeting', 'said when a player comes close (needs "Greets players" on the Behaviour tab)'],
@@ -5325,12 +5326,12 @@ const NPC_TABS = {
   },
   gear(b, c) {
     const g = grid2(b, 'Worn (it fights with these)');
-    WEAR.forEach((w, i) => row(g, w, ipick(() => c.worn[i], v => c.worn[i] = v)));
+    WEAR.forEach((w, i) => row(g, w, ipick(() => c.worn[i], v => c.worn[i] = v, { filter: t => (t[7] || 0) & WEAR_PL[i] })));   // Pick… lists what fits that slot
     const g2 = grid2(b, bit(c.flags, 10) ? 'Backpack: what it sells (merchant)' : 'Backpack (dropped when it dies)');
     const free = c.item.findIndex(v => !v);
     for (let i = 0; i < 40; i++) {
       if (!c.item[i] && i !== free) continue;
-      row(g2, c.item[i] ? 'Slot ' + (i + 1) : 'Add', ipick(() => c.item[i], v => { c.item[i] = v; tplRender(); }));
+      row(g2, c.item[i] ? 'Slot ' + (i + 1) : 'Add', ipick(() => c.item[i], v => { c.item[i] = v; tplRender(); }, { filter: t => t[3] }));
     }
     const g3 = grid2(b, 'In its hand');
     row(g3, 'Carried item', ipick(() => c.citem, v => c.citem = v), 'Rarely used.');
@@ -5744,7 +5745,7 @@ function playerSlots(b, c, where, title, names, count) {
     } else {
       const s = document.createElement('span'); s.className = 'nm none'; s.textContent = 'empty'; d.append(s);
       const ad = document.createElement('button'); ad.className = 'sm'; ad.textContent = '+ Give an item…';
-      const PLW = [1, 2, 4, 8, 32, 64, 128, 512, 256 | 2048, 1024, 4096, 4096];   // what fits each worn slot (PL_ bits)
+      const PLW = WEAR_PL;
       ad.onclick = () => itemPopup(ad, t => playerItem({ op: 'padditem', c: c.c, where, slot: i, t }), where === 'worn' ? (t => (t[7] || 0) & PLW[i]) : (t => t[3])); d.append(ad);
     }
     row(g, names ? names[i] : (it ? 'Slot ' + (i + 1) : 'Add'), d);
