@@ -7,7 +7,7 @@ Each section lists its changes roughly in the order they were made, oldest first
 **Contents**
 - [Client](#client): [Modernization](#modernization-changes) · [HUD changes](#hud-changes) · [Game view](#changes-to-the-game-view) · [New HUD features](#new-features-in-the-hud)
 - [Gameplay](#gameplay): [God / imp / builder tools](#god--imp--builder-commands-and-in-game-tools) · [Commands for all players](#general-commands-for-all-players) · [New zones and areas](#new-zones-and-areas) · [New for players](#new-features-from-a-players-point-of-view) · [Balance and fixes](#balance-changes-and-fixes)
-- [Editor](#editor): [Overview](#overview) · [Server manager](#server-manager) · [Builder](#builder) · [Player editor](#player-editor) · [NPC editor](#npc-editor) · [Quest editor](#quest-editor) · [Conversation editor](#conversation-editor) · [Chest editor](#chest-editor) · [Quests page](#quests-page) · [History and logs](#history-and-logs)
+- [Editor](#editor): [Overview](#overview) · [Server manager](#server-manager) · [Builder](#builder) · [Player editor](#player-editor) · [NPC editor](#npc-editor) · [Quest editor](#quest-editor) · [Conversation editor](#conversation-editor) · [Chest editor](#chest-editor) · [Merchants tab](#merchants-tab) · [Quests page](#quests-page) · [History and logs](#history-and-logs)
 - [Server](#server): [Modernization](#server-modernization) · [Data changes](#data-changes) · [Server-side view changes](#server-side-view-changes) · [Tools](#tools)
 
 ---
@@ -91,7 +91,7 @@ A new HUD drawn on its own canvas (window size ÷ 1.5) and composited over the w
 - **Smooth HUD font**: HUD text is no longer drawn with the 6x9 bitmap font scaled up 1.5x. It is collected while the HUD is drawn and drawn by the presenter with a real font (Consolas by default, `hud_fontface=` in `client.ini`) at full window resolution, ClearType-smoothed, in the bitmap font's own colours, one character per 6-unit cell so every layout and column stays where it was. `/hudfont classic` brings back the original pixel font, `/hudfont smooth` the new one (saved as `hud_font=` in `client.ini`). Tooltips blank out the text of panels under them.
 - **Clean line work**: lines are placed where their band really lands at 1.5x (rounded, not truncated, so rows are evenly spaced) and end exactly on the middle of the lines they meet. The coin, equipment and character panels use only their own hand-placed lines (none detected in the old picture, none of a neighbour's), share border lines with the backpack, and copy old-art pixels only from inside their frame, so no bits of the old borders show. The Update button sits under Base and Mod with the points under the rest; only the button itself applies the raises.
 - **Logging out**: the window stays open with an **Exit** button and an 8-second countdown, then closes by itself; Exit closes it sooner. The connection is closed quietly after the server's logout message.
-- Client fix: the skill list showed Two-Handed Axe a second time as a blank row (the old placeholder for skill 36 was still in the client's table).
+- Client fix: the skill list showed the Greataxe skill a second time as a blank row (the old placeholder for skill 36 was still in the client's table).
 
 ## Changes to the game view
 
@@ -151,7 +151,7 @@ A new HUD drawn on its own canvas (window size ÷ 1.5) and composited over the w
 - **`#write ["title"] <text>`** (gods, imps): the original `#write <text>` made an untitled "Parchment" and silently did nothing when the text was too long or the backpack full. Now the optional title in quotes is the note's name (default "Note"), the text (up to 199 characters) is what players read when they look at it; too-long text is cut with a message, a full backpack says so. Still the empty parchment (template 132), never decays, logged with its text (`god_note` in `svr_god.c`). (Fix: the first try added it as `#note`, in the wrong letter's block of the command switch, and `#setrecall` too, so neither worked; `#setrecall` is now under "s".)
 - **The gods' shops** (`godshop.c`): every item template a player can carry, free, for gods and their helpers.
   - **Categories**, worked out from each item's own data (new items sort themselves); nine at first (weapons 103, amulets 26, rings 40, keys 74, potions 82, quest 50, misc 35 items), ten once scrolls got their own: **weapons**, **belts**, **armors** (helmets, body armor, cloaks, sleeves, leggings, boots; torches and candles, the only left-hand items, count as weapons), **amulets**, **rings** (rings and gems), **keys**, **potions** (potions, flowers and drinks, with the Alchemist; the ales held in the hand used to show up as weapons), **scrolls** (their own merchant, the **Scribe**, template 1189; the spell scrolls are here), **quest** (items some NPC asks for, and labyrinth items), **misc** (the rest, including soulstones, Soul Crucibles and upgrade stones). Map objects (doors, chests, walls...) are not sold.
-  - **Unique items are not sold**: everything with the unique flag (Skua's, Gorn's, Kwai's and the Purple One's weapons, the Fire and Ice sets, the Caps of the Math Genius, the Helm of Shadows) and the Grolm Crown (unique in practice, though it has no unique flag).
+  - **Unique items are not sold**: everything with the unique flag (Skua's, Gorn's, Kwai's and the Purple One's weapons, the Caps of the Math Genius, the Helm of Shadows, the Ice Gargoyle Cape) and the Grolm Crown (unique in practice, though it has no unique flag). The Fire and Ice sets were unique too until they became rare drops; the god shop sells them now.
   - **Pages**: 38 items per page; the last two slots are "Previous page" / "Next page" arrows (templates 1374/1375, sprites 18230/18231).
   - **Quest items come out inert**: the copy has no template number, so no NPC accepts it as the real thing (its description says so). For the gods' live quests (LQ).
   - **Merchants in Elysium** (character templates 1180-1189, immortal): Armsmaster, Beltmaker, Armorer, Amulet Keeper, Ringmaker, Keymaster, Alchemist, Questkeeper, Curator, Scribe. They serve gods and imps standing next to them; anyone else is turned away ("I only serve the gods and their helpers"). They first stood in a row in Elysium (795-803, 805) and now stand in the god shop hall. They don't buy anything.
@@ -168,7 +168,7 @@ A new HUD drawn on its own canvas (window size ÷ 1.5) and composited over the w
 
 All also work with `/`, and they are listed in `#help`.
 
-- **Item tables**: `#armor`, `#weapon`, `#sword`, `#dagger`, `#twohand`, `#axe`, `#axe2h`, `#specialw`, `#belt`, `#specialarmor`, `#moddedarmor` and `#rings`. They print tables of requirements and bonuses, read live from the item templates so they stay accurate if an item is changed. `#specialarmor` lists the unique armor (Fire and Ice sets, Ice Cloak, Titanium Armor of Ankh, Winged Boots, Helm of Shadows, Grolm Crown, Cap of the Math Genius); `#moddedarmor` lists the magic suffixes (of the Lion, Snake, Owl, Weasel, Bear, Magic, Life, Defence) that chest helmets and armor can carry, with their normal and Godly values. `#axe2h` lists the two-handed axes (in `#weapon` too) and `#twohand` / `#axe2h` describe their specials.
+- **Item tables**: `#armor`, `#weapon`, `#sword`, `#dagger`, `#twohand`, `#axe`, `#axe2h`, `#specialw`, `#belt`, `#specialarmor`, `#moddedarmor` and `#rings`. They print tables of requirements and bonuses, read live from the item templates so they stay accurate if an item is changed. `#specialarmor` lists the special armor (Fire set, Ice set, Ice Gargoyle Cape, Titanium Armor of Ankh, Winged Boots, Helm of Shadows, Grolm Crown, Cap of the Math Genius) and explains the Fire and Ice set bonuses; `#moddedarmor` lists the magic suffixes (of the Lion, Snake, Owl, Weasel, Bear, Magic, Life, Defence) that chest helmets and armor can carry, with their normal and Godly values. `#axe2h` lists the greataxes (in `#weapon` too) and `#twohand` / `#axe2h` describe the two-handed sword's and the greataxe's specials with your own chance.
 - **`#quest`**: the quests of Aston and beyond as a table, easiest first, 15 a page (`#quest p2`, `p3`…): columns `#  Giver  Where  Reward  Exp`, lined up (the chat is 64 fixed-width letters a line; long names are cut to fit; Aston's streets without "Aston, "). Skill teachers come first, ordered by the experience they give (68 to 1,388, which follows how hard their item is to get), then the NPCs who trade an item for an item, ordered by the value of what they give. The place is the street the giver's house opens onto, "Aston, New Street" (`get_area_street` in `area.c`: the building they stand in, the street in front of its doors, else the closest street; outside town the area's name). Only what is left for you: skills you already know and skills your class can't learn are left out (`#quest all` shows every one, marked "learned" / "not your class"). Labyrinth and tower trades are not listed (they are puzzle steps). **`#quest <number>`**: that quest in detail, "Quest 3 of 24: Gunther" then lined-up Where / Wants / Reward lines, their own words (green), whether your class can learn it, and "Give Gunther the Silver Ring to finish it." `#quest all p2` and `#quest all <n>` work on the full list. (It used to print every teacher with its hint at once, too much for new players.)
 - **`#exp`**: experience this session and in total, each with exp per hour, unspent points, and how much is left to the next rank.
 - **`#played`**: time played this session and in total, and the character's creation date.
@@ -176,6 +176,7 @@ All also work with `/`, and they are listed in `#help`.
 - **`/lowhp <hp>`**, **`/hudfont classic|smooth`**: client-side settings, see [Game view](#changes-to-the-game-view) and [HUD changes](#hud-changes).
 - **`#silver <amount>`**: like `#gold`, but in silver coins (100 = 1 gold), so small amounts can be held on the mouse and handed to an NPC (e.g. 50 silver to the beggar).
 - **`#journal`**: lists your quests with the journal text for the step you are at (see [Quests](#quests-and-chain-quests)).
+- **`#burning`**: shows or hides the "Burning Hits damage inflicted" line (Fire set, 6 pieces); see [Fire and Ice sets](#fire-and-ice-sets).
 
 ## New zones and areas
 
@@ -252,14 +253,15 @@ A new labyrinth part after Lab 10 (map 180,900 - 299,999). The labyrinth gate af
 - **Prestige** counts how often a character has prestiged: an arch class going back to the start of its class line (Arch-Templar to Templar, Seyan'Du stays Seyan'Du). What triggers it and what it gives are still to be decided.
 - **Prestige looks**: prestige 1+ Arch-Templars (blue cape), Arch-Harakim (red cape) and Seyan'Du (amber) get a recoloured look. Base classes keep their normal look. Any class change sets the look of the new class, so a prestiged Templar who arches again gets the cape automatically.
 
-### Two-handed axes
-- New skill **Two-Handed Axe**. Every class that has Two-Handed has it too, with the same maximum and cost, and knows it from the start (at 4, like Two-Handed). Existing characters get it automatically; it keeps following Two-Handed when a character arches.
-- Five new weapons, bronze to titanium, with their own double-bit axe sprites. A weapon flagged both axe and two-handed uses the Two-Handed Axe skill.
-- **Same stats as two-handed swords, a different special**: two-handed axes have the same weapon value, Agility/Strength requirements and attack speed as two-handed swords. (At first they had 25% more WV, attacked 3 speed steps slower and needed more Strength.) Each has its own special instead, a percentage, so it works the same from Bronze to Titanium:
-  - **Two-handed axe - Critical hits:** 1 in 8 of your hits does double damage.
-  - **Two-handed sword - Deflect:** while you wield one, 1 in 8 melee hits against you is deflected (no damage); both sides get a message.
-  - Only players get the specials (monsters that wield these weapons fight as before). The item tooltip and `#twohand` / `#axe2h` describe them. Tunable: `WP2H_SPECIAL` (data.h).
-- Sold next to the two-handed swords: every merchant that sells a two-handed sword tier now also sells the axe of that tier (Karl in Aston, Gertrud, the outpost and lab merchants).
+### Greataxes
+- New skill **Greataxe** (skill 36; first called Two-Handed Axe). Every class that has Two-Handed has it too, with the same maximum and cost, and knows it from the start (at 4, like Two-Handed). Existing characters get it automatically; it keeps following Two-Handed when a character arches. It uses Strength, Strength, Agility.
+- Five new weapons, Bronze Greataxe to Titanium Greataxe, with their own double-bit axe sprites. A weapon flagged both axe and two-handed uses the Greataxe skill.
+- **Same stats as two-handed swords, a different special**: greataxes have the same weapon value, Agility/Strength requirements and attack speed as two-handed swords. (At first they had 25% more WV, attacked 3 speed steps slower and needed more Strength.) Each has its own special instead, a percentage, so it works the same from Bronze to Titanium:
+  - **Greataxe - Critical hits:** some of your hits do double damage.
+  - **Two-handed sword - Deflect:** while you wield one, some melee hits against you are deflected (no damage); both sides get a message.
+  - The chance grows with Strength (greataxe) or Agility (sword): see [Rebalance](#rebalance-two-handed-weapons-rings-spells-harakim). At first it was a flat 1 in 8.
+  - Only players get the specials (monsters that wield these weapons fight as before). The item tooltip and `#twohand` / `#axe2h` describe them.
+- Sold next to the two-handed swords: every merchant that sells a two-handed sword tier now also sells the greataxe of that tier (Karl in Aston, Gertrud, the outpost and lab merchants).
 
 ### Tiered armor
 The design is in `docs/ITEM_TIERS.md`.
@@ -299,98 +301,42 @@ The design is in `docs/ITEM_TIERS.md`.
 - Kept on the item (`IT_STACK`, a spare field; `stack_*` in `tier.c`). Console: `give <player> <item template> [count]`, `items <player>` (backpack with counts), `useslot <player> <slot>`.
 - **Client 2.15.02**: Ctrl+click on the backpack; the Greataxe skill name (built with the BuildKit). Old clients still play (no Ctrl+click), so MINVERSION stays 2.15.01.
 
-### Ice set pictures
-- The Helmet, Armor, Leggings, Boots and Gloves of Ice (unique, templates 1272-1276) showed "Sprite ... is missing": they now have pictures, the Fire set recoloured to ice blue with frost-white flecks (sprites 18100-18104, `tools/sprites/ice_set.py`). Players get them with the next client update.
-- **Cloak of Ice** (new, template 1407, sprite 18105 from the Cloak of Fire): the Ice set is now a complete set of six like the Fire set (armor 6, Stealth -10, unique; `tools/world/ice_cloak.txt`). The older **Ice Cloak** (909, traded for an ice gargoyle egg, temporary) stays as it is, unique and on its own (Cody's wish). `#specialarmor` says "Ice set (6 pieces)".
+### Fire and Ice sets
+**Fire set for melee, Ice set for casters** (both six pieces: helmet, armor, cloak, leggings, sleeves or gloves, boots)
 
-### Editor: exploration points ("poles") show their experience
-- Selecting an exploration point (driver 57) shows its experience (data[4]) as a field you can change (then Save item),
-  and what a player really gets: half to 1.5 times it, once per character, +10 luck, never more than 10% of the
-  player's total experience (+ up to 10%), and from what total experience looking at it says "too early".
+| | Fire set (623-628) | Ice set (1272-1276, 1407) |
+|---|---|---|
+| Armor per piece | 9 (as Titanium) | 5 (Steel + 1) |
+| Bonuses per piece | Braveness +1, Agility +2, Strength +2 | Braveness +1, Willpower +2, Intuition +2 |
+| Needs | Braveness, Willpower, Intuition 30; Agility, Strength 70; Hitpoints, Endurance, Mana 50 | Braveness, Agility, Strength 30; Willpower, Intuition 70; Hitpoints, Endurance, Mana 50 |
+| Stealth | -7 per piece | -7 per piece |
+| Damage to attackers | 1-3 per piece | 1-2 per piece |
+| Light | 220 | 100 |
 
-### Editor: Copy this chest
-- In a chest's window: "Copy this chest…", then click free spots on the map: each gets a new chest with the same rewards,
-  first-time item, once-per-player setting, refill time, name and facing. Each copy is its own chest (its own timer and
-  once-per-player list, as those go by the spot). Picking another brush stops copying.
+(Previously: Fire set armor 7, Ice set armor 6, no bonuses, every attribute 30 and Hitpoints / Endurance / Mana 150 (Fire) or 200 (Ice) needed, Stealth -15 (Fire) / -10 (Ice), Damage to attackers Fire 1-2 / Ice 1-3, both unique, value 150,000.)
 
-### Editor: "Scale to this rank" keeps to a class's limits and fixes the weapon skill
-- Next to the rank: "limits like Mercenary / Templar / Harakim / Seyan'Du / Warrior- / Sorcerer-Mercenary / Arch-Templar /
-  Arch-Harakim" (each value stops at that player class's maximum, the rest goes into the other stats) or "no limits
-  (monsters)". Enemies start on no limits, other NPCs on Seyan'Du. The maximums come from the classes' player templates.
-- The NPC fights with the skill of the weapon in its right hand (Hand to Hand without one): its best fighting skill is
-  moved there first (e.g. Sword 40 -> Dagger when it wields a dagger), so scaling raises the right one.
+**Set bonuses**, at 4 and at 6 pieces worn:
+- Fire, 4: **Weapon Specialization**, +4 % to the wielded weapon's special (two-handed sword deflect, greataxe critical hits; specials added later for other weapons get it too).
+- Fire, 6: **Burning Hits**, each melee hit that does damage burns for an extra 10 % at once (no lasting burn). When a monster you killed took Burning Hits damage from you, your log says "Burning Hits damage inflicted: N."; `#burning` turns that line off and on (saved with the character).
+- Ice, 4: **All Spells +5** (every spell skill).
+- Ice, 6: **Frost Armor**, 20 % of the melee hits that land on you chill the attacker ("Chilled": Agility and Strength -10 for 5 seconds) and hurt it with a little cold (5 % of the hit).
+- Item tooltips show "Fire set: 4 of 6 worn" and both bonuses ("4: Weapon Specialization +4%", "6: Burning Hits (10% Damage)", "4: All Spells +5", "6: Frost Armor (20% Chill)"), green when they apply; `#specialarmor` explains them.
 
-### Editor: NPC equipment picker fits the slot
-- In an NPC's "Equipment & stock" tab, Pick… on a worn slot lists only items that fit it (helmets for Head, weapons
-  for the right hand, rings for the rings...); the backpack lists only things that can be picked up.
-- Fixed: changing an NPC's worn gear, backpack (merchant stock) or carried item and pressing Apply did nothing (the
-  editor left those fields out, as it must for players); now they are saved and the NPC respawns with them.
+**Rare late-game drops** (no longer unique): monsters worth over 1.5 million exp carry a random Fire or Ice piece in 1 of 1000 spawns. Value 10,000. Gods and imps get them from the god shop; no other shop sells them, and a piece sold to a merchant is destroyed (after the seller's chance to buy it back), so it never shows up in a shop. The three treasure chests that gave Fire pieces (Labyrinth Undead Gorge 27,467, Lizard Temple 499,229, Pentagram Quest 330,304) give a random Magic Emerald or Crystal helmet or body armor instead.
 
-### Merchants: pages, own stock / prices / what they buy, seller's remorse (`server/merch.c`, editor Merchants tab)
-- **Editor, Merchants tab** (map mode, next to NPCs): every merchant, searchable (name, place, what he sells). Click one:
-  his stock (add with search, reorder, remove; up to 240), sells at % and pays at % of the normal price (empty =
-  normal), what he buys from players (Armor / Weapons / Magic / Other), the most gold he pays for one item, Go to,
-  "Back to the game's own". Apply writes `.dat/merchants.dat` and the running game reads it at once (`merchreload`).
-- **Pages**: with more than 40 things the shop shows 38 a page and the Previous / Next page arrows (like the god shop);
-  each player turns his own pages.
-- **Seller's remorse**: what a player sells shows after the stock; the seller can buy it back for what he got until he
-  looks at someone else (or 10 minutes). Then the merchant keeps it at his normal price, or throws it away if he
-  would not sell it (Fire / Ice pieces, shop-destroy items, damaged ones). Up to 62 such items a merchant (his depot).
-- Merchants without own settings work as before (stock = sale list + NPC backpack, buys what data[0] is, normal prices).
-- Console: `merchreload`, `shop <player> <merchant template> [buy <slot>|sell <backpack slot>|page <38/39>|leave]` (tests).
+**Ice set pictures and the Cloak of Ice**: the Helmet, Armor, Leggings, Boots and Gloves of Ice showed "Sprite ... is missing": they now have pictures, the Fire set recoloured to ice blue with frost-white flecks (sprites 18100-18104). The new **Cloak of Ice** (template 1407, sprite 18105) makes the Ice set six pieces like the Fire set. Players get the pictures with the next client update.
 
-### Damage to attackers (thorns) on every landed blow
-- Items with "Damage to attackers" (and the Epic Thorns effect) now hurt the attacker on every melee blow that lands,
-  also when your armor stops all of its damage (before: only blows that hurt you). Still adds up over the worn pieces
-  (full Fire set 1-18, full Ice set 1-12). Live Nov 4; Cody tested it and keeps it this way. Also live: the Burning Hits total on kills and `#burning`.
-- `fighttest ... back` also shows the damage done back to the monster (thorns, frost).
+**Ice Gargoyle Cape** (Previously: Ice Cloak): Syleia's reward for the ice gargoyle egg (template 909), unique and temporary (it melts), is not part of the Ice set and keeps its own stats (armor 15, Magic Shield, Resistance and Immunity +10). Only its name changed (and its description: "A cape made of ice..."); Syleia answers about it when asked about the "cape" too.
 
-### Ice Gargoyle Cape (was the Ice Cloak) (`tools/world/ice_names.txt`)
-- The old **Ice Cloak** (909, Syleia's ice egg trade, temporary, unique) is now the **Ice Gargoyle Cape**: name, reference,
-  description ("A cape made of ice..."), `#specialarmor`, and Syleia's answer (also when asked about the "cape"). Its stats
-  are unchanged. The **Cloak of Ice** (1407) now says "Cloak of Ice" (its reference was lower case).
-- `refresh_items ... names` also copies the name, reference and description onto items already in the world.
-
-### Fire set for melee, Ice set for casters (`tools/world/fire_ice_sets.txt`)
-- **Fire set** (623-628): armor 9 per piece (= Titanium), Braveness +1, Agility +2, Strength +2 per piece (full set: +6 / +12 / +12).
-  Needs Braveness, Willpower, Intelligence 30 and Agility, Strength 70. Stealth -7 per piece.
-- **Ice set** (1272-1276, 1407): armor 5 per piece (= Steel +1), Braveness +1, Willpower +2, Intelligence +2 per piece.
-  Needs Braveness, Agility, Strength 30 and Willpower, Intelligence 70. Stealth -7 per piece.
-- **Set bonuses** (server code, `set_pieces` in `svr_do.c`, numbers in `data.h` `SET_*`):
-  - Fire, 4 pieces: **weapon specialty**, +4 % to the wielded weapon's special (two-handed sword deflect, greataxe
-    critical; `weapon_special_bonus()`, so specials added later for other weapons get it too).
-  - Fire, 6 pieces: **burning hits**, each melee hit that does damage burns for an extra 10 % at once (no lasting burn).
-  - Ice, 4 pieces: **+5 to every spell skill**.
-  - Ice, 6 pieces: **frost armor**, 20 % of the melee hits that land on the wearer chill the attacker (spell "Chilled":
-    Agility and Strength -10 for 5 seconds) and hurt it with a little cold (5 % of the hit).
-  - When a monster you killed had taken Burning Hits damage from you, the log says "Burning Hits damage inflicted: N."
-    `#burning` turns that line off and on (saved with the character, flag `CF_NOBURNMSG`).
-  - Item tooltips show "Fire set: x of 6 worn" and the two bonuses, e.g. "4: Weapon Specialization +4%", "6: Burning Hits (10% Damage)", "4: All Spells +5", "6: Frost Armor (20% Chill)" (green when they apply); `#specialarmor` explains them.
-  - Tested on the test server (`fighttest`): Fire 6 = about +11 % melee damage, Ice 6 chills on about 1 in 5 landed hits.
-- New console commands (testing): `wear <player> <template>|off` (puts a new item straight into its worn slot and shows
-  the main values), `fighttest <player> <NPC template> <rounds> [back|kill]` (damage totals, or fight until it dies; test server only, it really fights).
-- Every piece of both sets needs Hitpoints, Endurance and Mana 50 (were 150 Fire / 200 Ice; `tools/world/fire_ice_hem.txt`).
-  They keep their Light (Fire 220, Ice 100; the Cloak of Ice had Fire's 220, now 100). Damage to attackers swapped:
-  Fire 1-3, Ice 1-2 (were Fire 1-2, Ice 1-3). `build_lab` learned `gethit`, `hpreq`,
-  `endreq`, `manareq`.
-- Pieces already in the world get the new numbers with the new tool `tools/world/refresh_items.c`.
-- **No longer unique: rare late-game drops** (`tools/world/fire_ice_drops.txt`, `populate.c`): monsters worth over 1.5 million
-  exp carry a random Fire or Ice piece in 1 of 1000 spawns (`SET_DROP_EXP` / `SET_DROP_CHANCE` in `data.h`). Value 10000
-  (was 150000). The god shop has them (gods / imps); no other shop sells them: a piece sold to a merchant is destroyed, so it never shows up in his stock. The three chests that gave Fire pieces (Labyrinth Undead Gorge 27,467, Lizard
-  Temple 499,229, Pentagram Quest 330,304) now give a random Magic Emerald / Crystal helmet or body armor.
-  `build_lab` learned `itemdata <x> <y> <values...>` (a placed item's data, e.g. a chest's contents).
-- The old **Ice Cloak** (909, traded for an ice gargoyle egg, temporary) is not part of the set and stays as it is, on purpose.
-
-### Rebalance: two-handed weapons, rings, spells, Harakim (design: `docs/REBALANCE.md`)
-- **Two-handed sword around Agility, two-handed axe around Strength.** The Two-Handed skill now uses Agility, Agility, Strength (was Agility, Strength, Strength); Two-Handed Axe Strength, Strength, Agility.
-- **Deflect and critical hits grow with the attribute**: the sword's deflect (from Agility) and the axe's critical hit (from Strength) are 8 % + 17 % x A / (A + 40): 11 % at 10, 14.5 % at 25, 17 % at 50, 20 % at 100, 21 % at 150, never quite 25 % (was a flat 1 in 8). The item tooltip and `#twohand` / `#axe2h` show your own chance. Tunable: `WP2H_MIN`, `WP2H_MAX`, `WP2H_K` (`data.h`).
-- **Spells around Willpower, Ghost Companion around Intelligence**: every spell now uses Willpower, Willpower, Intelligence and Ghost Companion Intelligence, Intelligence, Willpower (all were Braveness, Intelligence, Willpower), for every class.
-- **Three new stones and golden rings**: **Topaz** (Agility), **Amethyst** (Intelligence) and **Diamond** (Braveness), small / medium / big / huge, as the emeralds: the golden rings give +3 / +6 / +9 / +12 (the huge one +24 while active), same values and ranks. A stone on a plain golden ring makes the ring (`build_ring`); they need a golden ring (not silver). Found like the others: in the mines (`use_pile`; per level the share of stones is spread over six kinds: small stones as many as before, medium and big a little more, gargoyles 15 -> 9 of 30 at the deepest level) and as rare bonus items on monsters (`pop_create_bonus`). `#rings` lists all six.
+### Rebalance: two-handed weapons, rings, spells, Harakim
+The design is in `docs/REBALANCE.md`.
+- **Two-handed sword around Agility, greataxe around Strength.** The Two-Handed skill now uses Agility, Agility, Strength (was Agility, Strength, Strength); Greataxe Strength, Strength, Agility.
+- **Deflect and critical hits grow with the attribute**: the two-handed sword's deflect (from Agility) and the greataxe's critical hit (from Strength) are 8 % + 17 % x A / (A + 40): 11 % at 10, 14.5 % at 25, 17 % at 50, 20 % at 100, 21 % at 150, never quite 25 % (was a flat 1 in 8). The Fire set's Weapon Specialization adds 4 %. The item tooltip and `#twohand` / `#axe2h` show your own chance.
+- **Spells around Willpower, Ghost Companion around Intuition**: every spell now uses Willpower, Willpower, Intuition and Ghost Companion Intuition, Intuition, Willpower (all were Braveness, Intuition, Willpower), for every class.
+- **Three new stones and golden rings**: **Topaz** (Agility), **Amethyst** (Intuition) and **Diamond** (Braveness), small / medium / big / huge, as the emeralds: the golden rings give +3 / +6 / +9 / +12 (the huge one +24 while active), same values and ranks. A stone on a plain golden ring makes the ring; they need a golden ring (not silver). Found like the others: in the mines (per level the share of stones is spread over six kinds: small stones as many as before, medium and big a little more, gargoyles 15 -> 9 of 30 at the deepest level) and as rare bonus items on monsters. `#rings` lists all six.
 - **Spell books** (left hand, with a dagger; no armor): Initiate's (red, rank 2), Apprentice's (yellow, rank 6), Adept's (green, rank 10), Mage's (blue, rank 14), Archmage's (purple, rank 18): Willpower +1 / +2 / +3 / +4 / +5, Blast, Heal, Bless, Magic Shield, Protection and Enhance Weapon +2 / +3 / +5 / +6 / +8 each, mana +10 / +20 / +30 / +40 / +50. All five sold by Damor (a merchant for spell books and staffs may come later).
-- **Two-Handed Axe renamed Greataxe**: the skill (36; the server, the client's skill list, the editor, `#axe2h` / `#weapons`, tier item names) and the five weapons, Bronze Greataxe to Titanium Greataxe (templates: `tools/world/greataxe.txt`; the axes already in the world, carried or in depots: `tools/world/rename_items.c`).
-- **Ghost Companion buffs** (`skill_ghost`): a Harakim holding a **staff** summons a stronger ghost, +15 % power (Arch-Harakim +20 %; every staff's tooltip says so); the caster's **Intelligence** adds 1 % power per 10 points; the caster's **Willpower** adds 2 hitpoints per point to the ghost. Tunable: `GC_STAFF_HARAKIM`, `GC_STAFF_ARCH`, `GC_HP_PER_WIL` (`data.h`).
-- **Ghost Companion follows its master** through portals, teleports, recall, scrolls and god moves, to a free tile next to them (`companion_follow` in `god_transfer_char`), unless it was more than 20 steps away, the player died, or the place is an arena. Before, it stayed behind and destroyed itself after a while, costing the player luck.
-- Items: rings 1378-1389, stones 1390-1401, spell books 1402-1406 (`tools/world/rings_books.txt`, applied with `build_lab`, which learned `attr`, `skill`, `hp`/`end`/`mana`, `minrank`, `placement`, `armor` and `ch <t> additems`); sprites 18240-18287 (`tools/sprites/rings_books.py`), client update 3.
+- **Ghost Companion buffs**: a Harakim holding a **staff** summons a stronger ghost, +15 % power (Arch-Harakim +20 %; every staff's tooltip says so); the caster's **Intuition** adds 1 % power per 10 points; the caster's **Willpower** adds 2 hitpoints per point to the ghost.
+- **Ghost Companion follows its master** through portals, teleports, recall, scrolls and god moves, to a free tile next to them, unless it was more than 20 steps away, the player died, or the place is an arena. Before, it stayed behind and destroyed itself after a while, costing the player luck.
 
 ### Pentagrams
 - **Solve count follows the players doing pentagrams.** It was players online + three random 0-19 (about 28 + everyone online, 54 after a server start), whatever they were doing. Now: for each player who activated a pentagram in the last 10 minutes and is still online (at least 1), 5 + a random 2 or 3 (rolled per round): 7-8 alone, 14-16 for two, 21-24 for three, 35-40 for five. Worked out at every activation, so it follows people joining and leaving; a solve starts a new round with nobody counted. Tunable: `PENTA_PER_PLAYER`, `PENTA_RECENT` in `use_driver.c`.
@@ -398,8 +344,9 @@ The design is in `docs/ITEM_TIERS.md`.
 
 ### Merchants
 - **Merchants are easy to see**: merchants (all 63 of them) had Stealth around 160, so players had to walk right up to them before they showed. Their Stealth is now ignored: they show from as far as any character with no Stealth (light and line of sight still count).
-- **Merchant stock**: a merchant keeps in stock his sale list (at most 10 items) plus everything in his template's backpack, up to 40. For every original merchant the two were the same items, so nothing changes for them; it lets a lab merchant carry whole armor tiers.
-- **Merchants restock when their shop is opened**, not only after a trade, so stock added to a merchant shows up right away.
+- **Stock**: by default a merchant keeps in stock his sale list (at most 10 items) plus everything in his template's backpack, and restocks whenever his shop is opened. A merchant can also be given his own list (up to 240 items), his own prices and what he buys in the editor's [Merchants tab](#merchants-tab).
+- **Pages**: with more than 40 things, the shop shows 38 a page and the Previous / Next page arrows (like the god shop); each player turns his own pages.
+- **Seller's remorse**: what a player sells shows after the stock, and the seller can buy it back for what he got until he looks at someone else (or 10 minutes pass). Then the merchant keeps it at his normal price, or throws it away if he would not sell it (Fire / Ice pieces, damaged items, items marked to be destroyed in shops). Up to 62 such items a merchant.
 
 ### New characters
 - All six starting templates (Mercenary, Templar, Harakim, male and female) now start wearing a full set of cloth armor (helmet, armor, sleeves, leggings, boots, cloak; they had only the armor) and with 5 gold (was 2).
@@ -429,6 +376,7 @@ NPCs can now hold real conversations and run quests made in the editor (see [Que
 - A huge sapphire on a silver ring now gives the correct "too powerful" message (a 499 → 489 typo).
 - Spell slots are bounds-checked against `MAXITEM`.
 - `#recall` (gods) also gives the old temple back to a player taken out of a lab.
+- **Damage to attackers** (items, and the Epic effect Thorns) now hurts the attacker on every melee blow that lands, also when your armor stops all of its damage (before: only blows that hurt you). It still adds up over the worn pieces (a full Fire set does 1-18).
 
 ---
 
@@ -462,7 +410,7 @@ The map page (rail: Map).
 **Tabs of the piece library**
 - **Builder**: recently used pieces, chests, floor mixes, floors and flags, walls and objects.
 - **Areas**: area brushes (see below).
-- **Floors** (by how often they are used), **Walls** (drawn into the tile, they block), **Objects** (furniture, decoration, doors, chests…), **Items** (things players can pick up), **NPCs** (see [NPC editor](#npc-editor)), **Flags** (paint a flag on tiles).
+- **Floors** (by how often they are used), **Walls** (drawn into the tile, they block), **Objects** (furniture, decoration, doors, chests…), **Items** (things players can pick up), **NPCs** (see [NPC editor](#npc-editor)), **Merchants** (see [Merchants tab](#merchants-tab)), **Flags** (paint a flag on tiles), **Zones** (see below).
 - Right-click an item, object or wall in the library to edit its template.
 
 **Rugs** (Floors tab, at the top)
@@ -494,6 +442,7 @@ The map page (rail: Map).
 **The selected tile** (right panel)
 - Change its floor, remove its object/item, tick its flags.
 - **Items and portals**: name, description (what players read when they look), its data values, and for portals (driver 6) "Leads to x, y" with **Pick on map** (click the destination on the map or on the world map with M) and **Go there**. Placing a portal asks right away where it should lead. Lab portals (data 2 set) are flagged, with a button to make them normal portals.
+- **Exploration points** ("poles", driver 57): their experience as a field you can change (then Save item), and what a player really gets: half to 1.5 times it, once per character, +10 luck, never more than 10% of the player's total experience (+ up to 10%), and from what total experience looking at it says "too early".
 - **Edit its template…** and **Quest rules…** (what happens when a player uses it, see [Conversation editor](#conversation-editor)).
 - **Chests**: a summary and **Edit chest…** (see [Chest editor](#chest-editor)).
 - **NPCs**: turn, move or remove, **Edit NPC…** (see [NPC editor](#npc-editor)).
@@ -515,7 +464,7 @@ The map page (rail: Map).
 - **Icons** chosen by Cody: select (an arrow over a tile), a paint brush, a dashed rectangle with corner handles, fill (four squares with arrows going out), an eraser, an eye dropper with a drop, and move (a hand with four arrows). View switches (larger round 42 px buttons): grid (a 3×3 grid), see through walls (a brick wall, solid at the bottom left and see-through at the top right), light from lamps (a candle in refresh arrows), reload the world (a globe in refresh arrows).
 - The live/view-only banner is a strip along the top of the map.
 - **Left rail**: the sections are slots with icons (Map: a parchment map; Players: a knight's helmet; NPCs: a hooded figure; History: an hourglass; Server: a castle tower; Help: a book), and a gold mark beside the open one.
-- **Category tabs**: a grid of plaques with icons (Builder: a hammer; Floors: a tile; Walls: bricks; Objects: a chest; Items: a sword; NPCs: a hooded figure; Flags: a pennant). The other pages show a single title plaque.
+- **Category tabs**: a grid of plaques with icons (Builder: a hammer; Floors: a tile; Walls: bricks; Objects: a chest; Items: a sword; NPCs: a hooded figure; Merchants: a shopping bag; Flags: a pennant). The other pages show a single title plaque.
 
 ## Player editor
 
@@ -547,7 +496,9 @@ The **Players** page (rail) lists every player character, online ones first, wit
 - **General:** name, reference, description, look (sprite base, with a preview), facing, alignment (below 0 = enemy), money, class, flags (respawns, merchant, immortal, sees in the dark, undead, never sleeps, invisible, simple animation, ignores spells, no HP regeneration).
 - **Stats & skills:** the five attributes, HP, endurance, mana, all skills, the bonuses, and "Scale everything" by a percentage.
 - **Rank:** an NPC's rank comes from its experience value, which the server works out from its stats at every respawn, so it can't be set directly. The Stats tab shows the rank and has "Scale to this rank": it finds the smallest scale of all stats that makes the NPC exactly the chosen rank (using the server's own cost formulas), or says so if the stats max out first. The rank also shows in the editor's header line.
-- **Equipment & stock:** the 12 worn slots, and the 40 backpack slots, which are a merchant's stock. Each slot has an item picker with search and a link to edit that item.
+  - **Limits**: next to the rank, "limits like Mercenary / Templar / Harakim / Seyan'Du / Warrior-Mercenary / Sorcerer-Mercenary / Arch-Templar / Arch-Harakim" (no value goes past that player class's maximum, the rest goes into the other stats; the maximums come from the classes' player templates) or "no limits (monsters)". Enemies start on no limits, other NPCs on Seyan'Du.
+  - **The right weapon skill**: an NPC fights with the skill of the weapon in its right hand (Hand to Hand without one), so its best fighting skill is moved there first (e.g. Sword 40 -> Dagger when it wields a dagger) and scaling raises that one.
+- **Equipment & stock:** the 12 worn slots, and the 40 backpack slots, which are a merchant's stock. Each slot has an item picker with search and a link to edit that item; Pick… on a worn slot lists only items that fit it (helmets for Head, weapons for the right hand, rings for the rings...), the backpack only things that can be picked up.
 - **Behaviour:** taking part in fights, attack distance, keyword action, groups (attack all but / help / shout for help / come to help codes), random walk, greeting players, light, picking up trash, self-destruct.
 - **Patrol route:** up to 9 stops picked on the map, and the wait at each stop.
 - **Talk & quest:** its fixed lines (greeting, keyword and reply, warning, attacking, killed an enemy, dying words, shouting for help, coming to help; %s = the player's name), the dying-words chance, knowledge area and level (the game's built-in answers), and the "bring me an item" quest (wanted item -> teaches a skill + experience, and/or gives an item back).
@@ -555,6 +506,7 @@ The **Players** page (rail) lists every player character, online ones first, wit
 - **Advanced:** all 100 driver values, labelled after the original admin interface (`acct.c`).
 - **Apply** writes the template, and by default respawns the NPCs of that template with the changes (as the game's own reset does). **Save as a new NPC…** makes a copy with a new name (numbers from 2000 up); it is not placed until you click a tile with the NPC brush, and that first placement uses it directly. Copying an NPC template copies its conversations; a removed editor-made NPC loses them.
 - Fix: "Save as a new NPC" kept the original's respawning, though the copy has no spawn spot until it is placed. The game then kept trying to spawn it at 0,0 ("Could not drop char 2000" every 5 minutes in the log), and because of that spawn timer, the first placement made yet another copy instead of using it. A new NPC now respawns only once it is placed, and the first placement uses it (a stale spawn timer of it is removed).
+- Fix: changing an NPC's worn gear, backpack (merchant stock) or carried item and pressing Apply did nothing (the editor left those fields out, as it must for players); now they are saved and the NPC respawns with them.
 
 **Go to** (top right of the NPC, player and quest-rules windows): closes the window and shows that NPC, player or tile on the map, selected. An NPC: where it is now (with several of that template, each Go to on it shows the next one); not in the world: its spawn spot.
 
@@ -602,6 +554,16 @@ For every loot item (chests, flowers, bookshelves…).
 - **Editor chests**: facing, the name players see, how long it stays empty, once per player, the **first-time reward** (a checkbox and an item picker), a chance bar, and one card per reward (Item / Gold / Tier armor / Once on the server / Nothing, chosen with buttons) with its weight and %, move up, copy and remove; tier armor has Tier, Level from-to, Metal and Piece as chips. **+ Item / + Gold / + Tier armor / + Once on the server / + Nothing** add one.
 - **Facing**: the game's own chest has two looks, lock facing south (220/221) or west (222/223); the tile panel and the chest window show both, marked S and W, and clicking one turns that chest.
 - **+ Chest** (top of the Builder and Objects tabs): one plain chest for the whole map. The first click makes an item template **Chest** (a copy of Treasure Chest as an editor chest); after that it is a normal brush. Every chest placed with it is its own chest: the rewards belong to its spot, and the chest window opens as soon as one is placed (a single click).
+- **Copy this chest…** (in an editor chest's window): then each free spot you click on the map gets a new chest with the same rewards, first-time item, once-per-player setting, refill time, name and facing. Each copy is its own chest (its own timer and once-per-player list, since those go by the spot). Picking another brush stops copying; unsaved changes must be saved first.
+
+## Merchants tab
+
+Map → **Merchants** (next to NPCs): every merchant (not the gods' shops), searchable by name, place or an item he sells, with how many items he sells and where he stands. Click one to open his shop; right-click opens his NPC.
+- **Stock**: the items he always has, in shop order: add by search, move up / down, remove, sort by name (up to 240; more than 40 makes pages in the game).
+- **Sells at** and **Pays when buying**: a % of the normal price (normal = up to 4x the value when he sells, a quarter when he buys, both better with Bartering); empty = the normal price.
+- **Buys from players**: Armor, Weapons, Magic, Other, in any mix.
+- **Gold**: the most he pays for one item (0 = his own gold).
+- **Go to**, **Apply** (writes `.dat/merchants.dat`, and the running game reads it at once), **Back to the game's own** (forgets his settings: his stock follows his NPC backpack and sale list again, normal prices). Merchants without own settings work as before.
 
 ## Quests page
 
@@ -665,6 +627,9 @@ The server source assumed a 32-bit Linux, where `long` and `time_t` are 4 bytes.
 - **Area clears**: `cleartest <player> <NPC template>` counts a kill of that NPC for the player (who must stand in the zone).
 - **Quests**: `questgive <player> <NPC template>` hands that NPC the item it wants, as that player, and shows the exp and gold they got and how often they have done it.
 - **Zones**: `zonereload` reads `.dat/zones.dat` again (or the built-in `area.c` table if there is none); `zone <x> <y>` shows the zone names at a spot and the place `#quest` would give.
+- **Items**: `give <player> <item template> [count]` (into the backpack; stacks merge), `items <player>` (the backpack with stack counts), `useslot <player> <slot>` (uses that backpack item as the player).
+- **Fights** (test server only, they really fight): `wear <player> <item template>|off` puts a new item straight into its worn slot and shows the main values (or takes everything off); `fighttest <player> <NPC template> <rounds> [back|kill]` gives the damage totals of the player hitting the NPC, of the NPC hitting the player (`back`, with the damage done back by thorns and frost and how often it was chilled), or fights until it dies (`kill`).
+- **Merchants**: `merchreload` reads `.dat/merchants.dat` again; `shop <player> <merchant template> [buy <slot>|sell <backpack slot>|page <38/39>|leave]` shows the shop as that player sees it, or buys, sells, turns a page or ends the remorse.
 
 ## Data changes
 
@@ -676,9 +641,10 @@ Unchanged except for the version number and the larger view: `merc.dat`, `.moa` 
 - **Labyrinth temple**: entering a part saves the player's temple in `CHD_LABTEMPLE` (slot 33). A player is in a lab when they have a saved lab temple or their recall point lies in a "Labyrinth" zone (`temple_in_lab`), so custom recall points don't keep lab items or strip them early. Lab items are removed outside the lab by `lab_left_check`. `SEYAN_SHRINES` = 22.
 - **Tiered items** (`tier.c`): a tiered item is a plain piece of armor with rolled bonuses, kept in the item's spare `future3[]` fields (`IT_TIER`, `IT_TCAT`, `IT_TLEVEL`, ...; zero in every old item). Thorns and Light use the items' existing gethit damage and light; Thorns is no longer stored on the item (gethit damage adds up): the wearer gets it from the best Thorns piece only (`tier_thorns`, added in `really_update_char`). Regeneration effects: `tier_regen`, called from `do_regenerate`; Warding in `spell_curse` / `spell_stun`. Upgrade and reroll: `tier_upgrade`, `tier_reroll`. Glow: `tier_item_glow`, `tier_tile_glow`; graves: `body_has_items`. Old chest armor numbers: `tier_chest_item`. Soulstone drops: `soul_kill_drop` (tunable `SOULDROP_BASE`, `SOULDROP_PER_RANK`). Spell scroll marks: `item_marks`.
 - **Item drivers**: 71 Portal of Time (Lab 10), 72 Lab 11 lecterns, shelves, gates and pages (`use_lab11`), 73 Soul Crucibles (templates 1369-1371, sprites 18220-18228), 74 upgrade stone (template 1372, sprite 18229), 75 MyV2 chest (`talk_chest_open`).
-- **Two-handed axe**: skill 36 (`SK_AXE2H`; Agility/Strength/Strength like Two-Handed), added to existing characters in `really_update_char`; a weapon flagged both axe and two-handed uses it (`get_fight_skill`). Templates 1364-1368 (`tools/world/axe2h.txt`, rebalance `tools/world/axe2h_rebalance.spec`; axes already in the game are updated by `tools/world/wfix.c`, which keeps any bonus a piece had on top), sprites 18145-18165. While attacking with one, a character first acted `AXE2H_SLOW` (3) speed steps slower (`ch_act_speed` in `svr_act.c`); the rebalance gave them the swords' speed.
+- **Greataxe** (first called Two-Handed Axe): skill 36 (`SK_AXE2H`; Strength/Strength/Agility since the rebalance, Agility/Strength/Strength before), added to existing characters in `really_update_char`; a weapon flagged both axe and two-handed uses it (`get_fight_skill`). Templates 1364-1368 (`tools/world/axe2h.txt`, rebalance `tools/world/axe2h_rebalance.spec`, names `tools/world/greataxe.txt`; axes already in the game were updated by `tools/world/wfix.c`, which keeps any bonus a piece had on top, and renamed by `tools/world/rename_items.c`), sprites 18145-18165. While attacking with one, a character first acted `AXE2H_SLOW` (3) speed steps slower (`ch_act_speed` in `svr_act.c`); the rebalance gave them the swords' speed.
+- **Two-handed specials**: `wp2h_chance` (`svr_do.c`), tunable `WP2H_MIN`, `WP2H_MAX`, `WP2H_K` (`data.h`; at first a flat `WP2H_SPECIAL` 1 in 8), plus `weapon_special_bonus` (the Fire set).
 
-  | Axe (first version) | WV | Needs AGL / STR / Two-Handed Axe | Value | (2H sword WV, AGL / STR) |
+  | Greataxe (first version) | WV | Needs AGL / STR / Greataxe | Value | (2H sword WV, AGL / STR) |
   |---|---|---|---|---|
   | Bronze | 15 | 8 / 15 / 1 | 100 | 12, 10 / 12 |
   | Steel | 30 | 16 / 30 / 15 | 500 | 24, 20 / 24 |
@@ -687,7 +653,9 @@ Unchanged except for the version number and the larger view: `merc.dat`, `.moa` 
   | Titanium | 90 | 45 / 82 / 60 | 62500 | 72, 50 / 75 |
 
 - **Pentagram enemies** (`is_penta_enemy`: templates 364-385, 538-542, 1094-1097) without belongings leave no grave (`svr_effect.c`). The log line of a pentagram activation shows "(act of needed, n doing pentagrams)".
-- **Merchants**: `update_shop` stocks the sale list (`data[0..9]`) plus the template's backpack; restock on `do_look_char`; `do_char_can_see` ignores a merchant's Stealth (`CF_MERCHANT`).
+- **Merchants** (`merch.c`): `.dat/merchants.dat` (`merchant <template> sell <%> buy <%> gold <silver> kinds <mask>` and `stock <template> <items...>`; kinds 1 armor, 2 weapons, 4 magic, 8 other); without an entry a merchant stocks his sale list (`data[0..9]`) plus his template's backpack and buys what `data[0]` is. The 40 shop slots are filled for each viewer before the shop is shown, a tooltip is asked or a trade is made (`merch_fill`; display copies of the stock have `future3[8]` = -1); what players sold him is kept in his `depot[]` (`future3[8]` = what the seller got, `t_bought` = the seller, `t_sold` = when the remorse ends; the item garbage collector now knows merchants' depots). `player[].merch_co` / `merch_page`: the merchant a player deals with and his page there (in `client.h`, so the whole server is rebuilt after a change). `do_char_can_see` ignores a merchant's Stealth (`CF_MERCHANT`). The old `update_shop` is no longer used.
+- **Fire and Ice sets**: `set_pieces`, `set_of_temp`, `frost_armor` and the Burning Hits code in `svr_do.c` (`do_attack`); numbers `SET_*` in `data.h`; the Chilled spell is item template number `SPELL_CHILL` (199, not a skill); `CF_NOBURNMSG` (bit 47) for `#burning`; drops in `populate.c` (`SET_DROP_EXP`, `SET_DROP_CHANCE`); merchants destroy sold pieces. Data: `tools/world/fire_ice_sets.txt`, `fire_ice_hem.txt`, `fire_ice_drops.txt`, `ice_cloak.txt`, `ice_names.txt` (applied with `build_lab`, then `refresh_items`).
+- **Damage to attackers**: `do_hurt` also does it when a landed melee blow does no damage.
 - **Gods' shops**: merchants are character templates `1180-1188`, and 1189 the Scribe (`tools/world/godshop_merchants.txt`).
 - **Lab 11 data**: `LAB11_UNDEAD_REGEN`, `LAB11_KEEPER`, `LAB11_ARENA_DEATHS` in `data.h`; `lab_glow_near`.
 - **New characters**: starting templates 2, 3, 4, 76, 77, 78 (`tools/world/newplayer_start.spec`); Templar templates 3, 77, 544, 549 (Meditate). The player start templates (2, 3, 4, 13, 76-79, 543-552) and the Blank Template (1) are hidden from the editor's NPC lists.
@@ -698,7 +666,7 @@ Unchanged except for the version number and the larger view: `merc.dat`, `.moa` 
 - Hooks: say in `npc_hear` (`talk.c`), give and money in `npc_give()`, greeting in `driver.c` (`talk_has_near`, `talk_near_due`), kill in `do_char_killed` next to the soulstone drop, use in `use_driver()` before the item's own driver.
 - `.dat/quest.dat`: 255 quest steps per character, kept with the character's creation date (a new character in an old slot starts clean). The first version (31 steps, no header) is converted when the server first opens it, keeping the steps.
 - **MyV2 chests** (driver 75): `chest <x> <y> ... end` with `refill <seconds>`, `once player`, `first <t>` (first-time reward), and `reward item|unique|gold|nothing ...` / `reward tier <tiers> <metals> <piece> <level from> <level to> <weight>` lines (tier armor made by `tier_chest_reward` in `tier.c`; the older `tier metal piece weight` form still works). Rewards that can't be given any more (a once-only reward already given, an item marked Unique that exists somewhere) are left out of the draw; if nothing is left, it's empty. `.dat/chestlog.dat` keeps who opened which once-per-player chest (`P`), who got which first-time reward (`F x y cn stamp time name`) and which once-only rewards went to whom (`U`); `server.log` names every once-only reward.
-- **How the game's own loot items work** (for reference): a chest, flower, mushroom or bookshelf is a map item whose driver gives something when it is used. Driver 1: one fixed item (data 0). Driver 42: one item at random, equal chance, from up to 10 (data 0-9). Driver 59: gold (data 0). Driver 30: needs an item in the hand, which it takes. Driver 53: an item engraved with the player's name. Driver 54: an item, and it alerts the monsters nearby. Once opened it stays open for its duration (Treasure Chests: 1 hour), then anyone can open it again. Items marked Unique (`IF_UNIQUE`: Helm of Shadows, god weapons, the Fire and Ice sets) can't be created while a copy exists anywhere (`god_create_item`).
+- **How the game's own loot items work** (for reference): a chest, flower, mushroom or bookshelf is a map item whose driver gives something when it is used. Driver 1: one fixed item (data 0). Driver 42: one item at random, equal chance, from up to 10 (data 0-9). Driver 59: gold (data 0). Driver 30: needs an item in the hand, which it takes. Driver 53: an item engraved with the player's name. Driver 54: an item, and it alerts the monsters nearby. Once opened it stays open for its duration (Treasure Chests: 1 hour), then anyone can open it again. Items marked Unique (`IF_UNIQUE`: Helm of Shadows, god weapons, the Ice Gargoyle Cape) can't be created while a copy exists anywhere (`god_create_item`).
 - **Chest sprites**: the game's own, 220/221 (lock facing south) and 222/223 (lock facing west). The editor's `itemedit` takes a `sprite` to turn a chest. (North- and east-facing chests, 18130-18133, were tried: first the south/west chests with the lock painted out, then renders of a 3D model, then image-generator art. None matched well enough, so they were removed again with their scripts; they are in the git history.)
 
 **Live editing from the editor**
@@ -709,6 +677,9 @@ Unchanged except for the version number and the larger view: `merc.dat`, `.moa` 
 - One-off world patches live in `tools/world/`: `lab10_open.c`, `place_items.c` with `lab10_extras.txt` and `lab10_pole_move.txt`, `templar_meditate.c`, `movetowers.py`, `fix_item_status.c`, `tools/world/tier_part2.txt`.
 - `tools/world/build_lab.c`: builds an area from a spec file (map tiles, item and character templates, placed items); it also works out each changed template's experience value the way `reset_char` does (a rebuild had left the copied value of the base monster), but only for `copy` and `scale` (before, any `ch` line did, e.g. moving an NPC). `clear` empties an area of items, `movenpc` moves living NPCs to their template's new spot and `killnpc` removes them (Lab 11's monsters are made fresh on each rebuild), so an area can be rebuilt; afterwards `server pop` creates the new NPCs and `server light` the lighting. `place_items.c` and `build_lab.c` give placed items their template number (Lab 10's shrine of Kwai had been placed with 0; fixed in the data). Spec commands added over time: setting an item's driver, `ch <temp> worn <slot> <item temp>`, `ch <temp> gold <silver>`, `it <t> wv`, `atreq`, `skreq`, `dir <temp> <dx>` (resting direction of a template and its living NPCs).
 - `tools/world/merchant_stock.c`: sets a merchant template's stock (`merchant_stock <.dat dir> <template> <item templates...>`).
+- `build_lab` spec keywords added for the rebalance and the sets: `attr`, `skill`, `hp` / `end` / `mana`, `minrank`, `placement`, `armor`, `gethit`, `hpreq` / `endreq` / `manareq`, `ch <t> additems`, and `itemdata <x> <y> <values...>` (a placed item's data, e.g. a chest's contents).
+- `tools/world/refresh_items.c`: gives items already in the world (lying around, carried, worn, in depots) the stats of their template (`refresh_items <.dat> <templates...> [names] [write]`; `names` also copies name, reference and description).
+- `tools/world/rename_items.c`: renames items already in the world (e.g. the greataxes).
 
 ## Server-side view changes
 
@@ -733,7 +704,7 @@ Unchanged except for the version number and the larger view: `merc.dat`, `.moa` 
 - **`tools/claude-sync.sh`** syncs the server between Ubuntu (WSL) and the Windows copy: `send` (Ubuntu → Windows, keeps any newer Windows files), `get` (changed source files and the Makefile Windows → Ubuntu, with a backup, then `make server`), and `get-world` (world `.dat` files, server stopped).
 - `tools/world/`: scripts that read the world data directly: a full minimap render, a scan of every portal/teleport/ladder with a landing check, and a zone map. Reports are in `docs/`.
 - `tools/design/item_tier_samples.py` prints sample tier rolls (the same rules, for looking at numbers).
-- Build: `tier.c`, `godshop.c`, `console.c` and `npctalk.c` are new files, so the Makefile changed.
+- Build: `tier.c`, `godshop.c`, `merch.c`, `console.c` and `npctalk.c` are new files, so the Makefile changed.
 
 **Lab 11 layout sheet**
 - `tools/world/lab11/lab11_layout.xlsx`: one cell per tile with a short code (wall, water, shelf, lectern, gate, brazier, merchant, ...), coloured automatically, plus a Sections sheet with the rectangles that drain together, and codes for the shrine room (SW, SF, SC, SD). `lab11.py build` checks it (required swims, reachability) and turns it into the build spec; `lab11.py export` made the sheet from the first, generated layout (`draft_layout.py`).
@@ -751,10 +722,11 @@ Unchanged except for the version number and the larger view: `merc.dat`, `.moa` 
 - Hourglass sprites 18121-18128 (`tools/sprites/draw_hourglass.py`); unlit brazier 18129 (`tools/sprites/draw_brazier_unlit.py`).
 - **Trees in Hide mode**: stumps 18190-18202 (`tools/sprites/art/stumps/`).
 - **Torn page sprites** 18170-18183 (`tools/sprites/art/pages/`), torn from one generated page into four pieces.
-- **Two-handed axe sprites** (`tools/sprites/art/axe2h/`): a double-bit axe in bronze (18145), steel (18150), gold (18155), crystal (18160) and titanium (18165), each but titanium followed by four damage states like the two-handed swords (rust, patina, tarnish, clouding, chipped edges). Made from a generated steel axe by `axe2h_build.py`.
+- **Greataxe sprites** (`tools/sprites/art/axe2h/`): a double-bit axe in bronze (18145), steel (18150), gold (18155), crystal (18160) and titanium (18165), each but titanium followed by four damage states like the two-handed swords (rust, patina, tarnish, clouding, chipped edges). Made from a generated steel axe by `axe2h_build.py`.
 - **Emerald special armor** 18210 helmet, 18211 armor (`tools/sprites/art/emerald_special/emerald_special.py`).
 - **Soul Crucibles** 18220-18228 (three ranks: pale blue, violet, gold glow; each empty / one stone / full) and the **upgrade stone** 18229, made from one generated picture by `tools/sprites/art/crucible/crucible_build.py`.
 - **Gods' shop page arrows** 18230/18231; **Lit** flag icon 18232 and dot 18233 (`tools/sprites/art/lit/`).
+- **Ring stones and spell books** 18240-18287 (`tools/sprites/rings_books.py`); **Ice set** 18100-18105, the Fire set recoloured (`tools/sprites/ice_set.py`).
 - Chest sprites for north and east (18130-18133) were tried and removed again; see [Data changes](#data-changes).
 
 **Testing notes**
@@ -763,3 +735,5 @@ Unchanged except for the version number and the larger view: `merc.dat`, `.moa` 
 - NPC placement, tested on a copy with the real server: a placed Geoffrey spawned with all his items, facing as set; a moved and turned one kept its spot; a removed one did not come back. Template editor: a changed greeting and patrol reached the respawned NPC, and the Janitor walked a new route set in the editor.
 - Conversations: a quest intro over two lines that sets step 1, a follow-up line for step 1 and above, non-matching speech ignored, steps shown and reset from the console. Kills counted only once the quest was at the step, 1/3 and 2/3 across two Skeleton templates, the third finishing the step, a template-number match, a wrong area blocking its line, and no counting after the step was done.
 - Chests: tier lines with a level range and fitting metals (levels 3-6 in Bronze/Steel/Golden, Golden only at 5-6), with chosen metals at level 16-18, and in the older form (a list of six metals once failed to read, being longer than its buffer; fixed); a Bronze armor of Magic tier made new; gold; once per player refusing the second try; an "once on the server" reward given once and then left out of the draw (the next players got a new Bronze Mage Helm of Heal and another item from the list); first-time rewards for three players in a row, the chest's timer started by the first opening of a closed chest.
+- Fire and Ice sets (`fighttest`): 4 Fire pieces raised the two-handed specials from 19.2 % to 23.3 %; the 6th Fire piece raised melee damage by about 11 % (the burn plus its Strength); 4 Ice pieces raised Blast by 5 (plus the armor's own Willpower and Intuition); with 6 Ice pieces a Gargoyle hitting 3000 times was chilled about 1 time in 5 landed blows, and the thorns did 9.1 (Fire) / 6.5 (Ice, with frost) damage back per attack.
+- Merchants (`shop`): selling and buying back, the remorse ending on leaving (kept at the normal price; a Fire piece destroyed), 43 items on two pages, a 50 % price.
