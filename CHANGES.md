@@ -303,6 +303,11 @@ The design is in `docs/ITEM_TIERS.md`.
 - The Helmet, Armor, Leggings, Boots and Gloves of Ice (unique, templates 1272-1276) showed "Sprite ... is missing": they now have pictures, the Fire set recoloured to ice blue with frost-white flecks (sprites 18100-18104, `tools/sprites/ice_set.py`). Players get them with the next client update.
 - **Cloak of Ice** (new, template 1407, sprite 18105 from the Cloak of Fire): the Ice set is now a complete set of six like the Fire set (armor 6, Stealth -10, unique; `tools/world/ice_cloak.txt`). The older **Ice Cloak** (909, traded for an ice gargoyle egg, temporary) stays as it is, unique and on its own (Cody's wish). `#specialarmor` says "Ice set (6 pieces)".
 
+### Editor: Copy this chest
+- In a chest's window: "Copy this chest…", then click free spots on the map: each gets a new chest with the same rewards,
+  first-time item, once-per-player setting, refill time, name and facing. Each copy is its own chest (its own timer and
+  once-per-player list, as those go by the spot). Picking another brush stops copying.
+
 ### Editor: "Scale to this rank" keeps to a class's limits and fixes the weapon skill
 - Next to the rank: "limits like Mercenary / Templar / Harakim / Seyan'Du / Warrior- / Sorcerer-Mercenary / Arch-Templar /
   Arch-Harakim" (each value stops at that player class's maximum, the rest goes into the other stats) or "no limits

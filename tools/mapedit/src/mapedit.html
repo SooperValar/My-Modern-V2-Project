@@ -920,6 +920,7 @@ async function addSimilar() {
   toast('Added ' + add.map(a => a[0]).join(', ') + ' (lower weight: lower the sliders or remove any you don\'t like)');
 }
 function setBrush(b, keepTool) {
+  if (chestCopy && !(b && b.kind === 'place' && b.t && b.t[0] === chestCopy.temp)) chestCopy = null;   // another brush: no more copies
   brush = b;
   const k = brushKey(b);
   recent = [b, ...recent.filter(r => brushKey(r) !== k)].slice(0, 24);
@@ -1538,8 +1539,9 @@ function chestRender(el) {
   ad.append(Object.assign(document.createElement('span'), { className: 'hint', textContent: 'Add:' }));
   for (const [v, l, tip] of RW_TYPES) { const b = document.createElement('button'); b.className = 'btn sec'; b.textContent = '+ ' + l; b.title = tip; b.onclick = () => { C.rewards.push(newReward(v, 1)); again(); setTimeout(() => { const m = el.querySelector('.mbody'); m.scrollTop = m.scrollHeight; }, 0); }; ad.append(b); }
   body.append(ad);
-  ft.innerHTML = `<span class="hint">${TP.isNew ? '' : 'Saving makes it an editor chest. '}${info.running ? 'Live: goes straight into the running game.' : ''}</span><span class="sp"></span><button class="btn ghost" id="tcancel">Close</button><button class="btn pri" id="tapply">${TP.isNew ? 'Save chest' : 'Save and convert'}</button>`;
+  ft.innerHTML = `${TP.isNew ? '<button class="btn sec" id="tcopy" title="Put down new chests with these rewards, name and facing: click spots on the map. Each copy is its own chest (own timer, own once-per-player list).">Copy this chest…</button>' : ''}<span class="hint">${TP.isNew ? '' : 'Saving makes it an editor chest. '}${info.running ? 'Live: goes straight into the running game.' : ''}</span><span class="sp"></span><button class="btn ghost" id="tcancel">Close</button><button class="btn pri" id="tapply">${TP.isNew ? 'Save chest' : 'Save and convert'}</button>`;
   $('#tcancel').onclick = closeTemplate;
+  if ($('#tcopy')) { $('#tcopy').onclick = startChestCopy; $('#tcopy').disabled = ro; }
   $('#tapply').disabled = ro;
   $('#tapply').onclick = async () => {
     if (C.rewards.some(q => (q.type === 'item' || q.type === 'unique') && !q.v)) return toast('Pick an item for every item reward.', true);
@@ -1555,6 +1557,33 @@ function chestRender(el) {
     toast('Chest: ' + r2.msg); chestRender(el);
     if (selTile && selTile.x === TP.x && selTile.y === TP.y) selectTile(TP.x, TP.y);
   };
+}
+
+// ---- Copy this chest: the chest brush puts down new chests with the same rewards, name and facing (each its own chest:
+// its own refill timer, its own once-per-player list - those go by the spot)
+let chestCopy = null;   // {temp, C, name, face}
+function startChestCopy() {
+  if (chestDirty()) return toast('Save the chest first, then copy it.', true);
+  const row = pal.templates.find(t => t[0] === TP.it.temp);
+  if (!row) return toast('Its item template is not in the list.', true);
+  const face = CHEST_FACES.find(f => f[0] === TP.it.sprite || f[1] === TP.it.sprite);
+  const cp = { temp: row[0], C: JSON.parse(JSON.stringify(TP.C)), name: TP.name, face: face ? [face[0], face[1]] : null };
+  closeTemplate(); if (TP) return;
+  if (mode !== 'map') { const nb = document.querySelector('nav button[data-m="map"]'); if (nb) nb.click(); }
+  setBrush({ kind: 'place', t: row }); chestCopy = cp;
+  toast(`Copying "${cp.name}": click free spots on the map to put copies there (pick another brush to stop).`);
+}
+async function placeChestCopy(x, y) {
+  const cp = chestCopy;
+  const r2 = await api('/api/chest', { x, y, chest: cp.C });
+  if (r2.error) return toast(r2.error, true);
+  const op = { op: 'itemedit', x, y };
+  const it = (await api(`/api/tile?x=${x}&y=${y}`)).item || {};
+  if (cp.name && cp.name !== it.name) op.name = cp.name;
+  if (cp.face && it.sprite !== cp.face[0]) op.sprite = cp.face;
+  if (Object.keys(op).length > 3) await edit([op], `copied chest at ${x},${y}`, false);
+  selectTile(x, y);
+  toast(`Copy of "${cp.name}" on ${x}, ${y} · its own chest (own timer). Click another spot for more, or pick another brush.`);
 }
 
 // ---- + Chest: one plain chest for the whole map; each one placed gets its own rewards
@@ -3030,7 +3059,8 @@ async function edit(ops, lbl, reselect) {
   if (mode === 'history') leftUI();
   if (ops.length === 1 && ops[0].op === 'place' && !r.error && !(r.msgs && r.msgs.length)) {
     const pt = pal.templates.find(t => t[0] === ops[0].t);
-    if (pt && pt[4] === 75) { selectTile(ops[0].x, ops[0].y); openChest(ops[0].x, ops[0].y); }
+    if (pt && pt[4] === 75 && chestCopy && chestCopy.temp === pt[0]) placeChestCopy(ops[0].x, ops[0].y);
+    else if (pt && pt[4] === 75) { selectTile(ops[0].x, ops[0].y); openChest(ops[0].x, ops[0].y); }
   }
 }
 async function undoRedo(w) {
