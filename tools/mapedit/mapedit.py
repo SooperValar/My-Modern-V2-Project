@@ -4859,6 +4859,7 @@ function itemEditor(el, r, x, y, ro) {
     ${tele ? `<div class="lb">Leads to</div><div class="dest">x <input type="number" class="dx"> y <input type="number" class="dy">
       <button class="sm pk" title="Then click the spot on the map">Pick on map</button><button class="sm gt">Go there</button></div>
       ${it.data[2] ? '<div class="warn">This is a labyrinth portal (data 2 = ' + it.data[2] + '): it takes players to their next lab part, not to x, y. <button class="sm np">Make it a normal portal</button></div>' : ''}` : ''}
+    ${it.driver === 57 ? `<div class="lb">Exploration point · experience</div><div class="dest"><input type="number" class="xp" min="0" style="width:110px"> exp</div><div class="hint xph" style="line-height:1.5"></div>` : ''}
     <details><summary class="lb" style="cursor:pointer">Data values (advanced, driver ${it.driver})</summary><div class="dgrid">${it.data.map((v, i) => `<input type="number" data-i="${i}" value="${v}" title="data[${i}]">`).join('')}</div></details>
     <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap"><button class="btn pri" style="padding:5px 12px">Save item</button><button class="sm et" title="Change what every ${esc(it.name)} is made from: look, stats, flags…">Edit its template…</button><button class="sm qr" title="What happens when a player uses it, by quest step (a portal that leads elsewhere, a door that only opens after a quest…)">Quest rules…</button></div>`;
   el.appendChild(box);
@@ -4866,6 +4867,14 @@ function itemEditor(el, r, x, y, ro) {
   nm.value = it.name; ds.value = it.desc || '';
   if (tele) { box.querySelector('.dx').value = it.data[0]; box.querySelector('.dy').value = it.data[1]; }
   box.querySelectorAll('.dgrid input').forEach(i => { if (tele && (i.dataset.i === '0' || i.dataset.i === '1')) i.disabled = true; });
+  if (it.driver === 57) {     // an exploration point ("pole"): use_driver.c explorer_point(), data[4] = its experience
+    const xp = box.querySelector('.xp'), xh = box.querySelector('.xph'), d4 = box.querySelector('.dgrid input[data-i="4"]');
+    const show = () => { const n = Math.max(0, +xp.value || 0), f = v => Math.round(v).toLocaleString();
+      xh.textContent = `Gives ${f(n / 2)} to ${f(n * 1.5)} exp (about ${f(n)}), once per character, and +10 luck. Never more than 10% of the player's total experience (plus up to 10% more), so the whole amount needs about ${f(n * 10)} total exp; looking at it, players under ${f(n * 5)} are told it's too early (under ${f(n * 7)}: a bit early).`; };
+    xp.value = it.data[4]; show();
+    xp.oninput = () => { d4.value = Math.max(0, +xp.value || 0); show(); };
+    d4.addEventListener('input', () => { xp.value = d4.value; show(); });
+  }
   box.querySelectorAll('input,textarea,button').forEach(e => e.disabled = ro);
   const collect = () => {
     const data = {};

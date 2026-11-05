@@ -303,6 +303,11 @@ The design is in `docs/ITEM_TIERS.md`.
 - The Helmet, Armor, Leggings, Boots and Gloves of Ice (unique, templates 1272-1276) showed "Sprite ... is missing": they now have pictures, the Fire set recoloured to ice blue with frost-white flecks (sprites 18100-18104, `tools/sprites/ice_set.py`). Players get them with the next client update.
 - **Cloak of Ice** (new, template 1407, sprite 18105 from the Cloak of Fire): the Ice set is now a complete set of six like the Fire set (armor 6, Stealth -10, unique; `tools/world/ice_cloak.txt`). The older **Ice Cloak** (909, traded for an ice gargoyle egg, temporary) stays as it is, unique and on its own (Cody's wish). `#specialarmor` says "Ice set (6 pieces)".
 
+### Editor: exploration points ("poles") show their experience
+- Selecting an exploration point (driver 57) shows its experience (data[4]) as a field you can change (then Save item),
+  and what a player really gets: half to 1.5 times it, once per character, +10 luck, never more than 10% of the
+  player's total experience (+ up to 10%), and from what total experience looking at it says "too early".
+
 ### Editor: Copy this chest
 - In a chest's window: "Copy this chest…", then click free spots on the map: each gets a new chest with the same rewards,
   first-time item, once-per-player setting, refill time, name and facing. Each copy is its own chest (its own timer and
