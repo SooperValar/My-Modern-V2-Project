@@ -26,6 +26,17 @@ All rights reserved.
 int ctick=0;
 
 static char intro_msg1[]={"Welcome to Astonia 2, my friend!\n"};
+
+/* a player whose client is older than the newest published one: tell him to update with the launcher */
+static void outdated_note(int nr,int cn)
+{
+        unsigned int v=player[nr].version;
+        if (v>=CLIENT_LATEST) return;
+        do_char_log(cn,0,"Your game is out of date (version %u.%02u.%02u, the newest is %u.%02u.%02u).\n",
+                (v>>16)&255,(v>>8)&255,v&255,(CLIENT_LATEST>>16)&255,(CLIENT_LATEST>>8)&255,CLIENT_LATEST&255);
+        do_char_log(cn,0,"Please close it and start the game with Launcher.exe: it updates the game for you.\n");
+        do_char_log(cn,1," \n");
+}
 static char intro_msg2[]={"May your visit here be... interesting.\n"};
 
 static char intro_msg3[]={"\n"};
@@ -1443,6 +1454,7 @@ void plr_newlogin(int nr)
         do_char_log(cn,1," \n");
         do_char_log(cn,1,intro_msg4);
         do_char_log(cn,1," \n");
+        outdated_note(nr,cn);
 
 	if (player[nr].passwd[0] && !(ch[cn].flags&CF_PASSWD)) {
 		god_change_pass(cn,cn,player[nr].passwd);
@@ -1581,6 +1593,7 @@ void plr_login(int nr)
         do_char_log(cn,1," \n");
         do_char_log(cn,1,intro_msg4);
         do_char_log(cn,1," \n");
+        outdated_note(nr,cn);
 
 	if (player[nr].passwd[0] && !(ch[cn].flags&CF_PASSWD)) {
 		god_change_pass(cn,cn,player[nr].passwd);

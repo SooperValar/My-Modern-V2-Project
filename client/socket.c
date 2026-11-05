@@ -70,7 +70,7 @@ char *logout_reason[]={
 "Receive failure.",                                 //8
 "Server is being shutdown.",                        //9
 "You entered a Tavern.",                            //10
-"Client version too old. Update needed.",           //11
+"Game too old: start it with Launcher.exe to update.",   //11  (the login window has room for two short lines)
 "Aborting on user request.",                        //12
 "this should never show up",                        //13
 "You have been banned for an hour. Enhance your social behaviour before you come back."                 //14
