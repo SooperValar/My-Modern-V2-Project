@@ -1806,7 +1806,7 @@ void do_info_specialarmor(int cn)
 	static struct { int t; char *name; char *slot; } a[]={
 		{624,"Fire set (6 pieces)","each"},
 		{1273,"Ice set (6 pieces)","each"},
-		{909,"Ice Cloak","cloak"},
+		{909,"Ice Gargoyle Cape","cloak"},
 		{772,"Ti. Armor of Ankh","body"},
 		{907,"Winged Boots","feet"},
 		{263,"Helm of Shadows","head"},

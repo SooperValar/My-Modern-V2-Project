@@ -387,7 +387,8 @@ struct know know[]={
 {{"!other","?",NULL},                                   10,     AR_KNIGHT,      317,    "A dark sky, a large tree                 Weavers work in crimson                         The corner of which guides thee                  To key's holder, the lord's son.",0},
 
 {{"?ice","!egg",NULL},                                  0,      AR_NEST,        615,    "I heard that the ice gargoyles guard an ice egg in their nest. I'd be most grateful if you could bring it to me. But hurry, before it melts!", 0},
-{{"?ice","!cloak",NULL},                                0,      AR_NEST,        615,    "The Ice Cloak is a fine piece of armor, but it melts in due time. I can give you one if you obtain an ice egg for me.", 0},
+{{"?ice","!cloak",NULL},                                0,      AR_NEST,        615,    "The Ice Gargoyle Cape is a fine piece of armor, but it melts in due time. I can give you one if you obtain an ice egg for me.", 0},
+{{"?ice","?gargoyle","!cape",NULL},                     0,      AR_NEST,        615,    "The Ice Gargoyle Cape is a fine piece of armor, but it melts in due time. I can give you one if you obtain an ice egg for me.", 0},
 
 {{"!how","!are","!you","?",NULL},                       0,      AR_GENERAL,     0,      NULL,HEALTH},
 {{"!who","!are","!you","?",NULL},                       0,      AR_GENERAL,     0,      NULL,WHOAMI},

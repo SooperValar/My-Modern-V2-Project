@@ -1,0 +1,7 @@
+# Names (Cody, 2026-11-04): the Cloak of Ice's reference was lower case ("cloak of ice"); the old Ice Cloak (909, the
+# egg trade) is now the Ice Gargoyle Cape. Apply: build_lab <.dat> ice_names.txt, then
+# refresh_items <.dat> 1407 909 names write (items already in the world).
+it 1407 ref Cloak of Ice
+it 909 name Ice Gargoyle Cape
+it 909 ref Ice Gargoyle Cape
+it 909 desc A cape made of ice. It is very heavy and looks like it is going to melt soon.

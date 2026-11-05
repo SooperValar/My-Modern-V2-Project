@@ -303,6 +303,12 @@ The design is in `docs/ITEM_TIERS.md`.
 - The Helmet, Armor, Leggings, Boots and Gloves of Ice (unique, templates 1272-1276) showed "Sprite ... is missing": they now have pictures, the Fire set recoloured to ice blue with frost-white flecks (sprites 18100-18104, `tools/sprites/ice_set.py`). Players get them with the next client update.
 - **Cloak of Ice** (new, template 1407, sprite 18105 from the Cloak of Fire): the Ice set is now a complete set of six like the Fire set (armor 6, Stealth -10, unique; `tools/world/ice_cloak.txt`). The older **Ice Cloak** (909, traded for an ice gargoyle egg, temporary) stays as it is, unique and on its own (Cody's wish). `#specialarmor` says "Ice set (6 pieces)".
 
+### Ice Gargoyle Cape (was the Ice Cloak) (`tools/world/ice_names.txt`)
+- The old **Ice Cloak** (909, Syleia's ice egg trade, temporary, unique) is now the **Ice Gargoyle Cape**: name, reference,
+  description ("A cape made of ice..."), `#specialarmor`, and Syleia's answer (also when asked about the "cape"). Its stats
+  are unchanged. The **Cloak of Ice** (1407) now says "Cloak of Ice" (its reference was lower case).
+- `refresh_items ... names` also copies the name, reference and description onto items already in the world.
+
 ### Fire set for melee, Ice set for casters (`tools/world/fire_ice_sets.txt`)
 - **Fire set** (623-628): armor 9 per piece (= Titanium), Braveness +1, Agility +2, Strength +2 per piece (full set: +6 / +12 / +12).
   Needs Braveness, Willpower, Intelligence 30 and Agility, Strength 70. Stealth -7 per piece.
