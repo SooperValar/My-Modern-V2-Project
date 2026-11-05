@@ -40,6 +40,9 @@ is the project's `client/` folder.
 - Always end with clear **"▶ Do this now"** steps.
 - **Keep the hand-off documents current as we go** (this file, `docs/TODO.md`, `CHANGES.md`): Cody starts a new chat
   only about once a week, so every session should leave them complete enough for a cold start.
+- `CHANGES.md` describes the game as it is now, in the section where a thing belongs (player features, Editor,
+  Server console, Data changes, Tools), not as a diary: when something changes, update the old lines too. Use today's
+  names everywhere (Greataxe, Intuition, Ice Gargoyle Cape); an original game item that was renamed gets "(Previously: Ice Cloak)".
 - Keep `CHANGES.md` up to date with every change; commit every change (in the project folder);
   remind Cody to `git push` (Claude doesn't push).
 - **Server source is changed in BOTH places and kept identical**: the Windows Server folder and
