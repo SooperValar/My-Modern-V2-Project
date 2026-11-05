@@ -2010,14 +2010,6 @@ void do_played(int cn)
 }
 
 /* skill a teacher gives this character (same rules as the teacher code in driver.c) */
-static int quest_skill(int cn,int nr)
-{
-	if (nr==19 && (ch[cn].kindred&(KIN_TEMPLAR|KIN_ARCHTEMPLAR))) return 32;
-	if (nr==20 && (ch[cn].kindred&(KIN_TEMPLAR|KIN_ARCHTEMPLAR))) return 33;
-	if (nr==19 && (ch[cn].kindred&KIN_SEYAN_DU) && ch[cn].skill[19][0]) return 32;
-	if (nr==20 && (ch[cn].kindred&KIN_SEYAN_DU) && ch[cn].skill[20][0]) return 33;
-	return nr;
-}
 
 /* #quest: the quests of Aston and beyond, easiest first (skill teachers by the experience they
  * give, then the item trades by the value of what they give). #quest <n>: one in detail, with the
@@ -2043,7 +2035,7 @@ static int quest_build(int cn,struct qent *q,int max,int all)
 		{ int lo,hi; if (quest_rank_check(n,cn,&lo,&hi) && !all) continue; }	// not for this rank
 		q[cnt].ord=talk_quest_order(n);
 		if (quest_teach(n,cn)) {		// a skill teacher (for this class: class rewards)
-			nr=quest_teach(n,cn)==ch_temp[n].data[50] ? quest_skill(cn,ch_temp[n].data[50]) : quest_teach(n,cn);
+			nr=quest_teach(n,cn);		// the next skill it teaches this class (class rewards: several in turn)
 			if (nr<0 || nr>=50) continue;
 			if (!ch[cn].skill[nr][2] && !all) continue;	// not for this class
 			if (ch[cn].skill[nr][0] && !all) continue;	// learned already

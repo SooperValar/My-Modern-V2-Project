@@ -229,7 +229,7 @@ def talk_parse(text):
                 r['rmin'], r['rmax'] = int(a[1]), int(a[2])
             elif k == 'qclass' and len(a) >= 4 and not a[1].isdigit():   # class rewards: classes (joined by |), skill, item (-1 = as for everyone)
                 r = qrew.setdefault(int(a[0]), {'lim': 0, 'first': 0, 'gold': 0, 'st': []})
-                r.setdefault('cls', []).append({'c': a[1].lower(), 's': int(a[2]), 'i': int(a[3])})
+                r.setdefault('cls', []).append({'c': a[1].lower(), 's': [int(v) for v in a[2].split(',') if v.lstrip('-').isdigit()] or [-1], 'i': int(a[3])})
             elif k == 'qstage' and len(a) >= 5 and int(a[0]) in qrew:
                 qrew[int(a[0])]['st'].append([int(x) for x in a[1:5]])
             elif k == 'order' and len(a) >= 2:          # #quest list order (Quests page): template, place (-1 = not listed)
@@ -312,7 +312,8 @@ def talk_text(quests, npcs, names):
             if r.get('rmin', -1) >= 0 or r.get('rmax', -1) >= 0:
                 out.append('qrank %d %d %d' % (t, int(r.get('rmin', -1)), int(r.get('rmax', -1))))
             for c in (r.get('cls') or []):
-                out.append('qclass %d %s %d %d' % (t, c['c'], int(c['s']), int(c['i'])))
+                sk = c['s'] if isinstance(c['s'], list) else [c['s']]
+                out.append('qclass %d %s %s %d' % (t, c['c'], ','.join(str(int(v)) for v in sk[:4]) or '-1', int(c['i'])))
         out.append('')
     cl = quests.get('clears') or {}
     if cl:
@@ -1213,7 +1214,8 @@ class World:
                                    'st': [[cl(v) for v in (list(x) + [0] * 4)[:4]] for x in (r.get('st') or [])[:7]],
                                    'rmin': rk(r.get('rmin')), 'rmax': rk(r.get('rmax')),
                                    'cls': [{'c': '|'.join(n for n in str(c.get('c', '')).lower().split('|') if n in CLASS_NAMES),
-                                            's': max(-1, min(49, int(c.get('s', -1)))), 'i': max(-1, min(MAXTITEM - 1, int(c.get('i', -1))))}
+                                            's': [max(-1, min(49, int(v))) for v in (c.get('s') if isinstance(c.get('s'), list) else [c.get('s', -1)])][:4] or [-1],
+                                            'i': max(-1, min(MAXTITEM - 1, int(c.get('i', -1))))}
                                            for c in (r.get('cls') or []) if isinstance(c, dict)
                                            and any(n in CLASS_NAMES for n in str(c.get('c', '')).lower().split('|'))][:16]}
                           for t, r in rewards.items() if 0 < int(t) < MAXTCHARS}

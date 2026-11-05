@@ -527,19 +527,15 @@ int npc_give(int cn,int co,int in,int money)
 
                 /* quest-requested items */
                 if ((nr=teach)!=0) {
-                        // hack for stun=bash and curse=surround:
-                        if (nr==19 && (ch[co].kindred&(KIN_TEMPLAR|KIN_ARCHTEMPLAR))) nr=32;
-                        if (nr==20 && (ch[co].kindred&(KIN_TEMPLAR|KIN_ARCHTEMPLAR))) nr=33;
-                        if (nr==19 && (ch[co].kindred&KIN_SEYAN_DU) && ch[co].skill[19][0]) nr=32;
-                        if (nr==20 && (ch[co].kindred&KIN_SEYAN_DU) && ch[co].skill[20][0]) nr=33;
-
-                        if (nr==19 && (ch[co].kindred&KIN_SEYAN_DU)) {
-                                do_sayx(cn,"Bring me the item again to learn Immunity, %s!",ch[co].name);
+                        // (the original's built-in "stun = immunity, curse = surround hit for Templars, both for
+                        // Seyan'Du" is now class rewards in npctalk.dat: qclass 90 / 111, Quests page)
+                        if (IS_PLAYER(co) && !ch[co].skill[nr][2]) {
+                                do_sayx(cn,"I cannot teach %s to one of your kind, %s.",skilltab[nr].name,ch[co].name);
+                                god_take_from_char(in,cn);
+                                god_give_char(in,co);
+                                do_char_log(co,1,"%s did not accept the %s.\n",ch[cn].reference,it[in].name);
+                                return 0;
                         }
-                        if (nr==20 && (ch[co].kindred&KIN_SEYAN_DU)) {
-                                do_sayx(cn,"Bring me the item again to learn Surround Hit, %s!",ch[co].name);
-                        }
-                        // end hack
                         do_sayx(cn,"Now I'll teach you %s.",skilltab[nr].name);
                         if (ch[co].skill[nr][0]) {
                                 do_sayx(cn,"But you already know %s, %s!",skilltab[nr].name,ch[co].name);
@@ -550,6 +546,10 @@ int npc_give(int cn,int co,int in,int money)
                                 ch[co].skill[nr][0]=1;
                                 do_char_log(co,0,"You learned %s!\n",skilltab[nr].name);
                                 do_update_char(co);
+                                {	// another skill of this quest for this class: the next turn-in teaches it
+                                        int nx=quest_teach(ch[cn].temp,co);
+                                        if (nx && nx!=nr && !ch[co].skill[nx][0]) do_sayx(cn,"Bring me the item again to learn %s, %s!",skilltab[nx].name,ch[co].name);
+                                }
                                 if ((nr=ch[cn].data[51])!=0) {
                                         do_sayx(cn,"Now I'll teach you a bit about life, the world and everything, %s.",ch[co].name);
                                         do_give_exp(co,nr,0,-1);

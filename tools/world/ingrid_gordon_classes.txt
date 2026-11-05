@@ -1,0 +1,8 @@
+# The original game's built-in rule (driver.c npc_give, removed): Ingrid (90, Stun) and Gordon (111, Curse) teach
+# Templars / Arch-Templars Immunity / Surround Hit instead, and Seyan'Du first Stun / Curse, then on a second turn-in
+# Immunity / Surround Hit. Now class rewards in .dat/npctalk.dat (Quests page). Append these lines to npctalk.dat
+# (server stopped, or then "talkreload"):
+qclass 90 templar|archtemplar 32 -1
+qclass 90 seyan 19,32 -1
+qclass 111 templar|archtemplar 33 -1
+qclass 111 seyan 20,33 -1

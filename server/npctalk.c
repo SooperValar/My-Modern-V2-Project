@@ -164,10 +164,12 @@ static char hasnear[MAXTCHARS];		// templates with "when near" lines
 struct qstage { int times, item, exp, gold; };
 struct qrew { int limit, first, gold1, nst; struct qstage st[QSTAGES]; int rmin1, rmax1; };	// rmin1/rmax1: rank + 1, 0 = none
 static struct qrew qrew[MAXTCHARS];
-/* item quests: what some classes get instead ("qclass <t> <classes, joined by |> <skill> <item>": -1 = as for everyone,
- * 0 = none); a quest's rules in file order, the first one that has the player's class counts */
+/* item quests: what some classes get instead ("qclass <t> <classes, joined by |> <skills, joined by ,> <item>": -1 = as for
+ * everyone, 0 = none); a quest's rules in file order, the first one that has the player's class counts. Several skills:
+ * each turn-in teaches the first one of them the player doesn't know yet (e.g. Seyan'Du: Stun, then Immunity). */
 #define MAXQCLS 2048
-struct qcls { int t; unsigned int mask; int skill, item; };
+#define QSKILLS 4
+struct qcls { int t; unsigned int mask; int nsk, skill[QSKILLS], item; };
 static struct qcls qcls[MAXQCLS];
 static int nqcls=0;
 static const struct qcls *qcls_find(int t,int co)
@@ -292,9 +294,15 @@ int talk_load(void)
 			continue;
 		}
 		if (!strcmp(w1,"qclass")) {		// qclass <t> <classes joined by |> <skill, -1 = as for everyone, 0 = none> <item, -1 = as for everyone, 0 = none>
-			int t2,sk,itm; char cl[200];
-			if (sscanf(q,"%d %199s %d %d",&t2,cl,&sk,&itm)==4 && t2>0 && t2<MAXTCHARS && class_mask(cl) && sk>=-1 && sk<50 && itm>=-1 && itm<MAXTITEM && nqcls<MAXQCLS) {
-				struct qcls *c=&qcls[nqcls++]; c->t=t2; c->mask=class_mask(cl); c->skill=sk; c->item=itm;
+			int t2,itm,ok=1,k; char cl[200],sk[100],*p2;
+			if (sscanf(q,"%d %199s %99s %d",&t2,cl,sk,&itm)==4 && t2>0 && t2<MAXTCHARS && class_mask(cl) && itm>=-1 && itm<MAXTITEM && nqcls<MAXQCLS) {
+				struct qcls *c=&qcls[nqcls]; c->t=t2; c->mask=class_mask(cl); c->item=itm; c->nsk=0;
+				for (p2=sk; *p2 && c->nsk<QSKILLS; ) {
+					k=strtol(p2,&p2,10); if (k<-1 || k>=50) ok=0;
+					c->skill[c->nsk++]=k;
+					if (*p2==',') p2++; else if (*p2) { ok=0; break; }
+				}
+				if (ok && c->nsk) nqcls++; else bad++;
 			} else bad++;
 			continue;
 		}
@@ -1037,14 +1045,30 @@ static void quest_count_add(int co,int t)
 	if (qcfd>=0 && pwrite(qcfd,&r,sizeof(r),QHDR+(off_t)co*sizeof(r))!=sizeof(r)) xlog("cannot write %s",QCOUNT_FILE);
 }
 
-/* class rewards of item quests: the skill template t teaches character co (as data[50]: 0 = none) */
-int quest_teach(int t,int co)
+/* the skills template t's quest teaches character co, in order (class rewards, else its own data[50]); returns how many */
+int quest_skills(int t,int co,int *out)
 {
 	const struct qcls *c;
+	int n;
 	if (!talk_loaded) talk_load();
 	if (t<1 || t>=MAXTCHARS) return 0;
-	if ((c=qcls_find(t,co)) && c->skill>=0) return c->skill;
-	return ch_temp[t].data[50];
+	if ((c=qcls_find(t,co)) && c->skill[0]>=0) {
+		for (n=0; n<c->nsk; n++) out[n]=c->skill[n]>0 && c->skill[n]<50 ? c->skill[n] : 0;
+		return c->nsk==1 && !out[0] ? 0 : c->nsk;
+	}
+	out[0]=ch_temp[t].data[50];
+	return out[0] ? 1 : 0;
+}
+
+/* the skill template t teaches character co at this turn-in (as data[50]: 0 = none): the first of its skills that co
+ * doesn't know and can learn; if there is none, the first one (so the NPC says co knows it already) */
+int quest_teach(int t,int co)
+{
+	int sk[QSKILLS],n,cnt=quest_skills(t,co,sk);
+	if (!cnt) return 0;
+	if (IS_SANECHAR(co)) for (n=0; n<cnt; n++) if (sk[n] && !ch[co].skill[sk[n]][0] && ch[co].skill[sk[n]][2]) return sk[n];
+	for (n=0; n<cnt; n++) if (sk[n]) return sk[n];
+	return 0;
 }
 
 /* ... and the item: the class's item replaces the quest's own item (the first reward, and later steps that give the same) */

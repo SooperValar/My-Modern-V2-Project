@@ -229,7 +229,7 @@ def talk_parse(text):
                 r['rmin'], r['rmax'] = int(a[1]), int(a[2])
             elif k == 'qclass' and len(a) >= 4 and not a[1].isdigit():   # class rewards: classes (joined by |), skill, item (-1 = as for everyone)
                 r = qrew.setdefault(int(a[0]), {'lim': 0, 'first': 0, 'gold': 0, 'st': []})
-                r.setdefault('cls', []).append({'c': a[1].lower(), 's': int(a[2]), 'i': int(a[3])})
+                r.setdefault('cls', []).append({'c': a[1].lower(), 's': [int(v) for v in a[2].split(',') if v.lstrip('-').isdigit()] or [-1], 'i': int(a[3])})
             elif k == 'qstage' and len(a) >= 5 and int(a[0]) in qrew:
                 qrew[int(a[0])]['st'].append([int(x) for x in a[1:5]])
             elif k == 'order' and len(a) >= 2:          # #quest list order (Quests page): template, place (-1 = not listed)
@@ -312,7 +312,8 @@ def talk_text(quests, npcs, names):
             if r.get('rmin', -1) >= 0 or r.get('rmax', -1) >= 0:
                 out.append('qrank %d %d %d' % (t, int(r.get('rmin', -1)), int(r.get('rmax', -1))))
             for c in (r.get('cls') or []):
-                out.append('qclass %d %s %d %d' % (t, c['c'], int(c['s']), int(c['i'])))
+                sk = c['s'] if isinstance(c['s'], list) else [c['s']]
+                out.append('qclass %d %s %s %d' % (t, c['c'], ','.join(str(int(v)) for v in sk[:4]) or '-1', int(c['i'])))
         out.append('')
     cl = quests.get('clears') or {}
     if cl:
@@ -1213,7 +1214,8 @@ class World:
                                    'st': [[cl(v) for v in (list(x) + [0] * 4)[:4]] for x in (r.get('st') or [])[:7]],
                                    'rmin': rk(r.get('rmin')), 'rmax': rk(r.get('rmax')),
                                    'cls': [{'c': '|'.join(n for n in str(c.get('c', '')).lower().split('|') if n in CLASS_NAMES),
-                                            's': max(-1, min(49, int(c.get('s', -1)))), 'i': max(-1, min(MAXTITEM - 1, int(c.get('i', -1))))}
+                                            's': [max(-1, min(49, int(v))) for v in (c.get('s') if isinstance(c.get('s'), list) else [c.get('s', -1)])][:4] or [-1],
+                                            'i': max(-1, min(MAXTITEM - 1, int(c.get('i', -1))))}
                                            for c in (r.get('cls') or []) if isinstance(c, dict)
                                            and any(n in CLASS_NAMES for n in str(c.get('c', '')).lower().split('|'))][:16]}
                           for t, r in rewards.items() if 0 < int(t) < MAXTCHARS}
@@ -6461,7 +6463,17 @@ function repRow(q) {                  // the Times settings under a quest's row:
       const l2 = document.createElement('div'); l2.className = 'lb'; l2.textContent = 'For'; g.appendChild(l2);
       const r2 = document.createElement('div'); r2.className = 'ln'; r2.style.flexWrap = 'wrap'; g.appendChild(r2);
       const sp = t => { const e = document.createElement('span'); e.textContent = t; return e; };
-      const sk = sel([[-1, 'the row\'s skill'], [0, 'no skill'], ...SKILLS.map((n, i) => [i, n]).filter(([i]) => i > 0)], () => c.s, x => { c.s = x; re(); });
+      if (!Array.isArray(c.s)) c.s = [c.s ?? -1];
+      // the skills it teaches these classes: one, or several in turn (each turn-in teaches the next one they don't know yet)
+      const sk = document.createElement('span'); sk.style.cssText = 'display:inline-flex;gap:4px;align-items:center;flex-wrap:wrap';
+      c.s.forEach((v, j) => {
+        if (j) sk.append(Object.assign(document.createElement('span'), { textContent: 'then' }));
+        sk.append(sel(j ? SKILLS.map((n, i) => [i, n]).filter(([i]) => i > 0) : [[-1, 'the row\'s skill'], [0, 'no skill'], ...SKILLS.map((n, i) => [i, n]).filter(([i]) => i > 0)],
+          () => v, x => { c.s[j] = x; if (j === 0 && x <= 0) c.s.length = 1; re(); }));
+        if (j) { const xx = document.createElement('button'); xx.className = 'sm'; xx.textContent = '×'; xx.title = 'Remove this skill'; xx.onclick = () => { c.s.splice(j, 1); re(); }; sk.append(xx); }
+      });
+      if (c.s[0] > 0 && c.s.length < 4) { const ad2 = document.createElement('button'); ad2.className = 'sm'; ad2.textContent = '+ then…'; ad2.title = 'Another skill after this one: the next turn-in teaches it (e.g. Stun, then Immunity)';
+        ad2.onclick = () => { c.s.push(c.s[c.s.length - 1]); re(); }; sk.append(ad2); }
       const it = c.i < 0 ? Object.assign(document.createElement('button'), { className: 'sm', textContent: 'the row\'s item', title: 'Click to give these classes their own item',
         onclick: () => { c.i = 0; re(); } }) : qpick(() => c.i, x => { c.i = x; re(); }, 'nothing');
       const x = document.createElement('button'); x.className = 'sm'; x.textContent = '×'; x.title = 'Remove this class reward';
@@ -6472,12 +6484,12 @@ function repRow(q) {                  // the Times settings under a quest's row:
     });
     const ad = document.createElement('button'); ad.className = 'sm'; ad.textContent = '+ Add a class reward';
     ad.title = 'Pick the classes, then what they learn and get instead of the row\'s reward';
-    ad.onclick = () => { R.cls.push({ c: 'templar', s: -1, i: -1 }); re(); };
+    ad.onclick = () => { R.cls.push({ c: 'templar', s: [-1], i: -1 }); re(); };
     const l3 = document.createElement('div'); l3.className = 'lb'; g.appendChild(l3);
     const r3 = document.createElement('div'); r3.className = 'ln'; g.appendChild(r3); r3.appendChild(ad);
     if (R.cls.length) {
       const h = document.createElement('div'); h.className = 'hint'; h.style.gridColumn = '1 / -1'; h.style.margin = 0;
-      h.textContent = 'Click the classes a reward is for (gold = picked). The first rule with the player\'s class counts; other classes get the row\'s reward. Its skill is taught instead of the row\'s (or none), its item given instead of the row\'s item (the first reward, and later steps that give the row\'s item). Exp, gold, times and ranks are the same for every class. #quest shows each player their own.';
+      h.textContent = 'Click the classes a reward is for (gold = picked). The first rule with the player\'s class counts; other classes get the row\'s reward. Its skill is taught instead of the row\'s (or none; with "then", each turn-in teaches the next skill they don\'t know yet and the NPC tells them to come back for it), its item given instead of the row\'s item (the first reward, and later steps that give the row\'s item). Exp, gold, times and ranks are the same for every class. #quest shows each player their own.';
       g.appendChild(h);
     }
   }
