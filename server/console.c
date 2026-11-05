@@ -185,7 +185,7 @@ static void con_cmd(char *line)
 		return;
 	}
 	if (!strcmp(w[0],"fighttest")) {	// fighttest <player> <NPC template> <rounds> [back|kill]: the player hits the NPC (or "back": the NPC hits the player); damage total (test server only)
-		int t=atoi(w[2]),r=atoi(w[3]),back=!strcmp(w[4],"back"),cn=0,k,ii,chill=0,before; long long total=0;
+		int t=atoi(w[2]),r=atoi(w[3]),back=!strcmp(w[4],"back"),cn=0,k,ii,chill=0,before,nb; long long total=0,thorns=0;
 		if (!(co=con_player(w[1]))) return;
 		for (n=1; n<MAXCHARS; n++) if (ch[n].used==USE_ACTIVE && !(ch[n].flags&(CF_PLAYER|CF_BODY)) && ch[n].temp==t) { cn=n; break; }
 		if (!cn) { out("  No NPC of template %d in the world.\n",t); return; }
@@ -199,13 +199,16 @@ static void con_cmd(char *line)
 		for (k=0; k<r; k++) {
 			ch[co].a_hp=ch[co].hp[5]*1000; ch[cn].a_hp=ch[cn].hp[5]*1000;
 			before=back ? ch[co].a_hp : ch[cn].a_hp;
+			nb=ch[cn].a_hp;
 			if (back) do_attack(cn,co,0); else do_attack(co,cn,0);
 			total+=before-(back ? ch[co].a_hp : ch[cn].a_hp);
+			if (back) thorns+=nb-ch[cn].a_hp;
 			for (ii=0; ii<20; ii++) if (ch[cn].spell[ii] && it[ch[cn].spell[ii]].temp==SPELL_CHILL) { chill++; it[ch[cn].spell[ii]].used=USE_EMPTY; ch[cn].spell[ii]=0; really_update_char(cn); }
 		}
 		ch[co].a_hp=ch[co].hp[5]*1000; ch[cn].a_hp=ch[cn].hp[5]*1000;
 		out("  %d rounds, damage %s: %lld.%03lld hp (%lld.%03lld a round), %s chilled %d times.\n",r,back ? "taken by the player" : "done to the NPC",
 		    total/1000,total%1000,total/r/1000,total/r%1000,ch[cn].name,chill);
+		if (back) out("  Damage back to %s (thorns, frost): %lld.%03lld hp (%lld.%03lld a round).\n",ch[cn].name,thorns/1000,thorns%1000,thorns/r/1000,thorns/r%1000);
 		return;
 	}
 	if (!strcmp(w[0],"items")) {	// items <player>: the backpack and the hand, with stack counts

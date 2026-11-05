@@ -303,6 +303,12 @@ The design is in `docs/ITEM_TIERS.md`.
 - The Helmet, Armor, Leggings, Boots and Gloves of Ice (unique, templates 1272-1276) showed "Sprite ... is missing": they now have pictures, the Fire set recoloured to ice blue with frost-white flecks (sprites 18100-18104, `tools/sprites/ice_set.py`). Players get them with the next client update.
 - **Cloak of Ice** (new, template 1407, sprite 18105 from the Cloak of Fire): the Ice set is now a complete set of six like the Fire set (armor 6, Stealth -10, unique; `tools/world/ice_cloak.txt`). The older **Ice Cloak** (909, traded for an ice gargoyle egg, temporary) stays as it is, unique and on its own (Cody's wish). `#specialarmor` says "Ice set (6 pieces)".
 
+### Damage to attackers (thorns) on every landed blow
+- Items with "Damage to attackers" (and the Epic Thorns effect) now hurt the attacker on every melee blow that lands,
+  also when your armor stops all of its damage (before: only blows that hurt you). Still adds up over the worn pieces
+  (full Fire set 1-18, full Ice set 1-12). Being tested by Cody (TODO 22); may be toned down.
+- `fighttest ... back` also shows the damage done back to the monster (thorns, frost).
+
 ### Ice Gargoyle Cape (was the Ice Cloak) (`tools/world/ice_names.txt`)
 - The old **Ice Cloak** (909, Syleia's ice egg trade, temporary, unique) is now the **Ice Gargoyle Cape**: name, reference,
   description ("A cape made of ice..."), `#specialarmor`, and Syleia's answer (also when asked about the "cape"). Its stats

@@ -3250,6 +3250,10 @@ int do_hurt(int cn,int co,int dam,int type)
                 do_notify_char(cn,NT_DIDHIT,co,dam/1000,0,0);
         }
 
+        // Damage to attackers (thorns): every landed melee blow triggers it, also when the armor stopped all of the
+        // damage (MyV2, Cody; the blows that do hurt trigger it further down, if the defender survives)
+        if (dam<1 && type==0 && cn && ch[co].gethit_dam>0) do_hurt(co,cn,RANDOM(ch[co].gethit_dam)+1,3);
+
         if (dam<1) return 0;
 
         // give some EXPs to the attacker for a succesful blow:
@@ -3337,7 +3341,7 @@ int do_hurt(int cn,int co,int dam,int type)
 
                 ch[cn].cerrno=ERR_SUCCESS;
         } else {
-                if (type==0 && ch[co].gethit_dam>0) do_hurt(co,cn,RANDOM(ch[co].gethit_dam)+1,3);
+                if (type==0 && cn && ch[co].gethit_dam>0) do_hurt(co,cn,RANDOM(ch[co].gethit_dam)+1,3);
         }
 
         return dam/1000;
