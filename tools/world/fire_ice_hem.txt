@@ -37,6 +37,18 @@ it 1407 hpreq 50
 it 1407 endreq 50
 it 1407 manareq 50
 
-# The Cloak of Ice was copied from the Cloak of Fire and kept its light / damage to attackers: now like the other Ice pieces.
+# The Cloak of Ice was copied from the Cloak of Fire and kept its light: now like the other Ice pieces.
 it 1407 light 100 0
-it 1407 gethit 3
+# Damage to attackers swapped (Cody): Fire 1-3, Ice 1-2.
+it 623 gethit 3
+it 624 gethit 3
+it 625 gethit 3
+it 626 gethit 3
+it 627 gethit 3
+it 628 gethit 3
+it 1272 gethit 2
+it 1273 gethit 2
+it 1274 gethit 2
+it 1275 gethit 2
+it 1276 gethit 2
+it 1407 gethit 2

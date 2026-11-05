@@ -326,8 +326,8 @@ The design is in `docs/ITEM_TIERS.md`.
 - New console commands (testing): `wear <player> <template>|off` (puts a new item straight into its worn slot and shows
   the main values), `fighttest <player> <NPC template> <rounds> [back]` (damage totals; test server only, it really fights).
 - Every piece of both sets needs Hitpoints, Endurance and Mana 50 (were 150 Fire / 200 Ice; `tools/world/fire_ice_hem.txt`).
-  They keep their Light (Fire 220, Ice 100) and Damage to attackers (Fire 1-2, Ice 1-3); the Cloak of Ice had the
-  Fire values (copied from the Cloak of Fire) and now has the Ice ones. `build_lab` learned `gethit`, `hpreq`,
+  They keep their Light (Fire 220, Ice 100; the Cloak of Ice had Fire's 220, now 100). Damage to attackers swapped:
+  Fire 1-3, Ice 1-2 (were Fire 1-2, Ice 1-3). `build_lab` learned `gethit`, `hpreq`,
   `endreq`, `manareq`.
 - Pieces already in the world get the new numbers with the new tool `tools/world/refresh_items.c`.
 - **No longer unique: rare late-game drops** (`tools/world/fire_ice_drops.txt`, `populate.c`): monsters worth over 1.5 million
