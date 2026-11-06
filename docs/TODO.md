@@ -63,3 +63,4 @@ Cody wants to revisit these five, like the tool symbols: grid, see through walls
 23. **Merchants tab + shop rework** (Cody, Nov 4): LIVE Nov 4 (server `merch.c`, editor Merchants tab). See CHANGES.md "Merchants". Cody to check in game: pages, selling + buying back, the prices.
 
 24. ~~**Class rewards**~~ (LIVE Nov 5): item quests (Quests page, "+ Add a class reward", `qclass`) and conversation lines ("the player's class" condition, "By class" split) can give each picked class its own skill / item. Cody sets them up when he wants.
+- Nov 5 live: Ingrid/Gordon class rewards (qclass lines added to the live npctalk.dat), Warrior templates start Immunity/Surround Hit at 4, Identify/Light/Recall fixed at 250.
