@@ -6210,7 +6210,7 @@ window.addEventListener('keydown', e => {
   if (TP && k === 'escape') { if (tplPick) tplPicked(null); else if ($('#ipop').style.display === 'flex') $('#ipop').style.display = 'none'; else closeTemplate(); return; }
   if (TP && !tplPick) return;      // the template editor is open: its fields get the keys
   if ((e.ctrlKey || e.metaKey) && k === 'k') { e.preventDefault(); $('#q').focus(); $('#q').select(); return; }
-  if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable) {
     if (k === 'escape') e.target.blur();
     return;
   }
@@ -6238,7 +6238,7 @@ window.addEventListener('keydown', e => {
   if (k === 'arrowleft') { cam.x -= step; redraw(); } else if (k === 'arrowright') { cam.x += step; redraw(); }
   else if (k === 'arrowup') { cam.y -= step; redraw(); } else if (k === 'arrowdown') { cam.y += step; redraw(); }
 });
-window.addEventListener('keyup', e => { if (e.key === ' ') { spaceDown = false; setTool(tool); } });
+window.addEventListener('keyup', e => { if (e.key === ' ' && spaceDown) { spaceDown = false; setTool(tool); } });
 window.addEventListener('blur', () => { spaceDown = false; });
 
 // ---------------------------------------------------------------- search
