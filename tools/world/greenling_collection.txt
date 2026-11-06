@@ -1,0 +1,23 @@
+# Greenling eyes like Ratling eyes (Cody, 2026-11-05): the full Greenling Eye Collector becomes a Greenling Eye
+# Collection (was: the Greenling Eye Essence potion at once), which Robin takes for the essence - Robin's second item
+# quest, kept in template 2004 (an unplaced copy of Robin; npctalk.dat "qalias 2004 246"; rewards on the Quests page).
+# Apply: build_lab <.dat> greenling_collection.txt; fix_collectors.py <.dat> (collectors already in the world);
+# add "qalias 2004 246" to npctalk.dat.
+
+it 1408 copy 266
+it 1408 name Greenling Eye Collection
+it 1408 ref Greenling Eye Collection
+it 1408 desc A complete collection of greenling's eyes.
+it 1408 spr 16739 0
+it 1408 value 6000
+it 823 d 9 1408
+
+ch 2004 copy 246
+ch 2004 pos 0 0
+ch 2004 clrflags 10
+ch 2004 d 29 0
+ch 2004 d 49 1408
+ch 2004 d 50 0
+ch 2004 d 51 0
+ch 2004 d 66 833
+ch 2004 text 2 I collect Greenling's Eyes too, %s. Bring me a complete Greenling Eye Collection and I'll give you a potion of Greenling Eye Essence.

@@ -3497,7 +3497,7 @@ function questsRender() {
     const who = td(); const w = document.createElement('div'); w.className = 'who'; w.appendChild(thumb(q.sprite || 0, 30, 30));
     const nmd = document.createElement('div'); nmd.innerHTML = '<a></a><div class="n"></div>'; nmd.firstChild.textContent = q.name; nmd.firstChild.title = 'Open this NPC in the NPC editor';
     nmd.firstChild.onclick = () => gotoNpc(q.t, 'talk');
-    nmd.lastChild.textContent = `template ${q.t}${q.count ? '' : ' · not in the world'}`; w.appendChild(nmd); who.appendChild(w);
+    nmd.lastChild.textContent = q.extra_of ? `extra quest of template ${q.extra_of} · its own ${q.t}` : `template ${q.t}${q.count ? '' : ' · not in the world'}`; w.appendChild(nmd); who.appendChild(w);
     const special = qSpecial(q);
     if (special) { const sp = document.createElement('div'); sp.className = 'n'; sp.style.color = 'var(--gold2)'; sp.textContent = special; sp.title = 'Built into the game\'s code, not set here'; nmd.appendChild(sp); }
     const wh = td('where'); wh.textContent = (q.where || '–').replace(/^Aston, /, ''); if (/^Aston, /.test(q.where || '')) wh.title = q.where; if (q.x || q.y) { wh.style.cursor = 'pointer'; wh.title = 'Show it on the map'; wh.onclick = () => { const b = document.querySelector('nav button[data-m="map"]'); if (b) b.click(); setTimeout(() => { centerOn(q.x, q.y); selectTile(q.x, q.y); }, 50); }; }
@@ -3800,17 +3800,28 @@ function questNew() {
   const fill = () => {
     const s = q.value.trim().toLowerCase();
     const have = new Set(QS.map(x => x.t));
-    const rows = (pal.npcs || []).filter(t => !have.has(t[0]) && (!s || t[1].toLowerCase().includes(s) || String(t[0]) === s)).slice(0, 80);
+    const rows = (pal.npcs || []).filter(t => !s || t[1].toLowerCase().includes(s) || String(t[0]) === s).slice(0, 80);
     lst.innerHTML = '';
     for (const t of rows) {
       const e = document.createElement('div'); e.className = 'r'; e.append(thumb(t[2], 26));
-      const a = document.createElement('span'); a.textContent = t[1]; e.append(a);
+      const a = document.createElement('span'); a.textContent = t[1] + (have.has(t[0]) ? ' · another quest' : ''); e.append(a);
       const b = document.createElement('span'); b.className = 'n'; b.textContent = t[0]; e.append(b);
       e.onmousedown = async ev => {
         ev.preventDefault(); p.style.display = 'none';
-        const c = await api('/api/ctemp?t=' + t[0]);
+        let c = await api('/api/ctemp?t=' + t[0]), qt = t[0], extra = 0;
         if (c.error) return toast(c.error, true);
-        const row = { t: t[0], name: c.name, sprite: t[2], x: c.x, y: c.y, where: '', data: c.data, hint: c.text[2] || '', order: 0, puzzle: false, count: c.count + c.pending, listed: true, o0: false, rew: qRewNone(), r0: JSON.stringify(qRewNone()) };
+        if (have.has(t[0])) {        // it gives a quest already: its next quest lives in an unplaced copy of it (qalias), the NPC takes both items
+          if (RO()) return toast('The game server is running and live editing is not available.', true);
+          if (!confirm(`${c.name} already gives a quest. Add another one? (It is kept in a hidden copy of ${c.name}; ${c.name} takes either item.)`)) return;
+          const r = await api('/api/edit', { ops: [{ op: 'ctempnew', from: t[0], name: c.name }], label: 'extra quest of ' + c.name });
+          if (r.error || !r.made) return toast(r.error || (r.msgs || []).join('\n') || 'Could not make it.', true);
+          qt = r.made[1]; extra = t[0];
+          c = await api('/api/ctemp?t=' + qt);
+          c.data[49] = 0; c.data[50] = 0; c.data[51] = 0; c.data[66] = 0; c.text[2] = '';
+          await api('/api/edit', { ops: [{ op: 'ctempset', t: qt, fields: { data: c.data }, text: c.text, respawn: false }], label: 'extra quest of ' + c.name + ': empty to start' });
+          await api('/api/questorder', { only: 'alias', alias: Object.assign({}, ...QS.filter(x => x.extra_of).map(x => ({ [x.t]: x.extra_of })), { [qt]: extra }) });
+        }
+        const row = { t: qt, extra_of: extra, name: c.name, sprite: t[2], x: c.x, y: c.y, where: '', data: c.data, hint: c.text[2] || '', order: 0, puzzle: false, count: c.count + c.pending, listed: true, o0: false, rew: qRewNone(), r0: JSON.stringify(qRewNone()) };
         row.o = JSON.stringify([0, 0, 0, 0, row.hint]);
         QS.push(row); questsRender(); toast(`${c.name} added at the end: pick what it wants and what it gives, then Save.`);
       };
@@ -3835,7 +3846,8 @@ async function questsSave() {
   const order = {}; let k = 0;
   for (const q of QS) { if (q.puzzle || !q.data[49]) continue; order[q.t] = q.listed ? ++k : -1; }
   const rewards = {}; for (const q of QS) if (q.rew.lim || q.rew.first || q.rew.gold || q.rew.st.length || (q.rew.rmin ?? -1) >= 0 || (q.rew.rmax ?? -1) >= 0 || qHasCls(q.rew)) rewards[q.t] = q.rew;
-  const r = await api('/api/questorder', { order, rewards });
+  const alias = {}; for (const q of QS) if (q.extra_of) alias[q.t] = q.extra_of;
+  const r = await api('/api/questorder', { order, rewards, alias });
   toast((rows.length ? `${rows.length} quest${rows.length === 1 ? '' : 's'} changed${info.running ? '' : ' (Save to the game on the Map page writes them)'}. ` : '') + 'Order: ' + (r.msg || r.error || ''), !!r.error);
   await questsLoad();
 }

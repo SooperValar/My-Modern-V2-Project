@@ -175,7 +175,7 @@ OPS = ('=', '!=', '<', '>', '<=', '>=')
 
 def talk_parse(text):
     quests, npcs, cur, e = {}, {}, None, None
-    steps, chests, chest, order, qrew, clears = {}, {}, None, {}, {}, {}
+    steps, chests, chest, order, qrew, clears, alias = {}, {}, None, {}, {}, {}, {}
     for line in text.splitlines():
         line = line.strip()
         if not line or line.startswith('#'):
@@ -232,6 +232,8 @@ def talk_parse(text):
                 r.setdefault('cls', []).append({'c': a[1].lower(), 's': [int(v) for v in a[2].split(',') if v.lstrip('-').isdigit()] or [-1], 'i': int(a[3])})
             elif k == 'qstage' and len(a) >= 5 and int(a[0]) in qrew:
                 qrew[int(a[0])]['st'].append([int(x) for x in a[1:5]])
+            elif k == 'qalias' and len(a) >= 2:         # an extra item quest of an NPC: quest template (an unplaced copy), the NPC
+                alias[int(a[0])] = int(a[1])
             elif k == 'order' and len(a) >= 2:          # #quest list order (Quests page): template, place (-1 = not listed)
                 order[int(a[0])] = int(a[1])
             elif k == 'quest' and a:
@@ -287,7 +289,7 @@ def talk_parse(text):
                 e['acts'].append({'type': k})
         except (IndexError, ValueError):
             continue
-    return {'names': quests, 'steps': steps, 'chests': chests, 'order': order, 'qrew': qrew, 'clears': clears}, npcs
+    return {'names': quests, 'steps': steps, 'chests': chests, 'order': order, 'qrew': qrew, 'clears': clears, 'alias': alias}, npcs
 
 
 def talk_text(quests, npcs, names):
@@ -298,6 +300,12 @@ def talk_text(quests, npcs, names):
         out.append('# #quest list: order <NPC template> <place> (-1 = not listed) - the Quests page')
         for t in sorted(od, key=lambda t: (od[t] < 0, abs(od[t]), t)):
             out.append('order %d %d %s' % (t, od[t], names.get(t, '')))
+        out.append('')
+    al = {int(t): int(n) for t, n in (quests.get('alias') or {}).items() if int(t) != int(n)}
+    if al:
+        out.append('# extra item quests of an NPC: qalias <quest template (an unplaced copy of the NPC)> <NPC template> - the Quests page')
+        for t in sorted(al):
+            out.append('qalias %d %d %s' % (t, al[t], names.get(al[t], '')))
         out.append('')
     qr = {int(t): r for t, r in (quests.get('qrew') or {}).items() if r.get('lim') or r.get('first') or r.get('gold') or r.get('st')
           or r.get('rmin', -1) >= 0 or r.get('rmax', -1) >= 0 or r.get('cls')}
@@ -790,6 +798,7 @@ class World:
     def npc_templates(self):
         if self.tchar is None:
             return []
+        hidden = set(self.talk_load()[0].get('alias', {}))     # extra item quests: copies that hold a quest, not NPCs
         count = {}
         for c in range(1, MAXCHARS):
             o = c * CHAR_SIZE
@@ -802,7 +811,7 @@ class World:
             if not self.tchar[o + C_USED]:
                 continue
             fl = self.t_u64(t, C_FLAGS)
-            if fl & CF_PLAYER or t in PLAYER_START or t == 1:
+            if fl & CF_PLAYER or t in PLAYER_START or t == 1 or t in hidden:
                 continue
             x, y = struct.unpack_from('<hh', self.tchar, o + C_X)
             al = struct.unpack_from('<h', self.tchar, o + C_ALIGN)[0]
@@ -988,7 +997,7 @@ class World:
         try:
             return talk_parse(open(self.talk_path(), encoding='latin-1').read())
         except OSError:
-            return {'names': {}, 'steps': {}, 'chests': {}, 'order': {}, 'qrew': {}, 'clears': {}}, {}
+            return {'names': {}, 'steps': {}, 'chests': {}, 'order': {}, 'qrew': {}, 'clears': {}, 'alias': {}}, {}
 
     def talk_save(self, quests, npcs, ctl=None):
         p = self.talk_path()
@@ -1027,12 +1036,13 @@ class World:
                 d = list(struct.unpack_from('<100i', self.tchar, o + C_DATA))
                 if d[49] <= 0:
                     continue
-                x, y = struct.unpack_from('<hh', self.tchar, o + C_X)
+                npc = int(qs.get('alias', {}).get(t, t))          # an extra quest: its NPC's place and count
+                x, y = struct.unpack_from('<hh', self.tchar, npc * CHAR_SIZE + C_X)
                 where = self.zone(x, y) if (x or y) else ''
-                simple.append({'t': t, 'name': self.tname(t), 'sprite': self.tchar_sprite(t, 4),
+                simple.append({'t': t, 'name': self.tname(t), 'sprite': self.tchar_sprite(t, 4), 'extra_of': npc if npc != t else 0,
                                'x': x, 'y': y, 'where': where, 'data': d, 'hint': cstr(self.tchar[o + CT_TEXT + 2 * 160:o + CT_TEXT + 3 * 160]),
                                'order': order.get(t, 0), 'rew': dict({'lim': 0, 'first': 0, 'gold': 0, 'st': [], 'rmin': -1, 'rmax': -1}, **qrew.get(t, {})), 'puzzle': bool(d[50] == 0 and ('Labyrinth' in where or 'Tower' in where)),
-                               'count': len(self.living(t)) + len([p for p in self.pending() if p[2] == t])})
+                               'count': len(self.living(npc)) + len([p for p in self.pending() if p[2] == npc])})
         refs = {}
         for who, ents in npcs.items():
             label = ('tile %s' % who[1:]) if isinstance(who, str) else self.tname(who) if self.tchar is not None and 0 < who < MAXTCHARS else str(who)
@@ -1204,8 +1214,12 @@ class World:
             msg = 'saved; the game has it now' if r and 'Merchants loaded' in r else 'saved; the game reads it at its next start (it did not answer)'
         return {'msg': msg}
 
-    def quests_order_save(self, order, rewards=None, ctl=None):
+    def quests_order_save(self, order, rewards=None, ctl=None, alias=None, only_alias=False):
         qs, npcs = self.talk_load()
+        if alias is not None:
+            qs['alias'] = {int(t): int(n) for t, n in alias.items() if 0 < int(t) < MAXTCHARS and 0 < int(n) < MAXTCHARS and int(t) != int(n)}
+        if only_alias:                  # a new extra quest: just its NPC link, the order and rewards stay
+            return self.talk_save(qs, npcs, ctl)
         qs['order'] = {int(t): int(v) for t, v in order.items() if int(v) and 0 < int(t) < MAXTCHARS and -1 <= int(v) <= 30000}
         if rewards is not None:
             cl = lambda v: max(0, min(int(v or 0), 2000000000))
@@ -2718,7 +2732,7 @@ def make_handler(world, sprites, page, minimap, ctl):
             if u.path == '/api/merchants':
                 return self.js(world.merchants_save(body, ctl))
             if u.path == '/api/questorder':
-                return self.js({'msg': world.quests_order_save(body.get('order') or {}, body.get('rewards'), ctl)})
+                return self.js({'msg': world.quests_order_save(body.get('order') or {}, body.get('rewards'), ctl, body.get('alias'), body.get('only') == 'alias')})
             if u.path == '/api/zones':
                 err = world.zones_save(body.get('zones') or [], ctl)
                 if err and err != 'later':

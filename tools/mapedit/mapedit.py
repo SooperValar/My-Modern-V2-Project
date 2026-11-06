@@ -175,7 +175,7 @@ OPS = ('=', '!=', '<', '>', '<=', '>=')
 
 def talk_parse(text):
     quests, npcs, cur, e = {}, {}, None, None
-    steps, chests, chest, order, qrew, clears = {}, {}, None, {}, {}, {}
+    steps, chests, chest, order, qrew, clears, alias = {}, {}, None, {}, {}, {}, {}
     for line in text.splitlines():
         line = line.strip()
         if not line or line.startswith('#'):
@@ -232,6 +232,8 @@ def talk_parse(text):
                 r.setdefault('cls', []).append({'c': a[1].lower(), 's': [int(v) for v in a[2].split(',') if v.lstrip('-').isdigit()] or [-1], 'i': int(a[3])})
             elif k == 'qstage' and len(a) >= 5 and int(a[0]) in qrew:
                 qrew[int(a[0])]['st'].append([int(x) for x in a[1:5]])
+            elif k == 'qalias' and len(a) >= 2:         # an extra item quest of an NPC: quest template (an unplaced copy), the NPC
+                alias[int(a[0])] = int(a[1])
             elif k == 'order' and len(a) >= 2:          # #quest list order (Quests page): template, place (-1 = not listed)
                 order[int(a[0])] = int(a[1])
             elif k == 'quest' and a:
@@ -287,7 +289,7 @@ def talk_parse(text):
                 e['acts'].append({'type': k})
         except (IndexError, ValueError):
             continue
-    return {'names': quests, 'steps': steps, 'chests': chests, 'order': order, 'qrew': qrew, 'clears': clears}, npcs
+    return {'names': quests, 'steps': steps, 'chests': chests, 'order': order, 'qrew': qrew, 'clears': clears, 'alias': alias}, npcs
 
 
 def talk_text(quests, npcs, names):
@@ -298,6 +300,12 @@ def talk_text(quests, npcs, names):
         out.append('# #quest list: order <NPC template> <place> (-1 = not listed) - the Quests page')
         for t in sorted(od, key=lambda t: (od[t] < 0, abs(od[t]), t)):
             out.append('order %d %d %s' % (t, od[t], names.get(t, '')))
+        out.append('')
+    al = {int(t): int(n) for t, n in (quests.get('alias') or {}).items() if int(t) != int(n)}
+    if al:
+        out.append('# extra item quests of an NPC: qalias <quest template (an unplaced copy of the NPC)> <NPC template> - the Quests page')
+        for t in sorted(al):
+            out.append('qalias %d %d %s' % (t, al[t], names.get(al[t], '')))
         out.append('')
     qr = {int(t): r for t, r in (quests.get('qrew') or {}).items() if r.get('lim') or r.get('first') or r.get('gold') or r.get('st')
           or r.get('rmin', -1) >= 0 or r.get('rmax', -1) >= 0 or r.get('cls')}
@@ -790,6 +798,7 @@ class World:
     def npc_templates(self):
         if self.tchar is None:
             return []
+        hidden = set(self.talk_load()[0].get('alias', {}))     # extra item quests: copies that hold a quest, not NPCs
         count = {}
         for c in range(1, MAXCHARS):
             o = c * CHAR_SIZE
@@ -802,7 +811,7 @@ class World:
             if not self.tchar[o + C_USED]:
                 continue
             fl = self.t_u64(t, C_FLAGS)
-            if fl & CF_PLAYER or t in PLAYER_START or t == 1:
+            if fl & CF_PLAYER or t in PLAYER_START or t == 1 or t in hidden:
                 continue
             x, y = struct.unpack_from('<hh', self.tchar, o + C_X)
             al = struct.unpack_from('<h', self.tchar, o + C_ALIGN)[0]
@@ -988,7 +997,7 @@ class World:
         try:
             return talk_parse(open(self.talk_path(), encoding='latin-1').read())
         except OSError:
-            return {'names': {}, 'steps': {}, 'chests': {}, 'order': {}, 'qrew': {}, 'clears': {}}, {}
+            return {'names': {}, 'steps': {}, 'chests': {}, 'order': {}, 'qrew': {}, 'clears': {}, 'alias': {}}, {}
 
     def talk_save(self, quests, npcs, ctl=None):
         p = self.talk_path()
@@ -1027,12 +1036,13 @@ class World:
                 d = list(struct.unpack_from('<100i', self.tchar, o + C_DATA))
                 if d[49] <= 0:
                     continue
-                x, y = struct.unpack_from('<hh', self.tchar, o + C_X)
+                npc = int(qs.get('alias', {}).get(t, t))          # an extra quest: its NPC's place and count
+                x, y = struct.unpack_from('<hh', self.tchar, npc * CHAR_SIZE + C_X)
                 where = self.zone(x, y) if (x or y) else ''
-                simple.append({'t': t, 'name': self.tname(t), 'sprite': self.tchar_sprite(t, 4),
+                simple.append({'t': t, 'name': self.tname(t), 'sprite': self.tchar_sprite(t, 4), 'extra_of': npc if npc != t else 0,
                                'x': x, 'y': y, 'where': where, 'data': d, 'hint': cstr(self.tchar[o + CT_TEXT + 2 * 160:o + CT_TEXT + 3 * 160]),
                                'order': order.get(t, 0), 'rew': dict({'lim': 0, 'first': 0, 'gold': 0, 'st': [], 'rmin': -1, 'rmax': -1}, **qrew.get(t, {})), 'puzzle': bool(d[50] == 0 and ('Labyrinth' in where or 'Tower' in where)),
-                               'count': len(self.living(t)) + len([p for p in self.pending() if p[2] == t])})
+                               'count': len(self.living(npc)) + len([p for p in self.pending() if p[2] == npc])})
         refs = {}
         for who, ents in npcs.items():
             label = ('tile %s' % who[1:]) if isinstance(who, str) else self.tname(who) if self.tchar is not None and 0 < who < MAXTCHARS else str(who)
@@ -1204,8 +1214,12 @@ class World:
             msg = 'saved; the game has it now' if r and 'Merchants loaded' in r else 'saved; the game reads it at its next start (it did not answer)'
         return {'msg': msg}
 
-    def quests_order_save(self, order, rewards=None, ctl=None):
+    def quests_order_save(self, order, rewards=None, ctl=None, alias=None, only_alias=False):
         qs, npcs = self.talk_load()
+        if alias is not None:
+            qs['alias'] = {int(t): int(n) for t, n in alias.items() if 0 < int(t) < MAXTCHARS and 0 < int(n) < MAXTCHARS and int(t) != int(n)}
+        if only_alias:                  # a new extra quest: just its NPC link, the order and rewards stay
+            return self.talk_save(qs, npcs, ctl)
         qs['order'] = {int(t): int(v) for t, v in order.items() if int(v) and 0 < int(t) < MAXTCHARS and -1 <= int(v) <= 30000}
         if rewards is not None:
             cl = lambda v: max(0, min(int(v or 0), 2000000000))
@@ -2718,7 +2732,7 @@ def make_handler(world, sprites, page, minimap, ctl):
             if u.path == '/api/merchants':
                 return self.js(world.merchants_save(body, ctl))
             if u.path == '/api/questorder':
-                return self.js({'msg': world.quests_order_save(body.get('order') or {}, body.get('rewards'), ctl)})
+                return self.js({'msg': world.quests_order_save(body.get('order') or {}, body.get('rewards'), ctl, body.get('alias'), body.get('only') == 'alias')})
             if u.path == '/api/zones':
                 err = world.zones_save(body.get('zones') or [], ctl)
                 if err and err != 'later':
@@ -6334,7 +6348,7 @@ function questsRender() {
     const who = td(); const w = document.createElement('div'); w.className = 'who'; w.appendChild(thumb(q.sprite || 0, 30, 30));
     const nmd = document.createElement('div'); nmd.innerHTML = '<a></a><div class="n"></div>'; nmd.firstChild.textContent = q.name; nmd.firstChild.title = 'Open this NPC in the NPC editor';
     nmd.firstChild.onclick = () => gotoNpc(q.t, 'talk');
-    nmd.lastChild.textContent = `template ${q.t}${q.count ? '' : ' · not in the world'}`; w.appendChild(nmd); who.appendChild(w);
+    nmd.lastChild.textContent = q.extra_of ? `extra quest of template ${q.extra_of} · its own ${q.t}` : `template ${q.t}${q.count ? '' : ' · not in the world'}`; w.appendChild(nmd); who.appendChild(w);
     const special = qSpecial(q);
     if (special) { const sp = document.createElement('div'); sp.className = 'n'; sp.style.color = 'var(--gold2)'; sp.textContent = special; sp.title = 'Built into the game\'s code, not set here'; nmd.appendChild(sp); }
     const wh = td('where'); wh.textContent = (q.where || '–').replace(/^Aston, /, ''); if (/^Aston, /.test(q.where || '')) wh.title = q.where; if (q.x || q.y) { wh.style.cursor = 'pointer'; wh.title = 'Show it on the map'; wh.onclick = () => { const b = document.querySelector('nav button[data-m="map"]'); if (b) b.click(); setTimeout(() => { centerOn(q.x, q.y); selectTile(q.x, q.y); }, 50); }; }
@@ -6637,17 +6651,28 @@ function questNew() {
   const fill = () => {
     const s = q.value.trim().toLowerCase();
     const have = new Set(QS.map(x => x.t));
-    const rows = (pal.npcs || []).filter(t => !have.has(t[0]) && (!s || t[1].toLowerCase().includes(s) || String(t[0]) === s)).slice(0, 80);
+    const rows = (pal.npcs || []).filter(t => !s || t[1].toLowerCase().includes(s) || String(t[0]) === s).slice(0, 80);
     lst.innerHTML = '';
     for (const t of rows) {
       const e = document.createElement('div'); e.className = 'r'; e.append(thumb(t[2], 26));
-      const a = document.createElement('span'); a.textContent = t[1]; e.append(a);
+      const a = document.createElement('span'); a.textContent = t[1] + (have.has(t[0]) ? ' · another quest' : ''); e.append(a);
       const b = document.createElement('span'); b.className = 'n'; b.textContent = t[0]; e.append(b);
       e.onmousedown = async ev => {
         ev.preventDefault(); p.style.display = 'none';
-        const c = await api('/api/ctemp?t=' + t[0]);
+        let c = await api('/api/ctemp?t=' + t[0]), qt = t[0], extra = 0;
         if (c.error) return toast(c.error, true);
-        const row = { t: t[0], name: c.name, sprite: t[2], x: c.x, y: c.y, where: '', data: c.data, hint: c.text[2] || '', order: 0, puzzle: false, count: c.count + c.pending, listed: true, o0: false, rew: qRewNone(), r0: JSON.stringify(qRewNone()) };
+        if (have.has(t[0])) {        // it gives a quest already: its next quest lives in an unplaced copy of it (qalias), the NPC takes both items
+          if (RO()) return toast('The game server is running and live editing is not available.', true);
+          if (!confirm(`${c.name} already gives a quest. Add another one? (It is kept in a hidden copy of ${c.name}; ${c.name} takes either item.)`)) return;
+          const r = await api('/api/edit', { ops: [{ op: 'ctempnew', from: t[0], name: c.name }], label: 'extra quest of ' + c.name });
+          if (r.error || !r.made) return toast(r.error || (r.msgs || []).join('\n') || 'Could not make it.', true);
+          qt = r.made[1]; extra = t[0];
+          c = await api('/api/ctemp?t=' + qt);
+          c.data[49] = 0; c.data[50] = 0; c.data[51] = 0; c.data[66] = 0; c.text[2] = '';
+          await api('/api/edit', { ops: [{ op: 'ctempset', t: qt, fields: { data: c.data }, text: c.text, respawn: false }], label: 'extra quest of ' + c.name + ': empty to start' });
+          await api('/api/questorder', { only: 'alias', alias: Object.assign({}, ...QS.filter(x => x.extra_of).map(x => ({ [x.t]: x.extra_of })), { [qt]: extra }) });
+        }
+        const row = { t: qt, extra_of: extra, name: c.name, sprite: t[2], x: c.x, y: c.y, where: '', data: c.data, hint: c.text[2] || '', order: 0, puzzle: false, count: c.count + c.pending, listed: true, o0: false, rew: qRewNone(), r0: JSON.stringify(qRewNone()) };
         row.o = JSON.stringify([0, 0, 0, 0, row.hint]);
         QS.push(row); questsRender(); toast(`${c.name} added at the end: pick what it wants and what it gives, then Save.`);
       };
@@ -6672,7 +6697,8 @@ async function questsSave() {
   const order = {}; let k = 0;
   for (const q of QS) { if (q.puzzle || !q.data[49]) continue; order[q.t] = q.listed ? ++k : -1; }
   const rewards = {}; for (const q of QS) if (q.rew.lim || q.rew.first || q.rew.gold || q.rew.st.length || (q.rew.rmin ?? -1) >= 0 || (q.rew.rmax ?? -1) >= 0 || qHasCls(q.rew)) rewards[q.t] = q.rew;
-  const r = await api('/api/questorder', { order, rewards });
+  const alias = {}; for (const q of QS) if (q.extra_of) alias[q.t] = q.extra_of;
+  const r = await api('/api/questorder', { order, rewards, alias });
   toast((rows.length ? `${rows.length} quest${rows.length === 1 ? '' : 's'} changed${info.running ? '' : ' (Save to the game on the Map page writes them)'}. ` : '') + 'Order: ' + (r.msg || r.error || ''), !!r.error);
   await questsLoad();
 }

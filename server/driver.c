@@ -482,7 +482,7 @@ int npc_seemiss(int cn,int cc,int co)
 
 int npc_give(int cn,int co,int in,int money)
 {
-        int nr, ar, teach;
+        int nr, ar, teach, qt=0;
 
         if (ch[co].flags&(CF_PLAYER|CF_USURP)) ch[cn].data[92]=TICKS*60;
         else if (!group_active(cn)) return 0;
@@ -490,13 +490,17 @@ int npc_give(int cn,int co,int in,int money)
         // MyV2: the NPC's own dialogue can take this item (npctalk.dat)
         if (in && talk_custom_give(cn,co,in)) return 0;
 
-        if (in && ch[cn].data[49]==it[in].temp) {
+        // MyV2: the quest that wants this item: the NPC's own, or one of its extra quests (npctalk.dat "qalias")
+        if (in && !(in&0x80000000)) qt=quest_for_item(ch[cn].temp,it[in].temp);
+        if (in && !qt && ch[cn].data[49]==it[in].temp) qt=ch[cn].temp;
+
+        if (in && qt) {
                 // MyV2: the skill it teaches this player's class (class rewards, Quests page; as data[50])
-                teach=quest_teach(ch[cn].temp,co);
+                teach=quest_teach(qt,co);
                 // MyV2: the quest is only for some ranks (Quests page)
                 {
                         int lo,hi,rk;
-                        if (IS_PLAYER(co) && (rk=quest_rank_check(ch[cn].temp,co,&lo,&hi))!=0) {
+                        if (IS_PLAYER(co) && (rk=quest_rank_check(qt,co,&lo,&hi))!=0) {
                                 if (rk<0) do_sayx(cn,"You are not ready for this yet, %s. Come back when you are a %s.",ch[co].name,rank_name[lo]);
                                 else do_sayx(cn,"This task is not for one of your rank, %s.",ch[co].name);
                                 god_take_from_char(in,cn);
@@ -506,14 +510,14 @@ int npc_give(int cn,int co,int in,int money)
                         }
                 }
                 // MyV2: an item trade this player has done as often as it can be done (Quests page: "times")
-                if (!teach && talk_quest_maxed(cn,co)) {
+                if (!teach && talk_quest_maxed(qt,co)) {
                         do_sayx(cn,"Thank you, %s, but I don't need any more of those.",ch[co].name);
                         god_take_from_char(in,cn);
                         god_give_char(in,co);
                         do_char_log(co,1,"%s did not accept the %s.\n",ch[cn].reference,it[in].name);
                         return 0;
                 }
-                if (ch[cn].data[49]==740 && ch[cn].temp==518) { // hack for black candle
+                if (ch_temp[qt].data[49]==740 && qt==518) { // hack for black candle
 
                         ch[co].data[43]++;
 
@@ -547,14 +551,14 @@ int npc_give(int cn,int co,int in,int money)
                                 do_char_log(co,0,"You learned %s!\n",skilltab[nr].name);
                                 do_update_char(co);
                                 {	// another skill of this quest for this class: the next turn-in teaches it
-                                        int nx=quest_teach(ch[cn].temp,co);
+                                        int nx=quest_teach(qt,co);
                                         if (nx && nx!=nr && !ch[co].skill[nx][0]) do_sayx(cn,"Bring me the item again to learn %s, %s!",skilltab[nx].name,ch[co].name);
                                 }
-                                if ((nr=ch[cn].data[51])!=0) {
+                                if ((nr=ch_temp[qt].data[51])!=0) {
                                         do_sayx(cn,"Now I'll teach you a bit about life, the world and everything, %s.",ch[co].name);
                                         do_give_exp(co,nr,0,-1);
                                 }
-                                if ((nr=quest_gold_first(ch[cn].temp))>0) {	// MyV2: gold with the skill (Quests page)
+                                if ((nr=quest_gold_first(qt))>0) {	// MyV2: gold with the skill (Quests page)
                                         ch[co].gold+=nr; do_update_char(co);
                                         do_char_log(co,1,"%s gives you %dG %dS.\n",ch[cn].reference,nr/100,nr%100);
                                 }
@@ -566,14 +570,14 @@ int npc_give(int cn,int co,int in,int money)
                 /* items with a return gift */
                 if (!teach) {
                         // MyV2: item trades: item, exp and gold, first times / later, how often (npctalk.c, the Quests page)
-                        if (!talk_quest_trade(cn,co,in) && (nr=ch[cn].data[66])!=0) {	// not a player: the plain old trade
+                        if (!talk_quest_trade(cn,co,in,qt) && (nr=ch_temp[qt].data[66])!=0) {	// not a player: the plain old trade
                                 do_sayx(cn,"Here is your %s in exchange.",it_temp[nr].reference);
                                 god_take_from_char(in,cn);
                                 it[in].used=USE_EMPTY;
                                 in=god_create_item(nr);
                                 god_give_char(in,co);
                         }
-                } else if ((nr=quest_class_item(ch[cn].temp,co,ch[cn].data[66],0))!=0) {	// (class rewards: its item)
+                } else if ((nr=quest_class_item(qt,co,ch_temp[qt].data[66],0))!=0) {	// (class rewards: its item)
                         do_sayx(cn,"Here is your %s in exchange.",it_temp[nr].reference);
                         god_take_from_char(in,cn);
                         it[in].used=USE_EMPTY;

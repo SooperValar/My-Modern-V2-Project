@@ -236,9 +236,9 @@ static void con_cmd(char *line)
 		int t=atoi(w[2]),cn=0,in,e0,g0;
 		extern int npc_give(int cn,int co,int in,int money);
 		if (!(co=con_player(w[1]))) return;
-		for (n=1; n<MAXCHARS; n++) if (ch[n].used==USE_ACTIVE && !(ch[n].flags&(CF_PLAYER|CF_BODY)) && ch[n].temp==t) { cn=n; break; }
-		if (!cn) { out("  No NPC of template %d in the world.\n",t); return; }
-		if (ch[cn].data[49]<=0 || !(in=god_create_item(ch[cn].data[49]))) { out("  %s wants nothing.\n",ch[cn].name); return; }
+		for (n=1; n<MAXCHARS; n++) if (ch[n].used==USE_ACTIVE && !(ch[n].flags&(CF_PLAYER|CF_BODY)) && ch[n].temp==quest_npc(t)) { cn=n; break; }	// (an extra quest: its NPC)
+		if (!cn) { out("  No NPC of template %d in the world.\n",quest_npc(t)); return; }
+		if (ch_temp[t].data[49]<=0 || !(in=god_create_item(ch_temp[t].data[49]))) { out("  %s wants nothing.\n",ch[cn].name); return; }
 		if (!god_give_char(in,cn)) { it[in].used=USE_EMPTY; out("  %s can't take it.\n",ch[cn].name); return; }
 		e0=ch[co].points_tot; g0=ch[co].gold;
 		talk_set_echo(con_echo);

@@ -171,6 +171,9 @@ static struct qrew qrew[MAXTCHARS];
 #define QSKILLS 4
 struct qcls { int t; unsigned int mask; int nsk, skill[QSKILLS], item; };
 static struct qcls qcls[MAXQCLS];
+/* extra item quests of an NPC ("qalias <quest template> <NPC template>"): an unplaced copy of the NPC holds the quest
+ * (what it wants, teaches, gives, its hint, rewards, order...), the NPC itself takes the item */
+static unsigned short qalias[MAXTCHARS];
 static int nqcls=0;
 static const struct qcls *qcls_find(int t,int co)
 {
@@ -244,6 +247,7 @@ int talk_load(void)
 	memset(qorder,0,sizeof(qorder));
 	memset(qrew,0,sizeof(qrew));
 	nqcls=0;
+	memset(qalias,0,sizeof(qalias));
 	memset(clears,0,sizeof(clears));
 	memset(qname,0,sizeof(qname));
 	f=fopen(TALK_FILE,"r");
@@ -291,6 +295,11 @@ int talk_load(void)
 			if (sscanf(q,"%d %d %d",&a[0],&a[1],&a[2])==3 && a[0]>0 && a[0]<MAXTCHARS && a[1]>=-1 && a[1]<=23 && a[2]>=-1 && a[2]<=23) {
 				qrew[a[0]].rmin1=a[1]+1; qrew[a[0]].rmax1=a[2]+1;
 			} else bad++;
+			continue;
+		}
+		if (!strcmp(w1,"qalias")) {		// qalias <quest template> <NPC template>: an extra item quest of that NPC
+			int a1,a2;
+			if (sscanf(q,"%d %d",&a1,&a2)==2 && a1>0 && a1<MAXTCHARS && a2>0 && a2<MAXTCHARS && a1!=a2) qalias[a1]=a2; else bad++;
 			continue;
 		}
 		if (!strcmp(w1,"qclass")) {		// qclass <t> <classes joined by |> <skill, -1 = as for everyone, 0 = none> <item, -1 = as for everyone, 0 = none>
@@ -1045,6 +1054,31 @@ static void quest_count_add(int co,int t)
 	if (qcfd>=0 && pwrite(qcfd,&r,sizeof(r),QHDR+(off_t)co*sizeof(r))!=sizeof(r)) xlog("cannot write %s",QCOUNT_FILE);
 }
 
+/* the NPC template that runs quest template t (an extra quest's NPC, else t itself) */
+int quest_npc(int t)
+{
+	if (!talk_loaded) talk_load();
+	if (t>0 && t<MAXTCHARS && qalias[t]) return qalias[t];
+	return t;
+}
+
+int quest_is_extra(int t)	// is template t an extra quest of another NPC (not an NPC in the world)?
+{
+	if (!talk_loaded) talk_load();
+	return t>0 && t<MAXTCHARS && qalias[t]!=0;
+}
+
+/* the quest template of NPC template npc that wants item template itm: its own quest, or one of its extra quests; 0 = none */
+int quest_for_item(int npc,int itm)
+{
+	int t;
+	if (!talk_loaded) talk_load();
+	if (npc<1 || npc>=MAXTCHARS || itm<1) return 0;
+	if (ch_temp[npc].data[49]==itm) return npc;
+	for (t=1; t<MAXTCHARS; t++) if (qalias[t]==npc && ch_temp[t].used!=USE_EMPTY && ch_temp[t].data[49]==itm) return t;
+	return 0;
+}
+
 /* an NPC text for character co: {skill} = the skill template t's quest teaches co next (class rewards), {item} = the item it
  * wants; the rest is copied (%s stays for the player's name) */
 void quest_text(int t,int co,const char *in,char *out,int max)
@@ -1160,9 +1194,9 @@ int quest_gold_first(int t)		// a skill teacher's gold (given with the skill)
 
 /* the NPC cn got the item in it wants from player co, and teaches no skill: an item trade.
  * Returns 1 if it handled it (rewards given), 0 = nothing to give (as before: the NPC just keeps it). */
-int talk_quest_trade(int cn,int co,int in)
+int talk_quest_trade(int cn,int co,int in,int t)	// t: the quest's template (the NPC's own, or one of its extra quests)
 {
-	int t=ch[cn].temp,item,exp,gold,left,later,ni;
+	int item,exp,gold,left,later,ni;
 
 	if (!IS_PLAYER(co) || !quest_reward_now(t,co,&item,&exp,&gold,&left,&later)) return 0;
 	if (left==0) return 0;
@@ -1180,9 +1214,8 @@ int talk_quest_trade(int cn,int co,int in)
 	return 1;
 }
 
-int talk_quest_maxed(int cn,int co)	// this player has done the item trade as often as it can be done
+int talk_quest_maxed(int t,int co)	// this player has done the item trade of quest template t as often as it can be done
 {
-	int t=ch[cn].temp;
 	if (!talk_loaded) talk_load();
 	if (t<1 || t>=MAXTCHARS || !qrew[t].limit || !IS_PLAYER(co)) return 0;
 	return quest_count(co,t)>=qrew[t].limit;

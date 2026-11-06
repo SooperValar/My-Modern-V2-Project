@@ -2046,7 +2046,7 @@ static int quest_build(int cn,struct qent *q,int max,int all)
 			int it1,ex1,g1,left,later;
 			if (!quest_reward_now(n,cn,&it1,&ex1,&g1,&left,&later) && left!=0) continue;
 			if (left==0 && !all) continue;		// done as often as it can be done
-			area=get_area_m(ch_temp[n].x,ch_temp[n].y,1);
+			area=get_area_m(ch_temp[quest_npc(n)].x,ch_temp[quest_npc(n)].y,1);	// (an extra quest: where its NPC is)
 			if (strstr(area,"Labyrinth") || strstr(area,"Tower")) continue;
 			q[cnt].t=n; q[cnt].skill=-1; q[cnt].known=left==0;
 			{ int lo,hi; if (quest_rank_check(n,cn,&lo,&hi)) q[cnt].known=1; }
@@ -2086,7 +2086,7 @@ static void quest_reward_text(char *buf,int len,int item,int exp,int gold)	// "R
 
 static char *quest_place(int t,char *area)	// where the giver is, without the town for Aston's streets
 {
-	strncpy(area,get_area_street(ch_temp[t].x,ch_temp[t].y),99); area[99]=0;
+	strncpy(area,get_area_street(ch_temp[quest_npc(t)].x,ch_temp[quest_npc(t)].y),99); area[99]=0;
 	if (!strncmp(area,"Aston, ",7)) memmove(area,area+7,strlen(area+7)+1);
 	return area;
 }
