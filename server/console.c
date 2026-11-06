@@ -34,6 +34,8 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <time.h>
+#include <sys/stat.h>
+#include <dirent.h>
 #include "server.h"
 
 #define CONSOLE_PORT	5556
@@ -347,6 +349,40 @@ static void con_cmd(char *line)
 		out("  %s (%d), buys %d, gold %dG; %s has %dG %dS:\n",ch[co].name,t,merch_kinds(co),ch[co].gold/100,ch[pl].name,ch[pl].gold/100,ch[pl].gold%100);
 		for (k=0; k<40; k++) if ((in=ch[co].item[k]) && !(in&0x80000000))
 			out("  %2d  %-34s %7dS%s\n",k,it[in].name,merch_sell_price(pl,co,in),merch_remorse(pl,in) ? "  (sold by you: buy back)" : "");
+		return;
+	}
+	if (!strcmp(w[0],"zonefiles")) {	// zonefiles: the zones file and every copy of it (editor backups, claude-sync backups)
+		char p2[600]; struct stat st; DIR *d; struct dirent *e; char *home=getenv("HOME");
+		if (!stat(DATDIR"/zones.dat",&st)) out("  .dat/zones.dat  %ld bytes  %s",(long)st.st_size,ctime(&st.st_mtime)); else out("  .dat/zones.dat: none (the built-in zones are used)\n");
+		if ((d=opendir(DATDIR"/mapedit-backups"))) {
+			while ((e=readdir(d))) if (!strncmp(e->d_name,"zones-",6)) {
+				snprintf(p2,sizeof(p2),DATDIR"/mapedit-backups/%s",e->d_name);
+				if (!stat(p2,&st)) out("  %s  %ld bytes  %s",p2,(long)st.st_size,ctime(&st.st_mtime));
+			}
+			closedir(d);
+		}
+		if (home) {
+			snprintf(p2,sizeof(p2),"%s/claude-backups",home);
+			if ((d=opendir(p2))) {
+				while ((e=readdir(d))) if (e->d_name[0]!='.') {
+					snprintf(p2,sizeof(p2),"%s/claude-backups/%s/.dat/zones.dat",home,e->d_name);
+					if (!stat(p2,&st)) out("  %s  %ld bytes  %s",p2,(long)st.st_size,ctime(&st.st_mtime));
+				}
+				closedir(d);
+			}
+		}
+		return;
+	}
+	if (!strcmp(w[0],"zonerestore")) {	// zonerestore <a file zonefiles listed>: copy it to .dat/zones.dat (the old one is kept) and load it
+		char *src=after(line,1); FILE *in,*o; char buf[4096]; size_t k;
+		if (!src || !*src || strstr(src,"..") || !strstr(src,"zones") || !(strstr(src,"mapedit-backups/") || strstr(src,"/claude-backups/"))) { out("  Give a file that zonefiles listed.\n"); return; }
+		if (!(in=fopen(src,"rb"))) { out("  Cannot read %s.\n",src); return; }
+		rename(DATDIR"/zones.dat",DATDIR"/zones.dat.before-restore");
+		if (!(o=fopen(DATDIR"/zones.dat","wb"))) { fclose(in); out("  Cannot write .dat/zones.dat.\n"); return; }
+		while ((k=fread(buf,1,sizeof(buf),in))>0) fwrite(buf,1,k,o);
+		fclose(in); fclose(o);
+		n=zone_load();
+		out("  Restored from %s: %d zones in %d boxes (the one before is .dat/zones.dat.before-restore).\n",src,zone_count(),zone_boxes());
 		return;
 	}
 	if (!strcmp(w[0],"zonereload")) {
