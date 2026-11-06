@@ -13,6 +13,8 @@ All rights reserved.
 #include <time.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <sys/stat.h>
+#include <dirent.h>
 
 #include "server.h"
 #include "driver.h"
@@ -2963,4 +2965,169 @@ void god_setrecall(int cn,char *who,char *cx,char *cy)
 	do_char_log(cn,1,"%s now recalls to %d,%d (%s).\n",ch[co].name,x,y,get_area_m(x,y,0));
 	if (co!=cn && ch[co].used==USE_ACTIVE) do_char_log(co,1,"Your recall point was moved to %d,%d (%s).\n",x,y,get_area_m(x,y,1));
 	chlog(cn,"GOD: set %s's recall point to %d,%d",ch[co].name,x,y);
+}
+
+/* ---- MyV2: reset a player character to a brand new one, delete one (with a backup), restore a deleted one ----
+ * (console: charreset / chardelete / charrestore / chardeleted; the editor's Players page) */
+
+#define CHARBACKUP_DIR DATDIR"/mapedit-backups/deleted"
+#define CHARBACKUP_MAGIC "MYV2CHR1"
+// what a reset keeps of a character's rights (not prestige, depot or bank)
+#define RESET_KEEP_FLAGS (CF_GOD|CF_IMP|CF_STAFF|CF_CREATOR|CF_GREATERGOD|CF_GREATERINV|CF_PASSWD|CF_NOSTAFF|CF_SAFE|CF_NOWHO|CF_NOLIST)
+
+static void char_free_items(int co)	// every item a character has (worn, backpack, hand, depot, spells) is destroyed
+{
+	int n,in;
+	for (n=0; n<20; n++) { if ((in=ch[co].worn[n]) && IS_SANEITEM(in)) it[in].used=USE_EMPTY; ch[co].worn[n]=0; }
+	for (n=0; n<40; n++) { if ((in=ch[co].item[n]) && IS_SANEITEM(in)) it[in].used=USE_EMPTY; ch[co].item[n]=0; }
+	for (n=0; n<62; n++) { if ((in=ch[co].depot[n]) && IS_SANEITEM(in)) it[in].used=USE_EMPTY; ch[co].depot[n]=0; }
+	for (n=0; n<20; n++) { if ((in=ch[co].spell[n]) && IS_SANEITEM(in)) it[in].used=USE_EMPTY; ch[co].spell[n]=0; }
+	if ((in=ch[co].citem) && !(in&0x80000000) && IS_SANEITEM(in)) it[in].used=USE_EMPTY;
+	ch[co].citem=0;
+}
+
+static int char_check_offline(int co,char *why,int len)
+{
+	if (!IS_SANECHAR(co) || ch[co].used==USE_EMPTY || !(ch[co].flags&CF_PLAYER)) { snprintf(why,len,"no player character %d",co); return 0; }
+	if (ch[co].used==USE_ACTIVE || ch[co].player) { snprintf(why,len,"%s is online: kick them first",ch[co].name); return 0; }
+	return 1;
+}
+
+/* a brand new character of its (base) class: keeps name, password / key, staff / imp / god rights; returns 1 if done */
+int god_reset_player(int co,char *why,int len)
+{
+	int t,nc,n,in;
+	unsigned int k;
+	struct character old;
+	int male;
+
+	if (!char_check_offline(co,why,len)) return 0;
+	k=ch[co].kindred; male=(k&KIN_FEMALE) ? 0 : 1;
+	if (k&(KIN_TEMPLAR|KIN_ARCHTEMPLAR)) t=male ? 3 : 77;
+	else if (k&(KIN_HARAKIM|KIN_ARCHHARAKIM)) t=male ? 4 : 78;
+	else if (k&KIN_SEYAN_DU) t=male ? 13 : 79;
+	else t=male ? 2 : 76;
+	if (!(nc=god_create_char(t,1))) { snprintf(why,len,"no free character slot to build it in"); return 0; }
+
+	old=ch[co];
+	char_free_items(co);
+	ch[co]=ch[nc];
+	ch[nc].used=USE_EMPTY;
+	for (n=0; n<40; n++) if ((in=ch[co].item[n]) && IS_SANEITEM(in)) it[in].carried=co;
+	for (n=0; n<20; n++) if ((in=ch[co].worn[n]) && IS_SANEITEM(in)) it[in].carried=co;
+
+	ch[co].used=USE_NONACTIVE;
+	ch[co].temp=t;
+	strcpy(ch[co].name,old.name);
+	strcpy(ch[co].reference,old.reference);
+	snprintf(ch[co].description,LENDESC,"%s is a %s. %s looks somewhat nondescript.",old.name,
+		(ch[co].kindred&KIN_TEMPLAR) ? "Templar" : (ch[co].kindred&KIN_HARAKIM) ? "Harakim" : (ch[co].kindred&KIN_SEYAN_DU) ? "Seyan'Du" : "Mercenary",
+		male ? "He" : "She");
+	ch[co].pass1=old.pass1; ch[co].pass2=old.pass2;
+	memcpy(ch[co].passwd,old.passwd,sizeof(ch[co].passwd));
+	ch[co].addr=old.addr;
+	ch[co].player=0;
+	ch[co].flags=(ch_temp[t].flags|CF_PLAYER)&~(CF_RESPAWN|CF_NEWUSER);
+	ch[co].flags|=old.flags&RESET_KEEP_FLAGS;
+	ch[co].temple_x=ch[co].tavern_x=ch[co].x=HOME_MERCENARY_X;
+	ch[co].temple_y=ch[co].tavern_y=ch[co].y=HOME_MERCENARY_Y;
+	ch[co].points=ch[co].points_tot=0;
+	ch[co].luck=205;
+	ch[co].gold=ch_temp[t].gold;
+	ch[co].creation_date=ch[co].login_date=time(NULL);	// a new creation date: its quest steps, quest counts and area clears start over
+	really_update_char(co);
+	xlog("CHARRESET: %s (%d) is a new %s now",ch[co].name,co,ch_temp[t].name);
+	snprintf(why,len,"%s is a new %s now (template %d)",ch[co].name,ch_temp[t].name,t);
+	return 1;
+}
+
+static void wr_item(FILE *f,int in)	// one slot: 0 = empty, else 1 and the item
+{
+	unsigned char c=(in && !(in&0x80000000) && IS_SANEITEM(in) && it[in].used!=USE_EMPTY) ? 1 : 0;
+	fwrite(&c,1,1,f);
+	if (c) fwrite(&it[in],sizeof(struct item),1,f);
+}
+
+/* delete a player character: first a copy of it and all its items into .dat/mapedit-backups/deleted/; returns 1 if done */
+int god_delete_player(int co,char *why,int len)
+{
+	char fn[256],nm[48];
+	FILE *f;
+	int n;
+	time_t now=time(NULL);
+	struct tm *tm=localtime(&now);
+
+	if (!char_check_offline(co,why,len)) return 0;
+	mkdir(DATDIR"/mapedit-backups",0755); mkdir(CHARBACKUP_DIR,0755);
+	for (n=0; ch[co].name[n] && n<40; n++) nm[n]=isalnum((unsigned char)ch[co].name[n]) ? ch[co].name[n] : '_';
+	nm[n]=0;
+	snprintf(fn,sizeof(fn),CHARBACKUP_DIR"/%s-%04d%02d%02d-%02d%02d%02d.chr",nm,tm->tm_year+1900,tm->tm_mon+1,tm->tm_mday,tm->tm_hour,tm->tm_min,tm->tm_sec);
+	if (!(f=fopen(fn,"wb"))) { snprintf(why,len,"cannot write the backup %s",fn); return 0; }
+	fwrite(CHARBACKUP_MAGIC,8,1,f);
+	fwrite(&ch[co],sizeof(struct character),1,f);
+	for (n=0; n<20; n++) wr_item(f,ch[co].worn[n]);
+	for (n=0; n<40; n++) wr_item(f,ch[co].item[n]);
+	wr_item(f,ch[co].citem);
+	for (n=0; n<62; n++) wr_item(f,ch[co].depot[n]);
+	for (n=0; n<20; n++) wr_item(f,ch[co].spell[n]);
+	if (fclose(f)) { snprintf(why,len,"cannot write the backup %s",fn); return 0; }
+
+	char_free_items(co);
+	xlog("CHARDELETE: %s (%d) deleted, backup %s",ch[co].name,co,fn);
+	snprintf(why,len,"%s deleted (backup: %s)",ch[co].name,strrchr(fn,'/')+1);
+	ch[co].used=USE_EMPTY;
+	return 1;
+}
+
+static int rd_item(FILE *f,int co)	// one slot back: a new item number (0 = empty or no room)
+{
+	unsigned char c=0;
+	int in;
+	static struct item tmp;
+	if (fread(&c,1,1,f)!=1 || !c) return 0;
+	if (fread(&tmp,sizeof(struct item),1,f)!=1) return 0;
+	if (!(in=get_free_item())) return 0;
+	it[in]=tmp; it[in].carried=co;
+	return in;
+}
+
+/* bring a deleted character back from its backup file (its name in .dat/mapedit-backups/deleted/) */
+int god_restore_player(char *file,char *why,int len)
+{
+	char fn[300],magic[8];
+	FILE *f;
+	int co,n;
+	static struct character c;
+
+	if (!file || !*file || strchr(file,'/') || strstr(file,"..")) { snprintf(why,len,"which backup file?"); return 0; }
+	snprintf(fn,sizeof(fn),CHARBACKUP_DIR"/%s",file);
+	if (!(f=fopen(fn,"rb"))) { snprintf(why,len,"no backup %s",file); return 0; }
+	if (fread(magic,8,1,f)!=1 || memcmp(magic,CHARBACKUP_MAGIC,8) || fread(&c,sizeof(c),1,f)!=1) { fclose(f); snprintf(why,len,"%s is not a character backup",file); return 0; }
+	for (n=1; n<MAXCHARS; n++) if (ch[n].used!=USE_EMPTY && !strcmp(ch[n].name,c.name)) { fclose(f); snprintf(why,len,"the name %s is taken again (character %d)",c.name,n); return 0; }
+	for (co=1; co<MAXCHARS; co++) if (ch[co].used==USE_EMPTY) break;
+	if (co==MAXCHARS) { fclose(f); snprintf(why,len,"no free character slot"); return 0; }
+	ch[co]=c;
+	ch[co].used=USE_NONACTIVE; ch[co].player=0;
+	for (n=0; n<20; n++) ch[co].worn[n]=rd_item(f,co);
+	for (n=0; n<40; n++) ch[co].item[n]=rd_item(f,co);
+	ch[co].citem=rd_item(f,co);
+	for (n=0; n<62; n++) ch[co].depot[n]=rd_item(f,co);
+	for (n=0; n<20; n++) ch[co].spell[n]=rd_item(f,co);
+	fclose(f);
+	really_update_char(co);
+	xlog("CHARRESTORE: %s restored as character %d from %s",ch[co].name,co,file);
+	snprintf(why,len,"%s is back (character %d)",ch[co].name,co);
+	return 1;
+}
+
+/* the backups of deleted characters, newest first, into out (one file name a line) */
+void god_deleted_list(char *out,int len)
+{
+	DIR *d=opendir(CHARBACKUP_DIR);
+	struct dirent *e;
+	int l=0;
+	out[0]=0;
+	if (!d) return;
+	while ((e=readdir(d)) && l<len-80) if (strstr(e->d_name,".chr")) l+=snprintf(out+l,len-l,"%s\n",e->d_name);
+	closedir(d);
 }

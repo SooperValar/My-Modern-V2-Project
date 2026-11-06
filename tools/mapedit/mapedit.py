@@ -2683,6 +2683,11 @@ def make_handler(world, sprites, page, minimap, ctl):
                 return self.js(world.quests_view())
             if u.path == '/api/merchants':
                 return self.js(world.merchants())
+            if u.path == '/api/deletedchars':          # backups of deleted characters (the game lists them: chardeleted)
+                if not (ctl and server_running()):
+                    return self.js({'error': 'The game is not running.', 'files': []})
+                r = ctl.console('chardeleted', 5) or ''
+                return self.js({'files': sorted([l.strip() for l in r.splitlines() if l.strip().endswith('.chr')], key=lambda f: f.rsplit('-', 2)[-2:], reverse=True)})
             if u.path == '/api/classcaps':
                 return self.js(world.class_caps())
             if u.path == '/api/zonenpcs':
@@ -2731,6 +2736,26 @@ def make_handler(world, sprites, page, minimap, ctl):
                 return self.js({'msg': world.clears_save(body.get('clears') or [], ctl)})
             if u.path == '/api/merchants':
                 return self.js(world.merchants_save(body, ctl))
+            if u.path == '/api/playeraction':          # reset to a brand new character / delete (with a backup) / restore: done by the game
+                if not (ctl and server_running()):
+                    return self.js({'error': 'Start the game first: resetting, deleting and restoring characters is done by the running game.'})
+                act = str(body.get('act', ''))
+                if act == 'restore':
+                    f = str(body.get('file', ''))
+                    if not re.fullmatch(r'[A-Za-z0-9_]+-\d{8}-\d{6}\.chr', f):
+                        return self.js({'error': 'Bad backup name.'})
+                    cmd = 'charrestore ' + f
+                elif act in ('reset', 'delete'):
+                    c, nm = int(body.get('c', 0)), str(body.get('name', ''))
+                    if not re.fullmatch(r'[A-Za-z]+', nm):
+                        return self.js({'error': 'Bad name.'})
+                    cmd = 'char%s %d %s' % (act, c, nm)
+                else:
+                    return self.js({'error': 'What should happen?'})
+                r = (ctl.console(cmd, 10) or '').strip()
+                world.refresh_live()
+                ok = any(w in r for w in ('is a new', 'deleted (backup', 'is back'))
+                return self.js({'msg': r} if ok else {'error': r or 'The game did not answer.'})
             if u.path == '/api/questorder':
                 return self.js({'msg': world.quests_order_save(body.get('order') or {}, body.get('rewards'), ctl, body.get('alias'), body.get('only') == 'alias')})
             if u.path == '/api/zones':
@@ -4083,6 +4108,22 @@ function leftUI() {
         d.lastChild.textContent = `${p.rank} · ${p.kin} · ${p.online ? 'online' : p.login ? 'last seen ' + new Date(p.login * 1000).toLocaleDateString() : 'never'}`;
         r.appendChild(d); r.onclick = () => openPlayer(p.c);
         return r;
+      });
+      // deleted characters (backups kept by the game): bring one back
+      const del = document.createElement('div'); del.className = 'list'; w.appendChild(del);
+      api('/api/deletedchars').then(dl => {
+        if (mode !== 'players' || !dl.files || !dl.files.length) return;
+        const h = document.createElement('div'); h.className = 'sect'; h.style.padding = '14px 2px 8px'; h.textContent = 'Deleted characters · backups'; del.appendChild(h);
+        for (const f of dl.files) {
+          const r = document.createElement('div'); r.className = 'row';
+          const m = f.match(/^(.*)-(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})\d{2}\.chr$/);
+          const d = document.createElement('div'); d.style.flex = '1'; d.innerHTML = '<div></div><div class="n"></div>';
+          d.firstChild.textContent = m ? m[1] : f; d.lastChild.textContent = m ? `deleted ${m[2]}-${m[3]}-${m[4]} ${m[5]}:${m[6]}` : '';
+          const b = document.createElement('button'); b.className = 'sm'; b.textContent = 'Restore';
+          b.onclick = async e => { e.stopPropagation(); if (!confirm(`Bring ${m ? m[1] : f} back, with everything it had?`)) return;
+            const res = await api('/api/playeraction', { act: 'restore', file: f }); toast(res.error || res.msg, !!res.error); leftUI(); };
+          r.append(d, b); del.appendChild(r);
+        }
       });
     });
   } else if (mode === 'history') {
@@ -5862,6 +5903,25 @@ const PLAYER_TABS = {
     row(g, 'Character number', document.createTextNode(c.c));
     const g2 = grid2(b, 'Rights and flags');
     row(g2, '', chks(PFLAGS.map(([bt, l]) => chk(l, () => bit(c.flags, bt), on => c.flags = setBit(c.flags, bt, on)))));
+    // start over / delete (done by the running game; the character must be offline)
+    const g3 = grid2(b, 'Start over or delete');
+    const act = async (what, warn, done) => {
+      if (c.online) return toast(`${c.name} is online: kick them first (Server page).`, true);
+      const typed = prompt(warn + `\n\nType the name ${c.name} to confirm:`);
+      if (typed === null) return;
+      if (typed.trim() !== c.name) return toast('The name did not match: nothing was changed.', true);
+      const r = await api('/api/playeraction', { act: what, c: c.c, name: c.name });
+      if (r.error) return toast(r.error, true);
+      toast(r.msg); done();
+    };
+    const rb = document.createElement('button'); rb.className = 'btn sec'; rb.textContent = 'Reset to a brand new character…';
+    rb.onclick = () => act('reset', `Make ${c.name} a brand new character?\n\nKept: the name, the password and .moa file, the class (an arch class goes back to its base class), staff / imp / god rights.\nGone: experience, stats and skills, everything carried, worn and in the depot, the bank, gold, quests, area clears, prestige.`,
+      () => openPlayer(c.c));
+    row(g3, 'Reset', rb, 'Like a new character of its class, at the start, with the start gear. Only while the character is offline.');
+    const db = document.createElement('button'); db.className = 'btn sec'; db.style.color = 'var(--bad, #e06c5a)'; db.textContent = 'Delete this character…';
+    db.onclick = () => act('delete', `Delete ${c.name} from the server?\n\nA backup of the character and everything it has is kept (Players page: Deleted characters), so it can be brought back while its name is still free.`,
+      () => { closeTemplate(); if (mode === 'players') leftUI(); });
+    row(g3, 'Delete', db, 'The character and all its items are removed and the name is free again; a backup is kept. Only while the character is offline.');
   },
 };
 function playerSlots(b, c, where, title, names, count) {

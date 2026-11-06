@@ -482,6 +482,11 @@ The **Players** page (rail) lists every player character, online ones first, wit
 - **Depot:** the 62 depot slots, the same way, and the rent paid so far.
 - **History:** created, last login, last logout, time played, last address, and the lines about the character in `server.log` (logins, logouts, kills, deaths, other), which can be filtered and clicked to show the place on the map.
 - **Account:** download the character's **.moa** file (the client's key file: number, both keys, name, starting race, default display options) for a player who lost theirs; remove a forgotten password; rights and flags (staff, imp, god, creator, no shout, no tell, muted, golden/black list, hidden in #who).
+- **Start over or delete** (Account tab; the character must be offline, the game running; you type the name to confirm):
+  - **Reset to a brand new character**: a new character of its class at the start with the start gear (an arch class goes back to its base class: Arch-Templar to Templar). Kept: name, password and .moa key, staff / imp / god rights. Gone: experience, stats, skills, everything carried, worn and in the depot, bank, gold, prestige; it gets a new creation date, so its quest steps, quest counts and area clears start over.
+  - **Delete this character**: it and all its items are removed and the name is free again; a backup of the character with everything it had goes to `.dat/mapedit-backups/deleted/<name>-<date>.chr`.
+  - **Deleted characters** (under the Players list): the backups, each with **Restore** (while the name is still free).
+  - Done by the game (`god_reset_player`, `god_delete_player`, `god_restore_player` in `svr_god.c`; console `charreset <nr> <name>`, `chardelete <nr> <name>`, `chardeleted`, `charrestore <file>`).
 - Changes go through the normal edit path: undo, history, saving when the server is stopped, and live into the running game when it runs (an online player's client is refreshed).
 
 ## NPC editor

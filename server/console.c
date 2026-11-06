@@ -303,6 +303,25 @@ static void con_cmd(char *line)
 		out("  #quest place: %s\n",get_area_street(x,y)[0] ? get_area_street(x,y) : "-");
 		return;
 	}
+	if (!strcmp(w[0],"charreset") || !strcmp(w[0],"chardelete")) {	// charreset|chardelete <character number> <its name>: offline players only
+		char why[300]; int c2=atoi(w[1]);
+		if (c2<1 || c2>=MAXCHARS || !w[2][0] || strcmp(ch[c2].name,w[2])) { out("  Give the character number and its exact name.\n"); return; }
+		if (w[0][4]=='r') god_reset_player(c2,why,sizeof(why)); else god_delete_player(c2,why,sizeof(why));
+		out("  %s\n",why);
+		return;
+	}
+	if (!strcmp(w[0],"charrestore")) {	// charrestore <backup file>: a deleted character comes back
+		char why[300];
+		god_restore_player(w[1],why,sizeof(why));
+		out("  %s\n",why);
+		return;
+	}
+	if (!strcmp(w[0],"chardeleted")) {	// chardeleted: the backups of deleted characters
+		static char buf[8000];
+		god_deleted_list(buf,sizeof(buf));
+		out("%s",buf[0] ? buf : "  (none)\n");
+		return;
+	}
 	if (!strcmp(w[0],"greettext")) {	// greettext <player> <NPC template>: its greeting / #quest hint for that player ({skill}, {item})
 		char gb[400]; int t=atoi(w[2]);
 		if (!(co=con_player(w[1]))) return;
@@ -355,6 +374,9 @@ static void con_cmd(char *line)
 		    "  talkreload                    read the NPC dialogue file again\n"
 		    "  zonereload                    read the zones (.dat/zones.dat) again\n"
 		    "  merchreload                   read the merchants (.dat/merchants.dat) again\n"
+		    "  charreset <nr> <name>         make an offline player a brand new character (keeps name, password, class, rights)\n"
+		    "  chardelete <nr> <name>        delete an offline player (a backup goes to .dat/mapedit-backups/deleted)\n"
+		    "  chardeleted / charrestore <file>   list the deleted characters' backups / bring one back\n"
 		    "  shop <player> <merchant tpl> [buy <slot>|sell <bp slot>|page <38/39>|leave]   test a shop\n"
 		    "  zone <x> <y>                  the zone names at a spot\n"
 		    "  talktest <npc template> <player> <text>   try a conversation\n"

@@ -2683,6 +2683,11 @@ def make_handler(world, sprites, page, minimap, ctl):
                 return self.js(world.quests_view())
             if u.path == '/api/merchants':
                 return self.js(world.merchants())
+            if u.path == '/api/deletedchars':          # backups of deleted characters (the game lists them: chardeleted)
+                if not (ctl and server_running()):
+                    return self.js({'error': 'The game is not running.', 'files': []})
+                r = ctl.console('chardeleted', 5) or ''
+                return self.js({'files': sorted([l.strip() for l in r.splitlines() if l.strip().endswith('.chr')], key=lambda f: f.rsplit('-', 2)[-2:], reverse=True)})
             if u.path == '/api/classcaps':
                 return self.js(world.class_caps())
             if u.path == '/api/zonenpcs':
@@ -2731,6 +2736,26 @@ def make_handler(world, sprites, page, minimap, ctl):
                 return self.js({'msg': world.clears_save(body.get('clears') or [], ctl)})
             if u.path == '/api/merchants':
                 return self.js(world.merchants_save(body, ctl))
+            if u.path == '/api/playeraction':          # reset to a brand new character / delete (with a backup) / restore: done by the game
+                if not (ctl and server_running()):
+                    return self.js({'error': 'Start the game first: resetting, deleting and restoring characters is done by the running game.'})
+                act = str(body.get('act', ''))
+                if act == 'restore':
+                    f = str(body.get('file', ''))
+                    if not re.fullmatch(r'[A-Za-z0-9_]+-\d{8}-\d{6}\.chr', f):
+                        return self.js({'error': 'Bad backup name.'})
+                    cmd = 'charrestore ' + f
+                elif act in ('reset', 'delete'):
+                    c, nm = int(body.get('c', 0)), str(body.get('name', ''))
+                    if not re.fullmatch(r'[A-Za-z]+', nm):
+                        return self.js({'error': 'Bad name.'})
+                    cmd = 'char%s %d %s' % (act, c, nm)
+                else:
+                    return self.js({'error': 'What should happen?'})
+                r = (ctl.console(cmd, 10) or '').strip()
+                world.refresh_live()
+                ok = any(w in r for w in ('is a new', 'deleted (backup', 'is back'))
+                return self.js({'msg': r} if ok else {'error': r or 'The game did not answer.'})
             if u.path == '/api/questorder':
                 return self.js({'msg': world.quests_order_save(body.get('order') or {}, body.get('rewards'), ctl, body.get('alias'), body.get('only') == 'alias')})
             if u.path == '/api/zones':
