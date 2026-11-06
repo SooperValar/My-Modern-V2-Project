@@ -94,3 +94,15 @@ reference). 18100 Boots (from 890), 18101 Armor (894), 18102 Gloves (Sleeves of 
 18104 Leggings (892), 18105 Cloak of Ice (the Cloak of Fire 895; template 1407). The older Ice Cloak (909) keeps its own
 picture 16770.
 
+
+## Tables with a scroll - 18290-18293
+
+`table_scroll/`: the open parchment scroll (18140) shrunk to 62 % (17x11) and laid in the middle of the table top, with a
+faint shadow, by `build.py` (originals exported to `orig/`, `preview.png` shows before / after).
+
+| Table piece | Sprite | With scroll |
+|---|---|---|
+| Table III (plain red, leg piece) | 560 | 18290 |
+| Table IV (plain red, top piece) | 562 | 18291 |
+| Table I (wood grain, leg piece) | 1242 | 18292 |
+| Table II (wood grain, top piece) | 1244 | 18293 |
