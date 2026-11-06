@@ -601,6 +601,7 @@ Rail: **Quests**. Every quest on one page.
 - In the game: each new kill of a ticked NPC tells the player "4 of 12 Skeletons in this area."; the last one "You cleared Skeleton Lord!" and the experience. `#areas` lists every area and how far you are.
 - A kill counts for the killer (or a Ghost Companion's master) and the members of their group, each only while standing in that zone, so a player who joins late doesn't get the kills made before. Each NPC counts once (respawned ones don't count again). Once per character; with "again as Seyan'Du" once more after becoming a Seyan'Du. Changing an area's NPC list starts everyone's progress there again.
 - Kept in `npctalk.dat` (`clear <id> <exp> <again as Seyan'Du> <zone>`, `clearlabel`, `clearnpc <id> <templates>`, up to 64 areas of up to 64 NPCs); progress in `.dat/clears.dat` (a row per character). Console: `cleartest <player> <NPC template>` counts a kill as that player.
+- **Re-check zones** (after redrawing a zone or placing new enemies): each area then shows the enemies now in its zone that aren't ticked (**Tick them**) and ticked NPCs no longer in the zone (**Untick them**); then Save. The list is also read fresh each time the Quests page opens.
 
 **Chain quests** (`#journal`): each quest number with its name and journal texts (from which step on), **+ Step**, **Delete**, **+ New chain quest** (the next free number), and **Used by**: every NPC (or item tile) whose conversation lines check or move the quest on, with a click to open its Conversations. Saving goes into the game at once.
 

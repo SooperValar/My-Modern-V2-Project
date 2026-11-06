@@ -6655,6 +6655,7 @@ function clearsBox(el) {
       <input type="text" class="anew" list="clearzones" placeholder="Search a zone to add…" style="min-width:240px">
       <datalist id="clearzones">${zones.map(z => `<option value="${esc(z)}">`).join('')}</datalist>
       <button class="btn sec aadd">+ Add area</button>
+      <button class="btn sec arck" title="Look at the zones again: shows enemies that are now in an area's zone but not ticked, and ticked ones no longer there">Re-check zones</button>
       <button class="btn sec aund" ${d ? '' : 'disabled'}>Undo changes</button>
       <button class="btn pri asave" ${d ? '' : 'disabled'}>Save</button></div>
     <div class="hint">Kill every ticked NPC of a zone for an experience bonus. Players see "4 of 12 Skeletons in this area" with each new kill and their progress with #areas. A kill counts for the killer (a Ghost Companion's master) and their group members who are in the zone at that moment. Once per character; "again as Seyan'Du" allows a second time after becoming a Seyan'Du. Changing an area's NPC list starts everyone's progress there again. Saving goes into the game at once.</div>`;
@@ -6673,6 +6674,7 @@ function clearsBox(el) {
     toast(`${zone}: ${en.length} enemies ticked of ${list.length} NPCs there. Set the experience, then Save.`);
   };
   cb.querySelector('.aadd').onclick = add;
+  cb.querySelector('.arck').onclick = () => { zoneNpcCache = {}; questsRender(); toast('Zones checked again: each area shows what changed. Tick, then Save.'); };
   cb.querySelector('.anew').onkeydown = e => { if (e.key === 'Enter') add(); };
   cb.querySelector('.aund').onclick = () => { if (confirm('Forget your changes to the area clears?')) { QA = JSON.parse(QAorig); questsRender(); } };
   cb.querySelector('.asave').onclick = async () => {
@@ -6700,6 +6702,15 @@ function clearsBox(el) {
       d2.querySelector('.aall').onclick = () => { c.npcs = all.filter(n => n.kind === 'enemy').map(n => n.t); questsRender(); };
       d2.querySelector('.anone').onclick = () => { c.npcs = []; questsRender(); };
       cnt.textContent = `${c.npcs.length} of ${all.length} NPCs ticked · players see "1 of ${c.npcs.length} ${c.label || 'enemies'} in this area"`;
+      const fresh = list.filter(n => n.kind === 'enemy' && !c.npcs.includes(n.t)), gone = extra.filter(n => c.npcs.includes(n.t));
+      if (fresh.length || gone.length) {
+        const w2 = document.createElement('div'); w2.style.cssText = 'margin:2px 0 6px;color:#ffd36a;display:flex;gap:8px;align-items:center;flex-wrap:wrap';
+        if (fresh.length) { w2.insertAdjacentHTML('beforeend', `<span>${fresh.length} ${fresh.length === 1 ? 'enemy is' : 'enemies are'} in this zone but not ticked (${esc([...new Set(fresh.map(n => n.name))].slice(0, 6).join(', '))}).</span><button class="sm tf">Tick them</button>`); }
+        if (gone.length) { w2.insertAdjacentHTML('beforeend', `<span>${gone.length} ticked ${gone.length === 1 ? 'NPC is' : 'NPCs are'} no longer in this zone.</span><button class="sm ug">Untick them</button>`); }
+        const tf = w2.querySelector('.tf'); if (tf) tf.onclick = () => { fresh.forEach(n => { if (!c.npcs.includes(n.t)) c.npcs.push(n.t); }); questsRender(); };
+        const ug = w2.querySelector('.ug'); if (ug) ug.onclick = () => { const g = new Set(gone.map(n => n.t)); c.npcs = c.npcs.filter(t => !g.has(t)); questsRender(); };
+        cnt.after(w2);
+      }
       for (const n of all) {
         const l = document.createElement('label'); l.className = 'chk'; l.style.cssText = 'display:flex;gap:6px;align-items:center';
         l.innerHTML = '<input type="checkbox"><span></span>';
