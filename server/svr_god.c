@@ -3098,14 +3098,28 @@ int god_restore_player(char *file,char *why,int len)
 	FILE *f;
 	int co,n;
 	static struct character c;
+	char renamed[120]="";
 
 	if (!file || !*file || strchr(file,'/') || strstr(file,"..")) { snprintf(why,len,"which backup file?"); return 0; }
 	snprintf(fn,sizeof(fn),CHARBACKUP_DIR"/%s",file);
 	if (!(f=fopen(fn,"rb"))) { snprintf(why,len,"no backup %s",file); return 0; }
 	if (fread(magic,8,1,f)!=1 || memcmp(magic,CHARBACKUP_MAGIC,8) || fread(&c,sizeof(c),1,f)!=1) { fclose(f); snprintf(why,len,"%s is not a character backup",file); return 0; }
-	for (n=1; n<MAXCHARS; n++) if (ch[n].used!=USE_EMPTY && !strcmp(ch[n].name,c.name)) { fclose(f); snprintf(why,len,"the name %s is taken again (character %d)",c.name,n); return 0; }
 	for (co=1; co<MAXCHARS; co++) if (ch[co].used==USE_EMPTY) break;
 	if (co==MAXCHARS) { fclose(f); snprintf(why,len,"no free character slot"); return 0; }
+	for (n=1; n<MAXCHARS; n++) if (ch[n].used!=USE_EMPTY && !strcasecmp(ch[n].name,c.name)) break;
+	if (n<MAXCHARS) {	// its name is taken again: it comes back under a new (random) name, like a new character's
+		char old[40];
+		strcpy(old,c.name);
+		for (;;) {
+			strcpy(c.name,mkp());
+			for (n=1; n<MAXCHARS; n++) if (ch[n].used!=USE_EMPTY && !strcasecmp(ch[n].name,c.name)) break;
+			if (n==MAXCHARS) break;
+		}
+		strcpy(c.reference,c.name);
+		snprintf(c.description,LENDESC,"%s looks somewhat nondescript.",c.name);
+		xlog("CHARRESTORE: the name %s is taken, %s restored as %s",old,file,c.name);
+		snprintf(renamed,sizeof(renamed),"%s",old);
+	}
 	ch[co]=c;
 	ch[co].used=USE_NONACTIVE; ch[co].player=0;
 	for (n=0; n<20; n++) ch[co].worn[n]=rd_item(f,co);
@@ -3116,7 +3130,8 @@ int god_restore_player(char *file,char *why,int len)
 	fclose(f);
 	really_update_char(co);
 	xlog("CHARRESTORE: %s restored as character %d from %s",ch[co].name,co,file);
-	snprintf(why,len,"%s is back (character %d)",ch[co].name,co);
+	if (renamed[0]) snprintf(why,len,"%s is back as %s (character %d): the name %s is taken. Download the new .moa for the player.",renamed,ch[co].name,co,renamed);
+	else snprintf(why,len,"%s is back (character %d)",ch[co].name,co);
 	return 1;
 }
 

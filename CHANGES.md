@@ -485,7 +485,7 @@ The **Players** page (rail) lists every player character, online ones first, wit
 - **Start over or delete** (Account tab; the character must be offline, the game running; you type the name to confirm):
   - **Reset to a brand new character**: a new character of its class at the start with the start gear (an arch class goes back to its base class: Arch-Templar to Templar). Kept: name, password and .moa key, staff / imp / god rights. Gone: experience, stats, skills, everything carried, worn and in the depot, bank, gold, prestige; it gets a new creation date, so its quest steps, quest counts and area clears start over.
   - **Delete this character**: it and all its items are removed and the name is free again; a backup of the character with everything it had goes to `.dat/mapedit-backups/deleted/<name>-<date>.chr`.
-  - **Deleted characters** (under the Players list): the backups, each with **Restore** (while the name is still free).
+  - **Deleted characters** (under the Players list): the backups, each with **Restore**. If its name was taken in the meantime, it comes back under a new random name (like a new character's), so you can download its .moa and send it to the player.
   - Done by the game (`god_reset_player`, `god_delete_player`, `god_restore_player` in `svr_god.c`; console `charreset <nr> <name>`, `chardelete <nr> <name>`, `chardeleted`, `charrestore <file>`).
 - Changes go through the normal edit path: undo, history, saving when the server is stopped, and live into the running game when it runs (an online player's client is refreshed).
 

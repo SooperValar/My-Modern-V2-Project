@@ -3043,7 +3043,7 @@ const PLAYER_TABS = {
       () => openPlayer(c.c));
     row(g3, 'Reset', rb, 'Like a new character of its class, at the start, with the start gear. Only while the character is offline.');
     const db = document.createElement('button'); db.className = 'btn sec'; db.style.color = 'var(--bad, #e06c5a)'; db.textContent = 'Delete this character…';
-    db.onclick = () => act('delete', `Delete ${c.name} from the server?\n\nA backup of the character and everything it has is kept (Players page: Deleted characters), so it can be brought back while its name is still free.`,
+    db.onclick = () => act('delete', `Delete ${c.name} from the server?\n\nA backup of the character and everything it has is kept (Players page: Deleted characters), so it can be brought back (under a new name if its name has been taken by then).`,
       () => { closeTemplate(); if (mode === 'players') leftUI(); });
     row(g3, 'Delete', db, 'The character and all its items are removed and the name is free again; a backup is kept. Only while the character is offline.');
   },
