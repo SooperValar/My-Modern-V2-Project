@@ -1765,7 +1765,16 @@ function zoneGo(z) {
   const b = z.boxes.reduce((p, c) => (c[2] - c[0] + 1) * (c[3] - c[1] + 1) > (p[2] - p[0] + 1) * (p[3] - p[1] + 1) ? c : p);
   centerOn((b[0] + b[2]) >> 1, (b[1] + b[3]) >> 1);
 }
-function zoneChanged() { zoneDirty = true; leftUI(); redrawTop(); }
+// unsaved zone edits live only in this page: keep a draft in the browser so a refresh or an editor restart can't lose them
+const ZDRAFT = 'myv2.zonedraft';
+function zoneDraftSave() { try { localStorage.setItem(ZDRAFT, JSON.stringify({ t: Date.now(), z: Z })); } catch (e) {} }
+function zoneDraftDrop() { try { localStorage.removeItem(ZDRAFT); } catch (e) {} }
+function zoneDraftGet() { try { const d = JSON.parse(localStorage.getItem(ZDRAFT) || 'null'); return d && Array.isArray(d.z) ? d : null; } catch (e) { return null; } }
+function zoneChanged() { zoneDirty = true; zoneDraftSave(); leftUI(); redrawTop(); }
+window.addEventListener('beforeunload', e => {
+  let d = zoneDirty; try { d = d || tplDirty(); } catch (x) {}
+  if (d) { e.preventDefault(); e.returnValue = ''; }
+});
 function zoneArm(on) {
   zoneDraw = on; if (on) cv.style.cursor = 'crosshair'; else setTool(tool);
   if (on) toast(`Drag on the map to add a box to ${Z[zoneSel].name} (a click adds one tile). Esc or "Done" stops.`);
@@ -1812,17 +1821,26 @@ function zonesTab(w, sect, match) {
     <button class="btn pri sv" ${zoneDirty ? '' : 'disabled'}>Save zones</button>`;
   top.querySelector('.nz').onclick = () => {
     let n = 'New zone', k = 2; while (Z.some(z => z.name.toLowerCase() === n.toLowerCase())) n = 'New zone ' + k++;
-    Z.push({ name: n, flag: 1, boxes: [] }); zoneSel = Z.length - 1; zoneDirty = true; leftUI(); zoneArm(true);
+    Z.push({ name: n, flag: 1, boxes: [] }); zoneSel = Z.length - 1; zoneDirty = true; zoneDraftSave(); leftUI(); zoneArm(true);
   };
-  top.querySelector('.rv').onclick = () => { if (!confirm('Forget your zone changes?')) return; zoneDirty = false; Z = null; zoneSel = -1; if (zoneDraw) zoneArm(false); leftUI(); redrawTop(); };
+  top.querySelector('.rv').onclick = () => { if (!confirm('Forget your zone changes?')) return; zoneDirty = false; zoneDraftDrop(); Z = null; zoneSel = -1; if (zoneDraw) zoneArm(false); leftUI(); redrawTop(); };
   top.querySelector('.sv').onclick = async () => {
     const r = await api('/api/zones', { zones: Z });
     if (r.error) return toast(r.error, true);
-    info.areas = r.areas; info.zonesrc = 'zones.dat'; zoneDirty = false; if (zoneDraw) zoneArm(false);
+    info.areas = r.areas; info.zonesrc = 'zones.dat'; zoneDirty = false; zoneDraftDrop(); if (zoneDraw) zoneArm(false);
     const n = Z[zoneSel] && Z[zoneSel].name; Z = zonesFromInfo(); zoneSel = Z.findIndex(z => z.name === n);
     leftUI(); redraw(); toast(r.msg);
   };
   w.appendChild(top);
+  const dr = !zoneDirty && zoneDraftGet();
+  if (dr) {
+    const b = document.createElement('div'); b.className = 'hint';
+    b.style.cssText = 'padding:8px;margin-bottom:8px;border:1px solid #ffd36a;border-radius:6px;color:#ffd36a';
+    b.innerHTML = `You have zone changes from ${new Date(dr.t).toLocaleString()} that were never saved (${dr.z.length} zones). <button class="btn pri rs">Restore them</button> <button class="btn sec ds">Throw away</button>`;
+    b.querySelector('.rs').onclick = () => { Z = dr.z; zoneSel = -1; zoneDirty = true; leftUI(); redrawTop(); toast('Unsaved zone changes restored. Click Save zones to keep them.'); };
+    b.querySelector('.ds').onclick = () => { if (!confirm('Throw away those unsaved zone changes?')) return; zoneDraftDrop(); leftUI(); };
+    w.appendChild(b);
+  }
   w.insertAdjacentHTML('beforeend', `<div class="hint" style="padding:0 2px 8px">A zone is a name made of one or more boxes: all its boxes are one place, named once (odd shapes are several boxes). Click the map to pick the zone there; with a zone picked, <b>Add box</b> and drag on the map. Alt+click removes the picked zone's box under the mouse.${info.zonesrc === 'area.c' ? ' Now read from the server\'s area.c; the first save makes .dat/zones.dat, which the game uses from then on.' : ''}</div>`);
   const z = Z[zoneSel];
   if (z) {
