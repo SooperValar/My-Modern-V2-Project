@@ -4708,6 +4708,7 @@ function zonesTab(w, sect, match) {
     leftUI(); redraw(); toast(r.msg);
   };
   w.appendChild(top);
+  if (zoneDirty) w.insertAdjacentHTML('beforeend', '<div class="hint" style="padding:6px 8px;margin-bottom:8px;border:1px solid #ffd36a;border-radius:6px;color:#ffd36a">Unsaved zone changes: the game and the area clears don\'t see them until you click <b>Save zones</b>.</div>');
   const dr = !zoneDirty && zoneDraftGet();
   if (dr) {
     const b = document.createElement('div'); b.className = 'hint';
@@ -6681,6 +6682,7 @@ function clearsBox(el) {
     const bad = QA.find(c => !c.npcs.length); if (bad) return toast(bad.zone + ' has no NPC ticked.', true);
     const r = await api('/api/clears', { clears: QA }); toast(r.error || 'Area clears: ' + r.msg, !!r.error); if (!r.error) QAorig = JSON.stringify(QA); questsRender();
   };
+  if (zoneDirty || zoneDraftGet()) cb.insertAdjacentHTML('beforeend', `<div class="hint" style="padding:8px;margin:6px 0;border:1px solid #ffd36a;border-radius:6px;color:#ffd36a">Your zone changes are <b>not saved</b> yet${zoneDirty ? '' : ' (a draft is waiting in the Zones tab)'}: the area clears only see the saved zones. Go to Map → Zones, click <b>Save zones</b>, then come back and click <b>Re-check zones</b>.</div>`);
   if (!QA.length) cb.insertAdjacentHTML('beforeend', '<div class="empty">No area clears yet: search a zone above and Add it.</div>');
   for (const c of QA) {
     const d2 = document.createElement('div'); d2.className = 'qchain'; cb.appendChild(d2);
