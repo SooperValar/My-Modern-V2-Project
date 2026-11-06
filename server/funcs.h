@@ -440,6 +440,7 @@ int quest_count(int co,int t);
 int quest_reward_now(int t,int co,int *item,int *exp,int *gold,int *left,int *later);
 int quest_teach(int t,int co);
 int quest_skills(int t,int co,int *out);
+void quest_text(int t,int co,const char *in,char *out,int max);
 int quest_class_item(int t,int co,int item,int step);
 int quest_has_class(int t);
 int class_group(int co);

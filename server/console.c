@@ -303,6 +303,14 @@ static void con_cmd(char *line)
 		out("  #quest place: %s\n",get_area_street(x,y)[0] ? get_area_street(x,y) : "-");
 		return;
 	}
+	if (!strcmp(w[0],"greettext")) {	// greettext <player> <NPC template>: its greeting / #quest hint for that player ({skill}, {item})
+		char gb[400]; int t=atoi(w[2]);
+		if (!(co=con_player(w[1]))) return;
+		if (t<1 || t>=MAXTCHARS) { out("  No such template.\n"); return; }
+		quest_text(t,co,ch_temp[t].text[2],gb,sizeof(gb));
+		out("  %s: %s\n",ch_temp[t].name,gb);
+		return;
+	}
 	if (!strcmp(w[0],"merchreload")) {	// read .dat/merchants.dat again (the editor's Merchants tab)
 		n=merch_load();
 		out("  Merchants loaded: %d merchant%s with their own settings.\n",n,n==1 ? "" : "s");

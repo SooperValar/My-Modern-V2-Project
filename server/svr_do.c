@@ -2155,7 +2155,9 @@ void do_quest(int cn,char *a,char *b)
 			else if (rk>0) do_char_log(cn,0,"This one is below your rank.\n");
 		}
 		if (ch_temp[t].text[2][0] && ch_temp[t].text[2][0]!='#') {
-			quest_words(cn,ch_temp[t].text[2],buf,sizeof(buf));
+			char qt[400];
+			quest_text(t,cn,ch_temp[t].text[2],qt,sizeof(qt));	// {skill}, {item}
+			quest_words(cn,qt,buf,sizeof(buf));
 			do_char_log(cn,2,"%s says: \"%s\"\n",ch_temp[t].name,buf);
 		}
 		if (q[pick-1].skill>=0) {

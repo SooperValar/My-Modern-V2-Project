@@ -1045,6 +1045,21 @@ static void quest_count_add(int co,int t)
 	if (qcfd>=0 && pwrite(qcfd,&r,sizeof(r),QHDR+(off_t)co*sizeof(r))!=sizeof(r)) xlog("cannot write %s",QCOUNT_FILE);
 }
 
+/* an NPC text for character co: {skill} = the skill template t's quest teaches co next (class rewards), {item} = the item it
+ * wants; the rest is copied (%s stays for the player's name) */
+void quest_text(int t,int co,const char *in,char *out,int max)
+{
+	char *d=out; const char *v; int sk;
+	for (; *in && d<out+max-1; in++) {
+		v=NULL;
+		if (!strncmp(in,"{skill}",7)) { sk=quest_teach(t,co); v=sk>0 && sk<50 ? skilltab[sk].name : "nothing"; in+=6; }
+		else if (!strncmp(in,"{item}",6)) { v=t>0 && t<MAXTCHARS && ch_temp[t].data[49]>0 && ch_temp[t].data[49]<MAXTITEM ? it_temp[ch_temp[t].data[49]].reference : "something"; in+=5; }
+		if (v) { while (*v && d<out+max-1) *d++=*v++; }
+		else *d++=*in;
+	}
+	*d=0;
+}
+
 /* the skills template t's quest teaches character co, in order (class rewards, else its own data[50]); returns how many */
 int quest_skills(int t,int co,int *out)
 {

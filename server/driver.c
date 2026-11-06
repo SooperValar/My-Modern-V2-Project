@@ -789,23 +789,22 @@ int npc_see(int cn,int co)
         // MyV2: an NPC with its own greeting lines (npctalk.dat "when near") greets each player at most once a minute,
         // instead of remembering only the last four players it greeted
         if (!ch[cn].attack_cn && (ch[co].flags&(CF_PLAYER)) && ch[cn].data[37] && indoor1==indoor2 && talk_has_near(cn)) {
-                if (talk_near_due(cn,co) && !talk_custom_near(cn,co)) npc_saytext_n(cn, 2, ch[co].name);
+                if (talk_near_due(cn,co) && !talk_custom_near(cn,co)) {
+                        if (strchr(ch[cn].text[2],'{') && !(ch[cn].flags&CF_SHUTUP)) { char gb[400]; quest_text(ch[cn].temp,co,ch[cn].text[2],gb,sizeof(gb)); do_sayx(cn,gb,ch[co].name); }
+                        else npc_saytext_n(cn, 2, ch[co].name);
+                }
         }
         // check if we need to talk to him
         else if (!ch[cn].attack_cn && (ch[co].flags&(CF_PLAYER)) && ch[cn].data[37] && indoor1==indoor2 && ch[cn].data[56]<globs->ticker) {
                 for (n=37; n<41; n++)
                         if (ch[cn].data[n]==co) break;
                 if (n==41) {
-                        if (strcmp(ch[cn].text[2],"#stunspec")==0) {
-                                if ((ch[co].kindred&KIN_TEMPLAR) || (ch[co].kindred&KIN_ARCHTEMPLAR) || ((ch[co].kindred&KIN_SEYAN_DU) && ch[co].skill[19][0]))
-                                        do_sayx(cn,"Hello, %s. I'll teach you Immunity, if you bring me the potion from the Skeleton Lord.",ch[co].name);
-                                else
-                                        do_sayx(cn,"Hello, %s. I'll teach you Stun, if you bring me the potion from the Skeleton Lord.",ch[co].name);
-                        } else if (strcmp(ch[cn].text[2],"#cursespec")==0) {
-                                if ((ch[co].kindred&KIN_TEMPLAR) || (ch[co].kindred&KIN_ARCHTEMPLAR) || ((ch[co].kindred&KIN_SEYAN_DU) && ch[co].skill[19][0]))
-                                        do_sayx(cn,"Hi, %s. Bring me a Potion of Life and I'll teach you Surround Hit.",ch[co].name);
-                                else
-                                        do_sayx(cn,"Hi, %s. Bring me a Potion of Life and I'll teach you Curse.",ch[co].name);
+                        // (the original's "#stunspec" / "#cursespec" greetings for Ingrid and Gordon: now their own text
+                        // with {skill}, which names the skill they teach this player's class)
+                        if (strchr(ch[cn].text[2],'{') && !(ch[cn].flags&CF_SHUTUP)) {
+                                char gb[400];
+                                quest_text(ch[cn].temp,co,ch[cn].text[2],gb,sizeof(gb));
+                                if (!talk_custom_near(cn,co)) do_sayx(cn,gb,ch[co].name);
                         } else {
 				// here is message filter, if talking NPC is priest and player char is PURPLE we greet him								
 				if (talk_custom_near(cn,co)) ;	// MyV2: its own greeting lines (npctalk.dat "when near")
