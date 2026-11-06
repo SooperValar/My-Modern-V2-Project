@@ -2825,6 +2825,20 @@ void do_char_killed(int cn,int co)
                 do_area_notify(cc,co,ch[cc].x,ch[cc].y,NT_SEEHIT,cc,co,0,0);
         }
 
+        // MyV2: the gold a monster carried goes straight to the player who killed it (or whose follower did), not into its grave
+        if (cn && cn!=co && !(ch[co].flags&(CF_PLAYER|CF_MERCHANT)) && ch[co].gold>0 && !(mf&MF_ARENA)) {
+                int pl=0,m2;
+                if (ch[cn].flags&CF_PLAYER) pl=cn;
+                else if ((m2=ch[cn].data[63])>0 && IS_SANECHAR(m2) && (ch[m2].flags&CF_PLAYER) && ch[m2].used==USE_ACTIVE) pl=m2;
+                if (pl) {
+                        ch[pl].gold+=ch[co].gold;
+                        do_char_log(pl,1,"You take %dG %dS from %s.\n",ch[co].gold/100,ch[co].gold%100,ch[co].reference);
+                        chlog(pl,"Looted %dG %dS from %s",ch[co].gold/100,ch[co].gold%100,ch[co].name);
+                        ch[co].gold=0;
+                        do_update_char(pl);
+                }
+        }
+
         if (ch[co].flags&(CF_PLAYER)) {
                 if (ch[co].luck<0) ch[co].luck=min(0,ch[co].luck+10);
 

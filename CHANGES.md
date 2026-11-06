@@ -383,6 +383,7 @@ NPCs can now hold real conversations and run quests made in the editor (see [Que
 - A huge sapphire on a silver ring now gives the correct "too powerful" message (a 499 → 489 typo).
 - Spell slots are bounds-checked against `MAXITEM`.
 - `#recall` (gods) also gives the old temple back to a player taken out of a lab.
+- **Gold is looted automatically**: the gold a monster carried goes straight to the player who killed it (or whose Ghost Companion or other follower did), with "You take 1G 20S from the Thief.", instead of lying in its grave. Not for players killed, merchants or arena fights.
 - **Damage to attackers** (items, and the Epic effect Thorns) now hurts the attacker on every melee blow that lands, also when your armor stops all of its damage (before: only blows that hurt you). It still adds up over the worn pieces (a full Fire set does 1-18).
 
 ---
