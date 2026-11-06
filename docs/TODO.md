@@ -65,3 +65,4 @@ Cody wants to revisit these five, like the tool symbols: grid, see through walls
 24. ~~**Class rewards**~~ (LIVE Nov 5): item quests (Quests page, "+ Add a class reward", `qclass`) and conversation lines ("the player's class" condition, "By class" split) can give each picked class its own skill / item. Cody sets them up when he wants.
 - Nov 5 live: Ingrid/Gordon class rewards (qclass lines added to the live npctalk.dat), Warrior templates start Immunity/Surround Hit at 4, Identify/Light/Recall fixed at 250.
 - Nov 5 live: {skill} greetings (Ingrid/Gordon texts set), several item quests per NPC (qalias), Greenling Eye Collection -> Robin (quest template 2004).
+- Nov 5 live: Players page reset / delete (backup) / restore (new random name if taken).
