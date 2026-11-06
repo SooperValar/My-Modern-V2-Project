@@ -181,6 +181,7 @@ All also work with `/`, and they are listed in `#help`.
 
 ## New zones and areas
 
+- **Tables and bars with a scroll, readable like signs**: item templates 1409-1416 (Table, Marble Table, Round Table and Bar "with a Scroll"; `tools/world/table_scrolls.txt`), sprites 18290-18297 (the open scroll shrunk onto each table piece and the bar). Look at one to read it; each placed one has its own text, written in the editor's Description of the item.
 **Tower floors packed together**
 - Tower floors II-XX packed into one compact block (x 822-945, y 337-435), in floor order, five per row. Each floor moved as a unit with its items, NPCs and NPC templates (respawn, rest and patrol positions). Ladder offsets were recomputed and the tower zones in `area.c` moved with the floors. Tower I stays in the Strange Forest. One-off script: `tools/world/movetowers.py`.
 
