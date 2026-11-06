@@ -166,17 +166,16 @@ New sprites: write them to `Client\GFX` (new numbers), then `tools/release/publi
 
 ## Open items (details in docs/TODO.md and docs/HOSTING.md)
 
-**Tested by Cody in game (Nov 4):** potion stacks, the Fire/Ice set bonuses, Burning Hits (+ `#burning`), Frost Armor, the
-sets in the god shop, the Ice Gargoyle Cape and the Cloak of Ice names, thorns on every landed blow. **Still to test:** the
-2.15.02 client items (Ctrl+click, scroll charges, Greataxe name, Ice set pictures; then publish), Weapon Specialization in
-`#twohand` / `#axe2h`, a set piece sold to a merchant not showing in his stock, the three old Fire chests' new loot, the
-HP/End/Mana 50 requirement, the quests page / `#quest` and the area clears.
+**Tested by Cody in game (Nov 4-5), all good:** potion stacks, the Fire/Ice set bonuses, Burning Hits (+ `#burning`), Frost Armor, the
+sets in the god shop, the Ice Gargoyle Cape and the Cloak of Ice names, thorns on every landed blow, the 2.15.02 client
+(Ctrl+click, scroll charges, Greataxe name, Ice set pictures), Weapon Specialization in `#twohand` / `#greataxe`, set
+pieces sold to merchants being destroyed, the three old Fire chests' new loot, the HP/End/Mana 50 requirement, the quests
+page / `#quest` and the area clears. **Client 2.15.02 published Nov 5** (client-dist 08bdabd) and `CLIENT_LATEST` raised to
+0x020F02. `#axe2h` renamed `#greataxe` (Nov 5).
 
 **Zones (Nov 5):** Cody's earlier zone edits were lost: the live server never had a `.dat/zones.dat` (no backups either), so they were never saved (Zones tab edits lived only in the page until **Save zones**). Now the editor keeps a browser draft and offers to restore it, and warns before leaving with unsaved changes. Done Nov 5: Cody redrew and saved them (`.dat/zones.dat` now exists) and updated the area clears with **Re-check zones**.
 
-**Where we left off (Nov 4):** live: the rebalance, area clears, stacking (TODO 14), the Cloak of Ice (template 1407). Fire set = melee / Ice set = casters (`tools/world/fire_ice_sets.txt` + `refresh_items`): with 4- and 6-piece set bonuses, now non-unique rare late-game drops (god shop has them, merchants destroy sold pieces), HP/End/Mana need 50, Fire 1-3 / Ice 1-2 damage to attackers; old Ice Cloak renamed Ice Gargoyle Cape: all LIVE since Nov 4 (TODO 19; Cody checks tooltips / #specialarmor in game). The Ice Gargoyle Cape 909 (was "Ice Cloak"; egg trade, temporary, unique) keeps its stats: don't change them. Client: `Client\merc.exe` is now 2.15.02 (Greataxe skill name + Ctrl+click on stacks; earlier
-builds kept as `merc_2.15.01.exe` and `merc_old.exe`), NOT published: Cody tests at home, then `publish_client.py`
-(it also sends the Ice set pictures 18100-18105, which are in `Client\GFX`). After publishing a client, raise `CLIENT_LATEST` in `server/gendefs.h` to its version (players on older clients are then told on login to use Launcher.exe), and `MINVERSION` only if old clients can no longer play. Waiting for Cody at home: the summoner's
+**Where we left off (Nov 4):** live: the rebalance, area clears, stacking (TODO 14), the Cloak of Ice (template 1407). Fire set = melee / Ice set = casters (`tools/world/fire_ice_sets.txt` + `refresh_items`): with 4- and 6-piece set bonuses, now non-unique rare late-game drops (god shop has them, merchants destroy sold pieces), HP/End/Mana need 50, Fire 1-3 / Ice 1-2 damage to attackers; old Ice Cloak renamed Ice Gargoyle Cape: all LIVE since Nov 4 (TODO 19; Cody checks tooltips / #specialarmor in game). The Ice Gargoyle Cape 909 (was "Ice Cloak"; egg trade, temporary, unique) keeps its stats: don't change them. Client: `Client\merc.exe` is 2.15.02, published (earlier builds kept as `merc_2.15.01.exe` and `merc_old.exe`). After publishing a client, raise `CLIENT_LATEST` in `server/gendefs.h` to its version (players on older clients are then told on login to use Launcher.exe), and `MINVERSION` only if old clients can no longer play. Waiting for Cody at home: the summoner's
 staff and waypoints (TODO 13, pictures in `docs/ref`). Cody is going through the quests and area clears. The DuckDNS
 PowerShell window: switched to a hidden launcher; check with Cody that it stopped.
 

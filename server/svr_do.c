@@ -1628,7 +1628,7 @@ void do_info_twohand(int cn)
 	{ int c=wp2h_chance(cn,0); do_char_log(cn,2,"* Two-handed swords take both hands: no shield. Deflect: while you wield one, some melee hits against you are deflected: %d%% to %d%%, more with Agility (you: %d.%d%%).\n",WP2H_MIN/10,WP2H_MAX/10,c/10,c%10); }
 }
 
-void do_info_axe2h(int cn)
+void do_info_greataxe(int cn)
 {
 	static int t[]={AXE2H_T_BRONZE,AXE2H_T_BRONZE+1,AXE2H_T_BRONZE+2,AXE2H_T_BRONZE+3,AXE2H_T_BRONZE+4};
 	info_weapon_table(cn,"greataxes","GrAxe",SK_AXE2H,t,5);
@@ -1735,7 +1735,7 @@ void do_info_weapon(int cn)
 	do_char_log(cn,1,"#sword                 lists swords\n");
 	do_char_log(cn,1,"#twohand               lists two-handed swords\n");
 	do_char_log(cn,1,"#axe                   lists axes\n");
-	do_char_log(cn,1,"#axe2h                 lists greataxes\n");
+	do_char_log(cn,1,"#greataxe              lists greataxes\n");
 	do_char_log(cn,1,"#specialw              lists special weapons\n");
 	do_char_log(cn,1," \n");
 	do_char_log(cn,2,"* Weapon value (WV) only counts if your skill for that weapon type is high enough.\n");
@@ -2331,7 +2331,6 @@ void do_command(int cn, char *ptr)
                 if (prefix(cmd,"armor"))                { do_info_armor(cn); return; };
                 if (prefix(cmd,"areas") && f_p)         { do_areas(cn); return; };
                 if (prefix(cmd,"axe"))                  { do_info_axe(cn); return; };
-                if (prefix(cmd,"axe2h"))                { do_info_axe2h(cn); return; };
                 break;
         case 'b':
                 if (prefix(cmd,"bow") && !f_sh)  /*!*/  { ch[cn].misc_action=DR_BOW; return; };
@@ -2383,6 +2382,7 @@ void do_command(int cn, char *ptr)
                 if (prefix(cmd,"give") && f_giu)        { do_god_give(cn,dbatoi(arg[1])); return; }
                 if (prefix(cmd,"goto") && f_giu) /*!*/  { god_goto(cn,cn,arg[1],arg[2]); return; }
                 if (prefix(cmd,"god") && f_g)           { god_set_flag(cn,dbatoi_self(cn,arg[1]),CF_GOD); return; }
+                if (prefix(cmd,"greataxe"))             { do_info_greataxe(cn); return; };
 		if (prefix(cmd,"greatergod") && f_gg)   { god_set_flag(cn,dbatoi_self(cn,arg[1]),CF_GREATERGOD); return; }
 		if (prefix(cmd,"greaterinv") && f_gg)   { god_set_flag(cn,dbatoi_self(cn,arg[1]),CF_GREATERINV); return; }
                 if (prefix(cmd,"grolm") && f_gi)        { god_grolm(cn); return; }
