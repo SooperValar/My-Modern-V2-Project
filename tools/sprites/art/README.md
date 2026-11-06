@@ -95,7 +95,7 @@ reference). 18100 Boots (from 890), 18101 Armor (894), 18102 Gloves (Sleeves of 
 picture 16770.
 
 
-## Tables with a scroll - 18290-18293
+## Tables with a scroll - 18290-18296
 
 `table_scroll/`: the open parchment scroll (18140) shrunk to 62 % (17x11) and laid in the middle of the table top, with a
 faint shadow, by `build.py` (originals exported to `orig/`, `preview.png` shows before / after).
@@ -106,3 +106,8 @@ faint shadow, by `build.py` (originals exported to `orig/`, `preview.png` shows 
 | Table IV (plain red, top piece) | 562 | 18291 |
 | Table I (wood grain, leg piece) | 1242 | 18292 |
 | Table II (wood grain, top piece) | 1244 | 18293 |
+| Marble Table I (white, leg piece) | 16886 | 18294 |
+| Marble Table II (white, top piece) | 16888 | 18295 |
+| Marble Table III (white, round) | 16895 | 18296 |
+
+Item templates 1409-1415 use them (`tools/world/table_scrolls.txt`), readable like signs.

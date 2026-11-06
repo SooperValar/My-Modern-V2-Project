@@ -1,0 +1,46 @@
+# Tables with a scroll on them, readable like signs (apply with build_lab while the server is stopped).
+# Each is a copy of its plain table with the scroll sprite (tools/sprites/art/table_scroll), flagged
+# move-block + look like the signs. Place them in the editor and write each one's own text in the
+# selected item's Description (what players read when they look at it).
+it 1409 copy 298
+it 1409 name Table with a Scroll
+it 1409 ref the scroll
+it 1409 spr 18290 18290
+it 1409 flags 11
+it 1409 desc An open scroll lies on the table.
+it 1410 copy 299
+it 1410 name Table with a Scroll
+it 1410 ref the scroll
+it 1410 spr 18291 18291
+it 1410 flags 11
+it 1410 desc An open scroll lies on the table.
+it 1411 copy 82
+it 1411 name Table with a Scroll
+it 1411 ref the scroll
+it 1411 spr 18292 18292
+it 1411 flags 11
+it 1411 desc An open scroll lies on the table.
+it 1412 copy 83
+it 1412 name Table with a Scroll
+it 1412 ref the scroll
+it 1412 spr 18293 18293
+it 1412 flags 11
+it 1412 desc An open scroll lies on the table.
+it 1413 copy 1050
+it 1413 name Marble Table with a Scroll
+it 1413 ref the scroll
+it 1413 spr 18294 18294
+it 1413 flags 11
+it 1413 desc An open scroll lies on the table.
+it 1414 copy 1051
+it 1414 name Marble Table with a Scroll
+it 1414 ref the scroll
+it 1414 spr 18295 18295
+it 1414 flags 11
+it 1414 desc An open scroll lies on the table.
+it 1415 copy 1052
+it 1415 name Round Table with a Scroll
+it 1415 ref the scroll
+it 1415 spr 18296 18296
+it 1415 flags 11
+it 1415 desc An open scroll lies on the table.

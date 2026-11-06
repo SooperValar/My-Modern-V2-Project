@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
-"""Tables with a scroll on them: the open parchment scroll (18140) shrunk onto the four table sprites.
+"""Tables with a scroll on them: the open parchment scroll (18140) shrunk onto the table sprites.
     build.py <client folder>   writes 182NN png files here and preview.png
 """
 import os, sys
 from PIL import Image, ImageFilter
 HERE = os.path.dirname(os.path.abspath(__file__))
-OUT = {560: 18290, 562: 18291, 1242: 18292, 1244: 18293}   # table sprite -> new sprite
+OUT = {560: 18290, 562: 18291, 1242: 18292, 1244: 18293,     # table sprite -> new sprite
+       16886: 18294, 16888: 18295, 16895: 18296}               # white marble: square leg / top, round
+CENTER = {16895: (16, 37)}                                       # the middle of the top, when not the diamond's (16, 35)
 SCALE = 0.62
 def load(n): return Image.open(os.path.join(HERE, 'orig', '%05d.png' % n)).convert('RGBA')
 sc = load(18140); sc = sc.crop(sc.getbbox())
@@ -17,12 +19,12 @@ res = {}
 for t, nr in OUT.items():
     im = load(t)
     bb = im.getbbox()
-    cx, cy = 16, 27 + 8          # the middle of the table top (a 32x17 diamond from y 27)
+    cx, cy = CENTER.get(t, (16, 35))   # the middle of the table top (a 32x17 diamond from y 27)
     x, y = cx - w // 2, cy - h // 2 - 1
     im.alpha_composite(sh, (x + 1, y + 1)); im.alpha_composite(small, (x, y))
     im.save(os.path.join(HERE, '%d.png' % nr)); res[nr] = im
 S = 5
-pv = Image.new('RGBA', (32 * S * 8, 64 * S), (60, 60, 70, 255))
+pv = Image.new('RGBA', (32 * S * 2 * len(OUT), 64 * S), (60, 60, 70, 255))
 for k, t in enumerate(OUT):
     for j, im in enumerate((load(t), res[OUT[t]])):
         pv.alpha_composite(im.resize((32 * S, 64 * S), Image.NEAREST), ((k * 2 + j) * 32 * S, 0))
