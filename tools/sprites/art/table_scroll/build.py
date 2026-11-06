@@ -6,8 +6,9 @@ import os, sys
 from PIL import Image, ImageFilter
 HERE = os.path.dirname(os.path.abspath(__file__))
 OUT = {560: 18290, 562: 18291, 1242: 18292, 1244: 18293,     # table sprite -> new sprite
-       16886: 18294, 16888: 18295, 16895: 18296}               # white marble: square leg / top, round
-CENTER = {16895: (16, 37)}                                       # the middle of the top, when not the diamond's (16, 35)
+       16886: 18294, 16888: 18295, 16895: 18296,               # white marble: square leg / top, round
+       176: 18297}                                             # the tavern bar (Bar Box)
+CENTER = {16895: (16, 37), 176: (16, 31)}                                       # the middle of the top, when not the diamond's (16, 35)
 SCALE = 0.62
 def load(n): return Image.open(os.path.join(HERE, 'orig', '%05d.png' % n)).convert('RGBA')
 sc = load(18140); sc = sc.crop(sc.getbbox())

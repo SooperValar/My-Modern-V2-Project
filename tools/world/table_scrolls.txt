@@ -44,3 +44,9 @@ it 1415 ref the scroll
 it 1415 spr 18296 18296
 it 1415 flags 11
 it 1415 desc An open scroll lies on the table.
+it 1416 copy 330
+it 1416 name Bar with a Scroll
+it 1416 ref the scroll
+it 1416 spr 18297 18297
+it 1416 flags 11
+it 1416 desc An open scroll lies on the bar.
