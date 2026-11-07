@@ -2981,6 +2981,7 @@ def main():
     ap.add_argument('--area', default='area.c', help="the server's area.c (zone names)")
     ap.add_argument('--minimap', default=None, help='world minimap picture (default: the project docs one)')
     ap.add_argument('--port', type=int, default=8080)
+    ap.add_argument('--start-server', action='store_true', help='start the game server too if it is not running (myv2-start.sh, Windows start-up)')
     ap.add_argument('--backup-dir', default='/mnt/d/MyV2 Backups', help='off-PC copy of the automatic backups (every 6 hours); "" = no automatic backups')
     ap.add_argument('--host', default='127.0.0.1')
     ap.add_argument('--control', default='/mnt/c/Users/Cody/Desktop/MyV2/Server/control',
@@ -2999,6 +3000,9 @@ def main():
         if os.path.exists(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'mapedit.html')) else PAGE.encode()
     BACKUP['on'], BACKUP['dir'] = bool(a.backup_dir), a.backup_dir
     ctl = ServerCtl(world.server_dir, a.control if a.control and os.path.isdir(os.path.dirname(a.control)) else None, world)
+    if a.start_server and not server_running():
+        print('Starting the game server ...')
+        ctl.run_job('start')
     handler = make_handler(world, sprites, page, a.minimap, ctl)
     httpd = None
     for port in [a.port] + [p for p in range(8090, 8100) if p != a.port]:
