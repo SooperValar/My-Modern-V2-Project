@@ -335,7 +335,7 @@ void plr_cmd_turn(int nr)
 
         cn=player[nr].usnr;
 
-        if (IS_BUILDING(cn)) {
+        if (IS_BUILDING(cn) && x>=0 && x<MAPX && y>=0 && y<MAPY) {	// (MyV2: only on the map)
                 do_char_log(cn,3,"x=%d, y=%d, m=%d,light=%d, indoors=%lld, dlight=%d.\n",
                         x,y,x+y*MAPX,map[x+y*MAPX].light,map[x+y*MAPX].flags&MF_INDOORS,map[x+y*MAPX].dlight);
 
@@ -1149,14 +1149,17 @@ void plr_cmd_setuser(int nr)
                 case    0:
                         for (n=0; n<13; n++)
                                 ch[cn].text[0][n+pos]=player[nr].inbuf[n+3];
+                        ch[cn].text[0][78]=0;	// MyV2: the client sends at most 78 letters: always a proper end
                         break;
                 case    1:
                         for (n=0; n<13; n++)
                                 ch[cn].text[1][n+pos]=player[nr].inbuf[n+3];
+                        ch[cn].text[1][78]=0;	// MyV2: the client sends at most 78 letters: always a proper end
                         break;
                 case    2:
                         for (n=0; n<13; n++)
                                 ch[cn].text[2][n+pos]=player[nr].inbuf[n+3];
+                        ch[cn].text[2][78]=0;	// MyV2: the client sends at most 78 letters: always a proper end
                         if (pos!=65) break;
                         if (strlen(ch[cn].text[0])>3 &&
                             strlen(ch[cn].text[0])<38 &&

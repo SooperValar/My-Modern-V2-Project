@@ -21,6 +21,7 @@ All rights reserved.
 #include <sys/socket.h>
 #include <sys/time.h>
 #include <netinet/in.h>
+#include <arpa/inet.h>
 #include <sys/wait.h>
 #include <errno.h>
 
@@ -152,6 +153,20 @@ void new_player(int sock)
         setsockopt(nsock,SOL_SOCKET,SO_RCVBUF,(const char *)&onek,sizeof(int));
         setsockopt(nsock,SOL_SOCKET,SO_LINGER,(const char *)&zero,sizeof(int));
         setsockopt(nsock,SOL_SOCKET,SO_KEEPALIVE,(const char *)&one,sizeof(int));
+
+        // MyV2: at most MAX_PER_ADDR connections from one address (one machine can't fill all the player slots)
+        if (addr.sin_addr.s_addr!=htonl(INADDR_LOOPBACK)) {
+                for (n=1,m=0; n<MAXPLAYER; n++) if (player[n].sock && player[n].addr==addr.sin_addr.s_addr) m++;
+                if (m>=MAX_PER_ADDR) {
+                        static int last_note=0;
+                        close(nsock);
+                        if (globs->ticker-last_note>TICKS*60) {
+                                xlog("new_player (server.c): %d connections from %s already, refused",m,inet_ntoa(addr.sin_addr));
+                                last_note=globs->ticker;
+                        }
+                        return;
+                }
+        }
 
         for (n=1; n<MAXPLAYER; n++) if (!player[n].sock) break;
         if (n==MAXPLAYER) {

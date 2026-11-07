@@ -125,6 +125,7 @@ A new HUD drawn on its own canvas (window size ÷ 1.5) and composited over the w
 
 ## God / imp / builder commands and in-game tools
 
+- **Safety fixes** (hosting review): at most 5 connections at once from one internet address (`MAX_PER_ADDR`); the account name / description texts a client sends always end inside their buffer; the build-mode tile info only for spots on the map.
 - **Abandoned new characters are cleaned up**: once a day at 4 o'clock, characters with under 1 hour of play that haven't logged in for 30 days are deleted, each saved first to the deleted-characters backups (restore from the editor's Players page). Staff, imp and god characters are never touched. Console: `charcleanup list` (who would go), `charcleanup` (now). `god_cleanup_new` in `svr_god.c`.
 **Build mode**
 - **`#build`** starts build mode and explains it in chat: what each page holds, the commands, and how to place (Shift+click) and pick up (right-click) pieces.

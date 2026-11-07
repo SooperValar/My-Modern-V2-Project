@@ -407,6 +407,7 @@ struct player
 };
 
 #define MAXPLAYER		250
+#define MAX_PER_ADDR		5	// MyV2: connections from one internet address at once (server.c new_player)
 
 #define ST_CONNECT		0
 #define ST_NEW_CHALLENGE	1
