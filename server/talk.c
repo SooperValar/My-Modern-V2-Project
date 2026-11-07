@@ -580,6 +580,52 @@ void answer_attack(int cn,int co,char *text)
         }
 }
 
+/* MyV2: send the player's Ghost Companion at one chosen enemy (#gca, or Ghost Companion on the spell bar
+ * with an Alt-selected enemy). cn = the player, co = the enemy. Returns 1 if the companion was sent. */
+int gc_send(int cn,int co)
+{
+        int gc=ch[cn].data[CHD_COMPANION],idx;
+
+        if (!gc || !IS_SANECHAR(gc) || ch[gc].data[63]!=cn || (ch[gc].flags&CF_BODY) || ch[gc].used!=USE_ACTIVE) {
+                do_char_log(cn,0,"You have no Ghost Companion.\n");
+                return 0;
+        }
+        if (!co || !IS_SANECHAR(co) || ch[co].used!=USE_ACTIVE || (ch[co].flags&CF_BODY)) {
+                do_char_log(cn,0,"Pick an enemy first: Alt+click it (it turns green), then #gca or Ghost Companion on your spell bar.\n");
+                return 0;
+        }
+        if (co==cn || co==gc) {
+                do_sayx(gc,"I will not attack %s, %s!",co==cn ? "you" : "myself",ch[cn].name);
+                return 0;
+        }
+        if (!do_char_can_see(cn,co)) {
+                do_char_log(cn,0,"You cannot see %s.\n",ch[co].reference);
+                return 0;
+        }
+        if (abs(ch[gc].x-ch[co].x)+abs(ch[gc].y-ch[co].y)>=40) {
+                do_char_log(cn,0,"%s is too far away from your Ghost Companion.\n",ch[co].reference);
+                return 0;
+        }
+        if (!may_attack_msg(cn,co,1)) return 0;
+
+        ch[gc].attack_cn=co;
+        idx=co|(char_id(co)<<16);
+        ch[gc].data[80]=idx;
+        do_sayx(gc,"Yes %s, I will kill %s!",ch[cn].name,ch[co].reference);
+        do_notify_char(co,NT_GOTMISS,cn,0,0,0);
+        return 1;
+}
+
+/* #gca / #gcattack [character number]: the client adds the Alt-selected character's number;
+ * without one, the enemy the player is fighting */
+void do_gc_attack(int cn,char *arg)
+{
+        int co=(arg && *arg) ? atoi(arg) : 0;
+
+        if (co<=0 || co>=MAXCHARS) co=ch[cn].attack_cn;
+        gc_send(cn,co);
+}
+
 void answer_quiet(int cn, int co)
 {
         if (!ch[cn].data[CHD_TALKATIVE]) {

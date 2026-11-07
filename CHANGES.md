@@ -246,6 +246,7 @@ A new labyrinth part after Lab 10 (map 180,900 - 299,999). The labyrinth gate af
 
 ## New features from a player's point of view
 
+- **Send your Ghost Companion at one enemy**: Alt+click the enemy (it turns green), then type `#gca` (or `#gcattack`), or click **Ghost Companion on your spell bar** while your companion is out: it attacks exactly that enemy, not another one with the same name (`gc_send` in `talk.c`). Without a selection `#gca` uses the enemy you're fighting. Same rules as telling it by name: you must see the enemy, it must be within 40 tiles of the companion, and you must be allowed to attack it. Casting Ghost Companion this way costs no mana. Client 2.15.03 sends the selected enemy with `#gca`; older clients only have the spell-bar way and "the enemy you're fighting".
 ### Labyrinth
 - Entering a labyrinth part through the gate saves your temple; inside, death and recall go to the start of that part as before. Leaving by the exit portal or solving the part gives the old temple back (Purple One's temple, staff temple, ...) instead of always Aston.
 - Lab items (keys, the Hourglass of Time, ...) now also vanish when a player ends up outside the labyrinth by recall, being saved by the gods or the god `#recall`, not only at the exit portal. Death is unchanged: items drop into the grave and stay in the lab.

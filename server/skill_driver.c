@@ -1498,7 +1498,9 @@ void skill_ghost(int cn)
         if ((ch[cn].flags&CF_PLAYER) && (co=ch[cn].data[CHD_COMPANION])) {
                 if (!IS_SANECHAR(co) || ch[co].data[63]!=cn || (ch[co].flags&CF_BODY) || ch[co].used==USE_EMPTY) co=0;
                 if (co) {
-                        do_char_log(cn,0,"You may not have more than one Ghost Companion (%d).\n",co);
+                        int t=ch[cn].skill_target1;     // MyV2: an Alt-selected enemy sends the companion at it
+                        if (t && t!=cn && t!=co) { gc_send(cn,t); return; }
+                        do_char_log(cn,0,"You already have a Ghost Companion. Alt+click an enemy, then use this spell again (or #gca) to send it at that enemy.\n");
                         return;
                 }
         }

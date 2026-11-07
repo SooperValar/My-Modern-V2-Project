@@ -154,6 +154,24 @@ void say(char *input)
 	// #godshop opens a shop window from afar: let it open even right after a shop was closed
 	if ((input[0]=='/' || input[0]=='#') && !_strnicmp(input+1,"godshop",7)) noshop=0;
 
+	// #gca / #gcattack: add the Alt-selected character, so the server knows whom the Ghost Companion should attack
+	static char gca[128];
+	extern int selected_char;
+	if ((input[0]=='/' || input[0]=='#') && selected_char) {
+		char *p=input+1, *q;
+		int l=0;
+		if (!_strnicmp(p,"gcattack",8)) l=8;
+		else if (!_strnicmp(p,"gca",3)) l=3;
+		if (l && (p[l]==0 || p[l]==' ')) {
+			for (q=p+l; *q==' '; q++) ;
+			if (!*q) {
+				memset(gca,0,sizeof(gca));
+				_snprintf(gca,119,"#gca %d",selected_char);
+				input=gca;
+			}
+		}
+	}
+
 	int n;
 	char buf[16];
 	buf[0]=CL_CMD_INPUT1;

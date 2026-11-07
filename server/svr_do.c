@@ -643,6 +643,7 @@ void do_help(int cn,char *topic)
 	do_char_log(cn,1,"#exp                   experience and exp/hour.\n");
 	do_char_log(cn,1,"#fightback             toggle auto-figtback.\n");
 	do_char_log(cn,1,"#follow <player>|self  you'll follow player.\n");
+	do_char_log(cn,1,"#gca                   GC attacks your Alt-selected enemy.\n");
 	do_char_log(cn,1,"#gold <amount>         get X gold coins.\n");
 	do_char_log(cn,1,"#silver <amount>       get X silver coins.\n");
 	do_char_log(cn,1,"#group <player>        group with player.\n");
@@ -2374,6 +2375,7 @@ void do_command(int cn, char *ptr)
         case 'g':
                 if (!strcmp(cmd,"godshop") && f_g)      { god_godshop(cn,arg[1]); return; };
                 if (prefix(cmd,"gtell") && !f_m) /*!*/  { do_gtell(cn,args[0]); return; }
+                if (prefix(cmd,"gcattack") || !strcmp(cmd,"gca")) { do_gc_attack(cn,arg[1]); return; }
                 if (prefix(cmd,"gold"))                 { do_gold(cn,atoi(arg[1])); return; }
 		if (prefix(cmd,"golden") && f_g)	{ god_set_flag(cn,dbatoi(arg[1]),CF_GOLDEN); return; }
                 if (prefix(cmd,"group") && !f_m)        { do_group(cn,arg[1]); return; }

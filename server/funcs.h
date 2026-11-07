@@ -358,6 +358,8 @@ int can_see(int cn,int x,int y,int tx,int ty,int maxdist);
 int check_dlight(int x,int y);
 void compute_dlight(int x,int y);
 int char_id(int cn);
+int gc_send(int cn,int co);
+void do_gc_attack(int cn,char *arg);
 void char_item_expire(int cn);
 extern char *rank_name[];
 extern char *who_rank_name[];
