@@ -1499,7 +1499,7 @@ void skill_ghost(int cn)
                 if (!IS_SANECHAR(co) || ch[co].data[63]!=cn || (ch[co].flags&CF_BODY) || ch[co].used==USE_EMPTY) co=0;
                 if (co) {
                         int t=ch[cn].skill_target1;     // MyV2: an Alt-selected enemy sends the companion at it
-                        if (t && t!=cn && t!=co) { gc_send(cn,t); return; }
+                        if (t && t!=cn && !(ch[t].temp==CT_COMPANION && ch[t].data[63]==cn)) { gc_send(cn,t); return; }
                         do_char_log(cn,0,"You already have a Ghost Companion. Alt+click an enemy, then use this spell again (or #gca) to send it at that enemy.\n");
                         return;
                 }

@@ -580,40 +580,50 @@ void answer_attack(int cn,int co,char *text)
         }
 }
 
-/* MyV2: send the player's Ghost Companion at one chosen enemy (#gca, or Ghost Companion on the spell bar
- * with an Alt-selected enemy). cn = the player, co = the enemy. Returns 1 if the companion was sent. */
+/* MyV2: send the player's Ghost Companions at one chosen enemy (#gca, or Ghost Companion on the spell bar
+ * with an Alt-selected enemy). cn = the player, co = the enemy. Every companion of the player within reach
+ * goes (ready for more than one companion per player). Returns how many were sent. */
+static int gc_mine(int cn,int gc)
+{
+        return IS_SANECHAR(gc) && gc!=cn && ch[gc].used==USE_ACTIVE && ch[gc].temp==CT_COMPANION &&
+               ch[gc].data[63]==cn && !(ch[gc].flags&CF_BODY);
+}
+
 int gc_send(int cn,int co)
 {
-        int gc=ch[cn].data[CHD_COMPANION],idx;
+        int gc,idx,have=0,far=0,sent=0;
 
-        if (!gc || !IS_SANECHAR(gc) || ch[gc].data[63]!=cn || (ch[gc].flags&CF_BODY) || ch[gc].used!=USE_ACTIVE) {
-                do_char_log(cn,0,"You have no Ghost Companion.\n");
-                return 0;
-        }
         if (!co || !IS_SANECHAR(co) || ch[co].used!=USE_ACTIVE || (ch[co].flags&CF_BODY)) {
-                do_char_log(cn,0,"Pick an enemy first: Alt+click it (it turns green), then #gca or Ghost Companion on your spell bar.\n");
+                for (gc=1; gc<MAXCHARS && !have; gc++) if (gc_mine(cn,gc)) have=1;
+                do_char_log(cn,0,have ? "Pick an enemy first: Alt+click it (it turns green), then #gca or Ghost Companion on your spell bar.\n" :
+                                        "You have no Ghost Companion.\n");
                 return 0;
         }
-        if (co==cn || co==gc) {
-                do_sayx(gc,"I will not attack %s, %s!",co==cn ? "you" : "myself",ch[cn].name);
-                return 0;
+        if (co!=cn && !gc_mine(cn,co)) {
+                if (!do_char_can_see(cn,co)) {
+                        do_char_log(cn,0,"You cannot see %s.\n",ch[co].reference);
+                        return 0;
+                }
+                if (!may_attack_msg(cn,co,1)) return 0;
         }
-        if (!do_char_can_see(cn,co)) {
-                do_char_log(cn,0,"You cannot see %s.\n",ch[co].reference);
-                return 0;
-        }
-        if (abs(ch[gc].x-ch[co].x)+abs(ch[gc].y-ch[co].y)>=40) {
-                do_char_log(cn,0,"%s is too far away from your Ghost Companion.\n",ch[co].reference);
-                return 0;
-        }
-        if (!may_attack_msg(cn,co,1)) return 0;
-
-        ch[gc].attack_cn=co;
         idx=co|(char_id(co)<<16);
-        ch[gc].data[80]=idx;
-        do_sayx(gc,"Yes %s, I will kill %s!",ch[cn].name,ch[co].reference);
-        do_notify_char(co,NT_GOTMISS,cn,0,0,0);
-        return 1;
+        for (gc=1; gc<MAXCHARS; gc++) {
+                if (!gc_mine(cn,gc)) continue;
+                have++;
+                if (co==cn || gc_mine(cn,co)) {
+                        do_sayx(gc,"I will not attack %s, %s!",co==cn ? "you" : (co==gc ? "myself" : "my friend"),ch[cn].name);
+                        continue;
+                }
+                if (abs(ch[gc].x-ch[co].x)+abs(ch[gc].y-ch[co].y)>=40) { far++; continue; }
+                ch[gc].attack_cn=co;
+                ch[gc].data[80]=idx;
+                if (!sent++) do_sayx(gc,"Yes %s, I will kill %s!",ch[cn].name,ch[co].reference);
+                else do_sayx(gc,"Me too, %s!",ch[cn].name);
+        }
+        if (!have) { do_char_log(cn,0,"You have no Ghost Companion.\n"); return 0; }
+        if (sent) do_notify_char(co,NT_GOTMISS,cn,0,0,0);
+        else if (far) do_char_log(cn,0,"%s is too far away from your Ghost Companion.\n",ch[co].reference);
+        return sent;
 }
 
 /* #gca / #gcattack [character number]: the client adds the Alt-selected character's number;

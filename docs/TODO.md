@@ -42,6 +42,8 @@ In order:
 
 Later (ideas, not decided):
 
+- More than one Ghost Companion per player (Cody, Nov 6): `#gca` / the spell bar already send all of a player's companions; to decide: how many, how they're summoned (the spell with a selected enemy summons while below the limit, sends them at the limit?), mana, and `ch[].data[CHD_COMPANION]` (holds one) + `die_companion`.
+
 - Item tiers part 5: Legendaries (hand-designed named pieces; the current special armors move here), see `docs/ITEM_TIERS.md`.
 - Prestige: what triggers it and what it gives (the Final Test's Shrine of Change will be used).
 - Unused recolors of the exploration point post: green 1012, blue 1019/1020, purple 1144 (gold 1090 is the exploration point). Nothing uses them yet; maybe for prestige (e.g. points or markers only prestiged characters can use).
