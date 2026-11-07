@@ -2278,6 +2278,9 @@ def server_running():
 CONSOLE_PORT = 5556
 
 
+BACKUP = {'on': False, 'dir': ''}
+
+
 class ServerCtl:
     """Runs and talks to the game server.
     - console(): a command over the server's control port (127.0.0.1:5556, console.c)
@@ -2302,6 +2305,82 @@ class ServerCtl:
                 except OSError:
                     pass
         threading.Thread(target=self._watch, daemon=True).start()
+        self.bk_info = {}
+        if BACKUP['on']:
+            threading.Thread(target=self._backup_loop, daemon=True).start()
+
+    # --- automatic backups of the game data (.dat/*.dat): at 5, 11, 17 and 23 o'clock, while this editor runs.
+    # Each one goes to <server>/myv2-backups and to the off-PC folder (--backup-dir, default the D: drive), in three
+    # tiers: recent/ (every one, the last 8 = two days), daily/ (the 5 o'clock one, 14 days), weekly/ (Sunday 5 o'clock, 8 weeks).
+    BK_HOURS = (5, 11, 17, 23)
+    BK_KEEP = {'recent': 8, 'daily': 14, 'weekly': 8}
+
+    def _bk_slot(self, now=None):
+        t = time.localtime(now)
+        hs = [h for h in self.BK_HOURS if h <= t.tm_hour]
+        if hs:
+            return time.strftime('%Y%m%d', t) + '-%02d' % hs[-1], hs[-1], t.tm_wday
+        y = time.localtime(time.mktime(t) - 86400)
+        return time.strftime('%Y%m%d', y) + '-%02d' % self.BK_HOURS[-1], self.BK_HOURS[-1], y.tm_wday
+
+    def _bk_state(self, key=None):
+        p = os.path.join(self.dir, 'myv2-backups', 'last-slot.txt')
+        if key is None:
+            try:
+                return open(p).read().strip()
+            except OSError:
+                return ''
+        os.makedirs(os.path.dirname(p), exist_ok=True)
+        open(p, 'w').write(key)
+
+    def _backup_loop(self):
+        time.sleep(30)
+        while True:
+            try:
+                key, hour, wday = self._bk_slot()
+                if key != self._bk_state():
+                    self.backup(tiers=['recent'] + (['daily'] if hour == 5 else []) + (['weekly'] if hour == 5 and wday == 6 else []))
+                    self._bk_state(key)
+            except Exception as e:
+                self.bk_info = {'time': time.strftime('%Y-%m-%d %H:%M'), 'ok': False, 'msg': 'backup failed: %s' % e}
+            time.sleep(60)
+
+    def backup(self, tiers=('recent',)):
+        import tarfile
+        dat = self.world.dat
+        name = 'myv2-%s.tar.gz' % time.strftime('%Y%m%d-%H%M')
+        local = os.path.join(self.dir, 'myv2-backups')
+        os.makedirs(os.path.join(local, 'recent'), exist_ok=True)
+        tmp = os.path.join(local, name + '.part')
+        with tarfile.open(tmp, 'w:gz', compresslevel=6) as tf:
+            for f in sorted(glob.glob(os.path.join(dat, '*.dat'))):
+                tf.add(f, arcname='.dat/' + os.path.basename(f))
+        size = os.path.getsize(tmp)
+        msgs, ok = [], True
+        for root, label in ((local, 'here'), (BACKUP['dir'], 'off-PC')):
+            try:
+                for tr in tiers:
+                    d = os.path.join(root, tr)
+                    os.makedirs(d, exist_ok=True)
+                    shutil.copyfile(tmp, os.path.join(d, name))
+                    old = sorted(glob.glob(os.path.join(d, 'myv2-*.tar.gz')))
+                    for f in old[:-self.BK_KEEP[tr]]:
+                        os.remove(f)
+                msgs.append('%s ok' % label)
+            except OSError as e:
+                ok = False
+                msgs.append('%s FAILED (%s)' % (label, e))
+        os.remove(tmp)
+        line = '%s  %s  %.1f MB  %s  %s' % (time.strftime('%Y-%m-%d %H:%M'), name, size / 1e6, '+'.join(tiers), ', '.join(msgs))
+        for root in (local, BACKUP['dir']):
+            try:
+                with open(os.path.join(root, 'backup.log'), 'a') as fh:
+                    fh.write(line + '\n')
+            except OSError:
+                pass
+        print('Backup: ' + line)
+        self.bk_info = {'time': time.strftime('%Y-%m-%d %H:%M'), 'ok': ok, 'msg': line, 'dir': BACKUP['dir']}
+        return ok, line
 
     # --- the control port
     def console(self, cmd, timeout=5):
@@ -2357,6 +2436,7 @@ class ServerCtl:
             if st['job']:
                 st['job']['log'] = list(self.job['log'][-60:])
             st['requests'] = self.requests[-30:]
+        st['backup'] = self.bk_info
         return st
 
     # --- jobs
@@ -2540,6 +2620,14 @@ class ServerCtl:
             elif act == 'log':
                 entry['result'] = 'done'
                 self._answer(rid, {'ok': True, 'log': self.log_tail(int(req.get('lines', 200)))})
+            elif act == 'backup':               # a backup now (into recent/ only)
+                try:
+                    ok, line = self.backup()
+                    entry['result'] = 'done' if ok else 'failed'
+                    self._answer(rid, {'ok': ok, 'msg': line})
+                except Exception as e:
+                    entry['result'] = 'failed'
+                    self._answer(rid, {'ok': False, 'error': str(e)})
             elif act == 'reload-editor':         # start this editor again (after it was updated)
                 entry['result'] = 'done'
                 self._answer(rid, {'ok': True, 'note': 'the editor restarts now'})
@@ -2893,6 +2981,7 @@ def main():
     ap.add_argument('--area', default='area.c', help="the server's area.c (zone names)")
     ap.add_argument('--minimap', default=None, help='world minimap picture (default: the project docs one)')
     ap.add_argument('--port', type=int, default=8080)
+    ap.add_argument('--backup-dir', default='/mnt/d/MyV2 Backups', help='off-PC copy of the automatic backups (every 6 hours); "" = no automatic backups')
     ap.add_argument('--host', default='127.0.0.1')
     ap.add_argument('--control', default='/mnt/c/Users/Cody/Desktop/MyV2/Server/control',
                     help='folder where Claude leaves requests (status, console commands, restarts, updates); "" = off')
@@ -2908,6 +2997,7 @@ def main():
         print('Warning: no sprites found in %s (give --client)' % a.client)
     page = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'mapedit.html'), 'rb').read() \
         if os.path.exists(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'mapedit.html')) else PAGE.encode()
+    BACKUP['on'], BACKUP['dir'] = bool(a.backup_dir), a.backup_dir
     ctl = ServerCtl(world.server_dir, a.control if a.control and os.path.isdir(os.path.dirname(a.control)) else None, world)
     handler = make_handler(world, sprites, page, a.minimap, ctl)
     httpd = None

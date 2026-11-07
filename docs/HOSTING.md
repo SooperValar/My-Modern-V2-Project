@@ -35,7 +35,7 @@ Checked already:
 - [ ] Raising `MINVERSION` on the server makes old clients say "please update" (only needed when a client change must be in place before playing; the launcher usually updates first anyway).
 
 ## 4. Before strangers play
-- [ ] Automatic daily backups of the game data, with a copy off the PC.
+- [x] Automatic backups of the game data, with a copy off the PC (Nov 6). The editor (mapedit.py) zips `.dat/*.dat` (about 7 MB) at 5, 11, 17 and 23 o'clock while it runs, into `~/myv2-backups` in Ubuntu and `D:\MyV2 Backups` (`--backup-dir`; "" turns them off): `recent\` every one (last 8, two days), `daily\` the 5 o'clock one (14 days), `weekly\` Sunday's (8 weeks); `backup.log` in both. Claude can start one with the control action `backup`. **To restore**: stop the server, then in Ubuntu `cd ~ && tar xzf "/mnt/d/MyV2 Backups/daily/myv2-<date>.tar.gz"` (puts the files back into `~/.dat`), and start it. Backups need the editor running: see the next step.
 - [ ] The server starts with Windows (it already restarts itself after a crash with `./server loop`).
 - [ ] A test copy of the server for experiments, so live editing never surprises players.
 - [ ] Accounts: how new players get a character and password; muting, kicking and banning (most exist in game and in the editor's Players page).
