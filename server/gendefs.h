@@ -13,7 +13,7 @@ All rights reserved.
 
 #define VERSION         0x020E07
 #define MINVERSION      0x020F01
-#define CLIENT_LATEST   0x020F02	// the newest published client (Launcher.exe gets it): older ones are told on login to
+#define CLIENT_LATEST   0x020F03	// the newest published client (Launcher.exe gets it): older ones are told on login to
 					// start the game with Launcher.exe. Raise it when a new client is published (publish_client.py).
 
 // line-of-sight grid (was 40x40, center 20)

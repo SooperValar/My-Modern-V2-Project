@@ -173,6 +173,8 @@ pieces sold to merchants being destroyed, the three old Fire chests' new loot, t
 page / `#quest` and the area clears. **Client 2.15.02 published Nov 5** (client-dist 08bdabd) and `CLIENT_LATEST` raised to
 0x020F02. `#axe2h` renamed `#greataxe` (Nov 5).
 
+**Client 2.15.03 published Nov 6** (client-dist 0212ff4: `#gca` with the Alt-selected enemy, names drawn over the map, the table / bar scroll sprites); `CLIENT_LATEST` 0x020F03.
+
 **Readable tables (Nov 5, live):** templates 1409-1416 (tables / bar with a scroll, sprites 18290-18297 in `Client\GFX`, not yet in a published client). Cody places them and writes each Description.
 
 **Zones (Nov 5):** Cody's earlier zone edits were lost: the live server never had a `.dat/zones.dat` (no backups either), so they were never saved (Zones tab edits lived only in the page until **Save zones**). Now the editor keeps a browser draft and offers to restore it, and warns before leaving with unsaved changes. Done Nov 5: Cody redrew and saved them (`.dat/zones.dat` now exists) and updated the area clears with **Re-check zones**.
