@@ -2309,10 +2309,10 @@ class ServerCtl:
         if BACKUP['on']:
             threading.Thread(target=self._backup_loop, daemon=True).start()
 
-    # --- automatic backups of the game data (.dat/*.dat): at 5, 11, 17 and 23 o'clock, while this editor runs.
+    # --- automatic backups of the game data (.dat/*.dat): at 0, 6, 12 and 18 o'clock, while this editor runs.
     # Each one goes to <server>/myv2-backups and to the off-PC folder (--backup-dir, default the D: drive), in three
-    # tiers: recent/ (every one, the last 8 = two days), daily/ (the 5 o'clock one, 14 days), weekly/ (Sunday 5 o'clock, 8 weeks).
-    BK_HOURS = (5, 11, 17, 23)
+    # tiers: recent/ (every one, the last 8 = two days), daily/ (the 6 o'clock one, 14 days), weekly/ (Sunday 6 o'clock, 8 weeks).
+    BK_HOURS = (0, 6, 12, 18)
     BK_KEEP = {'recent': 8, 'daily': 14, 'weekly': 8}
 
     def _bk_slot(self, now=None):
@@ -2339,7 +2339,7 @@ class ServerCtl:
             try:
                 key, hour, wday = self._bk_slot()
                 if key != self._bk_state():
-                    self.backup(tiers=['recent'] + (['daily'] if hour == 5 else []) + (['weekly'] if hour == 5 and wday == 6 else []))
+                    self.backup(tiers=['recent'] + (['daily'] if hour == 6 else []) + (['weekly'] if hour == 6 and wday == 6 else []))
                     self._bk_state(key)
             except Exception as e:
                 self.bk_info = {'time': time.strftime('%Y-%m-%d %H:%M'), 'ok': False, 'msg': 'backup failed: %s' % e}
