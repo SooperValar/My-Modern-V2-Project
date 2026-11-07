@@ -2389,7 +2389,7 @@ class ServerCtl:
     def discord_url(self):
         p = os.path.join(os.path.dirname(self.control), 'discord-webhook.txt') if self.control else ''
         try:
-            u = open(p).read().strip()
+            u = open(p, encoding='utf-8-sig').read().strip()     # (Notepad may add a BOM)
             return u if u.startswith('https://discord.com/api/webhooks/') or u.startswith('https://discordapp.com/api/webhooks/') else ''
         except OSError:
             return ''
