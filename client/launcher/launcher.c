@@ -1,5 +1,5 @@
 /*
- * MyV2 Astonia launcher: keeps the player's client up to date, then starts the game.
+ * Mercenaries of Asgard v2 launcher (MyV2): keeps the player's client up to date, then starts the game.
  *
  * It reads manifest.txt from the update site (the client-dist branch of the project on GitHub,
  * over HTTPS), compares each listed file's SHA-256 with the player's copy, downloads what is
@@ -31,7 +31,7 @@
 #define UPDATE_BASE	"https://raw.githubusercontent.com/SooperValar/My-Modern-V2-Project/client-dist/"
 #define GAME_EXE	"merc.exe"
 #define SELF_EXE	"Launcher.exe"
-#define TITLE		"MyV2 Astonia"
+#define TITLE		"Mercenaries of Asgard v2"
 
 /* ------------------------------------------------------------------ SHA-256 */
 typedef struct { unsigned int s[8]; unsigned long long n; unsigned char b[64]; int bl; } SHA;

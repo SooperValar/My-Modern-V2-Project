@@ -54,12 +54,12 @@ FILETYPE VFT_APP
   {
    VALUE "CompanyName", "Daniel Brockhaus\000"
    VALUE "Author", "Daniel Brockhaus\000"
-   VALUE "FileDescription", "Mercenaries of Astonia\000"
+   VALUE "FileDescription", "Mercenaries of Asgard v2\000"
    VALUE "FileVersion", "2.14.00\000"
    VALUE "InternalName", "MERC\000"
    VALUE "LegalCopyright", "Copyright \251 D.Brockhaus 1997-2001\000"
    VALUE "OriginalFilename", "MERC.EXE\000"
-   VALUE "ProductName", "Mercenaries of Astonia\000"
+   VALUE "ProductName", "Mercenaries of Asgard v2\000"
    VALUE "ProductVersion", "2.14.00\000"
    VALUE "Comments", "Beta Test Version\000"
   }
@@ -68,12 +68,12 @@ FILETYPE VFT_APP
   {
    VALUE "CompanyName", "Daniel Brockhaus\000"
    VALUE "Author", "Daniel Brockhaus\000"
-   VALUE "FileDescription", "Mercenaries of Astonia\000"
+   VALUE "FileDescription", "Mercenaries of Asgard v2\000"
    VALUE "FileVersion", "2.14.00\000"
    VALUE "InternalName", "MERC\000"
    VALUE "LegalCopyright", "Copyright \251 D.Brockhaus 1997-2001\000"
    VALUE "OriginalFilename", "MERC.EXE\000"
-   VALUE "ProductName", "Mercenaries of Astonia\000"
+   VALUE "ProductName", "Mercenaries of Asgard v2\000"
    VALUE "ProductVersion", "2.14.00\000"
    VALUE "Comments", "Beta Test Version\000"
   }

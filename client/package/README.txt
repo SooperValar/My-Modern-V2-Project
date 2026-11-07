@@ -1,9 +1,9 @@
-MyV2 Astonia
-============
+Mercenaries of Asgard v2
+========================
 Server: myv2astonia.duckdns.org (port 5555)
 
 STARTING THE GAME
-1. Unzip the whole "MyV2 Astonia" folder somewhere you like (for example your Desktop
+1. Unzip the whole "Mercenaries of Asgard v2" folder somewhere you like (for example your Desktop
    or Documents). Keep all the files together.
 2. Double-click Launcher.exe (always start the game this way).
    It checks for updates, downloads anything new, then starts the game (merc.exe).

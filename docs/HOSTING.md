@@ -23,7 +23,7 @@ Checked already:
 
 ## 2. A client to hand out
 - [x] Server name and port in `client.ini` (`[server] host=`, `port=`), and the name built in as the default, so no `.bat` file is needed.
-- [x] One zip with everything the client needs: `merc.exe`, `gx00.dat/.idx`, `pnglib.dat/.idx`, `GFX/`, `sfx/` in a folder "MyV2 Astonia" (22 MB). Never `merc.dat` (your own character logins) or your `client.ini`.
+- [x] One zip with everything the client needs: `merc.exe`, `gx00.dat/.idx`, `pnglib.dat/.idx`, `GFX/`, `sfx/` in a folder "MyV2 Astonia" (22 MB; from Nov 7 the folder is "Mercenaries of Asgard v2"). Never `merc.dat` (your own character logins) or your `client.ini`.
 - [x] A short "how to start" note: `README.txt` in the zip (copy in `client/package/`): starting, the Windows warning, making a character, saving it as a .moa, the window, problems.
 
 ## 3. A self-updating client

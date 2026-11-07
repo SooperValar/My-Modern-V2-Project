@@ -1,4 +1,4 @@
-#define VERSION 0x020F03	// 2.15.03: #gca sends the Alt-selected character; names drawn over the map. 2.15.02: Greataxe skill name, Ctrl+click takes one from a stack (2.15.01: 1280x960 / 44x44 symmetric view + v2 HUD, needs the matching server)
+#define VERSION 0x020F04	// 2.15.04: the game is called Mercenaries of Asgard v2. 2.15.03: #gca sends the Alt-selected character; names drawn over the map. 2.15.02: Greataxe skill name, Ctrl+click takes one from a stack (2.15.01: 1280x960 / 44x44 symmetric view + v2 HUD, needs the matching server)
 
 #define MAXSPRITE 2000+(32*1024)
 

@@ -1104,7 +1104,7 @@ HWND InitWindow(HINSTANCE hInstance,int nCmdShow)
 
 	RegisterClass(&wc);
 
-	sprintf(buf,MNAME" v%d.%02d.%02d",
+	sprintf(buf,MNAME" (%d.%02d.%02d)",
 			VERSION>>16,(VERSION>>8)&255,VERSION&255);
 
 	// created hidden; dd_init() -> win_show() sizes and shows it after login

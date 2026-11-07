@@ -173,6 +173,8 @@ pieces sold to merchants being destroyed, the three old Fire chests' new loot, t
 page / `#quest` and the area clears. **Client 2.15.02 published Nov 5** (client-dist 08bdabd) and `CLIENT_LATEST` raised to
 0x020F02. `#axe2h` renamed `#greataxe` (Nov 5).
 
+**Name (Nov 7):** the game is called **Mercenaries of Asgard v2** (client 2.15.04 window title / save dialog / file properties, launcher title, README, login welcome line). The world stays Astonia (Aston, rank names). The address stays myv2astonia.duckdns.org; internal names (MyV2, MyV2 Editor, folders) stay. Client 2.15.04 + new Launcher.exe built: `Client\merc_2.15.04.exe` (merc.exe was open), `Client\Launcher.exe` (old one `Launcher_before_asgard.exe`); not published yet. Next player zip: folder "Mercenaries of Asgard v2".
+
 **Hosting (Nov 6):** backups every 6 hours live (`D:\MyV2 Backups`); start with Windows set up (task "MyV2 Server"), Cody tests it with a restart later: after it, check the game and editor came up (status.json). Section 4 done except: the restart test of start-with-Windows, step 3 (test server, skipped for now) and step 7 (a place for players, e.g. Discord).
 
 **Client 2.15.03 published Nov 6** (client-dist 0212ff4: `#gca` with the Alt-selected enemy, names drawn over the map, the table / bar scroll sprites); `CLIENT_LATEST` 0x020F03.

@@ -25,7 +25,7 @@ All rights reserved.
 
 int ctick=0;
 
-static char intro_msg1[]={"Welcome to Astonia 2, my friend!\n"};
+static char intro_msg1[]={"Welcome to Mercenaries of Asgard v2, my friend!\n"};
 
 /* a player whose client is older than the newest published one: tell him to update with the launcher */
 static void outdated_note(int nr,int cn)

@@ -567,7 +567,7 @@ INT_PTR CALLBACK OptionsProc(HWND hwnd,UINT message,WPARAM wParam,LPARAM lParam)
                         update_race(hwnd);
 			update_alpha(hwnd);
 
-			sprintf(buf,MNAME" v%d.%02d.%02d  --  Game Options",VERSION>>16,(VERSION>>8)&255,VERSION&255);
+			sprintf(buf,MNAME" (%d.%02d.%02d)  --  Game Options",VERSION>>16,(VERSION>>8)&255,VERSION&255);
 			SetWindowText(hwnd,buf);
 			done=1;
 			return 1;

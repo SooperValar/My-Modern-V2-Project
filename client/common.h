@@ -1,4 +1,4 @@
-#define MNAME	"Asguard"
+#define MNAME	"Mercenaries of Asgard v2"	// MyV2: the game's name (window title, save dialog); was "Asguard" in the original source
 #define MHELP	"http://mercaston.dnsalias.net/help.html"
 #define MNEWS	"http://mercaston.dnsalias.net/news.html"
 #define MHOST	"myv2astonia.duckdns.org"	// MyV2: the server name; client.ini [server] host= overrides it
