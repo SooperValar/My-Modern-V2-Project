@@ -1345,6 +1345,10 @@ int walkmark_x[4]={-1000,-1000,-1000,-1000},walkmark_y[4]={-1000,-1000,-1000,-10
 void mouse_rehover(void);
 void hud_draw_v2(int init,unsigned short *mapmem,int map_x,int map_y);
 
+// names over characters: collected while the map is drawn, then drawn after it, so walls drawn later can't cover them
+static struct { int x,y,xo,yo; char t[48]; } nameq[1024];
+static int nameqn=0;
+
 void eng_display(int init)	// optimize me!!!!!
 {
 	int x,y,m,plr_sprite=0,tmp,mapx,mapy,selected_visible=0,alpha,alphastr;
@@ -1479,7 +1483,12 @@ void eng_display(int init)	// optimize me!!!!!
 
 				if ((pdata.show_names|pdata.show_proz) && map[m].ch_nr) {
 					set_look_proz(map[m].ch_nr,map[m].ch_id,map[m].ch_proz);
-					dd_gputtext(x*32,y*32,1,lookup(map[m].ch_nr,map[m].ch_id),xoff+map[m].obj_xoff,yoff+map[m].obj_yoff);
+					if (nameqn<1024) {
+						nameq[nameqn].x=x*32; nameq[nameqn].y=y*32;
+						nameq[nameqn].xo=xoff+map[m].obj_xoff; nameq[nameqn].yo=yoff+map[m].obj_yoff;
+						strncpy(nameq[nameqn].t,lookup(map[m].ch_nr,map[m].ch_id),47); nameq[nameqn].t[47]=0;
+						nameqn++;
+					}
 				}
 
 				if (pl.misc_action==DR_DROP && pl.misc_target1==map[m].x && pl.misc_target2==map[m].y)
@@ -1552,6 +1561,9 @@ void eng_display(int init)	// optimize me!!!!!
 			}
 		}
 	}
+
+	for (x=0; x<nameqn; x++) dd_gputtext(nameq[x].x,nameq[x].y,1,nameq[x].t,nameq[x].xo,nameq[x].yo);
+	nameqn=0;
 
 	if (!selected_visible) selected_char=0;
 
