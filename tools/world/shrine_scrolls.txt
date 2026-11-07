@@ -1,0 +1,114 @@
+# Shrine scrolls (Nov 6): the Lord of Seyan'du (template 2005, 13,600) sells a teleport scroll to a copy of each
+# lab shrine of Kwai, in Cody's rooms north of Lab 7 (x 8-11, five rows each; Lab 1 nearest the Lord, the top room
+# 521-525 is spare). Scroll data: x, y, 0 (lag time), the shrine bit (merch.c: only a Seyan'Du who hasn't found it
+# may buy it; the price is its value, 100G x lab). Leave with Recall. Stock line in .dat/merchants.dat.
+it 1417 copy 331
+it 1417 name Scroll to Lab 1's Shrine
+it 1417 ref the scroll to Lab 1's shrine
+it 1417 desc Takes a Seyan'Du to a copy of the shrine of Kwai in Grolm Gorge (Lab 1). Leave with Recall.
+it 1417 d 0 9
+it 1417 d 1 591
+it 1417 d 2 0
+it 1417 d 3 1
+it 1417 value 10000
+place 557 10 589
+it 1418 copy 331
+it 1418 name Scroll to Lab 2's Shrine
+it 1418 ref the scroll to Lab 2's shrine
+it 1418 desc Takes a Seyan'Du to a copy of the shrine of Kwai in Lizard Gorge (Lab 2). Leave with Recall.
+it 1418 d 0 9
+it 1418 d 1 585
+it 1418 d 2 0
+it 1418 d 3 128
+it 1418 value 20000
+place 668 10 583
+it 1419 copy 331
+it 1419 name Scroll to Lab 3's Shrine
+it 1419 ref the scroll to Lab 3's shrine
+it 1419 desc Takes a Seyan'Du to a copy of the shrine of Kwai in Spellcaster Gorge (Lab 3). Leave with Recall.
+it 1419 d 0 9
+it 1419 d 1 579
+it 1419 d 2 0
+it 1419 d 3 256
+it 1419 value 30000
+place 669 10 577
+it 1420 copy 331
+it 1420 name Scroll to Lab 4's Shrine
+it 1420 ref the scroll to Lab 4's shrine
+it 1420 desc Takes a Seyan'Du to a copy of the shrine of Kwai in Knight Gorge (Lab 4). Leave with Recall.
+it 1420 d 0 9
+it 1420 d 1 573
+it 1420 d 2 0
+it 1420 d 3 512
+it 1420 value 40000
+place 670 10 571
+it 1421 copy 331
+it 1421 name Scroll to Lab 5's Shrine
+it 1421 ref the scroll to Lab 5's shrine
+it 1421 desc Takes a Seyan'Du to a copy of the shrine of Kwai in Undead Gorge (Lab 5). Leave with Recall.
+it 1421 d 0 9
+it 1421 d 1 567
+it 1421 d 2 0
+it 1421 d 3 1024
+it 1421 value 50000
+place 671 10 565
+it 1422 copy 331
+it 1422 name Scroll to Lab 6's Shrine
+it 1422 ref the scroll to Lab 6's shrine
+it 1422 desc Takes a Seyan'Du to a copy of the shrine of Kwai in Light&Dark Gorge (Lab 6). Leave with Recall.
+it 1422 d 0 9
+it 1422 d 1 561
+it 1422 d 2 0
+it 1422 d 3 2048
+it 1422 value 60000
+place 672 10 559
+it 1423 copy 331
+it 1423 name Scroll to Lab 7's Shrine
+it 1423 ref the scroll to Lab 7's shrine
+it 1423 desc Takes a Seyan'Du to a copy of the shrine of Kwai in Water Gorge (Lab 7). Leave with Recall.
+it 1423 d 0 9
+it 1423 d 1 555
+it 1423 d 2 0
+it 1423 d 3 4096
+it 1423 value 70000
+place 673 10 553
+it 1424 copy 331
+it 1424 name Scroll to Lab 8's Shrine
+it 1424 ref the scroll to Lab 8's shrine
+it 1424 desc Takes a Seyan'Du to a copy of the shrine of Kwai in Forest Gorge (Lab 8). Leave with Recall.
+it 1424 d 0 9
+it 1424 d 1 549
+it 1424 d 2 0
+it 1424 d 3 262144
+it 1424 value 80000
+place 1040 10 547
+it 1425 copy 331
+it 1425 name Scroll to Lab 9's Shrine
+it 1425 ref the scroll to Lab 9's shrine
+it 1425 desc Takes a Seyan'Du to a copy of the shrine of Kwai in Riddle Gorge (Lab 9). Leave with Recall.
+it 1425 d 0 9
+it 1425 d 1 543
+it 1425 d 2 0
+it 1425 d 3 524288
+it 1425 value 90000
+place 1095 10 541
+it 1426 copy 331
+it 1426 name Scroll to Lab 10's Shrine
+it 1426 ref the scroll to Lab 10's shrine
+it 1426 desc Takes a Seyan'Du to a copy of the shrine of Kwai in Seasons Gorge (Lab 10). Leave with Recall.
+it 1426 d 0 9
+it 1426 d 1 537
+it 1426 d 2 0
+it 1426 d 3 1048576
+it 1426 value 100000
+place 1298 10 535
+it 1427 copy 331
+it 1427 name Scroll to Lab 11's Shrine
+it 1427 ref the scroll to Lab 11's shrine
+it 1427 desc Takes a Seyan'Du to a copy of the shrine of Kwai in Sunken Dark (Lab 11). Leave with Recall.
+it 1427 d 0 9
+it 1427 d 1 531
+it 1427 d 2 0
+it 1427 d 3 2097152
+it 1427 value 110000
+place 1330 10 529

@@ -170,11 +170,16 @@ static int remorse_for(int cn,int in)	// may cn buy item in back for what he got
 }
 
 /* what cn pays merchant co for item in */
+/* a shrine scroll (a teleport scroll with the shrine-of-Kwai bit in data[3], sold by the Lord of Seyan'du):
+ * only for a Seyan'Du who has not found that shrine yet; its price is its value, no bartering */
+#define SHRINE_SCROLL(in) (it[in].driver==23 && it[in].data[3])
+
 int merch_sell_price(int cn,int co,int in)
 {
 	struct mconf *m=conf(co);
 	int pr;
 
+	if (SHRINE_SCROLL(in)) return it[in].value;
 	if (remorse_for(cn,in)) return PAID(in);
 	pr=barter(cn,do_item_value(in),1);
 	if (m && m->sell>0) pr=(int)((long long)pr*m->sell/100);
@@ -346,6 +351,10 @@ int merch_take(int cn,int co,int nr)
 		if (it[in].temp==GODSHOP_ARROW_TEMP+1 && *pp<pages-1) (*pp)++;
 		do_char_log(cn,1,"%s's wares, page %d of %d.\n",ch[co].name,*pp+1,pages);
 		return 1;
+	}
+	if (SHRINE_SCROLL(in) && (ch[cn].flags&CF_PLAYER)) {
+		if (!(ch[cn].kindred&KIN_SEYAN_DU)) { do_char_log(cn,0,"Only a Seyan'Du can use the shrines of Kwai.\n"); return 0; }
+		if (ch[cn].data[21]&it[in].data[3]) { do_char_log(cn,0,"You have already found that shrine.\n"); return 0; }
 	}
 	pr=merch_sell_price(cn,co,in);
 	if (ch[cn].gold<pr) { do_char_log(cn,0,"You cannot afford that.\n"); return 0; }
