@@ -173,6 +173,8 @@ pieces sold to merchants being destroyed, the three old Fire chests' new loot, t
 page / `#quest` and the area clears. **Client 2.15.02 published Nov 5** (client-dist 08bdabd) and `CLIENT_LATEST` raised to
 0x020F02. `#axe2h` renamed `#greataxe` (Nov 5).
 
+**Hosting (Nov 6):** backups every 6 hours live (`D:\MyV2 Backups`); start with Windows set up (task "MyV2 Server"), Cody tests it with a restart later: after it, check the game and editor came up (status.json). Next: HOSTING section 4 step 3 (a test copy of the server).
+
 **Client 2.15.03 published Nov 6** (client-dist 0212ff4: `#gca` with the Alt-selected enemy, names drawn over the map, the table / bar scroll sprites); `CLIENT_LATEST` 0x020F03.
 
 **Readable tables (Nov 5, live):** templates 1409-1416 (tables / bar with a scroll, sprites 18290-18297 in `Client\GFX`, not yet in a published client). Cody places them and writes each Description.
