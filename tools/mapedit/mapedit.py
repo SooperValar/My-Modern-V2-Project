@@ -1678,6 +1678,57 @@ class World:
             return ''
         return 'unknown NPC edit'
 
+    # --- copy / paste a selection (the toolbar's Copy tool): floors, walls / objects, the tile flags and the items
+    # (each pasted item is a new copy; editor chests get their rewards copied by the page). NPCs are not copied.
+    def copy_area(self, x0, y0, x1, y1):
+        x0, x1, y0, y1 = max(0, min(x0, x1)), min(MAPX - 1, max(x0, x1)), max(0, min(y0, y1)), min(MAPY - 1, max(y0, y1))
+        if (x1 - x0 + 1) * (y1 - y0 + 1) > 40000:
+            return {'error': 'That area is too big (at most 200x200 at once).'}
+        tiles, items, npcs, chests = [], 0, 0, []
+        qs = self.talk_load()[0].get('chests', {})
+        with self.lock:
+            for y in range(y0, y1 + 1):
+                for x in range(x0, x1 + 1):
+                    t = self.tile(x, y)
+                    ib = None
+                    if 0 < t[4] < MAXITEM and self.it_u8(t[4], I_USED):
+                        ib = bytes(self.item[t[4] * ITEM_SIZE:(t[4] + 1) * ITEM_SIZE]); items += 1
+                        c = qs.get('%d,%d' % (x, y))
+                        if c:
+                            chests.append([x - x0, y - y0, c])
+                    if t[2]:
+                        npcs += 1
+                    tiles.append((x - x0, y - y0, t[0], t[1], t[7] & 0xffff, ib))
+            self.clip = {'w': x1 - x0 + 1, 'h': y1 - y0 + 1, 'tiles': tiles}
+        return {'w': x1 - x0 + 1, 'h': y1 - y0 + 1, 'items': items, 'npcs': npcs, 'chests': chests}
+
+    def _paste(self, rec, x, y, msgs):
+        cl = getattr(self, 'clip', None)
+        if not cl:
+            msgs.append('Nothing copied yet.'); return 0
+        n = 0
+        for dx, dy, fl, ob, mf, ib in cl['tiles']:
+            tx, ty = x + dx, y + dy
+            if not (0 <= tx < MAPX and 0 <= ty < MAPY):
+                continue
+            self._save_map(rec, tx, ty)
+            self._remove_item(rec, tx, ty)
+            t = self.tile(tx, ty)
+            t[0], t[1], t[7] = fl, ob, (t[7] & ~0xffff) | mf
+            if ib:
+                i = self._free_item()
+                if not i:
+                    msgs.append('no free item slot'); ib = None
+                else:
+                    self._save_item(rec, i)
+                    o = i * ITEM_SIZE
+                    self.item[o:o + ITEM_SIZE] = ib
+                    struct.pack_into('<hhH', self.item, o + I_X, tx, ty, 0)
+                    t[4] = i
+            self.set_tile(tx, ty, t)
+            n += 1
+        return n
+
     def _free_item(self):
         for i in list(range(self.free_hint, MAXITEM)) + list(range(1, self.free_hint)):
             if not self.item[i * ITEM_SIZE + I_USED]:
@@ -1886,6 +1937,9 @@ class World:
                 if not (0 <= x < MAPX and 0 <= y < MAPY):
                     continue
                 k = op['op']
+                if k == 'paste':              # the copied selection, its top corner on x, y
+                    n += self._paste(rec, x, y, msgs)
+                    continue
                 if k.startswith('npc'):
                     err = self.npc_op(rec, op, x, y)
                     if err:
@@ -2776,6 +2830,8 @@ def make_handler(world, sprites, page, minimap, ctl):
                     world.area_save(body.get('save'), body.get('delete'))
                     return self.js({'msg': 'saved', 'areas': world.area_presets()})
                 return self.js({'error': 'nothing to do'})
+            if u.path == '/api/copy':
+                return self.js(world.copy_area(int(body['x0']), int(body['y0']), int(body['x1']), int(body['y1'])))
             if u.path == '/api/chest':
                 qs, npcs = world.talk_load()
                 key = '%d,%d' % (int(body['x']), int(body['y']))
@@ -3458,6 +3514,7 @@ const TOOLS = [     // the editor's own icon set: diamond tiles, quill, pickaxe,
   ['fill', 'F', 'Fill: a room (up to its walls, indoors or outdoors like the tile you click) or, with a floor, a patch of the same floor', '<rect x="7.6" y="7.6" width="4" height="4" fill="currentColor" fill-opacity=".35"/><rect x="12.4" y="7.6" width="4" height="4" fill="currentColor" fill-opacity=".35"/><rect x="7.6" y="12.4" width="4" height="4" fill="currentColor" fill-opacity=".35"/><rect x="12.4" y="12.4" width="4" height="4" fill="currentColor" fill-opacity=".35"/><path d="M12 5.6V1.2M10.2 3 12 1.2 13.8 3M12 18.4v4.4M10.2 21 12 22.8 13.8 21M5.6 12H1.2M3 10.2 1.2 12 3 13.8M18.4 12h4.4M21 10.2 22.8 12 21 13.8"/>'],
   ['erase', 'E', 'Erase: remove walls, objects and items (floor stays)', '<g transform="rotate(-38 12 12)"><rect x="3" y="8" width="18" height="8" rx="1.6"/><path d="M10 8v8"/><path d="M4.6 8h5.4v8H4.6A1.6 1.6 0 0 1 3 14.4V9.6A1.6 1.6 0 0 1 4.6 8z" fill="currentColor" fill-opacity=".35"/></g><path d="M13 21.5h8" opacity=".55"/>'],
   ['pick', 'I', 'Pick: take what is on a tile as the brush', '<g transform="rotate(45 12 12)"><rect x="9.6" y="0.6" width="4.8" height="5.4" rx="2.4" fill="currentColor" fill-opacity=".35"/><rect x="8.4" y="6" width="7.2" height="2" rx=".6"/><path d="M10.6 8h2.8v9.4L12 20.4l-1.4-3z"/><path d="M10.6 13h2.8" opacity=".55"/></g><path d="M4.2 18.2c-.8 1.1-1.3 1.9-1.3 2.5a1.3 1.3 0 0 0 2.6 0c0-.6-.5-1.4-1.3-2.5z" fill="currentColor" stroke="none"/>'],
+  ['copy', 'C', 'Copy and paste: drag to copy an area (floors, walls, objects, flags, items; not NPCs), then click to paste it, as often as you like. Shift+drag copies a new area, Esc forgets the copy', '<rect x="3" y="3" width="12" height="12" rx="1.2" stroke-dasharray="2.6 1.8"/><rect x="9" y="9" width="12" height="12" rx="1.2" fill="currentColor" fill-opacity=".35"/>'],
   ['pan', 'H', 'Move the view', '<g transform="translate(12 12.4) scale(.56) translate(-12 -12)" stroke-width="2.7"><path d="M8 13V6a1.5 1.5 0 0 1 3 0v6M11 11V4a1.5 1.5 0 0 1 3 0v7M14 11V5.5a1.5 1.5 0 0 1 3 0V13M17 9.5a1.5 1.5 0 0 1 3 0V15a6 6 0 0 1-6 6h-1a7 7 0 0 1-5.5-2.7L4.3 14a1.6 1.6 0 0 1 2.4-2l1.3 1.3"/></g><path d="M12 4.2V.9M10.5 2.4 12 .9l1.5 1.5M12 20.2v3M10.5 21.7 12 23.2l1.5-1.5M4.2 12H.9M2.4 10.5.9 12l1.5 1.5M19.8 12h3.3M21.6 10.5 23.1 12l-1.5 1.5"/>'],
 ];
 
@@ -3635,6 +3692,11 @@ function draw() {
       for (let x = Math.min(rect.a.x, rect.b.x); x <= Math.max(rect.a.x, rect.b.x); x++) { diamond(x, y, ctx); ctx.fill(); }
   }
   zonesOverlay(ctx);
+  if (clip && tool === 'copy' && hover && !rect) {      // where a paste would go
+    const b = [hover.x, hover.y, hover.x + clip.w - 1, hover.y + clip.h - 1];
+    zoneBoxPath(b, ctx); ctx.fillStyle = 'rgba(111,176,255,.16)'; ctx.fill();
+    ctx.setLineDash([6 / zoom, 4 / zoom]); ctx.lineWidth = 2 / zoom; ctx.strokeStyle = '#6fb0ff'; ctx.stroke(); ctx.setLineDash([]);
+  }
   if (hover && tool !== 'pan') {
     ctx.lineWidth = 1.6 / zoom; ctx.strokeStyle = '#ffd36a';
     for (const [x, y] of footprint(hover.x, hover.y)) { diamond(x, y, ctx); ctx.stroke(); }
@@ -3804,7 +3866,7 @@ function setBrush(b, keepTool) {
   brush = b;
   const k = brushKey(b);
   recent = [b, ...recent.filter(r => brushKey(r) !== k)].slice(0, 24);
-  if (!keepTool && (tool === 'select' || tool === 'pick' || tool === 'pan' || tool === 'erase')) setTool('brush');
+  if (!keepTool && (tool === 'select' || tool === 'pick' || tool === 'pan' || tool === 'erase' || tool === 'copy')) setTool('brush');
   card(); document.querySelectorAll('#palwrap [data-k]').forEach(el => el.classList.toggle('sel', el.dataset.k === k));
 }
 function card() {
@@ -6077,6 +6139,26 @@ async function pick(x, y) {
 }
 
 // ---------------------------------------------------------------- tools
+// ---- Copy tool: drag to copy an area, click to paste it (top corner on the clicked tile)
+let clip = null;     // {w, h, items, npcs, chests: [[dx, dy, chest], ...]}
+async function copyArea(x0, y0, x1, y1) {
+  const r = await api('/api/copy', { x0, y0, x1, y1 });
+  if (r.error) return toast(r.error, true);
+  clip = r; redrawTop();
+  toast(`Copied ${r.w}×${r.h}` + (r.items ? ` with ${r.items} item${r.items > 1 ? 's' : ''}` : '') + (r.npcs ? ` (NPCs are not copied: ${r.npcs} ${r.npcs > 1 ? 'were' : 'was'} there)` : '') +
+    '. Click where its top corner should go to paste; Shift+drag copies another area, Esc forgets it.');
+}
+async function pasteAt(x, y) {
+  if (RO()) return toast('The game server is running: editing is off.', true);
+  const c = clip;
+  await edit([{ op: 'paste', x, y }], `pasted ${c.w}×${c.h}`);
+  const tl = [];
+  for (let yy = y; yy < y + c.h + CH; yy += CH) for (let xx = x; xx < x + c.w + CH; xx += CH) tl.push([Math.min(xx, x + c.w - 1), Math.min(yy, y + c.h - 1)]);
+  refetch(tl);
+  for (const [dx, dy, ch] of c.chests || []) await api('/api/chest', { x: x + dx, y: y + dy, chest: ch });
+  if (c.chests && c.chests.length) toast(`Pasted, with ${c.chests.length} chest${c.chests.length > 1 ? 's' : ''} keeping ${c.chests.length > 1 ? 'their' : 'its'} rewards (each its own chest, own timer). Click again for another copy.`);
+}
+
 function setTool(t) {
   tool = t;
   document.querySelectorAll('#toolgrp button').forEach(b => b.classList.toggle('on', b.dataset.t === t));
@@ -6133,6 +6215,10 @@ cv.addEventListener('mousedown', e => {
   if (npcPick) { if (RO()) { npcPick = null; return toast('The game server is running: editing is off.', true); } moveNpc(t); return; }
   if (tool === 'select') { selectTile(t.x, t.y); return; }
   if (tool === 'pick') { pick(t.x, t.y); return; }
+  if (tool === 'copy') {
+    if (clip && !e.shiftKey) { pasteAt(t.x, t.y); return; }
+    rect = { a: t, b: t, copy: true }; redrawTop(); return;
+  }
   if (RO()) { toast('The game server is running: editing is off.', true); return; }
   if (brush.kind === 'npc' && tool !== 'erase') {     // NPCs go one at a time
     if (e.altKey) edit([{ op: 'npcremove', x: t.x, y: t.y }], 'removed an NPC');
@@ -6188,6 +6274,7 @@ window.addEventListener('mouseup', () => {
       edit(ops, `rug ${R.name} (${x1 - x0 + 1}×${y1 - y0 + 1})`); return;
     }
     if (rect.zone) { rect = null; redrawTop(); zoneMouseUp(x0, y0, x1, y1); return; }
+    if (rect.copy) { rect = null; redrawTop(); copyArea(x0, y0, x1, y1); return; }
     rect = null;
     if ((x1 - x0 + 1) * (y1 - y0 + 1) > 40000) { toast('That area is too big (at most 200×200 at once).', true); redrawTop(); return; }
     const ops = [];
@@ -6221,11 +6308,12 @@ window.addEventListener('keydown', e => {
     return;
   }
   if (k === ' ') { spaceDown = true; cv.style.cursor = 'grab'; e.preventDefault(); return; }
-  if (k === 'escape') { if (zoneDraw) { zoneArm(false); rect = null; leftUI(); redrawTop(); toast('Stopped adding boxes.'); return; }
+  if (k === 'escape') { if (tool === 'copy' && clip) { clip = null; redrawTop(); toast('Copy forgotten: drag to copy another area.'); return; }
+    if (zoneDraw) { zoneArm(false); rect = null; leftUI(); redrawTop(); toast('Stopped adding boxes.'); return; }
     if (rugLearn) { rugLearn = false; rect = null; setTool(tool); redrawTop(); toast('Cancelled.'); return; }
     if (areaLearn) { areaLearn = false; rect = null; setTool(tool); redrawTop(); toast('Cancelled.'); return; }
     if (destPick || npcPick) { destPick = npcPick = null; setTool(tool); toast('Cancelled.'); return; } toggleWorld(false); rect = null; selTile = null; redrawTop(); return; }
-  const map = { v: 'select', b: 'brush', u: 'rect', f: 'fill', e: 'erase', i: 'pick', h: 'pan' };
+  const map = { v: 'select', b: 'brush', u: 'rect', f: 'fill', e: 'erase', i: 'pick', h: 'pan', c: 'copy' };
   if (map[k]) return setTool(map[k]);
   if (k === '[') return stepSize(-1);
   if (k === ']') return stepSize(1);

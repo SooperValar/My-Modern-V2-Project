@@ -429,6 +429,8 @@ The map page (rail: Map).
 - Two come from the game's own map: the **Red rug** (border 523-530, middle 520/521/522) and the **Blue rug** (border 534-541, middle 531/532/533).
 - **+ Learn a rug from the map**: drag over a whole rug, its border included (at least 3 × 3); its corners, its sides (the most common piece on each) and its middle become a new rug, named by you. Right-click your own rug to rename or delete it. Kept in `.dat/mapedit-rugs.json`.
 
+**Copy tool** (C, in the toolbar): drag over an area to copy it, then click to paste it with its top corner on the clicked tile, as many times as you like (a dashed blue outline shows where it goes; Shift+drag copies another area, Esc forgets the copy). It copies the floors, walls / objects, the tile flags and the items (each paste makes new items; editor chests keep their rewards and each gets its own timer). NPCs are not copied. One paste is one undo step; works while the game runs.
+
 **Zones tab** (draws the game's zones; see [Zone names](#new-zones-and-areas))
 - Lists every zone in the order the game names them (search filters); click one to pick it and go there, or click the map to pick the smallest zone at that spot. The picked zone's boxes are shaded blue on the map, the others outlined in gold.
 - The picked zone: its name (renaming it to another zone's name offers to join the two), what the game says ("in", "in the", "on" for streets, "at"), its boxes (go to, remove) and **Delete zone**. **+ Add box** and drag on the map (a click adds a single tile) adds boxes until "Done" or Esc; Alt+click removes the picked zone's box under the mouse. **+ New zone** starts one and goes straight to adding boxes.

@@ -1678,6 +1678,57 @@ class World:
             return ''
         return 'unknown NPC edit'
 
+    # --- copy / paste a selection (the toolbar's Copy tool): floors, walls / objects, the tile flags and the items
+    # (each pasted item is a new copy; editor chests get their rewards copied by the page). NPCs are not copied.
+    def copy_area(self, x0, y0, x1, y1):
+        x0, x1, y0, y1 = max(0, min(x0, x1)), min(MAPX - 1, max(x0, x1)), max(0, min(y0, y1)), min(MAPY - 1, max(y0, y1))
+        if (x1 - x0 + 1) * (y1 - y0 + 1) > 40000:
+            return {'error': 'That area is too big (at most 200x200 at once).'}
+        tiles, items, npcs, chests = [], 0, 0, []
+        qs = self.talk_load()[0].get('chests', {})
+        with self.lock:
+            for y in range(y0, y1 + 1):
+                for x in range(x0, x1 + 1):
+                    t = self.tile(x, y)
+                    ib = None
+                    if 0 < t[4] < MAXITEM and self.it_u8(t[4], I_USED):
+                        ib = bytes(self.item[t[4] * ITEM_SIZE:(t[4] + 1) * ITEM_SIZE]); items += 1
+                        c = qs.get('%d,%d' % (x, y))
+                        if c:
+                            chests.append([x - x0, y - y0, c])
+                    if t[2]:
+                        npcs += 1
+                    tiles.append((x - x0, y - y0, t[0], t[1], t[7] & 0xffff, ib))
+            self.clip = {'w': x1 - x0 + 1, 'h': y1 - y0 + 1, 'tiles': tiles}
+        return {'w': x1 - x0 + 1, 'h': y1 - y0 + 1, 'items': items, 'npcs': npcs, 'chests': chests}
+
+    def _paste(self, rec, x, y, msgs):
+        cl = getattr(self, 'clip', None)
+        if not cl:
+            msgs.append('Nothing copied yet.'); return 0
+        n = 0
+        for dx, dy, fl, ob, mf, ib in cl['tiles']:
+            tx, ty = x + dx, y + dy
+            if not (0 <= tx < MAPX and 0 <= ty < MAPY):
+                continue
+            self._save_map(rec, tx, ty)
+            self._remove_item(rec, tx, ty)
+            t = self.tile(tx, ty)
+            t[0], t[1], t[7] = fl, ob, (t[7] & ~0xffff) | mf
+            if ib:
+                i = self._free_item()
+                if not i:
+                    msgs.append('no free item slot'); ib = None
+                else:
+                    self._save_item(rec, i)
+                    o = i * ITEM_SIZE
+                    self.item[o:o + ITEM_SIZE] = ib
+                    struct.pack_into('<hhH', self.item, o + I_X, tx, ty, 0)
+                    t[4] = i
+            self.set_tile(tx, ty, t)
+            n += 1
+        return n
+
     def _free_item(self):
         for i in list(range(self.free_hint, MAXITEM)) + list(range(1, self.free_hint)):
             if not self.item[i * ITEM_SIZE + I_USED]:
@@ -1886,6 +1937,9 @@ class World:
                 if not (0 <= x < MAPX and 0 <= y < MAPY):
                     continue
                 k = op['op']
+                if k == 'paste':              # the copied selection, its top corner on x, y
+                    n += self._paste(rec, x, y, msgs)
+                    continue
                 if k.startswith('npc'):
                     err = self.npc_op(rec, op, x, y)
                     if err:
@@ -2776,6 +2830,8 @@ def make_handler(world, sprites, page, minimap, ctl):
                     world.area_save(body.get('save'), body.get('delete'))
                     return self.js({'msg': 'saved', 'areas': world.area_presets()})
                 return self.js({'error': 'nothing to do'})
+            if u.path == '/api/copy':
+                return self.js(world.copy_area(int(body['x0']), int(body['y0']), int(body['x1']), int(body['y1'])))
             if u.path == '/api/chest':
                 qs, npcs = world.talk_load()
                 key = '%d,%d' % (int(body['x']), int(body['y']))
