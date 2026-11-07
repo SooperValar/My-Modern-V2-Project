@@ -2306,6 +2306,8 @@ class ServerCtl:
                     pass
         threading.Thread(target=self._watch, daemon=True).start()
         self.bk_info = {}
+        self.stopping = None       # the reason while this editor stops the server (for the Discord post)
+        self.dc_up = None          # Discord: last seen state / uptime
         if BACKUP['on']:
             threading.Thread(target=self._backup_loop, daemon=True).start()
 
@@ -2381,6 +2383,60 @@ class ServerCtl:
         print('Backup: ' + line)
         self.bk_info = {'time': time.strftime('%Y-%m-%d %H:%M'), 'ok': ok, 'msg': line, 'dir': BACKUP['dir']}
         return ok, line
+
+    # --- Discord: posts to a channel webhook (server up / going down / back after a crash). The webhook address is a
+    # secret: it lives only in <Server folder>/discord-webhook.txt (one line), never in the project or git.
+    def discord_url(self):
+        p = os.path.join(os.path.dirname(self.control), 'discord-webhook.txt') if self.control else ''
+        try:
+            u = open(p).read().strip()
+            return u if u.startswith('https://discord.com/api/webhooks/') or u.startswith('https://discordapp.com/api/webhooks/') else ''
+        except OSError:
+            return ''
+
+    def discord(self, text, wait=False):
+        url = self.discord_url()
+        if not url:
+            return 'no webhook (put its address in discord-webhook.txt in the Server folder)'
+        def post():
+            import urllib.request
+            try:
+                req = urllib.request.Request(url, data=json.dumps({'content': text, 'username': 'Mercenaries of Asgard v2',
+                                                                  'allowed_mentions': {'parse': []}}).encode(),
+                                             headers={'Content-Type': 'application/json',
+                                                      'User-Agent': 'MercenariesOfAsgardV2-Editor (local, 1.0)'})
+                urllib.request.urlopen(req, timeout=10).read()
+                return ''
+            except Exception as e:
+                print('Discord post failed:', e)
+                return str(e)
+        if wait:
+            return post()
+        threading.Thread(target=post, daemon=True).start()
+        return ''
+
+    def _discord_watch(self):
+        """called every few seconds: posts when the game comes up, goes down, or restarted by itself (a crash)"""
+        running = server_running()
+        up = None
+        if running:
+            r = self.console('status', 2)
+            if r is None:
+                return                        # starting, or busy: decide next time
+            m = re.search(r'uptime=(\d+)', r)
+            up = int(m.group(1)) if m else 0
+        prev = self.dc_up
+        self.dc_up = (running, up)
+        if prev is None:
+            return                            # the editor just started: no post for the state it found
+        was, prev_up = prev
+        if running and not was:
+            self.discord(':green_circle: **Mercenaries of Asgard v2 is online.** Come on in!')
+        elif was and not running:
+            why = self.stopping
+            self.discord(':red_circle: The server is offline' + (' for %s. It will be back soon.' % why if why else '.'))
+        elif running and was and prev_up is not None and up is not None and up + 30 < prev_up:
+            self.discord(':warning: The server restarted by itself (a crash?) and is **online** again.')
 
     # --- the control port
     def console(self, cmd, timeout=5):
@@ -2531,6 +2587,8 @@ class ServerCtl:
         if not server_running():
             self._log('the server is not running'); return True
         st = self.status()
+        self.stopping = reason
+        self.discord(':yellow_circle: The server goes down for %s%s.' % (reason, ' in %d seconds' % warn if warn and st.get('online') else ''))
         if warn and st.get('online'):
             self._log('warning %d player(s): going down in %d seconds' % (st['online'], warn))
             self.console('announce The server goes down for %s in %d seconds.' % (reason, warn))
@@ -2562,6 +2620,11 @@ class ServerCtl:
                 if self.control:
                     self._requests()
                     self._status_file()
+                if time.time() - getattr(self, 'dc_t', 0) >= 6:
+                    self.dc_t = time.time()
+                    self._discord_watch()
+                    if running and self.stopping and self.dc_up and self.dc_up[0]:
+                        self.stopping = None
             except Exception as e:
                 print('control:', e)
             time.sleep(2)
@@ -2620,6 +2683,10 @@ class ServerCtl:
             elif act == 'log':
                 entry['result'] = 'done'
                 self._answer(rid, {'ok': True, 'log': self.log_tail(int(req.get('lines', 200)))})
+            elif act == 'discord':              # post a message to the Discord channel (a test, an announcement)
+                err = self.discord(str(req.get('msg', ''))[:1900], wait=True)
+                entry['result'] = 'done' if not err else 'failed'
+                self._answer(rid, {'ok': not err, 'error': err})
             elif act == 'backup':               # a backup now (into recent/ only)
                 try:
                     ok, line = self.backup()

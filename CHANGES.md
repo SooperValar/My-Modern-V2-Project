@@ -433,6 +433,8 @@ The map page (rail: Map).
 - Two come from the game's own map: the **Red rug** (border 523-530, middle 520/521/522) and the **Blue rug** (border 534-541, middle 531/532/533).
 - **+ Learn a rug from the map**: drag over a whole rug, its border included (at least 3 × 3); its corners, its sides (the most common piece on each) and its middle become a new rug, named by you. Right-click your own rug to rename or delete it. Kept in `.dat/mapedit-rugs.json`.
 
+**Discord posts** (the editor): when the game goes down (with the reason, e.g. "an update"), is offline, comes online again, or restarted by itself after a crash, a message goes to the Discord channel whose webhook address is in `Server\discord-webhook.txt` (kept out of the project). Control action `discord` posts any message.
+
 **Automatic backups** (the editor, while it runs): every 6 hours (0, 6, 12, 18 o'clock) the game data (`.dat/*.dat`, about 7 MB zipped) goes to `~/myv2-backups` and the off-PC folder `D:\MyV2 Backups` (`--backup-dir`), kept as the last 8, 14 daily and 8 weekly; see docs/HOSTING.md for restoring.
 
 **Copy tool** (C, in the toolbar): drag over an area to copy it, then click to paste it with its top corner on the clicked tile, as many times as you like (a dashed blue outline shows where it goes; Shift+drag copies another area, Esc forgets the copy). It copies the floors, walls / objects, the tile flags and the items (each paste makes new items; editor chests keep their rewards and each gets its own timer). NPCs are not copied. One paste is one undo step; works while the game runs.
