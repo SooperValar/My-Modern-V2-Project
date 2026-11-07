@@ -694,6 +694,7 @@ int teleport2(int cn,int in2)
         it[in].power=it[in2].power;
         it[in].data[0]=it[in2].data[0];
         it[in].data[1]=it[in2].data[1];
+        it[in].data[2]=it[in2].data[4];        // MyV2: the way to face on arrival (DX_*), 0 = as always (down)
 
         if (!add_spell(cn,in)) {
                 do_char_log(cn,1,"Magical interference neutralised the %s's effect.\n",it[in].name);

@@ -352,6 +352,10 @@ int merch_take(int cn,int co,int nr)
 		do_char_log(cn,1,"%s's wares, page %d of %d.\n",ch[co].name,*pp+1,pages);
 		return 1;
 	}
+	if (SAMPLE(in) && it[in].temp>0 && it[in].temp<MAXTITEM) {	// a display copy: sold as its template is now
+		memcpy(it[in].data,it_temp[it[in].temp].data,sizeof(it[in].data));
+		it[in].value=it_temp[it[in].temp].value;
+	}
 	if (SHRINE_SCROLL(in) && (ch[cn].flags&CF_PLAYER)) {
 		if (!(ch[cn].kindred&KIN_SEYAN_DU)) { do_char_log(cn,0,"Only a Seyan'Du can use the shrines of Kwai.\n"); return 0; }
 		if (ch[cn].data[21]&it[in].data[3]) { do_char_log(cn,0,"You have already found that shrine.\n"); return 0; }

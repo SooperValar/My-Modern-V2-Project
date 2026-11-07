@@ -1,0 +1,56 @@
+# Nov 6: moves the shrine copies against the wall and points the scrolls at the old spot, facing the shrine (applied once).
+clear 10 589 10 589
+place 557 8 589
+it 1417 d 0 10
+it 1417 d 1 589
+it 1417 d 4 2
+clear 10 583 10 583
+place 668 8 583
+it 1418 d 0 10
+it 1418 d 1 583
+it 1418 d 4 2
+clear 10 577 10 577
+place 669 8 577
+it 1419 d 0 10
+it 1419 d 1 577
+it 1419 d 4 2
+clear 10 571 10 571
+place 670 8 571
+it 1420 d 0 10
+it 1420 d 1 571
+it 1420 d 4 2
+clear 10 565 10 565
+place 671 8 565
+it 1421 d 0 10
+it 1421 d 1 565
+it 1421 d 4 2
+clear 10 559 10 559
+place 672 8 559
+it 1422 d 0 10
+it 1422 d 1 559
+it 1422 d 4 2
+clear 10 553 10 553
+place 673 8 553
+it 1423 d 0 10
+it 1423 d 1 553
+it 1423 d 4 2
+clear 10 547 10 547
+place 1040 8 547
+it 1424 d 0 10
+it 1424 d 1 547
+it 1424 d 4 2
+clear 10 541 10 541
+place 1095 8 541
+it 1425 d 0 10
+it 1425 d 1 541
+it 1425 d 4 2
+clear 10 535 10 535
+place 1298 8 535
+it 1426 d 0 10
+it 1426 d 1 535
+it 1426 d 4 2
+clear 10 529 10 529
+place 1330 8 529
+it 1427 d 0 10
+it 1427 d 1 529
+it 1427 d 4 2

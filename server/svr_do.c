@@ -4241,7 +4241,8 @@ void do_regenerate(int cn)
                                         }
                                         lab_left_check(cn);
                                         ch[cn].status=0; ch[cn].attack_cn=0; ch[cn].skill_nr=0; ch[cn].goto_x=0;
-                                        ch[cn].use_nr=0; ch[cn].misc_action=0; ch[cn].dir=DX_DOWN;
+                                        ch[cn].use_nr=0; ch[cn].misc_action=0;
+                                        ch[cn].dir=(it[in].data[2]>=1 && it[in].data[2]<=8) ? it[in].data[2] : DX_DOWN;   // MyV2: a scroll may set the way to face
 
                                 } else do_char_log(cn,0,"%s ran out.\n",it[in].name);
                                 it[in].used=USE_EMPTY;
