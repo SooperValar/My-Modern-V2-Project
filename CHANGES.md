@@ -125,6 +125,7 @@ A new HUD drawn on its own canvas (window size ÷ 1.5) and composited over the w
 
 ## God / imp / builder commands and in-game tools
 
+- **Abandoned new characters are cleaned up**: once a day at 4 o'clock, characters with under 1 hour of play that haven't logged in for 30 days are deleted, each saved first to the deleted-characters backups (restore from the editor's Players page). Staff, imp and god characters are never touched. Console: `charcleanup list` (who would go), `charcleanup` (now). `god_cleanup_new` in `svr_god.c`.
 **Build mode**
 - **`#build`** starts build mode and explains it in chat: what each page holds, the commands, and how to place (Shift+click) and pick up (right-click) pieces.
 - The build pieces are in **numbered pages of 40** instead of one page per sprite number: **page 0** is the flags (zones like indoors, sight block, no-magic and so on), **pages 1 to N** are the floor types, and the **rest are objects** (walls, trees, furniture...). Every placeable item template is collected automatically, with repeats (same name and look) removed.

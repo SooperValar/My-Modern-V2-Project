@@ -3071,6 +3071,7 @@ void tick(void)
         globs->uptime_per_hour[hour]++;
 
 	if ((globs->ticker&31)==0) pop_save_char(globs->ticker%MAXCHARS);
+	if ((globs->ticker&1023)==0) tick_cleanup(hour);	// MyV2: abandoned new characters, once a day
 
         // send tick to players
         for (n=1; n<MAXPLAYER; n++) {

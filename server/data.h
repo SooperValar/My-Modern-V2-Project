@@ -298,6 +298,8 @@ extern unsigned int mapmarker;
 #define WP2H_MAX	250	// 25 % (never quite reached)
 #define WP2H_K		40
 // Fire / Ice set bonuses (svr_do.c set_pieces): Fire = melee, Ice = casters; bonus at 4 and at 6 pieces worn
+#define CLEANUP_DAYS    30              // abandoned new characters: not logged in for this many days...
+#define CLEANUP_PLAYED  (TICKS*60*60)   // ...and less play time than this are deleted (with a backup) at 4 o'clock
 #define FIXED_SKILL_VALUE	250	// Identify, Light, Recall: the fixed base of a player who knows them (really_update_char)
 #define SET_FIRE		1
 #define SET_ICE			2

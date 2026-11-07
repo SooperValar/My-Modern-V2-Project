@@ -318,6 +318,12 @@ static void con_cmd(char *line)
 		out("  %s\n",why);
 		return;
 	}
+	if (!strcmp(w[0],"charcleanup")) {	// charcleanup [list]: abandoned new characters (list = only show them)
+		static char buf[16000];
+		int k=god_cleanup_new(!strcmp(w[1],"list"),buf,sizeof(buf));
+		out("%s  %d character(s) %s.\n",buf,k,!strcmp(w[1],"list") ? "would be deleted" : "deleted (backups: chardeleted)");
+		return;
+	}
 	if (!strcmp(w[0],"chardeleted")) {	// chardeleted: the backups of deleted characters
 		static char buf[8000];
 		god_deleted_list(buf,sizeof(buf));

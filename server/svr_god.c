@@ -3146,3 +3146,46 @@ void god_deleted_list(char *out,int len)
 	while ((e=readdir(d)) && l<len-80) if (strstr(e->d_name,".chr")) l+=snprintf(out+l,len-l,"%s\n",e->d_name);
 	closedir(d);
 }
+
+/* MyV2: abandoned new characters - made but barely played (under CLEANUP_PLAYED of play time) and not logged in
+ * for CLEANUP_DAYS days - are deleted with a backup (god_delete_player: the Players page can restore them).
+ * Staff / imp / god characters are never touched. dry=1 only lists them. Run daily at 4 o'clock (tick_cleanup)
+ * and by the console command "charcleanup [list]". Returns how many. */
+int god_cleanup_new(int dry,char *out,int len)
+{
+	int co,cnt=0,l=0;
+	time_t now=time(NULL),last;
+	char why[300];
+
+	if (out && len) out[0]=0;
+	for (co=1; co<MAXCHARS; co++) {
+		if (ch[co].used==USE_EMPTY || !(ch[co].flags&CF_PLAYER)) continue;
+		if (ch[co].used==USE_ACTIVE) continue;
+		if (ch[co].flags&(CF_GOD|CF_IMP|CF_STAFF|CF_CREATOR|CF_GREATERGOD)) continue;
+		if (ch[co].total_online_time>=CLEANUP_PLAYED) continue;
+		last=ch[co].logout_date>0 ? ch[co].logout_date : ch[co].creation_date;
+		if (last<=0 || now-last<CLEANUP_DAYS*24*60*60) continue;
+		if (dry) {
+			if (out && l<len-80) l+=snprintf(out+l,len-l,"  %s (%d): %d min played, last seen %d days ago\n",ch[co].name,co,
+				(int)(ch[co].total_online_time/(TICKS*60)),(int)((now-last)/86400));
+			cnt++;
+		} else if (god_delete_player(co,why,sizeof(why))) {
+			chlog(co,"cleanup: abandoned new character deleted");
+			if (out && l<len-80) l+=snprintf(out+l,len-l,"  %s\n",why);
+			cnt++;
+		}
+	}
+	if (cnt) xlog("cleanup: %d abandoned new character(s) %s",cnt,dry ? "found" : "deleted");
+	return cnt;
+}
+
+void tick_cleanup(int hour)	// once a day, at 4 o'clock
+{
+	static int last_day=-1;
+	time_t t=time(NULL);
+	int day=(int)(t/86400);
+
+	if (hour!=4 || day==last_day) return;
+	last_day=day;
+	god_cleanup_new(0,NULL,0);
+}

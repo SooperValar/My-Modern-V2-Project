@@ -484,6 +484,8 @@ int god_reset_player(int co,char *why,int len);
 int god_delete_player(int co,char *why,int len);
 int god_restore_player(char *file,char *why,int len);
 void god_deleted_list(char *out,int len);
+int god_cleanup_new(int dry,char *out,int len);
+void tick_cleanup(int hour);
 int zone_has(const char *name,int x,int y);
 void clear_kill(int cn,int co);
 void do_areas(int cn);
