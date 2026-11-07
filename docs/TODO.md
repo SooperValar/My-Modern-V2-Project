@@ -65,6 +65,11 @@ Cody wants to revisit these five, like the tool symbols: grid, see through walls
 23. **Merchants tab + shop rework** (Cody, Nov 4): LIVE Nov 4 (server `merch.c`, editor Merchants tab). See CHANGES.md "Merchants". Cody to check in game: pages, selling + buying back, the prices.
 
 24. ~~**Class rewards**~~ (LIVE Nov 5): item quests (Quests page, "+ Add a class reward", `qclass`) and conversation lines ("the player's class" condition, "By class" split) can give each picked class its own skill / item. Cody sets them up when he wants.
+
+25. **Discord bots and a game chat bridge** (Cody, Nov 7; start on **Tuesday Nov 10**, when his usage resets):
+    - **Info for Discord**: who is online, rankings (e.g. top characters by experience / rank, maybe per class), maybe a live status message that is kept up to date (online / players count) instead of new posts. The editor already has the data (console `who`, `status`, char.dat) and posts through the webhook (`discord()` in mapedit.py); a webhook can edit its own messages, so a status / rankings message can be updated in place without a bot.
+    - **Game -> Discord**: in-game shouts (#shout) posted to a dedicated Discord channel (e.g. #game-chat), probably also #announce. Server side: log or forward shouts to the editor (console / control port), the editor posts them with a second webhook for that channel ("Name: text").
+    - **Discord -> game**: messages written in that Discord channel shown in game (like a shout, e.g. "[Discord] Name: text"). Needs a real Discord bot (a bot token, the Message Content intent, reading the channel) running next to the editor; then a console command that shouts the text in game. To decide: who may write (everyone, or only linked players), filtering (badwords.txt), length limits, mutes.
 - Nov 5 live: Ingrid/Gordon class rewards (qclass lines added to the live npctalk.dat), Warrior templates start Immunity/Surround Hit at 4, Identify/Light/Recall fixed at 250.
 - Nov 5 live: {skill} greetings (Ingrid/Gordon texts set), several item quests per NPC (qalias), Greenling Eye Collection -> Robin (quest template 2004).
 - Nov 5 live: Players page reset / delete (backup) / restore (new random name if taken).
