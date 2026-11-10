@@ -24,7 +24,7 @@ in the browser that can edit the running game live).
 | Windows copy of the server source (Claude edits this) | `C:\Users\Cody\Desktop\MyV2\Server` (= `$HOME/mnt/Server` in Claude's device shell) |
 | Client (what Cody plays) | `C:\Users\Cody\Desktop\MyV2\Client` (`merc.exe`, `Launcher.exe`, `GFX\`, `sfx\`, `gx00.*`, `pnglib.*`) |
 | Git project (GitHub, public) | `C:\Users\Cody\Desktop\MyV2\Client\Claude outputs\My-Modern-V2-Project` = github.com/SooperValar/My-Modern-V2-Project |
-| Player download | `Client\MyV2-Astonia.zip` |
+| Player download | `Client\For Players\Mercenaries-of-Asgard-v2.zip` (rebuilt by `publish_client.py`); public link: the GitHub release, see HOSTING.md |
 
 Project layout: `server/` (server source, the same files as the Windows Server folder),
 `client/` (client source; `client/launcher/` the launcher; `client/package/README.txt` the player
@@ -32,8 +32,7 @@ readme), `tools/mapedit/` (the editor), `tools/release/` (publishing client upda
 `tools/sprites/` (sprite scripts and art), `tools/world/` (one-off world data tools),
 `docs/` (TODO, HOSTING, ITEM_TIERS, this file).
 
-Note: the `.c` files directly in the `Client` folder are old (October 19); the real client source
-is the project's `client/` folder.
+Note: the real client source is the project's `client/` folder (the old copies in `Client` were moved out Nov 7).
 
 ## Cody's standing rules
 
@@ -166,6 +165,8 @@ New sprites: write them to `Client\GFX` (new numbers), then `tools/release/publi
 
 ## Open items (details in docs/TODO.md and docs/HOSTING.md)
 
+**Where we left off (Nov 10) - START HERE:** next is **TODO 28 (major): soulstone levels are too low** compared with the armor that drops. Then TODO 25 (Discord online / rankings info and the game <-> Discord chat bridge), 26 (walking / attack speed and the speed modes), 27 (town NPCs' door loop), 17, 20. Still waiting on Cody: the Windows restart test of start-with-Windows (the Discord #server-status channel shows if the server came back by itself). Discord server set up Nov 7 (layout in HOSTING.md); the editor posts server up / down there through `Server\discord-webhook.txt` (secret, never in git). Git note: in a new session the project folder may need delete permission again (device_request_delete_permission), else git leaves `.lock` files behind and Cody's push fails; clear stale `.git/*.lock`, `gc.pid`, `tmp_obj_*` after commits.
+
 **Tested by Cody in game (Nov 4-5), all good:** potion stacks, the Fire/Ice set bonuses, Burning Hits (+ `#burning`), Frost Armor, the
 sets in the god shop, the Ice Gargoyle Cape and the Cloak of Ice names, thorns on every landed blow, the 2.15.02 client
 (Ctrl+click, scroll charges, Greataxe name, Ice set pictures), Weapon Specialization in `#twohand` / `#greataxe`, set
@@ -192,14 +193,9 @@ PowerShell window: switched to a hidden launcher; check with Cody that it stoppe
 - **#quest** (IN PROGRESS, not final; live since the zones update; built and committed): the look is approved (column table, 15 a page); still open: the order
   and rewards; maybe a separate difficulty number per quest
   giver. `#journal` maybe only for temporary / seasonal quests.
-- **Hosting section 4**: daily backups of the world data with a copy off the PC (next);
-  the server and editor starting with Windows (a scheduled task; note the "only after login"
-  caveat); a test copy of the server; accounts (who has god / imp, remove test characters);
-  safety (runs as an ordinary user; a look at the network input code); a Discord (Cody creates it;
-  Claude can do webhook posts: server up / restarting / announcements, a status message, later a
-  chat bridge bot).
-- **Lab shrine keys** for missed lab shrines: 100 gold per shrine times the lab level.
-- **Ice set sprites** 18100-18104 are missing; item tiers part 5 (Legendaries); prestige rewards.
-- Server name ideas were offered (e.g. "Astonia Rekindled", "Sunken Dark"); Cody hasn't chosen.
+- **Hosting section 4**: done (Nov 6-7) except the test server (skipped for now) and the restart test; see HOSTING.md.
+- **Lab shrine keys**: done (Nov 6, scrolls from the Seyan'Du Lord, TODO 8).
+- Ice set sprites: done; item tiers part 5 (Legendaries); prestige rewards.
+- Name chosen: Mercenaries of Asgard v2 (Nov 7).
 - Chests: only the game's two facings (south 220/221, west 222/223); north/east sprites were tried
   three ways and dropped.
