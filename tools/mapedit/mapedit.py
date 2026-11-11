@@ -4255,7 +4255,7 @@ function leftUI() {
       if (!q) mixSection(true);
       sect('Floors · by how often they are used · Ctrl+click to mix'); lazy(grid(), list, f => cellFloor(f[0], f[1]));
     } else if (tab === 'npcs') {
-      const all = pal.npcs || [], blue = all.filter(t => !t[8]), made = blue.filter(t => t[7]);
+      const all = pal.npcs || [], blue = all.filter(t => !t[8] || (t[7] && !t[4])), made = blue.filter(t => t[7]);
       const seg = document.createElement('div'); seg.className = 'seg';
       seg.innerHTML = `<button data-s="world" class="${npcSub === 'world' ? 'on' : ''}">In the world</button><button data-s="blue" class="${npcSub === 'blue' ? 'on' : ''}">Blueprints · ${blue.length}</button>`;
       seg.querySelectorAll('button').forEach(b => b.onclick = () => { npcSub = b.dataset.s; leftUI(); });
