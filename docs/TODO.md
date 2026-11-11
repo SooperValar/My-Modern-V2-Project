@@ -12,12 +12,13 @@ world, quests, the editor, the client and Discord. Merged Nov 10 from the old TO
 
 ## Up next (in order)
 
-1. ★ **Soulstone levels too low** (MAJOR) - [Fixes](#1-fixes-and-balance)
-2. ★ **Discord: online / rankings info and the game chat bridge** - [Discord](#9-discord-and-community)
-3. ★ **Walking speed, speed modes and attack speed** (look at it together first) - [Systems](#2-gameplay-systems)
-4. ★ **Town NPCs' door loop** - [Fixes](#1-fixes-and-balance)
-5. ★ **Logout at shutdown** - [Fixes](#1-fixes-and-balance)
-6. ★ **Resizable game window** - [Client](#8-client-sprites-and-art)
+1. ★ **Town rearrangement** (IN PROGRESS) - [World](#5-world-and-areas)
+2. ★ **Soulstone levels too low** (MAJOR) - [Fixes](#1-fixes-and-balance)
+3. ★ **Discord: online / rankings info and the game chat bridge** - [Discord](#9-discord-and-community)
+4. ★ **Walking speed, speed modes and attack speed** (look at it together first) - [Systems](#2-gameplay-systems)
+5. ★ **Town NPCs' door loop** - [Fixes](#1-fixes-and-balance)
+6. ★ **Logout at shutdown** - [Fixes](#1-fixes-and-balance)
+7. ★ **Resizable game window** - [Client](#8-client-sprites-and-art)
 
 **Waiting on Cody:**
 - The Windows restart test of start-with-Windows (Discord #server-status shows if the server came back by itself).
@@ -157,7 +158,12 @@ back, the prices. (Ties in with the Market below.)
 
 ## 5. World and areas
 
-### ○ Town rearrangement and a Market (new, Nov 10)
+### ★ Town rearrangement and a Market (new, Nov 10; IN PROGRESS)
+**Plan (Nov 10):** Cody has built the rearranged town (with the Market) as a copy somewhere in the live world. Claude
+copies it over Aston (tiles + items, server stopped), puts every town NPC in the Temple of Skua (spawn = resting spot)
+for Cody to move in the editor, then updates zones, minimap and zone maps. Waiting on: where the copy is, and the
+newest world (the Windows `Server\.dat` is from Nov 7 and has no copy; `stop-send` or a backup). Picture of the old
+town: `MyV2\aston_town_plan.png`.
 Make a Market so a lot of the shop buildings are freed up for new quest givers.
 - **Market stalls:** 8 armor - Cloth, Leather, Bronze, Steel, Gold, Emerald, Crystal, Titanium;
   5 weapon - Bronze, Steel, Gold, Crystal, Titanium.
