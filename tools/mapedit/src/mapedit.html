@@ -2276,7 +2276,7 @@ function tplTabs() {
   if (TP.kind === 'use') return { conv: 'Quest rules' };
   if (TP.kind === 'player') return { overview: 'Overview', stats: 'Stats & skills', gear: 'Worn & backpack', depot: 'Depot', history: 'History', account: 'Account' };
   return TP.kind === 'npc'
-    ? { general: 'General', stats: 'Stats & skills', gear: 'Equipment & stock', behave: 'Behaviour', patrol: 'Patrol route', talk: 'Talk & quest', conv: 'Conversations', adv: 'Advanced' }
+    ? { general: 'General', stats: 'Stats & skills', gear: 'Equipment & stock', behave: 'Behaviour', patrol: 'Patrol & chores', talk: 'Talk & quest', conv: 'Conversations', adv: 'Advanced' }
     : { general: 'General', stats: 'Stats & requirements', adv: 'Advanced' };
 }
 function tplRender() {
@@ -2744,6 +2744,30 @@ const NPC_TABS = {
     }
     const g = grid2(b, 'Timing');
     row(g, 'Waits at each stop', num(() => Math.round(d[79] / 18), v => d[79] = v * 18, 0), 'seconds');
+    // its chores: doors it closes, lights it keeps burning, street lights it switches
+    const spots = (from, title, note, what) => {
+      const g2 = grid2(b, title); b.lastChild.insertAdjacentHTML('beforebegin', `<div class="note">${note}</div>`);
+      const L = []; for (let i = from; i < from + 4; i++) if (d[i]) L.push(pos(d[i]));
+      const save = () => { for (let i = 0; i < 4; i++) d[from + i] = L[i] ? L[i][0] + L[i][1] * 1024 : 0; };
+      L.forEach((p, i) => {
+        const a = document.createElement('div'); a.className = 'ipick';
+        a.append(num(() => p[0], v => { p[0] = v; save(); }, 0, 1023), num(() => p[1], v => { p[1] = v; save(); }, 0, 1023));
+        const mk = (t, f) => { const x = document.createElement('button'); x.className = 'sm'; x.textContent = t; x.onclick = f; a.append(x); };
+        mk('Pick on map', () => pickSpot(`Click the ${what}`, t => { p[0] = t.x; p[1] = t.y; save(); }));
+        mk('Go there', () => { centerOn(p[0], p[1]); });
+        mk('Remove', () => { L.splice(i, 1); save(); tplRender(); });
+        row(g2, `${what[0].toUpperCase() + what.slice(1)} ${i + 1}`, a);
+      });
+      if (L.length < 4) {
+        const add = document.createElement('button'); add.className = 'btn sec'; add.textContent = `+ Add a ${what} (pick on map)`;
+        add.onclick = () => pickSpot(`Click the ${what}`, t => { L.push([t.x, t.y]); save(); });
+        b.append(add);
+      }
+    };
+    spots(20, 'Doors it closes', 'Up to 4 doors. When a door is open and nobody stands next to it, it walks over and closes it. Pick the door tile itself.', 'door');
+    spots(32, 'Lights it keeps burning', 'Up to 4 torches, candles or fire bowls. When one has gone out, it walks over and lights it again. Pick the light tile itself; the spot must keep holding a light (if it is removed or moved, pick it again).', 'light');
+    const g4 = grid2(b, 'Street lights');
+    row(g4, 'Switches on at night, off by day', ipick(() => d[41], v => d[41] = v, { none: 'none' }), 'Every item of this kind within 8 tiles of where it is (the Janitors do this with Street Light on their rounds).');
   },
   talk(b, c) {
     const g = grid2(b, 'What it says');
