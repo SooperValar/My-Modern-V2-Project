@@ -2,7 +2,7 @@
 
 Read this first in a new chat. It says where everything is, how each part is changed and put
 live, Cody's standing rules, and what is still open. The full list of what was changed is in
-`CHANGES.md`; the open items in `docs/TODO.md` and `docs/HOSTING.md`.
+`CHANGES.md`; the open items and design ideas in `docs/TODO.md` (by category) and `docs/HOSTING.md`.
 
 **Starting a new chat:** Cody can paste:
 > Read `docs/HANDOFF.md` in my project (Client\Claude outputs\My-Modern-V2-Project) first, then `docs/TODO.md`. Then: <the task>.
@@ -165,7 +165,7 @@ New sprites: write them to `Client\GFX` (new numbers), then `tools/release/publi
 
 ## Open items (details in docs/TODO.md and docs/HOSTING.md)
 
-**Where we left off (Nov 10) - START HERE:** next is **TODO 28 (major): soulstone levels are too low** compared with the armor that drops. Then TODO 25 (Discord online / rankings info and the game <-> Discord chat bridge), 26 (walking / attack speed and the speed modes), 27 (town NPCs' door loop), 17, 20. Still waiting on Cody: the Windows restart test of start-with-Windows (the Discord #server-status channel shows if the server came back by itself). Discord server set up Nov 7 (layout in HOSTING.md); the editor posts server up / down there through `Server\discord-webhook.txt` (secret, never in git). Git note: in a new session the project folder may need delete permission again (device_request_delete_permission), else git leaves `.lock` files behind and Cody's push fails; clear stale `.git/*.lock`, `gc.pid`, `tmp_obj_*` after commits.
+**Where we left off (Nov 10) - START HERE:** `docs/TODO.md` was reorganized Nov 10 into one design + to-do document by category (fixes, systems, classes, items, world, quests, editor, client, Discord), merged with Cody's `MyV2\Design Document.txt` (Brawler class, Greataxe variants, Market, Sunken Archives, Graveyard quest, editor wishes...). Old item numbers are kept as "(was #n)". Its "Up next" list: **soulstone levels too low (was 28, major)**, then Discord (was 25), speed (was 26), town NPC doors (was 27), logout at shutdown (was 17), resizable window (was 20). If Cody adds new ideas to `Design Document.txt`, fold them into TODO.md. Still waiting on Cody: the Windows restart test of start-with-Windows (the Discord #server-status channel shows if the server came back by itself). Discord server set up Nov 7 (layout in HOSTING.md); the editor posts server up / down there through `Server\discord-webhook.txt` (secret, never in git). Git note: in a new session the project folder may need delete permission again (device_request_delete_permission), else git leaves `.lock` files behind and Cody's push fails; clear stale `.git/*.lock`, `gc.pid`, `tmp_obj_*` after commits.
 
 **Tested by Cody in game (Nov 4-5), all good:** potion stacks, the Fire/Ice set bonuses, Burning Hits (+ `#burning`), Frost Armor, the
 sets in the god shop, the Ice Gargoyle Cape and the Cloak of Ice names, thorns on every landed blow, the 2.15.02 client

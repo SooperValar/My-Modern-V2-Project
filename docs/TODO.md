@@ -1,81 +1,283 @@
-# To do
+# MyV2: design ideas and to-do
 
-In order:
+The one list of everything still to do or decide for Mercenaries of Asgard v2: fixes, systems, classes, items,
+world, quests, the editor, the client and Discord. Merged Nov 10 from the old TODO list and Cody's
+`Design Document.txt` (MyV2 folder). New ideas go straight in here, under their section.
 
-1. ~~**Lab 11 arena deaths**~~ (done): every death in Lab 11 counts as an arena death (items kept) until the lab is finished. Two signs, one on each side of the entrance to the first underwater section, saying the lab is still being worked on and deaths there are arena deaths for now.
-2. ~~**God item shop**~~ (done: `#godshop`, merchants in Elysium, and the Elysium layout): a shop only gods can use, with every item template in the game, free. It needs pages (a shop window holds 62 items), e.g. next/previous buttons or a category or search filter.
+- **Priority:** ★ **Next** (in the queue below) · ● **Soon** (decided, not started) · ○ **Idea** (not decided yet)
+- **(was #n)** = the item's number in the old numbered list; `CHANGES.md`, `HANDOFF.md` and old commits use those numbers.
+- Finished work moves to **Done** at the bottom (one line each; the details are in `CHANGES.md`).
 
-3. ~~**Item tiers**~~ (done: parts 1-4) for helmets and body armor (Common/Magic/Rare/Epic/Legendary, white/blue/yellow/purple/orange, random drops, soulstone upgrade and reroll): see `docs/ITEM_TIERS.md`. Part 5, Legendaries, is under "Later".
+---
 
-4. ~~**Pentagram enemies leave no grave**~~ (done) unless they carry something besides their weapon.
-5. ~~**Pentagram solve balance**~~ (done: 5 + 2-3 per player who activated one in the last 10 minutes): look at how the solve count works (now: players online + three random 0-19, so about 28 + players online; 54 right after a server start; every active pentagram in the world counts) and make it work for a solo player as well as for groups. **Base it on the players actually doing pentagrams** (e.g. those in the pentagram area or who activated one recently), not everyone online; usually 1-5 people.
+## Up next (in order)
 
-6. ~~**Equipment compare**~~ (done: differences in the tooltip, Shift shows the worn piece): when hovering an item, show how it compares to what is worn in that slot (e.g. a second tooltip with the worn piece, or +/- differences in green and red).
+1. ★ **Soulstone levels too low** (MAJOR) - [Fixes](#1-fixes-and-balance)
+2. ★ **Discord: online / rankings info and the game chat bridge** - [Discord](#9-discord-and-community)
+3. ★ **Walking speed, speed modes and attack speed** (look at it together first) - [Systems](#2-gameplay-systems)
+4. ★ **Town NPCs' door loop** - [Fixes](#1-fixes-and-balance)
+5. ★ **Logout at shutdown** - [Fixes](#1-fixes-and-balance)
+6. ★ **Resizable game window** - [Client](#8-client-sprites-and-art)
 
-7. ~~**Ice set sprites**~~ (done Nov 4: the Fire set recoloured, 18100-18104; published with the next client update): the Helmet, Armor, Leggings, Boots and Gloves of Ice (unique, templates 1272-1276) use sprites 18100-18104, which don't exist in the client ("Sprite ... is missing"). They need pictures (new ones or recoloured).
+**Waiting on Cody:**
+- The Windows restart test of start-with-Windows (Discord #server-status shows if the server came back by itself).
+- Going through the quest order / rewards on the editor's Quests page ([Quests](#6-quests)).
+- Checking the merchants in game: pages, selling + buying back, prices ([Items](#4-items-weapons-and-shops)).
+- Setting up the area clears (quest areas first) and the class rewards, when he wants.
+- An example of the waypoint window when we start waypoints.
 
-8. ~~**Lab shrine keys for missed lab shrines**~~ (LIVE Nov 6: the Lord of Seyan'du sells scrolls to copies of the 11 lab shrines of Kwai, `tools/world/shrine_scrolls.txt`): a way for players to get a key for a labyrinth shrine they missed. Price: 100 gold per shrine times the lab level (e.g. a missed shrine in lab 5 costs 500 gold).
+---
 
-9. **#quest list: order and rewards** (IN PROGRESS: the look is approved; the editor's Quests page (built) sets the order, rewards, exp and hints of every quest - next: Cody goes through them there): the new `#quest` (built, committed, live) lists the quest givers easiest first by their experience reward. Cody wants to go through the list and adjust the order and the rewards (skill / item / experience: the NPC editor's Talk & quest tab). Maybe a separate "difficulty" number per quest so the order doesn't have to follow the experience. Also: keep `#journal` only for temporary / seasonal quests? **Reference for the look** (Cody's example, use when we get to this): `docs/ref/quest_list_example.png` - one line per quest giver in columns: rank needed (SgM, 2Lieu, 1Lieu, Captn), giver (or "Lab V"), where (street, cut to fit), reward (Ring, Book, Amulet, Tarot, @Gold, *Metabol..., or -), experience right-aligned; a header "Now listing available quests (PAGE 1):", paged; sorted by rank needed, then experience; one line in a different colour (green: Faiza, @Gold 750).
+## 1. Fixes and balance
 
-10. ~~**Odd-shaped zones**~~ (done, live: `.dat/zones.dat`, the editor's Zones tab, `zonereload`): a zone doesn't have to be one box. Several boxes with the same name act as ONE zone (e.g. a 3x3 square plus one tile off its bottom-right corner is one zone, not two). Now: `server/area.c` is a list of boxes (`x1,y1,x2,y2,name,flag`), and `get_area` / `get_area_m` add every box that contains the spot, so two touching or overlapping boxes with one name give "Elysium, Elysium", and `get_area_street` treats each box as its own building (size = that box only). To do: group boxes by name (list a name once; size and edges of a building from all its boxes), let the editor draw and show a zone as one shape made of boxes (add/remove a box or tiles, one name and flag for all), and keep the minimap / zone maps right.
+### ★ Soulstone levels too low (MAJOR) (was #28)
+Cody: "I'm getting level 6 armors dropping but only level 2 soul stones."
+Now (`tier.c` ~419, `soul_kill_drop`): a stone drops in 1 of (20 + 6 x the player's rank) kills; it holds 10-15% of the
+enemy's experience value and its level comes from that exp, so ordinary monsters give low-level stones while armor
+levels follow a different scale. Strong monsters carry their own stone (same 10-15% rule, `tier_make_soulstone`).
+To do: compare the stone level formula with the armor item-level formula (`docs/ITEM_TIERS.md`), make stones match the
+level of armor that drops in the same area (e.g. stone level = the enemy's armor drop level, or a higher exp share),
+maybe raise the drop rate for high ranks.
 
-11. **Weapon, ring and Harakim rebalance** (idea 2; LIVE Nov 4 except the staff, see `docs/REBALANCE.md` and CHANGES "Rebalance"; next: the summoner's staff):
-    - **Two-handed sword around Agility, two-handed axe around Strength.** Now both skills use Agility/Strength/Strength (`skill.c`), and both specials are a flat 1 in 8 (`WP2H_SPECIAL`, `data.h`): sword = deflect 1 in 8 melee hits against you, axe = critical hit (double damage) 1 in 8 of your hits (`do_attack`, `svr_do.c`). Idea: sword Agility-heavy with a deflect/parry chance that grows with Agility; axe Strength-heavy with a crit chance that grows with Strength. Update the tooltips (`svr_tick.c`) and `#weapons` (`svr_do.c`).
-    - **Rings**: Agility rings on par with the Strength emerald rings; look over the whole ring list.
-    - **Harakim**: dagger / spell book for casters, staff for summoners. Spells Willpower-focused, summoning (Ghost Companion) Intelligence-focused. Now every spell uses Braveness/Intelligence/Willpower (`skill.c`), and the Staff skill uses Agility/Strength/Strength.
-    - **Ghost Companion follows its Harakim through portals and teleports** (also recall, lab exits, `#recall`?).
+### ★ Town NPCs and their doors: no more open / close loop (was #27)
+Town NPCs walk to "their" doors and close them (`driver.c` ~1592, `npc_driver_low`: up to four door spots in
+`data[20..23]`, the NPC uses the door when its item is `active`, i.e. open, and nobody stands next to it; the editor's
+NPC page sets these spots). Cody sees NPCs reopen a door that is already closed and then go to close it again, forever.
+To check: doors whose open / closed state is the other way round (active = closed sprite), locked doors the NPC can't
+really use, two NPCs sharing a door, or using an already closed door opening it.
+Fix options (Cody would take either): only close when the door is really open (and remember a failed try for a while),
+never use a door to open it, or an editor / server switch to turn door closing off (for one NPC, or all town NPCs).
 
-12. ~~**Area completion bonuses**~~ (LIVE Nov 4: "Area clears" on the Quests page, `#areas`; Cody sets up the areas, the quest areas first) (idea 3, an early-game experience boost): kill all of an area's set creatures (e.g. the Haunted Castle 588,530-623,554, Skeleton Lord 590,467-610,488, and other buildings in and around Aston) and get an experience bonus. Not for spawner areas (the Abandoned Clan Halls). To decide: which areas and their bonus; the list of creatures per area (their placed NPCs, e.g. picked in the editor); once per character or again after a cooldown; does a group share it (kills by party members / companions count); how far the player must have taken part (e.g. at least one kill, or in the area); a message on completion and maybe a "#areas" list of done/not done. Uses the zone boxes (see 10, odd-shaped zones).
+### ★ Logout at shutdown (players online during a stop / restart) (was #17)
+The logout loop at shutdown in `server.c` is bypassed (a WSL / live-server workaround, see CHANGES.md "Server
+modernization"); check what happens to players online when the server stops or restarts (saved position, items, their
+character staying "online"), and bring back a safe logout if needed.
 
-13. **Waypoints** (idea 4; Cody gives an example of the window when we start): like portals, but using one opens a new window (client GUI) listing the destinations to pick from. A player must find (visit) each waypoint before travel to it is unlocked; travel is free. Needs: waypoint items placed in the world, a per-character list of found waypoints (saved with the character), a server message that opens the window with the list and one that sends the choice back (new SV_/CL_ messages, client and server, so a client update and maybe a MINVERSION raise), and placing them in the editor. **Reference** (Cody's examples, use when we get to this): `docs/ref/waypoint_example_1_shrine.png` - the waypoint in the world: a square light stone platform with four short round pillars at the corners and a small glowing blue rune circle in the middle; `docs/ref/waypoint_example_2_window.png` - the travel window: a scrolling list, one row per waypoint with a small picture of the place on the left, then "Town, Place" (e.g. "Aston, Crossroads") and a short quoted line under it ("Between ivory and violet."); waypoints not found yet show as "Unknown Location" / "???" with a grey question-mark picture; scroll arrows on the right; an empty text/info box under the list.
+### ○ Grave sprites are finicky depending on the direction (new, Nov 10)
+Look at how graves pick their sprite and facing. (Chests have only the game's two facings, south 220/221 and west
+222/223; north / east were tried three ways and dropped. Graves may have the same limit.)
 
-14. ~~**Stacking consumables**~~ (LIVE Nov 4 on the server: potions stack to 20, Ctrl+click takes one (client 2.15.02, not published yet), spell scrolls combine charges) (idea 5): potions, scrolls and other common consumables stack in one slot and can be split again. The game has no stacking at all now (one item per slot; only gold is a number). Needs: a stack count on the item (a spare field, like the tier fields), which items may stack (same template and same state; not tiered/identified-different/once-only items), merging when picked up or dropped on a matching stack, using one from the stack, splitting (e.g. Shift+click, or a "how many" prompt), the count drawn on the item in the client (backpack, shops, graves), shops buying/selling stacks, and a check of every place that creates, moves or destroys items (graves, give, trade, depots, `#create`). Client and server update.
+### ○ Undead regeneration and underwater damage balance
+After more testing.
 
-15. ~~**Send the Ghost Companion at a chosen enemy**~~ (BUILT Nov 6: `#gca` / `#gcattack` with the Alt-selected enemy (client 2.15.03 adds its number; older clients: the enemy you're fighting), or Ghost Companion on the spell bar with an Alt-selected enemy while the GC is out; server live after Cody's go, client after his test + publish) (idea 6, goes with the Harakim part of 11): a command or spell aimed at one enemy (picked by clicking it, or the current target) makes the player's Ghost Companion attack that enemy if it can. Now: saying "<companion name>, attack <name>" works (`answer_attack`, `talk.c`), but it goes by name and picks the one nearest the companion (within 40 tiles), so with several "Skeleton"s it may pick the wrong one, and it needs typing. Options: a `#gc` / `#sic` command that uses the player's current attack target or the character under the mouse, a click mode in the client (new message), or a cheap spell. Same checks as now (not the master, not itself, `may_attack_msg`).
+---
 
-16. **Underground III** (idea 7): a third level below Underground I (840,0-1024,157) and Underground II (822,176-1020,333; reached by the hole at 925,101 -> 925,301). Theme: Deeplings or Firelings (to choose). To decide: theme, level range (above Underground II's monsters), size and where on the map it fits (free space), the way down from Underground II, new monsters (templates; sprites recoloured or new numbers), loot / a boss, and zone + minimap + zone maps.
+## 2. Gameplay systems
 
-17. **Revisit logout-at-shutdown in server.c (players online during a stop/restart)**: the logout loop at shutdown is bypassed (a WSL / live-server workaround, see CHANGES.md "Server modernization"); check what happens to players online when the server stops or restarts (saved position, items, their character staying "online"), and bring back a safe logout if needed.
+### ★ Walking speed, the three speed modes and attack speed (was #26)
+Cody wants changes here; look at it together first. How it works now: one speed value is used for every action,
+walking AND attacking (`ch[].speed`, set in `really_update_char`, `svr_do.c` ~4007):
+n = (Agility + Strength) / 50 + speed_mod (items / spells) + 12 slow / 14 normal / 16 fast, speed = 20 - n
+(0 fastest .. 19 slowest), so the speed buttons and Agi + Str change walking and attacking alike. Each animation step
+waits on `speedtab[speed][ctick]` (`svr_act.c` ~1079, `speedo` / `ch_act_speed`; the greataxe once added `AXE2H_SLOW`).
+The modes also cost endurance (fast drains it, `svr_do.c` ~4120-4137) and change Stealth (slow / normal sneak better,
+`svr_do.c` ~3710). To decide: separate walk and attack speed, how much stats should matter, what the modes cost / give.
 
-18. **Expand the Black Stronghold points system** (Cody wants to build on it later). How it works now (`talk.c`, `driver.c`): a character's points = kills in the Stronghold area below their rank / 25 + at their rank + above their rank x 2 (`data[26..28]`) + 25 per Black Candle given to the Cityguard (`data[43]`, the candle hack in `npc_give`) - points already spent (`data[41]`). Spent with the Cityguard (template 518) by saying POINTS, BUY GOLD (1G a point, at most 100 at once), BUY HEALING (6), BUY MANA (9), BUY EXP (`stronghold_exp_per_pt`: points_tot / 45,123, 1-125 exp a point). Ideas to decide: more things to buy (items, tier armor, keys, a Stronghold title), points as a reward type on the Quests page, a #stronghold command showing your points, the candle's 25 points editable. Related: the Black Stronghold Coin pieces (Star 761 from Damor for a Black Candle, Circle 762 from Shiva, Empty 763 from Malte and two Gargoyles) open the two star doors (3 Empty + Star / 3 Empty + Circle laid at 423-424,335-336, `sub_door_driver`); all three pieces have the same description ("showing a star"), to fix in the item editor.
+### ● Waypoints (was #13; + clan pentagrams, Nov 10)
+Like portals, but using one opens a window (client GUI) listing the destinations. A player must find (visit) each
+waypoint before travel to it is unlocked; travel is free. Needs: waypoint objects placed in the world, a per-character
+list of found waypoints (saved with the character), a server message that opens the window with the list and one that
+sends the choice back (new SV_/CL_ messages, client and server, so a client update and maybe a MINVERSION raise), and
+placing them in the editor.
+- **New idea (Nov 10):** use the **clan pentagrams** as waypoints. First check whether they are used anywhere now.
+  They would need an "active" look (Cody hopes blue), maybe a bigger multi-tile sprite: Cody would love a 3x3 circle /
+  pentagram.
+- **Reference** (Cody's examples): `docs/ref/waypoint_example_1_shrine.png` - a square light stone platform with four
+  short round pillars at the corners and a small glowing blue rune circle in the middle;
+  `docs/ref/waypoint_example_2_window.png` - the travel window: a scrolling list, one row per waypoint with a small
+  picture of the place on the left, then "Town, Place" (e.g. "Aston, Crossroads") and a short quoted line under it
+  ("Between ivory and violet."); waypoints not found yet show as "Unknown Location" / "???" with a grey question-mark
+  picture; scroll arrows on the right; an empty text / info box under the list.
 
-Later (ideas, not decided):
+### ● Weapon, ring and Harakim rebalance: what is left (was #11)
+Live Nov 4 (see `docs/REBALANCE.md` and CHANGES "Rebalance"): Two-Handed now Agility-based, sword deflect / axe crit.
+Still open:
+- **Summoner's staff** (Harakim: dagger / spell book for casters, staff for summoners; spells Willpower-focused,
+  summoning Intelligence-focused). Pictures in `docs/ref`.
+- **Rings**: Agility rings on par with the Strength emerald rings; look over the whole ring list.
+- **Ghost Companion follows its Harakim** through portals and teleports (also recall, lab exits, `#recall`?).
 
-- More than one Ghost Companion per player (Cody, Nov 6): `#gca` / the spell bar already send all of a player's companions; to decide: how many, how they're summoned (the spell with a selected enemy summons while below the limit, sends them at the limit?), mana, and `ch[].data[CHD_COMPANION]` (holds one) + `die_companion`.
+### ○ Peacekeeper as an editable flag (new, Nov 10)
+Cody: how do town NPCs summon a Peacekeeper; make it a flag so it can be set on town NPCs.
+Now (`driver.c` ~244, `npc_gotattack`): it is not a flag. Any NPC whose **alignment is exactly 10000** shouts "Skua!
+Protect the innocent! Send me a Peacekeeper!" when a player attacks it and summons a "Shadow of Peace" (template 80)
+for 2 minutes, once a minute at most. To do: a real flag (or an NPC editor checkbox that sets it), so it no longer
+depends on the alignment value.
 
-- Item tiers part 5: Legendaries (hand-designed named pieces; the current special armors move here), see `docs/ITEM_TIERS.md`.
-- Prestige: what triggers it and what it gives (the Final Test's Shrine of Change will be used).
-- Unused recolors of the exploration point post: green 1012, blue 1019/1020, purple 1144 (gold 1090 is the exploration point). Nothing uses them yet; maybe for prestige (e.g. points or markers only prestiged characters can use).
-- Swimming skill: a river south of Aston and a flooded mine quest like Lab 11 (without the darkness).
-- Lab 11's third merchant.
-- Undead regeneration and underwater damage balance, after more testing.
+### ○ More than one Ghost Companion per player (Cody, Nov 6)
+`#gca` / the spell bar already send all of a player's companions. To decide: how many, how they're summoned (the spell
+with a selected enemy summons while below the limit, sends them at the limit?), mana, and `ch[].data[CHD_COMPANION]`
+(holds one) + `die_companion`.
 
-## ~~MyV2 Editor: redo the view-switch icons (round buttons top right of the map)~~ (done)
-Cody wants to revisit these five, like the tool symbols: grid, see through walls, light from lamps, reload the world, show/hide the right panel. Same gold-on-wood style.
+### ○ Black Stronghold points system: expand it (was #18)
+How it works now (`talk.c`, `driver.c`): a character's points = kills in the Stronghold area below their rank / 25 +
+at their rank + above their rank x 2 (`data[26..28]`) + 25 per Black Candle given to the Cityguard (`data[43]`, the
+candle hack in `npc_give`) - points already spent (`data[41]`). Spent with the Cityguard (template 518) by saying
+POINTS, BUY GOLD (1G a point, at most 100 at once), BUY HEALING (6), BUY MANA (9), BUY EXP (`stronghold_exp_per_pt`:
+points_tot / 45,123, 1-125 exp a point). Ideas: more things to buy (items, tier armor, keys, a Stronghold title),
+points as a reward type on the Quests page, a `#stronghold` command showing your points, the candle's 25 points
+editable. Related fix: the three Black Stronghold Coin pieces (Star 761, Circle 762, Empty 763) all have the same
+description ("showing a star"); fix in the item editor.
 
-19. ~~**Fire / Ice set stats**~~ (done, live Nov 4) (Nov 4): new numbers in `tools/world/fire_ice_sets.txt` (Fire = melee: armor 9, Brv +1 Agi +2 Str +2, needs Agi/Str 70; Ice = casters: armor 5, Brv +1 Wil +2 Int +2, needs Wil/Int 70; Stealth -7 per piece for both). Apply with the next world update: `build_lab <.dat> tools/world/fire_ice_sets.txt`, then `refresh_items <.dat> 623 624 625 626 627 628 1272 1273 1274 1275 1276 1407 write`. Set bonuses at 4 and 6 pieces BUILT (server code, tested on the test server; see CHANGES.md): Fire 4 = weapon specialty +4 %, Fire 6 = burning hits +10 % (instant), Ice 4 = +5 spell skills, Ice 6 = frost armor (20 %: Chilled, Agi/Str -10 for 5 s, + 5 % cold). LIVE since Nov 4 (spec + refresh_items applied, server rebuilt). Left: Cody checks the tooltips and #specialarmor in game. Leave the Ice Cloak 909 alone.
+### ○ Prestige
+What triggers it and what it gives (the Final Test's Shrine of Change will be used). Unused recolors of the
+exploration point post could go with it (green 1012, blue 1019/1020, purple 1144; gold 1090 is the exploration point),
+e.g. points or markers only prestiged characters can use.
 
-20. **Resizable game window** (client, Cody Nov 4): the window already mostly resizes, but the blue background does not resize with it, and the spell effects (the spell icons / effect display) stay where they were instead of following the new size ("float there"). Make the background fill / scale with the window and anchor the spell effects to the right place. Client change: rebuild with the BuildKit, publish after Cody tests.
+---
 
-21. ~~**Fire / Ice sets as rare drops**~~ (done) (Nov 4): no longer unique; monsters worth over 1.5M exp carry a random piece in 1 of 1000 spawns; value 10000; god shop yes, other shops never (sold pieces are destroyed); the three Fire chests give Magic Emerald / Crystal armor instead. LIVE since Nov 4.
+## 3. Classes
 
-22. ~~**Damage to attackers (thorns) rework**~~ (DONE Nov 4: Cody tested it with Fire + the Epic Thorns effect, not overpowered, keep it as is): every landed melee blow now triggers it, also when the armor stops all damage (full damage, still adds up over the pieces); test server: full Fire 9.1, full Ice 6.5 (with frost) back to a Gargoyle per blow. Cody tests it live, then maybe tones it down. Before: today it only fires when a blow gets through the armor (`do_hurt`, type 0, after `dam<1` return) and adds up over all worn pieces (full Fire 1-18, full Ice 1-12), so high-AV gear triggers it less often. Cody wants it on every landed hit but toned down. Options offered: every hit at half damage; 50% of landed hits at full damage; every hit reduced by the attacker's armor; no stacking (best piece +1 per extra piece). Affects every item with Damage to attackers, and the Epic Thorns effect.
+### ○ Brawler (new class, Nov 10)
+- **Fists** as the weapon: Claude could make them from the FoH sprite (to check which sprite that is).
+- **Focus:** Hand to Hand, Braveness and Strength. Now Hand to Hand uses Braveness / Agility / Strength (`skill.c`);
+  a Brawler version would be Braveness / Strength / Strength or similar.
+- To decide: starting stats and skills, which race / templates, what the class gets that others don't (specials like
+  the greataxe crit or the sword deflect), class rewards on the Quests page.
 
-23. **Merchants tab + shop rework** (Cody, Nov 4): LIVE Nov 4 (server `merch.c`, editor Merchants tab). See CHANGES.md "Merchants". Cody to check in game: pages, selling + buying back, the prices.
+---
 
-24. ~~**Class rewards**~~ (LIVE Nov 5): item quests (Quests page, "+ Add a class reward", `qclass`) and conversation lines ("the player's class" condition, "By class" split) can give each picked class its own skill / item. Cody sets them up when he wants.
+## 4. Items, weapons and shops
 
-25. **Discord bots and a game chat bridge** (Cody, Nov 7; start on **Tuesday Nov 10**, when his usage resets):
-    - **Info for Discord**: who is online, rankings (e.g. top characters by experience / rank, maybe per class), maybe a live status message that is kept up to date (online / players count) instead of new posts. The editor already has the data (console `who`, `status`, char.dat) and posts through the webhook (`discord()` in mapedit.py); a webhook can edit its own messages, so a status / rankings message can be updated in place without a bot.
-    - **Game -> Discord**: in-game shouts (#shout) posted to a dedicated Discord channel (e.g. #game-chat), probably also #announce. Server side: log or forward shouts to the editor (console / control port), the editor posts them with a second webhook for that channel ("Name: text").
-    - **Discord -> game**: messages written in that Discord channel shown in game (like a shout, e.g. "[Discord] Name: text"). Needs a real Discord bot (a bot token, the Message Content intent, reading the channel) running next to the editor; then a console command that shouts the text in game. To decide: who may write (everyone, or only linked players), filtering (badwords.txt), length limits, mutes.
+### ○ Ice, Burning and Lava Greataxes (new, Nov 10)
+Special greataxes to go with the Fire / Ice themes.
 
-26. **Walking speed, the three speed modes and attack speed** (Cody, Nov 7: wants changes here; look at it together first). How it works now: one speed value is used for every action, walking AND attacking (`ch[].speed`, set in `really_update_char`, svr_do.c ~4007): n = (Agility + Strength) / 50 + speed_mod (items / spells) + 12 slow / 14 normal / 16 fast, speed = 20 - n (0 fastest .. 19 slowest), so the speed buttons and Agi+Str change walking and attacking alike. Each animation step waits on `speedtab[speed][ctick]` (svr_act.c ~1079, `speedo` / `ch_act_speed`; the greataxe once added `AXE2H_SLOW`). The modes also cost endurance (fast drains it, svr_do.c ~4120-4137) and change Stealth (slow / normal sneak better, svr_do.c ~3710). Ideas to decide: separate walk and attack speed, how much stats should matter, what the modes should cost / give.
+### ○ Special weapons for every weapon type (new, Nov 10)
+More special weapons so Sword, Two-Handed, Dagger and Greataxe have similar levels. First step: **a table of every
+weapon** (type, level / requirements, damage, specials) generated from the world data, to see the gaps.
 
-27. **Town NPCs and their doors: no more open / close loop** (Cody, Nov 7). Town NPCs walk to "their" doors and close them (driver.c ~1592, `npc_driver_low`: up to four door spots in `data[20..23]`, the NPC uses the door when its item is `active`, i.e. open, and nobody stands next to it; the editor's NPC page sets these spots). Cody sees NPCs reopen a door that is already closed and then go to close it again, forever. To check: doors whose open / closed state is the other way round (active = closed sprite), locked doors the NPC can't really use, two NPCs sharing a door, or using an already closed door opening it. Fix options: only close when the door is really open (and remember a failed try for a while), never use a door to open it, or an editor / server switch to turn door closing off (for one NPC, or for all town NPCs).
+### ○ Item tiers part 5: Legendaries
+Hand-designed named pieces; the current special armors move here. See `docs/ITEM_TIERS.md`.
 
-28. **(MAJOR, first when Cody's usage is back) Soulstone levels too low** (Cody, Nov 7): level 6 armor drops, but only level 2 soulstones. Now (tier.c ~419, `soul_kill_drop`): a stone drops in 1 of (20 + 6 x the player's rank) kills; it holds 10-15% of the enemy's experience value and its level comes from that exp, so ordinary monsters give low-level stones while armor levels follow a different scale. Strong monsters carry their own stone (same 10-15% rule, `tier_make_soulstone`). To do: compare the stone level formula with the armor item-level formula (docs/ITEM_TIERS.md), make stones match the level of armor that drops in the same area (e.g. stone level = the enemy's armor drop level, or a higher exp share), maybe raise the drop rate for high ranks.
-- Nov 5 live: Ingrid/Gordon class rewards (qclass lines added to the live npctalk.dat), Warrior templates start Immunity/Surround Hit at 4, Identify/Light/Recall fixed at 250.
-- Nov 5 live: {skill} greetings (Ingrid/Gordon texts set), several item quests per NPC (qalias), Greenling Eye Collection -> Robin (quest template 2004).
-- Nov 5 live: Players page reset / delete (backup) / restore (new random name if taken).
+### ● Merchants tab + shop rework: Cody checks in game (was #23)
+LIVE Nov 4 (server `merch.c`, editor Merchants tab), see CHANGES.md "Merchants". Cody to check: pages, selling + buying
+back, the prices. (Ties in with the Market below.)
+
+---
+
+## 5. World and areas
+
+### ○ Town rearrangement and a Market (new, Nov 10)
+Make a Market so a lot of the shop buildings are freed up for new quest givers.
+- **Market stalls:** 8 armor - Cloth, Leather, Bronze, Steel, Gold, Emerald, Crystal, Titanium;
+  5 weapon - Bronze, Steel, Gold, Crystal, Titanium.
+- **Moves:** Inga moves to Sandra's house; Steven moves across from the Templar Outlaws (his house goes to the
+  Graveyard quest giver, see [Quests](#6-quests)).
+- Keep the minimap, zones and zone maps current after the move.
+
+### ○ Sunken Gorge -> "The Sunken Archives"? (new, Nov 10)
+More bookshelves; the enemies switch to blue lizards (Cody's recolors in
+`C:\Users\Cody\Desktop\MyV2\V2SpriteChanger\Lizard\Aqua\Male`, would need new sprite numbers).
+
+### ○ A bigger game world (new, Nov 10)
+The map is fixed at 1024 x 1024 tiles (`MAPX` / `MAPY` in `gendefs.h`), shared by the server, the map files in `.dat`,
+the editor and probably the client. To find out first: how much free space is left (`docs/world_minimap.png`), and what
+growing the map would touch. A big change; maybe new areas fit in the free space first.
+
+### ○ Underground III (was #16)
+A third level below Underground I (840,0-1024,157) and Underground II (822,176-1020,333; reached by the hole at
+925,101 -> 925,301). Theme: Deeplings or Firelings (to choose). To decide: theme, level range (above Underground II's
+monsters), size and where on the map it fits, the way down from Underground II, new monsters (templates; sprites
+recoloured or new numbers), loot / a boss, and zone + minimap + zone maps.
+
+### ○ Swimming skill
+A river south of Aston and a flooded mine quest like Lab 11 (without the darkness).
+
+### ○ Lab 11's third merchant
+
+---
+
+## 6. Quests
+
+### ● `#quest` list: order and rewards (was #9)
+The look is approved and live (column table, 15 a page); the editor's Quests page sets the order, rewards, exp and
+hints of every quest. Next: Cody goes through them there. Maybe a separate "difficulty" number per quest giver so the
+order doesn't have to follow the experience. Keep `#journal` only for temporary / seasonal quests?
+Reference for the look: `docs/ref/quest_list_example.png`.
+
+### ○ Graveyard quest (new, Nov 10)
+Several undead have come up in the cemetery (the existing graveyard area north of town). The undead should be easier
+than Lab 5, maybe with a stunted regeneration. A quest NPC needs skin samples or something to curb the problem. The NPC
+could live in Steven's house, with Steven moving across from the Templar Outlaws.
+
+### ● Area clears and class rewards: Cody sets them up
+Both built and live (Quests page); Cody adds the areas (quest areas first) and the class rewards when he wants.
+
+---
+
+## 7. MyV2 Editor
+
+### ○ Area brushes: erase (new, Nov 10)
+An area erase, used like the drag-and-drop painting.
+
+### ○ Area brushes: frequency sliders (new, Nov 10)
+The floor editor has sliders for how often each tile is used; the area brushes should have the same, inside the editor,
+instead of a separate editor.
+
+### ○ Easier zone flag editing (new, Nov 10)
+A quicker way to see and change a zone's flag in the Zones tab.
+
+### ○ Editor minimap redraws by itself (new, Nov 10)
+The editor's minimap should refresh every so often (it goes stale while the world changes).
+
+---
+
+## 8. Client, sprites and art
+
+### ★ Resizable game window (was #20)
+The window already mostly resizes, but the blue background doesn't resize with it, and the spell effects (the spell
+icons / effect display) stay where they were instead of following the new size. Make the background fill / scale with
+the window and anchor the spell effects. Client change: rebuild with the BuildKit, publish after Cody tests.
+
+### ○ Black stone archway: any width, and lighter stone (new, Nov 10)
+Lengthen the black stone arch, or add a raised top stone piece so an arch can be any width. Also an arch in a lighter
+stone: temple white, or a Greek beige / tan. New sprite numbers.
+
+### ○ New sprite sheets from Blender (new, Nov 10)
+Find out what Claude needs from Cody to make new sprite sheets from Blender models (`MyV2\3d Models`): camera angle,
+lighting, the 8 directions and frames per animation, sizes, the palette / recolor rules.
+
+---
+
+## 9. Discord and community
+
+### ★ Discord bots and a game chat bridge (was #25)
+- **Info for Discord:** who is online, rankings (e.g. top characters by experience / rank, maybe per class), maybe a
+  live status message kept up to date (online / player count) instead of new posts. The editor already has the data
+  (console `who`, `status`, char.dat) and posts through the webhook (`discord()` in mapedit.py); a webhook can edit its
+  own messages, so a status / rankings message can be updated in place without a bot.
+- **Game -> Discord:** in-game shouts (`#shout`) posted to a dedicated channel (e.g. #game-chat), probably also
+  `#announce`. Server side: log or forward shouts to the editor (console / control port); the editor posts them with a
+  second webhook ("Name: text").
+- **Discord -> game:** messages written in that channel shown in game (like a shout, e.g. "[Discord] Name: text").
+  Needs a real Discord bot (a bot token, the Message Content intent, reading the channel) running next to the editor,
+  then a console command that shouts the text in game. To decide: who may write (everyone, or only linked players),
+  filtering (badwords.txt), length limits, mutes.
+
+---
+
+## Done
+
+Details in `CHANGES.md`.
+
+- Lab 11 arena deaths and the two warning signs (was #1).
+- God item shop `#godshop`, merchants in Elysium, Elysium layout (was #2).
+- Item tiers parts 1-4: Common to Legendary colours, random drops, soulstone upgrade / reroll (was #3).
+- Pentagram enemies leave no grave unless they carry more than their weapon (was #4).
+- Pentagram solve balance: 5 + 2-3 per player who activated one in the last 10 minutes (was #5).
+- Equipment compare in the tooltip, Shift shows the worn piece (was #6).
+- Ice set sprites 18100-18104 (was #7).
+- Lab shrine keys: scrolls from the Lord of Seyan'du, 100 gold x lab level (was #8, Nov 6).
+- Odd-shaped zones: `.dat/zones.dat`, the editor's Zones tab, `zonereload` (was #10).
+- Two-handed sword / greataxe rebalance (was #11, part; the staff, rings and GC following are still open above).
+- Area completion bonuses: area clears on the Quests page, `#areas` (was #12, Nov 4).
+- Stacking consumables: potions to 20, Ctrl+click, scroll charges (was #14, Nov 4; client 2.15.02).
+- Send the Ghost Companion at a chosen enemy: `#gca` / spell bar (was #15; client 2.15.03).
+- Fire / Ice set stats and 4 / 6-piece bonuses (was #19, Nov 4).
+- Fire / Ice sets as rare drops, destroyed when sold to merchants (was #21, Nov 4).
+- Thorns on every landed blow; Cody tested, kept as is (was #22, Nov 4).
+- Class rewards on the Quests page and in conversations (was #24, Nov 5).
+- Editor view-switch icons redone in the gold-on-wood style.
+- Nov 5: Ingrid / Gordon class rewards; Warrior templates start Immunity / Surround Hit at 4; Identify / Light / Recall
+  fixed at 250; `{skill}` greetings; several item quests per NPC (`qalias`); Greenling Eye Collection -> Robin
+  (quest template 2004); Players page reset / delete (backup) / restore.
