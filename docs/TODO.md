@@ -166,10 +166,8 @@ back, the prices. (Ties in with the Market below.)
   Joe's gang (Joe, James, John, Joshua) waits in the closed house at 593-598,520-524 until their new house is ready.
   Set their door spots again where they get a house (cleared).
 - New market NPCs (Titanium armor, the other weapon metals, Titanium weapons): tell Claude names / stock, or make them.
-- Zones: the Market, the graveyard, the new houses; move or remove the zones of buildings that are gone (Joe's House,
-  Crystal / Cloth / Bronze / Steel / Golden Armor Shops, Weapon Shop, Brunhild's Shop, Sirjan's House...) and shift
-  Jamil's House, the Temple of the Purple One, the Cursed Tomb and the Gorn Clan Hall 2 east. Then Claude redraws
-  `docs/world_zones.png`.
+- Zones: done Nov 10 (Market, shifted ones, Inga / Jefferson / Jamil); Cody adds the new buildings' zones.
+- Moves still to do in the editor: Inga's house is ready (she's in it); Jefferson moves into Inga's old house.
 - Steven's new house (Cody builds it).
 - Clear the copy at x 443-627, y 737-929 when happy (it has a spider spawner).
 - Old door spots that were already wrong before (part of TODO "door loop"): the Barkeeper (508,488) and a Thief
@@ -233,9 +231,9 @@ instead of a separate editor.
 ### ● Flags and zones for the new Aston (Nov 10)
 - ~~Editor: clear a type of flag, drag a rectangle to add / remove a flag~~ (DONE Nov 10: Flags tab Add / Remove,
   Brush / Rectangle, Clear in the view / in a zone).
-- Zones: being talked through with Cody (picture `MyV2\aston_zones_plan.png`: green still fits, blue moves with its
-  building, red changed / gone, yellow new). Then Claude writes the new `zones.dat` (game stopped, or Cody saves it in
-  the Zones tab) and redraws the zone maps.
+- ~~Zones~~ (DONE Nov 10, see CHANGES "Aston's zones after the move"). Left for Cody: zones for the Grave Keeper's
+  house (not decided yet), Joe's gang's new house, Steven's new house and any other new building; then "Re-check
+  zones" for the area clears (the Cursed Tomb and Gorn Clan Hall moved), and Claude redraws `docs/world_zones.png`.
 - Tile flags: Cody fixes them by hand in the Flags tab (`MyV2\aston_flags_zones.png` shows them all).
 
 ### ○ Editor minimap redraws by itself (new, Nov 10)
