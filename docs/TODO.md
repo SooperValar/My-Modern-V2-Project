@@ -159,11 +159,21 @@ back, the prices. (Ties in with the Market below.)
 ## 5. World and areas
 
 ### ★ Town rearrangement and a Market (new, Nov 10; IN PROGRESS)
-**Plan (Nov 10):** Cody has built the rearranged town (with the Market) as a copy somewhere in the live world. Claude
-copies it over Aston (tiles + items, server stopped), puts every town NPC in the Temple of Skua (spawn = resting spot)
-for Cody to move in the editor, then updates zones, minimap and zone maps. Waiting on: where the copy is, and the
-newest world (the Windows `Server\.dat` is from Nov 7 and has no copy; `stop-send` or a backup). Picture of the old
-town: `MyV2\aston_town_plan.png`.
+**Done Nov 10:** Aston now matches Cody's copy (see CHANGES.md "Aston rearranged"; picture `MyV2\aston_before_after.png`).
+**Left (Cody, in the editor):**
+- Place the NPCs waiting in the Temple of Skua: Geoffrey, Ruth, Sandra, Karl, Gertrud, Brunhild, Antonia, Henry, Hagen
+  (market), Sirjan, Jefferson, the Guard (was at the Cloth Armor Shop), the Janitor (its walking route needs redoing).
+  Joe's gang (Joe, James, John, Joshua) waits in the closed house at 593-598,520-524 until their new house is ready.
+  Set their door spots again where they get a house (cleared).
+- New market NPCs (Titanium armor, the other weapon metals, Titanium weapons): tell Claude names / stock, or make them.
+- Zones: the Market, the graveyard, the new houses; move or remove the zones of buildings that are gone (Joe's House,
+  Crystal / Cloth / Bronze / Steel / Golden Armor Shops, Weapon Shop, Brunhild's Shop, Sirjan's House...) and shift
+  Jamil's House, the Temple of the Purple One, the Cursed Tomb and the Gorn Clan Hall 2 east. Then Claude redraws
+  `docs/world_zones.png`.
+- Steven's new house (Cody builds it).
+- Clear the copy at x 443-627, y 737-929 when happy (it has a spider spawner).
+- Old door spots that were already wrong before (part of TODO "door loop"): the Barkeeper (508,488) and a Thief
+  (template 970, 455,546) have door spots on tiles with no door.
 Make a Market so a lot of the shop buildings are freed up for new quest givers.
 - **Market stalls:** 8 armor - Cloth, Leather, Bronze, Steel, Gold, Emerald, Crystal, Titanium;
   5 weapon - Bronze, Steel, Gold, Crystal, Titanium.
