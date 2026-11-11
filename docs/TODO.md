@@ -239,6 +239,7 @@ instead of a separate editor.
 - ~~Tile flags~~: grass / street cleared, Market and Joe's house without "no fighting" (DONE Nov 10); Cody fine-tunes
   the rest in the Flags tab. The Market is still mostly "indoors" (not asked to change).
 - ~~Guard and Janitor~~ (DONE Nov 10): Guard 7 is the Market guard, the Janitor is back on his loop.
+- ~~NPC candle / torch lighting~~ (DONE Nov 10): light duties fixed for the moved NPCs; editor tab "Patrol & chores".
 
 ### ○ Editor minimap redraws by itself (new, Nov 10)
 The editor's minimap should refresh every so often (it goes stale while the world changes).
