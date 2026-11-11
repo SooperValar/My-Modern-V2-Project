@@ -1,0 +1,1261 @@
+489 558 clear 5
+490 558 clear 5
+491 558 clear 5
+491 559 clear 5
+492 558 clear 5
+493 558 clear 5
+494 558 clear 5
+495 558 clear 5
+496 558 clear 5
+500 558 clear 2
+500 560 clear 2
+501 558 clear 2
+501 560 clear 2
+502 558 clear 2
+502 560 clear 2
+503 558 clear 2
+503 560 clear 2
+504 558 clear 2
+504 560 clear 2
+505 558 clear 2
+505 560 clear 2
+506 558 clear 2
+506 560 clear 2
+507 558 clear 2
+507 560 clear 2
+508 558 clear 2
+508 560 clear 2
+509 558 clear 2
+509 560 clear 2
+510 558 clear 2
+510 560 clear 2
+511 558 clear 2
+511 560 clear 2
+512 558 clear 2
+512 560 clear 2
+513 558 clear 2
+513 560 clear 2
+514 558 clear 2
+514 560 clear 2
+515 558 clear 2
+515 560 clear 2
+516 558 clear 2
+517 558 clear 2
+518 477 clear 2
+518 478 clear 2
+518 479 clear 2
+518 480 clear 2
+518 481 clear 2
+518 482 clear 2
+518 483 clear 2
+518 484 clear 2
+518 485 clear 2
+518 558 clear 2
+519 477 clear 2 14
+519 478 clear 2 14
+519 479 clear 2 14
+519 480 clear 2 14
+519 481 clear 2 14
+519 482 clear 2 14
+519 483 clear 2 14
+519 484 clear 2 14
+519 485 clear 2
+519 523 clear 2
+519 558 clear 2
+520 476 clear 2
+520 477 clear 2 14
+520 478 clear 2 14
+520 479 clear 2 14
+520 480 clear 2 14
+520 481 clear 2 14
+520 482 clear 2 14
+520 483 clear 2 14
+520 484 clear 2 14
+520 485 clear 2
+520 523 clear 2
+520 558 clear 2
+521 476 clear 2
+521 477 clear 2 14
+521 478 clear 2 14
+521 479 clear 2 14
+521 480 clear 2 14
+521 481 clear 2 14
+521 482 clear 2 14
+521 483 clear 2 14
+521 484 clear 2 14
+521 485 clear 2
+521 523 clear 2
+521 558 clear 2
+522 475 clear 5
+522 476 clear 2
+522 477 clear 2 14
+522 478 clear 2 14
+522 479 clear 2 14
+522 480 clear 2 14
+522 481 clear 2 14
+522 482 clear 2 14
+522 483 clear 2 14
+522 484 clear 2 14
+522 485 clear 2
+522 486 clear 5
+522 523 clear 2
+522 558 clear 2
+523 476 clear 2
+523 477 clear 2 14
+523 478 clear 2 14
+523 479 clear 2 14
+523 480 clear 2 14
+523 481 clear 2 14
+523 482 clear 2 14
+523 483 clear 2 14
+523 484 clear 2 14
+523 485 clear 2
+523 486 clear 5
+523 523 clear 2
+523 558 clear 2
+523 569 clear 5
+523 570 clear 5
+523 571 clear 5
+524 475 clear 5
+524 476 clear 2
+524 477 clear 2 14
+524 478 clear 2 14
+524 479 clear 2 14
+524 480 clear 2 14
+524 481 clear 2 14
+524 482 clear 2 14
+524 483 clear 2 14
+524 484 clear 2 14
+524 485 clear 2
+524 486 clear 5
+524 523 clear 2
+524 558 clear 2
+524 569 clear 5
+524 570 clear 5
+524 571 clear 5
+525 475 clear 5
+525 476 clear 2
+525 477 clear 2 14
+525 478 clear 2 14
+525 479 clear 2 14
+525 480 clear 2 14
+525 481 clear 2 14
+525 482 clear 2 14
+525 483 clear 2 14
+525 484 clear 2 14
+525 485 clear 2
+525 486 clear 5
+525 523 clear 2
+525 558 clear 2
+526 475 clear 5
+526 476 clear 2
+526 477 clear 2 14
+526 478 clear 2 14
+526 479 clear 2 14
+526 480 clear 2 14
+526 481 clear 2 14
+526 482 clear 2 14
+526 483 clear 2 14
+526 484 clear 2 14
+526 485 clear 2
+526 486 clear 5
+526 523 clear 2
+527 475 clear 5
+527 476 clear 2
+527 477 clear 2 14
+527 478 clear 2 14
+527 479 clear 2 14
+527 480 clear 2 14
+527 481 clear 2 14
+527 482 clear 2 14
+527 483 clear 2 14
+527 484 clear 2 14
+527 485 clear 2
+527 486 clear 5
+527 523 clear 2
+528 476 clear 2
+528 477 clear 2
+528 478 clear 2
+528 479 clear 2
+528 480 clear 2 5 14
+528 481 clear 2
+528 482 clear 2
+528 483 clear 2
+528 484 clear 2
+528 485 clear 2
+528 486 clear 5
+528 523 clear 2
+529 479 clear 5
+529 480 clear 5
+529 481 clear 5
+529 523 clear 2
+530 451 clear 5
+530 453 clear 5
+530 469 clear 5
+530 471 clear 5
+530 479 clear 5
+530 480 clear 5
+530 481 clear 5
+530 523 clear 2
+531 421 clear 2 5
+531 422 clear 2 5
+531 423 clear 2 5
+531 451 clear 5
+531 453 clear 5
+531 469 clear 5
+531 471 clear 5
+537 413 clear 5
+537 415 clear 5
+537 449 clear 5
+537 451 clear 5
+537 472 clear 5
+537 474 clear 5
+537 525 clear 5
+537 526 clear 5
+537 528 clear 5
+537 529 clear 5
+537 530 clear 5
+537 531 clear 5
+537 532 clear 5
+537 534 clear 5
+538 413 clear 5
+538 415 clear 5
+538 449 clear 5
+538 451 clear 5
+538 472 clear 5
+538 474 clear 5
+538 480 clear 5
+538 481 clear 5
+538 483 clear 5
+538 484 clear 5
+538 485 clear 5
+538 487 clear 5
+538 512 clear 5
+538 513 clear 5
+538 524 clear 2 14
+538 525 clear 2 14
+538 526 clear 2 14
+538 527 clear 14
+538 592 clear 2
+538 593 clear 2
+539 478 clear 2
+539 479 clear 2
+539 480 clear 2
+539 481 clear 2
+539 482 clear 2
+539 483 clear 2
+539 484 clear 2
+539 485 clear 2
+539 486 clear 2
+539 487 clear 2
+539 488 clear 2
+539 499 clear 5
+539 500 clear 5
+539 501 clear 5
+539 502 clear 5
+539 503 clear 5
+539 511 clear 5
+539 512 clear 5
+539 513 clear 5
+539 524 clear 2 14
+539 525 clear 2 14
+539 526 clear 2 14
+539 527 clear 14
+539 592 clear 2
+539 593 clear 2
+540 478 clear 2
+540 479 clear 2 14
+540 480 clear 2 14
+540 481 clear 2 14
+540 482 clear 2 14
+540 483 clear 2 14
+540 484 clear 2 14
+540 485 clear 2 14
+540 486 clear 2 14
+540 487 clear 2 14
+540 488 clear 2
+540 489 clear 5
+540 498 clear 2
+540 511 clear 2
+540 512 clear 2 14
+540 513 clear 2
+540 524 clear 14
+540 525 clear 14
+540 526 clear 2 14
+540 527 clear 14
+540 558 clear 5
+540 559 clear 5
+540 592 clear 2
+540 593 clear 2
+541 478 clear 2
+541 479 clear 2 14
+541 480 clear 2 14
+541 481 clear 2 14
+541 482 clear 2 14
+541 483 clear 2 14
+541 484 clear 2 14
+541 485 clear 2 14
+541 486 clear 2 14
+541 487 clear 2 14
+541 488 clear 2
+541 489 clear 5
+541 498 clear 2
+541 499 clear 14
+541 500 clear 14
+541 501 clear 14
+541 502 clear 14
+541 503 clear 14
+541 508 clear 14
+541 509 clear 14
+541 510 clear 14
+541 511 clear 2 14
+541 512 clear 2 14
+541 513 clear 2 14
+541 514 clear 14
+541 515 clear 14
+541 516 clear 14
+541 524 clear 14
+541 525 clear 14
+541 526 clear 2 14
+541 527 clear 14
+541 558 clear 5
+541 559 clear 5
+541 592 clear 2
+541 593 clear 2
+542 478 clear 2
+542 479 clear 2 14
+542 480 clear 2 14
+542 481 clear 2 14
+542 482 clear 2 14
+542 483 clear 2 14
+542 484 clear 2 14
+542 485 clear 2 14
+542 486 clear 2 14
+542 487 clear 2 14
+542 488 clear 2
+542 489 clear 5
+542 498 clear 2
+542 499 clear 14
+542 500 clear 14
+542 501 clear 14
+542 502 clear 14
+542 503 clear 14
+542 508 clear 14
+542 509 clear 14
+542 510 clear 14
+542 511 clear 2 14
+542 512 clear 2 14
+542 513 clear 2 14
+542 514 clear 14
+542 515 clear 14
+542 516 clear 14
+542 524 clear 14
+542 525 clear 14
+542 526 clear 2 14
+542 527 clear 14
+542 542 clear 5
+542 558 clear 5
+542 559 clear 5
+542 593 clear 2
+543 478 clear 2
+543 479 clear 2 14
+543 480 clear 2 14
+543 481 clear 2 14
+543 482 clear 2 14
+543 483 clear 2 14
+543 484 clear 2 14
+543 485 clear 2 14
+543 486 clear 2 14
+543 487 clear 2 14
+543 488 clear 2
+543 489 clear 5
+543 498 clear 2
+543 499 clear 14
+543 500 clear 14
+543 501 clear 14
+543 502 clear 14
+543 503 clear 14
+543 508 clear 14
+543 509 clear 14
+543 510 clear 14
+543 511 clear 2 14
+543 512 clear 2 14
+543 513 clear 2 14
+543 514 clear 14
+543 515 clear 14
+543 516 clear 14
+543 524 clear 14
+543 525 clear 14
+543 526 clear 2 14
+543 527 clear 14
+543 542 clear 5
+543 546 clear 5
+543 558 clear 5
+543 559 clear 5
+543 593 clear 2
+544 478 clear 2
+544 479 clear 2 14
+544 480 clear 2 14
+544 481 clear 2 14
+544 482 clear 2 14
+544 483 clear 2 14
+544 484 clear 2 14
+544 485 clear 2 14
+544 486 clear 2 14
+544 487 clear 2 14
+544 488 clear 2
+544 489 clear 5
+544 497 clear 5
+544 498 clear 2
+544 499 clear 14
+544 500 clear 14
+544 501 clear 14
+544 502 clear 14
+544 503 clear 14
+544 508 clear 14
+544 509 clear 14
+544 510 clear 14
+544 511 clear 2 14
+544 512 clear 2 14
+544 513 clear 2 14
+544 514 clear 14
+544 515 clear 14
+544 516 clear 14
+544 524 clear 14
+544 525 clear 14
+544 526 clear 2 14
+544 527 clear 14
+544 558 clear 5
+544 559 clear 5
+544 592 clear 2
+544 593 clear 2
+545 478 clear 2
+545 479 clear 2 14
+545 480 clear 2 14
+545 481 clear 2 14
+545 482 clear 2 14
+545 483 clear 2 14
+545 484 clear 2 14
+545 485 clear 2 14
+545 486 clear 2 14
+545 487 clear 2 14
+545 488 clear 2
+545 489 clear 5
+545 497 clear 5
+545 498 clear 2 5 14
+545 499 clear 14
+545 500 clear 14
+545 501 clear 14
+545 502 clear 14
+545 503 clear 14
+545 508 clear 14
+545 509 clear 14
+545 510 clear 14
+545 511 clear 2 14
+545 512 clear 2 14
+545 513 clear 2 14
+545 514 clear 14
+545 515 clear 14
+545 516 clear 14
+545 524 clear 14
+545 525 clear 14
+545 526 clear 2 14
+545 527 clear 14
+545 558 clear 5
+545 559 clear 5
+545 592 clear 2
+545 593 clear 2
+546 478 clear 2
+546 479 clear 2 14
+546 480 clear 2 14
+546 481 clear 2 14
+546 482 clear 2 14
+546 483 clear 2 14
+546 484 clear 2 14
+546 485 clear 2 14
+546 486 clear 2 14
+546 487 clear 2 14
+546 488 clear 2 5 14
+546 489 clear 5
+546 498 clear 2
+546 499 clear 14
+546 500 clear 14
+546 501 clear 14
+546 502 clear 14
+546 503 clear 14
+546 508 clear 14
+546 509 clear 14
+546 510 clear 14
+546 511 clear 2 14
+546 512 clear 2 14
+546 513 clear 2 14
+546 514 clear 14
+546 515 clear 14
+546 516 clear 14
+546 524 clear 14
+546 525 clear 14
+546 526 clear 2 14
+546 527 clear 14
+546 558 clear 5
+546 559 clear 5
+546 592 clear 2
+546 593 clear 2
+547 478 clear 2
+547 479 clear 2 14
+547 480 clear 2 14
+547 481 clear 2 14
+547 482 clear 2 14
+547 483 clear 2 14
+547 484 clear 2 14
+547 485 clear 2 14
+547 486 clear 2 14
+547 487 clear 2 14
+547 488 clear 2
+547 489 clear 5
+547 497 clear 5
+547 498 clear 2
+547 499 clear 14
+547 500 clear 14
+547 501 clear 14
+547 502 clear 14
+547 503 clear 14
+547 508 clear 14
+547 509 clear 14
+547 510 clear 14
+547 511 clear 2 14
+547 512 clear 2 14
+547 513 clear 2 14
+547 514 clear 14
+547 515 clear 14
+547 516 clear 14
+547 524 clear 14
+547 525 clear 14
+547 526 clear 2 14
+547 527 clear 14
+547 592 clear 2
+547 593 clear 2
+548 478 clear 2
+548 479 clear 2 14
+548 480 clear 2 14
+548 481 clear 2 14
+548 482 clear 2 14
+548 483 clear 2 14
+548 484 clear 2 14
+548 485 clear 2 14
+548 486 clear 2 14
+548 487 clear 2 14
+548 488 clear 2
+548 489 clear 5
+548 498 clear 2
+548 499 clear 14
+548 500 clear 14
+548 501 clear 14
+548 502 clear 14
+548 503 clear 14
+548 507 clear 2
+548 508 clear 2 14
+548 509 clear 2 14
+548 510 clear 2 14
+548 511 clear 2 14
+548 512 clear 2 14
+548 513 clear 2 14
+548 514 clear 2 14
+548 515 clear 2 14
+548 516 clear 2 14
+548 517 clear 2
+548 518 clear 5
+548 524 clear 14
+548 525 clear 14
+548 526 clear 2 14
+548 527 clear 14
+548 592 clear 2
+549 478 clear 2
+549 479 clear 2 14
+549 480 clear 2 14
+549 481 clear 2 14
+549 482 clear 2 14
+549 483 clear 2 14
+549 484 clear 2 14
+549 485 clear 2 14
+549 486 clear 2 14
+549 487 clear 2 14
+549 488 clear 2
+549 489 clear 5
+549 497 clear 5
+549 498 clear 2
+549 499 clear 14
+549 500 clear 14
+549 501 clear 14
+549 502 clear 14
+549 503 clear 14
+549 507 clear 2
+549 508 clear 2 14
+549 509 clear 2 14
+549 510 clear 2 14
+549 511 clear 2 14
+549 512 clear 2 14
+549 513 clear 2 14
+549 514 clear 2 14
+549 515 clear 2 14
+549 516 clear 2 14
+549 517 clear 2
+549 524 clear 14
+549 525 clear 14
+549 526 clear 2 14
+549 527 clear 14
+549 592 clear 2
+549 593 clear 2
+550 478 clear 2
+550 479 clear 2 14
+550 480 clear 2 14
+550 481 clear 2 14
+550 482 clear 2 14
+550 483 clear 2 14
+550 484 clear 2 14
+550 485 clear 2 14
+550 486 clear 2 14
+550 487 clear 2 14
+550 488 clear 2
+550 489 clear 5
+550 497 clear 5
+550 498 clear 2
+550 507 clear 2
+550 508 clear 2
+550 509 clear 2
+550 510 clear 2
+550 511 clear 2
+550 512 clear 2
+550 513 clear 2
+550 514 clear 2
+550 515 clear 2
+550 516 clear 2
+550 517 clear 2
+550 526 clear 5
+550 527 clear 5
+550 528 clear 5
+550 529 clear 5
+550 530 clear 5
+550 532 clear 5
+550 533 clear 5
+550 534 clear 5
+550 535 clear 5
+550 592 clear 2
+550 593 clear 2
+551 478 clear 2
+551 479 clear 2 14
+551 480 clear 2 14
+551 481 clear 2 14
+551 482 clear 2 14
+551 483 clear 2 14
+551 484 clear 2 14
+551 485 clear 2 14
+551 486 clear 2 14
+551 487 clear 2 14
+551 488 clear 2
+551 489 clear 5
+551 511 clear 5
+551 512 clear 5
+551 513 clear 5
+551 592 clear 2
+551 593 clear 2
+552 478 clear 2
+552 479 clear 2 14
+552 480 clear 2 14
+552 481 clear 2 14
+552 482 clear 2 14
+552 483 clear 2 14
+552 484 clear 2 14
+552 485 clear 2 14
+552 486 clear 2 14
+552 487 clear 2 14
+552 488 clear 2
+552 592 clear 2
+552 593 clear 2
+553 478 clear 2
+553 479 clear 2 14
+553 480 clear 2 14
+553 481 clear 2 14
+553 482 clear 2 14
+553 483 clear 2 14
+553 484 clear 2 14
+553 485 clear 2 14
+553 486 clear 2 14
+553 487 clear 2 14
+553 488 clear 2
+553 489 clear 5
+553 508 clear 2
+553 509 clear 2
+553 515 clear 2
+553 516 clear 2
+553 517 clear 2
+553 518 clear 2
+553 593 clear 2
+554 478 clear 2
+554 479 clear 2
+554 480 clear 2
+554 481 clear 2
+554 482 clear 2
+554 483 clear 2
+554 484 clear 2
+554 485 clear 2
+554 486 clear 2
+554 487 clear 2
+554 488 clear 2
+554 489 clear 5
+554 498 clear 2 14
+554 499 clear 2 14
+554 500 clear 2 14
+554 501 clear 2 14
+554 502 clear 2 14
+554 503 clear 2 14
+554 504 clear 2 14
+554 505 clear 2 14
+554 508 clear 2
+554 509 clear 2
+554 515 clear 2
+554 516 clear 2
+554 517 clear 2
+554 518 clear 2
+554 593 clear 2
+555 497 clear 5
+555 498 clear 2 14
+555 499 clear 2 14
+555 500 clear 2 14
+555 501 clear 2 14
+555 502 clear 2 14
+555 503 clear 2 14
+555 504 clear 2 14
+555 505 clear 2 14
+555 508 clear 2
+555 509 clear 2
+555 515 clear 2
+555 516 clear 2
+555 517 clear 2
+555 518 clear 2
+555 592 clear 2
+555 593 clear 2
+556 497 clear 5
+556 498 clear 2 14
+556 499 clear 14
+556 500 clear 14
+556 501 clear 14
+556 502 clear 14
+556 503 clear 14
+556 504 clear 14
+556 505 clear 14
+556 508 clear 2
+556 509 clear 2
+556 515 clear 2
+556 516 clear 2
+556 517 clear 2
+556 518 clear 2
+556 537 clear 14
+556 551 clear 14
+556 592 clear 2
+556 593 clear 2
+557 480 clear 2
+557 481 clear 2
+557 482 clear 2
+557 483 clear 2
+557 484 clear 2
+557 485 clear 2
+557 486 clear 2
+557 487 clear 2
+557 488 clear 2
+557 497 clear 5
+557 498 clear 2 14
+557 499 clear 14
+557 500 clear 14
+557 501 clear 14
+557 502 clear 14
+557 503 clear 14
+557 504 clear 14
+557 505 clear 14
+557 508 clear 2
+557 509 clear 2
+557 510 clear 2
+557 511 clear 2
+557 512 clear 2
+557 513 clear 2
+557 514 clear 2
+557 515 clear 2
+557 516 clear 2
+557 517 clear 2
+557 518 clear 2
+557 537 clear 14
+557 551 clear 14
+557 592 clear 2
+557 593 clear 2
+558 480 clear 2
+558 481 clear 2 14
+558 482 clear 2 14
+558 483 clear 2 14
+558 484 clear 2 14
+558 485 clear 2 14
+558 486 clear 2 14
+558 487 clear 2 14
+558 488 clear 2
+558 497 clear 5
+558 498 clear 2 14
+558 499 clear 14
+558 500 clear 14
+558 501 clear 14
+558 502 clear 14
+558 503 clear 14
+558 504 clear 14
+558 505 clear 14
+558 508 clear 2
+558 509 clear 2
+558 510 clear 2
+558 511 clear 2
+558 512 clear 2
+558 513 clear 2
+558 514 clear 2
+558 515 clear 2
+558 516 clear 2
+558 517 clear 2
+558 518 clear 2
+558 537 clear 14
+558 551 clear 14
+558 592 clear 2
+558 593 clear 2
+559 480 clear 2
+559 481 clear 2 14
+559 482 clear 2 14
+559 483 clear 2 14
+559 484 clear 2 14
+559 485 clear 2 14
+559 486 clear 2 14
+559 487 clear 2 14
+559 488 clear 2
+559 497 clear 5
+559 498 clear 2 5 14
+559 499 clear 14
+559 500 clear 14
+559 501 clear 14
+559 502 clear 14
+559 503 clear 14
+559 504 clear 14
+559 505 clear 14
+559 506 clear 5
+559 507 clear 5
+559 508 clear 2
+559 509 clear 2
+559 510 clear 2
+559 511 clear 2
+559 512 clear 2
+559 513 clear 2
+559 514 clear 2
+559 515 clear 2
+559 516 clear 2
+559 517 clear 2
+559 518 clear 2
+559 537 clear 14
+559 551 clear 14
+559 592 clear 2
+559 593 clear 2
+560 480 clear 2
+560 481 clear 2 14
+560 482 clear 2 14
+560 483 clear 2 14
+560 484 clear 2 14
+560 485 clear 2 14
+560 486 clear 2 14
+560 487 clear 2 14
+560 488 clear 2
+560 489 clear 5
+560 497 clear 5
+560 498 clear 2 14
+560 499 clear 14
+560 500 clear 14
+560 501 clear 14
+560 502 clear 14
+560 503 clear 14
+560 504 clear 14
+560 505 clear 14
+560 506 clear 5
+560 507 clear 5
+560 508 clear 2
+560 509 clear 2
+560 510 clear 2
+560 511 clear 2
+560 512 clear 2
+560 513 clear 2
+560 514 clear 2
+560 515 clear 2
+560 516 clear 2
+560 517 clear 2
+560 518 clear 2
+560 529 clear 5
+560 530 clear 5
+560 531 clear 5
+560 537 clear 14
+560 551 clear 14
+560 592 clear 2
+560 593 clear 2
+561 480 clear 2
+561 481 clear 2 14
+561 482 clear 2 14
+561 483 clear 2 14
+561 484 clear 2 14
+561 485 clear 2 14
+561 486 clear 2 14
+561 487 clear 2 14
+561 488 clear 2 5 14
+561 489 clear 5
+561 498 clear 2 14
+561 499 clear 14
+561 500 clear 14
+561 501 clear 14
+561 502 clear 14
+561 503 clear 14
+561 504 clear 14
+561 505 clear 14
+561 511 clear 2
+561 512 clear 2
+561 513 clear 2
+561 524 clear 14
+561 525 clear 14
+561 526 clear 2 14
+561 527 clear 2 14
+561 528 clear 2 14
+561 529 clear 2 14
+561 530 clear 2 14
+561 531 clear 2 14
+561 532 clear 2 14
+561 533 clear 2 14
+561 535 clear 2 14
+561 537 clear 14
+561 551 clear 14
+561 592 clear 2
+561 593 clear 2
+562 480 clear 2
+562 481 clear 2 14
+562 482 clear 2 14
+562 483 clear 2 14
+562 484 clear 2 14
+562 485 clear 2 14
+562 486 clear 2 14
+562 487 clear 2 14
+562 488 clear 2
+562 497 clear 5
+562 498 clear 2 14
+562 499 clear 14
+562 500 clear 14
+562 501 clear 14
+562 502 clear 14
+562 503 clear 14
+562 504 clear 14
+562 505 clear 14
+562 511 clear 2
+562 512 clear 2
+562 513 clear 2
+562 524 clear 14
+562 525 clear 14
+562 526 clear 2 14
+562 527 clear 14
+562 537 clear 14
+562 551 clear 14
+562 592 clear 2
+562 593 clear 2
+563 480 clear 2
+563 481 clear 2 14
+563 482 clear 2 14
+563 483 clear 2 14
+563 484 clear 2 14
+563 485 clear 2 14
+563 486 clear 2 14
+563 487 clear 2 14
+563 488 clear 2
+563 497 clear 5
+563 498 clear 2 14
+563 499 clear 14
+563 500 clear 14
+563 501 clear 14
+563 502 clear 14
+563 503 clear 14
+563 504 clear 14
+563 505 clear 14
+563 511 clear 2
+563 512 clear 2
+563 513 clear 2
+563 524 clear 14
+563 525 clear 14
+563 526 clear 2 14
+563 527 clear 14
+563 537 clear 14
+563 551 clear 14
+563 592 clear 2
+564 480 clear 2
+564 481 clear 2 14
+564 482 clear 2 14
+564 483 clear 2 14
+564 484 clear 2 14
+564 485 clear 2 14
+564 486 clear 2 14
+564 487 clear 2 14
+564 488 clear 2
+564 489 clear 5
+564 498 clear 2 14
+564 499 clear 14
+564 500 clear 14
+564 501 clear 14
+564 502 clear 14
+564 503 clear 14
+564 504 clear 14
+564 505 clear 14
+564 511 clear 2
+564 512 clear 2
+564 513 clear 2
+564 524 clear 14
+564 525 clear 14
+564 526 clear 2 14
+564 527 clear 14
+564 537 clear 14
+564 551 clear 14
+564 592 clear 2
+564 593 clear 2
+565 480 clear 2
+565 481 clear 2 14
+565 482 clear 2 14
+565 483 clear 2 14
+565 484 clear 2 14
+565 485 clear 2 14
+565 486 clear 2 14
+565 487 clear 2 14
+565 488 clear 2
+565 489 clear 5
+565 511 clear 2
+565 512 clear 2
+565 513 clear 2
+565 524 clear 14
+565 525 clear 14
+565 526 clear 2 14
+565 527 clear 14
+565 593 clear 2
+566 480 clear 2
+566 481 clear 2 14
+566 482 clear 2 14
+566 483 clear 2 14
+566 484 clear 2 14
+566 485 clear 2 14
+566 486 clear 2 14
+566 487 clear 2 14
+566 488 clear 2
+566 489 clear 5
+566 511 clear 2
+566 512 clear 2
+566 513 clear 2
+566 524 clear 14
+566 525 clear 14
+566 526 clear 2 14
+566 527 clear 14
+566 593 clear 2
+567 477 clear 2
+567 478 clear 2
+567 480 clear 2
+567 481 clear 2 14
+567 482 clear 2 14
+567 483 clear 2 14
+567 484 clear 2 14
+567 485 clear 2 14
+567 486 clear 2 14
+567 487 clear 2 14
+567 488 clear 2
+567 489 clear 5
+567 511 clear 2
+567 512 clear 2
+567 513 clear 2
+567 524 clear 14
+567 525 clear 14
+567 526 clear 2 14
+567 527 clear 14
+567 592 clear 2
+567 593 clear 2
+568 480 clear 2
+568 481 clear 2
+568 482 clear 2
+568 483 clear 2
+568 484 clear 2
+568 485 clear 2
+568 486 clear 2
+568 487 clear 2
+568 488 clear 2
+568 511 clear 2
+568 512 clear 2
+568 513 clear 2
+568 524 clear 14
+568 525 clear 14
+568 526 clear 2 14
+568 527 clear 14
+569 511 clear 2
+569 512 clear 2
+569 513 clear 2
+569 524 clear 14
+569 525 clear 14
+569 526 clear 2 14
+569 527 clear 14
+569 592 clear 2
+569 593 clear 2
+570 511 clear 2
+570 512 clear 2
+570 513 clear 2
+570 524 clear 14
+570 525 clear 14
+570 526 clear 2 14
+570 527 clear 14
+570 592 clear 2
+570 593 clear 2
+571 450 clear 5
+571 508 clear 2
+571 509 clear 2
+571 510 clear 2
+571 511 clear 2
+571 512 clear 2 5
+571 513 clear 2
+571 514 clear 2
+571 515 clear 2
+571 516 clear 2
+571 517 clear 2
+571 518 clear 2
+571 519 clear 2
+571 520 clear 2
+571 521 clear 2
+571 524 clear 2 14
+571 525 clear 2 14
+571 526 clear 2 14
+571 527 clear 14
+571 592 clear 2
+571 593 clear 2
+572 450 clear 5
+572 511 clear 5
+572 512 clear 5
+572 513 clear 5
+572 527 clear 14
+572 531 clear 5
+572 593 clear 2
+573 450 clear 5
+573 511 clear 5
+573 512 clear 5
+573 513 clear 5
+573 530 clear 5
+573 532 clear 5
+573 533 clear 5
+573 592 clear 2
+573 593 clear 2
+574 450 clear 5
+575 450 clear 5
+575 592 clear 2
+575 593 clear 2
+576 450 clear 5
+576 592 clear 2
+576 593 clear 2
+578 450 clear 5
+580 498 clear 5
+580 499 clear 5
+580 501 clear 5
+580 502 clear 5
+580 503 clear 5
+580 505 clear 5
+580 506 clear 5
+580 510 clear 5
+580 511 clear 5
+580 512 clear 5
+580 518 clear 5
+580 520 clear 5
+580 521 clear 5
+580 522 clear 5
+580 523 clear 5
+580 525 clear 5
+581 497 clear 2
+581 502 clear 5
+581 509 clear 2
+581 510 clear 2
+581 511 clear 2
+581 523 clear 14
+581 526 clear 5
+582 496 clear 5
+582 497 clear 2
+582 509 clear 2
+582 510 clear 2 14
+582 511 clear 2 14
+582 521 clear 14
+582 522 clear 14
+582 523 clear 14
+582 526 clear 5
+583 496 clear 5
+583 497 clear 2
+583 509 clear 2
+583 510 clear 2 14
+583 511 clear 2 14
+583 513 clear 14
+583 520 clear 14
+583 521 clear 14
+583 522 clear 14
+583 523 clear 14
+583 524 clear 14
+583 526 clear 5
+584 496 clear 5
+584 497 clear 2
+584 509 clear 2
+584 510 clear 2 14
+584 511 clear 2 14
+584 513 clear 14
+584 514 clear 14
+584 522 clear 14
+584 523 clear 14
+584 524 clear 14
+584 526 clear 5
+585 496 clear 5
+585 497 clear 2
+585 509 clear 2
+585 510 clear 2 14
+585 511 clear 2 14
+585 513 clear 14
+585 514 clear 14
+585 523 clear 14
+585 524 clear 14
+585 526 clear 5
+586 496 clear 5
+586 497 clear 2
+586 509 clear 2
+586 510 clear 2 14
+586 511 clear 2 14
+586 513 clear 14
+586 514 clear 14
+586 522 clear 14
+586 526 clear 5
+587 496 clear 5
+587 497 clear 2
+587 509 clear 2
+587 510 clear 2 14
+587 511 clear 2 14
+587 520 clear 14
+587 521 clear 14
+587 522 clear 14
+588 496 clear 5
+588 497 clear 2
+588 509 clear 2
+588 510 clear 2 14
+588 511 clear 2 14
+588 526 clear 5
+589 497 clear 2
+589 509 clear 2
+589 510 clear 2 14
+589 511 clear 2 14
+589 514 clear 14
+590 509 clear 2
+590 510 clear 2 14
+590 511 clear 2 14
+590 513 clear 14
+590 514 clear 14
+591 509 clear 2
+591 510 clear 2 14
+591 511 clear 2 14
+591 513 clear 14
+591 514 clear 14
+592 509 clear 2
+592 510 clear 2
+592 511 clear 2
+599 490 clear 5
+599 516 clear 5

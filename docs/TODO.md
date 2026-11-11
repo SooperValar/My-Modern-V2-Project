@@ -164,7 +164,7 @@ back, the prices. (Ties in with the Market below.)
 - Place the NPCs waiting in the Temple of Skua: Geoffrey, Ruth, Sandra, Karl, Gertrud, Brunhild, Antonia, Henry, Hagen
   (market), Sirjan, Jefferson, the Guard (was at the Cloth Armor Shop), the Janitor (its walking route needs redoing).
   Joe's gang (Joe, James, John, Joshua) waits in the closed house at 593-598,520-524 until their new house is ready.
-  Set their door spots again where they get a house (cleared).
+  Set their door spots again where they get a house (cleared). (Nov 10: all placed.)
 - ~~New market NPCs~~ (DONE Nov 10: Garrett Steel / Lionel Golden / Martin Titanium weapons, Tabor Titanium armor,
   templates 2008-2011, Karl Bronze only). Cody places the four with the editor's NPC brush (they don't stand anywhere
   yet). Old shop greetings still name their old shops (e.g. Hagen "Welcome to the Golden Armor Shop!").
@@ -236,7 +236,9 @@ instead of a separate editor.
 - ~~Zones~~ (DONE Nov 10, see CHANGES "Aston's zones after the move"). Left for Cody: zones for the Grave Keeper's
   house (not decided yet), Joe's gang's new house, Steven's new house and any other new building; then "Re-check
   zones" for the area clears (the Cursed Tomb and Gorn Clan Hall moved), and Claude redraws `docs/world_zones.png`.
-- Tile flags: Cody fixes them by hand in the Flags tab (`MyV2\aston_flags_zones.png` shows them all).
+- ~~Tile flags~~: grass / street cleared, Market and Joe's house without "no fighting" (DONE Nov 10); Cody fine-tunes
+  the rest in the Flags tab. The Market is still mostly "indoors" (not asked to change).
+- ~~Guard and Janitor~~ (DONE Nov 10): Guard 7 is the Market guard, the Janitor is back on his loop.
 
 ### ○ Editor minimap redraws by itself (new, Nov 10)
 The editor's minimap should refresh every so often (it goes stale while the world changes).
