@@ -174,6 +174,9 @@ stopped via `stop-send`, then `update-world` and `reload-editor`):
 
 ## Known quirks
 
+- `server/lab9.c` and `lab9.h` differ from the Windows Server copies only in line endings (CRLF there, LF in git since
+  the original import); an md5 check flags them, `diff --strip-trailing-cr` shows they match. Not a real difference.
+
 - **Deleting files in Cody's folders** needs his approval (a permission prompt), and the approval
   has dropped by itself during a session. Git then can't remove its own lock files: after a commit,
   move any `.git/*.lock` and `.git/objects/maintenance.lock` aside (e.g. to `.git/stale-...`) so
