@@ -3661,6 +3661,7 @@ let size = 1;
 const show = { floors: true, walls: true, items: true, chars: true, see: false, light: false, grid: false, names: true, npcnames: false };
 try { show.npcnames = localStorage.getItem('myv2.npcnames') === '1'; } catch (e) {}
 const flagOn = new Set();
+let flagRemove = false;     // Flags tab: painting removes the flag (Alt does the other one)
 let selTile = null;
 const chunks = new Map(), sprites = new Map();
 let hover = null, stroke = null, rect = null, panning = null, spaceDown = false, needDraw = true, baseDirty = true;
@@ -4050,7 +4051,7 @@ function card() {
   if (brush.kind === 'floor') { spr = brush.s; t = 'Floor ' + brush.s; s = brush.set && pal && pal.sets[brush.s] ? 'Floor sprite ' + brush.s + ' (random variants ' + pal.sets[brush.s].join(', ') + ')' : 'Floor sprite ' + brush.s; }
   else if (brush.kind === 'place') { spr = brush.t[2]; t = brush.t[1]; s = `Template ${brush.t[0]} · ${brush.t[6] ? 'item' : 'drawn into the tile'}${brush.t[5] & 1 ? ' · blocks walking' : ''}`; }
   else if (brush.kind === 'object') { spr = brush.s; t = 'Object ' + brush.s; s = 'Picked from the map' + (brush.block & 1 ? ' · blocks walking' : '') + (brush.block & 2 ? ' · blocks sight' : ''); }
-  else if (brush.kind === 'flag') { t = 'Flag: ' + FLAGS[brush.bit]; s = 'Paint sets it · Alt+paint clears it'; }
+  else if (brush.kind === 'flag') { t = 'Flag: ' + FLAGS[brush.bit]; s = (flagRemove ? 'Remove mode: painting clears it · Alt sets it' : 'Add mode: painting sets it · Alt clears it') + ' · Shift+drag or the Rectangle tool: a whole rectangle'; }
   else if (brush.kind === 'npc') { spr = brush.t[2]; t = brush.t[1]; s = `NPC template ${brush.t[0]} · ${brush.t[3]} · click a free tile to place one (it respawns there) · Alt+click removes an NPC`; }
   if (brush.kind === 'flag') { const d = document.createElement('div'); d.style.cssText = `width:40px;height:40px;border-radius:8px;background:${FCOL[brush.bit]};flex:none`; c.appendChild(d); }
   else c.appendChild(thumb(spr, 40));
@@ -4130,13 +4131,51 @@ function cellMix(m, saved) {
   if (saved) c.oncontextmenu = e => { e.preventDefault(); if (confirm('Delete the mix "' + m.name + '"?')) { mixes = mixes.filter(x => x !== m); saveMixes(); leftUI(); } };
   return c;
 }
+// Flags tab: add / remove, brush / rectangle, and clearing one flag from the view or a zone
+function flagControls(w, sect) {
+  const b = brush.kind === 'flag' ? brush.bit : -1;
+  const box = document.createElement('div'); box.className = 'flagctl';
+  const zs = (Z && zoneDirty ? Z : zonesFromInfo()).map(z => z.name).sort((a, c) => a.localeCompare(c));
+  box.innerHTML = `<div class="sect" style="padding:4px 2px 6px">Painting</div>
+    <div class="seg md"><button data-m="0" title="Painting sets the flag (Alt clears it)">Add</button><button data-m="1" title="Painting clears the flag (Alt sets it)">Remove</button></div>
+    <div class="seg sh"><button data-t="brush" title="Paint tile by tile (B)">Brush</button><button data-t="rect" title="Drag a rectangle (U); Shift+drag works with any tool">Rectangle</button></div>
+    <div class="sect" style="padding:4px 2px 6px">Clear ${b < 0 ? 'a flag (pick one below first)' : '<span style="color:' + FCOL[b] + '">' + FLAGS[b] + '</span>'}</div>
+    <div class="seg cl"><button data-c="view" title="Every tile you can see on the map now">In the view</button><button data-c="zone" title="Every tile of the zone chosen below">In a zone</button></div>
+    <select class="zn" style="width:100%;margin:-4px 0 10px">${zs.map(n => `<option>${esc(n)}</option>`).join('')}</select>
+    <div class="n cnt" style="color:var(--dim);font-size:12px;margin:-4px 2px 6px"></div>`;
+  w.appendChild(box);
+  const upd = () => {
+    box.querySelectorAll('.md button').forEach(x => x.classList.toggle('on', +x.dataset.m === (flagRemove ? 1 : 0)));
+    box.querySelectorAll('.sh button').forEach(x => x.classList.toggle('on', x.dataset.t === tool));
+    box.querySelectorAll('.cl button').forEach(x => x.disabled = b < 0);
+    if (b >= 0) { const v = visible(); let n = 0;
+      for (let y = v.y0; y <= v.y1; y++) for (let x = v.x0; x <= v.x1; x++) { const d = T(x, y); if (d && (d.d.fl[d.i] >> b) & 1) n++; }
+      box.querySelector('.cnt').textContent = `${n} tile${n === 1 ? '' : 's'} with ${FLAGS[b]} in the view`; }
+  };
+  box.querySelectorAll('.md button').forEach(x => x.onclick = () => { flagRemove = x.dataset.m === '1'; card(); upd(); });
+  box.querySelectorAll('.sh button').forEach(x => x.onclick = () => { setTool(x.dataset.t); upd(); });
+  box.querySelectorAll('.cl button').forEach(x => x.onclick = () => {
+    if (b < 0 || RO()) return toast(RO() ? 'The game server is running: editing is off.' : 'Pick a flag first.', true);
+    const ops = [], seen = new Set();
+    const add = (x, y) => { const k = x + ',' + y; if (seen.has(k)) return; seen.add(k); const d = T(x, y); if (d && !((d.d.fl[d.i] >> b) & 1)) return; ops.push({ op: 'flag', x, y, bit: b, mode: 0 }); };
+    let where;
+    if (x.dataset.c === 'view') { const v = visible(); for (let y = v.y0; y <= v.y1; y++) for (let xx = v.x0; xx <= v.x1; xx++) { const d = T(xx, y); if (d && (d.d.fl[d.i] >> b) & 1) add(xx, y); } where = 'the view'; }
+    else { const n = box.querySelector('.zn').value, z = (Z && zoneDirty ? Z : zonesFromInfo()).find(z => z.name === n); if (!z) return;
+      for (const [x0, y0, x1, y1] of z.boxes) for (let y = y0; y <= y1; y++) for (let xx = x0; xx <= x1; xx++) add(xx, y); where = n; }
+    if (!ops.length) return toast(`No ${FLAGS[b]} in ${where}.`);
+    if (ops.length > 60000) return toast('That is too big at once (over 60,000 tiles).', true);
+    if (!confirm(`Clear ${FLAGS[b]} from ${ops.length} tile${ops.length === 1 ? '' : 's'} in ${where}? (Undo works.)`)) return;
+    ops.forEach(preview); edit(ops, `cleared ${FLAGS[b]} in ${where} (${ops.length})`).then(upd);
+  });
+  upd();
+}
 function cellFlag(b) {
   const c = document.createElement('div'); c.className = 'cell'; c.dataset.k = 'flag:' + b;
   if (brushKey(brush) === c.dataset.k) c.classList.add('sel');
   c.title = 'Paint the ' + FLAGS[b] + ' flag (Alt+paint clears it)';
   c.innerHTML = `<div class="sw" style="background:${FCOL[b]}"></div><div class="lab"></div>`;
   c.lastChild.textContent = FLAGS[b];
-  c.onclick = () => { setBrush({ kind: 'flag', bit: b }); if (!flagOn.has(b)) { flagOn.add(b); layersUI(); redraw(); } };
+  c.onclick = () => { setBrush({ kind: 'flag', bit: b }); if (!flagOn.has(b)) { flagOn.add(b); layersUI(); redraw(); } if (mode === 'map' && tab === 'flags') leftUI(); };
   return c;
 }
 function cellTemp(t) {
@@ -4291,7 +4330,8 @@ function leftUI() {
     } else if (tab === 'zones') {
       zonesTab(w, sect, match);
     } else if (tab === 'flags') {
-      sect('Paint a flag on tiles'); lazy(grid(), FLAGS.map((f, i) => i).filter(i => match(FLAGS[i], '')), cellFlag);
+      flagControls(w, sect);
+      sect('Pick a flag'); lazy(grid(), FLAGS.map((f, i) => i).filter(i => match(FLAGS[i], '')), cellFlag);
     } else {
       const list = C[tab].filter(t => match(t[1], t[0]));
       if (tab === 'objects' && match('chest', '')) { sect('Chests · put one in and choose what it gives'); grid().appendChild(cellChest()); }
@@ -6200,7 +6240,7 @@ function footprint(x, y) {
 function opFor(x, y, alt) {
   const b = brush;
   if (tool === 'erase' || (alt && (b.kind === 'place' || b.kind === 'object' || b.kind === 'area'))) return { op: 'erase', x, y };
-  if (b.kind === 'flag') return { op: 'flag', x, y, bit: b.bit, mode: alt ? 0 : 1 };
+  if (b.kind === 'flag') return { op: 'flag', x, y, bit: b.bit, mode: alt !== flagRemove ? 0 : 1 };
   if (alt) return null;
   if (b.kind === 'floor') return { op: 'floor', x, y, s: b.s, set: b.set };
   if (b.kind === 'mix') return { op: 'floor', x, y, s: mixPick(b.items), set: false };
@@ -6212,7 +6252,7 @@ function opFor(x, y, alt) {
 function label(alt) {
   if (tool === 'erase') return 'erase';
   const b = brush;
-  if (b.kind === 'flag') return (alt ? 'cleared ' : 'set ') + FLAGS[b.bit];
+  if (b.kind === 'flag') return (alt !== flagRemove ? 'cleared ' : 'set ') + FLAGS[b.bit];
   if (alt) return 'erase';
   if (b.kind === 'area') return 'area ' + b.name + (areaFloor ? '' : ' (pieces only)');
   return b.kind === 'floor' ? 'floor ' + b.s : b.kind === 'mix' ? (b.name ? 'mix ' + b.name : 'floor mix ' + b.items.map(i => i.s).join('/')) : b.kind === 'place' ? b.t[1] : 'object ' + b.s;

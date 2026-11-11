@@ -426,7 +426,7 @@ The map page (rail: Map).
 **Tabs of the piece library**
 - **Builder**: recently used pieces, chests, floor mixes, floors and flags, walls and objects.
 - **Areas**: area brushes (see below).
-- **Floors** (by how often they are used), **Walls** (drawn into the tile, they block), **Objects** (furniture, decoration, doors, chests…), **Items** (things players can pick up), **NPCs** (see [NPC editor](#npc-editor)), **Merchants** (see [Merchants tab](#merchants-tab)), **Flags** (paint a flag on tiles), **Zones** (see below).
+- **Floors** (by how often they are used), **Walls** (drawn into the tile, they block), **Objects** (furniture, decoration, doors, chests…), **Items** (things players can pick up), **NPCs** (see [NPC editor](#npc-editor)), **Merchants** (see [Merchants tab](#merchants-tab)), **Flags** (paint a flag on tiles: **Add / Remove** mode, **Brush / Rectangle** (drag a rectangle to set or clear a flag on all of it), and **Clear a flag** in the view or in a whole zone in one go, with a count of the tiles that have it in the view; undo works), **Zones** (see below).
 - Right-click an item, object or wall in the library to edit its template.
 
 **Rugs** (Floors tab, at the top)

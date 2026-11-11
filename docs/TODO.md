@@ -230,8 +230,13 @@ An area erase, used like the drag-and-drop painting.
 The floor editor has sliders for how often each tile is used; the area brushes should have the same, inside the editor,
 instead of a separate editor.
 
-### ○ Easier zone flag editing (new, Nov 10)
-A quicker way to see and change a zone's flag in the Zones tab.
+### ● Flags and zones for the new Aston (Nov 10)
+- ~~Editor: clear a type of flag, drag a rectangle to add / remove a flag~~ (DONE Nov 10: Flags tab Add / Remove,
+  Brush / Rectangle, Clear in the view / in a zone).
+- Zones: being talked through with Cody (picture `MyV2\aston_zones_plan.png`: green still fits, blue moves with its
+  building, red changed / gone, yellow new). Then Claude writes the new `zones.dat` (game stopped, or Cody saves it in
+  the Zones tab) and redraws the zone maps.
+- Tile flags: Cody fixes them by hand in the Flags tab (`MyV2\aston_flags_zones.png` shows them all).
 
 ### ○ Editor minimap redraws by itself (new, Nov 10)
 The editor's minimap should refresh every so often (it goes stale while the world changes).
