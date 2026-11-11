@@ -1,0 +1,11 @@
+# Market: one tier per merchant (Nov 10)
+merchant 26 sell 0 buy 0 gold 0 kinds -1
+stock 26 27 31 35 1364
+merchant 2008 sell 0 buy 0 gold 0 kinds 2
+stock 2008 28 32 36 1365
+merchant 2009 sell 0 buy 0 gold 0 kinds 2
+stock 2009 29 33 37 1366
+merchant 2010 sell 0 buy 0 gold 0 kinds 2
+stock 2010 523 524 125 1368
+merchant 2011 sell 0 buy 0 gold 0 kinds 1
+stock 2011 94 95 96 97 98 99

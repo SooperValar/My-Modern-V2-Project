@@ -165,7 +165,9 @@ back, the prices. (Ties in with the Market below.)
   (market), Sirjan, Jefferson, the Guard (was at the Cloth Armor Shop), the Janitor (its walking route needs redoing).
   Joe's gang (Joe, James, John, Joshua) waits in the closed house at 593-598,520-524 until their new house is ready.
   Set their door spots again where they get a house (cleared).
-- New market NPCs (Titanium armor, the other weapon metals, Titanium weapons): tell Claude names / stock, or make them.
+- ~~New market NPCs~~ (DONE Nov 10: Garrett Steel / Lionel Golden / Martin Titanium weapons, Tabor Titanium armor,
+  templates 2008-2011, Karl Bronze only). Cody places the four with the editor's NPC brush (they don't stand anywhere
+  yet). Old shop greetings still name their old shops (e.g. Hagen "Welcome to the Golden Armor Shop!").
 - Zones: done Nov 10 (Market, shifted ones, Inga / Jefferson / Jamil); Cody adds the new buildings' zones.
 - Moves still to do in the editor: Inga's house is ready (she's in it); Jefferson moves into Inga's old house.
 - Steven's new house (Cody builds it).
