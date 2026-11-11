@@ -93,6 +93,25 @@ The live world is in Ubuntu (`~/.dat`); `Server\.dat` on Windows is only a copy 
    Windows, starts the game), then `{"action":"reload-editor"}`.
 New sprites: write them to `Client\GFX` (new numbers), then `tools/release/publish_client.py`; Cody pushes `client-dist`.
 
+More world tools (Nov 10, all in `tools/world/`, build with `gcc -I server`, run on `$HOME/mnt/Server/.dat` with the game
+stopped via `stop-send`, then `update-world` and `reload-editor`):
+- `town_apply.c`: copy changed tiles and their items from one place to another (spec: `offset`, `tile`, `tiledata`,
+  `itemdata`); `town_rearrange/` has the Nov 10 specs.
+- `mapflags.c`: set / clear map flag bits on a list of tiles. **`struct map` is 28 bytes** (sprite, fsprite, ch, to_ch,
+  it, dlight, light, flags u64): never write map.dat with a hand-made record layout (a 24-byte numpy dtype once
+  scrambled it; caught and restored with `send`).
+- `npcdata.c`: `chd <temp> <i> <value>` / `cht <temp> <i> <text>` set data / text of a template AND its living NPCs.
+- `npc_lights.c`: lists every NPC's light duties (data 32-35) and whether a light is still on each spot.
+- After changing indoors flags or lights, run `./server light` on a copy of the .dat (test server folder `~/ctest`)
+  and copy map.dat back.
+- NPC data that holds map spots: 10-18 patrol, 20-23 doors it closes, 29 resting spot, 32-35 lights it keeps burning,
+  41 street light kind it switches. The editor's NPC page "Patrol & chores" tab sets them.
+- Placing a template with the editor's NPC brush makes a NEW template per placed NPC (the copies get the next free
+  numbers, e.g. Garrett 2008 -> placed as 2012): anything keyed by template number (merchants.dat) must use the
+  placed one.
+- Zones: `.dat/zones.dat` can be written while the game is stopped (send, edit, get-world, reload-editor); the editor
+  holds them in memory, so reload it, and ask Cody first whether he has unsaved editor changes.
+
 ## The MyV2 Editor
 
 - Runs as one file, `mapedit.py` (in the Server folder; a copy in `tools/mapedit/`).
@@ -165,9 +184,7 @@ New sprites: write them to `Client\GFX` (new numbers), then `tools/release/publi
 
 ## Open items (details in docs/TODO.md and docs/HOSTING.md)
 
-**Town rearranged (Nov 10, late):** Aston now matches Cody's copy (CHANGES "Aston rearranged"); the world is in Ubuntu (get-world done) but the GAME IS STOPPED until Cody starts it. What's left is in TODO.md, "Town rearrangement" (Cody places the NPCs waiting in the Temple of Skua, zones, new market NPCs).
-
-**Where we left off (Nov 10) - START HERE:** `docs/TODO.md` was reorganized Nov 10 into one design + to-do document by category (fixes, systems, classes, items, world, quests, editor, client, Discord), merged with Cody's `MyV2\Design Document.txt` (Brawler class, Greataxe variants, Market, Sunken Archives, Graveyard quest, editor wishes...). Old item numbers are kept as "(was #n)". Its "Up next" list: **soulstone levels too low (was 28, major)**, then Discord (was 25), speed (was 26), town NPC doors (was 27), logout at shutdown (was 17), resizable window (was 20). If Cody adds new ideas to `Design Document.txt`, fold them into TODO.md. Still waiting on Cody: the Windows restart test of start-with-Windows (the Discord #server-status channel shows if the server came back by itself). Discord server set up Nov 7 (layout in HOSTING.md); the editor posts server up / down there through `Server\discord-webhook.txt` (secret, never in git). Git note: in a new session the project folder may need delete permission again (device_request_delete_permission), else git leaves `.lock` files behind and Cody's push fails; clear stale `.git/*.lock`, `gc.pid`, `tmp_obj_*` after commits.
+**Where we left off (Nov 10, late) - START HERE:** the **town rearrangement is done** (CHANGES.md "Aston rearranged" and the lines after it; leftovers in TODO.md "Town rearrangement"; pictures in `MyV2\Town pictures (Nov 10)\`). The game is running. Next in `docs/TODO.md` "Up next": **soulstone levels too low (major)**, then Discord, speed, town NPC doors, logout at shutdown, resizable window. TODO.md is one design + to-do document by category (merged Nov 10 with Cody's `MyV2\Design Document.txt`; old numbers kept as "(was #n)"); if Cody adds ideas to `Design Document.txt`, fold them in. Still waiting on Cody: the Windows restart test of start-with-Windows (Discord #server-status shows if the server came back by itself). Discord server set up Nov 7 (layout in HOSTING.md); the editor posts server up / down through `Server\discord-webhook.txt` (secret, never in git). Git note: in a new session ask for delete permission on the project folder (device_request_delete_permission), else git leaves `.lock` files and Cody's push fails; clear stale `.git/*.lock`, `gc.pid` after commits.
 
 **Tested by Cody in game (Nov 4-5), all good:** potion stacks, the Fire/Ice set bonuses, Burning Hits (+ `#burning`), Frost Armor, the
 sets in the god shop, the Ice Gargoyle Cape and the Cloak of Ice names, thorns on every landed blow, the 2.15.02 client

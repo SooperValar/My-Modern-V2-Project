@@ -12,15 +12,15 @@ world, quests, the editor, the client and Discord. Merged Nov 10 from the old TO
 
 ## Up next (in order)
 
-1. ★ **Town rearrangement** (IN PROGRESS) - [World](#5-world-and-areas)
-2. ★ **Soulstone levels too low** (MAJOR) - [Fixes](#1-fixes-and-balance)
-3. ★ **Discord: online / rankings info and the game chat bridge** - [Discord](#9-discord-and-community)
-4. ★ **Walking speed, speed modes and attack speed** (look at it together first) - [Systems](#2-gameplay-systems)
-5. ★ **Town NPCs' door loop** - [Fixes](#1-fixes-and-balance)
-6. ★ **Logout at shutdown** - [Fixes](#1-fixes-and-balance)
-7. ★ **Resizable game window** - [Client](#8-client-sprites-and-art)
+1. ★ **Soulstone levels too low** (MAJOR) - [Fixes](#1-fixes-and-balance)
+2. ★ **Discord: online / rankings info and the game chat bridge** - [Discord](#9-discord-and-community)
+3. ★ **Walking speed, speed modes and attack speed** (look at it together first) - [Systems](#2-gameplay-systems)
+4. ★ **Town NPCs' door loop** - [Fixes](#1-fixes-and-balance)
+5. ★ **Logout at shutdown** - [Fixes](#1-fixes-and-balance)
+6. ★ **Resizable game window** - [Client](#8-client-sprites-and-art)
 
 **Waiting on Cody:**
+- Town leftovers: zones for the new buildings, Steven's house, Re-check zones for the area clears ([World](#5-world-and-areas)).
 - The Windows restart test of start-with-Windows (Discord #server-status shows if the server came back by itself).
 - Going through the quest order / rewards on the editor's Quests page ([Quests](#6-quests)).
 - Checking the merchants in game: pages, selling + buying back, prices ([Items](#4-items-weapons-and-shops)).
@@ -158,28 +158,26 @@ back, the prices. (Ties in with the Market below.)
 
 ## 5. World and areas
 
-### ★ Town rearrangement and a Market (new, Nov 10; IN PROGRESS)
-**Done Nov 10:** Aston now matches Cody's copy (see CHANGES.md "Aston rearranged"; picture `MyV2\aston_before_after.png`).
-**Left (Cody, in the editor):**
-- Place the NPCs waiting in the Temple of Skua: Geoffrey, Ruth, Sandra, Karl, Gertrud, Brunhild, Antonia, Henry, Hagen
-  (market), Sirjan, Jefferson, the Guard (was at the Cloth Armor Shop), the Janitor (its walking route needs redoing).
-  Joe's gang (Joe, James, John, Joshua) waits in the closed house at 593-598,520-524 until their new house is ready.
-  Set their door spots again where they get a house (cleared). (Nov 10: all placed.)
-- ~~New market NPCs~~ (DONE Nov 10: Garrett Steel / Lionel Golden / Martin Titanium weapons, Tabor Titanium armor,
-  templates 2008-2011, Karl Bronze only). Cody places the four with the editor's NPC brush (they don't stand anywhere
-  yet). Old shop greetings still name their old shops (e.g. Hagen "Welcome to the Golden Armor Shop!").
-- Zones: done Nov 10 (Market, shifted ones, Inga / Jefferson / Jamil); Cody adds the new buildings' zones.
-- Moves still to do in the editor: Inga's house is ready (she's in it); Jefferson moves into Inga's old house.
-- Steven's new house (Cody builds it).
-- Clear the copy at x 443-627, y 737-929 when happy (it has a spider spawner).
-- Old door spots that were already wrong before (part of TODO "door loop"): the Barkeeper (508,488) and a Thief
-  (template 970, 455,546) have door spots on tiles with no door.
-Make a Market so a lot of the shop buildings are freed up for new quest givers.
-- **Market stalls:** 8 armor - Cloth, Leather, Bronze, Steel, Gold, Emerald, Crystal, Titanium;
-  5 weapon - Bronze, Steel, Gold, Crystal, Titanium.
-- **Moves:** Inga moves to Sandra's house; Steven moves across from the Templar Outlaws (his house goes to the
-  Graveyard quest giver, see [Quests](#6-quests)).
-- Keep the minimap, zones and zone maps current after the move.
+### ● Town rearrangement and a Market (Nov 10; MOSTLY DONE)
+**Done Nov 10** (details in CHANGES.md "Aston rearranged" and the lines after it; pictures in
+`MyV2\Town pictures (Nov 10)\`): Aston copied from Cody's copy (Market, graveyard, new houses, east side 2 tiles east,
+holes / ladders / chest kept working); every NPC placed by Cody; Market merchants one tier each (new Garrett, Lionel,
+Martin, Tabor = templates 2012-2015, Karl Bronze only, stock in `merchants.dat`); zones redone (Market one zone, gone
+shops removed, Inga / Jefferson / Jamil); tile flags cleaned (grass / street, "no fighting" off the Market and Joe's
+house, Cody's picks of stray "no monsters" removed); the Guard of the old Cloth shop stands in the Market, the Janitor
+is back on his loop; NPC light duties fixed (each tends the lights of its own room).
+**Left:**
+- Zones for the new buildings: the Grave Keeper's house (Cody hasn't decided), Joe's gang's house, Steven's new house.
+- Steven's new house (Cody builds it); the Grave Keeper / graveyard quest NPC (see [Quests](#6-quests)).
+- Area clears: "Re-check zones" on the Quests page (the Cursed Tomb and Gorn Clan Hall moved 2 east).
+- Old shop greetings still name their old shops (e.g. Hagen "Welcome to the Golden Armor Shop!"): rewrite for the
+  Market if Cody wants.
+- Door spots of the NPCs that moved were cleared: set them again where they have a house (editor: NPC page, "Patrol &
+  chores"). Old wrong door spots (part of the door loop item): the Barkeeper (508,488) and Thief 970 (455,546).
+- The Market guard (Guard, template 7) has no patrol: give him stops if he should walk the Market.
+- The Market square is still mostly "indoors" (left as is; Cody decides).
+- Clear Cody's copy at x 443-627, y 737-929 when he's happy (it has a working spider spawner).
+- Redraw `docs/world_zones.png` after Cody adds zones (`tools/world/worldzones.py`).
 
 ### ○ Sunken Gorge -> "The Sunken Archives"? (new, Nov 10)
 More bookshelves; the enemies switch to blue lizards (Cody's recolors in
