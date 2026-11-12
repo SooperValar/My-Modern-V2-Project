@@ -20,9 +20,9 @@ world, quests, the editor, the client and Discord. Merged Nov 10 from the old TO
 6. ★ **Resizable game window** - [Client](#8-client-sprites-and-art)
 
 **Waiting on Cody:**
-- Town leftovers: zones for the new buildings, Steven's house, Re-check zones for the area clears ([World](#5-world-and-areas)).
+- Town leftovers: Re-check zones for the area clears, if not done yet ([World](#5-world-and-areas)). (Zones for the new buildings and Steven's house: done, Cody Nov 11.)
 - The Windows restart test of start-with-Windows (Discord #server-status shows if the server came back by itself).
-- Going through the quest order / rewards on the editor's Quests page ([Quests](#6-quests)).
+- Quest rewards on the editor's Quests page, if he wants changes ([Quests](#6-quests)). (Order: Cody is happy with it, Nov 11.)
 - Checking the merchants in game: pages, selling + buying back, prices ([Items](#4-items-weapons-and-shops)).
 - Setting up the area clears (quest areas first) and the class rewards, when he wants.
 - An example of the waypoint window when we start waypoints.
@@ -167,8 +167,8 @@ shops removed, Inga / Jefferson / Jamil); tile flags cleaned (grass / street, "n
 house, Cody's picks of stray "no monsters" removed); the Guard of the old Cloth shop stands in the Market, the Janitor
 is back on his loop; NPC light duties fixed (each tends the lights of its own room).
 **Left:**
-- Zones for the new buildings: the Grave Keeper's house (Cody hasn't decided), Joe's gang's house, Steven's new house.
-- Steven's new house (Cody builds it); the Grave Keeper / graveyard quest NPC (see [Quests](#6-quests)).
+- ~~Zones for the new buildings; Steven's house moved~~ (DONE, Cody Nov 11). Claude: redraw `docs/world_zones.png`.
+- The Grave Keeper / graveyard quest NPC (see [Quests](#6-quests)).
 - Area clears: "Re-check zones" on the Quests page (the Cursed Tomb and Gorn Clan Hall moved 2 east).
 - Old shop greetings still name their old shops (e.g. Hagen "Welcome to the Golden Armor Shop!"): rewrite for the
   Market if Cody wants.
@@ -205,7 +205,8 @@ A river south of Aston and a flooded mine quest like Lab 11 (without the darknes
 
 ### ● `#quest` list: order and rewards (was #9)
 The look is approved and live (column table, 15 a page); the editor's Quests page sets the order, rewards, exp and
-hints of every quest. Next: Cody goes through them there. Maybe a separate "difficulty" number per quest giver so the
+hints of every quest. **Order settled** (Cody, Nov 11: happy with the current order). Rewards: Cody changes them there
+if he wants (or asks Claude to suggest a plan). Maybe a separate "difficulty" number per quest giver so the
 order doesn't have to follow the experience. Keep `#journal` only for temporary / seasonal quests?
 Reference for the look: `docs/ref/quest_list_example.png`.
 

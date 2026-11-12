@@ -57,6 +57,8 @@ Note: the real client source is the project's `client/` folder (the old copies i
 - Don't paste artifact URLs.
 - Editing the live game's data directly from a browser tab (POST `/api/edit` via a browser tool)
   was refused by the safety system: don't; ask Cody to do such edits in the editor himself.
+  This is only about the browser route: Claude DOES change live world data (templates, NPCs, npctalk.dat, zones...)
+  through the control files and world tools (stop-send / tools / update-world), with Cody's "go" for the stop.
 
 ## Running and updating the server
 
