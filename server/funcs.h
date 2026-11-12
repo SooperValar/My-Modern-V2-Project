@@ -480,6 +480,16 @@ int stack_split(int in,int k);
 int stack_use_one(int in);
 int stack_into_backpack(int cn,int in);
 int get_free_item(void);
+int is_nolab_item(int in);
+
+/* waypoint.c */
+int wp_load(void);
+int wp_count(void);
+int wp_item_sprite(int cn,int in);
+int use_waypoint(int cn,int in);
+void plr_cmd_waypoint(int nr);
+void wp_console_list(void (*out)(char *format,...));
+void wp_console_found(int co,char *what,void (*out)(char *format,...));
 int god_reset_player(int co,char *why,int len);
 int god_delete_player(int co,char *why,int len);
 int god_restore_player(char *file,char *why,int len);

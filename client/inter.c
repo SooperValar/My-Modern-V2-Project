@@ -1109,10 +1109,38 @@ static void hud_backpack(int nr,int mode)
 	hightlight_sub=nr;
 }
 
+// waypoint travel window; x,y relative to the window
+static void mouse_wp(int x,int y,int state)
+{
+	int i,maxpos=wp_count>HW_ROWS ? wp_count-HW_ROWS : 0;
+
+	cursor_type=CT_NONE;
+	if (x>=HW_LISTW) {
+		if (y>=HW_ROWS*HW_ROWH) return;
+		if (state!=MS_LB_UP) return;
+		if (y<16) show_wp=0;							// close box
+		else if (y<16+(HW_ROWS*HW_ROWH-16)/2) { if (wp_pos>0) wp_pos--; }	// scroll column
+		else if (wp_pos<maxpos) wp_pos++;
+		return;
+	}
+	if (y>=HW_ROWS*HW_ROWH) return;
+	i=wp_pos+y/HW_ROWH;
+	if (i<0 || i>=wp_count) return;
+	hightlight=HL_WAYPOINT;
+	hightlight_sub=i;
+	if ((wp_rows[i].flags&3)==1) {	// found, and not the one we stand at
+		cursor_type=CT_USE;
+		if (state==MS_LB_UP) { cmd(CL_CMD_WAYPOINT,wp_rows[i].nr,0); show_wp=0; }
+	}
+}
+
 // returns 1 if (x,y) is on a panel (even if nothing happens there)
 int hud_mouse(int x,int y,int state)
 {
 	int n,c,r,lrow;
+
+	// waypoint travel window (on top of everything)
+	if (show_wp && in_rect(x,y,HW_X,HW_Y,HW_W,HW_H)) { mouse_wp(x-HW_X,y-HW_Y,state); return 1; }
 
 	// shop window (on top of everything)
 	if (show_shop && in_rect(x,y,HSH_X,HSH_Y,HSH_LW,HSH_LH)) {
@@ -1227,7 +1255,12 @@ void hud_wheel(int x,int y,int lines)
 {
 	extern int logstart,logtimer;
 
-	if (in_rect(x,y,HCH_X,HCH_Y,HCH_W,HCH_H)) {
+	if (show_wp && in_rect(x,y,HW_X,HW_Y,HW_W,HW_H)) {
+		int pos=wp_pos-lines,maxpos=wp_count>HW_ROWS ? wp_count-HW_ROWS : 0;
+		if (pos>maxpos) pos=maxpos;
+		if (pos<0) pos=0;
+		wp_pos=pos;
+	} else if (in_rect(x,y,HCH_X,HCH_Y,HCH_W,HCH_H)) {
 		logstart+=lines*3;
 		if (logstart>HCH_LINES*10-HCH_LINES) logstart=HCH_LINES*10-HCH_LINES;
 		if (logstart<0) logstart=0;

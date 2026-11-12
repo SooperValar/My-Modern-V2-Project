@@ -567,6 +567,38 @@ static void tip_store(struct tipinfo *t,unsigned char *buf)
 	}
 }
 
+/* a row of the waypoint travel window: [1] row, [2] rows in all (0 closes it), [3] flags, [4] picture, [6] number,
+ * [8] name, [40] line. The window opens with the last row. */
+struct wp_row wp_rows[256];
+int wp_count=0,wp_pos=0,show_wp=0,wp_new=0;
+int sv_waypoint(unsigned char *buf)
+{
+	static struct wp_row tmp[256];
+	extern char path[];
+	int i=buf[1],n=buf[2],k;
+	char fn[300];
+	FILE *fp;
+
+	if (!n) { show_wp=0; return 80; }
+	if (i>=n) return 80;
+	memset(&tmp[i],0,sizeof(tmp[i]));
+	tmp[i].flags=buf[3]; tmp[i].pic=*(unsigned short*)(buf+4); tmp[i].nr=buf[6];
+	memcpy(tmp[i].name,buf+8,31); memcpy(tmp[i].line,buf+40,39);
+	if (tmp[i].pic) {	// is the picture there? (asking for a missing sprite every frame would be slow)
+		sprintf(fn,"%sgfx\\%05d.png",path,tmp[i].pic);
+		if ((fp=fopen(fn,"rb"))) { fclose(fp); tmp[i].picok=1; }
+	}
+	if (i==n-1) {
+		memcpy(wp_rows,tmp,sizeof(wp_rows)); wp_count=n;
+		for (k=0; k<n; k++) if (wp_rows[k].flags&2) break;
+		wp_pos=(k<n) ? k-HW_ROWS/2 : 0;
+		if (wp_pos>n-HW_ROWS) wp_pos=n-HW_ROWS;
+		if (wp_pos<0) wp_pos=0;
+		show_wp=1; wp_new=1; show_shop=0;
+	}
+	return 80;
+}
+
 int sv_iteminfo(unsigned char *buf)
 {
 	tip_store(&tip,buf);
@@ -1021,6 +1053,7 @@ int sv_cmd(unsigned char *buf)
 		case 	SV_IGNORE:		return sv_ignore(buf);
 		case	SV_SPELLTIME:		return sv_spelltime(buf);
 		case	SV_ITEMINFO:		return sv_iteminfo(buf);
+		case	SV_WAYPOINT:		return sv_waypoint(buf);
 		case	SV_TILEGLOW:		{ int t=*(unsigned short*)(buf+1); if (t<TILEX*TILEY) map[t].glow=buf[3]; } return 4;
 		case	SV_ITEMMARKS:		{ extern unsigned char inv_mark[124],shop_mark[124]; if (buf[1]==0) memcpy(inv_mark,buf+2,124); else memcpy(shop_mark,buf+2,124); } return 126;
 		case	SV_TIERS:		{ extern unsigned char inv_tier[60],shop_tier[62]; if (buf[1]==0) memcpy(inv_tier,buf+2,60); else memcpy(shop_tier,buf+2,62); } return 64;

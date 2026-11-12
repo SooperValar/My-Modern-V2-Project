@@ -106,6 +106,20 @@
 #define HSH_LW		300
 #define HSH_LH		318
 
+// waypoint travel window: in the shop window's place; rows of a picture (64x32), a name and a line
+#define HW_ROWS		8
+#define HW_ROWH		35
+#define HW_W		300
+#define HW_LISTW	(HW_W-16)			// the list; right of it the close box and the scroll column
+#define HW_H		(HW_ROWS*HW_ROWH+34)
+#define HW_X		(HSH_X+1)
+#define HW_Y		(HSH_Y+5)
+#define WP_SPR_UNKNOWN	18340				// "not found yet" picture
+#define WP_SPR_STOCK	18341				// a found waypoint whose own picture is not there (yet)
+struct wp_row { unsigned char flags,nr,picok; unsigned short pic; char name[32],line[40]; };	// flags: 1 found, 2 you are here
+extern struct wp_row wp_rows[256];
+extern int wp_count,wp_pos,show_wp,wp_new;
+
 extern int hud_cw,hud_ch;	// canvas size (dd.c)
 
 #define HCH_X		(hud_cw-HCH_W)

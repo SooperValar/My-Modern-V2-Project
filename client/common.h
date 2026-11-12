@@ -214,6 +214,7 @@ struct cplayer {
 #define CL_CMD_UNIQUE       32
 #define CL_PASSWD			33
 #define CL_CMD_ITEMINFO		34	// ask for an item tooltip
+#define CL_CMD_WAYPOINT		35	// travel to the waypoint with this number
 #define CL_CMD_CTICK      255
 
 
@@ -296,6 +297,7 @@ struct cplayer {
 #define SV_TILEGLOW		76	// map tile (short), glow (4 bytes)
 #define SV_TIERS		77	// kind (0 backpack+worn, 1 shop/grave), 62 tiers (64 bytes)
 #define SV_ITEMMARKS		78	// kind, 62 x (letter, number; 255 none) (126 bytes)
+#define SV_WAYPOINT		79	// a row of the waypoint travel window (80 bytes)
 
 #define SV_SETMAP	128
 

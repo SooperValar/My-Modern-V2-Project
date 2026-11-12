@@ -1348,6 +1348,7 @@ void plr_cmd(int nr)
 
                 case CL_CMD_SHOP:       plr_cmd_shop(nr); break;
                 case CL_CMD_ITEMINFO:   plr_cmd_iteminfo(nr); break;
+                case CL_CMD_WAYPOINT:   plr_cmd_waypoint(nr); break;
                 default:                plog(nr,"Unknown CL: %d",player[nr].inbuf[0]); break;
         }
 }
@@ -2694,6 +2695,7 @@ void plr_getmap_complete(int nr)
 					smap[n].it_sprite=it[co].sprite[0];
 					smap[n].it_status=it[co].status[0];
 				}
+				if (it[co].driver==76 && !it[co].temp) smap[n].it_sprite=wp_item_sprite(cn,co);	// a waypoint's circle: lit for those who found it
 				if ((it[co].flags&IF_LOOK) || (it[co].flags&IF_LOOKSPECIAL))
 					smap[n].flags|=ISITEM;
 				if (!(it[co].flags&IF_TAKE) && it[co].flags&(IF_USE|IF_USESPECIAL)) smap[n].flags|=ISUSABLE;
@@ -2868,6 +2870,7 @@ void plr_getmap_fast(int nr)
 					smap[n].it_sprite=it[co].sprite[0];
 					smap[n].it_status=it[co].status[0];
 				}
+				if (it[co].driver==76 && !it[co].temp) smap[n].it_sprite=wp_item_sprite(cn,co);	// a waypoint's circle: lit for those who found it
 				if ((it[co].flags&IF_LOOK) || (it[co].flags&IF_LOOKSPECIAL))
 					smap[n].flags|=ISITEM;
 				if (!(it[co].flags&IF_TAKE) && it[co].flags&(IF_USE|IF_USESPECIAL)) smap[n].flags|=ISUSABLE;

@@ -801,6 +801,7 @@ int main(int argc,char *args[])
 	globs->flags|=GF_DIRTY;
 	
 	load_mod();
+	wp_load();	// MyV2 waypoints: read the list, make the circles (waypoint.c)
 
         xlog("Entering game loop... (type help in this terminal for console commands)");
 

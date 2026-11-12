@@ -784,6 +784,78 @@ class World:
             return 'later'
         return ''
 
+    # --- waypoints (Waypoints tab): .dat/waypoints.dat, read by the game's waypoint.c ("wpreload").
+    #   next <n>  /  wp <nr> <x> <y> <look> <picture> <name>|<line>     (in list order; nr 1-255, never used twice)
+    # The game makes and removes the nine circle pieces itself; the picture of waypoint nr is sprite 18400 + nr.
+    def waypoints_path(self):
+        return os.path.join(self.dat, 'waypoints.dat')
+
+    def waypoints_read(self):
+        nxt, out = 1, []
+        try:
+            for line in open(self.waypoints_path(), encoding='latin-1'):
+                line = line.rstrip('\r\n')
+                m = re.match(r'next\s+(\d+)', line)
+                if m:
+                    nxt = int(m.group(1))
+                m = re.match(r'wp\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s(.*)$', line)
+                if m:
+                    name, _, say = m.group(6).partition('|')
+                    out.append({'nr': int(m.group(1)), 'x': int(m.group(2)), 'y': int(m.group(3)), 'look': int(m.group(4)),
+                                'pic': int(m.group(5)), 'name': name.strip(), 'line': say.strip()})
+        except OSError:
+            pass
+        nxt = max([nxt] + [w['nr'] + 1 for w in out])
+        return {'next': nxt, 'list': out}
+
+    def waypoints_save(self, lst, ctl=None):
+        """lst: [{nr (0 = new), x, y, look, name, line}, ...] in the order of the travel window. Returns (error, later)."""
+        cur = self.waypoints_read()
+        nxt, known, rows, seen = cur['next'], {w['nr'] for w in cur['list']}, [], set()
+        for w in lst:
+            name = re.sub(r'\s+', ' ', str(w.get('name', ''))).replace('|', '/').strip()
+            say = re.sub(r'\s+', ' ', str(w.get('line', ''))).replace('|', '/').strip()
+            if not name:
+                return 'A waypoint has no name.', False
+            if len(name) > 31:
+                return 'The name "%s" is too long (at most 31 letters).' % name, False
+            if len(say) > 34:
+                return 'The line of "%s" is too long (at most 34 letters).' % name, False
+            try:
+                name.encode('latin-1'); say.encode('latin-1')
+            except UnicodeError:
+                return 'The name or line of "%s" has letters the game cannot show.' % name, False
+            x, y, nr = int(w.get('x', 0)), int(w.get('y', 0)), int(w.get('nr', 0))
+            if not (2 <= x < MAPX - 2 and 2 <= y < MAPY - 2):
+                return '"%s" is off the map.' % name, False
+            for r in rows:
+                if abs(r['x'] - x) <= 2 and abs(r['y'] - y) <= 2:
+                    return '"%s" and "%s" overlap: move one of them.' % (name, r['name']), False
+            if nr not in known or nr in seen:
+                nr = 0
+            if not nr:
+                if nxt > 255:
+                    return 'No waypoint numbers left (255 were made in all).', False
+                nr, nxt = nxt, nxt + 1
+            seen.add(nr)
+            rows.append({'nr': nr, 'x': x, 'y': y, 'look': 1 if int(w.get('look', 0)) == 1 else 0, 'pic': 18400 + nr, 'name': name, 'line': say})
+        p = self.waypoints_path()
+        if os.path.exists(p):
+            bk = os.path.join(self.dat, 'mapedit-backups')
+            os.makedirs(bk, exist_ok=True)
+            shutil.copy2(p, os.path.join(bk, 'waypoints-%s.dat' % time.strftime('%Y%m%d-%H%M%S')))
+        with open(p + '.tmp', 'w', encoding='latin-1', errors='replace') as fh:
+            fh.write('# Waypoints: wp <nr> <x> <y> <look 0 runes / 1 pentagram> <picture sprite> <name>|<line>, in list order.\n'
+                     '# A number is never used twice. Written by the MyV2 Editor (Waypoints tab).\n')
+            fh.write('next %d\n' % nxt)
+            for r in rows:
+                fh.write('wp %d %d %d %d %d %s|%s\n' % (r['nr'], r['x'], r['y'], r['look'], r['pic'], r['name'], r['line']))
+        os.replace(p + '.tmp', p)
+        if ctl and server_running():
+            r = ctl.console('wpreload', 8)
+            return '', not (r and 'Waypoints loaded' in r)
+        return '', False
+
     # --- raw access
     def tile(self, x, y):
         return list(struct.unpack_from(MAP_FMT, self.map, (x + y * MAPX) * MAP_SIZE))
@@ -3049,6 +3121,11 @@ def make_handler(world, sprites, page, minimap, ctl):
                 return self.js(world.quests_view())
             if u.path == '/api/merchants':
                 return self.js(world.merchants())
+            if u.path == '/api/waypoints':
+                r = world.waypoints_read()
+                for w in r['list']:
+                    w['haspic'] = '.png' in sprites.gfx.get(18400 + w['nr'], {})
+                return self.js(r)
             if u.path == '/api/deletedchars':          # backups of deleted characters (the game lists them: chardeleted)
                 if not (ctl and server_running()):
                     return self.js({'error': 'The game is not running.', 'files': []})
@@ -3100,6 +3177,42 @@ def make_handler(world, sprites, page, minimap, ctl):
                 return self.js({'rugs': world.rug_save(body.get('save'), body.get('delete'), body.get('rename'))})
             if u.path == '/api/clears':
                 return self.js({'msg': world.clears_save(body.get('clears') or [], ctl)})
+            if u.path == '/api/waypoints':
+                err, later = world.waypoints_save(body.get('list') or [], ctl)
+                if err:
+                    return self.js({'error': err})
+                r = world.waypoints_read()
+                for w in r['list']:
+                    w['haspic'] = '.png' in sprites.gfx.get(18400 + w['nr'], {})
+                r['msg'] = 'Waypoints saved: %d. %s' % (len(r['list']),
+                    'The game reads them at its next start (the running server is older).' if later else
+                    'The game has made the circles.' if server_running() else 'The game makes the circles when the server starts.')
+                if server_running() and not later:
+                    world.refresh_live()
+                return self.js(r)
+            if u.path == '/api/wppic':                  # the travel window's picture of a waypoint: a 64x32 PNG into the client's GFX folder
+                import base64
+                nr = int(body.get('nr', 0))
+                if not 1 <= nr <= 255:
+                    return self.js({'error': 'Save the waypoint first.'})
+                try:
+                    png = base64.b64decode(str(body.get('png', '')).split(',', 1)[-1])
+                except Exception:
+                    png = b''
+                if png[:8] != b'\x89PNG\r\n\x1a\n' or len(png) > 200000 or struct.unpack('>II', png[16:24]) != (64, 32):
+                    return self.js({'error': 'That is not a 64 x 32 picture.'})
+                d = os.path.join(sprites.client, 'GFX')
+                if not os.path.isdir(d):
+                    d = os.path.join(sprites.client, 'gfx')
+                if not os.path.isdir(d):
+                    return self.js({'error': 'The client folder has no GFX folder.'})
+                f = os.path.join(d, '%05d.png' % (18400 + nr))
+                with open(f, 'wb') as fh:
+                    fh.write(png)
+                sprites.gfx.setdefault(18400 + nr, {})['.png'] = f
+                with sprites.lock:
+                    sprites.cache.pop(18400 + nr, None)
+                return self.js({'msg': 'Picture saved as GFX\\%05d.png. Players get it with the next client update.' % (18400 + nr), 'sprite': 18400 + nr})
             if u.path == '/api/killquests':
                 return self.js({'msg': world.kills_save(body.get('kills') or [], ctl)})
             if u.path == '/api/kqgiver':

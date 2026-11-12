@@ -769,7 +769,7 @@ LRESULT CALLBACK MainWndProc(HWND hWnd, UINT message,WPARAM wParam, LPARAM lPara
 				if (b>=0) { if (!(lParam&(1<<30))) button_command(16+b); break; }
 			}
 			switch ((int)wParam) {
-				case    27:         cmd(CL_CMD_RESET,0,0); show_shop=0; noshop=QSIZE*12; xmove=0; break;	//ESC
+				case    27:         cmd(CL_CMD_RESET,0,0); show_shop=0; show_wp=0; noshop=QSIZE*12; xmove=0; break;	//ESC
 				case    'p':            if (keys) button_command(16);
 					else cmd(CL_CMD_MODE,2,0); break;		//F1
 				case    'q':            if (keys) button_command(17);

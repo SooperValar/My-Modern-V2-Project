@@ -2856,6 +2856,7 @@ void use_driver(int cn,int in,int carried)
                                 case 73:        ret=use_soul_crucible(cn,in); break;	// item tiers (tier.c)
                                 case 74:        ret=use_upgrade_stone(cn,in); break;
                                 case 75:        ret=talk_chest_open(cn,in); break;	// MyV2 chest (npctalk.c, set up in the MyV2 Editor)
+                                case 76:        ret=use_waypoint(cn,in); break;	// MyV2 waypoint (waypoint.c)
                                 /* CS, 991127: offering to shrines in Lab 8 */
                                 case 63:        ret=use_lab8_shrine(cn,in); break;
                                 /* CS, 991127: offering money to shrine in Lab 8 */

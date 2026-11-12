@@ -355,6 +355,13 @@ The design is in `docs/REBALANCE.md`.
 - **Solve count follows the players doing pentagrams.** It was players online + three random 0-19 (about 28 + everyone online, 54 after a server start), whatever they were doing. Now: for each player who activated a pentagram in the last 10 minutes and is still online (at least 1), 5 + a random 2 or 3 (rolled per round): 7-8 alone, 14-16 for two, 21-24 for three, 35-40 for five. Worked out at every activation, so it follows people joining and leaving; a solve starts a new round with nobody counted. Tunable: `PENTA_PER_PLAYER`, `PENTA_RECENT` in `use_driver.c`.
 - **No graves for empty pentagram enemies.** A pentagram enemy whose only belonging is its own weapon leaves no grave; it just vanishes after the death mist, like an NPC with nothing on it. Ones with something else (the Grolm Fighters/Warriors/Knights/Mages carry armor and gold, or a tier drop) still leave one.
 
+### Waypoints
+(Built Nov 11; live with the next server update and client 2.15.05.)
+- **A waypoint** is a 3 × 3 rune circle on the ground. Click it to find it ("You found the waypoint Aston, Crossroads."); from then on its circle glows blue for you (other players see it carved and grey until they find it themselves).
+- **Travel window**: clicking a waypoint opens a list of every waypoint: a small picture of the place, "Town, Place" and a short line; the ones you have not found show as "Unknown Location" / "???". Click a found one to travel there. Travel is free, and only works while you stand at a waypoint you have found. The mouse wheel or the arrows scroll the list; the X, Esc or walking away closes it. The place you are at is green.
+- The Ghost Companion comes along (as with every teleport). Labyrinth items vanish, as with a teleport.
+- Older clients (before 2.15.05) can find waypoints but are told to start the game with Launcher.exe to travel.
+
 ### Merchants
 - **Merchants are easy to see**: merchants (all 63 of them) had Stealth around 160, so players had to walk right up to them before they showed. Their Stealth is now ignored: they show from as far as any character with no Stealth (light and line of sight still count).
 - **Stock**: by default a merchant keeps in stock his sale list (at most 10 items) plus everything in his template's backpack, and restocks whenever his shop is opened. A merchant can also be given his own list (up to 240 items), his own prices and what he buys in the editor's [Merchants tab](#merchants-tab).
@@ -599,6 +606,13 @@ Map → **Merchants** (next to NPCs): every merchant (not the gods' shops), sear
 - **Gold**: the most he pays for one item (0 = his own gold).
 - **Go to**, **Apply** (writes `.dat/merchants.dat`, and the running game reads it at once), **Back to the game's own** (forgets his settings: his stock follows his NPC backpack and sale list again, normal prices). Merchants without own settings work as before.
 
+## Waypoints tab
+
+Map → **Waypoints**: the list of waypoints in the order of the travel window. **+ New waypoint** and a click on the map sets the middle of the circle; then its name ("Town, Place", up to 31 letters), the line under it (up to 34), and the look (**Rune circle**, or the **Pentagram** kept as a second look). **Move**, ▲ / ▼ (the order), **Delete**. **Save waypoints** writes `.dat/waypoints.dat`; a running game lays the circles at once (`wpreload`).
+- **Nothing is placed by hand**: the game makes the nine circle pieces itself on whatever floor is there, and removes them when the waypoint is deleted or moved. Build the floor and pillars around it with the other tabs (the short round pillar of Cody's example is the game's sprite 107). The nine tiles must be free of other objects; a tile that holds one gets no piece (logged).
+- **Take the picture from the map**: the travel window's picture of a waypoint is cut from the map as the editor shows it (128 × 64 map pixels around the circle, saved at 64 × 32 as `GFX\184NN.png`, NN = the waypoint's number). Players get it with the next client update; until then they see a stock picture.
+- A waypoint's number is never used again, so a new waypoint is never "found" by anybody. Deleting one takes it from everyone who found it.
+
 ## Quests page
 
 Rail: **Quests**. Every quest on one page.
@@ -677,6 +691,7 @@ The server source assumed a 32-bit Linux, where `long` and `time_t` are 4 bytes.
 - **Zones**: `zonereload` reads `.dat/zones.dat` again (or the built-in `area.c` table if there is none); `zone <x> <y>` shows the zone names at a spot and the place `#quest` would give.
 - **Items**: `give <player> <item template> [count]` (into the backpack; stacks merge), `items <player>` (the backpack with stack counts), `useslot <player> <slot>` (uses that backpack item as the player).
 - **Fights** (test server only, they really fight): `wear <player> <item template>|off` puts a new item straight into its worn slot and shows the main values (or takes everything off); `fighttest <player> <NPC template> <rounds> [back|kill]` gives the damage totals of the player hitting the NPC, of the NPC hitting the player (`back`, with the damage done back by thorns and frost and how often it was chilled), or fights until it dies (`kill`).
+- **Waypoints**: `wpreload` reads `.dat/waypoints.dat` again and remakes the circles; `wplist`; `wpfound <player> [all|none|<nr>]` shows what a player has found, or sets all / none / switches one; `wpuse <player> <x> <y>` as if the player clicked the circle piece there.
 - **Merchants**: `merchreload` reads `.dat/merchants.dat` again; `shop <player> <merchant template> [buy <slot>|sell <backpack slot>|page <38/39>|leave]` shows the shop as that player sees it, or buys, sells, turns a page or ends the remorse.
 
 ## Data changes
@@ -743,6 +758,7 @@ Unchanged except for the version number and the larger view: `merc.dat`, `.moa` 
 - **Item tooltips**: the client asks with `CL_CMD_ITEMINFO` (34), the server answers with 64-byte `SV_ITEMINFO` lines (75). Equipment compare: `tip_compare` in `svr_tick.c` writes the section and a hidden line (font 8, "W <slot> [<slot>]") naming the worn slots; the client (`engine.c` hud_tooltip, `socket.c`) reads it and asks for those worn tooltips while Shift is down.
 - **Buff timers**: a 20-byte `SV_SPELLTIME` packet (74) with each spell update.
 - **Glow**: `SV_TILEGLOW` (76: map tile, glow) and `SV_TIERS` (77: the tiers of the backpack and worn slots, or of the open shop / grave). The glow of a map tile is a new field in `struct cmap` on both sides; it scrolls with the map. In the clean HUD the panels behind items are drawn by the presenter (the framebuffer holds the transparent key colour there); the outline is blended with the panel colour, not the key, which had turned every colour pink.
+- **Waypoints** (`waypoint.c`): item driver 76 = a circle piece (made by the server from `.dat/waypoints.dat`, template 0, walkable, usable); `svr_tick.c` shows a player the lit sprite (+10) of the waypoints he found. `SV_WAYPOINT` (79, 80 bytes: row, rows, flags 1 found + 2 here, picture sprite, number, name 32, line 40), one per row, opens the window with the last row; `CL_CMD_WAYPOINT` (35: number) travels. Only sent to clients from 2.15.05 on. Found waypoints per character: `.dat/wpfound.dat` (256 bits a row, like `clears.dat`).
 - **Spell scroll marks**: `SV_ITEMMARKS` (78: a letter and a number per slot, for the backpack and worn slots or the open shop / grave), sent like `SV_TIERS`.
 
 ## Tools
@@ -752,7 +768,7 @@ Unchanged except for the version number and the larger view: `merc.dat`, `.moa` 
 - **`tools/claude-sync.sh`** syncs the server between Ubuntu (WSL) and the Windows copy: `send` (Ubuntu → Windows, keeps any newer Windows files), `get` (changed source files and the Makefile Windows → Ubuntu, with a backup, then `make server`), and `get-world` (world `.dat` files, server stopped).
 - `tools/world/`: scripts that read the world data directly: a full minimap render, a scan of every portal/teleport/ladder with a landing check, and a zone map. Reports are in `docs/`.
 - `tools/design/item_tier_samples.py` prints sample tier rolls (the same rules, for looking at numbers).
-- Build: `tier.c`, `godshop.c`, `merch.c`, `console.c` and `npctalk.c` are new files, so the Makefile changed.
+- Build: `tier.c`, `godshop.c`, `merch.c`, `console.c`, `npctalk.c` and `waypoint.c` are new files, so the Makefile changed.
 
 **Lab 11 layout sheet**
 - `tools/world/lab11/lab11_layout.xlsx`: one cell per tile with a short code (wall, water, shelf, lectern, gate, brazier, merchant, ...), coloured automatically, plus a Sections sheet with the rectangles that drain together, and codes for the shrine room (SW, SF, SC, SD). `lab11.py build` checks it (required swims, reachability) and turns it into the build spec; `lab11.py export` made the sheet from the first, generated layout (`draft_layout.py`).
@@ -767,6 +783,7 @@ Unchanged except for the version number and the larger view: `merc.dat`, `.moa` 
 - `tools/sprites/export_sprites.py`: exports a character's frames from `gx00`/`pnglib` to PNGs (colour key made transparent), e.g. to give the V2 Sprite Recolor Tool the base Templar, Harakim and Mercenary.
 - `tools/sprites/install_variant.py`: copies a recoloured set into `gfx/` right after the original (sprite numbers + 448).
 - New sprites from generated art (`tools/sprites/art/`, made with `tools/sprites/shrink_art.py`): **18140** an open parchment scroll and **18141** a weathered open book, ready for new items. The script cuts out the background, shrinks the object to sprite size and rounds the colours to the client's 16-bit palette.
+- **Waypoint circles** (`tools/sprites/draw_waypoint.py`; originals in `tools/sprites/art/waypoint/`): nine see-through ground pieces each, so they lie on any floor: rune circle 18300-18308 (lit, blue: 18310-18318), pentagram 18320-18328 (lit 18330-18338). The PNGs hold colour multiplied by alpha, as the client reads them. Travel window pictures (`draw_waypoint_pics.py`): 18340 "not found yet", 18341 stock picture; 18401-18655 = the picture of waypoint 1-255 (made in the editor).
 - Hourglass sprites 18121-18128 (`tools/sprites/draw_hourglass.py`); unlit brazier 18129 (`tools/sprites/draw_brazier_unlit.py`).
 - **Trees in Hide mode**: stumps 18190-18202 (`tools/sprites/art/stumps/`).
 - **Torn page sprites** 18170-18183 (`tools/sprites/art/pages/`), torn from one generated page into four pieces.

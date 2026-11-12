@@ -12,6 +12,7 @@ world, quests, the editor, the client and Discord. Merged Nov 10 from the old TO
 
 ## Up next (in order)
 
+0. ★ **Waypoints: update, test, publish** - [Systems](#2-gameplay-systems)
 1. ★ **Soulstone levels too low** (MAJOR) - [Fixes](#1-fixes-and-balance)
 2. ★ **Discord: online / rankings info and the game chat bridge** - [Discord](#9-discord-and-community)
 3. ★ **Walking speed, speed modes and attack speed** (look at it together first) - [Systems](#2-gameplay-systems)
@@ -25,7 +26,7 @@ world, quests, the editor, the client and Discord. Merged Nov 10 from the old TO
 - Quest rewards on the editor's Quests page, if he wants changes ([Quests](#6-quests)). (Order: Cody is happy with it, Nov 11.)
 - Checking the merchants in game: pages, selling + buying back, prices ([Items](#4-items-weapons-and-shops)).
 - Setting up the area clears (quest areas first) and the class rewards, when he wants.
-- An example of the waypoint window when we start waypoints.
+- Waypoints: "go" for the server update, try `merc_new.exe`, place the first waypoints ([Systems](#2-gameplay-systems)).
 
 ---
 
@@ -74,21 +75,20 @@ waits on `speedtab[speed][ctick]` (`svr_act.c` ~1079, `speedo` / `ch_act_speed`;
 The modes also cost endurance (fast drains it, `svr_do.c` ~4120-4137) and change Stealth (slow / normal sneak better,
 `svr_do.c` ~3710). To decide: separate walk and attack speed, how much stats should matter, what the modes cost / give.
 
-### ● Waypoints (was #13; + clan pentagrams, Nov 10)
-Like portals, but using one opens a window (client GUI) listing the destinations. A player must find (visit) each
-waypoint before travel to it is unlocked; travel is free. Needs: waypoint objects placed in the world, a per-character
-list of found waypoints (saved with the character), a server message that opens the window with the list and one that
-sends the choice back (new SV_/CL_ messages, client and server, so a client update and maybe a MINVERSION raise), and
-placing them in the editor.
-- **New idea (Nov 10):** use the **clan pentagrams** as waypoints. First check whether they are used anywhere now.
-  They would need an "active" look (Cody hopes blue), maybe a bigger multi-tile sprite: Cody would love a 3x3 circle /
-  pentagram.
-- **Reference** (Cody's examples): `docs/ref/waypoint_example_1_shrine.png` - a square light stone platform with four
-  short round pillars at the corners and a small glowing blue rune circle in the middle;
-  `docs/ref/waypoint_example_2_window.png` - the travel window: a scrolling list, one row per waypoint with a small
-  picture of the place on the left, then "Town, Place" (e.g. "Aston, Crossroads") and a short quoted line under it
-  ("Between ivory and violet."); waypoints not found yet show as "Unknown Location" / "???" with a grey question-mark
-  picture; scroll arrows on the right; an empty text / info box under the list.
+### ★ Waypoints (was #13): built Nov 11, waiting for the update and Cody's test
+Built (CHANGES.md "Waypoints", "Waypoints tab"): server `waypoint.c`, client 2.15.05 (`Client\merc_new.exe`, not published),
+the editor's Waypoints tab, the circle sprites. Tried on the test server (console) and the editor (browser test); **the
+travel window itself has not been seen in a running game yet**.
+Cody's choices (Nov 11): rune circle (design B) as the waypoint, the pentagram (A) kept as a second look; a see-through
+3 x 3 circle on any floor, pillars / platform built by hand; click to open; pictures from the map; no other rules.
+**Left:**
+- Cody: "go" for the update-code restart; swap in `merc_new.exe`; place the first waypoints (editor) and try them.
+- After his test: publish client 2.15.05 (with the circle sprites and the pictures), raise `CLIENT_LATEST` to 0x020F05.
+- Maybe: light from the circle at night (it has none now), a sound, a `#waypoints` list, the dim circle a bit stronger
+  on dark floors.
+- The old **Clan Pentagram** (item 7495 at 469,523, template 587; also template 570; sprite 761, the green 760 and red
+  762 are unused) still runs the Lab 13 portal check when stepped on (its driver number 38 was reused): remove it or
+  make that spot a waypoint. Cody decides.
 
 ### ● Weapon, ring and Harakim rebalance: what is left (was #11)
 Live Nov 4 (see `docs/REBALANCE.md` and CHANGES "Rebalance"): Two-Handed now Agility-based, sword deflect / axe crit.
@@ -96,7 +96,8 @@ Still open:
 - **Summoner's staff** (Harakim: dagger / spell book for casters, staff for summoners; spells Willpower-focused,
   summoning Intelligence-focused). Pictures in `docs/ref`.
 - **Rings**: Agility rings on par with the Strength emerald rings; look over the whole ring list.
-- **Ghost Companion follows its Harakim** through portals and teleports (also recall, lab exits, `#recall`?).
+- ~~Ghost Companion follows its Harakim~~: already done (`companion_follow` in `god_transfer_char`: portals, teleports,
+  recall, scrolls, waypoints). Only check lab exits if Cody sees it stay behind somewhere.
 
 ### ○ Peacekeeper as an editable flag (new, Nov 10)
 Cody: how do town NPCs summon a Peacekeeper; make it a flag so it can be set on town NPCs.

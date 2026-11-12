@@ -783,6 +783,7 @@ function draw() {
       for (let x = Math.min(rect.a.x, rect.b.x); x <= Math.max(rect.a.x, rect.b.x); x++) { diamond(x, y, ctx); ctx.fill(); }
   }
   zonesOverlay(ctx);
+  waypointsOverlay(ctx);
   if (clip && tool === 'copy' && hover && !rect) {      // where a paste would go
     const b = [hover.x, hover.y, hover.x + clip.w - 1, hover.y + clip.h - 1];
     zoneBoxPath(b, ctx); ctx.fillStyle = 'rgba(111,176,255,.16)'; ctx.fill();
@@ -869,7 +870,7 @@ function toggleWorld(on) {
 
 // ---------------------------------------------------------------- left panel
 let npcSub = 'world', newNpc = null;    // NPCs tab: In the world / Blueprints; the + New NPC form
-const TABS = { builder: 'Builder', floors: 'Floors', areas: 'Areas', walls: 'Walls', objects: 'Objects', items: 'Items', npcs: 'NPCs', merchants: 'Merchants', flags: 'Flags', zones: 'Zones' };
+const TABS = { builder: 'Builder', floors: 'Floors', areas: 'Areas', walls: 'Walls', objects: 'Objects', items: 'Items', npcs: 'NPCs', merchants: 'Merchants', flags: 'Flags', zones: 'Zones', waypoints: 'Waypoints' };
 const TAB_ICONS = {      // the editor's own icons, same set as the toolbar
   builder: '<path d="M14 4l6 6-3 3-6-6z"/><path d="M11 7 3.5 14.5a2 2 0 0 0 0 2.8l3.2 3.2a2 2 0 0 0 2.8 0L17 13"/>',
   floors: '<path d="M12 4 21 9.5 12 15 3 9.5z" fill="currentColor" fill-opacity=".25"/><path d="M12 4 21 9.5 12 15 3 9.5z"/><path d="M3 13.5 12 19l9-5.5" opacity=".6"/>',
@@ -880,6 +881,7 @@ const TAB_ICONS = {      // the editor's own icons, same set as the toolbar
   flags: '<path d="M5 21V3"/><path d="M5 4h13l-3 4 3 4H5"/>',
   areas: '<path d="M7 3 3.5 10h7z"/><path d="M7 10v4"/><circle cx="16.5" cy="8" r="3.5"/><path d="M16.5 11.5V15"/><path d="M2 18c3-2 6-2 10 0s7 2 10 0" opacity=".7"/><path d="M2 21.5c3-2 6-2 10 0s7 2 10 0" opacity=".4"/>',
   zones: '<path d="M3 4h9v6h9v10H3z" fill="currentColor" fill-opacity=".22"/><path d="M3 4h9v6h9v10H3z"/><path d="M12 10v4H3" stroke-dasharray="2 2" opacity=".7"/>',
+  waypoints: '<ellipse cx="12" cy="14" rx="9" ry="5"/><ellipse cx="12" cy="14" rx="5" ry="2.6" opacity=".7"/><path d="M12 3v8M9 6l3-3 3 3"/>',
   title: '<path d="M12 3 21 12 12 21 3 12z"/>',
   merchants: '<path d="M5 8h14l-1.2 12H6.2z" fill="currentColor" fill-opacity=".22"/><path d="M5 8h14l-1.2 12H6.2z"/><path d="M9 8V6.5a3 3 0 0 1 6 0V8"/>',
 };
@@ -1258,6 +1260,8 @@ function leftUI() {
       merchantsTab(w, sect, q);
     } else if (tab === 'zones') {
       zonesTab(w, sect, match);
+    } else if (tab === 'waypoints') {
+      waypointsTab(w, sect, match);
     } else if (tab === 'flags') {
       flagControls(w, sect);
       sect('Pick a flag'); lazy(grid(), FLAGS.map((f, i) => i).filter(i => match(FLAGS[i], '')), cellFlag);
@@ -1954,6 +1958,109 @@ function zonesTab(w, sect, match) {
     r.firstChild.firstChild.textContent = z.name;
     r.firstChild.lastChild.textContent = `${ZFLAG[z.flag]} · ${z.boxes.length} box${z.boxes.length === 1 ? '' : 'es'}`;
     r.onclick = () => { zoneSel = i; if (zoneDraw) zoneArm(false); leftUI(); zoneGo(z); redrawTop(); };
+    return r;
+  });
+}
+// ---- waypoints (Waypoints tab): a 3x3 circle players click to travel between the ones they have found.
+// Saved to .dat/waypoints.dat; the game makes the nine circle pieces itself ("wpreload"), so nothing is placed by hand:
+// build the floor and pillars around the spot with the other tabs. The picture of the travel window is taken from the map.
+let WP = null, wpSel = -1, wpDirty = false, wpPlace = 0, wpLoading = false;     // wpPlace: 1 = the next map click places a new one, 2 = moves the picked one
+async function wpLoad() {
+  if (wpLoading) return; wpLoading = true;
+  try { const r = await api('/api/waypoints'); WP = r.list || []; wpDirty = false; if (wpSel >= WP.length) wpSel = -1; } finally { wpLoading = false; }
+  leftUI(); redrawTop();
+}
+function wpArm(v) { wpPlace = v; if (v) cv.style.cursor = 'crosshair'; else setTool(tool); }
+function wpChanged() { wpDirty = true; leftUI(); redrawTop(); }
+function wpFree(x, y, me) { return !WP.some(w => w !== me && Math.abs(w.x - x) <= 2 && Math.abs(w.y - y) <= 2); }
+function wpClick(x, y) {
+  if (wpPlace) {
+    if (x < 2 || y < 2 || x > 1021 || y > 1021) return toast('Too close to the edge of the map.', true);
+    const me = wpPlace === 2 ? WP[wpSel] : null;
+    if (!wpFree(x, y, me)) return toast('Too close to another waypoint.', true);
+    if (me) { me.x = x; me.y = y; toast(`${me.name} moved to ${x},${y}. Save to move the circle in the game.`); }
+    else {
+      let n = 'New waypoint', k = 2; while (WP.some(w => w.name.toLowerCase() === n.toLowerCase())) n = 'New waypoint ' + k++;
+      WP.push({ nr: 0, x, y, look: 0, pic: 0, name: n, line: '' }); wpSel = WP.length - 1;
+      toast('Waypoint placed: give it a name and a line, then Save waypoints.');
+    }
+    wpArm(0); wpChanged(); return;
+  }
+  wpSel = WP.findIndex(w => Math.abs(w.x - x) <= 1 && Math.abs(w.y - y) <= 1);
+  leftUI(); redrawTop();
+}
+function waypointsOverlay(c) {
+  if (mode !== 'map' || tab !== 'waypoints' || !WP) return;
+  WP.forEach((w, i) => {
+    zoneBoxPath([w.x - 1, w.y - 1, w.x + 1, w.y + 1], c);
+    c.fillStyle = i === wpSel ? 'rgba(111,176,255,.30)' : 'rgba(111,176,255,.12)'; c.fill();
+    c.lineWidth = (i === wpSel ? 2 : 1.2) / zoom; c.strokeStyle = i === wpSel ? '#6fb0ff' : 'rgba(111,176,255,.7)'; c.stroke();
+  });
+  if (wpPlace && hover) { zoneBoxPath([hover.x - 1, hover.y - 1, hover.x + 1, hover.y + 1], c); c.setLineDash([6 / zoom, 4 / zoom]); c.lineWidth = 2 / zoom; c.strokeStyle = '#ffd36a'; c.stroke(); c.setLineDash([]); }
+}
+async function wpShot(w) {        // the travel window's picture: 128 x 64 map pixels around the circle, at half size
+  if (!w.nr || wpDirty) return toast('Save the waypoints first.', true);
+  const s = tileToScreen(w.x, w.y), zw = 128 * zoom, zh = 64 * zoom, sx = s.sx - zw / 2, sy = s.sy - zh / 2 - 10 * zoom;
+  if (sx < 0 || sy < 0 || sx + zw > W || sy + zh > H || zoom < 1) { if (zoom < 1) { zoom = 1; } centerOn(w.x, w.y); return toast('The map now shows the waypoint: check the picture area is what you want (grid and flags off), then click again.'); }
+  if (needDraw || baseDirty) return toast('The map is still drawing: click again in a moment.');
+  const c = document.createElement('canvas'); c.width = 64; c.height = 32;
+  const g = c.getContext('2d'); g.imageSmoothingEnabled = true; g.imageSmoothingQuality = 'high';
+  g.drawImage(base, sx, sy, zw, zh, 0, 0, 64, 32);
+  const r = await api('/api/wppic', { nr: w.nr, png: c.toDataURL('image/png') });
+  if (r.error) return toast(r.error, true);
+  w.haspic = true; sprites.delete(r.sprite); toast(r.msg); leftUI();
+}
+function waypointsTab(w, sect, match) {
+  if (!WP) { wpLoad(); w.insertAdjacentHTML('beforeend', '<div class="empty">Loading…</div>'); return; }
+  const top = document.createElement('div'); top.style.cssText = 'display:flex;gap:6px;margin-bottom:8px';
+  top.innerHTML = `<button class="btn ${wpPlace === 1 ? 'pri' : 'sec'} nw">${wpPlace === 1 ? 'Click the map…' : '+ New waypoint'}</button><span style="flex:1"></span>
+    <button class="btn sec rv" ${wpDirty ? '' : 'disabled'} title="Forget the changes since the last save">Undo changes</button>
+    <button class="btn pri sv" ${wpDirty ? '' : 'disabled'}>Save waypoints</button>`;
+  top.querySelector('.nw').onclick = () => { wpArm(wpPlace === 1 ? 0 : 1); leftUI(); if (wpPlace) toast('Click the tile that will be the middle of the circle (3 x 3 tiles). Esc cancels.'); };
+  top.querySelector('.rv').onclick = () => { if (!confirm('Forget your waypoint changes?')) return; WP = null; wpSel = -1; wpArm(0); leftUI(); redrawTop(); };
+  top.querySelector('.sv').onclick = async () => {
+    const name = WP[wpSel] && WP[wpSel].name;
+    const r = await api('/api/waypoints', { list: WP });
+    if (r.error) return toast(r.error, true);
+    WP = r.list; wpDirty = false; wpSel = WP.findIndex(q => q.name === name); wpArm(0);
+    toast(r.msg); leftUI(); redraw();
+  };
+  w.appendChild(top);
+  if (wpDirty) w.insertAdjacentHTML('beforeend', '<div class="hint" style="padding:6px 8px;margin-bottom:8px;border:1px solid #ffd36a;border-radius:6px;color:#ffd36a">Unsaved waypoint changes: the game doesn\'t see them until you click <b>Save waypoints</b>.</div>');
+  w.insertAdjacentHTML('beforeend', `<div class="hint" style="padding:0 2px 8px">A waypoint is a 3 × 3 circle on the ground. A player who clicks it has found it and can travel, for free, between the waypoints they found. <b>The game lays the circle itself</b> on whatever floor is there when you save (and takes it away when you delete or move the waypoint): build the floor and pillars around it with the other tabs. The nine tiles must be free of other objects. The list order is the order of the travel window.</div>`);
+  const p = WP[wpSel];
+  if (p) {
+    const ed = document.createElement('div'); ed.className = 'newnpc'; ed.style.marginBottom = '10px';
+    ed.innerHTML = `<div class="lb">Name ("Town, Place")</div><input type="text" maxlength="31" class="wn">
+      <div class="lb">Line under it</div><input type="text" maxlength="34" class="wl" placeholder='"Between ivory and violet."'>
+      <div class="lb">Look</div><div class="seg wk"><button data-k="0" class="${p.look ? '' : 'on'}">Rune circle</button><button data-k="1" class="${p.look ? 'on' : ''}">Pentagram</button></div>
+      <div class="hint ws"></div>
+      <div style="display:flex;gap:6px;margin:6px 0;flex-wrap:wrap"><button class="btn ${wpPlace === 2 ? 'pri' : 'sec'} mv">${wpPlace === 2 ? 'Click the map…' : 'Move'}</button><button class="btn sec up" title="Earlier in the travel window">▲</button><button class="btn sec dn" title="Later in the travel window">▼</button><span style="flex:1"></span><button class="btn sec danger dl">Delete</button></div>
+      <div class="lb">Picture in the travel window</div>
+      <div style="display:flex;gap:10px;align-items:center;margin-bottom:4px"><span class="wp" style="width:128px;height:64px;border:1px solid var(--line);background:#111;display:inline-block;flex:none"></span><button class="btn sec sh" style="flex:1">Take the picture from the map</button></div>
+      <div class="hint">The picture is the map as you see it around the circle (64 × 32, sprite ${p.nr ? 18400 + p.nr : '18400 + its number'}). Take it again after you change the place. Players get it with the next client update; until then they see a stock picture.</div>`;
+    const wn = ed.querySelector('.wn'), wl = ed.querySelector('.wl'); wn.value = p.name; wl.value = p.line;
+    ed.querySelector('.ws').textContent = `Middle at ${p.x},${p.y}${p.nr ? ' · number ' + p.nr : ' · not saved yet'}`;
+    if (p.haspic && p.nr) { const im = new Image(); im.src = '/sprite/' + (18400 + p.nr) + '?' + Date.now(); im.style.cssText = 'width:128px;height:64px;image-rendering:pixelated'; ed.querySelector('.wp').appendChild(im); }
+    wn.onchange = () => { const n = wn.value.replace(/\s+/g, ' ').trim(); if (!n) { wn.value = p.name; return toast('A waypoint needs a name.', true); } p.name = n; wpChanged(); };
+    wl.onchange = () => { p.line = wl.value.replace(/\s+/g, ' ').trim(); wpChanged(); };
+    ed.querySelectorAll('.wk button').forEach(b => b.onclick = () => { p.look = +b.dataset.k; wpChanged(); });
+    ed.querySelector('.mv').onclick = () => { wpArm(wpPlace === 2 ? 0 : 2); leftUI(); if (wpPlace) toast('Click the new middle tile. Esc cancels.'); };
+    ed.querySelector('.up').onclick = () => { if (wpSel > 0) { WP.splice(wpSel - 1, 0, WP.splice(wpSel, 1)[0]); wpSel--; wpChanged(); } };
+    ed.querySelector('.dn').onclick = () => { if (wpSel < WP.length - 1) { WP.splice(wpSel + 1, 0, WP.splice(wpSel, 1)[0]); wpSel++; wpChanged(); } };
+    ed.querySelector('.dl').onclick = () => { if (!confirm(`Delete the waypoint ${p.name}? Players who found it lose it; a new one in the same place must be found again.`)) return; WP.splice(wpSel, 1); wpSel = -1; wpArm(0); wpChanged(); };
+    ed.querySelector('.sh').onclick = () => wpShot(p);
+    w.appendChild(ed);
+  }
+  const list = WP.map((z, i) => [z, i]).filter(([z]) => match(z.name, ''));
+  sect(`${list.length} waypoint${list.length === 1 ? '' : 's'} · in the order of the travel window · click to pick and go there`);
+  const box = document.createElement('div'); box.className = 'list'; w.appendChild(box);
+  lazy(box, list, ([z, i]) => {
+    const r = document.createElement('div'); r.className = 'row' + (i === wpSel ? ' sel' : '');
+    r.innerHTML = '<div style="flex:1;min-width:0"><div></div><div class="n"></div></div>';
+    r.firstChild.firstChild.textContent = z.name;
+    r.firstChild.lastChild.textContent = `${z.line || 'no line'} · ${z.x},${z.y}${z.nr ? '' : ' · new'}${z.nr && !z.haspic ? ' · no picture' : ''}`;
+    r.onclick = () => { wpSel = i; wpArm(0); leftUI(); centerOn(z.x, z.y); };
     return r;
   });
 }
@@ -3360,6 +3467,7 @@ cv.addEventListener('mousedown', e => {
   if (e.button !== 0) return;
   if (areaLearn) { rect = { a: t, b: t, learn: true }; redrawTop(); return; }
   if (rugLearn) { rect = { a: t, b: t, rug: true }; redrawTop(); return; }
+  if (mode === 'map' && tab === 'waypoints' && WP && !destPick && !tplPick && !npcPick) { wpClick(t.x, t.y); return; }
   if (mode === 'map' && tab === 'zones' && Z && !destPick && !tplPick && !npcPick) {
     if (e.altKey && !zoneDraw) zoneAltClick(t.x, t.y); else { rect = { a: t, b: t, zone: true }; redrawTop(); }
     return;
@@ -3464,6 +3572,7 @@ window.addEventListener('keydown', e => {
   if (k === ' ') { spaceDown = true; cv.style.cursor = 'grab'; e.preventDefault(); return; }
   if (k === 'escape') { if (tool === 'copy' && clip) { clip = null; redrawTop(); toast('Copy forgotten: drag to copy another area.'); return; }
     if (zoneDraw) { zoneArm(false); rect = null; leftUI(); redrawTop(); toast('Stopped adding boxes.'); return; }
+    if (wpPlace) { wpArm(0); leftUI(); toast('Cancelled.'); return; }
     if (rugLearn) { rugLearn = false; rect = null; setTool(tool); redrawTop(); toast('Cancelled.'); return; }
     if (areaLearn) { areaLearn = false; rect = null; setTool(tool); redrawTop(); toast('Cancelled.'); return; }
     if (destPick || npcPick) { destPick = npcPick = null; setTool(tool); toast('Cancelled.'); return; } toggleWorld(false); rect = null; selTile = null; redrawTop(); return; }

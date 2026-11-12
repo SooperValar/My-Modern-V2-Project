@@ -697,6 +697,56 @@ static void hud_shopwindow(void)
 	if (pl.citem && shop.pl_price) dd_xputtext(x+6,y+8*35+18,1,"Buy:  %dG %dS",shop.pl_price/100,shop.pl_price%100);
 }
 
+/* waypoint travel window: every waypoint, one a row: its picture, "Town, Place" and its line; the ones not
+ * found yet as "Unknown Location". Click a found one to travel there. */
+static void hud_wpwindow(void)
+{
+	int x=HW_X,y=HW_Y,r,i,n,found=0,hl,font;
+	unsigned short col;
+	struct wp_row *w;
+	char buf[80];
+
+	dd_hud_vclip(x,y,HW_W,HW_H);
+	col=(unsigned short)((((HUD_RGB_PANEL>>16)&255)>>3)<<11 | (((HUD_RGB_PANEL>>8)&255)>>2)<<5 | ((HUD_RGB_PANEL&255)>>3));
+	dd_hud_fill(x,y,HW_W,HW_H,col);
+	dd_hud_panel(x,y,HW_W,HW_H);
+	for (r=1; r<=HW_ROWS; r++) dd_hud_hline(x,y+r*HW_ROWH,r==HW_ROWS ? HW_W : HW_LISTW);
+	dd_hud_vline(x+HW_LISTW,y,HW_ROWS*HW_ROWH+2);
+	dd_hud_vline1(x+68,y,HW_ROWS*HW_ROWH);
+	dd_hud_hline(x+HW_LISTW,y+16,16);			// close box
+	ctext(x+HW_LISTW+2,12,y+4,0,"x");
+	hud_scroll(x+HW_LISTW,y+16,HW_ROWS*HW_ROWH-16+2,wp_pos,max(0,wp_count-HW_ROWS));
+
+	for (n=0; n<wp_count; n++) if (wp_rows[n].flags&1) found++;
+	for (r=0; r<HW_ROWS; r++) {
+		i=wp_pos+r;
+		if (i>=wp_count) break;
+		w=&wp_rows[i];
+		hl=(hightlight==HL_WAYPOINT && hightlight_sub==i && (w->flags&3)==1);
+		if (!(w->flags&1)) {
+			copyspritex(WP_SPR_UNKNOWN,x+3,y+r*HW_ROWH+2,0);
+			dd_puttext(x+74,y+r*HW_ROWH+7,1,"Unknown Location");
+			dd_puttext(x+74,y+r*HW_ROWH+19,1,"\"???\"");
+			continue;
+		}
+		copyspritex(w->picok ? w->pic : WP_SPR_STOCK,x+3,y+r*HW_ROWH+2,hl ? 16 : 0);
+		font=(w->flags&2) ? 2 : (hl ? 3 : 1);
+		dd_puttext(x+74,y+r*HW_ROWH+7,font,w->name);
+		dd_puttext(x+74,y+r*HW_ROWH+19,font,w->line);
+	}
+
+	// the box under the list: what a click would do
+	i=(hightlight==HL_WAYPOINT) ? hightlight_sub : -1;
+	if (i>=0 && i<wp_count) {
+		w=&wp_rows[i];
+		if (!(w->flags&1)) strcpy(buf,"You have not found this waypoint yet.");
+		else if (w->flags&2) strcpy(buf,"You are here.");
+		else sprintf(buf,"Travel to %s.",w->name);
+	} else sprintf(buf,"Waypoints found: %d of %d.",found,wp_count);
+	dd_puttext(x+8,y+HW_ROWS*HW_ROWH+8,1,buf);
+	if (i<0 || i>=wp_count) dd_puttext(x+8,y+HW_ROWS*HW_ROWH+20,1,"Click a waypoint to travel there.");
+}
+
 static void hud_bar(int x,int y,int w,unsigned int rgb)
 {
 	if (w>124) w=124;
@@ -905,6 +955,14 @@ void hud_draw_v2(int init,unsigned short *mapmem,int map_x,int map_y)
 
 		// --- shop window (centered)
 		if (show_shop) { if (hud_theme==2) hud_shopwindow(); else dd_hud_from_legacy(HSH_LX,HSH_LY,HSH_LW,HSH_LH,HSH_X,HSH_Y); }
+
+		// --- waypoint travel window (in the same place); it closes when the player walks away
+		if (show_wp) {
+			static int wx=0,wy=0;
+			if (wp_new) { wp_new=0; wx=map_x; wy=map_y; }
+			if (show_shop || abs(map_x-wx)>3 || abs(map_y-wy)>3) show_wp=0;
+			else hud_wpwindow();
+		}
 	} else if (do_exit) {
 		// logged out (e.g. walked into a tavern): keep the Exit button, like the
 		// original, so the player can read the reason in the chat and then leave

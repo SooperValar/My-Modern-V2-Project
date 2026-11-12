@@ -360,6 +360,27 @@ static void con_cmd(char *line)
 		out("  %s: %s\n",ch_temp[t].name,gb);
 		return;
 	}
+	if (!strcmp(w[0],"wpreload")) {	// read .dat/waypoints.dat again (the editor's Waypoints tab) and remake the circles
+		n=wp_load();
+		if (n<0) out("  waypoints.dat could not be read; the waypoints stay as they were.\n");
+		else out("  Waypoints loaded: %d.\n",n);
+		return;
+	}
+	if (!strcmp(w[0],"wplist")) { wp_console_list(out); return; }
+	if (!strcmp(w[0],"wpuse")) {	// wpuse <player> <x> <y>: as if the player clicked the circle piece there
+		int pl,x=atoi(w[2]),y=atoi(w[3]),in;
+		if (!(pl=con_player(w[1]))) return;
+		if (!SANEXY(x,y) || !(in=map[x+y*MAPX].it) || it[in].driver!=76) { out("  No waypoint piece on %d,%d.\n",x,y); return; }
+		out("  use_waypoint: %d\n",use_waypoint(pl,in));
+		wp_console_found(pl,"",out);
+		return;
+	}
+	if (!strcmp(w[0],"wpfound")) {	// wpfound <player> [all | none | <nr>]: show / change what a player has found
+		int pl;
+		if (!(pl=con_player(w[1]))) return;
+		wp_console_found(pl,w[2],out);
+		return;
+	}
 	if (!strcmp(w[0],"merchreload")) {	// read .dat/merchants.dat again (the editor's Merchants tab)
 		n=merch_load();
 		out("  Merchants loaded: %d merchant%s with their own settings.\n",n,n==1 ? "" : "s");
@@ -438,6 +459,9 @@ static void con_cmd(char *line)
 		    "  talkreload                    read the NPC dialogue file again\n"
 		    "  zonereload                    read the zones (.dat/zones.dat) again\n"
 		    "  merchreload                   read the merchants (.dat/merchants.dat) again\n"
+		    "  wpreload / wplist             read the waypoints (.dat/waypoints.dat) again / list them\n"
+		    "  wpfound <player> [all|none|<nr>]   the waypoints a player has found; set all, none, or switch one\n"
+		    "  wpuse <player> <x> <y>        try clicking the waypoint piece there\n"
 		    "  charreset <nr> <name>         make an offline player a brand new character (keeps name, password, class, rights)\n"
 		    "  chardelete <nr> <name>        delete an offline player (a backup goes to .dat/mapedit-backups/deleted)\n"
 		    "  chardeleted / charrestore <file>   list the deleted characters' backups / bring one back\n"

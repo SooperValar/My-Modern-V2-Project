@@ -21,7 +21,7 @@ in the browser that can edit the running game live).
 | What | Where |
 |---|---|
 | Live game server (runs here) | Ubuntu in WSL, home folder `/home/cody` (`~`): `./server`, sources, `.dat/` (world data) |
-| Windows copy of the server source (Claude edits this) | `C:\Users\Cody\Desktop\MyV2\Server` (= `$HOME/mnt/Server` in Claude's device shell) |
+| Windows copy of the server source (Claude edits this) | `C:\Users\Cody\Desktop\MyV2\Server` (= `$HOME/mnt/MyV2/Server` in Claude's device shell when Cody adds the whole `MyV2` folder, which is the easy way: one "Add folder" covers Server, Client and the project; `$HOME/mnt/Server` if he adds it alone) |
 | Client (what Cody plays) | `C:\Users\Cody\Desktop\MyV2\Client` (`merc.exe`, `Launcher.exe`, `GFX\`, `sfx\`, `gx00.*`, `pnglib.*`) |
 | Git project (GitHub, public) | `C:\Users\Cody\Desktop\MyV2\Client\Claude outputs\My-Modern-V2-Project` = github.com/SooperValar/My-Modern-V2-Project |
 | Player download | `Client\For Players\Mercenaries-of-Asgard-v2.zip` (rebuilt by `publish_client.py`); public link: the GitHub release, see HOSTING.md |
@@ -190,6 +190,17 @@ stopped via `stop-send`, then `update-world` and `reload-editor`):
 - `merc.exe` can't be replaced while the game is open.
 
 ## Open items (details in docs/TODO.md and docs/HOSTING.md)
+
+**Nov 11 (later): waypoints built, NOT live yet.** Server (`waypoint.c` + small changes in `client.h`, `funcs.h`, `use_driver.c`,
+`svr_tick.c`, `console.c`, `server.c`, `Makefile`; both source copies match), client 2.15.05 (`Client\merc_new.exe`, not
+published), the editor's Waypoints tab (new `mapedit.py` is in the Server folder; it shows after `reload-editor`), circle
+sprites 18300-18341 (already in `Client\GFX`). Next: Cody's "go" -> `update-code`; `reload-editor`; Cody swaps in
+`merc_new.exe`, places waypoints in the editor (Waypoints tab: the game lays the circles itself) and tries them; then
+publish 2.15.05 and raise `CLIENT_LATEST`. The travel window has not been seen running yet (the client can't be run in
+Claude's workspace): expect small layout fixes. Console: `wpreload`, `wplist`, `wpfound`, `wpuse`. Details: TODO.md
+"Waypoints", CHANGES.md "Waypoints". A test server can be built in Claude's device shell (`~/ctest`, gcc is there); it
+is gone with each new session. Claude's own request for the Server / Client folders was refused automatically: Cody adds
+the `MyV2` folder with "Add folder".
 
 **Nov 11:** kill quests built (Quests page box, server `npctalk.c` "kill quests", `#kills`); see CHANGES.md "Kill quests".
 Cody makes the first ones and tries them.
