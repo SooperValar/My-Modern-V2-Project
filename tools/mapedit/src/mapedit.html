@@ -1998,6 +1998,35 @@ function waypointsOverlay(c) {
   });
   if (wpPlace && hover) { zoneBoxPath([hover.x - 1, hover.y - 1, hover.x + 1, hover.y + 1], c); c.setLineDash([6 / zoom, 4 / zoom]); c.lineWidth = 2 / zoom; c.strokeStyle = '#ffd36a'; c.stroke(); c.setLineDash([]); }
 }
+// your own picture (a screenshot): any image, cut to 2:1 around its middle and saved at 64 x 32
+async function wpOwnPic(w, blob) {
+  if (!w.nr || wpDirty) return toast('Save the waypoints first.', true);
+  let im;
+  try { im = await createImageBitmap(blob); } catch (e) { return toast('That is not a picture.', true); }
+  let sw = im.width, sh = im.height;
+  if (sw > sh * 2) sw = sh * 2; else sh = sw / 2;
+  const c = document.createElement('canvas'); c.width = 64; c.height = 32;
+  const g = c.getContext('2d'); g.imageSmoothingEnabled = true; g.imageSmoothingQuality = 'high';
+  g.fillStyle = '#000'; g.fillRect(0, 0, 64, 32);
+  // big screenshots: halve in steps, so the small picture stays clean
+  let src = im, w0 = sw, h0 = sh, x0 = (im.width - sw) / 2, y0 = (im.height - sh) / 2;
+  while (w0 > 256) {
+    const t = document.createElement('canvas'); t.width = Math.round(w0 / 2); t.height = Math.round(h0 / 2);
+    const tg = t.getContext('2d'); tg.imageSmoothingQuality = 'high'; tg.drawImage(src, x0, y0, w0, h0, 0, 0, t.width, t.height);
+    src = t; w0 = t.width; h0 = t.height; x0 = 0; y0 = 0;
+  }
+  g.drawImage(src, x0, y0, w0, h0, 0, 0, 64, 32);
+  const r = await api('/api/wppic', { nr: w.nr, png: c.toDataURL('image/png') });
+  if (r.error) return toast(r.error, true);
+  w.haspic = true; sprites.delete(r.sprite); toast(r.msg); leftUI();
+}
+document.addEventListener('paste', e => {      // Ctrl+V on the Waypoints tab: a screenshot from the clipboard becomes the picked waypoint's picture
+  if (mode !== 'map' || tab !== 'waypoints' || !WP || !WP[wpSel]) return;
+  if (e.target && /^(INPUT|TEXTAREA)$/.test(e.target.tagName)) return;
+  const it = [...(e.clipboardData ? e.clipboardData.items : [])].find(i => i.type.startsWith('image/'));
+  if (!it) return;
+  e.preventDefault(); wpOwnPic(WP[wpSel], it.getAsFile());
+});
 async function wpShot(w) {        // the travel window's picture: 128 x 64 map pixels around the circle, at half size
   if (!w.nr || wpDirty) return toast('Save the waypoints first.', true);
   const s = tileToScreen(w.x, w.y), zw = 128 * zoom, zh = 64 * zoom, sx = s.sx - zw / 2, sy = s.sy - zh / 2 - 10 * zoom;
@@ -2037,8 +2066,9 @@ function waypointsTab(w, sect, match) {
       <div class="hint ws"></div>
       <div style="display:flex;gap:6px;margin:6px 0;flex-wrap:wrap"><button class="btn ${wpPlace === 2 ? 'pri' : 'sec'} mv">${wpPlace === 2 ? 'Click the map…' : 'Move'}</button><button class="btn sec up" title="Earlier in the travel window">▲</button><button class="btn sec dn" title="Later in the travel window">▼</button><span style="flex:1"></span><button class="btn sec danger dl">Delete</button></div>
       <div class="lb">Picture in the travel window</div>
-      <div style="display:flex;gap:10px;align-items:center;margin-bottom:4px"><span class="wp" style="width:128px;height:64px;border:1px solid var(--line);background:#111;display:inline-block;flex:none"></span><button class="btn sec sh" style="flex:1">Take the picture from the map</button></div>
-      <div class="hint">The picture is the map as you see it around the circle (64 × 32, sprite ${p.nr ? 18400 + p.nr : '18400 + its number'}). Take it again after you change the place. Players get it with the next client update; until then they see a stock picture.</div>`;
+      <div style="display:flex;gap:10px;align-items:center;margin-bottom:4px"><span class="wp" style="width:128px;height:64px;border:1px solid var(--line);background:#111;display:inline-block;flex:none"></span><div style="flex:1;display:flex;flex-direction:column;gap:6px"><button class="btn pri op">Use my own picture…</button><button class="btn sec sh">Take it from the editor's map</button></div></div>
+      <input type="file" accept="image/*" class="of" style="display:none">
+      <div class="hint"><b>Your own screenshot:</b> pick an image file, or copy a screenshot (in Windows: Win+Shift+S) and press <b>Ctrl+V</b> here with this waypoint picked. Any size works: it is cut to twice as wide as high around its middle and shrunk to 64 × 32, so snip an area about that shape (e.g. 256 × 128) with the place in the middle. Saved as sprite ${p.nr ? 18400 + p.nr : '18400 + its number'}; players get it with the next client update, until then they see a stock picture.</div>`;
     const wn = ed.querySelector('.wn'), wl = ed.querySelector('.wl'); wn.value = p.name; wl.value = p.line;
     ed.querySelector('.ws').textContent = `Middle at ${p.x},${p.y}${p.nr ? ' · number ' + p.nr : ' · not saved yet'}`;
     if (p.haspic && p.nr) { const im = new Image(); im.src = '/sprite/' + (18400 + p.nr) + '?' + Date.now(); im.style.cssText = 'width:128px;height:64px;image-rendering:pixelated'; ed.querySelector('.wp').appendChild(im); }
@@ -2050,6 +2080,9 @@ function waypointsTab(w, sect, match) {
     ed.querySelector('.dn').onclick = () => { if (wpSel < WP.length - 1) { WP.splice(wpSel + 1, 0, WP.splice(wpSel, 1)[0]); wpSel++; wpChanged(); } };
     ed.querySelector('.dl').onclick = () => { if (!confirm(`Delete the waypoint ${p.name}? Players who found it lose it; a new one in the same place must be found again.`)) return; WP.splice(wpSel, 1); wpSel = -1; wpArm(0); wpChanged(); };
     ed.querySelector('.sh').onclick = () => wpShot(p);
+    const of = ed.querySelector('.of');
+    ed.querySelector('.op').onclick = () => of.click();
+    of.onchange = () => { if (of.files[0]) wpOwnPic(p, of.files[0]); };
     w.appendChild(ed);
   }
   const list = WP.map((z, i) => [z, i]).filter(([z]) => match(z.name, ''));
