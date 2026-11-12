@@ -234,6 +234,13 @@ static void con_cmd(char *line)
 		v=kq_test_kill(co,atoi(w[2]));
 		talk_set_echo(NULL);
 		if (v<0) out("  No NPC of template %d in the world.\n",atoi(w[2])); else if (!v) out("  (no kill quest of the player counts that kill now)\n");
+		for (n=1; n<MAXCHARS; n++) if (ch[n].used==USE_ACTIVE && ch[n].temp==atoi(w[2]) && !(ch[n].flags&(CF_PLAYER|CF_BODY))) {
+			out("  (the victim: %s at %d,%d, rank %d, %s)\n",ch[n].name,ch[n].x,ch[n].y,points2rank(ch[n].points_tot),get_area_m(ch[n].x,ch[n].y,0)); break; }
+		return;
+	}
+	if (!strcmp(w[0],"kqtime")) {	// kqtime <player> <minutes>: as if the player's kill quests were taken / handed in that much earlier
+		if (!(co=con_player(w[1]))) return;
+		out("  %d times moved back %d minutes.\n",kq_test_time(co,atoi(w[2])),atoi(w[2]));
 		return;
 	}
 	if (!strcmp(w[0],"kills")) {	// kills <player>: the player's #kills
@@ -445,6 +452,7 @@ static void con_cmd(char *line)
 		    "  cleartest <player> <npc template>         as if the player killed it (area clears)\n"
 		    "  kqkill <player> <npc template>            as if the player killed it (kill quests)\n"
 		    "  kills <player>                            the player's #kills\n"
+		    "  kqtime <player> <minutes>                 kill quests: as if taken / handed in that much earlier\n"
 		    "  give <player> <item template> [count]     new items into the backpack\n"
 		    "  items <player>                            the backpack, with stack counts\n"
 		    "  useslot <player> <slot>                   use the item in that backpack slot\n"

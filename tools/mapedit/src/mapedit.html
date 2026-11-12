@@ -181,6 +181,21 @@ nav .grow { flex: 1; }
 #qp .kq .kgrid input[type=text] { width: 100%; box-sizing: border-box; }
 #qp .kq .kgrid .ipick { display: flex; gap: 6px; align-items: center; margin: 0; }
 #qp .kq.need { outline: 1px solid #ffd36a; }
+#qp .kq .ksum { color: var(--text); font-weight: 600; }
+#qp .kq .ksec { margin-top: 12px; padding-top: 8px; border-top: 1px solid #2a241b; }
+#qp .kq .ksec h4 { margin: 0 0 4px; color: var(--gold2); font-size: 12px; text-transform: uppercase; letter-spacing: .06em; }
+#qp .kq .kgrid label.full { grid-column: 1 / -1; }
+#qp .kq .kgrid label label { flex-direction: row; display: inline-flex; gap: 6px; align-items: center; color: var(--text); font-size: 13px; }
+#qp .kq .krules, #qp .kq .kzone { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; color: var(--text); }
+#qp .kq .kchip { display: inline-flex; gap: 6px; align-items: center; padding: 3px 4px 3px 9px; border: 1px solid var(--gold); border-radius: 12px; color: var(--text); font-size: 12px; }
+#qp .kq .kchip.ex { border-color: var(--bad); }
+#qp .kq .kchip button { padding: 0 5px; color: var(--dim); }
+#qp .kq .kchip.pick { padding: 2px 9px 2px 3px; border-color: var(--line); cursor: pointer; background: none; }
+#qp .kq .kchip.pick.on { border-color: var(--gold); background: rgba(214,164,67,.18); }
+#qp .kq .kchip.pick.fr { opacity: .65; }
+#qp .kq .ksteps { display: flex; flex-direction: column; gap: 6px; color: var(--text); }
+#qp .kq .ksteps > div { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+#qp .kq .ksteps input[type=number] { width: 70px; }
 #qp .hint { color: var(--dim2); font-size: 12px; margin: 0 0 10px; }
 .qtab { width: 100%; border-collapse: collapse; font-size: 13px; }
 .qtab th { text-align: left; color: var(--dim2); font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: .06em; padding: 6px; border-bottom: 1px solid var(--line); white-space: nowrap; }
@@ -3871,10 +3886,16 @@ function qSpecial(q) {              // rewards built into the game's code (drive
   return '';
 }
 // ---- kill quests (Quests page, second box): "kill 5 Spiders" for a giver; players say QUEST to it, list with #kills
-let QK = null, QKorig = '', QK0 = '[]';
-const KQF = ['id', 'giver', 'count', 'limit', 'exp', 'gold', 'item', 'kill', 'area', 'label', 'offer', 'done'];
+let QK = null, QKorig = '', QK0 = '[]', QKopen = new Set();
+const KQF = ['id', 'giver', 'count', 'limit', 'exp', 'gold', 'item', 'skill', 'first', 'st', 'kill', 'zone', 'label', 'rmin', 'rmax', 'vmin', 'vmax', 'cls', 'tlimit', 'cool', 'txt'];
 const qkKey = () => JSON.stringify((QK || []).map(k => KQF.map(f => k[f])));
 const qkDirty = () => QK && qkKey() !== QKorig;
+const KQ_TXT = [['offer', 'Offers it', null], ['accept', 'Player says yes', 'Good. Come back to me when it is done, %s.'],
+  ['busy', 'Not done yet', 'Come back when the task is done, %s.'], ['done', 'Hands it in', 'Well done, %s! Here is your reward.'],
+  ['low', 'Rank too low', 'You should get stronger first, %s.'], ['high', 'Rank too high', 'You are a bit too strong for this task, %s.'],
+  ['class', 'Wrong class', 'This task is not for one of your kind, %s.'], ['max', 'Done all times', 'I have no more tasks for you, %s.'],
+  ['late', 'Ran out of time', 'You took too long, %s. Ask me again if you want to try once more.'],
+  ['wait', 'Not again yet', 'Come back later, %s. I have nothing for you right now.'], ['full', 'Backpack full', 'Make room in your backpack first, %s, then come back.']];
 function kqNpcPick(anchor, done, title) {     // choose an NPC template (each placed NPC has its own)
   const p = $('#ipop'), r = anchor.getBoundingClientRect();
   p.style.display = 'flex'; p.style.left = Math.min(window.innerWidth - 350, r.left) + 'px'; p.style.top = Math.min(window.innerHeight - 390, r.bottom + 4) + 'px';
@@ -3893,13 +3914,40 @@ function kqNpcPick(anchor, done, title) {     // choose an NPC template (each pl
   };
   q.oninput = fillL; fillL(); setTimeout(() => q.focus(), 0);
 }
+// what to kill: rules joined by |  ·  a name (* = anything), #templates, @enemy; !rule = never counts
+const kqTok = k => k.kill.split('|').map(s => s.trim()).filter(Boolean);
+function kqRule(t) {            // a rule -> {ex, kind, v, text}
+  const ex = t.startsWith('!'); const s = ex ? t.slice(1).trim() : t; let kind, v;
+  if (s === '@enemy') { kind = 'enemy'; v = ''; }
+  else if (s.startsWith('#')) { kind = 'tpl'; v = s.slice(1); }
+  else if (s.length > 2 && s.startsWith('*') && s.endsWith('*') && !s.slice(1, -1).includes('*')) { kind = 'has'; v = s.slice(1, -1); }
+  else if (s.endsWith('*') && !s.slice(0, -1).includes('*')) { kind = 'starts'; v = s.slice(0, -1); }
+  else if (s.includes('*')) { kind = 'glob'; v = s; }
+  else { kind = 'is'; v = s; }
+  const tn = n => { const x = (pal.npcs || []).find(r => r[0] === +n); return x ? `${x[1]} (${n})` : n; };
+  const text = kind === 'enemy' ? 'any enemy' : kind === 'tpl' ? 'template ' + v.split(/[ ,#]+/).filter(Boolean).map(tn).join(', ')
+    : kind === 'has' ? `name contains "${v}"` : kind === 'starts' ? `name starts with "${v}"` : kind === 'glob' ? `name like "${v}"` : `"${v}"`;
+  return { ex, kind, v, text };
+}
+const kqMake = (kind, v) => { v = v.trim().toLowerCase(); return kind === 'enemy' ? '@enemy' : kind === 'tpl' ? '#' + v.replace(/^#/, '').replace(/\s+/g, '') : kind === 'has' ? `*${v}*` : kind === 'starts' ? v + '*' : v; };
 function kqLabel(k) {           // what the counter says, as the game makes it
   if (k.label.trim()) return k.label.trim();
-  const s = k.kill.trim();
-  let w;
+  const inc = kqTok(k).filter(t => !t.startsWith('!'));
+  if (!inc.length) return 'enemies';
+  const s = inc[0]; let w;
+  if (s === '@enemy') return k.count > 1 ? 'enemies' : 'enemy';
   if (s.startsWith('#')) { const t = parseInt(s.slice(1)), x = (pal.npcs || []).find(r => r[0] === t); if (!x) return 'enemies'; w = x[1]; }
-  else { w = s.split('|')[0].replace(/\*/g, '').trim(); if (!w) return 'enemies'; w = w[0].toUpperCase() + w.slice(1); }
+  else { w = s.replace(/\*/g, '').trim(); if (!w) return 'enemies'; w = w[0].toUpperCase() + w.slice(1); }
   return k.count > 1 && !/s$/i.test(w) ? w + 's' : w;      // as the game: "Spiders", not for 1 or a name ending in s
+}
+const kqMinText = m => !m ? '' : m < 60 ? m + ' min' : m < 1440 ? (m % 60 ? `${Math.floor(m / 60)}h ${m % 60}m` : m / 60 + 'h') : (m % 1440 ? `${Math.floor(m / 1440)}d ${Math.floor(m % 1440 / 60)}h` : m / 1440 + 'd');
+function kqMinutes(get, set) {   // a number and a unit (minutes / hours / days); 0 = none
+  const d = document.createElement('div'); d.className = 'ipick';
+  const m = get(), unit = m && m % 1440 === 0 ? 1440 : m && m % 60 === 0 ? 60 : 1;
+  const n = document.createElement('input'); n.type = 'number'; n.min = 0; n.value = m / unit; n.style.width = '70px';
+  const u = document.createElement('select'); u.innerHTML = '<option value="1">minutes</option><option value="60">hours</option><option value="1440">days</option>'; u.value = unit;
+  const upd = () => set(Math.max(0, Math.round((+n.value || 0) * +u.value)));
+  n.onchange = upd; u.onchange = upd; d.append(n, u); return d;
 }
 function killsBox(el) {
   const kb = document.createElement('div'); kb.className = 'box'; el.appendChild(kb);
@@ -3908,65 +3956,171 @@ function killsBox(el) {
       <button class="btn sec knew">+ New kill quest</button>
       <button class="btn sec kund" ${d ? '' : 'disabled'}>Undo changes</button>
       <button class="btn pri ksave" ${d && !ro ? '' : 'disabled'}>Save</button></div>
-    <div class="hint">"Kill 5 Spiders" for an NPC. A player says <b>QUEST</b> (or task, job, work) to the giver, or the giver offers it when it greets them; <b>YES</b> takes it. Then only that player's kills count ("Spiders: 3/5"; the killer, a Ghost Companion's master, and group members who can see them), and coming back to the giver hands it in for the reward. A giver offers its kill quests one at a time, top to bottom. Players see them all with <b>#kills</b>. <b>Kill</b>: an NPC name (<code>Spider*</code> = every name starting with Spider, <code>Ghost|Skeleton</code> = either) or template numbers (<code>#390,391</code>). <b>Area</b> (optional): only kills in an area whose name contains this. Changing what to kill, how many, the area or the giver starts the players' progress on that quest again. Saving goes into the game at once.</div>`;
+    <div class="hint">"Kill 5 Spiders" for an NPC. A player says <b>QUEST</b> (or task, job, work) to the giver, or the giver offers it when it greets them; <b>YES</b> takes it. Then that player's kills count ("Spiders: 3/5"; the killer, a Ghost Companion's master, and group members who can see them), and coming back hands it in. A giver offers its quests one at a time, top to bottom. Players see them all with <b>#kills</b>. Every setting left empty means "no limit". Changing what to kill, how many, the zone, the monster ranks or the giver starts the players' progress on that quest again. Saving goes into the game at once.</div>`;
   kb.querySelector('.knew').onclick = () => {
     let id = 1; while (QK.some(k => k.id === id)) id++;
     if (id > 64) return toast('At most 64 kill quests.', true);
     kqNpcPick(kb.querySelector('.knew'), async t => {
       const g = await api('/api/kqgiver', { t: t[0] });
-      QK.push({ id, giver: t[0], count: 5, limit: 1, exp: 0, gold: 0, item: 0, kill: '', area: '', label: '', offer: '', done: '', g });
-      questsRender(); toast(`New kill quest for ${t[1]}: set what to kill and the reward, then Save.`);
+      QK.push({ id, giver: t[0], count: 5, limit: 1, exp: 0, gold: 0, item: 0, skill: 0, first: 0, st: [], kill: '', zone: '', label: '', rmin: -1, rmax: -1, vmin: -1, vmax: -1, cls: '', tlimit: 0, cool: 0, txt: {}, g });
+      QKopen.add(id); questsRender(); toast(`New kill quest for ${t[1]}: set what to kill and the reward, then Save.`);
     }, 'Who gives the quest? Name or template number');
   };
   kb.querySelector('.kund').onclick = () => { if (confirm('Forget your changes to the kill quests?')) { QK = JSON.parse(QK0); questsRender(); } };
   kb.querySelector('.ksave').onclick = async () => {
-    const bad = QK.find(k => !k.kill.trim()); if (bad) return toast(`Kill quest ${bad.id} (${bad.g.name}): what should be killed?`, true);
+    const bad = QK.find(k => !kqTok(k).some(t => !t.startsWith('!'))); if (bad) return toast(`Kill quest ${QK.indexOf(bad) + 1} (${bad.g.name}): what should be killed?`, true);
     const r = await api('/api/killquests', { kills: QK.map(k => Object.fromEntries(KQF.map(f => [f, k[f]]))) });
     toast(r.error || 'Kill quests: ' + r.msg, !!r.error); if (!r.error) { QKorig = qkKey(); QK0 = JSON.stringify(QK); } questsRender();
   };
   if (!QK.length) kb.insertAdjacentHTML('beforeend', '<div class="empty">No kill quests yet: + New kill quest, then pick who gives it.</div>');
   const re = () => questsRender();
+  const zones = [...new Set((info.areas || []).map(a => a[4]))].sort((a, b) => a.localeCompare(b));
+  if (!$('#kqzones')) { const dl = document.createElement('datalist'); dl.id = 'kqzones'; dl.innerHTML = zones.map(n => `<option value="${esc(n)}">`).join(''); document.body.append(dl); }
+  const rankOpts = none => [[-1, none], ...RANK_NAMES.map((n, i) => [i, `${i} · ${n}`])];
+  const sp = t => Object.assign(document.createElement('span'), { textContent: t });
   QK.forEach((k, i) => {
+    if (!k.txt) k.txt = {}; if (!Array.isArray(k.st)) k.st = [];
     const c = document.createElement('div'); c.className = 'qchain kq'; kb.appendChild(c);
     const hd = document.createElement('div'); hd.className = 'qch'; c.appendChild(hd);
     const qn = document.createElement('span'); qn.className = 'qn'; qn.textContent = 'Kill quest ' + (i + 1); hd.appendChild(qn);
     const gb = document.createElement('button'); gb.className = 'kgiver'; gb.title = 'Pick another giver';
-    gb.append(thumb(k.g.sprite || 0, 26, 26)); const gn = document.createElement('span'); gn.textContent = `${k.g.name} · ${k.giver}`; gb.append(gn);
+    gb.append(thumb(k.g.sprite || 0, 26, 26)); gb.append(sp(`${k.g.name} · ${k.giver}`));
     gb.onclick = () => kqNpcPick(gb, async t => { k.giver = t[0]; k.g = await api('/api/kqgiver', { t: t[0] }); re(); }, 'Who gives the quest? Name or template number');
     hd.appendChild(gb);
-    const wh = document.createElement('span'); wh.className = 'hint'; wh.style.margin = '0'; wh.textContent = (k.g.where || '').replace(/^Aston, /, '') || (k.g.count ? '' : 'not in the world'); hd.appendChild(wh);
+    const wh = sp((k.g.where || '').replace(/^Aston, /, '') || (k.g.count ? '' : 'not in the world')); wh.className = 'hint'; wh.style.margin = '0'; hd.appendChild(wh);
+    const sum = sp(`Kill ${k.count} ${kqLabel(k)}${k.zone ? ' in ' + k.zone : ''}`); sum.className = 'ksum'; hd.appendChild(sum);
     hd.appendChild(Object.assign(document.createElement('span'), { style: 'flex:1' }));
-    const op = document.createElement('button'); op.className = 'sm'; op.textContent = 'Open NPC'; op.title = 'Open the giver in the NPC editor'; op.onclick = () => gotoNpc(k.giver, 'behave'); hd.appendChild(op);
+    const tg = document.createElement('button'); tg.className = 'sm'; tg.textContent = QKopen.has(k.id) ? 'Close' : 'Edit'; tg.onclick = () => { QKopen.has(k.id) ? QKopen.delete(k.id) : QKopen.add(k.id); re(); };
+    const op = document.createElement('button'); op.className = 'sm'; op.textContent = 'Open NPC'; op.title = 'Open the giver in the NPC editor'; op.onclick = () => gotoNpc(k.giver, 'behave');
     const up = document.createElement('button'); up.className = 'sm'; up.textContent = '▲'; up.title = 'Earlier (a giver offers its quests top to bottom)'; up.disabled = i === 0;
     up.onclick = () => { [QK[i - 1], QK[i]] = [QK[i], QK[i - 1]]; re(); };
     const dn = document.createElement('button'); dn.className = 'sm'; dn.textContent = '▼'; dn.title = 'Later'; dn.disabled = i === QK.length - 1;
     dn.onclick = () => { [QK[i + 1], QK[i]] = [QK[i], QK[i + 1]]; re(); };
     const del = document.createElement('button'); del.className = 'sm'; del.textContent = 'Delete'; del.onclick = () => { if (confirm(`Delete kill quest ${i + 1} (${k.g.name})?`)) { QK.splice(i, 1); re(); } };
-    hd.append(up, dn, del);
-    const g = document.createElement('div'); g.className = 'kgrid'; c.appendChild(g);
-    const fld = (label, inp, wide) => { const l = document.createElement('label'); if (wide) l.className = 'wide'; const s2 = document.createElement('span'); s2.textContent = label; l.append(s2, inp); g.appendChild(l); return l; };
-    const kt = txt(() => k.kill, v => k.kill = v, 200); kt.placeholder = 'Spider*  or  Ghost|Skeleton  or  #390,391'; kt.onchange = re;
-    const pk = document.createElement('button'); pk.className = 'sm'; pk.textContent = 'Pick NPC…';
-    pk.onclick = () => kqNpcPick(pk, t => { k.kill = k.kill.trim() && !k.kill.trim().startsWith('#') ? k.kill.trim() + '|' + t[1] : t[1]; re(); }, 'Which NPC should be killed?');
-    const kw = document.createElement('div'); kw.className = 'ipick'; kw.append(kt, pk); fld('Kill', kw, true);
-    fld('How many', num(() => k.count, v => { k.count = v; re(); }, 1, 60000));
-    const ar = txt(() => k.area, v => k.area = v, 60); ar.placeholder = '(anywhere)'; ar.onchange = re;
-    if (!$('#areanames')) { const dl = document.createElement('datalist'); dl.id = 'areanames'; dl.innerHTML = [...new Set((info.areas || []).map(a => a[4]))].sort().map(n => `<option value="${esc(n)}">`).join(''); document.body.append(dl); }
-    ar.setAttribute('list', 'areanames'); fld('In the area', ar);
-    const lb = txt(() => k.label, v => k.label = v, 60); lb.placeholder = kqLabel(Object.assign({}, k, { label: '' })); lb.onchange = re; fld('Counter calls them', lb);
-    fld('Exp', num(() => k.exp, v => { k.exp = v; re(); }, 0, 99999999));
-    fld('Gold', goldIn(() => k.gold, v => { k.gold = v; re(); }));
-    fld('Item', qpick(() => k.item, v => { k.item = v; re(); }, 'nothing'));
-    const tw = document.createElement('div'); tw.className = 'ipick';
-    const tsel = sel([[1, 'Once'], [2, 'A number of times'], [0, 'Forever']], () => k.limit === 0 ? 0 : k.limit === 1 ? 1 : 2, v => { k.limit = v === 2 ? Math.max(2, k.limit) : v; re(); });
-    tw.append(tsel); if (k.limit > 1) tw.append(num(() => k.limit, v => { k.limit = v; re(); }, 2, 60000), ' times');
-    fld('Times per player', tw);
-    const of = txt(() => k.offer, v => k.offer = v, 200); of.placeholder = `%s, I need someone to kill ${k.count} ${kqLabel(k)}${k.area.trim() ? ' in ' + k.area.trim() : ''}. Will you do it?`; of.onchange = re; fld('Giver offers it', of, true);
-    const dt = txt(() => k.done, v => k.done = v, 200); dt.placeholder = 'Well done, %s! Here is your reward.'; dt.onchange = re; fld('Giver hands it in', dt, true);
-    const ft = document.createElement('div'); ft.className = 'hint'; ft.style.margin = '6px 0 0'; c.appendChild(ft);
-    ft.textContent = `Players see "${kqLabel(k)}: 1/${k.count}" with each kill. %s = the player's name. ` + (k.g.greets ? `${k.g.name} greets players, so it offers the quest when they come close.` : '');
-    if (!k.g.greets) ft.insertAdjacentHTML('beforeend', `<span style="color:#ffd36a">${esc(k.g.name)} doesn't greet players: they have to say QUEST to it. To have it offer the quest when they come close, Open NPC and tick "Greets players".</span>`);
-    if (!k.kill.trim()) c.classList.add('need');
+    hd.append(tg, op, up, dn, del);
+    // the short summary line
+    const rs = [k.skill && SKILLS[k.skill], k.exp && k.exp.toLocaleString() + ' exp', k.gold && k.gold / 100 + 'G', k.item && iname(k.item)].filter(Boolean).join(', ') || 'no reward';
+    const lim = [k.limit === 1 ? 'once' : k.limit ? k.limit + ' times' : 'forever', k.first && k.st.length ? (1 + k.st.length) + ' rewards' : '',
+      (k.rmin >= 0 || k.rmax >= 0) && qRankText({ rmin: k.rmin, rmax: k.rmax }), (k.vmin >= 0 || k.vmax >= 0) && 'monster ' + qRankText({ rmin: k.vmin, rmax: k.vmax }),
+      k.cls && 'some classes', k.tlimit && kqMinText(k.tlimit) + ' to finish', k.cool && k.limit !== 1 && 'again after ' + kqMinText(k.cool)].filter(Boolean).join(' · ');
+    const sl = document.createElement('div'); sl.className = 'hint'; sl.style.margin = '4px 0 0'; sl.textContent = `Reward: ${rs} · ${lim}`; c.appendChild(sl);
+    if (!kqTok(k).some(t => !t.startsWith('!'))) { c.classList.add('need'); QKopen.add(k.id); }
+    if (!QKopen.has(k.id)) return;
+    const body = document.createElement('div'); body.className = 'kbody'; c.appendChild(body);
+    const sec = (t, h) => { const s2 = document.createElement('div'); s2.className = 'ksec'; s2.innerHTML = `<h4>${t}</h4>` + (h ? `<div class="hint">${h}</div>` : ''); body.appendChild(s2); const g = document.createElement('div'); g.className = 'kgrid'; s2.appendChild(g); return g; };
+    const fld = (g, label, inp, wide) => { const l = document.createElement('label'); if (wide) l.className = 'wide'; l.append(sp(label), inp); g.appendChild(l); return l; };
+    // ---- what to kill
+    const g1 = sec('What to kill', 'Every rule in the list counts; an "except" rule never counts. <b>name contains</b> "spider" also counts Weak Spider and Strong Spider; <b>name is</b> only that exact name. Pick a zone to see the NPCs living there and click the ones that count.');
+    fld(g1, 'How many', num(() => k.count, v => { k.count = v; re(); }, 1, 60000));
+    const zn = txt(() => k.zone, v => k.zone = v, 60); zn.placeholder = '(anywhere)'; zn.setAttribute('list', 'kqzones');
+    zn.onchange = () => { const z = zones.find(x => x.toLowerCase() === zn.value.trim().toLowerCase()); k.zone = z || zn.value.trim(); if (k.zone && !z) toast('No zone called "' + k.zone + '": pick one from the list.', true); re(); };
+    fld(g1, 'In the zone', zn);
+    const lb = txt(() => k.label, v => k.label = v, 60); lb.placeholder = kqLabel(Object.assign({}, k, { label: '' })); lb.onchange = re; fld(g1, 'Counter calls them', lb);
+    const vr = document.createElement('div'); vr.className = 'ipick';
+    vr.append(sel(rankOpts('any'), () => k.vmin, v => { k.vmin = v; if (k.vmax >= 0 && v > k.vmax) k.vmax = v; re(); }), sp('to'), sel(rankOpts('any'), () => k.vmax, v => { k.vmax = v; if (v >= 0 && k.vmin > v) k.vmin = v; re(); }));
+    fld(g1, 'Monster rank', vr).title = 'Only monsters of these ranks count (e.g. pentagram monsters of some ranks)';
+    const rl = document.createElement('div'); rl.className = 'krules'; fld(g1, 'Counts', rl).classList.add('full');
+    const toks = kqTok(k);
+    const setToks = a => { k.kill = a.join('|'); re(); };
+    if (!toks.length) rl.append(sp('nothing yet: add a rule below'));
+    toks.forEach((t, j) => {
+      const r = kqRule(t), ch = document.createElement('span'); ch.className = 'kchip' + (r.ex ? ' ex' : '');
+      ch.textContent = (r.ex ? 'except ' : '') + r.text;
+      const x = document.createElement('button'); x.textContent = '×'; x.title = 'Remove'; x.onclick = () => setToks(toks.filter((_, n) => n !== j)); ch.append(x); rl.append(ch);
+    });
+    const ad = document.createElement('div'); ad.className = 'ipick'; ad.style.flexWrap = 'wrap';
+    const es = document.createElement('select'); es.innerHTML = '<option value="0">counts:</option><option value="1">except (never counts):</option>';
+    const ms = document.createElement('select'); ms.innerHTML = '<option value="has">name contains</option><option value="is">name is</option><option value="starts">name starts with</option><option value="tpl">template numbers</option>';
+    const vt = document.createElement('input'); vt.type = 'text'; vt.placeholder = 'spider'; vt.style.width = '150px';
+    const ex = () => es.value === '1';
+    const add = () => { if (!vt.value.trim()) return; setToks([...toks, (ex() ? '!' : '') + kqMake(ms.value, vt.value)]); };
+    vt.onkeydown = e => { if (e.key === 'Enter') add(); };
+    const ab = document.createElement('button'); ab.className = 'sm'; ab.textContent = '+ Add'; ab.onclick = add;
+    const pk = document.createElement('button'); pk.className = 'sm'; pk.textContent = 'Pick NPC…'; pk.title = 'Add an NPC by its name';
+    pk.onclick = () => kqNpcPick(pk, t => setToks([...toks, (ex() ? '!' : '') + kqMake('is', t[1])]), 'Which NPC? (its name counts)');
+    const ae = document.createElement('button'); ae.className = 'sm'; ae.textContent = '+ Any enemy'; ae.title = 'Every NPC that is an enemy (with a zone: every enemy in that zone)';
+    ae.onclick = () => { if (!toks.includes('@enemy')) setToks([...toks, '@enemy']); };
+    ad.append(es, ms, vt, ab, pk, ae);
+    const adl = document.createElement('label'); adl.className = 'full'; adl.append(sp('Add a rule'), ad); g1.appendChild(adl);
+    const raw = txt(() => k.kill, v => k.kill = v, 300); raw.onchange = re; raw.title = 'The rules as the game reads them: joined by |; * = anything; #390,391 = templates; @enemy = any enemy; ! = except';
+    fld(g1, 'As text (advanced)', raw).classList.add('full');
+    if (k.zone) {     // the NPCs of the zone: click a name to count it (or not)
+      const zl = document.createElement('div'); zl.className = 'kzone'; const zlab = document.createElement('label'); zlab.className = 'full';
+      zlab.append(sp(`NPCs living in ${k.zone}: click a name to count it, again to stop (dim = not an enemy)`), zl); g1.appendChild(zlab);
+      zl.textContent = 'Loading…';
+      zoneNpcs(k.zone).then(list => {
+        zl.textContent = '';
+        const byName = {}; list.forEach(n => { (byName[n.name] = byName[n.name] || { n: 0, kind: n.kind, sprite: n.sprite }).n++; });
+        const names = Object.keys(byName).sort((a, b) => (byName[a].kind !== 'enemy') - (byName[b].kind !== 'enemy') || a.localeCompare(b));
+        if (!names.length) zl.textContent = 'No NPC spawns in this zone.';
+        for (const nm of names) {
+          const t2 = nm.toLowerCase(), on = toks.includes(t2), b = document.createElement('button'); b.type = 'button';
+          b.className = 'kchip pick' + (on ? ' on' : '') + (byName[nm].kind !== 'enemy' ? ' fr' : '');
+          b.append(thumb(byName[nm].sprite || 0, 20, 20), sp(`${nm} ×${byName[nm].n}`)); b.title = byName[nm].kind;
+          b.onclick = ev => { ev.preventDefault(); setToks(on ? toks.filter(x => x !== t2) : [...toks, t2]); };
+          zl.append(b);
+        }
+      });
+    }
+    // ---- who can take it
+    const g2 = sec('Who can take it, and when');
+    const pr = document.createElement('div'); pr.className = 'ipick';
+    pr.append(sel(rankOpts('any'), () => k.rmin, v => { k.rmin = v; if (k.rmax >= 0 && v > k.rmax) k.rmax = v; re(); }), sp('to'), sel(rankOpts('any'), () => k.rmax, v => { k.rmax = v; if (v >= 0 && k.rmin > v) k.rmin = v; re(); }));
+    fld(g2, 'Player rank', pr, true);
+    const cw = document.createElement('div'); cw.className = 'ipick'; cw.style.flexWrap = 'wrap';
+    cw.append(chk('Only some classes', () => !!k.cls, v => { k.cls = v ? CLASS_LIST.map(x => x[0]).join('|') : ''; re(); }));
+    if (k.cls) cw.append(classChips(() => k.cls, v => { k.cls = v; re(); }));
+    fld(g2, 'Classes', cw).classList.add('full');
+    fld(g2, 'Time to finish (0 = no limit)', kqMinutes(() => k.tlimit, v => { k.tlimit = v; re(); }));
+    if (k.limit !== 1) fld(g2, 'Wait before doing it again', kqMinutes(() => k.cool, v => { k.cool = v; re(); }));
+    // ---- rewards
+    const g3 = sec('Rewards');
+    const seg = document.createElement('div'); seg.className = 'seg'; const md = k.limit === 1 ? 'once' : k.limit ? 'n' : 'ever';
+    seg.innerHTML = `<button data-m="once" class="${md === 'once' ? 'on' : ''}">Once</button><button data-m="n" class="${md === 'n' ? 'on' : ''}">A number of times</button><button data-m="ever" class="${md === 'ever' ? 'on' : ''}">Forever</button>`;
+    seg.querySelectorAll('button').forEach(b => b.onclick = ev => { ev.preventDefault(); k.limit = b.dataset.m === 'once' ? 1 : b.dataset.m === 'n' ? Math.max(2, k.limit || 3) : 0; re(); });
+    const tw = document.createElement('div'); tw.className = 'ipick'; tw.append(seg); if (md === 'n') tw.append(num(() => k.limit, v => { k.limit = Math.max(2, v); re(); }, 2, 60000), 'times');
+    fld(g3, 'How often per player', tw, true);
+    const steps = k.limit !== 1 && k.first > 0 && k.st.length > 0;
+    const head = steps ? (k.first === 1 ? '1st time' : `1st – ${qOrd(k.first)} time`) : 'Every time';
+    fld(g3, head + ': exp', num(() => k.exp, v => { k.exp = v; re(); }, 0, 99999999));
+    fld(g3, 'Gold', goldIn(() => k.gold, v => { k.gold = v; re(); }));
+    fld(g3, 'Item', qpick(() => k.item, v => { k.item = v; re(); }, 'nothing'));
+    fld(g3, 'Teaches (with this reward)', sel([[0, '–'], ...SKILLS.map((s2, n) => [n, s2]).filter(x => x[0] > 0)], () => k.skill, v => { k.skill = v; re(); }));
+    if (k.limit !== 1) {
+      const cl = document.createElement('label'); cl.className = 'full';
+      cl.append(chk('Rewards change with each turn-in (first time only, the first few times, the rest of the time…)', () => steps, v => { if (v) { k.first = 1; if (!k.st.length) k.st = [[0, k.item, Math.round(k.exp / 2), Math.round(k.gold / 2)]]; } else { k.first = 0; k.st = []; } re(); }));
+      g3.appendChild(cl);
+    }
+    if (steps) {
+      const tb = document.createElement('div'); tb.className = 'ksteps'; const tl = document.createElement('label'); tl.className = 'full'; tl.append(tb); g3.appendChild(tl);
+      const r0 = document.createElement('div'); r0.append(sp('The reward above for the first'), num(() => k.first, v => { k.first = Math.max(1, v); re(); }, 1, 60000), sp('time' + (k.first === 1 ? '' : 's') + ', then:')); tb.append(r0);
+      let from = k.first + 1;
+      k.st.forEach((st, j) => {
+        const last = j === k.st.length - 1, r = document.createElement('div');
+        if (!last) r.append(sp(`from the ${qOrd(from)},`), num(() => st[0], v => { st[0] = Math.max(1, v); re(); }, 1, 60000), sp('time' + (st[0] === 1 ? '' : 's') + ':'));
+        else r.append(sp(k.limit ? `from the ${qOrd(from)} to the ${qOrd(k.limit)}:` : `the ${qOrd(from)} time and every time after:`));
+        const ex2 = num(() => st[2], v => { st[2] = v; re(); }, 0, 99999999); ex2.style.width = '90px';
+        const x = document.createElement('button'); x.className = 'sm'; x.textContent = '×'; x.title = 'Remove this step';
+        x.onclick = ev => { ev.preventDefault(); k.st.splice(j, 1); if (k.st.length) k.st[k.st.length - 1][0] = 0; else k.first = 0; re(); };
+        r.append(sp('exp'), ex2, sp('gold'), goldIn(() => st[3], v => { st[3] = v; re(); }), sp('item'), qpick(() => st[1], v => { st[1] = v; re(); }, 'nothing'), x);
+        tb.append(r); if (!last) from += st[0] || 1;
+      });
+      const ad2 = document.createElement('button'); ad2.className = 'sm'; ad2.textContent = '+ Add a step'; ad2.disabled = k.st.length >= 7;
+      ad2.onclick = ev => { ev.preventDefault(); const L = k.st[k.st.length - 1]; k.st.splice(k.st.length - 1, 0, [1, L[1], L[2], L[3]]); re(); };
+      const r9 = document.createElement('div'); r9.append(ad2); tb.append(r9);
+    }
+    // ---- what the giver says
+    const g4 = sec('What the giver says', '%s = the player\'s name. Empty: the text shown in grey. (Only the ones that can happen with these settings are listed.)');
+    for (const [key, label, def] of KQ_TXT) {
+      if (key === 'low' && k.rmin < 0 || key === 'high' && k.rmax < 0 || key === 'class' && !k.cls || key === 'late' && !k.tlimit || key === 'wait' && (!k.cool || k.limit === 1) || key === 'full' && !k.item && !k.st.some(s2 => s2[1])) continue;
+      const t = document.createElement('input'); t.type = 'text'; t.maxLength = 200; t.value = k.txt[key] || '';
+      t.placeholder = def || `%s, I need someone to kill ${k.count} ${kqLabel(k)}${k.zone ? ' in ' + k.zone : ''}. Will you do it?`;
+      t.onchange = () => { if (t.value.trim()) k.txt[key] = t.value; else delete k.txt[key]; re(); };
+      fld(g4, label, t, true);
+    }
+    const ft = document.createElement('div'); ft.className = 'hint'; ft.style.margin = '6px 0 0'; body.appendChild(ft);
+    if (!k.g.greets) ft.innerHTML = `<span style="color:#ffd36a">${esc(k.g.name)} doesn't greet players: they have to say QUEST to it. To have it offer the quest when they come close, Open NPC and tick "Greets players".</span>`;
+    else ft.textContent = `${k.g.name} greets players, so it offers the quest when they come close.`;
   });
 }
 // ---- area clears (Quests page, third box): kill every chosen NPC of a zone for an experience bonus

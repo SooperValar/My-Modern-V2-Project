@@ -219,13 +219,8 @@ def talk_parse(text):
             if k == 'clearnpc' and a:
                 clears.setdefault(int(a[0]), {'id': int(a[0]), 'npcs': [], 'exp': 0, 'seyan': 1, 'zone': '', 'label': ''})['npcs'] += [int(v) for v in a[1:] if v.isdigit()]
                 continue
-            if k in KQ_KEYS and a:                      # kill quests (Quests page)
-                i = int(a[0])
-                kq = kills.setdefault(i, kq_new(i))
-                if k == 'kq' and len(a) >= 7:
-                    kq.update(dict(zip(('giver', 'count', 'limit', 'exp', 'gold', 'item'), [int(v) for v in a[1:7]])))
-                elif k != 'kq':
-                    kq[KQ_KEYS[k]] = rest.split(None, 1)[1].strip() if len(a) > 1 else ''
+            if k.startswith('kq') and a:                # kill quests (Quests page)
+                kq_parse_line(kills, k, a, rest)
                 continue
             if k == 'qreward' and len(a) >= 4:        # item quest: times, first times, gold (Quests page); then qstage lines
                 v = [int(x) for x in a[1:7] if x.lstrip('-').isdigit()]
@@ -302,13 +297,67 @@ def talk_parse(text):
             'kills': {i: k for i, k in kills.items() if k['giver'] > 0}}, npcs
 
 
-# kill quests (npctalk.c "kq" lines; the Quests page): kq <id> <giver> <count> <times, 0 = forever> <exp> <gold> <item>,
-# then kqkill / kqarea / kqlabel / kqoffer / kqdone <id> <text>
-KQ_KEYS = {'kq': '', 'kqkill': 'kill', 'kqarea': 'area', 'kqlabel': 'label', 'kqoffer': 'offer', 'kqdone': 'done'}
+# kill quests (npctalk.c "kq" lines; the Quests page; the top of npctalk.c lists them all)
+KQ_TEXTS = ('offer', 'accept', 'busy', 'done', 'low', 'high', 'class', 'max', 'late', 'wait', 'full')
 
 
 def kq_new(i):
-    return {'id': i, 'giver': 0, 'count': 5, 'limit': 1, 'exp': 0, 'gold': 0, 'item': 0, 'kill': '', 'area': '', 'label': '', 'offer': '', 'done': ''}
+    return {'id': i, 'giver': 0, 'count': 5, 'limit': 1, 'exp': 0, 'gold': 0, 'item': 0, 'skill': 0, 'first': 0, 'st': [],
+            'kill': '', 'zone': '', 'label': '', 'rmin': -1, 'rmax': -1, 'vmin': -1, 'vmax': -1, 'cls': '', 'tlimit': 0, 'cool': 0, 'txt': {}}
+
+
+def kq_parse_line(kills, k, a, rest):
+    i = int(a[0])
+    q = kills.setdefault(i, kq_new(i))
+    tail = rest.split(None, 1)[1].strip() if len(a) > 1 else ''
+    if k == 'kq' and len(a) >= 7:
+        q.update(dict(zip(('giver', 'count', 'limit', 'exp', 'gold', 'item'), [int(v) for v in a[1:7]])))
+    elif k in ('kqkill', 'kqzone', 'kqlabel'):
+        q[k[2:]] = tail
+    elif k in ('kqrank', 'kqvrank') and len(a) >= 3:
+        p = 'r' if k == 'kqrank' else 'v'
+        q[p + 'min'], q[p + 'max'] = int(a[1]), int(a[2])
+    elif k == 'kqclass' and len(a) >= 2:
+        q['cls'] = a[1].lower()
+    elif k == 'kqtime' and len(a) >= 3:
+        q['tlimit'], q['cool'] = int(a[1]), int(a[2])
+    elif k == 'kqskill' and len(a) >= 2:
+        q['skill'] = int(a[1])
+    elif k == 'kqfirst' and len(a) >= 2:
+        q['first'] = int(a[1])
+    elif k == 'kqstage' and len(a) >= 5:
+        q['st'].append([int(v) for v in a[1:5]])
+    elif k == 'kqtext' and len(a) >= 2 and a[1] in KQ_TEXTS:
+        q['txt'][a[1]] = rest.split(None, 2)[2].strip() if len(a) > 2 else ''
+
+
+def kq_lines(i, k, name):
+    out = ['kq %d %d %d %d %d %d %d %s' % (i, int(k['giver']), max(1, int(k.get('count', 1))), max(0, int(k.get('limit', 0))),
+                                         max(0, int(k.get('exp', 0))), max(0, int(k.get('gold', 0))), max(0, int(k.get('item', 0))), name)]
+    for key in ('kill', 'zone', 'label'):
+        v = ' '.join(str(k.get(key, '')).split())
+        if v:
+            out.append('kq%s %d %s' % (key, i, v))
+    if int(k.get('rmin', -1)) >= 0 or int(k.get('rmax', -1)) >= 0:
+        out.append('kqrank %d %d %d' % (i, int(k.get('rmin', -1)), int(k.get('rmax', -1))))
+    if int(k.get('vmin', -1)) >= 0 or int(k.get('vmax', -1)) >= 0:
+        out.append('kqvrank %d %d %d' % (i, int(k.get('vmin', -1)), int(k.get('vmax', -1))))
+    if str(k.get('cls', '')).strip():
+        out.append('kqclass %d %s' % (i, str(k['cls']).strip().lower()))
+    if int(k.get('tlimit', 0)) > 0 or int(k.get('cool', 0)) > 0:
+        out.append('kqtime %d %d %d' % (i, max(0, int(k.get('tlimit', 0))), max(0, int(k.get('cool', 0)))))
+    if int(k.get('skill', 0)) > 0:
+        out.append('kqskill %d %d' % (i, int(k['skill'])))
+    st = [s for s in (k.get('st') or [])][:7]
+    if int(k.get('first', 0)) > 0 and st:
+        out.append('kqfirst %d %d' % (i, int(k['first'])))
+        for x in st:
+            out.append('kqstage %d %d %d %d %d' % (i, *[max(0, int(v)) for v in (list(x) + [0] * 4)[:4]]))
+    for t in KQ_TEXTS:
+        v = ' '.join(str((k.get('txt') or {}).get(t, '')).split())
+        if v:
+            out.append('kqtext %d %s %s' % (i, t, v))
+    return out
 
 
 def talk_text(quests, npcs, names):
@@ -358,18 +407,13 @@ def talk_text(quests, npcs, names):
         out.append('')
     kl = quests.get('kills') or {}
     if kl:
-        out.append('# kill quests: kq <id> <giver template> <count> <times, 0 = forever> <exp> <gold in silver> <item>; kqkill / kqarea /')
-        out.append('# kqlabel / kqoffer / kqdone <id> <text> - the Quests page (players: say QUEST to the giver, #kills)')
+        out.append('# kill quests: kq <id> <giver template> <count> <times, 0 = forever> <exp> <gold in silver> <item>, then kqkill, kqzone,')
+        out.append('# kqlabel, kqrank, kqvrank, kqclass, kqtime, kqskill, kqfirst, kqstage, kqtext lines (see npctalk.c) - the Quests page')
         for i in sorted(kl, key=int):
             k = kl[i]
             if int(k.get('giver', 0)) <= 0 or not str(k.get('kill', '')).strip():
                 continue
-            out.append('kq %d %d %d %d %d %d %d %s' % (int(i), int(k['giver']), max(1, int(k.get('count', 1))), max(0, int(k.get('limit', 0))),
-                                                     max(0, int(k.get('exp', 0))), max(0, int(k.get('gold', 0))), max(0, int(k.get('item', 0))), names.get(int(k['giver']), '')))
-            for key in ('kill', 'area', 'label', 'offer', 'done'):
-                v = ' '.join(str(k.get(key, '')).split())
-                if v:
-                    out.append('kq%s %d %s' % (key, int(i), v))
+            out += kq_lines(int(i), k, names.get(int(k['giver']), ''))
         out.append('')
     for n in sorted(set(qn) | set(qs)):
         out.append('quest %d %s' % (n, ' '.join(str(qn.get(n, '')).split())))
@@ -1115,10 +1159,18 @@ class World:
             i = int(k.get('id', 0))
             if not 1 <= i <= 64 or int(k.get('giver', 0)) <= 0 or not str(k.get('kill', '')).strip():
                 continue
-            out[i] = {'id': i, 'giver': int(k['giver']), 'count': min(60000, max(1, int(k.get('count', 1)))), 'limit': max(0, int(k.get('limit', 0))),
+            q = kq_new(i)
+            q.update({'giver': int(k['giver']), 'count': min(60000, max(1, int(k.get('count', 1)))), 'limit': max(0, int(k.get('limit', 0))),
                       'exp': max(0, int(k.get('exp', 0))), 'gold': max(0, int(k.get('gold', 0))), 'item': max(0, int(k.get('item', 0))),
-                      **{key: ' '.join(str(k.get(key, '')).split())[:200] for key in ('kill', 'area', 'label', 'offer', 'done')}}
-            out[i]['label'] = out[i]['label'][:60]
+                      'skill': max(0, min(49, int(k.get('skill', 0)))), 'first': max(0, int(k.get('first', 0))),
+                      'st': [[int(v) for v in (list(x) + [0] * 4)[:4]] for x in (k.get('st') or [])][:7],
+                      'kill': ' '.join(str(k.get('kill', '')).split())[:300], 'zone': ' '.join(str(k.get('zone', '')).split())[:60],
+                      'label': ' '.join(str(k.get('label', '')).split())[:60], 'cls': re.sub(r'[^a-z|]', '', str(k.get('cls', '')).lower()),
+                      'tlimit': max(0, int(k.get('tlimit', 0))), 'cool': max(0, int(k.get('cool', 0))),
+                      'txt': {t: ' '.join(str(v).split())[:200] for t, v in (k.get('txt') or {}).items() if t in KQ_TEXTS and str(v).strip()}})
+            for f in ('rmin', 'rmax', 'vmin', 'vmax'):
+                q[f] = max(-1, min(23, int(k.get(f, -1))))
+            out[i] = q
         qs['kills'] = out
         return self.talk_save(qs, npcs, ctl)
 

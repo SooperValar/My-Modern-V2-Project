@@ -77,7 +77,7 @@ Note: the real client source is the project's `client/` folder (the old copies i
   changed Windows source into Ubuntu with a backup in `~/claude-backups/`, then `make`), starts.
 - Console commands (control port 127.0.0.1:5556, or the editor's console): `who`, `status`,
   `announce`, `tell`, `kick`, `raise`, `lower`, `gold`, `quest`, `talkreload`, `talktest`,
-  `talkkill`, `talkuse`, `talknear`, `talkmoney`, `zonereload`, `zone <x> <y>`, `chesttest <player> <x> <y> [real]`, `kqkill <player> <NPC template>`, `kills <player>`, `edpatch`, `wear <player> <template>|off`, `fighttest <player> <NPC template> <rounds> [back|kill]` (test server only), `merchreload`, `shop <player> <merchant template> [buy|sell|page|leave]`.
+  `talkkill`, `talkuse`, `talknear`, `talkmoney`, `zonereload`, `zone <x> <y>`, `chesttest <player> <x> <y> [real]`, `kqkill <player> <NPC template>`, `kills <player>`, `kqtime <player> <minutes>`, `edpatch`, `wear <player> <template>|off`, `fighttest <player> <NPC template> <rounds> [back|kill]` (test server only), `merchreload`, `shop <player> <merchant template> [buy|sell|page|leave]`.
 - **Test server** (for trying server changes without touching the live game): in Claude's device
   shell, `~/ctest` holds a copy of the server source and data. Copy the changed files there,
   `make server` (a full build may need two runs within the 3-minute limit). **Always check port
@@ -129,8 +129,8 @@ stopped via `stop-send`, then `update-world` and `reload-editor`):
   `qrank` (lowest / highest rank); per-player counts in `.dat/questcount.dat`. Console `questgive <player> <template>`
   tests a hand-in. **Area clears** (Quests page, `#areas`): `clear` / `clearlabel` / `clearnpc` lines in `npctalk.dat`,
   progress in `.dat/clears.dat`, console `cleartest`. **Rugs** (Floors tab): `.dat/mapedit-rugs.json`; the Red and Blue rug are built in.
-- **Kill quests** (Quests page, second box; Nov 11): `kq` / `kqkill` / `kqarea` / `kqlabel` / `kqoffer` / `kqdone` lines in
-  `npctalk.dat`, progress in `.dat/killquests.dat`, players `#kills`, say QUEST / YES to the giver; console `kqkill`, `kills`.
+- **Kill quests** (Quests page, second box; Nov 11): `kq*` lines in `npctalk.dat` (listed at the top of `npctalk.c`),
+  progress in `.dat/killquests.dat`, players `#kills`, say QUEST / YES to the giver; console `kqkill`, `kills`, `kqtime`.
 - **Quests page** (rail: Quests): every item quest (`#quest`: wants / teaches / gives / exp / hint / order) and chain quest
   (`#journal`: names, journal steps, which NPCs use them) on one page. The `#quest` order is kept in `npctalk.dat` as
   `order <template> <place>` (-1 = not listed).

@@ -492,6 +492,7 @@ void do_areas(int cn);
 void kq_kill(int cn,int co);
 void do_kills(int cn);
 int kq_test_kill(int co,int t);
+int kq_test_time(int co,int mins);
 int clear_test(int co,int t);
 int zone_count(void);
 int zone_boxes(void);
