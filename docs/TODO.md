@@ -225,7 +225,8 @@ Both built and live (Quests page); Cody adds the areas (quest areas first) and t
 ### ● Kill quests on the Quests page (Nov 11; built, Cody tries them)
 Made and changed on the Quests page, with Cody's criteria (Nov 11): zone, name rules (contains / is / starts with /
 templates / any enemy, with exceptions), monster ranks, player ranks, classes, time to finish, wait before again, rewards
-that change per turn-in, every giver text. `#kills` in game, say QUEST / YES to the giver (CHANGES.md "Kill quests").
+that change per turn-in, every giver text; requirements (quest step, skill, item, money, area) that hide the quest until
+they fit, and quest steps set on hand-in (so town quest NPCs can give kill quests as part of chain quests). `#kills` in game, say QUEST / YES to the giver (CHANGES.md "Kill quests").
 Next: Cody makes the first ones and tries them in game. Ideas if wanted later: rewards by class, kill quests in `#quest` too.
 
 ### ○ Area brushes: erase (new, Nov 10)

@@ -298,12 +298,40 @@ def talk_parse(text):
 
 
 # kill quests (npctalk.c "kq" lines; the Quests page; the top of npctalk.c lists them all)
-KQ_TEXTS = ('offer', 'accept', 'busy', 'done', 'low', 'high', 'class', 'max', 'late', 'wait', 'full')
+KQ_TEXTS = ('offer', 'accept', 'busy', 'done', 'low', 'high', 'class', 'max', 'late', 'wait', 'full', 'req')
 
 
 def kq_new(i):
     return {'id': i, 'giver': 0, 'count': 5, 'limit': 1, 'exp': 0, 'gold': 0, 'item': 0, 'skill': 0, 'first': 0, 'st': [],
-            'kill': '', 'zone': '', 'label': '', 'rmin': -1, 'rmax': -1, 'vmin': -1, 'vmax': -1, 'cls': '', 'tlimit': 0, 'cool': 0, 'txt': {}}
+            'kill': '', 'zone': '', 'label': '', 'rmin': -1, 'rmax': -1, 'vmin': -1, 'vmax': -1, 'cls': '', 'tlimit': 0, 'cool': 0, 'txt': {},
+            'req': [], 'sets': []}
+
+
+def cond_parse(a, rest):
+    """an "if" condition (the words after "if") -> the editor's condition dict, or None"""
+    if a[0] == 'quest': return {'type': 'quest', 'n': int(a[1]), 'op': a[2], 'v': int(a[3])}
+    if a[0] == 'has': return {'type': 'has', 't': int(a[1])}
+    if a[0] == '!has': return {'type': 'hasnot', 't': int(a[1])}
+    if a[0] == 'rank': return {'type': 'rank', 'op': a[1], 'v': int(a[2])}
+    if a[0] == 'area': return {'type': 'area', 's': rest.split(None, 1)[1] if len(a) > 1 else ''}
+    if a[0] == 'skill': return {'type': 'skill', 'n': int(a[1]), 'op': a[2], 'v': int(a[3])}
+    if a[0] == 'gold': return {'type': 'gold', 'op': a[1], 'v': int(a[2])}
+    if a[0] in ('class', '!class') and len(a) > 1: return {'type': 'class', 'not': a[0] == '!class', 'c': a[1].lower()}
+    return None
+
+
+def cond_line(c):
+    """the editor's condition dict -> the words after "if" (or '' if it is not complete)"""
+    ty, clean = c.get('type'), lambda v: ' '.join(str(v).split())
+    if ty == 'quest' and c.get('op') in OPS: return 'quest %d %s %d' % (int(c['n']), c['op'], int(c['v']))
+    if ty == 'has': return 'has %d' % int(c['t'])
+    if ty == 'hasnot': return '!has %d' % int(c['t'])
+    if ty == 'rank' and c.get('op') in OPS: return 'rank %s %d' % (c['op'], int(c['v']))
+    if ty == 'area' and clean(c.get('s', '')): return 'area ' + clean(c['s']).lower()
+    if ty == 'skill' and c.get('op') in OPS: return 'skill %d %s %d' % (int(c['n']), c['op'], int(c['v']))
+    if ty == 'gold' and c.get('op') in OPS: return 'gold %s %d' % (c['op'], int(c['v']))
+    if ty == 'class' and re.fullmatch(r'[a-z|]+', str(c.get('c', ''))): return '%sclass %s' % ('!' if c.get('not') else '', c['c'])
+    return ''
 
 
 def kq_parse_line(kills, k, a, rest):
@@ -327,6 +355,11 @@ def kq_parse_line(kills, k, a, rest):
         q['first'] = int(a[1])
     elif k == 'kqstage' and len(a) >= 5:
         q['st'].append([int(v) for v in a[1:5]])
+    elif k == 'kqif' and len(a) >= 2:
+        c = cond_parse(a[1:], rest.split(None, 1)[1])
+        if c: q['req'].append(c)
+    elif k == 'kqset' and len(a) >= 4 and a[1] in ('set', 'add'):
+        q['sets'].append({'type': a[1], 'n': int(a[2]), 'v': int(a[3])})
     elif k == 'kqtext' and len(a) >= 2 and a[1] in KQ_TEXTS:
         q['txt'][a[1]] = rest.split(None, 2)[2].strip() if len(a) > 2 else ''
 
@@ -353,6 +386,13 @@ def kq_lines(i, k, name):
         out.append('kqfirst %d %d' % (i, int(k['first'])))
         for x in st:
             out.append('kqstage %d %d %d %d %d' % (i, *[max(0, int(v)) for v in (list(x) + [0] * 4)[:4]]))
+    for c in (k.get('req') or [])[:8]:
+        w = cond_line(c)
+        if w:
+            out.append('kqif %d %s' % (i, w))
+    for x in (k.get('sets') or [])[:4]:
+        if x.get('type') in ('set', 'add') and 1 <= int(x.get('n', 0)) <= 255:
+            out.append('kqset %d %s %d %d' % (i, x['type'], int(x['n']), int(x.get('v', 0))))
     for t in KQ_TEXTS:
         v = ' '.join(str((k.get('txt') or {}).get(t, '')).split())
         if v:
@@ -1167,7 +1207,10 @@ class World:
                       'kill': ' '.join(str(k.get('kill', '')).split())[:300], 'zone': ' '.join(str(k.get('zone', '')).split())[:60],
                       'label': ' '.join(str(k.get('label', '')).split())[:60], 'cls': re.sub(r'[^a-z|]', '', str(k.get('cls', '')).lower()),
                       'tlimit': max(0, int(k.get('tlimit', 0))), 'cool': max(0, int(k.get('cool', 0))),
-                      'txt': {t: ' '.join(str(v).split())[:200] for t, v in (k.get('txt') or {}).items() if t in KQ_TEXTS and str(v).strip()}})
+                      'txt': {t: ' '.join(str(v).split())[:200] for t, v in (k.get('txt') or {}).items() if t in KQ_TEXTS and str(v).strip()},
+                      'req': [c for c in (k.get('req') or []) if isinstance(c, dict) and cond_line(c)][:8],
+                      'sets': [{'type': x['type'], 'n': int(x['n']), 'v': int(x.get('v', 0))} for x in (k.get('sets') or [])
+                               if isinstance(x, dict) and x.get('type') in ('set', 'add') and 1 <= int(x.get('n', 0)) <= 255][:4]})
             for f in ('rmin', 'rmax', 'vmin', 'vmax'):
                 q[f] = max(-1, min(23, int(k.get(f, -1))))
             out[i] = q

@@ -72,8 +72,11 @@
    kqskill <id> <skill>           the first reward also teaches this skill
    kqfirst <id> <n>               the kq reward for the first n turn-ins, then:
    kqstage <id> <times> <item> <exp> <gold>   the next reward for that many turn-ins (0 = every time after)
+   kqif <id> <condition>          a requirement, as an "if" line (quest 3 >= 2, skill 12 > 0, has 1408, gold >= 100...);
+                                  until all are met the quest is hidden (not offered, not in #kills)
+   kqset <id> set|add <n> <v>     handing it in sets / adds to quest step n (to go on with a chain quest)
    kqtext <id> <which> <text>     what the giver says (%s = the player's name): offer, accept, busy, done, low, high,
-                                  class, max, late, wait, full
+                                  class, max, late, wait, full, req (requirements not met; none = say nothing)
  A player says QUEST (task, job, work, kill) to the giver, or the giver greets them: it offers its first kill quest the
  player can take; YES takes it. Kills count only while it is taken (the killer, a companion's master, and group members
  who can see them), "Spiders: 3/5"; at the last one "Return to <giver>". Coming back (greeting or QUEST) hands it in.
@@ -220,8 +223,8 @@ static void clear_hashes(void);
 /* ---- kill quests (the editor's Quests page): see the top of this file */
 #define MAXKQ		64
 #define KQ_FILE		DATDIR"/killquests.dat"
-enum { KT_OFFER, KT_ACCEPT, KT_BUSY, KT_DONE, KT_LOW, KT_HIGH, KT_CLASS, KT_MAX, KT_LATE, KT_WAIT, KT_FULL, KT_N };
-static char *kt_name[KT_N]={"offer","accept","busy","done","low","high","class","max","late","wait","full"};
+enum { KT_OFFER, KT_ACCEPT, KT_BUSY, KT_DONE, KT_LOW, KT_HIGH, KT_CLASS, KT_MAX, KT_LATE, KT_WAIT, KT_FULL, KT_REQ, KT_N };
+static char *kt_name[KT_N]={"offer","accept","busy","done","low","high","class","max","late","wait","full","req"};
 static char *kt_default[KT_N]={
 	NULL,	// made from the quest: "%s, I need someone to kill 5 Spiders. Will you do it?"
 	"Good. Come back to me when it is done, %s.",
@@ -233,7 +236,8 @@ static char *kt_default[KT_N]={
 	"I have no more tasks for you, %s.",
 	"You took too long, %s. Ask me again if you want to try once more.",
 	"Come back later, %s. I have nothing for you right now.",
-	"Make room in your backpack first, %s, then come back."};
+	"Make room in your backpack first, %s, then come back.",
+	NULL};	// req: none = the quest stays hidden until its requirements are met
 struct kquest {
 	int used, giver, count, limit, exp, gold, item, skill, first, nst;
 	struct qstage st[QSTAGES];
@@ -241,6 +245,8 @@ struct kquest {
 	unsigned int cmask;			// classes that may take it, 0 = all
 	int tlimit, cool;			// minutes
 	int kill, zone, label, txt[KT_N];	// pool offsets
+	struct tcond c[MAXCOND]; int nc;	// requirements ("kqif", as an "if" line)
+	struct { int add, n, v; } set[4]; int nset;	// quest steps set / added when it is handed in ("kqset")
 	unsigned short hash;
 };
 static struct kquest kq[MAXKQ+1];
@@ -281,6 +287,23 @@ static int cmp_op(int a,int op,int b)
 }
 
 static void lower(char *s) { for (; *s; s++) *s=tolower((unsigned char)*s); }
+
+/* an "if ..." condition (the text after "if"): 1 = understood */
+static int parse_cond(struct tcond *c,char *q)
+{
+	char op[16]; int n,v;
+	memset(c,0,sizeof(*c));
+	if (sscanf(q,"quest %d %7s %d",&n,op,&v)==3 && n>=1 && n<=QVARS && parse_op(op)>=0) { c->type=C_QUEST; c->n=n; c->op=parse_op(op); c->v=v; return 1; }
+	if (sscanf(q,"has %d",&n)==1) { c->type=C_HAS; c->n=n; return 1; }
+	if (sscanf(q,"!has %d",&n)==1) { c->type=C_HASNOT; c->n=n; return 1; }
+	if (sscanf(q,"rank %7s %d",op,&v)==2 && parse_op(op)>=0) { c->type=C_RANK; c->op=parse_op(op); c->v=v; return 1; }
+	if (!strncmp(q,"area ",5)) { c->type=C_AREA; lower(q+5); c->n=pool_add(q+5); return 1; }
+	if (sscanf(q,"skill %d %7s %d",&n,op,&v)==3 && n>=0 && n<50 && parse_op(op)>=0) { c->type=C_SKILL; c->n=n; c->op=parse_op(op); c->v=v; return 1; }
+	if (sscanf(q,"gold %7s %d",op,&v)==2 && parse_op(op)>=0) { c->type=C_GOLD; c->op=parse_op(op); c->v=v; return 1; }
+	if (!strncmp(q,"class ",6) && class_mask(q+6)) { c->type=C_CLASS; c->op=0; c->n=(int)class_mask(q+6); return 1; }
+	if (!strncmp(q,"!class ",7) && class_mask(q+7)) { c->type=C_CLASS; c->op=1; c->n=(int)class_mask(q+7); return 1; }
+	return 0;
+}
 
 int talk_load(void)
 {
@@ -361,6 +384,13 @@ int talk_load(void)
 				else if (!strcmp(w1,"kqstage") && sscanf(kv,"%d %d %d %d",&a[0],&a[1],&a[2],&a[3])==4 && K->nst<QSTAGES && a[0]>=0) {
 					struct qstage *st=&K->st[K->nst++];
 					st->times=a[0]; st->item=a[1]>0 && a[1]<MAXTITEM ? a[1] : 0; st->exp=a[2]>0 ? a[2] : 0; st->gold=a[3]>0 ? a[3] : 0; ok=1;
+				}
+				else if (!strcmp(w1,"kqif") && K->nc<MAXCOND) { if (parse_cond(&K->c[K->nc],kv)) { K->nc++; ok=1; } }
+				else if (!strcmp(w1,"kqset") && K->nset<4) {
+					char w3[8]=""; int n3,v3;
+					if (sscanf(kv,"%7s %d %d",w3,&n3,&v3)==3 && (!strcmp(w3,"set") || !strcmp(w3,"add")) && n3>=1 && n3<=QVARS) {
+						K->set[K->nset].add=w3[0]=='a'; K->set[K->nset].n=n3; K->set[K->nset].v=v3; K->nset++; ok=1;
+					}
 				}
 				else if (!strcmp(w1,"kqtext")) {
 					char w3[16]=""; int k3=0,t;
@@ -469,17 +499,7 @@ int talk_load(void)
 		if (!e) { if (strcmp(w1,"end")) bad++; continue; }
 		if (!strcmp(w1,"end")) { e=NULL; continue; }
 		if (!strcmp(w1,"if") && e->nc<MAXCOND) {
-			struct tcond *c=&e->c[e->nc];
-			if (sscanf(q,"quest %d %7s %d",&n,op,&v)==3 && n>=1 && n<=QVARS && parse_op(op)>=0) { c->type=C_QUEST; c->n=n; c->op=parse_op(op); c->v=v; e->nc++; }
-			else if (sscanf(q,"has %d",&n)==1) { c->type=C_HAS; c->n=n; e->nc++; }
-			else if (sscanf(q,"!has %d",&n)==1) { c->type=C_HASNOT; c->n=n; e->nc++; }
-			else if (sscanf(q,"rank %7s %d",op,&v)==2 && parse_op(op)>=0) { c->type=C_RANK; c->op=parse_op(op); c->v=v; e->nc++; }
-			else if (!strncmp(q,"area ",5)) { c->type=C_AREA; lower(q+5); c->n=pool_add(q+5); e->nc++; }
-			else if (sscanf(q,"skill %d %7s %d",&n,op,&v)==3 && n>=0 && n<50 && parse_op(op)>=0) { c->type=C_SKILL; c->n=n; c->op=parse_op(op); c->v=v; e->nc++; }
-			else if (sscanf(q,"gold %7s %d",op,&v)==2 && parse_op(op)>=0) { c->type=C_GOLD; c->op=parse_op(op); c->v=v; e->nc++; }
-			else if (!strncmp(q,"class ",6) && class_mask(q+6)) { c->type=C_CLASS; c->op=0; c->n=(int)class_mask(q+6); e->nc++; }
-			else if (!strncmp(q,"!class ",7) && class_mask(q+7)) { c->type=C_CLASS; c->op=1; c->n=(int)class_mask(q+7); e->nc++; }
-			else bad++;
+			if (parse_cond(&e->c[e->nc],q)) e->nc++; else bad++;
 			continue;
 		}
 		if (e->ne>=MAXEFF) { bad++; continue; }
@@ -667,12 +687,12 @@ static int victim_match(char *spec,int co)
 	return 0;
 }
 
-static int conds_ok(struct tentry *e,int co,int x,int y)
+static int conds_check(struct tcond *cs,int nc,int co,int x,int y)
 {
 	int n;
 	char area[512],*s;
-	for (n=0; n<e->nc; n++) {
-		struct tcond *c=&e->c[n];
+	for (n=0; n<nc; n++) {
+		struct tcond *c=&cs[n];
 		switch (c->type) {
 			case C_QUEST:  if (!cmp_op(quest_get(co,c->n),c->op,c->v)) return 0; break;
 			case C_HAS:    if (!carried(co,c->n)) return 0; break;
@@ -691,6 +711,8 @@ static int conds_ok(struct tentry *e,int co,int x,int y)
 	}
 	return 1;
 }
+
+static int conds_ok(struct tentry *e,int co,int x,int y) { return conds_check(e->c,e->nc,co,x,y); }
 
 static void (*talk_echo)(char *)=NULL;
 void talk_set_echo(void (*f)(char *)) { talk_echo=f; }
@@ -1458,7 +1480,7 @@ struct kqrow {
 #define KQ_TAKEN	1
 #define KQ_READY	2
 #define KQ_LATE		3	// ran out of time: the giver says so the next time, then it can be taken again
-enum { KW_OK=0, KW_BUSY, KW_MAX, KW_WAIT, KW_LOW, KW_HIGH, KW_CLASS };
+enum { KW_OK=0, KW_BUSY, KW_MAX, KW_WAIT, KW_LOW, KW_HIGH, KW_CLASS, KW_REQ };
 static int kqfd=-2;
 static struct { int giver, tick; } kq_offered[MAXCHARS];	// the last kill quest giver that offered this player a task
 
@@ -1658,6 +1680,7 @@ static int kq_why(int co,struct kqrow *r,int a,int *wait)
 	if (!kq[a].used) return KW_MAX;
 	if (r->st[a]==KQ_TAKEN || r->st[a]==KQ_READY) return KW_BUSY;
 	if (kq[a].limit && r->done[a]>=kq[a].limit) return KW_MAX;
+	if (kq[a].nc && !conds_check(kq[a].c,kq[a].nc,co,ch[co].x,ch[co].y)) return KW_REQ;
 	if (kq[a].cmask && !(ch[co].kindred&kq[a].cmask)) return KW_CLASS;
 	if (kq[a].rmin1 && rank<kq[a].rmin1-1) return KW_LOW;
 	if (kq[a].rmax1 && rank>kq[a].rmax1-1) return KW_HIGH;
@@ -1695,6 +1718,7 @@ static int kq_reward(int cn,int co,int a,struct kqrow *r)
 		if (!ch[co].skill[sk][0] && ch[co].skill[sk][2]) { ch[co].skill[sk][0]=1; do_update_char(co); kqlog(co,0,"You learned %s!\n",skilltab[sk].name); }
 	}
 	if (exp>0) do_give_exp(co,exp,0,-1);
+	for (sk=0; sk<kq[a].nset; sk++) quest_set(co,kq[a].set[sk].n,kq[a].set[sk].add ? quest_get(co,kq[a].set[sk].n)+kq[a].set[sk].v : kq[a].set[sk].v);
 	if (r->done[a]<65535) r->done[a]++;
 	r->st[a]=0; r->cnt[a]=0; r->tlast[a]=time(NULL);
 	chlog(co,"Kill quest %d (%d %s) handed in to %s, %d time(s): %d exp, %d silver, item %d",a,kq[a].count,kq_label(a),ch[cn].name,r->done[a],exp,gold,item);
@@ -1719,13 +1743,19 @@ static int kq_pending(int cn,int co,struct kqrow *r)
 	return 0;
 }
 
+static int kq_prio(int a,int why,const int *prio)	// a requirement with its own text comes before "done all times"
+{
+	if (why==KW_REQ && kq[a].txt[KT_REQ] && pool[kq[a].txt[KT_REQ]]) return 2;
+	return prio[why];
+}
+
 /* a player said something to the NPC cn: QUEST / TASK / JOB / WORK / KILL asks for a task (or hands one in),
  * YES takes the one just offered. 1 = handled */
 static int kq_say(int cn,int co,char *text)
 {
 	struct kqrow r;
 	int a,t=ch[cn].temp,ask,yes,why,wait,best=-1,bwhy=0,bwait=0;
-	static const int prio[]={0,0,1,5,4,4,3};	// which reason to give when none can be taken: wait > rank > class > done
+	static const int prio[]={0,0,1,5,4,4,3,0};	// which reason to give when none can be taken: wait > rank > class > done > requirements
 	if (!IS_SANECHAR(cn) || !IS_SANECHAR(co) || !kq_is_giver(t)) return 0;
 	ask=said("quest*|task*|job*|work|kill*|mission*",text);
 	yes=said("yes|accept*|ok|okay|sure",text) && kq_offered[co].giver==t && globs->ticker-kq_offered[co].tick<TICKS*120;
@@ -1753,7 +1783,7 @@ static int kq_say(int cn,int co,char *text)
 		if (!kq[a].used || kq[a].giver!=t) continue;
 		why=kq_why(co,&r,a,&wait);
 		if (why==KW_OK) { kq_offer(cn,co,a,r.done[a]); return 1; }
-		if (best<0 || prio[why]>prio[bwhy]) { best=a; bwhy=why; bwait=wait; }
+		if (best<0 || kq_prio(a,why,prio)>kq_prio(best,bwhy,prio)) { best=a; bwhy=why; bwait=wait; }
 	}
 	if (best<0 || !ask) return 0;
 	switch (bwhy) {
@@ -1761,6 +1791,8 @@ static int kq_say(int cn,int co,char *text)
 		case KW_HIGH:  kqsay_t(cn,co,best,KT_HIGH); break;
 		case KW_CLASS: kqsay_t(cn,co,best,KT_CLASS); break;
 		case KW_WAIT:  kqsay_t(cn,co,best,KT_WAIT); kqlog(co,1,"(You can do it again in %s.)\n",kq_mins(bwait)); break;
+		case KW_REQ:   if (!kq[best].txt[KT_REQ] || !pool[kq[best].txt[KT_REQ]]) return 0;	// hidden until its requirements are met
+		               kqsay_t(cn,co,best,KT_REQ); break;
 		default:       kqsay_t(cn,co,best,KT_MAX); break;
 	}
 	return 1;
@@ -1834,9 +1866,10 @@ void do_kills(int cn)
 	kqrow_get(cn,&r);
 	for (a=1; a<=MAXKQ; a++) {
 		if (!kq[a].used) continue;
+		why=kq_why(cn,&r,a,&wait); font=1;
+		if (why==KW_REQ && !r.st[a]) continue;	// hidden until its requirements are met
 		if (!nr) kqlog(cn,1,"Kill quests:\n");
 		nr++;
-		why=kq_why(cn,&r,a,&wait); font=1;
 		if (r.st[a]==KQ_READY) snprintf(st,sizeof(st),"done: return to %s",ch_temp[kq[a].giver].name);
 		else if (r.st[a]==KQ_TAKEN && kq[a].tlimit) snprintf(st,sizeof(st),"%d/%d, %s left",r.cnt[a],kq[a].count,kq_mins((kq[a].tlimit*60-((int)time(NULL)-r.t0[a])+59)/60));
 		else if (r.st[a]==KQ_TAKEN) snprintf(st,sizeof(st),"%d/%d",r.cnt[a],kq[a].count);
@@ -1860,7 +1893,7 @@ void do_kills(int cn)
 		if (kq[a].cmask) o+=snprintf(tm+o,sizeof(tm)-o,"%s%s",o ? ", " : "",kq_class_text(kq[a].cmask));
 		if (o) kqlog(cn,1,"   (%s)\n",tm);
 	}
-	if (!nr) kqlog(cn,1,"There are no kill quests yet.\n");
+	if (!nr) kqlog(cn,1,"There are no kill quests for you yet.\n");
 }
 
 /* console: as if player co killed an NPC of template t (kill quests only); -1 = no such NPC in the world */

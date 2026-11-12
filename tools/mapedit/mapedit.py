@@ -298,12 +298,40 @@ def talk_parse(text):
 
 
 # kill quests (npctalk.c "kq" lines; the Quests page; the top of npctalk.c lists them all)
-KQ_TEXTS = ('offer', 'accept', 'busy', 'done', 'low', 'high', 'class', 'max', 'late', 'wait', 'full')
+KQ_TEXTS = ('offer', 'accept', 'busy', 'done', 'low', 'high', 'class', 'max', 'late', 'wait', 'full', 'req')
 
 
 def kq_new(i):
     return {'id': i, 'giver': 0, 'count': 5, 'limit': 1, 'exp': 0, 'gold': 0, 'item': 0, 'skill': 0, 'first': 0, 'st': [],
-            'kill': '', 'zone': '', 'label': '', 'rmin': -1, 'rmax': -1, 'vmin': -1, 'vmax': -1, 'cls': '', 'tlimit': 0, 'cool': 0, 'txt': {}}
+            'kill': '', 'zone': '', 'label': '', 'rmin': -1, 'rmax': -1, 'vmin': -1, 'vmax': -1, 'cls': '', 'tlimit': 0, 'cool': 0, 'txt': {},
+            'req': [], 'sets': []}
+
+
+def cond_parse(a, rest):
+    """an "if" condition (the words after "if") -> the editor's condition dict, or None"""
+    if a[0] == 'quest': return {'type': 'quest', 'n': int(a[1]), 'op': a[2], 'v': int(a[3])}
+    if a[0] == 'has': return {'type': 'has', 't': int(a[1])}
+    if a[0] == '!has': return {'type': 'hasnot', 't': int(a[1])}
+    if a[0] == 'rank': return {'type': 'rank', 'op': a[1], 'v': int(a[2])}
+    if a[0] == 'area': return {'type': 'area', 's': rest.split(None, 1)[1] if len(a) > 1 else ''}
+    if a[0] == 'skill': return {'type': 'skill', 'n': int(a[1]), 'op': a[2], 'v': int(a[3])}
+    if a[0] == 'gold': return {'type': 'gold', 'op': a[1], 'v': int(a[2])}
+    if a[0] in ('class', '!class') and len(a) > 1: return {'type': 'class', 'not': a[0] == '!class', 'c': a[1].lower()}
+    return None
+
+
+def cond_line(c):
+    """the editor's condition dict -> the words after "if" (or '' if it is not complete)"""
+    ty, clean = c.get('type'), lambda v: ' '.join(str(v).split())
+    if ty == 'quest' and c.get('op') in OPS: return 'quest %d %s %d' % (int(c['n']), c['op'], int(c['v']))
+    if ty == 'has': return 'has %d' % int(c['t'])
+    if ty == 'hasnot': return '!has %d' % int(c['t'])
+    if ty == 'rank' and c.get('op') in OPS: return 'rank %s %d' % (c['op'], int(c['v']))
+    if ty == 'area' and clean(c.get('s', '')): return 'area ' + clean(c['s']).lower()
+    if ty == 'skill' and c.get('op') in OPS: return 'skill %d %s %d' % (int(c['n']), c['op'], int(c['v']))
+    if ty == 'gold' and c.get('op') in OPS: return 'gold %s %d' % (c['op'], int(c['v']))
+    if ty == 'class' and re.fullmatch(r'[a-z|]+', str(c.get('c', ''))): return '%sclass %s' % ('!' if c.get('not') else '', c['c'])
+    return ''
 
 
 def kq_parse_line(kills, k, a, rest):
@@ -327,6 +355,11 @@ def kq_parse_line(kills, k, a, rest):
         q['first'] = int(a[1])
     elif k == 'kqstage' and len(a) >= 5:
         q['st'].append([int(v) for v in a[1:5]])
+    elif k == 'kqif' and len(a) >= 2:
+        c = cond_parse(a[1:], rest.split(None, 1)[1])
+        if c: q['req'].append(c)
+    elif k == 'kqset' and len(a) >= 4 and a[1] in ('set', 'add'):
+        q['sets'].append({'type': a[1], 'n': int(a[2]), 'v': int(a[3])})
     elif k == 'kqtext' and len(a) >= 2 and a[1] in KQ_TEXTS:
         q['txt'][a[1]] = rest.split(None, 2)[2].strip() if len(a) > 2 else ''
 
@@ -353,6 +386,13 @@ def kq_lines(i, k, name):
         out.append('kqfirst %d %d' % (i, int(k['first'])))
         for x in st:
             out.append('kqstage %d %d %d %d %d' % (i, *[max(0, int(v)) for v in (list(x) + [0] * 4)[:4]]))
+    for c in (k.get('req') or [])[:8]:
+        w = cond_line(c)
+        if w:
+            out.append('kqif %d %s' % (i, w))
+    for x in (k.get('sets') or [])[:4]:
+        if x.get('type') in ('set', 'add') and 1 <= int(x.get('n', 0)) <= 255:
+            out.append('kqset %d %s %d %d' % (i, x['type'], int(x['n']), int(x.get('v', 0))))
     for t in KQ_TEXTS:
         v = ' '.join(str((k.get('txt') or {}).get(t, '')).split())
         if v:
@@ -1167,7 +1207,10 @@ class World:
                       'kill': ' '.join(str(k.get('kill', '')).split())[:300], 'zone': ' '.join(str(k.get('zone', '')).split())[:60],
                       'label': ' '.join(str(k.get('label', '')).split())[:60], 'cls': re.sub(r'[^a-z|]', '', str(k.get('cls', '')).lower()),
                       'tlimit': max(0, int(k.get('tlimit', 0))), 'cool': max(0, int(k.get('cool', 0))),
-                      'txt': {t: ' '.join(str(v).split())[:200] for t, v in (k.get('txt') or {}).items() if t in KQ_TEXTS and str(v).strip()}})
+                      'txt': {t: ' '.join(str(v).split())[:200] for t, v in (k.get('txt') or {}).items() if t in KQ_TEXTS and str(v).strip()},
+                      'req': [c for c in (k.get('req') or []) if isinstance(c, dict) and cond_line(c)][:8],
+                      'sets': [{'type': x['type'], 'n': int(x['n']), 'v': int(x.get('v', 0))} for x in (k.get('sets') or [])
+                               if isinstance(x, dict) and x.get('type') in ('set', 'add') and 1 <= int(x.get('n', 0)) <= 255][:4]})
             for f in ('rmin', 'rmax', 'vmin', 'vmax'):
                 q[f] = max(-1, min(23, int(k.get(f, -1))))
             out[i] = q
@@ -7098,7 +7141,7 @@ function qSpecial(q) {              // rewards built into the game's code (drive
 }
 // ---- kill quests (Quests page, second box): "kill 5 Spiders" for a giver; players say QUEST to it, list with #kills
 let QK = null, QKorig = '', QK0 = '[]', QKopen = new Set();
-const KQF = ['id', 'giver', 'count', 'limit', 'exp', 'gold', 'item', 'skill', 'first', 'st', 'kill', 'zone', 'label', 'rmin', 'rmax', 'vmin', 'vmax', 'cls', 'tlimit', 'cool', 'txt'];
+const KQF = ['id', 'giver', 'count', 'limit', 'exp', 'gold', 'item', 'skill', 'first', 'st', 'kill', 'zone', 'label', 'rmin', 'rmax', 'vmin', 'vmax', 'cls', 'tlimit', 'cool', 'txt', 'req', 'sets'];
 const qkKey = () => JSON.stringify((QK || []).map(k => KQF.map(f => k[f])));
 const qkDirty = () => QK && qkKey() !== QKorig;
 const KQ_TXT = [['offer', 'Offers it', null], ['accept', 'Player says yes', 'Good. Come back to me when it is done, %s.'],
@@ -7106,7 +7149,8 @@ const KQ_TXT = [['offer', 'Offers it', null], ['accept', 'Player says yes', 'Goo
   ['low', 'Rank too low', 'You should get stronger first, %s.'], ['high', 'Rank too high', 'You are a bit too strong for this task, %s.'],
   ['class', 'Wrong class', 'This task is not for one of your kind, %s.'], ['max', 'Done all times', 'I have no more tasks for you, %s.'],
   ['late', 'Ran out of time', 'You took too long, %s. Ask me again if you want to try once more.'],
-  ['wait', 'Not again yet', 'Come back later, %s. I have nothing for you right now.'], ['full', 'Backpack full', 'Make room in your backpack first, %s, then come back.']];
+  ['wait', 'Not again yet', 'Come back later, %s. I have nothing for you right now.'], ['full', 'Backpack full', 'Make room in your backpack first, %s, then come back.'],
+  ['req', 'Requirements not met', '(says nothing: the quest stays hidden)']];
 function kqNpcPick(anchor, done, title) {     // choose an NPC template (each placed NPC has its own)
   const p = $('#ipop'), r = anchor.getBoundingClientRect();
   p.style.display = 'flex'; p.style.left = Math.min(window.innerWidth - 350, r.left) + 'px'; p.style.top = Math.min(window.innerHeight - 390, r.bottom + 4) + 'px';
@@ -7173,7 +7217,7 @@ function killsBox(el) {
     if (id > 64) return toast('At most 64 kill quests.', true);
     kqNpcPick(kb.querySelector('.knew'), async t => {
       const g = await api('/api/kqgiver', { t: t[0] });
-      QK.push({ id, giver: t[0], count: 5, limit: 1, exp: 0, gold: 0, item: 0, skill: 0, first: 0, st: [], kill: '', zone: '', label: '', rmin: -1, rmax: -1, vmin: -1, vmax: -1, cls: '', tlimit: 0, cool: 0, txt: {}, g });
+      QK.push({ id, giver: t[0], count: 5, limit: 1, exp: 0, gold: 0, item: 0, skill: 0, first: 0, st: [], kill: '', zone: '', label: '', rmin: -1, rmax: -1, vmin: -1, vmax: -1, cls: '', tlimit: 0, cool: 0, txt: {}, req: [], sets: [], g });
       QKopen.add(id); questsRender(); toast(`New kill quest for ${t[1]}: set what to kill and the reward, then Save.`);
     }, 'Who gives the quest? Name or template number');
   };
@@ -7213,7 +7257,7 @@ function killsBox(el) {
     const rs = [k.skill && SKILLS[k.skill], k.exp && k.exp.toLocaleString() + ' exp', k.gold && k.gold / 100 + 'G', k.item && iname(k.item)].filter(Boolean).join(', ') || 'no reward';
     const lim = [k.limit === 1 ? 'once' : k.limit ? k.limit + ' times' : 'forever', k.first && k.st.length ? (1 + k.st.length) + ' rewards' : '',
       (k.rmin >= 0 || k.rmax >= 0) && qRankText({ rmin: k.rmin, rmax: k.rmax }), (k.vmin >= 0 || k.vmax >= 0) && 'monster ' + qRankText({ rmin: k.vmin, rmax: k.vmax }),
-      k.cls && 'some classes', k.tlimit && kqMinText(k.tlimit) + ' to finish', k.cool && k.limit !== 1 && 'again after ' + kqMinText(k.cool)].filter(Boolean).join(' · ');
+      k.cls && 'some classes', k.req && k.req.length && k.req.length + ' requirement' + (k.req.length === 1 ? '' : 's'), k.tlimit && kqMinText(k.tlimit) + ' to finish', k.cool && k.limit !== 1 && 'again after ' + kqMinText(k.cool)].filter(Boolean).join(' · ');
     const sl = document.createElement('div'); sl.className = 'hint'; sl.style.margin = '4px 0 0'; sl.textContent = `Reward: ${rs} · ${lim}`; c.appendChild(sl);
     if (!kqTok(k).some(t => !t.startsWith('!'))) { c.classList.add('need'); QKopen.add(k.id); }
     if (!QKopen.has(k.id)) return;
@@ -7284,6 +7328,32 @@ function killsBox(el) {
     fld(g2, 'Classes', cw).classList.add('full');
     fld(g2, 'Time to finish (0 = no limit)', kqMinutes(() => k.tlimit, v => { k.tlimit = v; re(); }));
     if (k.limit !== 1) fld(g2, 'Wait before doing it again', kqMinutes(() => k.cool, v => { k.cool = v; re(); }));
+    // ---- requirements: any "if" condition, like conversation lines (quest step, skill, carried item, money, area...)
+    const OPN2 = [['=', 'is'], ['!=', 'is not'], ['<', 'is below'], ['>', 'is above'], ['<=', 'is at most'], ['>=', 'is at least']];
+    const selS2 = (opts, get, set) => { const s3 = document.createElement('select'); s3.innerHTML = opts.map(([v, l]) => `<option value="${esc(v)}">${esc(l)}</option>`).join(''); s3.value = get(); s3.onchange = () => set(s3.value); return s3; };
+    const qOpts = cur => {      // the chain quests (names), a few free numbers after them, and the one in use
+      const ns = new Set((QC || []).map(c2 => c2.n)); const top = Math.max(0, ...ns); for (let n = top + 1; n <= Math.min(255, top + 5); n++) ns.add(n); if (cur) ns.add(+cur);
+      return [...ns].sort((a, b) => a - b).map(n => { const c2 = (QC || []).find(x => x.n === n); return [n, c2 && c2.name ? `${n} · ${c2.name}` : `${n} · (unnamed)`]; });
+    };
+    if (!Array.isArray(k.req)) k.req = []; if (!Array.isArray(k.sets)) k.sets = [];
+    const rq = document.createElement('div'); rq.className = 'ksteps';
+    k.req.forEach((cd, j) => {
+      const r = document.createElement('div');
+      const ty = selS2([['quest', 'quest step'], ['skill', 'skill'], ['has', 'carries the item'], ['hasnot', 'does not carry the item'], ['gold', 'money (silver)'], ['area', 'is in the area']], () => cd.type,
+        v => { k.req[j] = v === 'quest' ? { type: v, n: (QC && QC[0] ? QC[0].n : 1), op: '>=', v: 1 } : v === 'skill' ? { type: v, n: 12, op: '>', v: 0 } : v === 'gold' ? { type: v, op: '>=', v: 100 } : v === 'area' ? { type: v, s: '' } : { type: v, t: 0 }; re(); });
+      r.append(ty);
+      if (cd.type === 'quest') r.append(sel(qOpts(cd.n), () => cd.n, v => { cd.n = v; re(); }), selS2(OPN2, () => cd.op, v => { cd.op = v; re(); }), num(() => cd.v, v => { cd.v = v; re(); }, 0, 65535));
+      else if (cd.type === 'skill') r.append(sel(SKILLS.map((s2, n) => [n, s2]), () => cd.n, v => { cd.n = v; re(); }), selS2(OPN2, () => cd.op, v => { cd.op = v; re(); }), num(() => cd.v, v => { cd.v = v; re(); }, 0, 255), sp('(0 = doesn\'t know it)'));
+      else if (cd.type === 'gold') r.append(selS2(OPN2, () => cd.op, v => { cd.op = v; re(); }), num(() => cd.v, v => { cd.v = v; re(); }, 0));
+      else if (cd.type === 'area') { const ai = txt(() => cd.s, v => cd.s = v, 60); ai.placeholder = 'part of an area name'; ai.setAttribute('list', 'kqzones'); ai.onchange = re; r.append(ai); }
+      else r.append(qpick(() => cd.t, v => { cd.t = v; re(); }, 'pick one!'));
+      const x = document.createElement('button'); x.className = 'sm'; x.textContent = '×'; x.title = 'Remove'; x.onclick = ev => { ev.preventDefault(); k.req.splice(j, 1); re(); }; r.append(x);
+      rq.append(r);
+    });
+    const ra = document.createElement('button'); ra.className = 'sm'; ra.textContent = '+ Requirement';
+    ra.onclick = ev => { ev.preventDefault(); k.req.push({ type: 'quest', n: (QC && QC[0] ? QC[0].n : 1), op: '>=', v: 1 }); re(); };
+    const r8 = document.createElement('div'); r8.append(ra); if (!k.req.length) r8.append(sp('none: everyone (who fits the rank and class) can take it')); rq.append(r8);
+    const rql = document.createElement('label'); rql.className = 'full'; rql.append(sp('Requirements (all must fit; until then the quest is hidden: not offered, not in #kills)'), rq); g2.appendChild(rql);
     // ---- rewards
     const g3 = sec('Rewards');
     const seg = document.createElement('div'); seg.className = 'seg'; const md = k.limit === 1 ? 'once' : k.limit ? 'n' : 'ever';
@@ -7320,10 +7390,24 @@ function killsBox(el) {
       ad2.onclick = ev => { ev.preventDefault(); const L = k.st[k.st.length - 1]; k.st.splice(k.st.length - 1, 0, [1, L[1], L[2], L[3]]); re(); };
       const r9 = document.createElement('div'); r9.append(ad2); tb.append(r9);
     }
+    { // handing it in moves a chain quest on
+      const ss = document.createElement('div'); ss.className = 'ksteps';
+      k.sets.forEach((x, j) => {
+        const r = document.createElement('div');
+        r.append(selS2([['set', 'set quest'], ['add', 'add to quest']], () => x.type, v => { x.type = v; re(); }), sel(qOpts(x.n), () => x.n, v => { x.n = v; re(); }),
+          sp(x.type === 'set' ? 'to step' : 'the value'), num(() => x.v, v => { x.v = v; re(); }, -65535, 65535));
+        const xb2 = document.createElement('button'); xb2.className = 'sm'; xb2.textContent = '×'; xb2.onclick = ev => { ev.preventDefault(); k.sets.splice(j, 1); re(); }; r.append(xb2);
+        ss.append(r);
+      });
+      const sa = document.createElement('button'); sa.className = 'sm'; sa.textContent = '+ Quest step'; sa.disabled = k.sets.length >= 4;
+      sa.onclick = ev => { ev.preventDefault(); k.sets.push({ type: 'set', n: (QC && QC[0] ? QC[0].n : 1), v: 1 }); re(); };
+      const r9 = document.createElement('div'); r9.append(sa); if (!k.sets.length) r9.append(sp('none')); ss.append(r9);
+      const sl2 = document.createElement('label'); sl2.className = 'full'; sl2.append(sp('When it is handed in, also (e.g. to go on with a chain quest)'), ss); g3.appendChild(sl2);
+    }
     // ---- what the giver says
     const g4 = sec('What the giver says', '%s = the player\'s name. Empty: the text shown in grey. (Only the ones that can happen with these settings are listed.)');
     for (const [key, label, def] of KQ_TXT) {
-      if (key === 'low' && k.rmin < 0 || key === 'high' && k.rmax < 0 || key === 'class' && !k.cls || key === 'late' && !k.tlimit || key === 'wait' && (!k.cool || k.limit === 1) || key === 'full' && !k.item && !k.st.some(s2 => s2[1])) continue;
+      if (key === 'low' && k.rmin < 0 || key === 'high' && k.rmax < 0 || key === 'class' && !k.cls || key === 'late' && !k.tlimit || key === 'wait' && (!k.cool || k.limit === 1) || key === 'full' && !k.item && !k.st.some(s2 => s2[1]) || key === 'req' && !k.req.length) continue;
       const t = document.createElement('input'); t.type = 'text'; t.maxLength = 200; t.value = k.txt[key] || '';
       t.placeholder = def || `%s, I need someone to kill ${k.count} ${kqLabel(k)}${k.zone ? ' in ' + k.zone : ''}. Will you do it?`;
       t.onchange = () => { if (t.value.trim()) k.txt[key] = t.value; else delete k.txt[key]; re(); };
