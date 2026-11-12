@@ -79,7 +79,8 @@ def main():
     u = (sx / 16 + sy / 8) / 2; v = (sx / 16 - sy / 8) / 2
     I = design(u, v, kind)
     Ilow = np.array(Image.fromarray((I * 255).astype(np.uint8)).resize((W, H), Image.BOX)) / 255.0
-    glow = np.array(Image.fromarray((I * 255).astype(np.uint8)).filter(ImageFilter.GaussianBlur(SS * 2.2)).resize((W, H), Image.BOX)) / 255.0
+    Iwide = np.array(Image.fromarray((I * 255).astype(np.uint8)).filter(ImageFilter.MaxFilter(2 * (SS // 2) + 1)).resize((W, H), Image.BOX)) / 255.0
+    glow = np.array(Image.fromarray((I * 255).astype(np.uint8)).filter(ImageFilter.GaussianBlur(SS * 1.2)).resize((W, H), Image.BOX)) / 255.0
     inner = np.array(Image.fromarray(((np.hypot(u, v) < R_OUT) * 255).astype(np.uint8)).filter(ImageFilter.GaussianBlur(SS * 3)).resize((W, H), Image.BOX)) / 255.0
     # the floor under it
     base = np.zeros((H, W, 4), np.uint8); pos = {}
@@ -95,10 +96,11 @@ def main():
     def state(lit):
         o = np.zeros((H, W, 4))
         if lit:
-            over(o, (110, 165, 255), inner * 0.16)                         # a faint blue wash inside the circle
-            over(o, (40, 120, 255), np.clip(glow * 1.5, 0, 1) * 0.42)      # halo on the floor
-            over(o, (40, 130, 255), Ilow)                                  # the lines themselves
-            over(o, (150, 220, 255), np.clip(Ilow, 0, 1) ** 4 * 0.75)      # bright core
+            over(o, (90, 150, 255), inner * 0.07)                          # a faint blue wash inside the circle
+            over(o, (30, 110, 255), np.clip(glow * 1.2, 0, 1) * 0.16)      # a thin halo: more would fill the gaps between the lines
+            over(o, (20, 60, 170), np.clip(Iwide - Ilow, 0, 1) * 0.55)     # a dark blue rim, so the lines stay sharp on light floors
+            over(o, (60, 150, 255), Ilow)                                  # the lines themselves
+            over(o, (190, 235, 255), np.clip(Ilow, 0, 1) ** 3 * 0.8)       # bright core
         else:
             over(o, (58, 66, 84), Ilow * 0.72)                             # carved, unlit
             sh = np.roll(Ilow, 1, 0)                                       # a thin light edge below each groove
