@@ -176,6 +176,7 @@ OPS = ('=', '!=', '<', '>', '<=', '>=')
 def talk_parse(text):
     quests, npcs, cur, e = {}, {}, None, None
     steps, chests, chest, order, qrew, clears, alias = {}, {}, None, {}, {}, {}, {}
+    kills = {}
     for line in text.splitlines():
         line = line.strip()
         if not line or line.startswith('#'):
@@ -217,6 +218,14 @@ def talk_parse(text):
                 continue
             if k == 'clearnpc' and a:
                 clears.setdefault(int(a[0]), {'id': int(a[0]), 'npcs': [], 'exp': 0, 'seyan': 1, 'zone': '', 'label': ''})['npcs'] += [int(v) for v in a[1:] if v.isdigit()]
+                continue
+            if k in KQ_KEYS and a:                      # kill quests (Quests page)
+                i = int(a[0])
+                kq = kills.setdefault(i, kq_new(i))
+                if k == 'kq' and len(a) >= 7:
+                    kq.update(dict(zip(('giver', 'count', 'limit', 'exp', 'gold', 'item'), [int(v) for v in a[1:7]])))
+                elif k != 'kq':
+                    kq[KQ_KEYS[k]] = rest.split(None, 1)[1].strip() if len(a) > 1 else ''
                 continue
             if k == 'qreward' and len(a) >= 4:        # item quest: times, first times, gold (Quests page); then qstage lines
                 v = [int(x) for x in a[1:7] if x.lstrip('-').isdigit()]
@@ -289,7 +298,17 @@ def talk_parse(text):
                 e['acts'].append({'type': k})
         except (IndexError, ValueError):
             continue
-    return {'names': quests, 'steps': steps, 'chests': chests, 'order': order, 'qrew': qrew, 'clears': clears, 'alias': alias}, npcs
+    return {'names': quests, 'steps': steps, 'chests': chests, 'order': order, 'qrew': qrew, 'clears': clears, 'alias': alias,
+            'kills': {i: k for i, k in kills.items() if k['giver'] > 0}}, npcs
+
+
+# kill quests (npctalk.c "kq" lines; the Quests page): kq <id> <giver> <count> <times, 0 = forever> <exp> <gold> <item>,
+# then kqkill / kqarea / kqlabel / kqoffer / kqdone <id> <text>
+KQ_KEYS = {'kq': '', 'kqkill': 'kill', 'kqarea': 'area', 'kqlabel': 'label', 'kqoffer': 'offer', 'kqdone': 'done'}
+
+
+def kq_new(i):
+    return {'id': i, 'giver': 0, 'count': 5, 'limit': 1, 'exp': 0, 'gold': 0, 'item': 0, 'kill': '', 'area': '', 'label': '', 'offer': '', 'done': ''}
 
 
 def talk_text(quests, npcs, names):
@@ -336,6 +355,21 @@ def talk_text(quests, npcs, names):
             cnp = [int(t) for t in c.get('npcs', []) if int(t) > 0][:64]
             for k in range(0, len(cnp), 16):
                 out.append('clearnpc %d %s' % (int(i), ' '.join(str(t) for t in cnp[k:k + 16])))
+        out.append('')
+    kl = quests.get('kills') or {}
+    if kl:
+        out.append('# kill quests: kq <id> <giver template> <count> <times, 0 = forever> <exp> <gold in silver> <item>; kqkill / kqarea /')
+        out.append('# kqlabel / kqoffer / kqdone <id> <text> - the Quests page (players: say QUEST to the giver, #kills)')
+        for i in sorted(kl, key=int):
+            k = kl[i]
+            if int(k.get('giver', 0)) <= 0 or not str(k.get('kill', '')).strip():
+                continue
+            out.append('kq %d %d %d %d %d %d %d %s' % (int(i), int(k['giver']), max(1, int(k.get('count', 1))), max(0, int(k.get('limit', 0))),
+                                                     max(0, int(k.get('exp', 0))), max(0, int(k.get('gold', 0))), max(0, int(k.get('item', 0))), names.get(int(k['giver']), '')))
+            for key in ('kill', 'area', 'label', 'offer', 'done'):
+                v = ' '.join(str(k.get(key, '')).split())
+                if v:
+                    out.append('kq%s %d %s' % (key, int(i), v))
         out.append('')
     for n in sorted(set(qn) | set(qs)):
         out.append('quest %d %s' % (n, ' '.join(str(qn.get(n, '')).split())))
@@ -997,7 +1031,7 @@ class World:
         try:
             return talk_parse(open(self.talk_path(), encoding='latin-1').read())
         except OSError:
-            return {'names': {}, 'steps': {}, 'chests': {}, 'order': {}, 'qrew': {}, 'clears': {}, 'alias': {}}, {}
+            return {'names': {}, 'steps': {}, 'chests': {}, 'order': {}, 'qrew': {}, 'clears': {}, 'alias': {}, 'kills': {}}, {}
 
     def talk_save(self, quests, npcs, ctl=None):
         p = self.talk_path()
@@ -1005,7 +1039,8 @@ class World:
             bk = os.path.join(self.dat, 'mapedit-backups')
             os.makedirs(bk, exist_ok=True)
             shutil.copy2(p, os.path.join(bk, 'npctalk-%s.dat' % time.strftime('%Y%m%d-%H%M%S')))
-        names = {t: self.tname(t) for t in list(npcs) + list((quests.get('order') or {}).keys()) + list((quests.get('qrew') or {}).keys()) if isinstance(t, int) and self.tchar is not None and 0 < t < MAXTCHARS}
+        names = {t: self.tname(t) for t in list(npcs) + list((quests.get('order') or {}).keys()) + list((quests.get('qrew') or {}).keys())
+                 + [int(k.get('giver', 0)) for k in (quests.get('kills') or {}).values()] if isinstance(t, int) and self.tchar is not None and 0 < t < MAXTCHARS}
         for key in quests.get('chests', {}):
             x, y = map(int, key.split(','))
             i = self.tile(x, y)[4] if 0 <= x < MAPX and 0 <= y < MAPY else 0
@@ -1058,7 +1093,34 @@ class World:
             chain.append({'n': n, 'name': qs['names'].get(n, ''), 'steps': sorted(qs['steps'].get(n, []), key=lambda v: int(v[0])),
                           'refs': [{'who': r['who'], 'label': r['label'], 'kinds': sorted(r['kinds'])} for r in refs.get(n, {}).values()]})
         clears = sorted(qs.get('clears', {}).values(), key=lambda c: c['id'])
-        return {'simple': simple, 'chain': chain, 'clears': clears}
+        return {'simple': simple, 'chain': chain, 'clears': clears, 'kills': [self.kq_view(k) for k in sorted(qs.get('kills', {}).values(), key=lambda k: k['id'])]}
+
+    def kq_giver(self, t):
+        """a kill quest giver for the Quests page: name, picture, place, whether it greets players, how many in the world"""
+        if self.tchar is None or not 0 < t < MAXTCHARS or not self.tchar[t * CHAR_SIZE + C_USED]:
+            return {'name': 'template %d (empty!)' % t, 'sprite': 0, 'x': 0, 'y': 0, 'where': '', 'greets': 0, 'count': 0}
+        o = t * CHAR_SIZE
+        x, y = struct.unpack_from('<hh', self.tchar, o + C_X)
+        d = struct.unpack_from('<100i', self.tchar, o + C_DATA)
+        return {'name': self.tname(t), 'sprite': self.tchar_sprite(t, 4), 'x': x, 'y': y, 'where': self.zone(x, y) if (x or y) else '',
+                'greets': 1 if d[37] else 0, 'count': len(self.living(t)) + len([p for p in self.pending() if p[2] == t])}
+
+    def kq_view(self, k):
+        return dict(k, g=self.kq_giver(int(k['giver'])))
+
+    def kills_save(self, kills, ctl=None):
+        qs, npcs = self.talk_load()
+        out = {}
+        for k in kills:
+            i = int(k.get('id', 0))
+            if not 1 <= i <= 64 or int(k.get('giver', 0)) <= 0 or not str(k.get('kill', '')).strip():
+                continue
+            out[i] = {'id': i, 'giver': int(k['giver']), 'count': min(60000, max(1, int(k.get('count', 1)))), 'limit': max(0, int(k.get('limit', 0))),
+                      'exp': max(0, int(k.get('exp', 0))), 'gold': max(0, int(k.get('gold', 0))), 'item': max(0, int(k.get('item', 0))),
+                      **{key: ' '.join(str(k.get(key, '')).split())[:200] for key in ('kill', 'area', 'label', 'offer', 'done')}}
+            out[i]['label'] = out[i]['label'][:60]
+        qs['kills'] = out
+        return self.talk_save(qs, npcs, ctl)
 
     def zone_npcs(self, zone):
         """NPC templates whose spawn spot is inside the zone (any of its boxes): the candidates for an area clear"""
@@ -2943,6 +3005,10 @@ def make_handler(world, sprites, page, minimap, ctl):
                 return self.js({'rugs': world.rug_save(body.get('save'), body.get('delete'), body.get('rename'))})
             if u.path == '/api/clears':
                 return self.js({'msg': world.clears_save(body.get('clears') or [], ctl)})
+            if u.path == '/api/killquests':
+                return self.js({'msg': world.kills_save(body.get('kills') or [], ctl)})
+            if u.path == '/api/kqgiver':
+                return self.js(world.kq_giver(int(body.get('t', 0))))
             if u.path == '/api/merchants':
                 return self.js(world.merchants_save(body, ctl))
             if u.path == '/api/playeraction':          # reset to a brand new character / delete (with a backup) / restore: done by the game

@@ -658,6 +658,7 @@ void do_help(int cn,char *topic)
 	do_char_log(cn,1,"#played                time played, created.\n");
 	do_char_log(cn,1,"#journal               your quests.\n");
 	do_char_log(cn,1,"#areas                 areas to clear, and how far you are.\n");
+	do_char_log(cn,1,"#kills                 kill quests, and how far you are.\n");
 	do_char_log(cn,1,"#quest [n|p2|all]      quests, easiest first; n: details.\n");
 	do_char_log(cn,1,"#repair                repair all worn gear.\n");
 	do_char_log(cn,1,"#repairinv             repair backpack gear.\n");
@@ -2413,6 +2414,7 @@ void do_command(int cn, char *ptr)
                 break;
         case 'k':
                 if (prefix(cmd,"kick") && f_giu)        { god_kick(cn,dbatoi(arg[1])); return; };
+                if (prefix(cmd,"kills") && f_p)         { do_kills(cn); return; };
                 break;
         case 'l':
                 if (prefix(cmd,"lag") && !f_m)          { do_lag(cn,atoi(arg[1])); return; };
@@ -3018,6 +3020,7 @@ void do_char_killed(int cn,int co)
                 soul_kill_drop(cn,co);	// maybe a soulstone (more often for low ranks)
                 talk_custom_kill(cn,co);	// quests that count this kill (npctalk.dat)
                 clear_kill(cn,co);		// area clears (npctalk.dat)
+                kq_kill(cn,co);			// kill quests (npctalk.dat)
                 chlog(co,"new npc body");
 		if (ch[co].flags&CF_RESPAWN) ch[co].flags=CF_BODY|CF_RESPAWN;
                 else ch[co].flags=CF_BODY;

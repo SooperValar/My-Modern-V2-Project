@@ -176,6 +176,7 @@ OPS = ('=', '!=', '<', '>', '<=', '>=')
 def talk_parse(text):
     quests, npcs, cur, e = {}, {}, None, None
     steps, chests, chest, order, qrew, clears, alias = {}, {}, None, {}, {}, {}, {}
+    kills = {}
     for line in text.splitlines():
         line = line.strip()
         if not line or line.startswith('#'):
@@ -217,6 +218,14 @@ def talk_parse(text):
                 continue
             if k == 'clearnpc' and a:
                 clears.setdefault(int(a[0]), {'id': int(a[0]), 'npcs': [], 'exp': 0, 'seyan': 1, 'zone': '', 'label': ''})['npcs'] += [int(v) for v in a[1:] if v.isdigit()]
+                continue
+            if k in KQ_KEYS and a:                      # kill quests (Quests page)
+                i = int(a[0])
+                kq = kills.setdefault(i, kq_new(i))
+                if k == 'kq' and len(a) >= 7:
+                    kq.update(dict(zip(('giver', 'count', 'limit', 'exp', 'gold', 'item'), [int(v) for v in a[1:7]])))
+                elif k != 'kq':
+                    kq[KQ_KEYS[k]] = rest.split(None, 1)[1].strip() if len(a) > 1 else ''
                 continue
             if k == 'qreward' and len(a) >= 4:        # item quest: times, first times, gold (Quests page); then qstage lines
                 v = [int(x) for x in a[1:7] if x.lstrip('-').isdigit()]
@@ -289,7 +298,17 @@ def talk_parse(text):
                 e['acts'].append({'type': k})
         except (IndexError, ValueError):
             continue
-    return {'names': quests, 'steps': steps, 'chests': chests, 'order': order, 'qrew': qrew, 'clears': clears, 'alias': alias}, npcs
+    return {'names': quests, 'steps': steps, 'chests': chests, 'order': order, 'qrew': qrew, 'clears': clears, 'alias': alias,
+            'kills': {i: k for i, k in kills.items() if k['giver'] > 0}}, npcs
+
+
+# kill quests (npctalk.c "kq" lines; the Quests page): kq <id> <giver> <count> <times, 0 = forever> <exp> <gold> <item>,
+# then kqkill / kqarea / kqlabel / kqoffer / kqdone <id> <text>
+KQ_KEYS = {'kq': '', 'kqkill': 'kill', 'kqarea': 'area', 'kqlabel': 'label', 'kqoffer': 'offer', 'kqdone': 'done'}
+
+
+def kq_new(i):
+    return {'id': i, 'giver': 0, 'count': 5, 'limit': 1, 'exp': 0, 'gold': 0, 'item': 0, 'kill': '', 'area': '', 'label': '', 'offer': '', 'done': ''}
 
 
 def talk_text(quests, npcs, names):
@@ -336,6 +355,21 @@ def talk_text(quests, npcs, names):
             cnp = [int(t) for t in c.get('npcs', []) if int(t) > 0][:64]
             for k in range(0, len(cnp), 16):
                 out.append('clearnpc %d %s' % (int(i), ' '.join(str(t) for t in cnp[k:k + 16])))
+        out.append('')
+    kl = quests.get('kills') or {}
+    if kl:
+        out.append('# kill quests: kq <id> <giver template> <count> <times, 0 = forever> <exp> <gold in silver> <item>; kqkill / kqarea /')
+        out.append('# kqlabel / kqoffer / kqdone <id> <text> - the Quests page (players: say QUEST to the giver, #kills)')
+        for i in sorted(kl, key=int):
+            k = kl[i]
+            if int(k.get('giver', 0)) <= 0 or not str(k.get('kill', '')).strip():
+                continue
+            out.append('kq %d %d %d %d %d %d %d %s' % (int(i), int(k['giver']), max(1, int(k.get('count', 1))), max(0, int(k.get('limit', 0))),
+                                                     max(0, int(k.get('exp', 0))), max(0, int(k.get('gold', 0))), max(0, int(k.get('item', 0))), names.get(int(k['giver']), '')))
+            for key in ('kill', 'area', 'label', 'offer', 'done'):
+                v = ' '.join(str(k.get(key, '')).split())
+                if v:
+                    out.append('kq%s %d %s' % (key, int(i), v))
         out.append('')
     for n in sorted(set(qn) | set(qs)):
         out.append('quest %d %s' % (n, ' '.join(str(qn.get(n, '')).split())))
@@ -997,7 +1031,7 @@ class World:
         try:
             return talk_parse(open(self.talk_path(), encoding='latin-1').read())
         except OSError:
-            return {'names': {}, 'steps': {}, 'chests': {}, 'order': {}, 'qrew': {}, 'clears': {}, 'alias': {}}, {}
+            return {'names': {}, 'steps': {}, 'chests': {}, 'order': {}, 'qrew': {}, 'clears': {}, 'alias': {}, 'kills': {}}, {}
 
     def talk_save(self, quests, npcs, ctl=None):
         p = self.talk_path()
@@ -1005,7 +1039,8 @@ class World:
             bk = os.path.join(self.dat, 'mapedit-backups')
             os.makedirs(bk, exist_ok=True)
             shutil.copy2(p, os.path.join(bk, 'npctalk-%s.dat' % time.strftime('%Y%m%d-%H%M%S')))
-        names = {t: self.tname(t) for t in list(npcs) + list((quests.get('order') or {}).keys()) + list((quests.get('qrew') or {}).keys()) if isinstance(t, int) and self.tchar is not None and 0 < t < MAXTCHARS}
+        names = {t: self.tname(t) for t in list(npcs) + list((quests.get('order') or {}).keys()) + list((quests.get('qrew') or {}).keys())
+                 + [int(k.get('giver', 0)) for k in (quests.get('kills') or {}).values()] if isinstance(t, int) and self.tchar is not None and 0 < t < MAXTCHARS}
         for key in quests.get('chests', {}):
             x, y = map(int, key.split(','))
             i = self.tile(x, y)[4] if 0 <= x < MAPX and 0 <= y < MAPY else 0
@@ -1058,7 +1093,34 @@ class World:
             chain.append({'n': n, 'name': qs['names'].get(n, ''), 'steps': sorted(qs['steps'].get(n, []), key=lambda v: int(v[0])),
                           'refs': [{'who': r['who'], 'label': r['label'], 'kinds': sorted(r['kinds'])} for r in refs.get(n, {}).values()]})
         clears = sorted(qs.get('clears', {}).values(), key=lambda c: c['id'])
-        return {'simple': simple, 'chain': chain, 'clears': clears}
+        return {'simple': simple, 'chain': chain, 'clears': clears, 'kills': [self.kq_view(k) for k in sorted(qs.get('kills', {}).values(), key=lambda k: k['id'])]}
+
+    def kq_giver(self, t):
+        """a kill quest giver for the Quests page: name, picture, place, whether it greets players, how many in the world"""
+        if self.tchar is None or not 0 < t < MAXTCHARS or not self.tchar[t * CHAR_SIZE + C_USED]:
+            return {'name': 'template %d (empty!)' % t, 'sprite': 0, 'x': 0, 'y': 0, 'where': '', 'greets': 0, 'count': 0}
+        o = t * CHAR_SIZE
+        x, y = struct.unpack_from('<hh', self.tchar, o + C_X)
+        d = struct.unpack_from('<100i', self.tchar, o + C_DATA)
+        return {'name': self.tname(t), 'sprite': self.tchar_sprite(t, 4), 'x': x, 'y': y, 'where': self.zone(x, y) if (x or y) else '',
+                'greets': 1 if d[37] else 0, 'count': len(self.living(t)) + len([p for p in self.pending() if p[2] == t])}
+
+    def kq_view(self, k):
+        return dict(k, g=self.kq_giver(int(k['giver'])))
+
+    def kills_save(self, kills, ctl=None):
+        qs, npcs = self.talk_load()
+        out = {}
+        for k in kills:
+            i = int(k.get('id', 0))
+            if not 1 <= i <= 64 or int(k.get('giver', 0)) <= 0 or not str(k.get('kill', '')).strip():
+                continue
+            out[i] = {'id': i, 'giver': int(k['giver']), 'count': min(60000, max(1, int(k.get('count', 1)))), 'limit': max(0, int(k.get('limit', 0))),
+                      'exp': max(0, int(k.get('exp', 0))), 'gold': max(0, int(k.get('gold', 0))), 'item': max(0, int(k.get('item', 0))),
+                      **{key: ' '.join(str(k.get(key, '')).split())[:200] for key in ('kill', 'area', 'label', 'offer', 'done')}}
+            out[i]['label'] = out[i]['label'][:60]
+        qs['kills'] = out
+        return self.talk_save(qs, npcs, ctl)
 
     def zone_npcs(self, zone):
         """NPC templates whose spawn spot is inside the zone (any of its boxes): the candidates for an area clear"""
@@ -2943,6 +3005,10 @@ def make_handler(world, sprites, page, minimap, ctl):
                 return self.js({'rugs': world.rug_save(body.get('save'), body.get('delete'), body.get('rename'))})
             if u.path == '/api/clears':
                 return self.js({'msg': world.clears_save(body.get('clears') or [], ctl)})
+            if u.path == '/api/killquests':
+                return self.js({'msg': world.kills_save(body.get('kills') or [], ctl)})
+            if u.path == '/api/kqgiver':
+                return self.js(world.kq_giver(int(body.get('t', 0))))
             if u.path == '/api/merchants':
                 return self.js(world.merchants_save(body, ctl))
             if u.path == '/api/playeraction':          # reset to a brand new character / delete (with a backup) / restore: done by the game
@@ -3267,6 +3333,13 @@ nav .grow { flex: 1; }
 #qp .box.qitems { min-width: 0; }
 #qp .qhd { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
 #qp .qhd h3 { margin: 0; flex: 1; }
+#qp .kq .kgiver { display: flex; gap: 6px; align-items: center; padding: 2px 8px 2px 2px; border: 1px solid var(--line); border-radius: 6px; }
+#qp .kq .kgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 8px 12px; margin-top: 8px; }
+#qp .kq .kgrid label { display: flex; flex-direction: column; gap: 3px; font-size: 12px; color: var(--dim2); min-width: 0; }
+#qp .kq .kgrid label.wide { grid-column: span 2; }
+#qp .kq .kgrid input[type=text] { width: 100%; box-sizing: border-box; }
+#qp .kq .kgrid .ipick { display: flex; gap: 6px; align-items: center; margin: 0; }
+#qp .kq.need { outline: 1px solid #ffd36a; }
 #qp .hint { color: var(--dim2); font-size: 12px; margin: 0 0 10px; }
 .qtab { width: 100%; border-collapse: collapse; font-size: 13px; }
 .qtab th { text-align: left; color: var(--dim2); font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: .06em; padding: 6px; border-bottom: 1px solid var(--line); white-space: nowrap; }
@@ -6688,12 +6761,13 @@ async function questsLoad() {
   QSorig = JSON.stringify(QS.map(q => [q.t, q.listed, q.rew]));
   QC = JSON.parse(JSON.stringify(r.chain)); QCorig = JSON.stringify(QC.map(c => [c.n, c.name, c.steps]));
   QA = JSON.parse(JSON.stringify(r.clears || [])); QAorig = JSON.stringify(QA); zoneNpcCache = {};
+  QK = JSON.parse(JSON.stringify(r.kills || [])); QKorig = qkKey(); QK0 = JSON.stringify(QK);
   questsRender();
 }
 const qDirtyRows = () => (QS || []).filter(q => JSON.stringify(qdata(q)) !== q.o);
 const qOrderDirty = () => QS && JSON.stringify(QS.map(q => [q.t, q.listed, q.rew])) !== QSorig;
 const qChainDirty = () => QC && JSON.stringify(QC.map(c => [c.n, c.name, c.steps])) !== QCorig;
-const qAnyDirty = () => !!QS && (qDirtyRows().length > 0 || qOrderDirty() || qChainDirty() || qaDirty());
+const qAnyDirty = () => !!QS && (qDirtyRows().length > 0 || qOrderDirty() || qChainDirty() || qaDirty() || qkDirty());
 function gotoNpc(t, tabk) {     // the NPC editor works over the map page
   const b = document.querySelector('nav button[data-m="map"]'); if (b) b.click();
   openTemplate('npc', t);
@@ -6771,6 +6845,7 @@ function questsRender() {
     h.querySelector('button').onclick = () => { QPuz = !QPuz; questsRender(); };
     if (QPuz) puz.forEach((q, i) => add(q, i, puz));
   }
+  killsBox(el);
   // ---- chain quests
   const cb = document.createElement('div'); cb.className = 'box'; el.appendChild(cb);
   const cd = qChainDirty();
@@ -6953,6 +7028,105 @@ function repRow(q) {                  // the Times settings under a quest's row:
 function qSpecial(q) {              // rewards built into the game's code (driver.c), shown so the row doesn't look empty
   if (q.t === 518 && q.data[49] === 740) return 'built in: +25 Stronghold points (spent by asking him POINTS / BUY …)';
   return '';
+}
+// ---- kill quests (Quests page, second box): "kill 5 Spiders" for a giver; players say QUEST to it, list with #kills
+let QK = null, QKorig = '', QK0 = '[]';
+const KQF = ['id', 'giver', 'count', 'limit', 'exp', 'gold', 'item', 'kill', 'area', 'label', 'offer', 'done'];
+const qkKey = () => JSON.stringify((QK || []).map(k => KQF.map(f => k[f])));
+const qkDirty = () => QK && qkKey() !== QKorig;
+function kqNpcPick(anchor, done, title) {     // choose an NPC template (each placed NPC has its own)
+  const p = $('#ipop'), r = anchor.getBoundingClientRect();
+  p.style.display = 'flex'; p.style.left = Math.min(window.innerWidth - 350, r.left) + 'px'; p.style.top = Math.min(window.innerHeight - 390, r.bottom + 4) + 'px';
+  const q = p.querySelector('input'), lst = p.querySelector('.lst'); q.value = ''; q.placeholder = title;
+  const fillL = () => {
+    const s = q.value.trim().toLowerCase();
+    const rows = (pal.npcs || []).filter(t => !s || t[1].toLowerCase().includes(s) || String(t[0]) === s).slice(0, 80);
+    lst.innerHTML = '';
+    for (const t of rows) {
+      const e = document.createElement('div'); e.className = 'r'; e.append(thumb(t[2], 26));
+      const a = document.createElement('span'); a.textContent = t[1] + (t[4] ? '' : ' · not in the world'); e.append(a);
+      const n2 = document.createElement('span'); n2.className = 'n'; n2.textContent = t[0]; e.append(n2);
+      e.onmousedown = ev => { ev.preventDefault(); p.style.display = 'none'; done(t); };
+      lst.append(e);
+    }
+  };
+  q.oninput = fillL; fillL(); setTimeout(() => q.focus(), 0);
+}
+function kqLabel(k) {           // what the counter says, as the game makes it
+  if (k.label.trim()) return k.label.trim();
+  const s = k.kill.trim();
+  let w;
+  if (s.startsWith('#')) { const t = parseInt(s.slice(1)), x = (pal.npcs || []).find(r => r[0] === t); if (!x) return 'enemies'; w = x[1]; }
+  else { w = s.split('|')[0].replace(/\*/g, '').trim(); if (!w) return 'enemies'; w = w[0].toUpperCase() + w.slice(1); }
+  return k.count > 1 && !/s$/i.test(w) ? w + 's' : w;      // as the game: "Spiders", not for 1 or a name ending in s
+}
+function killsBox(el) {
+  const kb = document.createElement('div'); kb.className = 'box'; el.appendChild(kb);
+  const d = qkDirty(), ro = RO();
+  kb.innerHTML = `<div class="qhd"><h3>Kill quests · #kills</h3>
+      <button class="btn sec knew">+ New kill quest</button>
+      <button class="btn sec kund" ${d ? '' : 'disabled'}>Undo changes</button>
+      <button class="btn pri ksave" ${d && !ro ? '' : 'disabled'}>Save</button></div>
+    <div class="hint">"Kill 5 Spiders" for an NPC. A player says <b>QUEST</b> (or task, job, work) to the giver, or the giver offers it when it greets them; <b>YES</b> takes it. Then only that player's kills count ("Spiders: 3/5"; the killer, a Ghost Companion's master, and group members who can see them), and coming back to the giver hands it in for the reward. A giver offers its kill quests one at a time, top to bottom. Players see them all with <b>#kills</b>. <b>Kill</b>: an NPC name (<code>Spider*</code> = every name starting with Spider, <code>Ghost|Skeleton</code> = either) or template numbers (<code>#390,391</code>). <b>Area</b> (optional): only kills in an area whose name contains this. Changing what to kill, how many, the area or the giver starts the players' progress on that quest again. Saving goes into the game at once.</div>`;
+  kb.querySelector('.knew').onclick = () => {
+    let id = 1; while (QK.some(k => k.id === id)) id++;
+    if (id > 64) return toast('At most 64 kill quests.', true);
+    kqNpcPick(kb.querySelector('.knew'), async t => {
+      const g = await api('/api/kqgiver', { t: t[0] });
+      QK.push({ id, giver: t[0], count: 5, limit: 1, exp: 0, gold: 0, item: 0, kill: '', area: '', label: '', offer: '', done: '', g });
+      questsRender(); toast(`New kill quest for ${t[1]}: set what to kill and the reward, then Save.`);
+    }, 'Who gives the quest? Name or template number');
+  };
+  kb.querySelector('.kund').onclick = () => { if (confirm('Forget your changes to the kill quests?')) { QK = JSON.parse(QK0); questsRender(); } };
+  kb.querySelector('.ksave').onclick = async () => {
+    const bad = QK.find(k => !k.kill.trim()); if (bad) return toast(`Kill quest ${bad.id} (${bad.g.name}): what should be killed?`, true);
+    const r = await api('/api/killquests', { kills: QK.map(k => Object.fromEntries(KQF.map(f => [f, k[f]]))) });
+    toast(r.error || 'Kill quests: ' + r.msg, !!r.error); if (!r.error) { QKorig = qkKey(); QK0 = JSON.stringify(QK); } questsRender();
+  };
+  if (!QK.length) kb.insertAdjacentHTML('beforeend', '<div class="empty">No kill quests yet: + New kill quest, then pick who gives it.</div>');
+  const re = () => questsRender();
+  QK.forEach((k, i) => {
+    const c = document.createElement('div'); c.className = 'qchain kq'; kb.appendChild(c);
+    const hd = document.createElement('div'); hd.className = 'qch'; c.appendChild(hd);
+    const qn = document.createElement('span'); qn.className = 'qn'; qn.textContent = 'Kill quest ' + (i + 1); hd.appendChild(qn);
+    const gb = document.createElement('button'); gb.className = 'kgiver'; gb.title = 'Pick another giver';
+    gb.append(thumb(k.g.sprite || 0, 26, 26)); const gn = document.createElement('span'); gn.textContent = `${k.g.name} · ${k.giver}`; gb.append(gn);
+    gb.onclick = () => kqNpcPick(gb, async t => { k.giver = t[0]; k.g = await api('/api/kqgiver', { t: t[0] }); re(); }, 'Who gives the quest? Name or template number');
+    hd.appendChild(gb);
+    const wh = document.createElement('span'); wh.className = 'hint'; wh.style.margin = '0'; wh.textContent = (k.g.where || '').replace(/^Aston, /, '') || (k.g.count ? '' : 'not in the world'); hd.appendChild(wh);
+    hd.appendChild(Object.assign(document.createElement('span'), { style: 'flex:1' }));
+    const op = document.createElement('button'); op.className = 'sm'; op.textContent = 'Open NPC'; op.title = 'Open the giver in the NPC editor'; op.onclick = () => gotoNpc(k.giver, 'behave'); hd.appendChild(op);
+    const up = document.createElement('button'); up.className = 'sm'; up.textContent = '▲'; up.title = 'Earlier (a giver offers its quests top to bottom)'; up.disabled = i === 0;
+    up.onclick = () => { [QK[i - 1], QK[i]] = [QK[i], QK[i - 1]]; re(); };
+    const dn = document.createElement('button'); dn.className = 'sm'; dn.textContent = '▼'; dn.title = 'Later'; dn.disabled = i === QK.length - 1;
+    dn.onclick = () => { [QK[i + 1], QK[i]] = [QK[i], QK[i + 1]]; re(); };
+    const del = document.createElement('button'); del.className = 'sm'; del.textContent = 'Delete'; del.onclick = () => { if (confirm(`Delete kill quest ${i + 1} (${k.g.name})?`)) { QK.splice(i, 1); re(); } };
+    hd.append(up, dn, del);
+    const g = document.createElement('div'); g.className = 'kgrid'; c.appendChild(g);
+    const fld = (label, inp, wide) => { const l = document.createElement('label'); if (wide) l.className = 'wide'; const s2 = document.createElement('span'); s2.textContent = label; l.append(s2, inp); g.appendChild(l); return l; };
+    const kt = txt(() => k.kill, v => k.kill = v, 200); kt.placeholder = 'Spider*  or  Ghost|Skeleton  or  #390,391'; kt.onchange = re;
+    const pk = document.createElement('button'); pk.className = 'sm'; pk.textContent = 'Pick NPC…';
+    pk.onclick = () => kqNpcPick(pk, t => { k.kill = k.kill.trim() && !k.kill.trim().startsWith('#') ? k.kill.trim() + '|' + t[1] : t[1]; re(); }, 'Which NPC should be killed?');
+    const kw = document.createElement('div'); kw.className = 'ipick'; kw.append(kt, pk); fld('Kill', kw, true);
+    fld('How many', num(() => k.count, v => { k.count = v; re(); }, 1, 60000));
+    const ar = txt(() => k.area, v => k.area = v, 60); ar.placeholder = '(anywhere)'; ar.onchange = re;
+    if (!$('#areanames')) { const dl = document.createElement('datalist'); dl.id = 'areanames'; dl.innerHTML = [...new Set((info.areas || []).map(a => a[4]))].sort().map(n => `<option value="${esc(n)}">`).join(''); document.body.append(dl); }
+    ar.setAttribute('list', 'areanames'); fld('In the area', ar);
+    const lb = txt(() => k.label, v => k.label = v, 60); lb.placeholder = kqLabel(Object.assign({}, k, { label: '' })); lb.onchange = re; fld('Counter calls them', lb);
+    fld('Exp', num(() => k.exp, v => { k.exp = v; re(); }, 0, 99999999));
+    fld('Gold', goldIn(() => k.gold, v => { k.gold = v; re(); }));
+    fld('Item', qpick(() => k.item, v => { k.item = v; re(); }, 'nothing'));
+    const tw = document.createElement('div'); tw.className = 'ipick';
+    const tsel = sel([[1, 'Once'], [2, 'A number of times'], [0, 'Forever']], () => k.limit === 0 ? 0 : k.limit === 1 ? 1 : 2, v => { k.limit = v === 2 ? Math.max(2, k.limit) : v; re(); });
+    tw.append(tsel); if (k.limit > 1) tw.append(num(() => k.limit, v => { k.limit = v; re(); }, 2, 60000), ' times');
+    fld('Times per player', tw);
+    const of = txt(() => k.offer, v => k.offer = v, 200); of.placeholder = `%s, I need someone to kill ${k.count} ${kqLabel(k)}${k.area.trim() ? ' in ' + k.area.trim() : ''}. Will you do it?`; of.onchange = re; fld('Giver offers it', of, true);
+    const dt = txt(() => k.done, v => k.done = v, 200); dt.placeholder = 'Well done, %s! Here is your reward.'; dt.onchange = re; fld('Giver hands it in', dt, true);
+    const ft = document.createElement('div'); ft.className = 'hint'; ft.style.margin = '6px 0 0'; c.appendChild(ft);
+    ft.textContent = `Players see "${kqLabel(k)}: 1/${k.count}" with each kill. %s = the player's name. ` + (k.g.greets ? `${k.g.name} greets players, so it offers the quest when they come close.` : '');
+    if (!k.g.greets) ft.insertAdjacentHTML('beforeend', `<span style="color:#ffd36a">${esc(k.g.name)} doesn't greet players: they have to say QUEST to it. To have it offer the quest when they come close, Open NPC and tick "Greets players".</span>`);
+    if (!k.kill.trim()) c.classList.add('need');
+  });
 }
 // ---- area clears (Quests page, third box): kill every chosen NPC of a zone for an experience bonus
 let QA = null, QAorig = '', zoneNpcCache = {};

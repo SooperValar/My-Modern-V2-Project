@@ -77,7 +77,7 @@ Note: the real client source is the project's `client/` folder (the old copies i
   changed Windows source into Ubuntu with a backup in `~/claude-backups/`, then `make`), starts.
 - Console commands (control port 127.0.0.1:5556, or the editor's console): `who`, `status`,
   `announce`, `tell`, `kick`, `raise`, `lower`, `gold`, `quest`, `talkreload`, `talktest`,
-  `talkkill`, `talkuse`, `talknear`, `talkmoney`, `zonereload`, `zone <x> <y>`, `chesttest <player> <x> <y> [real]`, `edpatch`, `wear <player> <template>|off`, `fighttest <player> <NPC template> <rounds> [back|kill]` (test server only), `merchreload`, `shop <player> <merchant template> [buy|sell|page|leave]`.
+  `talkkill`, `talkuse`, `talknear`, `talkmoney`, `zonereload`, `zone <x> <y>`, `chesttest <player> <x> <y> [real]`, `kqkill <player> <NPC template>`, `kills <player>`, `edpatch`, `wear <player> <template>|off`, `fighttest <player> <NPC template> <rounds> [back|kill]` (test server only), `merchreload`, `shop <player> <merchant template> [buy|sell|page|leave]`.
 - **Test server** (for trying server changes without touching the live game): in Claude's device
   shell, `~/ctest` holds a copy of the server source and data. Copy the changed files there,
   `make server` (a full build may need two runs within the 3-minute limit). **Always check port
@@ -129,6 +129,8 @@ stopped via `stop-send`, then `update-world` and `reload-editor`):
   `qrank` (lowest / highest rank); per-player counts in `.dat/questcount.dat`. Console `questgive <player> <template>`
   tests a hand-in. **Area clears** (Quests page, `#areas`): `clear` / `clearlabel` / `clearnpc` lines in `npctalk.dat`,
   progress in `.dat/clears.dat`, console `cleartest`. **Rugs** (Floors tab): `.dat/mapedit-rugs.json`; the Red and Blue rug are built in.
+- **Kill quests** (Quests page, second box; Nov 11): `kq` / `kqkill` / `kqarea` / `kqlabel` / `kqoffer` / `kqdone` lines in
+  `npctalk.dat`, progress in `.dat/killquests.dat`, players `#kills`, say QUEST / YES to the giver; console `kqkill`, `kills`.
 - **Quests page** (rail: Quests): every item quest (`#quest`: wants / teaches / gives / exp / hint / order) and chain quest
   (`#journal`: names, journal steps, which NPCs use them) on one page. The `#quest` order is kept in `npctalk.dat` as
   `order <template> <place>` (-1 = not listed).
@@ -189,7 +191,10 @@ stopped via `stop-send`, then `update-world` and `reload-editor`):
 
 ## Open items (details in docs/TODO.md and docs/HOSTING.md)
 
-**Where we left off (Nov 10, late) - START HERE:** the **town rearrangement is done** (CHANGES.md "Aston rearranged" and the lines after it; leftovers in TODO.md "Town rearrangement"; pictures in `MyV2\Town pictures (Nov 10)\`). The game is running. Next in `docs/TODO.md` "Up next": **soulstone levels too low (major)**, then Discord, speed, town NPC doors, logout at shutdown, resizable window. TODO.md is one design + to-do document by category (merged Nov 10 with Cody's `MyV2\Design Document.txt`; old numbers kept as "(was #n)"); if Cody adds ideas to `Design Document.txt`, fold them in. Still waiting on Cody: the Windows restart test of start-with-Windows (Discord #server-status shows if the server came back by itself). Discord server set up Nov 7 (layout in HOSTING.md); the editor posts server up / down through `Server\discord-webhook.txt` (secret, never in git). Git note: in a new session ask for delete permission on the project folder (device_request_delete_permission), else git leaves `.lock` files and Cody's push fails; clear stale `.git/*.lock`, `gc.pid` after commits.
+**Nov 11:** kill quests built (Quests page box, server `npctalk.c` "kill quests", `#kills`); see CHANGES.md "Kill quests".
+Cody makes the first ones and tries them.
+
+**Where we left off (Nov 10, late):** the **town rearrangement is done** (CHANGES.md "Aston rearranged" and the lines after it; leftovers in TODO.md "Town rearrangement"; pictures in `MyV2\Town pictures (Nov 10)\`). The game is running. Next in `docs/TODO.md` "Up next": **soulstone levels too low (major)**, then Discord, speed, town NPC doors, logout at shutdown, resizable window. TODO.md is one design + to-do document by category (merged Nov 10 with Cody's `MyV2\Design Document.txt`; old numbers kept as "(was #n)"); if Cody adds ideas to `Design Document.txt`, fold them in. Still waiting on Cody: the Windows restart test of start-with-Windows (Discord #server-status shows if the server came back by itself). Discord server set up Nov 7 (layout in HOSTING.md); the editor posts server up / down through `Server\discord-webhook.txt` (secret, never in git). Git note: in a new session ask for delete permission on the project folder (device_request_delete_permission), else git leaves `.lock` files and Cody's push fails; clear stale `.git/*.lock`, `gc.pid` after commits.
 
 **Tested by Cody in game (Nov 4-5), all good:** potion stacks, the Fire/Ice set bonuses, Burning Hits (+ `#burning`), Frost Armor, the
 sets in the god shop, the Ice Gargoyle Cape and the Cloak of Ice names, thorns on every landed blow, the 2.15.02 client

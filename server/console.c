@@ -228,6 +228,21 @@ static void con_cmd(char *line)
 		out("  used\n");
 		return;
 	}
+	if (!strcmp(w[0],"kqkill")) {	// kqkill <player> <NPC template>: as if the player killed one (kill quests)
+		if (!(co=con_player(w[1]))) return;
+		talk_set_echo(con_echo);
+		v=kq_test_kill(co,atoi(w[2]));
+		talk_set_echo(NULL);
+		if (v<0) out("  No NPC of template %d in the world.\n",atoi(w[2])); else if (!v) out("  (no kill quest of the player counts that kill now)\n");
+		return;
+	}
+	if (!strcmp(w[0],"kills")) {	// kills <player>: the player's #kills
+		if (!(co=con_player(w[1]))) return;
+		talk_set_echo(con_echo);
+		do_kills(co);
+		talk_set_echo(NULL);
+		return;
+	}
 	if (!strcmp(w[0],"cleartest")) {	// cleartest <player> <NPC template>: as if the player killed that NPC (area clears)
 		if (!(co=con_player(w[1]))) return;
 		if (!clear_test(co,atoi(w[2]))) out("  No NPC of template %d in the world.\n",atoi(w[2]));
@@ -428,6 +443,8 @@ static void con_cmd(char *line)
 		    "  talkmoney <npc template> <player> <silver>   try handing money over\n"
 		    "  questgive <player> <npc template>         hand that NPC the item it wants\n"
 		    "  cleartest <player> <npc template>         as if the player killed it (area clears)\n"
+		    "  kqkill <player> <npc template>            as if the player killed it (kill quests)\n"
+		    "  kills <player>                            the player's #kills\n"
 		    "  give <player> <item template> [count]     new items into the backpack\n"
 		    "  items <player>                            the backpack, with stack counts\n"
 		    "  useslot <player> <slot>                   use the item in that backpack slot\n"

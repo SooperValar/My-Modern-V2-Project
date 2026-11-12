@@ -59,6 +59,17 @@
    (rewards that can't be given any more - a unique already given, an item marked Unique that
    exists somewhere - are left out of the draw; if nothing is left, the chest is empty)
 
+ Kill quests (the editor's Quests page; per character in .dat/killquests.dat, list with #kills):
+   kq <id> <giver template> <count> <times, 0 = forever> <exp> <gold in silver> <item template, 0 = none>
+   kqkill <id> <name>|#<t>,<t>... what to kill (as "when kill")
+   kqarea <id> <text>             only kills in an area whose name contains this (optional)
+   kqlabel <id> <text>            what the counter calls them ("Spiders")
+   kqoffer <id> <text>            what the giver says to offer it (%s = the player's name)
+   kqdone <id> <text>             what the giver says when it is handed in
+ A player says QUEST (task, job, work, kill) to the giver, or the giver greets them: it offers its first kill quest the
+ player can take; YES takes it. Kills count only while it is taken (the killer, a companion's master, and group members
+ who can see them), "Spiders: 3/5"; at the last one "Return to <giver>". Coming back (greeting or QUEST) hands it in.
+
  .dat/chestlog.dat: which player got something from which once-per-player chest, and which
  unique rewards were given (text, one line each).
 
@@ -74,6 +85,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <time.h>
+#include <stdarg.h>
 #include "server.h"
 
 #define TALK_FILE DATDIR"/npctalk.dat"
@@ -197,6 +209,12 @@ static short qorder[MAXTCHARS];		// #quest: place in the list ("order <template>
 struct clear { int used, exp, seyan, n, t[CLEARNPC]; char zone[48], label[40]; unsigned short hash; };
 static struct clear clears[MAXCLEAR+1];
 static void clear_hashes(void);
+/* ---- kill quests (the editor's Quests page): see the top of this file */
+#define MAXKQ		64
+#define KQ_FILE		DATDIR"/killquests.dat"
+struct kquest { int used, giver, count, limit, exp, gold, item, kill, area, label, offer, done; unsigned short hash; };	// kill..done: pool offsets
+static struct kquest kq[MAXKQ+1];
+static void kq_hashes(void);
 static struct tstep step[MAXSTEP];
 static int qname[QVARS+1];
 static int nent=0, nstep=0, talk_loaded=0;
@@ -249,6 +267,7 @@ int talk_load(void)
 	nqcls=0;
 	memset(qalias,0,sizeof(qalias));
 	memset(clears,0,sizeof(clears));
+	memset(kq,0,sizeof(kq));
 	memset(qname,0,sizeof(qname));
 	f=fopen(TALK_FILE,"r");
 	if (!f) return 0;
@@ -287,6 +306,22 @@ int talk_load(void)
 			} else if (!strcmp(w1,"clearnpc") && sscanf(q,"%d %n",&id,&k2)>=1 && id>=1 && id<=MAXCLEAR) {
 				char *e2,*p2=q+k2; long tv;
 				for (;;) { tv=strtol(p2,&e2,10); if (e2==p2) break; p2=e2; if (tv>0 && tv<MAXTCHARS && clears[id].n<CLEARNPC) clears[id].t[clears[id].n++]=tv; }
+			} else bad++;
+			continue;
+		}
+		if (!strncmp(w1,"kq",2)) {		// kill quests
+			int id=0,a[6],k2=0;
+			if (!strcmp(w1,"kq") && sscanf(q,"%d %d %d %d %d %d %d",&id,&a[0],&a[1],&a[2],&a[3],&a[4],&a[5])==7 && id>=1 && id<=MAXKQ
+			    && a[0]>0 && a[0]<MAXTCHARS && a[1]>=1 && a[1]<=60000 && a[2]>=0 && a[3]>=0 && a[4]>=0 && a[5]>=0 && a[5]<MAXTITEM) {
+				kq[id].used=1; kq[id].giver=a[0]; kq[id].count=a[1]; kq[id].limit=a[2]; kq[id].exp=a[3]; kq[id].gold=a[4]; kq[id].item=a[5];
+			} else if (sscanf(q,"%d %n",&id,&k2)>=1 && id>=1 && id<=MAXKQ && k2) {
+				char *kv=q+k2; int o;
+				if (!strcmp(w1,"kqkill")) { o=pool_add(kv); lower(pool+o); kq[id].kill=o; }
+				else if (!strcmp(w1,"kqarea")) { o=pool_add(kv); lower(pool+o); kq[id].area=o; }
+				else if (!strcmp(w1,"kqlabel")) kq[id].label=pool_add(kv);
+				else if (!strcmp(w1,"kqoffer")) kq[id].offer=pool_add(kv);
+				else if (!strcmp(w1,"kqdone")) kq[id].done=pool_add(kv);
+				else bad++;
 			} else bad++;
 			continue;
 		}
@@ -431,6 +466,11 @@ int talk_load(void)
 	fclose(f);
 	for (n=0; n<nent; n++) if (ent[n].trig==T_NEAR && ent[n].temp>0 && ent[n].temp<MAXTCHARS) hasnear[ent[n].temp]=1;
 	clear_hashes();
+	for (n=1; n<=MAXKQ; n++) {
+		if (kq[n].used && !kq[n].kill) { kq[n].used=0; bad++; }	// nothing to kill
+		if (kq[n].used) hasnear[kq[n].giver]=1;
+	}
+	kq_hashes();
 	xlog("NPC dialogue: %d entries, %d quest steps loaded from %s%s",nent,nstep,TALK_FILE,bad ? " (some lines not understood)" : "");
 	return bad;
 }
@@ -706,10 +746,13 @@ static int run(struct tentry *e,int cn,int co,int given)
 }
 
 /* a player said something near the NPC: 1 = answered */
+static int kq_say(int cn,int co,char *text);
+static int kq_near(int cn,int co);
 int talk_custom_say(int cn,int co,char *text)
 {
 	int n;
 	if (!talk_loaded) talk_load();
+	if ((ch[co].flags&CF_PLAYER) && kq_say(cn,co,text)) return 1;
 	if (!nent || !(ch[co].flags&CF_PLAYER)) return 0;
 	for (n=0; n<nent; n++) {
 		if (ent[n].temp!=ch[cn].temp || ent[n].trig!=T_SAY) continue;
@@ -753,6 +796,7 @@ int talk_custom_near(int cn,int co)
 {
 	int n;
 	if (!talk_loaded) talk_load();
+	if ((ch[co].flags&CF_PLAYER) && kq_near(cn,co)) return 1;
 	if (!nent || !(ch[co].flags&CF_PLAYER)) return 0;
 	for (n=0; n<nent; n++) {
 		if (ent[n].temp!=ch[cn].temp || ent[n].trig!=T_NEAR || !conds_ok(&ent[n],co,ch[co].x,ch[co].y)) continue;
@@ -1357,4 +1401,274 @@ int clear_test(int co,int t)
 	if (!talk_loaded) talk_load();
 	for (n=1; n<MAXCHARS; n++) if (ch[n].used==USE_ACTIVE && ch[n].temp==t && !(ch[n].flags&(CF_PLAYER|CF_BODY))) { clear_kill(co,n); return 1; }
 	return 0;
+}
+
+/* ---- kill quests (the editor's Quests page; "kq" lines, see the top of this file) */
+struct kqrow { int stamp; unsigned short cnt[MAXKQ+1], done[MAXKQ+1], hash[MAXKQ+1]; unsigned char st[MAXKQ+1]; };
+#define KQ_TAKEN	1
+#define KQ_READY	2
+static int kqfd=-2;
+static struct { int giver, tick; } kq_offered[MAXCHARS];	// the last kill quest giver that offered this player a task
+
+static void kq_hashes(void)
+{
+	int a; unsigned h; char *s;
+	for (a=1; a<=MAXKQ; a++) {
+		h=5381+kq[a].giver*7+kq[a].count*131;
+		for (s=pool+kq[a].kill; *s; s++) h=h*33+(unsigned char)*s;
+		for (s=pool+kq[a].area; *s; s++) h=h*33+(unsigned char)*s;
+		kq[a].hash=(unsigned short)(h ? h : 1);
+	}
+}
+
+static void kqopen(void)
+{
+	char hdr[QHDR];
+	kqfd=open(KQ_FILE,O_RDWR|O_CREAT,0600);
+	if (kqfd<0) { xlog("cannot open %s",KQ_FILE); return; }
+	if (pread(kqfd,hdr,QHDR,0)==QHDR && !memcmp(hdr,"MYV2KQ01",8)) return;
+	memset(hdr,0,QHDR); memcpy(hdr,"MYV2KQ01",8); *(int*)(hdr+8)=MAXKQ;
+	if (pwrite(kqfd,hdr,QHDR,0)!=QHDR) xlog("cannot write %s",KQ_FILE);
+}
+
+/* a character's kill quest row, brought up to date: a changed quest (giver, count, what to kill, area) starts its
+ * progress again (how often it was done stays) */
+static void kqrow_get(int co,struct kqrow *r)
+{
+	int a;
+	if (kqfd==-2) kqopen();
+	memset(r,0,sizeof(*r));
+	if (kqfd>=0 && pread(kqfd,r,sizeof(*r),QHDR+(off_t)co*sizeof(*r))!=sizeof(*r)) memset(r,0,sizeof(*r));
+	if (r->stamp!=(int)ch[co].creation_date) { memset(r,0,sizeof(*r)); r->stamp=ch[co].creation_date; }
+	for (a=1; a<=MAXKQ; a++) if (r->hash[a]!=kq[a].hash) { r->hash[a]=kq[a].hash; r->cnt[a]=0; r->st[a]=0; }
+}
+
+static void kqrow_put(int co,struct kqrow *r)
+{
+	if (kqfd>=0 && pwrite(kqfd,r,sizeof(*r),QHDR+(off_t)co*sizeof(*r))!=sizeof(*r)) xlog("cannot write %s",KQ_FILE);
+}
+
+static void kqlog(int co,int font,char *format,...) __attribute__ ((format(printf,3,4)));
+static void kqlog(int co,int font,char *format,...)
+{
+	va_list args; char buf[512]; int l;
+	va_start(args,format); vsnprintf(buf,sizeof(buf),format,args); va_end(args);
+	do_char_log(co,font,"%s",buf);
+	if (talk_echo) { l=strlen(buf); if (l && buf[l-1]=='\n') buf[l-1]=0; talk_echo(buf); }
+}
+
+static void kqsay(int cn,int co,char *text)	// the giver says it (%s = the player's name)
+{
+	char buf[512];
+	fill(buf,sizeof(buf),text,co);
+	do_sayx(cn,"%s",buf);
+	if (talk_echo) talk_echo(buf);
+}
+
+/* what the counter calls the victims: the label, else the first name of the kill spec ("Spider*" -> "Spiders";
+ * no "s" added for a count of 1 or a name ending in s) */
+static char *kq_label(int a)
+{
+	static char buf[64];
+	char *s; int i=0,t;
+	if (kq[a].label && pool[kq[a].label]) return pool+kq[a].label;
+	s=pool+kq[a].kill;
+	if (*s=='#') { t=atoi(s+1); if (t<=0 || t>=MAXTCHARS || ch_temp[t].used==USE_EMPTY) return "enemies"; snprintf(buf,sizeof(buf)-2,"%s",ch_temp[t].name); i=strlen(buf); }
+	else {
+		while (*s && *s!='|' && i<60) { if (*s!='*') buf[i++]=*s; s++; }
+		buf[i]=0;
+		while (i>0 && isspace((unsigned char)buf[i-1])) buf[--i]=0;
+		if (!i) return "enemies";
+		buf[0]=toupper((unsigned char)buf[0]);
+	}
+	if (kq[a].count>1 && i && tolower((unsigned char)buf[i-1])!='s') { buf[i++]='s'; buf[i]=0; }
+	return buf;
+}
+
+static char *kq_area_text(int a)	// " in Kwai Hall" or ""
+{
+	static char buf[80];
+	if (!kq[a].area || !pool[kq[a].area]) return "";
+	snprintf(buf,sizeof(buf)," in %s",pool+kq[a].area);
+	buf[4]=toupper((unsigned char)buf[4]);
+	return buf;
+}
+
+static char *kq_reward_text(int a)
+{
+	static char buf[160];
+	int o=0;
+	buf[0]=0;
+	if (kq[a].exp) o+=snprintf(buf+o,sizeof(buf)-o,"%d exp",kq[a].exp);
+	if (kq[a].gold%100) o+=snprintf(buf+o,sizeof(buf)-o,"%s%dG %dS",o ? ", " : "",kq[a].gold/100,kq[a].gold%100);
+	else if (kq[a].gold) o+=snprintf(buf+o,sizeof(buf)-o,"%s%dG",o ? ", " : "",kq[a].gold/100);
+	if (kq[a].item>0 && kq[a].item<MAXTITEM && it_temp[kq[a].item].used) o+=snprintf(buf+o,sizeof(buf)-o,"%s%s",o ? ", " : "",it_temp[kq[a].item].name);
+	if (!o) snprintf(buf,sizeof(buf),"nothing");
+	return buf;
+}
+
+static int kq_can_take(struct kqrow *r,int a)
+{
+	return kq[a].used && !r->st[a] && (!kq[a].limit || r->done[a]<kq[a].limit);
+}
+
+static void kq_offer(int cn,int co,int a)
+{
+	char buf[300];
+	if (kq[a].offer && pool[kq[a].offer]) kqsay(cn,co,pool+kq[a].offer);
+	else {
+		snprintf(buf,sizeof(buf),"%%s, I need someone to kill %d %s%s. Will you do it?",kq[a].count,kq_label(a),kq_area_text(a));
+		kqsay(cn,co,buf);
+	}
+	kqlog(co,1,"(Kill %d %s%s for %s: %s. Say YES to %s to take it.)\n",kq[a].count,kq_label(a),kq_area_text(a),ch[cn].name,kq_reward_text(a),ch[cn].name);
+	kq_offered[co].giver=ch[cn].temp; kq_offered[co].tick=globs->ticker;
+}
+
+/* hand in: 0 = not possible now (no room for the item) */
+static int kq_reward(int cn,int co,int a,struct kqrow *r)
+{
+	int in=0;
+	if (kq[a].item>0 && kq[a].item<MAXTITEM && it_temp[kq[a].item].used) {
+		if (!(in=god_create_item(kq[a].item))) return 0;
+		if (!god_give_char(in,co)) { it[in].used=USE_EMPTY; kqsay(cn,co,"Make room in your backpack first, %s, then come back."); return 0; }
+	}
+	if (kq[a].done && pool[kq[a].done]) kqsay(cn,co,pool+kq[a].done);
+	else kqsay(cn,co,"Well done, %s! Here is your reward.");
+	if (in) kqlog(co,1,"%s gives you %s.\n",ch[cn].name,it[in].reference);
+	if (kq[a].gold>0) { ch[co].gold+=kq[a].gold; do_update_char(co); kqlog(co,1,"%s gives you %dG %dS.\n",ch[cn].name,kq[a].gold/100,kq[a].gold%100); }
+	if (kq[a].exp>0) do_give_exp(co,kq[a].exp,0,-1);
+	if (r->done[a]<65535) r->done[a]++;
+	r->st[a]=0; r->cnt[a]=0;
+	chlog(co,"Kill quest %d (%d %s) handed in to %s, %d time(s): %d exp, %d silver, item %d",a,kq[a].count,kq_label(a),ch[cn].name,r->done[a],kq[a].exp,kq[a].gold,kq[a].item);
+	return 1;
+}
+
+static int kq_is_giver(int t)
+{
+	int a;
+	for (a=1; a<=MAXKQ; a++) if (kq[a].used && kq[a].giver==t) return 1;
+	return 0;
+}
+
+/* a player said something to the NPC cn: QUEST / TASK / JOB / WORK / KILL asks for a task (or hands one in),
+ * YES takes the one just offered. 1 = handled */
+static int kq_say(int cn,int co,char *text)
+{
+	struct kqrow r;
+	int a,t=ch[cn].temp,ask,yes,any=0;
+	if (!IS_SANECHAR(cn) || !IS_SANECHAR(co) || !kq_is_giver(t)) return 0;
+	ask=said("quest*|task*|job*|work|kill*|mission*",text);
+	yes=said("yes|accept*|ok|okay|sure",text) && kq_offered[co].giver==t && globs->ticker-kq_offered[co].tick<TICKS*120;
+	if (!ask && !yes) return 0;
+	kqrow_get(co,&r);
+	for (a=1; a<=MAXKQ; a++) if (kq[a].used && kq[a].giver==t && r.st[a]==KQ_READY) {	// hand in
+		kq_reward(cn,co,a,&r); kqrow_put(co,&r); return 1;
+	}
+	if (yes) {
+		for (a=1; a<=MAXKQ; a++) if (kq[a].giver==t && kq_can_take(&r,a)) break;
+		if (a<=MAXKQ) {
+			r.st[a]=KQ_TAKEN; r.cnt[a]=0; kqrow_put(co,&r);
+			kq_offered[co].giver=0;
+			kqsay(cn,co,"Good. Come back to me when it is done, %s.");
+			kqlog(co,1,"Task taken: kill %d %s%s. (#kills shows your tasks.)\n",kq[a].count,kq_label(a),kq_area_text(a));
+			return 1;
+		}
+	}
+	for (a=1; a<=MAXKQ; a++) if (kq[a].used && kq[a].giver==t && r.st[a]==KQ_TAKEN) {
+		kqsay(cn,co,"Come back when the task is done, %s.");
+		kqlog(co,1,"%s: %d/%d%s.\n",kq_label(a),r.cnt[a],kq[a].count,kq_area_text(a));
+		return 1;
+	}
+	for (a=1; a<=MAXKQ; a++) if (kq[a].used && kq[a].giver==t) { any=1; if (kq_can_take(&r,a)) { kq_offer(cn,co,a); return 1; } }
+	if (any && ask) { kqsay(cn,co,"I have no more tasks for you, %s."); return 1; }
+	return 0;
+}
+
+/* the giver greets a player: hands in a finished task, or offers one (at most every 10 minutes); 1 = it said something */
+static int kq_near(int cn,int co)
+{
+	struct kqrow r;
+	int a,t=ch[cn].temp;
+	if (!IS_SANECHAR(cn) || !IS_SANECHAR(co) || !kq_is_giver(t)) return 0;
+	kqrow_get(co,&r);
+	for (a=1; a<=MAXKQ; a++) if (kq[a].used && kq[a].giver==t && r.st[a]==KQ_READY) { if (kq_reward(cn,co,a,&r)) kqrow_put(co,&r); return 1; }
+	for (a=1; a<=MAXKQ; a++) if (kq[a].used && kq[a].giver==t && r.st[a]==KQ_TAKEN) return 0;
+	if (kq_offered[co].giver==t && globs->ticker-kq_offered[co].tick<TICKS*600) return 0;
+	for (a=1; a<=MAXKQ; a++) if (kq[a].giver==t && kq_can_take(&r,a)) { kq_offer(cn,co,a); return 1; }
+	return 0;
+}
+
+/* player p gets credit for killing co */
+static int kq_credit(int p,int co)
+{
+	struct kqrow r;
+	int a,changed=0;
+	char area[512],*s;
+	kqrow_get(p,&r);
+	for (a=1; a<=MAXKQ; a++) {
+		if (!kq[a].used || r.st[a]!=KQ_TAKEN || !victim_match(pool+kq[a].kill,co)) continue;
+		if (kq[a].area && pool[kq[a].area]) {
+			strncpy(area,get_area_m(ch[co].x,ch[co].y,0),511); area[511]=0;
+			for (s=area; *s; s++) *s=tolower((unsigned char)*s);
+			if (!strstr(area,pool+kq[a].area)) continue;
+		}
+		changed=1;
+		if (++r.cnt[a]>=kq[a].count) {
+			r.cnt[a]=kq[a].count; r.st[a]=KQ_READY;
+			kqlog(p,2,"%s: %d/%d. Done! Return to %s.\n",kq_label(a),r.cnt[a],kq[a].count,ch_temp[kq[a].giver].name);
+		} else kqlog(p,2,"%s: %d/%d\n",kq_label(a),r.cnt[a],kq[a].count);
+	}
+	if (changed) kqrow_put(p,&r);
+	return changed;
+}
+
+/* the NPC co was killed by cn: the player behind it (a companion's master) and their group members who can see them */
+void kq_kill(int cn,int co)
+{
+	int p=0,n,m;
+	if (!talk_loaded) talk_load();
+	if (!IS_SANECHAR(cn) || !IS_SANECHAR(co) || (ch[co].flags&CF_PLAYER)) return;
+	for (n=1; n<=MAXKQ; n++) if (kq[n].used) break;
+	if (n>MAXKQ) return;
+	if (ch[cn].flags&CF_PLAYER) p=cn;
+	else if ((m=ch[cn].data[63])>0 && m<MAXCHARS && (ch[m].flags&CF_PLAYER)) p=m;
+	if (!p) return;
+	kq_credit(p,co);
+	for (n=1; n<10; n++)
+		if ((m=ch[p].data[n])>0 && m<MAXCHARS && m!=p && (ch[m].flags&CF_PLAYER) && ch[m].used==USE_ACTIVE && isgroup(m,p) && do_char_can_see(p,m))
+			kq_credit(m,co);
+}
+
+/* #kills: every kill quest and how far this character is */
+void do_kills(int cn)
+{
+	struct kqrow r;
+	int a,nr=0;
+	char st[64],tm[40];
+	if (!talk_loaded) talk_load();
+	kqrow_get(cn,&r);
+	for (a=1; a<=MAXKQ; a++) {
+		if (!kq[a].used) continue;
+		if (!nr) kqlog(cn,1,"Kill quests:\n");
+		nr++;
+		if (r.st[a]==KQ_READY) snprintf(st,sizeof(st),"done: return to %s",ch_temp[kq[a].giver].name);
+		else if (r.st[a]==KQ_TAKEN) snprintf(st,sizeof(st),"%d/%d",r.cnt[a],kq[a].count);
+		else if (kq[a].limit && r.done[a]>=kq[a].limit) snprintf(st,sizeof(st),"finished");
+		else snprintf(st,sizeof(st),"say QUEST to %s",ch_temp[kq[a].giver].name);
+		if (!kq[a].limit) snprintf(tm,sizeof(tm),r.done[a] ? ", repeatable (done %d)" : ", repeatable",r.done[a]);
+		else if (kq[a].limit>1) snprintf(tm,sizeof(tm),", %d of %d times",r.done[a],kq[a].limit);
+		else tm[0]=0;
+		kqlog(cn,(r.st[a] || (kq[a].limit && r.done[a]>=kq[a].limit)) ? 3 : 1,"%2d Kill %d %s%s - %s\n",nr,kq[a].count,kq_label(a),kq_area_text(a),st);
+		kqlog(cn,1,"   %s, %s. Reward: %s%s\n",ch_temp[kq[a].giver].name,get_area_street(ch_temp[kq[a].giver].x,ch_temp[kq[a].giver].y),kq_reward_text(a),tm);
+	}
+	if (!nr) kqlog(cn,1,"There are no kill quests yet.\n");
+}
+
+/* console: as if player co killed an NPC of template t (kill quests only); -1 = no such NPC in the world */
+int kq_test_kill(int co,int t)
+{
+	int n;
+	if (!talk_loaded) talk_load();
+	for (n=1; n<MAXCHARS; n++) if (ch[n].used==USE_ACTIVE && ch[n].temp==t && !(ch[n].flags&(CF_PLAYER|CF_BODY))) return kq_credit(co,n);
+	return -1;
 }
