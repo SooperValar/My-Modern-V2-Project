@@ -356,7 +356,7 @@ The design is in `docs/REBALANCE.md`.
 - **No graves for empty pentagram enemies.** A pentagram enemy whose only belonging is its own weapon leaves no grave; it just vanishes after the death mist, like an NPC with nothing on it. Ones with something else (the Grolm Fighters/Warriors/Knights/Mages carry armor and gold, or a tier drop) still leave one.
 
 ### Waypoints
-(Built Nov 11; live with the next server update and client 2.15.05.)
+(Server side live Nov 12; travelling needs client 2.15.05, not published yet.)
 - **A waypoint** is a 3 × 3 rune circle on the ground. Click it to find it ("You found the waypoint Aston, Crossroads."); from then on its circle glows blue for you (other players see it carved and grey until they find it themselves).
 - **Travel window**: clicking a waypoint opens a list of every waypoint: a small picture of the place, "Town, Place" and a short line; the ones you have not found show as "Unknown Location" / "???". Click a found one to travel there. Travel is free, and only works while you stand at a waypoint you have found. The mouse wheel or the arrows scroll the list; the X, Esc or walking away closes it. The place you are at is green.
 - The Ghost Companion comes along (as with every teleport). Labyrinth items vanish, as with a teleport.

@@ -26,7 +26,7 @@ world, quests, the editor, the client and Discord. Merged Nov 10 from the old TO
 - Quest rewards on the editor's Quests page, if he wants changes ([Quests](#6-quests)). (Order: Cody is happy with it, Nov 11.)
 - Checking the merchants in game: pages, selling + buying back, prices ([Items](#4-items-weapons-and-shops)).
 - Setting up the area clears (quest areas first) and the class rewards, when he wants.
-- Waypoints: "go" for the server update, try `merc_new.exe`, place the first waypoints ([Systems](#2-gameplay-systems)).
+- Waypoints: try `merc_new.exe`, place the first waypoints ([Systems](#2-gameplay-systems)).
 
 ---
 
@@ -82,7 +82,7 @@ travel window itself has not been seen in a running game yet**.
 Cody's choices (Nov 11): rune circle (design B) as the waypoint, the pentagram (A) kept as a second look; a see-through
 3 x 3 circle on any floor, pillars / platform built by hand; click to open; pictures from the map; no other rules.
 **Left:**
-- Cody: "go" for the update-code restart; swap in `merc_new.exe`; place the first waypoints (editor) and try them.
+- ~~update-code restart, editor reload~~ (done Nov 12). Cody: swap in `merc_new.exe`; place the first waypoints (editor) and try them.
 - After his test: publish client 2.15.05 (with the circle sprites and the pictures), raise `CLIENT_LATEST` to 0x020F05.
 - Maybe: light from the circle at night (it has none now), a sound, a `#waypoints` list, the dim circle a bit stronger
   on dark floors.

@@ -191,10 +191,10 @@ stopped via `stop-send`, then `update-world` and `reload-editor`):
 
 ## Open items (details in docs/TODO.md and docs/HOSTING.md)
 
-**Nov 11 (later): waypoints built, NOT live yet.** Server (`waypoint.c` + small changes in `client.h`, `funcs.h`, `use_driver.c`,
+**Nov 12: the server update with waypoints is LIVE (update-code, editor reloaded); no waypoints placed yet, client 2.15.05 not published.** Built Nov 11: Server (`waypoint.c` + small changes in `client.h`, `funcs.h`, `use_driver.c`,
 `svr_tick.c`, `console.c`, `server.c`, `Makefile`; both source copies match), client 2.15.05 (`Client\merc_new.exe`, not
 published), the editor's Waypoints tab (new `mapedit.py` is in the Server folder; it shows after `reload-editor`), circle
-sprites 18300-18341 (already in `Client\GFX`). Next: Cody's "go" -> `update-code`; `reload-editor`; Cody swaps in
+sprites 18300-18341 (already in `Client\GFX`). Next: Cody swaps in
 `merc_new.exe`, places waypoints in the editor (Waypoints tab: the game lays the circles itself) and tries them; then
 publish 2.15.05 and raise `CLIENT_LATEST`. The travel window has not been seen running yet (the client can't be run in
 Claude's workspace): expect small layout fixes. Console: `wpreload`, `wplist`, `wpfound`, `wpuse`. Details: TODO.md
