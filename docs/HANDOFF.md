@@ -203,6 +203,10 @@ New sprites above 34,767 need client 2.15.06 or later: raise `MINVERSION` when t
 
 ## Open items (details in docs/TODO.md and docs/HOSTING.md)
 
+**Nov 13:** new ground with soft edges (path, dusty path, clear water; sprites 35000+ in `Client\GFX`, editor Floors tab,
+auto edges; CHANGES.md "New ground"). Cody plays with client 2.15.06 via `play.bat` (Launcher.exe would put the published
+2.15.05 back). Publishing waits until the world sprites are further along.
+
 **Nov 12, late:** client 2.15.06 (sprite numbers up to 65,535) built: `Client\merc_new.exe`, NOT published (Cody publishes
 everything together with the new world sprites, before players get the game). Server side (unsigned item sprites) in
 both server folders, built on the test server, NOT live yet (needs an update-code with Cody's "go"). World sprites:

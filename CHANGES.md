@@ -427,6 +427,23 @@ The **MyV2 Editor** is a map, NPC, quest and player editor in the browser (`tool
 - **Live editing while the server runs**: floors, objects, items, flags, portals, NPCs (place, move, turn, remove) and NPC and item templates all go straight into the running game, and players see them right away. The banner turns green ("Live editing"). There is nothing to save, and Ctrl+Z / Ctrl+Y undo and redo. How it works is under [Server · Data changes](#data-changes). Needs the new server (once: "Update code & restart"); with an older server running, the editor stays view-only and says so.
 - With the server stopped, changes are saved to the game files with **Save to the game**.
 
+## New ground (world sprites)
+
+New floor tiles made from the game's own tiles (`tools/sprites/world_ground.py`, Nov 13), each with **4 variants** (a floor
+brush paints them at random) and **soft edges into grass**:
+- **Path** (35000-35003): brown earth with the grass tiles' own grain, no shiny pebbles or clumps. **Dusty path**
+  (35100-35103): the same, lighter. **Clear water** (35500-35503): the game's dark water made lighter and clearer, with
+  light wave lines (the game's own water stays as the "deep" water).
+- **Soft edges:** 46 edge tiles per ground (35004-35049, 35104-35149, 35504-35549): grass with the ground creeping in
+  from the sides / corners that border it, dithered, seamless with the plain tiles. The editor places them by itself:
+  after any floor change, every grass tile (551-554) or edge tile next to a changed tile gets the edge tile that fits its
+  neighbours, or plain grass again when the ground was painted away (in one undo step with the painting). Between
+  two grounds a grass tile shows the edge of clear water first, then path, then dusty path.
+- Editor: Map → Floors, "New ground · soft edges into grass" at the top. The sprites are loose PNGs in `Client\GFX`
+  (published with the next client update; they need client 2.15.06, numbers above 34,767).
+- The edge table is `tools/sprites/world_ground.json` (also built into the editor as `WORLD_GROUND`): re-run
+  `world_ground.py <Client folder>` after changing the look, then rebuild the table into `mapedit_template.py`.
+
 ## Server manager
 
 The **Server** page (rail: Server):

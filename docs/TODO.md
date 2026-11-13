@@ -273,6 +273,10 @@ Cody looks at in game before making the rest.
   a noisy dithered mask along the sides / corners that border the other ground; seamless with the plain tiles). The
   full set per ground pair is up to 47 tiles; the editor would pick the right one by the neighbours (an "auto-edge"
   brush), so Cody only paints "path".
+- **Done Nov 13 (in the editor, not published yet):** path, dusty path and clear water, 4 variants each + soft edges the
+  editor places by itself (CHANGES.md "New ground"). Cody liked: the grass's own grain recoloured; not: shiny pebbles,
+  flat smear, dark clumps. Next: desert sand (with cactus), more floors / stone / brick, trees, cobwebs; edges between
+  two new grounds (path to sand) if wanted.
 - First mock-up (Nov 12, not in the game): `MyV2\Client\Claude outputs\world_sprites\_test_scene.png` (dirt path,
   desert sand, lighter water on grass, soft edges); scripts in Claude's shell only so far.
 

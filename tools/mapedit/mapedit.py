@@ -164,6 +164,29 @@ FLOOR_SETS = {1003: [1003, 1005, 1006, 1007], 542: list(range(542, 551)), 551: l
               704: [704, 659, 660, 688], 950: list(range(950, 959)), 16670: list(range(16670, 16674)),
               16933: [16933, 16957, 16958, 16959]}
 
+# new grounds with soft edges into grass (tools/sprites/world_ground.py makes the sprites and this table):
+# each has 4 plain variants and an edge tile for every mask of neighbours (1 x+1, 2 y+1, 4 x-1, 8 y-1 sides;
+# 16 x+1,y+1, 32 x-1,y+1, 64 x-1,y-1, 128 x+1,y-1 corners, a corner only when neither of its sides is the ground)
+WORLD_GROUND = json.loads('''{"grass": [551, 552, 553, 554], "sets": {"path": {"plain": [35000, 35001, 35002, 35003], "edges": {"1": 35004, "2": 35005, "3": 35006, "4": 35007, "5": 35008, "6": 35009, "7": 35010, "8": 35011, "9": 35012, "10": 35013, "11": 35014, "12": 35015, "13": 35016, "14": 35017, "15": 35018, "16": 35019, "20": 35020, "24": 35021, "28": 35022, "32": 35023, "33": 35024, "40": 35025, "41": 35026, "48": 35027, "56": 35028, "64": 35029, "65": 35030, "66": 35031, "67": 35032, "80": 35033, "96": 35034, "97": 35035, "112": 35036, "128": 35037, "130": 35038, "132": 35039, "134": 35040, "144": 35041, "148": 35042, "160": 35043, "176": 35044, "192": 35045, "194": 35046, "208": 35047, "224": 35048, "240": 35049}}, "dusty path": {"plain": [35100, 35101, 35102, 35103], "edges": {"1": 35104, "2": 35105, "3": 35106, "4": 35107, "5": 35108, "6": 35109, "7": 35110, "8": 35111, "9": 35112, "10": 35113, "11": 35114, "12": 35115, "13": 35116, "14": 35117, "15": 35118, "16": 35119, "20": 35120, "24": 35121, "28": 35122, "32": 35123, "33": 35124, "40": 35125, "41": 35126, "48": 35127, "56": 35128, "64": 35129, "65": 35130, "66": 35131, "67": 35132, "80": 35133, "96": 35134, "97": 35135, "112": 35136, "128": 35137, "130": 35138, "132": 35139, "134": 35140, "144": 35141, "148": 35142, "160": 35143, "176": 35144, "192": 35145, "194": 35146, "208": 35147, "224": 35148, "240": 35149}}, "clear water": {"plain": [35500, 35501, 35502, 35503], "edges": {"1": 35504, "2": 35505, "3": 35506, "4": 35507, "5": 35508, "6": 35509, "7": 35510, "8": 35511, "9": 35512, "10": 35513, "11": 35514, "12": 35515, "13": 35516, "14": 35517, "15": 35518, "16": 35519, "20": 35520, "24": 35521, "28": 35522, "32": 35523, "33": 35524, "40": 35525, "41": 35526, "48": 35527, "56": 35528, "64": 35529, "65": 35530, "66": 35531, "67": 35532, "80": 35533, "96": 35534, "97": 35535, "112": 35536, "128": 35537, "130": 35538, "132": 35539, "134": 35540, "144": 35541, "148": 35542, "160": 35543, "176": 35544, "192": 35545, "194": 35546, "208": 35547, "224": 35548, "240": 35549}}}}''')
+WORLD_GROUND['sets'] = {n: {'plain': g['plain'], 'edges': {int(m): s for m, s in g['edges'].items()}} for n, g in WORLD_GROUND['sets'].items()}
+WG_ORDER = ['clear water', 'path', 'dusty path']      # a grass tile between two grounds shows the edge of the first
+WG_PLAIN = {s: n for n, g in WORLD_GROUND['sets'].items() for s in g['plain']}
+WG_EDGE = {s for g in WORLD_GROUND['sets'].values() for s in g['edges'].values()}
+WG_GRASS = set(WORLD_GROUND['grass'])
+for _g in WORLD_GROUND['sets'].values():
+    FLOOR_SETS[_g['plain'][0]] = list(_g['plain'])
+
+
+def wg_mask(is_ground):
+    m = 0
+    for k, (dx, dy) in enumerate(((1, 0), (0, 1), (-1, 0), (0, -1))):
+        if is_ground(dx, dy):
+            m |= 1 << k
+    for k, (dx, dy) in enumerate(((1, 1), (-1, 1), (-1, -1), (1, -1))):
+        if is_ground(dx, dy) and not m & (1 << k) and not m & (1 << ((k + 1) % 4)):
+            m |= 16 << k
+    return m
+
 
 def cstr(b):
     return b.split(b'\0', 1)[0].decode('latin-1')
@@ -1080,9 +1103,36 @@ class World:
         fl_sorted = sorted(floors.items(), key=lambda a: -a[1])
         ob_sorted = sorted(objs.items(), key=lambda a: -a[1])
         return {'floors': fl_sorted, 'objects': ob_sorted, 'templates': temps, 'flags': MF, 'sets': FLOOR_SETS,
+                'ground': [[n, g['plain'][0]] for n, g in WORLD_GROUND['sets'].items()],
                 'npcs': self.npc_templates()}
 
     # --- editing: every change remembers the old bytes so a batch can be undone
+    def _autoedge(self, rec):
+        """new grounds (WORLD_GROUND): the grass tiles around tiles whose floor changed get the right soft-edge tile
+        (or plain grass again when no new ground is next to them any more)"""
+        floor = lambda x, y: struct.unpack_from('<H', self.map, (x + y * MAPX) * MAP_SIZE)[0]
+        changed = [(k[1], k[2]) for k, old in list(rec.items()) if k[0] == 'm' and struct.unpack_from('<H', old, 0)[0] != floor(k[1], k[2])]
+        todo = {(x + dx, y + dy) for x, y in changed for dx in (-1, 0, 1) for dy in (-1, 0, 1)}
+        for x, y in todo:
+            if not (0 < x < MAPX - 1 and 0 < y < MAPY - 1):
+                continue
+            cur = floor(x, y)
+            if cur not in WG_GRASS and cur not in WG_EDGE:
+                continue
+            new = None
+            for name in WG_ORDER:
+                m = wg_mask(lambda dx, dy: WG_PLAIN.get(floor(x + dx, y + dy)) == name)
+                if m:
+                    new = WORLD_GROUND['sets'][name]['edges'][m]
+                    break
+            if new is None:
+                if cur in WG_GRASS:
+                    continue
+                new = random.choice(WORLD_GROUND['grass'])
+            if new != cur:
+                self._save_map(rec, x, y)
+                t = self.tile(x, y); t[0] = new; self.set_tile(x, y, t)
+
     def _save_map(self, rec, x, y):
         k = ('m', x, y)
         if k not in rec:
@@ -2268,6 +2318,7 @@ class World:
                     t[7] = (t[7] | b) if m == 1 else (t[7] & ~b) if m == 0 else (t[7] ^ b)
                     self.set_tile(x, y, t)
                 n += 1
+            self._autoedge(rec)
             # keep only real changes
             real = {}
             for key, old in rec.items():
@@ -4549,6 +4600,10 @@ function leftUI() {
     } else if (tab === 'floors') {
       const list = pal.floors.filter(([s]) => match('', s));
       if (/^\d+$/.test(q) && !list.some(([s]) => String(s) === q)) list.unshift([+q, 0]);
+      if (!q && pal.ground && pal.ground.length) {   // new grounds: 4 random variants, the grass around them gets soft edges by itself
+        sect('New ground · soft edges into grass (painted grass next to it blends in by itself)');
+        const g = grid(); pal.ground.forEach(([nm, s]) => { const c = cellFloor(s, 0); c.querySelector('.lab').textContent = nm; c.title = nm + ' · 4 random variants; the grass tiles around it get soft edges by themselves'; g.appendChild(c); });
+      }
       rugSection(w, sect, grid, match);
       if (!q) mixSection(true);
       sect('Floors · by how often they are used · Ctrl+click to mix'); lazy(grid(), list, f => cellFloor(f[0], f[1]));

@@ -1182,6 +1182,10 @@ function leftUI() {
     } else if (tab === 'floors') {
       const list = pal.floors.filter(([s]) => match('', s));
       if (/^\d+$/.test(q) && !list.some(([s]) => String(s) === q)) list.unshift([+q, 0]);
+      if (!q && pal.ground && pal.ground.length) {   // new grounds: 4 random variants, the grass around them gets soft edges by itself
+        sect('New ground · soft edges into grass (painted grass next to it blends in by itself)');
+        const g = grid(); pal.ground.forEach(([nm, s]) => { const c = cellFloor(s, 0); c.querySelector('.lab').textContent = nm; c.title = nm + ' · 4 random variants; the grass tiles around it get soft edges by themselves'; g.appendChild(c); });
+      }
       rugSection(w, sect, grid, match);
       if (!q) mixSection(true);
       sect('Floors · by how often they are used · Ctrl+click to mix'); lazy(grid(), list, f => cellFloor(f[0], f[1]));
