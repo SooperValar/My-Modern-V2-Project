@@ -359,7 +359,7 @@ The design is in `docs/REBALANCE.md`.
 (Live Nov 12; client 2.15.05 published Nov 12, `CLIENT_LATEST` 0x020F05.)
 - **A waypoint** is a 3 × 3 rune circle on the ground. Click it to find it ("You found the waypoint Aston, Crossroads."); from then on its circle glows blue for you (other players see it carved and grey until they find it themselves).
 - **Travel window**: clicking a waypoint opens a list of every waypoint: a small picture of the place, "Town, Place" and a short line; the ones you have not found show as "Unknown Location" / "???". Click a found one to travel there. Travel is free, and only works while you stand at a waypoint you have found. The mouse wheel or the arrows scroll the list; the X, Esc or walking away closes it. The place you are at is green.
-- A found circle glows a little at night (the client never draws its lit pieces darker than light level 6, `WP_GLOW`); travelling plays a sound (`sfx\\19.wav`, made for it; the game had no teleport sound) for the traveller and those nearby at both ends.
+- A found circle glows a little at night (the client never draws its lit pieces darker than light level 6, `WP_GLOW`); travelling plays a sound (`sfx\\19.wav`: the whoosh Cody picked, "scifi anime whoosh 27" by floraphonic from Pixabay, cut to 1.1 s and converted to the game's 8-bit 22 kHz format; the game had no teleport sound) for the traveller and those nearby at both ends.
 - The Ghost Companion comes along (as with every teleport). Labyrinth items vanish, as with a teleport.
 - Older clients (before 2.15.05) can find waypoints but are told to start the game with Launcher.exe to travel.
 

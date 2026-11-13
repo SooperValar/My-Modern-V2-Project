@@ -192,8 +192,7 @@ stopped via `stop-send`, then `update-world` and `reload-editor`):
 ## Open items (details in docs/TODO.md and docs/HOSTING.md)
 
 **Nov 12: waypoints are done and live** (tested by Cody; client 2.15.05 published and pushed, client-dist 0633098;
-travel sound and `CLIENT_LATEST` 0x020F05 live since the evening update). Cody has five waypoints. Open: his verdict on
-the sound and the night glow, and the old Clan Pentagram in the mine (TODO.md). Pieces: server `waypoint.c`, client travel window +
+travel sound and `CLIENT_LATEST` 0x020F05 live since the evening update). Cody has five waypoints. The travel sound is the whoosh Cody picked (republished Nov 12, late); glow and the old Clan Pentagram stay as they are. Pieces: server `waypoint.c`, client travel window +
 night glow (`WP_GLOW` in `hud.h`), editor Waypoints tab (the game lays the circles itself from `.dat/waypoints.dat`;
 pictures by pasted screenshot), sprites 18300-18341 + 18401.. (pictures), `sfx\19.wav` (synthesized in Python, Claude
 can't hear it). Console: `wpreload`, `wplist`, `wpfound`, `wpuse`. Details: TODO.md "Waypoints", CHANGES.md "Waypoints".

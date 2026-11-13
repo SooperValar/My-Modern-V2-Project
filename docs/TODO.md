@@ -25,7 +25,6 @@ world, quests, the editor, the client and Discord. Merged Nov 10 from the old TO
 - Quest rewards on the editor's Quests page, if he wants changes ([Quests](#6-quests)). (Order: Cody is happy with it, Nov 11.)
 - Checking the merchants in game: pages, selling + buying back, prices ([Items](#4-items-weapons-and-shops)).
 - Setting up the area clears (quest areas first) and the class rewards, when he wants.
-- Waypoints: listen to the travel sound, look at the night glow; decide about the old Clan Pentagram in the mine ([Systems](#2-gameplay-systems)).
 
 ---
 
@@ -80,12 +79,9 @@ Nov 12 (client-dist 0633098: travel window, night glow of found circles, circle 
 waypoints 1-5). CHANGES.md "Waypoints", "Waypoints tab".
 **Left:**
 - ~~push, then the update with the travel sound and `CLIENT_LATEST` 0x020F05~~ (done Nov 12, all live).
-- Cody listens to the travel sound (Claude made `19.wav` without being able to hear it) and looks at the night glow
-  and the stronger grey circle.
+- Travel sound: Cody's own pick since Nov 12 (see CHANGES); night glow and the Clan Pentagram: fine as they are (Cody).
 - New waypoint pictures need a client publish each time (until then: the stock picture).
-- The old **Clan Pentagram** (item 7495 at 469,523, template 587; also template 570; sprite 761, the green 760 and red
-  762 are unused) still runs the Lab 13 portal check when stepped on (its driver number 38 was reused): remove it or
-  make that spot a waypoint. Cody decides.
+- The old Clan Pentagram in the Mine, 1st Level (469,523) stays as it is (Cody, Nov 12).
 
 ### ● Weapon, ring and Harakim rebalance: what is left (was #11)
 Live Nov 4 (see `docs/REBALANCE.md` and CHANGES "Rebalance"): Two-Handed now Agility-based, sword deflect / axe crit.
