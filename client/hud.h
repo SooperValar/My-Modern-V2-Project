@@ -114,6 +114,9 @@
 #define HW_H		(HW_ROWS*HW_ROWH+34)
 #define HW_X		(HSH_X+1)
 #define HW_Y		(HSH_Y+5)
+// a found (lit) waypoint circle glows a little in the dark: its pieces are never drawn darker than light level WP_GLOW
+#define WP_GLOW		6
+#define WP_LIGHT(spr,l)	((((spr)>=18310 && (spr)<=18318) || ((spr)>=18330 && (spr)<=18338)) && (l)>WP_GLOW ? WP_GLOW : (l))
 #define WP_SPR_UNKNOWN	18340				// "not found yet" picture
 #define WP_SPR_STOCK	18341				// a found waypoint whose own picture is not there (yet)
 struct wp_row { unsigned char flags,nr,picok; unsigned short pic; char name[32],line[40]; };	// flags: 1 found, 2 you are here

@@ -40,6 +40,7 @@ clears.dat.
 #define WP_SHOWN	200		// rows sent to a client at most
 #define WP_CLIENT	0x020F05	// the first client with the travel window
 #define WP_HDR		16
+#define WP_SOUND	19		// sfx/19.wav (new with client 2.15.05)
 
 struct waypoint { int nr,x,y,look,pic; char name[32],line[40]; };
 static struct waypoint wp[MAXWP];
@@ -273,10 +274,13 @@ void plr_cmd_waypoint(int nr)
 	}
 
 	fx_add_effect(6,0,ch[cn].x,ch[cn].y,0);
+	do_area_sound(cn,0,ch[cn].x,ch[cn].y,WP_SOUND);		// those left behind hear it
 	if (!god_transfer_char(cn,wp[n].x,wp[n].y)) {
 		do_char_log(cn,0,"Something blocks the waypoint %s. Try again in a moment.\n",wp[n].name); return;
 	}
 	fx_add_effect(6,0,ch[cn].x,ch[cn].y,0);
+	char_play_sound(cn,WP_SOUND,-150,0);
+	do_area_sound(cn,0,ch[cn].x,ch[cn].y,WP_SOUND);
 	do_update_char(cn);
 	do_char_log(cn,1,"You travel to %s.\n",wp[n].name);
 	chlog(cn,"Waypoint travel %s -> %s (%d,%d)",wp[here].name,wp[n].name,wp[n].x,wp[n].y);

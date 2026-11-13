@@ -12,7 +12,7 @@ world, quests, the editor, the client and Discord. Merged Nov 10 from the old TO
 
 ## Up next (in order)
 
-0. ★ **Waypoints: update, test, publish** - [Systems](#2-gameplay-systems)
+0. ★ **Waypoints: push client-dist, then the last server update (sound, CLIENT_LATEST)** - [Systems](#2-gameplay-systems)
 1. ★ **Soulstone levels too low** (MAJOR) - [Fixes](#1-fixes-and-balance)
 2. ★ **Discord: online / rankings info and the game chat bridge** - [Discord](#9-discord-and-community)
 3. ★ **Walking speed, speed modes and attack speed** (look at it together first) - [Systems](#2-gameplay-systems)
@@ -26,7 +26,7 @@ world, quests, the editor, the client and Discord. Merged Nov 10 from the old TO
 - Quest rewards on the editor's Quests page, if he wants changes ([Quests](#6-quests)). (Order: Cody is happy with it, Nov 11.)
 - Checking the merchants in game: pages, selling + buying back, prices ([Items](#4-items-weapons-and-shops)).
 - Setting up the area clears (quest areas first) and the class rewards, when he wants.
-- Waypoints: try `merc_new.exe`, place the first waypoints ([Systems](#2-gameplay-systems)).
+- Waypoints: `git push origin client-dist`, then "go" for the update; listen to the travel sound ([Systems](#2-gameplay-systems)).
 
 ---
 
@@ -75,17 +75,17 @@ waits on `speedtab[speed][ctick]` (`svr_act.c` ~1079, `speedo` / `ch_act_speed`;
 The modes also cost endurance (fast drains it, `svr_do.c` ~4120-4137) and change Stealth (slow / normal sneak better,
 `svr_do.c` ~3710). To decide: separate walk and attack speed, how much stats should matter, what the modes cost / give.
 
-### ★ Waypoints (was #13): built Nov 11, waiting for the update and Cody's test
-Built (CHANGES.md "Waypoints", "Waypoints tab"): server `waypoint.c`, client 2.15.05 (`Client\merc_new.exe`, not published),
-the editor's Waypoints tab, the circle sprites. Tried on the test server (console) and the editor (browser test); **the
-travel window itself has not been seen in a running game yet**.
-Cody's choices (Nov 11): rune circle (design B) as the waypoint, the pentagram (A) kept as a second look; a see-through
-3 x 3 circle on any floor, pillars / platform built by hand; click to open; pictures from the map; no other rules.
+### ★ Waypoints (was #13): live; one server update left
+Live Nov 12 and tested by Cody (finding, the travel window, travel, his own pictures by paste). Client 2.15.05 published
+Nov 12 (client-dist 0633098: travel window, night glow of found circles, circle sprites, `sfx\19.wav`, the pictures of
+waypoints 1-5). CHANGES.md "Waypoints", "Waypoints tab".
 **Left:**
-- ~~update-code restart, editor reload~~ (done Nov 12). Cody: swap in `merc_new.exe`; place the first waypoints (editor) and try them.
-- After his test: publish client 2.15.05 (with the circle sprites and the pictures), raise `CLIENT_LATEST` to 0x020F05.
-- Maybe: light from the circle at night (it has none now), a sound, a `#waypoints` list, the dim circle a bit stronger
-  on dark floors.
+- Cody pushes `client-dist`, THEN says "go" for an update-code: it brings the travel sound (`waypoint.c`) and
+  `CLIENT_LATEST` 0x020F05 (both already in the source, both copies). Not before the push, or players are told to
+  update to a client that isn't out yet.
+- Cody listens to the travel sound (Claude made `19.wav` without being able to hear it) and looks at the night glow
+  and the stronger grey circle.
+- New waypoint pictures need a client publish each time (until then: the stock picture).
 - The old **Clan Pentagram** (item 7495 at 469,523, template 587; also template 570; sprite 761, the green 760 and red
   762 are unused) still runs the Lab 13 portal check when stepped on (its driver number 38 was reused): remove it or
   make that spot a waypoint. Cody decides.

@@ -102,9 +102,9 @@ def main():
             over(o, (60, 150, 255), Ilow)                                  # the lines themselves
             over(o, (190, 235, 255), np.clip(Ilow, 0, 1) ** 3 * 0.8)       # bright core
         else:
-            over(o, (58, 66, 84), Ilow * 0.72)                             # carved, unlit
-            sh = np.roll(Ilow, 1, 0)                                       # a thin light edge below each groove
-            over(o, (255, 255, 255), np.clip(sh - Ilow, 0, 1) * 0.35)
+            over(o, (40, 46, 62), np.clip(Ilow * 1.15, 0, 1) * 0.92)       # carved, unlit
+            sh = np.roll(Ilow, 1, 0)                                       # a light edge below each groove (it carries the circle on dark floors)
+            over(o, (235, 240, 255), np.clip(sh - Ilow, 0, 1) * 0.62)
         return o
     def png(o):                                # the client expects colour already multiplied by alpha
         q = np.zeros(o.shape, np.uint8); al = np.clip(o[..., 3], 0, 1)

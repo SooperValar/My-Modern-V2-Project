@@ -191,16 +191,15 @@ stopped via `stop-send`, then `update-world` and `reload-editor`):
 
 ## Open items (details in docs/TODO.md and docs/HOSTING.md)
 
-**Nov 12: the server update with waypoints is LIVE (update-code, editor reloaded); no waypoints placed yet, client 2.15.05 not published.** Built Nov 11: Server (`waypoint.c` + small changes in `client.h`, `funcs.h`, `use_driver.c`,
-`svr_tick.c`, `console.c`, `server.c`, `Makefile`; both source copies match), client 2.15.05 (`Client\merc_new.exe`, not
-published), the editor's Waypoints tab (new `mapedit.py` is in the Server folder; it shows after `reload-editor`), circle
-sprites 18300-18341 (already in `Client\GFX`). Next: Cody swaps in
-`merc_new.exe`, places waypoints in the editor (Waypoints tab: the game lays the circles itself) and tries them; then
-publish 2.15.05 and raise `CLIENT_LATEST`. The travel window has not been seen running yet (the client can't be run in
-Claude's workspace): expect small layout fixes. Console: `wpreload`, `wplist`, `wpfound`, `wpuse`. Details: TODO.md
-"Waypoints", CHANGES.md "Waypoints". A test server can be built in Claude's device shell (`~/ctest`, gcc is there); it
-is gone with each new session. Claude's own request for the Server / Client folders was refused automatically: Cody adds
-the `MyV2` folder with "Add folder".
+**Nov 12: waypoints are live and tested by Cody; client 2.15.05 published (client-dist 0633098, Cody pushes it).**
+Waiting: after that push, Cody's "go" for an update-code that brings the travel sound (sound 19) and `CLIENT_LATEST`
+0x020F05 (already in both source copies; never before the push). Pieces: server `waypoint.c`, client travel window +
+night glow (`WP_GLOW` in `hud.h`), editor Waypoints tab (the game lays the circles itself from `.dat/waypoints.dat`;
+pictures by pasted screenshot), sprites 18300-18341 + 18401.. (pictures), `sfx\19.wav` (synthesized in Python, Claude
+can't hear it). Console: `wpreload`, `wplist`, `wpfound`, `wpuse`. Details: TODO.md "Waypoints", CHANGES.md "Waypoints".
+A test server can be built in Claude's device shell (`~/ctest`, gcc is there); it is gone with each new session.
+Claude's own request for the Server / Client folders was refused automatically: Cody adds the `MyV2` folder with
+"Add folder". `Client\merc_2.15.04.exe` is the client before waypoints.
 
 **Nov 11:** kill quests built (Quests page box, server `npctalk.c` "kill quests", `#kills`); see CHANGES.md "Kill quests".
 Cody makes the first ones and tries them.
