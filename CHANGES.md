@@ -456,6 +456,11 @@ brush paints them at random) and **soft edges into grass**:
   Walls, "New walls" at the top; each paints its 4 variants at random, drawn into the tile, blocking walking and
   sight like the game's walls (an object brush can now carry variants). The list is `tools/sprites/world_walls.json`
   (built into the editor as `WORLD_WALLS`).
+- **New floors (Nov 13, `tools/sprites/world_floors.py`):** seven floors, 4 variants each, clean and with grain, the
+  patterns along the map's axes so planks and joints continue from tile to tile: Oak Planks (37000 / grain 37004), Dark
+  Wood Planks (37010 / 37014), Flagstone (37020 / 37024), Checkered Marble (37030 / 37034), Terracotta Tiles (37040 /
+  37044), White Marble (37050 / 37054), Stone Setts (37060 / 37064). Editor: Map → Floors, "New floors" (each paints its
+  4 variants at random, like the game's floor sets). The list is `tools/sprites/world_floors.json` (`WORLD_FLOORS`).
 - Editor: Map → Floors, "New ground · soft edges into grass" at the top. The sprites are loose PNGs in `Client\GFX`
   (published with the next client update; they need client 2.15.06, numbers above 34,767).
 - The edge table is `tools/sprites/world_ground.json` (also built into the editor as `WORLD_GROUND`): re-run

@@ -276,11 +276,17 @@ Cody looks at in game before making the rest.
 - **Done Nov 13 (in the editor, not published yet):** path, dusty path and clear water, 4 variants each + soft edges the
   editor places by itself (CHANGES.md "New ground"). Cody liked: the grass's own grain recoloured; not: shiny pebbles,
   flat smear, dark clumps. **Desert done Nov 13** (four sands, 7 cacti with black spines, four Desert area brushes).
-  **Walls done Nov 13** (8 materials, clean + grain; Cody: no strong grain). Next: floors, trees, cobwebs, maybe more
+  **Walls done Nov 13** (8 materials, clean + grain; Cody: no strong grain). **Floors done Nov 13** (7, clean + grain;
+  red carpet dropped). Next: doors (below), trees, cobwebs, maybe more
   walls (log cabin, plaster, dungeon brick, carved sandstone); edges between two new grounds (path to sand) if wanted; maybe
   dead / dry cacti, agave, desert shrubs, bones and rocks.
 - First mock-up (Nov 12, not in the game): `MyV2\Client\Claude outputs\world_sprites\_test_scene.png` (dirt path,
   desert sand, lighter water on grass, soft edges); scripts in Claude's shell only so far.
+
+### ● Doors for the new walls (Cody, Nov 13)
+Door sprites that match the new wall materials (sandstone, temple, brick, stone, slate, timber, fieldstone), closed and
+open, both facings. Doors are items (templates with the door driver, an open / closed sprite pair), so new doors need new
+item templates (world data: stop-send, a world tool, update-world), unlike walls and floors, which are only sprites.
 
 ### ○ New character sprites from existing ones (Cody, Nov 12; tabled for now)
 Same animations as an existing character (all 448 frames per character), changed look: recolor by area, swapped / added

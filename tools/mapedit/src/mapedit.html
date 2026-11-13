@@ -1194,6 +1194,10 @@ function leftUI() {
         sect('New ground · soft edges into grass (painted grass next to it blends in by itself)');
         const g = grid(); pal.ground.forEach(([nm, s]) => { const c = cellFloor(s, 0); c.querySelector('.lab').textContent = nm; c.title = nm + ' · 4 random variants; the grass tiles around it get soft edges by themselves'; g.appendChild(c); });
       }
+      if (pal.newfloors && pal.newfloors.length) {   // new floors: 4 variants each, painted at random
+        const nf = pal.newfloors.filter(f => match(f[1], f[0]));
+        if (nf.length) { sect('New floors · 4 variants each, painted at random'); const g = grid(); nf.forEach(([s, nm]) => { const c = cellFloor(s, 0); c.querySelector('.lab').textContent = nm; c.title = nm + ' · 4 random variants'; g.appendChild(c); }); }
+      }
       rugSection(w, sect, grid, match);
       if (!q) mixSection(true);
       sect('Floors · by how often they are used · Ctrl+click to mix'); lazy(grid(), list, f => cellFloor(f[0], f[1]));
