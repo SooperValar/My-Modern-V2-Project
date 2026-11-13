@@ -497,7 +497,7 @@ void sv_setchar_item(unsigned char *buf)
 
 	n=*(unsigned long*)(buf+1);
 	if (n<0 || n>39) xlog(0,"Invalid setchar item");
-	pl.item[n]=*(short int*)(buf+5);
+	pl.item[n]=*(unsigned short*)(buf+5);	// MyV2: sprite numbers are unsigned (up to 65535)
 	pl.item_p[n]=*(short int*)(buf+7);
 
 //	xlog("SV SETCHAR ITEM (%d,%d,%d)",*(unsigned long*)(buf+1),*(short int*)(buf+5),*(short int*)(buf+7));
@@ -510,7 +510,7 @@ void sv_setchar_worn(unsigned char *buf)
 
 	n=*(unsigned long*)(buf+1);
 	if (n<0 || n>19) xlog(0,"Invalid setchar worn");
-	pl.worn[n]=*(short int*)(buf+5);
+	pl.worn[n]=*(unsigned short*)(buf+5);
 	pl.worn_p[n]=*(short int*)(buf+7);
 }
 
@@ -521,7 +521,7 @@ void sv_setchar_spell(unsigned char *buf)
 
 	n=*(unsigned long*)(buf+1);
 	if (n<0 || n>19) xlog(0,"Invalid setchar spell");
-	pl.spell[n]=*(short int*)(buf+5);
+	pl.spell[n]=*(unsigned short*)(buf+5);
 	pl.active[n]=*(short int*)(buf+7);
 }
 
@@ -611,7 +611,7 @@ void sv_setchar_obj(unsigned char *buf)
 {
 	DEBUG("SV SETCHAR OBJ");
 
-	pl.citem=*(short int*)(buf+1);
+	pl.citem=*(unsigned short*)(buf+1);
 	pl.citem_p=*(short int*)(buf+3);
 
 //	xlog("SV SETCHAR OBJ (%d,%d)",*(short int*)(buf+1),*(short int*)(buf+3));

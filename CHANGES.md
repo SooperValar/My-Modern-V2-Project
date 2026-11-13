@@ -58,6 +58,13 @@ Getting the original client to run on modern Windows. The original `merc.exe` wo
 - **Out-of-date clients**: a player whose client is older than the newest published one (`CLIENT_LATEST` in `gendefs.h`) is told in red on every login: "Your game is out of date (version 2.15.01, the newest is 2.15.02). Please close it and start the game with Launcher.exe: it updates the game for you." A client too old to play at all (below `MINVERSION`) is refused at login; from client 2.15.02 on its login window then says "Game too old: start it with Launcher.exe to update." (older clients say their own "Client version too old. Update needed."). When a new client is published, raise `CLIENT_LATEST` to its version.
 - **Player zip**: the "MyV2 Astonia" folder with the launcher, the game, its graphics and sounds, and `README.txt` (`client/package/`): start with Launcher.exe, the Windows warning, making a character, saving it as a .moa, updates, problems.
 
+**More sprite numbers (client 2.15.06, Nov 12; not published yet):** the client could only show sprites up to 34,767
+(`MAXSPRITE` = 2000+32*1024 in `client/inter.h`); now every 16-bit number, 0-65,535 (`MAXSPRITE` 65536), the most the
+server can send. Map, item and inventory sprites are read as unsigned (`common.h` `ba_sprite` / `it_sprite`, `socket.c`
+inventory / worn / spells / hand), and every sprite drawing / loading function in `dd.c` refuses a number outside the
+table instead of reading past it. Older `pnglib.idx` files (34,768 entries) still load. Server side: see
+[Server modernization](#server-modernization). Numbering plan for new world sprites: HANDOFF.md.
+
 ## HUD changes
 
 **800×600 HUD (first pass)**
@@ -694,6 +701,11 @@ The server source assumed a 32-bit Linux, where `long` and `time_t` are 4 bytes.
 - **Fights** (test server only, they really fight): `wear <player> <item template>|off` puts a new item straight into its worn slot and shows the main values (or takes everything off); `fighttest <player> <NPC template> <rounds> [back|kill]` gives the damage totals of the player hitting the NPC, of the NPC hitting the player (`back`, with the damage done back by thorns and frost and how often it was chilled), or fights until it dies (`kill`).
 - **Waypoints**: `wpreload` reads `.dat/waypoints.dat` again and remakes the circles; `wplist`; `wpfound <player> [all|none|<nr>]` shows what a player has found, or sets all / none / switches one; `wpuse <player> <x> <y>` as if the player clicked the circle piece there.
 - **Merchants**: `merchreload` reads `.dat/merchants.dat` again; `shop <player> <merchant template> [buy <slot>|sell <backpack slot>|page <38/39>|leave]` shows the shop as that player sees it, or buys, sells, turns a page or ends the remorse.
+
+**Sprite numbers up to 65,535 (Nov 12):** item sprites (`sprite[2]`) and a character's `sprite_override` were signed
+shorts in `data.h`, so a sprite above 32,767 turned negative; now unsigned (same size, the `.dat` files don't change).
+`client.h` `cmap` sprites and the item sprite fields sent in `svr_tick.c` unsigned too. The editor reads and writes item
+sprites as unsigned (0-65,535 in the item editor).
 
 ## Data changes
 

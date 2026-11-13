@@ -1,6 +1,6 @@
-#define VERSION 0x020F05	// 2.15.05: waypoints (the travel window). 2.15.04: the game is called Mercenaries of Asgard v2. 2.15.03: #gca sends the Alt-selected character; names drawn over the map. 2.15.02: Greataxe skill name, Ctrl+click takes one from a stack (2.15.01: 1280x960 / 44x44 symmetric view + v2 HUD, needs the matching server)
+#define VERSION 0x020F06	// 2.15.06: sprite numbers up to 65535 (MAXSPRITE), item / map sprites unsigned. 2.15.05: waypoints (the travel window). 2.15.04: the game is called Mercenaries of Asgard v2. 2.15.03: #gca sends the Alt-selected character; names drawn over the map. 2.15.02: Greataxe skill name, Ctrl+click takes one from a stack (2.15.01: 1280x960 / 44x44 symmetric view + v2 HUD, needs the matching server)
 
-#define MAXSPRITE 2000+(32*1024)
+#define MAXSPRITE 65536	// MyV2: every 16-bit sprite number (was 2000+32*1024 = 34768); the server sends sprites as unsigned short
 
 // The HUD code works in the original 800x600 coordinates ("legacy"). The
 // world is drawn on a bigger screen. MODEX/MODEY are the size of whatever

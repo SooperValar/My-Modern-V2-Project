@@ -400,6 +400,7 @@ void dd_alphaeffect_magic_1(int nr,int str,int xpos,int ypos,int xoff,int yoff)
 	unsigned short *dst,d;
 	int x,y,dstx,dsty,e;
 	int r,g,b,r1,g1,b1,e2;
+	if (nr<=0 || nr>=MAXSPRITE) return;	// MyV2: never past the sprite table (sprite numbers can now go up to 65535)
 
 	rx=(xpos/2)+(ypos/2)-(2*16)+32+XPOS-((TILEX-34)/2*32);
 	if (xpos<0 && (xpos&1))	rx--;
@@ -470,6 +471,7 @@ void dd_alphaeffect_magic_0(int nr,int str,int xpos,int ypos,int xoff,int yoff)
 	unsigned short *dst,d;
 	int x,y,dstx,dsty,e;
 	int r,g,b,r1,g1,b1,e2;
+	if (nr<=0 || nr>=MAXSPRITE) return;	// MyV2: never past the sprite table (sprite numbers can now go up to 65535)
 
 	rx=(xpos/2)+(ypos/2)-(2*16)+32+XPOS-((TILEX-34)/2*32);
 	if (xpos<0 && (xpos&1))	rx--;
@@ -535,6 +537,7 @@ void dd_alphaeffect_magic_0(int nr,int str,int xpos,int ypos,int xoff,int yoff)
 
 void dd_alphaeffect_magic(int nr,int str,int xpos,int ypos,int xoff,int yoff)
 {
+	if (nr<=0 || nr>=MAXSPRITE) return;	// MyV2: never past the sprite table (sprite numbers can now go up to 65535)
 	if (RGBM==1) dd_alphaeffect_magic_1(nr,str,xpos,ypos,xoff,yoff);
 	else dd_alphaeffect_magic_0(nr,str,xpos,ypos,xoff,yoff);	
 }
@@ -808,6 +811,7 @@ unsigned short avgcolor(unsigned short *ptr,int xs,int ys)
 
 int get_avgcol(int nr)
 {
+	if (nr<=0 || nr>=MAXSPRITE) return 0;	// MyV2: never past the sprite table (sprite numbers can now go up to 65535)
 	return sprtab[nr].avgcol;
 }
 
@@ -860,6 +864,7 @@ void dd_load_sprite(int nr)
 	unsigned short *optr=NULL;
 	unsigned char *alpha=NULL;
 	char buf[300];
+	if (nr<=0 || nr>=MAXSPRITE) return;	// MyV2: never past the sprite table (sprite numbers can now go up to 65535)
 	FILE *fp;
 
 	if (usedmem>maxmem) free_2nd_cache();
@@ -1213,6 +1218,7 @@ int gettile(unsigned int sprite,unsigned int effect,int x,int y,int xs)
 void copysprite(int nr,int effect,int xpos,int ypos,int xoff,int yoff)
 {
 	unsigned int x,y,xs,ys,n,rx,ry;
+	if (nr<=0 || nr>=MAXSPRITE) return;	// MyV2: never past the sprite table (sprite numbers can now go up to 65535)
 
 	if (nr==0) return;
 
@@ -1247,6 +1253,7 @@ void copysprite(int nr,int effect,int xpos,int ypos,int xoff,int yoff)
 void copyspritex(int nr,int xpos,int ypos,int effect)
 {
 	unsigned int x,y,xs,ys,n;
+	if (nr<=0 || nr>=MAXSPRITE) return;	// MyV2: never past the sprite table (sprite numbers can now go up to 65535)
 
 	if (nr==0) return;
 
@@ -1274,6 +1281,7 @@ void copyspritex_fit(int nr,int xpos,int ypos,int box,int effect)
 {
 	int w,h,dw,dh,x,y,sx,sy,ox,oy;
 	unsigned short *dst,v;
+	if (nr<=0 || nr>=MAXSPRITE) return;	// MyV2: never past the sprite table (sprite numbers can now go up to 65535)
 
 	if (nr==0) return;
 	if (!sprtab[nr].image) dd_load_sprite(nr);
@@ -1881,6 +1889,7 @@ void dd_lowhp_glow(int xpos,int ypos,int xoff,int yoff,int pct,int limit)
  * holding items. sx,sy: the sprite's top left on the screen. */
 static void glow_core(int nr,int sx,int sy,int glow,int light)
 {
+	if (nr<=0 || nr>=MAXSPRITE) return;	// MyV2: never past the sprite table (sprite numbers can now go up to 65535)
 	// strong, clearly different hues; the outline is only one pixel wide, so it stays subtle
 	static const int col[6][3]={{0,0,0},{40,120,255},{255,215,0},{175,60,255},{255,120,0},{210,210,210}};
 	static const int amax_t[6]={0,150,150,160,170,90};
@@ -1957,6 +1966,7 @@ void dd_shadow(int nr,int xpos,int ypos,int xoff,int yoff)
 {
 	unsigned int x,y,xs,ys,rx,ry,m,p,v,ok=0,disp,swap=0,n;
 	unsigned short *dst,*src;
+	if (nr<=0 || nr>=MAXSPRITE) return;	// MyV2: never past the sprite table (sprite numbers can now go up to 65535)
 
 	if (nr==0) return;
 

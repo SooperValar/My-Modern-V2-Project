@@ -2001,12 +2001,12 @@ void plr_change(int nr)
                                                 *(short int*)(buf+5)=in&0xfffffff;
                                                 *(short int*)(buf+7)=0;
                                         } else {
-                                                *(short int*)(buf+5)=it_temp[in].sprite[0];
+                                                *(unsigned short*)(buf+5)=it_temp[in].sprite[0];
                                                 *(short int*)(buf+7)=0;
                                         }
                                 } else {
-                                        if (it[in].active) *(short int*)(buf+5)=it[in].sprite[1];
-                                        else  *(short int*)(buf+5)=it[in].sprite[0];
+                                        if (it[in].active) *(unsigned short*)(buf+5)=it[in].sprite[1];
+                                        else  *(unsigned short*)(buf+5)=it[in].sprite[0];
                                         *(short int*)(buf+7)=it[in].placement;
 
                                         it[in].flags&=~IF_UPDATE;
@@ -2027,8 +2027,8 @@ void plr_change(int nr)
 				buf[0]=SV_SETCHAR_WORN;
 				*(unsigned int*)(buf+1)=n;
 				if (in) {
-					if (it[in].active) *(short int*)(buf+5)=it[in].sprite[1];
-					else *(short int*)(buf+5)=it[in].sprite[0];
+					if (it[in].active) *(unsigned short*)(buf+5)=it[in].sprite[1];
+					else *(unsigned short*)(buf+5)=it[in].sprite[0];
 					*(short int*)(buf+7)=it[in].placement;
 				} else {
 					*(short int*)(buf+5)=0;
@@ -2065,7 +2065,7 @@ void plr_change(int nr)
 				buf[0]=SV_SETCHAR_SPELL;
 				*(unsigned int*)(buf+1)=n;
 				if (in) {
-					*(short int*)(buf+5)=it[in].sprite[1];
+					*(unsigned short*)(buf+5)=it[in].sprite[1];
 					*(short int*)(buf+7)=it[in].active*16/max(1,it[in].duration);
 					cpl->spell[n]=in;
 					cpl->active[n]=(it[in].active*16/max(1,it[in].duration));
@@ -2108,8 +2108,8 @@ void plr_change(int nr)
 					*(short int*)(buf+1)=46;
 					*(short int*)(buf+3)=0;
 				} else {
-					if (it[in].active) *(short int*)(buf+1)=it[in].sprite[1];
-					else *(short int*)(buf+1)=it[in].sprite[0];
+					if (it[in].active) *(unsigned short*)(buf+1)=it[in].sprite[1];
+					else *(unsigned short*)(buf+1)=it[in].sprite[0];
 					*(short int*)(buf+3)=it[in].placement;
 	
 					it[in].flags&=~IF_UPDATE;

@@ -83,7 +83,7 @@ IT_FIELDS = {
     'placement': (293, '<H'), 'max_age': (298, '<2I'), 'max_damage': (314, '<I'), 'attrib': (322, '15b'),
     'hp': (337, '<3h'), 'end': (343, '<3h'), 'mana': (349, '<3h'), 'skill': (355, '150b'), 'armor': (505, '2b'),
     'weapon': (507, '2b'), 'light': (509, '<2h'), 'duration': (513, '<I'), 'cost': (517, '<I'), 'power': (521, '<I'),
-    'sprite_override': (535, '<H'), 'sprite': (537, '<2h'), 'status': (541, '2B'), 'gethit_dam': (543, '2b'),
+    'sprite_override': (535, '<H'), 'sprite': (537, '<2H'), 'status': (541, '2B'), 'gethit_dam': (543, '2b'),
     'min_rank': (545, 'b'), 'driver': (593, 'B'), 'data': (594, '<10i'),
 }
 
@@ -871,7 +871,7 @@ class World:
 
     def item_sprite(self, i):
         o = i * ITEM_SIZE
-        s0, s1 = struct.unpack_from('<hh', self.item, o + I_SPRITE)
+        s0, s1 = struct.unpack_from('<HH', self.item, o + I_SPRITE)
         active = struct.unpack_from('<i', self.item, o + I_ACTIVE)[0]
         return (s1 if active and s1 else s0) & 0xffff
 
@@ -6500,7 +6500,7 @@ const ITEM_TABS = {
     row(g, 'Description', txt(() => c.description, v => c.description = v, 199, true), 'What players read when they look at it.');
     for (const k of [0, 1]) {
       const sp = document.createElement('div'); sp.className = 'ipick'; const th = thumb(c.sprite[k], 48);
-      sp.append(num(() => c.sprite[k], v => { c.sprite[k] = v; th.dataset.spr = v; paintThumb(th); }, -32768, 32767), th);
+      sp.append(num(() => c.sprite[k], v => { c.sprite[k] = v; th.dataset.spr = v; paintThumb(th); }, 0, 65535), th);
       row(g, k ? 'Look when on/active' : 'Look', sp, k ? 'For doors, torches and the like (0 = same).' : '');
     }
     const val = document.createElement('div'); val.className = 'ipick';

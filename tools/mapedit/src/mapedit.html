@@ -3133,7 +3133,7 @@ const ITEM_TABS = {
     row(g, 'Description', txt(() => c.description, v => c.description = v, 199, true), 'What players read when they look at it.');
     for (const k of [0, 1]) {
       const sp = document.createElement('div'); sp.className = 'ipick'; const th = thumb(c.sprite[k], 48);
-      sp.append(num(() => c.sprite[k], v => { c.sprite[k] = v; th.dataset.spr = v; paintThumb(th); }, -32768, 32767), th);
+      sp.append(num(() => c.sprite[k], v => { c.sprite[k] = v; th.dataset.spr = v; paintThumb(th); }, 0, 65535), th);
       row(g, k ? 'Look when on/active' : 'Look', sp, k ? 'For doors, torches and the like (0 = same).' : '');
     }
     const val = document.createElement('div'); val.className = 'ipick';

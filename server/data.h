@@ -506,7 +506,7 @@ struct character
 	char lastattack;		// neater display: remembers the last attack animation
         char future1[25];               // space for future expansion
 
-        short int sprite_override;
+        unsigned short sprite_override; // MyV2: unsigned (sprites up to 65535)
 
         short future2[49];
 
@@ -684,7 +684,7 @@ struct item
         unsigned short carried;         // 533, carried by character carried
         unsigned short sprite_override; // 535, used for potions/spells which change the character sprite
 
-        short int sprite[2];            // 543
+        unsigned short sprite[2];       // 543 (MyV2: unsigned, sprites up to 65535)
         unsigned char status[2];        // 545
 
         char gethit_dam[2];             // 547, damage for hitting this item

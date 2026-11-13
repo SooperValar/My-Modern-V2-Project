@@ -96,7 +96,7 @@ struct cmap {
 	unsigned short x,y;			// position
 
 	// for background
-	short int ba_sprite;			// background image
+	unsigned short ba_sprite;		// background image (MyV2: unsigned, sprites up to 65535)
 	unsigned char light;
 	unsigned int flags;
 	unsigned int flags2;
@@ -111,7 +111,7 @@ struct cmap {
 	unsigned char ch_proz;
 
 	// for item
-	short int it_sprite;			// basic sprite of item
+	unsigned short it_sprite;		// basic sprite of item (MyV2: unsigned)
 	unsigned char it_status;	// for items with animation (burning torches etc)
 
 	unsigned char glow;		// item tiers (SV_TILEGLOW): 1-4 the item's tier, 5 a grave holding items; +8 a body holding items

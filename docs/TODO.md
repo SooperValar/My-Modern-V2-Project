@@ -266,8 +266,9 @@ Cody looks at in game before making the rest.
 - **What we know (Nov 12):** floor tiles are 32x32 PNGs, the diamond 32 x 15 at the bottom (rows 17-31). Existing sets:
   grass 551-554, gray dirt 950-958, dark cobble 542-550, light stone / sand-ish 142-145 and 170-175, wood 133-141,
   dark grass 1003-1007, water 16933 / 16957-16959, light blue 16670-16673. Free sprite numbers: the client's limit is
-  MAXSPRITE = 2000+32*1024 = 34768 (`client/inter.h`); 34192-34767 is free (576 numbers); the other free gaps are mostly
-  the appearance-tier blocks after each character, so keep out of them, or raise MAXSPRITE in a client update for more.
+  MAXSPRITE was 2000+32*1024 = 34768; **raised to 65536 in client 2.15.06 (Nov 12, not published yet)**, item sprites
+  unsigned on the server. New world sprites from 35000 (numbering plan in HANDOFF.md "Sprite numbers"); keep out of the
+  appearance-tier gaps after each character.
 - **Edges:** a floor has one sprite per tile, so a soft grass-to-path edge needs whole blended tiles (made by a script:
   a noisy dithered mask along the sides / corners that border the other ground; seamless with the plain tiles). The
   full set per ground pair is up to 47 tiles; the editor would pick the right one by the neighbours (an "auto-edge"

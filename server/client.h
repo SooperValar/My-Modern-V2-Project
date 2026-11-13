@@ -37,13 +37,13 @@ All rights reserved.
 struct cmap
 {
 	// for background
-	short int ba_sprite;		// background image
+	unsigned short ba_sprite;	// background image (MyV2: unsigned, sprites up to 65535)
 	unsigned char light;
 	unsigned int flags;
 	unsigned int flags2;
 
 	// for character
-	short int ch_sprite;		// basic sprite of character
+	unsigned short ch_sprite;	// basic sprite of character
 	unsigned char ch_status2;
 	unsigned char ch_status;  	// what the character is doing, animation-wise
 	unsigned char ch_speed;		// speed of animation
@@ -52,7 +52,7 @@ struct cmap
 	unsigned char ch_proz;		// health in percent
 
 	// for item
-	short int it_sprite;		// basic sprite of item
+	unsigned short it_sprite;		// basic sprite of item
 	unsigned char it_status;  	// for items with animation (burning torches etc)
 
 	unsigned char glow;		// item tiers: 1-4 the item's tier, 5 a grave holding items; +8: the character is a body holding items (SV_TILEGLOW)

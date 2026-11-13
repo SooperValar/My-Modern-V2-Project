@@ -176,6 +176,14 @@ stopped via `stop-send`, then `update-world` and `reload-editor`):
   "DuckDNS myv2astonia" (`%USERPROFILE%\duckdns\`; the token stays there, never in the project).
 - Tested from outside (laptop on a phone hotspot) and the launcher's update path (version 1 -> 2).
 
+## Sprite numbers (Nov 12)
+
+Client 2.15.06 shows sprites 0-65,535 (before: up to 34,767). Free for new sprites: 34,192 and up. Not free: the gaps
+after each character's 448 frames (appearance tiers, `install_variant.py`, `LOOKTIER_STEP`). Plan for new world sprites
+(TODO "World sprites"): ground 35000+, water 35500+, walls / brick / stone 36000+, floors 37000+, trees / plants /
+cactus 38000+, cobwebbed versions 39000+; more blocks above 40000 when needed. Every ground / floor kind in 4+ variants.
+New sprites above 34,767 need client 2.15.06 or later: raise `MINVERSION` when the first ones go into the world.
+
 ## Known quirks
 
 - `server/lab9.c` and `lab9.h` differ from the Windows Server copies only in line endings (CRLF there, LF in git since
@@ -194,6 +202,11 @@ stopped via `stop-send`, then `update-world` and `reload-editor`):
   check its size is 44 + the data.
 
 ## Open items (details in docs/TODO.md and docs/HOSTING.md)
+
+**Nov 12, late:** client 2.15.06 (sprite numbers up to 65,535) built: `Client\merc_new.exe`, NOT published (Cody publishes
+everything together with the new world sprites, before players get the game). Server side (unsigned item sprites) in
+both server folders, built on the test server, NOT live yet (needs an update-code with Cody's "go"). World sprites:
+first mock-up only (TODO "World sprites").
 
 **Nov 12: waypoints are done and live** (tested by Cody; client 2.15.05 published and pushed, client-dist 0633098;
 travel sound and `CLIENT_LATEST` 0x020F05 live since the evening update). Cody has five waypoints. The travel sound is the whoosh Cody picked (republished Nov 12, late); glow and the old Clan Pentagram stay as they are. Pieces: server `waypoint.c`, client travel window +
