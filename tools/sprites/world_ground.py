@@ -21,6 +21,11 @@ SETS = {   # name: first sprite, how it is made
     'path':       {'first': 35000, 'kind': 'earth', 'hsv': (0.083, 0.52, 0.56)},   # brown dirt path
     'dusty path': {'first': 35100, 'kind': 'earth', 'hsv': (0.09, 0.40, 0.66)},    # light dusty road
     'clear water': {'first': 35500, 'kind': 'water'},
+    # desert sands (Nov 13; Cody: "I like those sands", all four)
+    'pale sand':   {'first': 35200, 'kind': 'earth', 'hsv': (0.115, 0.38, 0.84), 'grain': 0.55},
+    'golden sand': {'first': 35250, 'kind': 'earth', 'hsv': (0.11, 0.50, 0.80), 'grain': 0.6},
+    'dune sand':   {'first': 35300, 'kind': 'earth', 'hsv': (0.112, 0.44, 0.82), 'grain': 0.45, 'ripples': 0.045},
+    'red desert':  {'first': 35350, 'kind': 'earth', 'hsv': (0.075, 0.48, 0.74), 'grain': 0.6},
 }
 SIDES = [(1, 0), (0, 1), (-1, 0), (0, -1)]
 CORNERS = [(1, 1), (-1, 1), (-1, -1), (1, -1)]      # corner k lies between side k and side k+1
@@ -90,9 +95,11 @@ for _y in range(17, 32):
 IN = lambda x, y: 0 <= x < 32 and 0 <= y < 32 and DIAM.getpixel((x, y))
 
 
-def earth(grass, hsv):
-    """the grass tile's own pixel grain, recoloured to earth (no clumps, no stones, nothing brighter than the grass)"""
+def earth(grass, hsv, grain=0.95, ripples=0.0, seed=0):
+    """the grass tile's own pixel grain, recoloured to earth (no clumps, no stones, nothing brighter than the grass);
+    ripples: soft wind ripples across the tile (dune sand)"""
     h, s, v0 = hsv
+    ph = random.Random(seed).random() * 6.28
     g = grass.load()
     vs = [colorsys.rgb_to_hsv(*[c / 255 for c in g[x, y][:3]])[2] for y in range(32) for x in range(32) if IN(x, y)]
     vm = sum(vs) / len(vs)
@@ -101,7 +108,11 @@ def earth(grass, hsv):
         for x in range(32):
             if IN(x, y):
                 v = colorsys.rgb_to_hsv(*[c / 255 for c in g[x, y][:3]])[2]
-                vv = max(0, min(1, v0 * (1 + (v - vm) / vm * 0.95)))
+                rel = (v - vm) / vm * grain
+                if ripples:
+                    xl, yl = local(x, y)
+                    rel += ripples * math.sin(xl * 6.28 * 3 + ph + 0.8 * math.sin(yl * 5 + ph))
+                vv = max(0, min(1, v0 * (1 + rel)))
                 r, gg, b = colorsys.hsv_to_rgb(h, s, vv)
                 px[x, y] = (int(r * 255), int(gg * 255), int(b * 255), 255)
     return t
@@ -159,7 +170,7 @@ def build(client):
     out = {}
     for name, cfg in SETS.items():
         if cfg['kind'] == 'earth':
-            plain = [earth(grass[k], cfg['hsv']) for k in range(4)]
+            plain = [earth(grass[k], cfg['hsv'], cfg.get('grain', 0.95), cfg.get('ripples', 0.0), seed=cfg['first'] + k) for k in range(4)]
         else:
             plain = [water(S.get(n), k) for k, n in enumerate((16933, 16957, 16958, 16959))]
         first = cfg['first']

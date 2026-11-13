@@ -440,6 +440,14 @@ brush paints them at random) and **soft edges into grass**:
   neighbours, or plain grass again when the ground was painted away (in one undo step with the painting). Between
   two grounds a grass tile shows the edge of clear water first, then path, then dusty path. The map shows the variants
   and edges at once while painting (the page picks the variant and draws the edges as the save will), not after the save.
+- **Desert (Nov 13):** four sands, each with 4 variants and soft grass edges: **pale sand** (35200+), **golden sand**
+  (35250+), **dune sand** with faint wind ripples (35300+), **red desert** (35350+). Between grounds the edge order is
+  clear water, path, dusty path, then the sands.
+- **Cacti** (`tools/sprites/world_plants.py`, 38000-38006, black spines): saguaro with two arms, left arm, right arm, no
+  arms; barrel cactus with flowers and without; prickly pear with fruit. 32x64 like the game's trees; drawn into the tile
+  and block walking. Editor: Map → Objects, "New plants" at the top.
+- **Area brushes** (Areas tab, built in): **Desert** (golden sand), **Pale Desert**, **Desert Dunes** (fewer cacti) and
+  **Red Desert**: the sand at random plus cacti scattered (kept apart), with the grass edges around the painted area.
 - Editor: Map → Floors, "New ground · soft edges into grass" at the top. The sprites are loose PNGs in `Client\GFX`
   (published with the next client update; they need client 2.15.06, numbers above 34,767).
 - The edge table is `tools/sprites/world_ground.json` (also built into the editor as `WORLD_GROUND`): re-run

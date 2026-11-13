@@ -1049,6 +1049,14 @@ function cellFloor(s, n) {
   c.onclick = e => (e.ctrlKey || e.metaKey || e.shiftKey) ? toggleMix(s) : setBrush({ kind: 'floor', s, set: true });
   return c;
 }
+function cellPlant([s, name, block]) {
+  const c = document.createElement('div'); c.className = 'cell'; c.dataset.k = brushKey({ kind: 'object', s, block });
+  if (brushKey(brush) === c.dataset.k) c.classList.add('sel');
+  c.title = `${name} · sprite ${s}`; c.appendChild(thumb(s, 64, 64));
+  const l = document.createElement('div'); l.className = 'lab'; l.textContent = name; c.appendChild(l);
+  c.onclick = () => setBrush({ kind: 'object', s, block });
+  return c;
+}
 function cellMix(m, saved) {
   const c = document.createElement('div'); c.className = 'cell'; c.dataset.k = brushKey({ kind: 'mix', items: m.items });
   if (brushKey(brush) === c.dataset.k) c.classList.add('sel');
@@ -1271,6 +1279,10 @@ function leftUI() {
       sect('Pick a flag'); lazy(grid(), FLAGS.map((f, i) => i).filter(i => match(FLAGS[i], '')), cellFlag);
     } else {
       const list = C[tab].filter(t => match(t[1], t[0]));
+      if (tab === 'objects' && pal.plants && pal.plants.length) {   // new plants (cacti...): drawn into the tile, like the area brushes' trees
+        const pl = pal.plants.filter(p => match(p[1], p[0]));
+        if (pl.length) { sect('New plants · drawn into the tile (block walking)'); const g = grid(); pl.forEach(p => g.appendChild(cellPlant(p))); }
+      }
       if (tab === 'objects' && match('chest', '')) { sect('Chests · put one in and choose what it gives'); grid().appendChild(cellChest()); }
       sect({ walls: 'Walls · drawn into the tile, they block', objects: 'Objects · furniture, decoration, doors, chests…', items: 'Items · things players can pick up' }[tab]);
       lazy(grid(), list, cellTemp);
