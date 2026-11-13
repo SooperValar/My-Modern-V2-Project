@@ -260,6 +260,20 @@ game's own tiles (same size, angle, light and palette) by recoloring, re-texturi
 corner pieces a path or a sand area needs to blend into grass; new sprite numbers; added to the editor's palette (and
 area brushes, e.g. a "Desert" or "Dirt path" brush), then published in a client update. Start with a small test set
 Cody looks at in game before making the rest.
+- **Cody's rules (Nov 12):** every ground / floor kind comes in **4+ variants** so area brushes can randomize them (like
+  the 4 grass tiles 551-554), and keep that for everything new. Also wanted: **cactus** sprites (desert), and **cobwebbed
+  versions** of existing sprites (walls, corners, furniture...) for abandoned areas.
+- **What we know (Nov 12):** floor tiles are 32x32 PNGs, the diamond 32 x 15 at the bottom (rows 17-31). Existing sets:
+  grass 551-554, gray dirt 950-958, dark cobble 542-550, light stone / sand-ish 142-145 and 170-175, wood 133-141,
+  dark grass 1003-1007, water 16933 / 16957-16959, light blue 16670-16673. Free sprite numbers: the client's limit is
+  MAXSPRITE = 2000+32*1024 = 34768 (`client/inter.h`); 34192-34767 is free (576 numbers); the other free gaps are mostly
+  the appearance-tier blocks after each character, so keep out of them, or raise MAXSPRITE in a client update for more.
+- **Edges:** a floor has one sprite per tile, so a soft grass-to-path edge needs whole blended tiles (made by a script:
+  a noisy dithered mask along the sides / corners that border the other ground; seamless with the plain tiles). The
+  full set per ground pair is up to 47 tiles; the editor would pick the right one by the neighbours (an "auto-edge"
+  brush), so Cody only paints "path".
+- First mock-up (Nov 12, not in the game): `MyV2\Client\Claude outputs\world_sprites\_test_scene.png` (dirt path,
+  desert sand, lighter water on grass, soft edges); scripts in Claude's shell only so far.
 
 ### ○ New character sprites from existing ones (Cody, Nov 12; tabled for now)
 Same animations as an existing character (all 448 frames per character), changed look: recolor by area, swapped / added
