@@ -188,6 +188,10 @@ stopped via `stop-send`, then `update-world` and `reload-editor`):
 - When committing a file to Cody's PC, use the `fileUuid` from sending it first; committing by a
   staged path once sent an old copy.
 - `merc.exe` can't be replaced while the game is open.
+- **Sounds** (`Client\sfx\N.wav`): the client reads them raw after a 44-byte header, 8-bit stereo 22050 Hz. A wav sent to Cody's PC
+  through the chat (SendUserFile + commit) arrives with extra chunks added (a `LIST` before the data, a `C2PA` block after it),
+  which the game would play as noise: rewrite it on the PC with Python's `wave` module (read the frames, write a plain file) and
+  check its size is 44 + the data.
 
 ## Open items (details in docs/TODO.md and docs/HOSTING.md)
 
