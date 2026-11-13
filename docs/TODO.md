@@ -253,6 +253,19 @@ The window already mostly resizes, but the blue background doesn't resize with i
 icons / effect display) stay where they were instead of following the new size. Make the background fill / scale with
 the window and anchor the spell effects. Client change: rebuild with the BuildKit, publish after Cody tests.
 
+### ● World sprites: more ground, water, walls, floors and trees (Cody, Nov 12)
+Cody's priority over new characters. Wanted: new ground tiles (dirt paths, desert / sand areas), better-looking water,
+more building types, more kinds of stone and brick, more floor types, new trees and plants. Way: build them from the
+game's own tiles (same size, angle, light and palette) by recoloring, re-texturing and combining, with the edge /
+corner pieces a path or a sand area needs to blend into grass; new sprite numbers; added to the editor's palette (and
+area brushes, e.g. a "Desert" or "Dirt path" brush), then published in a client update. Start with a small test set
+Cody looks at in game before making the rest.
+
+### ○ New character sprites from existing ones (Cody, Nov 12; tabled for now)
+Same animations as an existing character (all 448 frames per character), changed look: recolor by area, swapped / added
+parts (helmet, cape, another head), effects (ghostly, glowing, rotting, size). Pipeline: `tools/sprites/export_sprites.py`,
+Cody's V2 Sprite Recolor Tool, `install_variant.py`; a new block of 448 sprite numbers per character. No new poses.
+
 ### ○ Black stone archway: any width, and lighter stone (new, Nov 10)
 Lengthen the black stone arch, or add a raised top stone piece so an arch can be any width. Also an arch in a lighter
 stone: temple white, or a Greek beige / tan. New sprite numbers.
