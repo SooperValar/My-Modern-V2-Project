@@ -448,6 +448,14 @@ brush paints them at random) and **soft edges into grass**:
   and block walking. Editor: Map → Objects, "New plants" at the top.
 - **Area brushes** (Areas tab, built in): **Desert** (golden sand), **Pale Desert**, **Desert Dunes** (fewer cacti) and
   **Red Desert**: the sand at random plus cacti scattered (kept apart), with the grass edges around the painted area.
+- **New walls (Nov 13, `tools/sprites/world_walls.py`):** eight materials on the game's own wall block (the outline and
+  grey cap of wall 1200: a lit left face, a shaded right face; courses line up from tile to tile), each in 4 variants and
+  each **clean and with grain** (the grain like the game's painted walls): Sandstone (36000 / grain 36004), White Temple
+  (36010 / 36014), Red Brick (36020 / 36024), Mossy Stone (36030 / 36034), Cracked Stone (36040 / 36044), Dark Slate
+  (36050 / 36054), Timber-Framed (36060 / 36064, braces on half the variants), Fieldstone (36070 / 36074). Editor: Map →
+  Walls, "New walls" at the top; each paints its 4 variants at random, drawn into the tile, blocking walking and
+  sight like the game's walls (an object brush can now carry variants). The list is `tools/sprites/world_walls.json`
+  (built into the editor as `WORLD_WALLS`).
 - Editor: Map → Floors, "New ground · soft edges into grass" at the top. The sprites are loose PNGs in `Client\GFX`
   (published with the next client update; they need client 2.15.06, numbers above 34,767).
 - The edge table is `tools/sprites/world_ground.json` (also built into the editor as `WORLD_GROUND`): re-run

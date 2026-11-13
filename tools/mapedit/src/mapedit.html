@@ -1049,12 +1049,12 @@ function cellFloor(s, n) {
   c.onclick = e => (e.ctrlKey || e.metaKey || e.shiftKey) ? toggleMix(s) : setBrush({ kind: 'floor', s, set: true });
   return c;
 }
-function cellPlant([s, name, block]) {
+function cellPlant([s, name, block, vars]) {     // a new plant or wall: an object sprite drawn into the tile (vars: variants painted at random)
   const c = document.createElement('div'); c.className = 'cell'; c.dataset.k = brushKey({ kind: 'object', s, block });
   if (brushKey(brush) === c.dataset.k) c.classList.add('sel');
-  c.title = `${name} · sprite ${s}`; c.appendChild(thumb(s, 64, 64));
+  c.title = `${name} · sprite ${vars ? vars.join(', ') + ' (at random)' : s}`; c.appendChild(thumb(s, 64, 64));
   const l = document.createElement('div'); l.className = 'lab'; l.textContent = name; c.appendChild(l);
-  c.onclick = () => setBrush({ kind: 'object', s, block });
+  c.onclick = () => setBrush(vars ? { kind: 'object', s, block, vars } : { kind: 'object', s, block });
   return c;
 }
 function cellMix(m, saved) {
@@ -1279,6 +1279,10 @@ function leftUI() {
       sect('Pick a flag'); lazy(grid(), FLAGS.map((f, i) => i).filter(i => match(FLAGS[i], '')), cellFlag);
     } else {
       const list = C[tab].filter(t => match(t[1], t[0]));
+      if (tab === 'walls' && pal.newwalls && pal.newwalls.length) {   // new walls: 4 variants each, painted at random
+        const nw = pal.newwalls.filter(w => match(w[1], w[0]));
+        if (nw.length) { sect('New walls · 4 variants each, painted at random (block walking and sight)'); const g = grid(); nw.forEach(w => g.appendChild(cellPlant([w[0], w[1], 3, w[2]]))); }
+      }
       if (tab === 'objects' && pal.plants && pal.plants.length) {   // new plants (cacti...): drawn into the tile, like the area brushes' trees
         const pl = pal.plants.filter(p => match(p[1], p[0]));
         if (pl.length) { sect('New plants · drawn into the tile (block walking)'); const g = grid(); pl.forEach(p => g.appendChild(cellPlant(p))); }
@@ -3356,7 +3360,7 @@ function opFor(x, y, alt) {
     return vs && vs.length ? { op: 'floor', x, y, s: vs[Math.floor(Math.random() * vs.length)], set: false } : { op: 'floor', x, y, s: b.s, set: b.set };
   }
   if (b.kind === 'mix') return { op: 'floor', x, y, s: mixPick(b.items), set: false };
-  if (b.kind === 'object') return { op: 'object', x, y, s: b.s, block: b.block };
+  if (b.kind === 'object') return { op: 'object', x, y, s: b.vars && b.vars.length ? b.vars[Math.floor(Math.random() * b.vars.length)] : b.s, block: b.block };
   if (b.kind === 'place') return { op: 'place', x, y, t: b.t[0] };
   if (b.kind === 'area') return { op: 'area', x, y, a: b.name, floor: areaFloor };
   return null;

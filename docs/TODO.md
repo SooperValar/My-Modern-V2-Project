@@ -276,7 +276,8 @@ Cody looks at in game before making the rest.
 - **Done Nov 13 (in the editor, not published yet):** path, dusty path and clear water, 4 variants each + soft edges the
   editor places by itself (CHANGES.md "New ground"). Cody liked: the grass's own grain recoloured; not: shiny pebbles,
   flat smear, dark clumps. **Desert done Nov 13** (four sands, 7 cacti with black spines, four Desert area brushes).
-  Next: more floors / stone / brick, trees, cobwebs; edges between two new grounds (path to sand) if wanted; maybe
+  **Walls done Nov 13** (8 materials, clean + grain; Cody: no strong grain). Next: floors, trees, cobwebs, maybe more
+  walls (log cabin, plaster, dungeon brick, carved sandstone); edges between two new grounds (path to sand) if wanted; maybe
   dead / dry cacti, agave, desert shrubs, bones and rocks.
 - First mock-up (Nov 12, not in the game): `MyV2\Client\Claude outputs\world_sprites\_test_scene.png` (dirt path,
   desert sand, lighter water on grass, soft edges); scripts in Claude's shell only so far.
