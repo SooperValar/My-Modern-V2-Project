@@ -1104,6 +1104,7 @@ class World:
         ob_sorted = sorted(objs.items(), key=lambda a: -a[1])
         return {'floors': fl_sorted, 'objects': ob_sorted, 'templates': temps, 'flags': MF, 'sets': FLOOR_SETS,
                 'ground': [[n, g['plain'][0]] for n, g in WORLD_GROUND['sets'].items()],
+                'wg': {'grass': WORLD_GROUND['grass'], 'order': WG_ORDER, 'sets': WORLD_GROUND['sets']},
                 'npcs': self.npc_templates()}
 
     # --- editing: every change remembers the old bytes so a batch can be undone

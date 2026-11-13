@@ -3339,7 +3339,10 @@ function opFor(x, y, alt) {
   if (tool === 'erase' || (alt && (b.kind === 'place' || b.kind === 'object' || b.kind === 'area'))) return { op: 'erase', x, y };
   if (b.kind === 'flag') return { op: 'flag', x, y, bit: b.bit, mode: alt !== flagRemove ? 0 : 1 };
   if (alt) return null;
-  if (b.kind === 'floor') return { op: 'floor', x, y, s: b.s, set: b.set };
+  if (b.kind === 'floor') {     // a floor with variants: pick the variant here, so the map shows it at once (not after the save)
+    const vs = b.set && pal && pal.sets && pal.sets[b.s];
+    return vs && vs.length ? { op: 'floor', x, y, s: vs[Math.floor(Math.random() * vs.length)], set: false } : { op: 'floor', x, y, s: b.s, set: b.set };
+  }
   if (b.kind === 'mix') return { op: 'floor', x, y, s: mixPick(b.items), set: false };
   if (b.kind === 'object') return { op: 'object', x, y, s: b.s, block: b.block };
   if (b.kind === 'place') return { op: 'place', x, y, t: b.t[0] };
@@ -3354,11 +3357,30 @@ function label(alt) {
   if (b.kind === 'area') return 'area ' + b.name + (areaFloor ? '' : ' (pieces only)');
   return b.kind === 'floor' ? 'floor ' + b.s : b.kind === 'mix' ? (b.name ? 'mix ' + b.name : 'floor mix ' + b.items.map(i => i.s).join('/')) : b.kind === 'place' ? b.t[1] : 'object ' + b.s;
 }
+// new grounds: the soft grass edges around a painted tile, drawn at once as the editor will save them (_autoedge)
+function wgAround(x0, y0) {
+  const W = pal && pal.wg; if (!W) return;
+  if (!W.plain) { W.plain = {}; W.edge = new Set(); W.grassSet = new Set(W.grass); for (const [n, g] of Object.entries(W.sets)) { g.plain.forEach(s => W.plain[s] = n); Object.values(g.edges).forEach(s => W.edge.add(s)); } }
+  const fl = (x, y) => { const t = T(x, y); return t ? t.d.g[t.i] : 0; };
+  for (let dx = -1; dx <= 1; dx++) for (let dy = -1; dy <= 1; dy++) {
+    const x = x0 + dx, y = y0 + dy, t = T(x, y); if (!t) continue;
+    const cur = t.d.g[t.i]; if (!W.grassSet.has(cur) && !W.edge.has(cur)) continue;
+    let nw = null;
+    for (const name of W.order) {
+      let m = 0; const is = (a, b) => W.plain[fl(x + a, y + b)] === name;
+      [[1, 0], [0, 1], [-1, 0], [0, -1]].forEach(([a, b], k) => { if (is(a, b)) m |= 1 << k; });
+      [[1, 1], [-1, 1], [-1, -1], [1, -1]].forEach(([a, b], k) => { if (is(a, b) && !(m & (1 << k)) && !(m & (1 << ((k + 1) % 4)))) m |= 16 << k; });
+      if (m) { nw = W.sets[name].edges[m]; break; }
+    }
+    if (nw == null) { if (W.grassSet.has(cur)) continue; nw = W.grass[Math.floor(Math.random() * W.grass.length)]; }
+    t.d.g[t.i] = nw;
+  }
+}
 function preview(op) {
   const t = T(op.x, op.y);
   if (!t) return;
   const d = t.d, i = t.i;
-  if (op.op === 'floor') d.g[i] = op.s;
+  if (op.op === 'floor') { d.g[i] = op.s; wgAround(op.x, op.y); }
   else if (op.op === 'object') d.f[i] = op.s;
   else if (op.op === 'place') { if (brush.t && brush.t[6]) { if (!d.it[i]) { d.it[i] = brush.t[2]; d.f[i] = 0; } } else if (brush.t) d.f[i] = brush.t[2]; }
   else if (op.op === 'erase') { d.f[i] = 0; d.it[i] = 0; }
