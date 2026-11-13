@@ -12,7 +12,6 @@ world, quests, the editor, the client and Discord. Merged Nov 10 from the old TO
 
 ## Up next (in order)
 
-0. ★ **Waypoints: push client-dist, then the last server update (sound, CLIENT_LATEST)** - [Systems](#2-gameplay-systems)
 1. ★ **Soulstone levels too low** (MAJOR) - [Fixes](#1-fixes-and-balance)
 2. ★ **Discord: online / rankings info and the game chat bridge** - [Discord](#9-discord-and-community)
 3. ★ **Walking speed, speed modes and attack speed** (look at it together first) - [Systems](#2-gameplay-systems)
@@ -26,7 +25,7 @@ world, quests, the editor, the client and Discord. Merged Nov 10 from the old TO
 - Quest rewards on the editor's Quests page, if he wants changes ([Quests](#6-quests)). (Order: Cody is happy with it, Nov 11.)
 - Checking the merchants in game: pages, selling + buying back, prices ([Items](#4-items-weapons-and-shops)).
 - Setting up the area clears (quest areas first) and the class rewards, when he wants.
-- Waypoints: `git push origin client-dist`, then "go" for the update; listen to the travel sound ([Systems](#2-gameplay-systems)).
+- Waypoints: listen to the travel sound, look at the night glow; decide about the old Clan Pentagram in the mine ([Systems](#2-gameplay-systems)).
 
 ---
 
@@ -75,14 +74,12 @@ waits on `speedtab[speed][ctick]` (`svr_act.c` ~1079, `speedo` / `ch_act_speed`;
 The modes also cost endurance (fast drains it, `svr_do.c` ~4120-4137) and change Stealth (slow / normal sneak better,
 `svr_do.c` ~3710). To decide: separate walk and attack speed, how much stats should matter, what the modes cost / give.
 
-### ★ Waypoints (was #13): live; one server update left
+### ● Waypoints (was #13): live, Cody checks the sound and the glow
 Live Nov 12 and tested by Cody (finding, the travel window, travel, his own pictures by paste). Client 2.15.05 published
 Nov 12 (client-dist 0633098: travel window, night glow of found circles, circle sprites, `sfx\19.wav`, the pictures of
 waypoints 1-5). CHANGES.md "Waypoints", "Waypoints tab".
 **Left:**
-- Cody pushes `client-dist`, THEN says "go" for an update-code: it brings the travel sound (`waypoint.c`) and
-  `CLIENT_LATEST` 0x020F05 (both already in the source, both copies). Not before the push, or players are told to
-  update to a client that isn't out yet.
+- ~~push, then the update with the travel sound and `CLIENT_LATEST` 0x020F05~~ (done Nov 12, all live).
 - Cody listens to the travel sound (Claude made `19.wav` without being able to hear it) and looks at the night glow
   and the stronger grey circle.
 - New waypoint pictures need a client publish each time (until then: the stock picture).
