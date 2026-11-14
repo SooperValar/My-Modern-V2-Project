@@ -211,7 +211,7 @@ as one special quest. Build one area at a time from the bottom, with `tools/worl
 - [ ] Then Fenwatch and its areas, Stonehold, the Last Bastion. Code needed on the way: Swimming made useful, the new
   potion effects (Stoneskin, Clear Water, Elixir of the Good Moon, Fireward, Frozen Heart, Draught of the Void), the Ring
   of the Good Moon.
-- Gold rewards: the sheet's 1/10 of the exp is far too much (19G fits a Sergeant quest, 190G does not): use about 1/100.
+- Rewards follow Cody's Quest Planner sheet (he set gold to 1/20 of the exp, Nov 14).
 
 ### ● `#quest` list: order and rewards (was #9)
 The look is approved and live (column table, 15 a page); the editor's Quests page sets the order, rewards, exp and

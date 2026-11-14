@@ -480,7 +480,7 @@ The first area of the quest plan (the "Quest Map and Plan" doc and "Quest Planne
 - **The east road**: a dirt trail from Aston's east gate (533,601) across the field and on to **Bandit Hollow** (x 498-572, y 662-748), a clearing in a thick forest. Zones "Bandit Hollow" and "Wynn's Hut".
 - **The bandit camp**: a red picket palisade (514,692 - 556,740, gate in its west side with two torches), three campfires with logs to sit on, barrels, the Quartermaster's storehouse, the Poisoner's hut, two sleeping shacks and **Red Harlan's lodge** (fieldstone, door on the west, four fire bowls).
 - **Monsters** (Outlaw look, group 30): 17 Bandits (Sergeant and Staff Sergeant), the **Bandit Quartermaster** (carries the Stolen Ledger), the **Bandit Poisoner** (carries the Bundle of Moonwort), two **Harlan's Guards** and **Red Harlan** (Master Sergeant; carries his head).
-- **Three quests** (npctalk.dat, journal quests 1-3; each once per character, 1,900 exp and 19G):
+- **Three quests** (npctalk.dat, journal quests 1-3; each once per character; exp and gold as in the Quest Planner sheet: Hollis 1,600 exp and 80G, Tobias and Wynn 1,900 exp and 95G each):
   - **Sergeant Hollis** (Cityguard, just outside the east gate): Red Harlan's head -> **Harlan's Studded Belt** (+2 Strength, Sergeant).
   - **Tobias** (a robbed merchant by the gate): the Stolen Ledger -> **Merchant's Signet** (ring, +3 Bartering, Staff Sergeant).
   - **Wynn** (herbalist, her hut on the road, with a garden of flowers to pick; no monsters there): the Bundle of Moonwort -> 3 **Potions of Second Wind** (endurance back to full).

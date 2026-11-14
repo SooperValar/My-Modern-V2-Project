@@ -20,8 +20,8 @@ when give %(head)d
 if quest 1 < 2
 answer Red Harlan's head! Aston owes you, %%s. Here - his belt, and the city's thanks.
 give item %(belt)d
-give exp 1900
-give gold 1900
+give exp 1600
+give gold 8000
 set quest 1 2
 keep
 end
@@ -54,7 +54,7 @@ if quest 2 < 2
 answer My ledger! Every debt I'm owed is in here. Take my signet, %%s - merchants will treat you as one of their own.
 give item %(signet)d
 give exp 1900
-give gold 1900
+give gold 9500
 set quest 2 2
 keep
 end
@@ -85,7 +85,7 @@ give item %(second)d
 give item %(second)d
 give item %(second)d
 give exp 1900
-give gold 1900
+give gold 9500
 set quest 3 2
 keep
 end
