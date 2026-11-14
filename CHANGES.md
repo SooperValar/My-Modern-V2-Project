@@ -481,7 +481,7 @@ The game and Discord are linked through the editor (setup: `docs/HOSTING.md` "Di
 (a bot; bad words refused); announcements, players entering / leaving and [Server] messages go to **#system**;
 **#status** has two messages kept up to date: who is online, and the **rankings** (top 10 by experience + the best 3 of
 each class), then who is online with the game time (as `#time`) and the moon: a game day is 80 real minutes and a
-28-day month has a **New Moon** on day 1 (spells 15% weaker, regeneration halved) and a **Full Moon** on day 15 (spells
+28-day month has a **Bad Moon** (new moon) on day 1 (spells 15% weaker, regeneration halved) and a **Good Moon** (full moon) on day 15 (spells
 15% stronger, regeneration doubled); the board says which is on, or how long (real time) until the next one. GitHub pushes can go to **#github** (a GitHub webhook, no code). Server console: `feed`, `dshout`, `rankings`.
 
 ## Cobwebs (Nov 14)

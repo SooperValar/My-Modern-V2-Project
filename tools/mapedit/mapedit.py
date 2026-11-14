@@ -2839,13 +2839,13 @@ class DiscordLink:
             d = dd % 28
             until = lambda target: ((target - d) % 28) * 86400 - t
             if d == 0:
-                moon = 'New Moon tonight! Spells are 15%% weaker and regeneration is halved (%s more).' % real(86400 - t)
+                moon = 'Bad Moon tonight! Spells are 15%% weaker and regeneration is halved (%s more).' % real(86400 - t)
             elif d == 14:
-                moon = 'Full Moon tonight! Spells are 15%% stronger and regeneration is doubled (%s more).' % real(86400 - t)
+                moon = 'Good Moon tonight! Spells are 15%% stronger and regeneration is doubled (%s more).' % real(86400 - t)
             elif d < 14:
-                moon = 'The Moon is growing. Full Moon in about %s.' % real(until(14))
+                moon = 'The Moon is growing. Good Moon in about %s.' % real(until(14))
             else:
-                moon = 'The moon is dwindling. New Moon in about %s.' % real(until(0))
+                moon = 'The Moon is dwindling. Bad Moon in about %s.' % real(until(0))
             text += '\n```ansi\nIt\'s %d:%02d on the %d%s of the %d%s month of the year %d.\n  %s\n```' % (
                 t // 3600, t // 60 % 60, day, th(day), month, th(month), yr, moon)
         text += '\n-# updated <t:%d:R>' % (int(time.time()) // 60 * 60)
