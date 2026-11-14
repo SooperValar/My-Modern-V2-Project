@@ -485,6 +485,7 @@ The first area of the quest plan (the "Quest Map and Plan" doc and "Quest Planne
   - **Tobias** (a robbed merchant by the gate): the Stolen Ledger -> **Merchant's Signet** (ring, +3 Bartering, Staff Sergeant).
   - **Wynn** (herbalist, her hut on the road, with a garden of flowers to pick; no monsters there): the Bundle of Moonwort -> 3 **Potions of Second Wind** (endurance back to full).
   - Hollis turns away players below Sergeant; Tobias and Wynn offer their quest from Staff Sergeant.
+- **Hidden forms** (client sprites 16883, 38168, 39305): with "hide walls" on, the client draws objects as sprite+1; the barrel, the last stump and the web with a spider had no such sprite ("Sprite 16883 is missing"). Copies added and published; `tools/world/check_hide_sprites.py` lists any others.
 - Built with `tools/world/bandit_hollow/build_hollow.py` (uses the MyV2 Editor's own World class on the .dat; `made.json` lists the template numbers: items 2001-2006, NPCs 2008-2036) and `talk.py` (the npctalk.dat lines). Tested on a copy with the real server (`talknear`, `talktest`, `questgive`, `zone`).
 
 ## #rank and #ranks (Nov 14)

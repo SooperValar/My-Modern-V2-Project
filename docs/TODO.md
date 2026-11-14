@@ -211,6 +211,8 @@ as one special quest. Build one area at a time from the bottom, with `tools/worl
 - [ ] Then Fenwatch and its areas, Stonehold, the Last Bastion. Code needed on the way: Swimming made useful, the new
   potion effects (Stoneskin, Clear Water, Elixir of the Good Moon, Fireward, Frozen Heart, Draught of the Void), the Ring
   of the Good Moon.
+- New object sprite sets have no real cut-down "hidden" form: with hide walls on, a new tree shows the next variant
+  (the original trees show stumps). Make proper hidden forms some time; run `tools/world/check_hide_sprites.py` after each build.
 - Rewards follow Cody's Quest Planner sheet (he set gold to 1/20 of the exp, Nov 14).
 
 ### ● `#quest` list: order and rewards (was #9)
