@@ -2809,9 +2809,9 @@ class DiscordLink:
         who = self.ctl.console('who', 3) if running else None
         if running and who is None:
             return
-        bar = '-' * 52
+        bar = '[' + '-' * 50 + ']'      # ini code block: text in [brackets] shows blue in Discord
         if not running:
-            text = '```diff\nPlayers Online:\n%s\n- The server is offline.\n%s\n```' % (bar, bar)
+            text = '```ini\n[Players Online]\n%s\n  The server is offline.\n%s\n```' % (bar, bar)
         else:
             pl = []
             for l in who.splitlines():       # console.c con_who: "  %-20s %-22s %s"
@@ -2819,7 +2819,7 @@ class DiscordLink:
                     area = l[46:].replace('[god]', '').replace('[imp]', '').strip()
                     pl.append((l[2:22].strip(), l[23:45].strip(), area or 'the world'))
             rows = '\n'.join('  %-5s %-16s %s' % (RANK_SHORT.get(r, r[:5]), n, a[:34]) for n, r, a in pl[:40]) or '  Nobody is online right now.'
-            text = '```diff\nPlayers Online:\n%s\n%s\n%s\n  %d player%s online.\n```' % (bar, rows, bar, len(pl), '' if len(pl) == 1 else 's')
+            text = '```ini\n[Players Online]\n%s\n%s\n%s\n  %d player%s online.\n```' % (bar, rows, bar, len(pl), '' if len(pl) == 1 else 's')
         text += '\n-# updated <t:%d:R>' % (int(time.time()) // 60 * 60)
         self._board('status', hook, text)
 
@@ -2836,7 +2836,7 @@ class DiscordLink:
         rows.sort(key=lambda x: -x[0])
         sh = lambda x: RANK_SHORT.get(x[2], x[2][:5])
         top = '\n'.join('  %2d. %-5s %-16s %-13s %13s' % (k + 1, sh(x), x[1], x[3], format(x[0], ',')) for k, x in enumerate(rows[:10]))
-        text = '```diff\n- Top Characters:\n' + (top or '  No characters yet.') + '\n\n- Best of Each Class:\n'
+        text = '```ini\n[Top Characters]\n' + (top or '  No characters yet.') + '\n\n[Best of Each Class]\n'
         for c in ("Seyan'Du", 'Arch-Templar', 'Arch-Harakim', 'Warrior', 'Sorcerer', 'Templar', 'Harakim', 'Mercenary'):
             for k, x in enumerate([x for x in rows if x[3] == c][:3]):
                 text += '  %-13s %-5s %-16s %13s\n' % (c if k == 0 else '', sh(x), x[1], format(x[0], ','))
