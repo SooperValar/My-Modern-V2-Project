@@ -205,8 +205,8 @@ New sprites above 34,767 need client 2.15.06 or later: raise `MINVERSION` when t
 
 **Nov 13, evening:** new doors live (templates 1440-1456, Seyan'Du Door other facing 1456); the server with unsigned
 item sprites is live too. World sprites so far (all in `Client\GFX`, NOT published yet): grounds + desert 35000-35549,
-walls 36000-36077, doors 36500-36581, floors 37000-37067, cacti 38000-38006, trees 38100-38167, cobwebs 39000-39421 (39400+ not published yet; door templates 1460-1484 live, tools/world/cobweb_doors.txt) and snow ground 35400-35499 + 35600-35649 (published Nov 14), arches 36400-36409 (v2 + smooth; saved copies in tools/sprites/art/arches_v2, arches_light; published Nov 14) (CHANGES.md "New ground (world sprites)").
-PUBLISHED Nov 14 (later): client-dist aa75d8d (2.15.06 + arches, trees, snow, cobwebs; Cody pushes `client-dist`). Before: 03db219 (arches). Before: Nov 13 late: client-dist 185dc94 (client 2.15.06 + 511 world sprites; Cody pushes `client-dist`);
+walls 36000-36077, doors 36500-36581, floors 37000-37067, cacti 38000-38006, trees 38100-38167, cobwebs 39000-39421 (all published; door templates 1460-1484 live, tools/world/cobweb_doors.txt) and snow ground 35400-35499 + 35600-35649 (published Nov 14), arches 36400-36409 (v2 + smooth; saved copies in tools/sprites/art/arches_v2, arches_light; published Nov 14) (CHANGES.md "New ground (world sprites)").
+PUBLISHED Nov 14 (latest): client-dist 4544755 (2.15.06 + arches, trees, snow, cobwebs I + II; Cody pushes `client-dist`). Before: 03db219 (arches). Before: Nov 13 late: client-dist 185dc94 (client 2.15.06 + 511 world sprites; Cody pushes `client-dist`);
 `MINVERSION` and `CLIENT_LATEST` 0x020F06 in both server folders (live after the next update-code).
 
 **Nov 13:** new ground with soft edges (path, dusty path, clear water; sprites 35000+ in `Client\GFX`, editor Floors tab,
