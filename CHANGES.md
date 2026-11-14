@@ -474,6 +474,14 @@ brush paints them at random) and **soft edges into grass**:
 - The edge table is `tools/sprites/world_ground.json` (also built into the editor as `WORLD_GROUND`): re-run
   `world_ground.py <Client folder>` after changing the look, then rebuild the table into `mapedit_template.py`.
 
+## Discord (Nov 14)
+
+The game and Discord are linked through the editor (setup: `docs/HOSTING.md` "Discord links"): in-game shouts go to
+**#game-chat** under the player's name, and what people write in #game-chat shows in game as **"[Discord] Name: text"**
+(a bot; bad words refused); announcements, players entering / leaving and [Server] messages go to **#system**;
+**#status** has two messages kept up to date: who is online, and the **rankings** (top 10 by experience + the best 3 of
+each class). GitHub pushes can go to **#github** (a GitHub webhook, no code). Server console: `feed`, `dshout`, `rankings`.
+
 ## Cobwebs (Nov 14)
 
 Cobwebbed, lightly dusty copies of the game's things (the originals unchanged), sprites 39000+

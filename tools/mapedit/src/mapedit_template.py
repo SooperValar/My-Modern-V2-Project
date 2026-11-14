@@ -2679,6 +2679,210 @@ CONSOLE_PORT = 5556
 BACKUP = {'on': False, 'dir': ''}
 
 
+class DiscordLink:
+    """Mercenaries of Asgard v2 <-> Discord (all secrets in the Server folder, never in git):
+    - discord-chat-webhook.txt    #game-chat: in-game shouts, posted as the player ("Name: text")
+    - discord-system-webhook.txt  #system: announcements, players entering / leaving, [Server] messages
+    - discord-board-webhook.txt   #status: two messages kept up to date in place: who is online, and the rankings
+                                  (top 10 by experience + the best 3 of each class)
+    - discord-bot.txt             line 1 the bot's token, line 2 the #game-chat channel id: messages written there are
+                                  shown in game ("[Discord] Name: text"; bad words refused by the server)
+    The game side is the console: feed <since> (shouts C / system S), dshout <name> <text>, rankings, who."""
+
+    API = 'https://discord.com/api/v10'
+
+    def __init__(self, ctl):
+        self.ctl = ctl
+        self.dir = os.path.dirname(ctl.control)
+        self.state_file = os.path.join(ctl.control, 'discord-state.json')
+        try:
+            self.state = json.load(open(self.state_file))
+        except (OSError, ValueError):
+            self.state = {}
+        self.feed_next = None         # the editor starts at the newest line: nothing old is posted again
+        self.board_t = self.rank_t = self.bot_t = 0
+        self.last = {}
+
+    def start(self):
+        threading.Thread(target=self._loop, daemon=True).start()
+
+    def _save(self):
+        try:
+            json.dump(self.state, open(self.state_file, 'w'))
+        except OSError:
+            pass
+
+    def _file(self, name):
+        try:
+            return [l.strip() for l in open(os.path.join(self.dir, name), encoding='utf-8-sig').read().splitlines() if l.strip()]
+        except OSError:
+            return []
+
+    def _hook(self, name):
+        l = self._file(name)
+        return l[0] if l and l[0].startswith(('https://discord.com/api/webhooks/', 'https://discordapp.com/api/webhooks/')) else ''
+
+    def _http(self, method, url, body=None, bot=None):
+        import urllib.request, urllib.error
+        h = {'Content-Type': 'application/json', 'User-Agent': 'DiscordBot (https://github.com, 1.0) MercenariesOfAsgardV2-Editor'}
+        if bot:
+            h['Authorization'] = 'Bot ' + bot
+        for _ in range(3):
+            req = urllib.request.Request(url, data=json.dumps(body).encode() if body is not None else None, headers=h, method=method)
+            try:
+                r = urllib.request.urlopen(req, timeout=15).read()
+                return json.loads(r) if r else {}
+            except urllib.error.HTTPError as e:
+                if e.code == 429:             # rate limited: wait as asked
+                    try:
+                        time.sleep(min(30, float(json.loads(e.read()).get('retry_after', 2))))
+                    except Exception:
+                        time.sleep(2)
+                    continue
+                return {'_error': e.code}
+            except Exception as e:
+                return {'_error': str(e)}
+        return {'_error': 429}
+
+    def _post(self, hook, text, name=None):
+        if not hook or not text:
+            return
+        b = {'content': text[:1990], 'allowed_mentions': {'parse': []}, 'username': (name or 'Mercenaries of Asgard v2')[:80]}
+        self._http('POST', hook, b)
+
+    def _board(self, key, hook, text):
+        """one message in #status, edited in place (a new one if it was deleted)"""
+        if not hook or self.last.get(key) == text:
+            return
+        mid = self.state.get(key + '_' + hook[-12:])
+        if mid:
+            r = self._http('PATCH', hook + '/messages/' + mid, {'content': text, 'allowed_mentions': {'parse': []}})
+            if '_error' not in r:
+                self.last[key] = text; return
+        r = self._http('POST', hook + '?wait=true', {'content': text, 'allowed_mentions': {'parse': []}, 'username': 'Mercenaries of Asgard v2'})
+        if r.get('id'):
+            self.state[key + '_' + hook[-12:]] = r['id']; self._save(); self.last[key] = text
+
+    # --- the parts
+    def _feed(self):
+        r = self.ctl.console('feed %d' % (self.feed_next or 0), 3)
+        if r is None:
+            return
+        lines = r.splitlines()
+        nxt = next((int(l.split()[1]) for l in lines if l.startswith('next ')), None)
+        if nxt is None:
+            return
+        if self.feed_next is None or nxt < self.feed_next:      # first look, or the server restarted
+            first = self.feed_next is None
+            self.feed_next = nxt if first else 0
+            if first:
+                return
+            r = self.ctl.console('feed 0', 3) or ''
+            lines = r.splitlines(); nxt = next((int(l.split()[1]) for l in lines if l.startswith('next ')), 0)
+        chat, system = [], []
+        for l in lines:
+            m = re.match(r'(\d+) ([CS]) (.*)$', l)
+            if m:
+                (chat if m.group(2) == 'C' else system).append(m.group(3))
+        self.feed_next = nxt
+        ch_hook, sys_hook = self._hook('discord-chat-webhook.txt'), self._hook('discord-system-webhook.txt')
+        for t in chat:
+            name, _, text = t.partition(': ')
+            self._post(ch_hook, text, name)
+        if system:
+            self._post(sys_hook, '\n'.join(system))
+
+    def _status_board(self):
+        hook = self._hook('discord-board-webhook.txt')
+        if not hook:
+            return
+        running = server_running()
+        who = self.ctl.console('who', 3) if running else None
+        if running and who is None:
+            return
+        if not running:
+            text = ':red_circle: **Mercenaries of Asgard v2 is offline.**'
+        else:
+            pl = []
+            for l in who.splitlines():       # console.c con_who: "  %-20s %-22s %s"
+                if len(l) > 24 and l.startswith('  ') and not l.strip().endswith('online.') and '[god]' not in l and '[imp]' not in l:
+                    area = l[46:].replace('[god]', '').replace('[imp]', '').strip()
+                    pl.append((l[2:22].strip(), l[23:45].strip(), area or 'the world'))
+            text = ':green_circle: **Mercenaries of Asgard v2 is online** - %d player%s' % (len(pl), '' if len(pl) == 1 else 's')
+            if pl:
+                text += '\n' + '\n'.join('- **%s** (%s) in %s' % p for p in pl[:40])
+        text += '\n-# updated <t:%d:R>' % (int(time.time()) // 60 * 60)
+        self._board('status', hook, text)
+
+    def _rankings(self):
+        hook = self._hook('discord-board-webhook.txt')
+        r = self.ctl.console('rankings', 5) if hook and server_running() else None
+        if not r:
+            return
+        rows = []
+        for l in r.splitlines():
+            p = l.split('|')
+            if len(p) == 5 and p[0].lstrip('-').isdigit():
+                rows.append((int(p[0]), p[1], p[2], p[3]))
+        rows.sort(key=lambda x: -x[0])
+        line = lambda k, x: '%d. **%s** - %s, %s (%s exp)' % (k, x[1], x[2], x[3], format(x[0], ','))
+        text = ':trophy: **Rankings**\n' + ('\n'.join(line(k + 1, x) for k, x in enumerate(rows[:10])) or 'No characters yet.')
+        for c in ("Seyan'Du", 'Arch-Templar', 'Arch-Harakim', 'Warrior', 'Sorcerer', 'Templar', 'Harakim', 'Mercenary'):
+            top = [x for x in rows if x[3] == c][:3]
+            if top:
+                text += '\n**%s:** %s' % (c, ', '.join('%s (%s)' % (x[1], format(x[0], ',')) for x in top))
+        text += '\n-# updated <t:%d:R>' % (int(time.time()) // 60 * 60)
+        self._board('rankings', hook, text[:1990])
+
+    def _bot(self):
+        cfg = self._file('discord-bot.txt')
+        if len(cfg) < 2 or not cfg[1].isdigit():
+            return
+        tok, cid = cfg[0], cfg[1]
+        after = self.state.get('bot_after')
+        if not after:                         # first time: start after the newest message
+            r = self._http('GET', '%s/channels/%s/messages?limit=1' % (self.API, cid), bot=tok)
+            if isinstance(r, list):
+                self.state['bot_after'] = r[0]['id'] if r else '0'; self._save()
+            elif r.get('_error'):
+                print('Discord bot:', r)
+            return
+        r = self._http('GET', '%s/channels/%s/messages?after=%s&limit=50' % (self.API, cid, after), bot=tok)
+        if not isinstance(r, list):
+            if r.get('_error'):
+                print('Discord bot:', r)
+            return
+        for m in sorted(r, key=lambda m: int(m['id'])):
+            self.state['bot_after'] = m['id']
+            a = m.get('author') or {}
+            if m.get('webhook_id') or a.get('bot'):
+                continue                      # our own posts, other bots
+            text = re.sub(r'<a?:(\w+):\d+>', r':\1:', m.get('content') or '')          # custom emoji -> :name:
+            text = re.sub(r'<[@#][!&]?\d+>', '', text)                                     # mentions out
+            text = ' '.join(text.split())
+            text = text.encode('latin-1', 'replace').decode('latin-1')[:200]
+            if not text:
+                continue
+            name = ((m.get('member') or {}).get('nick') or a.get('global_name') or a.get('username') or 'someone')
+            name = re.sub(r'[^A-Za-z0-9 \'-]', '', name.encode('latin-1', 'replace').decode('latin-1')).strip()[:30] or 'someone'
+            if server_running():
+                self.ctl.console('dshout %s %s' % (name.replace(' ', '_'), text), 3)
+        self._save()
+
+    def _loop(self):
+        while True:
+            now = time.time()
+            for what, every, attr in ((self._feed, 3, 'feed_t'), (self._bot, 3, 'bot_t'), (self._status_board, 60, 'board_t'),
+                                      (self._rankings, 600, 'rank_t')):
+                if now - getattr(self, attr, 0) >= every:
+                    setattr(self, attr, now)
+                    try:
+                        what()
+                    except Exception as e:
+                        print('Discord:', what.__name__, e)
+            time.sleep(1)
+
+
 class ServerCtl:
     """Runs and talks to the game server.
     - console(): a command over the server's control port (127.0.0.1:5556, console.c)
@@ -2703,6 +2907,8 @@ class ServerCtl:
                 except OSError:
                     pass
         threading.Thread(target=self._watch, daemon=True).start()
+        if control_dir:
+            DiscordLink(self).start()
         self.bk_info = {}
         self.stopping = None       # the reason while this editor stops the server (for the Discord post)
         self.dc_up = None          # Discord: last seen state / uptime

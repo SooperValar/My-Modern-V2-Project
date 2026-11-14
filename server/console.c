@@ -100,6 +100,7 @@ static void con_announce(char *text)
 		do_char_log(n,0,"[Server] %s\n",text);
 		cnt++;
 	}
+	discord_feed('S',"[Server] %s",text);	// MyV2
 	out("  Sent to %d player%s.\n",cnt,cnt==1 ? "" : "s");
 	xlog("CONSOLE: announce: %s",text);
 }
@@ -114,6 +115,37 @@ static char *after(char *line,int n)
 	}
 	while (isspace(*p)) p++;
 	return p;
+}
+
+static void feed_put(int seq,char kind,char *text) { out("%d %c %s\n",seq,kind,text); }
+
+/* MyV2: "dshout <name> <text>": a line written in Discord #game-chat, shown in game like a shout */
+static void con_dshout(char *name,char *text)
+{
+	char buf[300],nm[32]; int n,cnt=0,l;
+	if (!*name || !text || !*text) { out("  dshout <name> <text>\n"); return; }
+	snprintf(nm,sizeof(nm),"%s",name);
+	for (l=0; nm[l]; l++) if (nm[l]=='_') nm[l]=' ';	// the editor sends spaces in a name as _
+	if (is_badword(text) || is_badword(nm)) { out("  refused (bad words)\n"); return; }
+	snprintf(buf,sizeof(buf),"[Discord] %.30s: %.200s\n",nm,text);
+	for (n=1; n<MAXCHARS; n++) {
+		if (((ch[n].flags&(CF_PLAYER|CF_USURP)) || ch[n].temp==15) && ch[n].used==USE_ACTIVE && !(ch[n].flags&CF_NOSHOUT)) { do_char_log(n,3,"%s",buf); cnt++; }
+	}
+	out("  shown to %d player%s\n",cnt,cnt==1 ? "" : "s");
+}
+
+/* MyV2: "rankings": every player character, for the Discord rankings board: exp|name|rank|class|online */
+static void con_rankings(void)
+{
+	static struct { unsigned int k; char *n; } cl[]={{KIN_SEYAN_DU,"Seyan'Du"},{KIN_ARCHTEMPLAR,"Arch-Templar"},{KIN_ARCHHARAKIM,"Arch-Harakim"},
+		{KIN_WARRIOR,"Warrior"},{KIN_SORCERER,"Sorcerer"},{KIN_TEMPLAR,"Templar"},{KIN_HARAKIM,"Harakim"},{KIN_MERCENARY,"Mercenary"},{0,NULL}};
+	int n,k;
+	for (n=1; n<MAXCHARS; n++) {
+		if (ch[n].used==USE_EMPTY || !(ch[n].flags&CF_PLAYER) || (ch[n].flags&(CF_GOD|CF_IMP|CF_USURP|CF_NOWHO|CF_INVISIBLE))) continue;
+		for (k=0; cl[k].n && !(ch[n].kindred&cl[k].k); k++) ;
+		out("%d|%s|%s|%s|%d\n",ch[n].points_tot,ch[n].name,rank_name[min(23,max(0,points2rank(ch[n].points_tot)))],
+			cl[k].n ? cl[k].n : "-",ch[n].used==USE_ACTIVE);
+	}
 }
 
 static void con_edpatch(char *path);
@@ -145,6 +177,9 @@ static void con_cmd(char *line)
 		return;
 	}
 	if (!strcmp(w[0],"edpatch")) { con_edpatch(after(line,1)); return; }
+	if (!strcmp(w[0],"feed")) { out("next %d\n",discord_feed_read(atoi(w[1]),feed_put)); return; }	// MyV2: Discord
+	if (!strcmp(w[0],"dshout")) { con_dshout(w[1],after(line,2)); return; }
+	if (!strcmp(w[0],"rankings")) { con_rankings(); return; }
 	if (!strcmp(w[0],"talktest")) {	// talktest <NPC template> <player> <text>: as if the player said it there
 		int t=atoi(w[1]),cn=0;
 		for (n=1; n<MAXCHARS; n++) if (ch[n].used==USE_ACTIVE && ch[n].temp==t && !(ch[n].flags&(CF_PLAYER|CF_BODY))) { cn=n; break; }
@@ -483,6 +518,9 @@ static void con_cmd(char *line)
 		    "  questgive <player> <npc template>         hand that NPC the item it wants\n"
 		    "  cleartest <player> <npc template>         as if the player killed it (area clears)\n"
 		    "  usexy <player> <x> <y>                    the player uses the item on that spot (tests)\n"
+		    "  feed <since>                              shouts and system messages for Discord, after number since\n"
+		    "  dshout <name> <text>                      a Discord #game-chat line, shown in game like a shout\n"
+		    "  rankings                                  every player: exp|name|rank|class|online\n"
 		    "  kqkill <player> <npc template>            as if the player killed it (kill quests)\n"
 		    "  kills <player>                            the player's #kills\n"
 		    "  kqtime <player> <minutes>                 kill quests: as if taken / handed in that much earlier\n"

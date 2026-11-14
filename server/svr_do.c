@@ -298,6 +298,33 @@ void do_admin_log(int source, char *format,...)
 
 /* CS, 991205: Players see new arrivals */
 /* Announcement to all players */
+/* MyV2: what goes to Discord. Shouts (C) and system messages (S: announcements, server messages) are kept in a ring
+ * the editor reads over the console ("feed <since>") and posts to the Discord channels. */
+#define FEEDN 256
+static struct { int seq; char kind; char text[240]; } feed[FEEDN];
+static int feed_seq=0;
+
+void discord_feed(char kind,char *format,...)
+{
+        va_list args; char buf[240]; int l;
+        va_start(args,format); vsnprintf(buf,sizeof(buf),format,args); va_end(args);
+        l=strlen(buf); while (l && (buf[l-1]=='\n' || buf[l-1]=='\r')) buf[--l]=0;
+        if (!l) return;
+        feed_seq++;
+        feed[feed_seq%FEEDN].seq=feed_seq; feed[feed_seq%FEEDN].kind=kind;
+        strcpy(feed[feed_seq%FEEDN].text,buf);
+}
+
+/* lines after seq since, for the console: calls put(seq,kind,text); returns the newest seq */
+int discord_feed_read(int since,void (*put)(int,char,char*))
+{
+        int n;
+        if (since<feed_seq-FEEDN+1) since=feed_seq-FEEDN;
+        if (since<0) since=0;
+        for (n=since+1; n<=feed_seq; n++) if (feed[n%FEEDN].seq==n) put(n,feed[n%FEEDN].kind,feed[n%FEEDN].text);
+        return feed_seq;
+}
+
 void do_announce(int source, int author, char *format,...)
 {
         va_list args;
@@ -314,6 +341,7 @@ void do_announce(int source, int author, char *format,...)
         } else {
                 strcpy(buf_named, buf_anon);
         }
+        if (!source || !(ch[source].flags & (CF_INVISIBLE|CF_NOWHO))) discord_feed('S',"%s",author ? buf_named : buf_anon);     // MyV2
 
         for (n=1; n<MAXCHARS; n++) {
                 /* various tests to exclude listeners (n) */
@@ -544,6 +572,7 @@ void do_shout(int cn,char *text)
         }
 
         if (ch[cn].flags&(CF_PLAYER)) chlog(cn,"Shouts \"%s\"",text);
+        if ((ch[cn].flags&CF_PLAYER) && !(ch[cn].flags&CF_INVISIBLE)) discord_feed('C',"%.30s: %.200s",ch[cn].name,text);     // MyV2: to Discord #game-chat
 
 }
 

@@ -42,3 +42,29 @@ Checked already:
 - [x] Safety (Nov 6): the server and editor run as the ordinary Ubuntu user `cody` (files in /home/cody), never root. Only port 5555 is forwarded; the console (5556) and the editor (8090) listen on 127.0.0.1 only. The README tells players the passwords aren't encrypted. Network code review: every client message (svr_tick.c `plr_*`) checks its numbers (slots, characters, map spots via the pathfinder, shop slots), packets are fixed 16 bytes into a 256-byte buffer, player text is never used as a format string. Fixed: the account texts (name / description) now always end inside their buffer (`plr_cmd_setuser`); the build-mode tile info checks the spot is on the map (`plr_cmd_turn`); at most 5 connections at once from one internet address (`MAX_PER_ADDR`, client.h; `new_player` in server.c), so one machine can't take all 250 player slots.
 - [x] Rights checked (Nov 7): only Iluvatar has god / greater god / imp / staff / builder; Testpilot and Tulkas (no rights) stay for now (Cody's choice). Keep Iluvatar's password strong and unique (not encrypted).
 - [x] A place for the players: the Discord server "Mercenaries of Asgard v2" (Nov 7): INFO (read-only: #welcome with the download link and how to start, #rules, #announcements, #server-status), COMMUNITY (#general, #help, #trading, #screenshots, voice General), STAFF (private: #staff); roles Admin (administrator), Staff (kick, timeout, manage messages / nicknames, audit log), Player. Download link (always the newest release): https://github.com/SooperValar/My-Modern-V2-Project/releases/latest/download/Mercenaries-of-Asgard-v2.zip (a GitHub release per client update, asset name unchanged). Built Nov 7: the editor posts to a Discord channel webhook when the game goes down (with the reason), is offline, comes online, or restarted by itself (a crash); Claude can post with the control action `discord` ({"msg": ...}). The webhook address is secret: only in `Server\discord-webhook.txt` (one line), never in the project or git. Icon: `docs/brand/asgard-icon-helm.png`. Webhook set up Nov 7 (test post OK).
+
+## Discord links (Nov 14)
+
+The editor (`DiscordLink` in mapedit.py) connects the game and Discord. Each part is switched on by a file in the
+**Server folder** (secret: never in git, never published); a missing file = that part off.
+
+| File | What | How to get it |
+|---|---|---|
+| `discord-webhook.txt` | #server-status: up / down / crash posts (since Nov 7) | channel settings > Integrations > Webhooks > New Webhook > Copy Webhook URL |
+| `discord-chat-webhook.txt` | #game-chat: in-game shouts, posted under the player's name | same, in #game-chat |
+| `discord-system-webhook.txt` | #system: announcements, players entering / leaving, [Server] messages | same, in #system |
+| `discord-board-webhook.txt` | #status: two messages kept up to date in place: who is online (every minute), rankings (every 10 minutes: top 10 by experience + the best 3 of each class) | same, in #status (best a read-only channel) |
+| `discord-bot.txt` | Discord -> game: line 1 the bot token, line 2 the #game-chat channel id; what people write there shows in game as "[Discord] Name: text" (everyone may write; bad words refused, 200 characters) | see below |
+
+**The bot** (only for Discord -> game): discord.com/developers/applications > New Application > Bot > Reset Token (copy it:
+line 1). On the same page turn on **Message Content Intent**. OAuth2 > URL Generator: scope `bot`, permissions
+*View Channels* + *Read Message History* > open the link, add it to the server. Channel id: Discord settings > Advanced >
+Developer Mode on, then right-click #game-chat > Copy Channel ID (line 2). The editor reads the channel every 3 seconds
+(no other program needed) and remembers where it was in `control/discord-state.json` (also the #status message ids).
+
+**GitHub pushes** (#github): a webhook in #github, then on GitHub: the repository > Settings > Webhooks > Add webhook:
+Payload URL = the Discord webhook URL with `/github` added at the end, Content type `application/json`, "Just the push
+event". Nothing in the editor.
+
+Game side (console, `console.c` / `svr_do.c`): `feed <since>` (shouts C and system messages S kept in a ring of 256),
+`dshout <name> <text>`, `rankings`. Gods / imps and invisible characters are left out of the board and the rankings.

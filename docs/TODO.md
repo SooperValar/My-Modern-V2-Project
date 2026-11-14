@@ -13,7 +13,7 @@ world, quests, the editor, the client and Discord. Merged Nov 10 from the old TO
 ## Up next (in order)
 
 1. ★ **Soulstone levels too low** (MAJOR) - [Fixes](#1-fixes-and-balance)
-2. ★ **Discord: online / rankings info and the game chat bridge** - [Discord](#9-discord-and-community)
+2. ★ **Discord**: built Nov 14 (CHANGES.md "Discord"); waiting on Cody's webhooks / bot (HOSTING.md "Discord links")
 3. ★ **Walking speed, speed modes and attack speed** (look at it together first) - [Systems](#2-gameplay-systems)
 4. ★ **Town NPCs' door loop** - [Fixes](#1-fixes-and-balance)
 5. ★ **Logout at shutdown** - [Fixes](#1-fixes-and-balance)
