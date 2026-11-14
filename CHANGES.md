@@ -483,6 +483,10 @@ Cobwebbed, lightly dusty copies of the game's things (the originals unchanged), 
   neighbours cleanly. Editor, Walls tab: **Cobwebbed walls** (each paints one of its 3 at random).
 - **Furniture** 39200-39224: chests, bookshelves, tables, candles (candles webbed at the foot). Editor, Objects tab:
   **Cobwebbed furniture**, decoration drawn into the tile (a chest there can't be opened).
+- **Trees, stumps, fences, pillars** 39400-39421: the game's bare tree and the 4 dead trees (webs between the branches;
+  the small ones three small webs spread out), stumps and the log, the 6 wooden fence pieces, marble / Greek / black
+  pillars and the sandstone column (webbed like a wall), the pedestal, two small tables. Objects tab: **Cobwebbed
+  trees, stumps, fences & pillars** (they block like the originals). Not published yet.
 - **Loose cobwebs** 39300-39304: hanging webs (↘ and ↗), a web on the floor, torn scraps, a big web with a spider.
   Objects tab: **Cobwebs** (nothing blocks).
 - **Doors** 39100-39149 (closed / open), templates 1460-1484 ("Cobwebbed Door I" ..., each a copy of its own door;

@@ -1323,6 +1323,7 @@ function leftUI() {
         if (tab === 'walls') { const l = f(C.walls); if (l.length) { sect('Cobwebbed walls · each paints one of its 3 at random'); const g = grid(); l.forEach(p => g.appendChild(cellPlant(p))); } }
         else {
           let l = f(C.webs); if (l.length) { sect('Cobwebs · on their own, nothing blocks'); const g = grid(); l.forEach(p => g.appendChild(cellPlant(p))); }
+          l = f(C.more || []); if (l.length) { sect('Cobwebbed trees, stumps, fences & pillars'); const g = grid(); l.forEach(p => g.appendChild(cellPlant(p))); }
           l = f(C.furniture); if (l.length) { sect('Cobwebbed furniture · decoration (a chest here can\'t be opened)'); const g = grid(); l.forEach(p => g.appendChild(cellPlant(p))); }
         }
       }

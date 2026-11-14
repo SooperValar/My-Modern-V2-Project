@@ -15,6 +15,7 @@ FIRST = 39000
 
 WEB = (214, 214, 208)          # thread colour on an empty background
 WEB_ON = 0.5                  # how far a thread pulls an existing pixel toward WEB
+LIGHT_THREAD = (128, 128, 124)  # the first set; the second set (MORE) uses a darker one on light stone
 
 # ---------------------------------------------------------------- what gets a cobwebbed copy
 WALLS = [  # (sprite, name): 32x64 wall blocks
@@ -58,7 +59,7 @@ def put(px, x, y, mask, W, H, keep=1.0, r=None):
     c = px[x, y]
     if c[3]:
         lum = 0.3 * c[0] + 0.59 * c[1] + 0.11 * c[2]
-        to = WEB if lum < 165 else (128, 128, 124)       # on white stone a grey thread, or it can't be seen
+        to = WEB if lum < 165 else LIGHT_THREAD             # on white stone a grey thread, or it can't be seen
         px[x, y] = tuple(int(c[i] + (to[i] - c[i]) * WEB_ON) for i in range(3)) + (255,)
     else:
         px[x, y] = WEB + (255,)
@@ -156,12 +157,12 @@ def drape(px, mask, W, H, A, B, r, depth):
         line(px, P, (M[0] + (P[0] - M[0]) * 0.2, M[1]), mask, W, H, r, keep=0.85)
 
 
-def wall_webbed(im, variant, seed):
+def wall_webbed(im, variant, seed, base=None):
     """32x64 wall block: cap diamond on top, lit left face (x 0-15), shaded right face (16-31). Webs hang from the
     middle of a face's top edge or sit on the middle of its bottom edge, never at the block's side edges, so walls
     side by side still join cleanly (Cody: a web in the corner looked wrong next to another wall)"""
     im = dust(im); px = im.load(); W, H = im.size; r = random.Random(seed)
-    base = H - 64
+    base = H - 64 if base is None else base       # a column as tall as its sprite: base 0
     left = Mask({(x, y) for x in range(0, 16) for y in range(base + 13 + x // 2, H) if im.getpixel((x, y))[3]})
     right = Mask({(x, y) for x in range(16, 32) for y in range(base + 13 + (31 - x) // 2, H) if im.getpixel((x, y))[3]})
     top_l = lambda x: (x, base + 13 + x / 2.0)
@@ -259,6 +260,38 @@ def loose_webs():
     return out
 
 
+# second set (Nov 14, Cody: "what about cobweb trees and fences"): kind 'tree' webs between the branches, the rest
+# like furniture; (sprite, name, kind, block) - block as the original piece
+MORE = [
+    (1116, 'Bare tree', 'tree', 3), (38160, 'Dead tree', 'tree', 1), (38161, 'Dead tree II', 'tree', 1),
+    (38162, 'Dead tree III', 'tree', 1), (38163, 'Dead tree IV', 'tree', 1),
+    (38164, 'Stump', 'obj', 1), (38165, 'Mossy stump', 'obj', 1), (38166, 'Broken stump', 'obj', 1), (38167, 'Fallen log', 'obj', 1),
+    (1172, 'Wooden fence', 'fence', 1), (1174, 'Wooden fence II', 'fence', 1), (1176, 'Fence corner I', 'fence', 1),
+    (1178, 'Fence corner II', 'fence', 1), (1180, 'Fence corner III', 'fence', 1), (1182, 'Fence corner IV', 'fence', 1),
+    (1160, 'Marble pillar', 'obj', 3), (106, 'Greek pillar', 'obj', 3), (946, 'Black pillar', 'obj', 3),
+    (102, 'Sandstone column', 'column', 3), (228, 'Pedestal', 'obj', 1), (16886, 'Small white table', 'obj', 1),
+    (560, 'Small red table', 'obj', 1),
+]
+
+
+def tree_webbed(im, seed):
+    """bare and dead trees: dusty, two or three webs strung between the branches, fanning up from the trunk"""
+    im = dust(im, 0.12); px = im.load(); W, H = im.size; r = random.Random(seed)
+    m, hull = hull_mask(im)
+    ys = [y for x, y in hull]; ytop = min(ys); ybot = max(ys); h = ybot - ytop
+    op = opaque_mask(im)
+    small = H <= 64                                   # small trees: two lighter webs (Cody: lighter)
+    for f, side in (((0.42, -1), (0.6, 1), (0.8, -1)) if small else ((0.45, -1), (0.62, 1), (0.78, -1))):   # small: 3 small webs, spread out (Cody)
+        y = int(ybot - h * f)
+        row = [x for x in range(W) if (x, y) in op]
+        if not row:
+            continue
+        x = row[len(row) // 2] + (side * 3 if small else 0)
+        a = -math.pi / 2 + side * r.uniform(0.25, 0.55)
+        corner_web(px, m, W, H, (x, y), a - 0.55, a + 0.55, (r.uniform(6, 8) if small else max(7, min(14, h * 0.24))), r, rings=2, spokes=4 if small else 5)
+    return im
+
+
 def build(get):
     out, names = {}, []
     n = FIRST
@@ -276,6 +309,14 @@ def build(get):
     for s, name in FURNITURE:
         out[n] = foot_webbed(get(s), s * 5) if s in CANDLES else object_webbed(get(s), s * 5)
         names.append([n, 'Cobwebbed ' + name.lower() if name[0].islower() else 'Cobwebbed ' + name, 'furniture', [n], s]); n += 1
+    n = FIRST + 400                                   # 39400+: trees, stumps, fences, pillars, more furniture
+    global LIGHT_THREAD, WEB_ON
+    LIGHT_THREAD = (84, 80, 74); WEB_ON = 0.7                       # darker threads on light stone, so they show (Cody)
+    for s_, name, kind, blk in MORE:
+        im = get(s_)
+        out[n] = tree_webbed(im, s_ * 11) if kind == 'tree' else wall_webbed(im, 1, s_ * 11, base=0) if kind == 'column' else object_webbed(im, s_ * 11)
+        names.append([n, 'Cobwebbed ' + name.lower() if False else 'Cobwebbed ' + name, 'more', [n], s_, blk]); n += 1
+    LIGHT_THREAD = (128, 128, 124); WEB_ON = 0.5
     n = FIRST + 300                                   # 39300+: loose webs
     for im, name in loose_webs():
         out[n] = im; names.append([n, name, 'web', [n], 0]); n += 1
@@ -296,7 +337,7 @@ if __name__ == '__main__':
         im.save(os.path.join(out, '%05d.png' % nr))
     with open(os.path.join(HERE, 'cobwebs.json'), 'w') as f:
         json.dump(names, f)
-    print('%d cobweb sprites written: walls 39000-%d, doors 39100-, furniture 39200-, loose webs 39300-' % (len(sprites), FIRST + 3 * len(WALLS) - 1))
+    print('%d cobweb sprites written: walls 39000-%d, doors 39100-, furniture 39200-, loose webs 39300-, trees/fences/pillars 39400-' % (len(sprites), FIRST + 3 * len(WALLS) - 1))
     if '--sheet' in sys.argv:
         items = [(e[4], e[3]) for e in names]
         per = 8; CW, CH = 150, 110
