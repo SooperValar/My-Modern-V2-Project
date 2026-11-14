@@ -474,6 +474,12 @@ brush paints them at random) and **soft edges into grass**:
 - The edge table is `tools/sprites/world_ground.json` (also built into the editor as `WORLD_GROUND`): re-run
   `world_ground.py <Client folder>` after changing the look, then rebuild the table into `mapedit_template.py`.
 
+## #rank and #ranks (Nov 14)
+
+**#rank**: your rank and experience, the next rank, the experience it starts at, how much more you need and how far
+along you are. **#ranks**: all 24 ranks and the experience each starts at (yours highlighted). Both in `#help`
+(`svr_do.c` do_rank / do_ranks; the thresholds are those of `helper.c` points2rank).
+
 ## Discord (Nov 14)
 
 The game and Discord are linked through the editor (setup: `docs/HOSTING.md` "Discord links"): in-game shouts go to

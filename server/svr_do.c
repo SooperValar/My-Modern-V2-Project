@@ -691,6 +691,8 @@ void do_help(int cn,char *topic)
 	do_char_log(cn,1,"#quest [n|p2|all]      quests, easiest first; n: details.\n");
 	do_char_log(cn,1,"#repair                repair all worn gear.\n");
 	do_char_log(cn,1,"#repairinv             repair backpack gear.\n");
+	do_char_log(cn,1,"#rank                  your rank, the next one and the exp to it.\n");
+	do_char_log(cn,1,"#ranks                 every rank and the exp it needs.\n");
 	do_char_log(cn,1,"#rings                 all rings and gems.\n");
 	do_char_log(cn,1,"#notell                you won't hear tells.\n");
 	do_char_log(cn,1,"#seen <player>         when last seen here?.\n");
@@ -1889,6 +1891,35 @@ static void info_ringbonus(int t,int act,char *out)
 	if (!out[0]) strcpy(out,"-");
 }
 
+/* MyV2: #rank and #ranks. The experience each rank starts at (helper.c points2rank). */
+static const int rank_start[24]={0,50,850,4900,17700,48950,113750,233800,438600,766650,1266650,1998700,3035500,4463550,
+	6384350,8915600,12192400,16368450,21617250,28133300,36133300,49014500,63000600,80977100};
+
+static char *commas(int v,char *buf)	// 1234567 -> "1,234,567"
+{
+	char t[16]; int l,i,o=0;
+	sprintf(t,"%d",v); l=strlen(t);
+	for (i=0; i<l; i++) { buf[o++]=t[i]; if (t[i]!='-' && (l-i-1)%3==0 && i<l-1) buf[o++]=','; }
+	buf[o]=0; return buf;
+}
+
+void do_rank(int cn)
+{
+	int r=points2rank(ch[cn].points_tot),pc; char a[16],b[16],c[16];
+	do_char_log(cn,1,"You are %s %s, with %s experience.\n",strchr("AEIOU",rank_name[r][0]) ? "an" : "a",rank_name[r],commas(ch[cn].points_tot,a));
+	if (r>=23) { do_char_log(cn,1,"That is the highest rank there is.\n"); return; }
+	pc=(int)((double)(ch[cn].points_tot-rank_start[r])*100/(rank_start[r+1]-rank_start[r]));
+	do_char_log(cn,1,"Next: %s at %s experience: %s more to go (%d%% of the way).\n",rank_name[r+1],commas(rank_start[r+1],b),
+		commas(rank_start[r+1]-ch[cn].points_tot,c),max(0,min(99,pc)));
+}
+
+void do_ranks(int cn)
+{
+	int r,me=points2rank(ch[cn].points_tot); char a[16];
+	do_char_log(cn,1,"The ranks and the experience they start at:\n");
+	for (r=0; r<24; r++) do_char_log(cn,r==me ? 2 : 1,"%2d. %-20s %12s%s\n",r+1,rank_name[r],commas(rank_start[r],a),r==me ? "  <- you" : "");
+}
+
 void do_info_rings(int cn)
 {
 	// plain ring + stone -> ring (see build_ring() in use_driver.c)
@@ -2509,6 +2540,8 @@ void do_command(int cn, char *ptr)
                                                           if (ch[cn].temple_x) { sprintf(bx,"%d",ch[cn].temple_x); sprintf(by,"%d",ch[cn].temple_y); } else { strcpy(bx,"512"); strcpy(by,"512"); }
                                                           god_goto(cn,cn,bx,by); lab_left_check(cn); return; };
                 if (prefix(cmd,"respawn") && f_giu)     { do_respawn(cn,atoi(arg[1])); return; };
+                if (!strcmp(cmd,"ranks"))               { do_ranks(cn); return; };	// MyV2
+                if (prefix(cmd,"rank"))                 { do_rank(cn); return; };
                 if (prefix(cmd,"rings"))                { do_info_rings(cn); return; };
                 if (!strcmp(cmd,"repair") && f_p)       { do_repair_all(cn,0); return; };
                 if (!strcmp(cmd,"repairinv") && f_p)    { do_repair_all(cn,1); return; };
