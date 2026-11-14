@@ -482,11 +482,11 @@ Stone arches as wide as you like. An arch is two halves, the second **4 tiles** 
   its end isn't level), bridge 36400.
 
 Two looks, the same pieces and rule: the game's stone as it is (above), and **smooth** (specks out, grain a bit softer):
-↘ 36404 + 36405, bridge 36406; ↗ 36407 + 36409, bridge 36408. Don't mix the looks in one arch.
+↘ 36404 + 36405, bridge 36406; ↗ 36407 + 36409, bridge 36408. Don't mix the looks in one arch. Published to players Nov 14.
 
 To widen by N tiles: put N bridges on the tiles right after the first half and the second half N tiles further (4 + N).
 The bridges are cut from the arch's own stone (`tools/sprites/arch_bridge.py`). The editor's Objects tab has an
-**Arches** section with all six pieces (halves block walking, bridges don't). Sprites in `Client\GFX`, not published yet.
+**Arches** section with all six pieces (halves block walking, bridges don't). Sprites in `Client\GFX`.
 
 ## One of each look in the builder (Nov 13)
 
