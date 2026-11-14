@@ -474,6 +474,14 @@ brush paints them at random) and **soft edges into grass**:
 - The edge table is `tools/sprites/world_ground.json` (also built into the editor as `WORLD_GROUND`): re-run
   `world_ground.py <Client folder>` after changing the look, then rebuild the table into `mapedit_template.py`.
 
+## Wider arches (Nov 14)
+
+The game's stone arches come in two halves: **↗** 937 + 944 (the second half 5 tiles up-right) and **↘** 942 + 934 (the
+second half 4 tiles down-right). Two new **arch bridges** (sprites 36400 ↗, 36401 ↘; `tools/sprites/arch_bridge.py`,
+cut from the arch's own stone) make them as wide as you like: move the second half N tiles further and put a bridge on
+each of the N tiles just before it. The editor's Objects tab has an **Arches** section with all six pieces (halves
+block walking, bridges don't). Sprites in `Client\GFX`, not published yet.
+
 ## One of each look in the builder (Nov 13)
 
 Many item templates look the same and differ only in their settings (each locked door its own key, each portal its own
