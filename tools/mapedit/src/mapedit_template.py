@@ -183,7 +183,10 @@ WORLD_PLANTS = [[38000, 'Saguaro', 1], [38001, 'Saguaro (left arm)', 1], [38002,
 # from the first; the up-right one is the game's down-right arch mirrored. Wider: N bridges on the tiles right after the
 # first half, the second half N tiles further.
 WORLD_ARCHES = [[942, 'Arch ↘ first half', 1], [36401, 'Arch ↘ bridge', 0], [934, 'Arch ↘ second half (4 tiles ↘)', 1],
-                [36402, 'Arch ↗ first half', 1], [36400, 'Arch ↗ bridge', 0], [36403, 'Arch ↗ second half (4 tiles ↗)', 1]]
+                [36402, 'Arch ↗ first half', 1], [36400, 'Arch ↗ bridge', 0], [36403, 'Arch ↗ second half (4 tiles ↗)', 1],
+                # the 'light' look: specks out, grain softer
+                [36404, 'Smooth arch ↘ first half', 1], [36406, 'Smooth arch ↘ bridge', 0], [36405, 'Smooth arch ↘ second half (4 tiles ↘)', 1],
+                [36407, 'Smooth arch ↗ first half', 1], [36408, 'Smooth arch ↗ bridge', 0], [36409, 'Smooth arch ↗ second half (4 tiles ↗)', 1]]
 WG_PLAIN = {s: n for n, g in WORLD_GROUND['sets'].items() for s in g['plain']}
 WG_EDGE = {s for g in WORLD_GROUND['sets'].values() for s in g['edges'].values()}
 WG_GRASS = set(WORLD_GROUND['grass'])
