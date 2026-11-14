@@ -488,13 +488,13 @@ Cobwebbed, lightly dusty copies of the game's things (the originals unchanged), 
 - **Doors** 39100-39149 (closed / open), templates 1460-1484 ("Cobwebbed Door I" ..., each a copy of its own door;
   `tools/world/cobweb_doors.txt`, live since Nov 14): in the builder's Objects list like any door, placed unlocked.
 
-Not published yet.
+Published Nov 14.
 
 ## Snow ground (Nov 14)
 
 Three snow grounds like the sands (the game's grass grain recoloured, 4 variants each, soft auto edges against grass):
 **soft snow** 35400-35449, **bluish snow** 35450-35499, **bright snow** 35600-35649 (`tools/sprites/world_ground.py`).
-In the editor's Floors tab under New ground. Not published yet.
+In the editor's Floors tab under New ground. Published Nov 14.
 
 ## New trees (Nov 14)
 
@@ -508,7 +508,7 @@ In the editor's Floors tab under New ground. Not published yet.
 
 Editor, Objects tab: **New trees**, one cell a kind that paints one of its 4 at random (they block like the game's
 trees; dead trees and stumps block walking only). New area brushes: **Autumn Forest**, **Pine Forest**, **Snowy Forest**
-(on the new soft snow). Sprites in `Client\GFX`, not published yet.
+(on the new soft snow). Sprites in `Client\GFX`, published Nov 14.
 
 ## Wider arches (Nov 14)
 
