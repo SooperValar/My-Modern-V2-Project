@@ -1,0 +1,152 @@
+# Cobwebbed doors (Nov 14, tools/sprites/cobwebs.py): a copy of each door's own template with the cobwebbed sprites
+# (closed / open). Template numbers from 1460: check they are free in the live world first.
+
+it 1460 copy 22
+it 1460 name Cobwebbed Door I
+it 1460 desc An old door, thick with cobwebs.
+it 1460 ref cobwebbed door
+it 1460 spr 39100 39101
+
+it 1461 copy 84
+it 1461 name Cobwebbed Door II
+it 1461 desc An old door, thick with cobwebs.
+it 1461 ref cobwebbed door
+it 1461 spr 39102 39103
+
+it 1462 copy 594
+it 1462 name Cobwebbed Marble Door
+it 1462 desc An old door, thick with cobwebs.
+it 1462 ref cobwebbed door
+it 1462 spr 39104 39105
+
+it 1463 copy 593
+it 1463 name Cobwebbed White Door
+it 1463 desc An old door, thick with cobwebs.
+it 1463 ref cobwebbed door
+it 1463 spr 39106 39107
+
+it 1464 copy 300
+it 1464 name Cobwebbed Red Door
+it 1464 desc An old door, thick with cobwebs.
+it 1464 ref cobwebbed door
+it 1464 spr 39108 39109
+
+it 1465 copy 301
+it 1465 name Cobwebbed Red Door II
+it 1465 desc An old door, thick with cobwebs.
+it 1465 ref cobwebbed door
+it 1465 spr 39110 39111
+
+it 1466 copy 159
+it 1466 name Cobwebbed Earth Door
+it 1466 desc An old door, thick with cobwebs.
+it 1466 ref cobwebbed door
+it 1466 spr 39112 39113
+
+it 1467 copy 759
+it 1467 name Cobwebbed Iron Gate Door
+it 1467 desc An old door, thick with cobwebs.
+it 1467 ref cobwebbed door
+it 1467 spr 39114 39115
+
+it 1468 copy 732
+it 1468 name Cobwebbed Iron Gate Door II
+it 1468 desc An old door, thick with cobwebs.
+it 1468 ref cobwebbed door
+it 1468 spr 39116 39117
+
+it 1469 copy 1440
+it 1469 name Cobwebbed Oak Door I
+it 1469 desc An old door, thick with cobwebs.
+it 1469 ref cobwebbed door
+it 1469 spr 39118 39119
+
+it 1470 copy 1441
+it 1470 name Cobwebbed Oak Door II
+it 1470 desc An old door, thick with cobwebs.
+it 1470 ref cobwebbed door
+it 1470 spr 39120 39121
+
+it 1471 copy 1442
+it 1471 name Cobwebbed Dark Wood Door I
+it 1471 desc An old door, thick with cobwebs.
+it 1471 ref cobwebbed door
+it 1471 spr 39122 39123
+
+it 1472 copy 1443
+it 1472 name Cobwebbed Dark Wood Door II
+it 1472 desc An old door, thick with cobwebs.
+it 1472 ref cobwebbed door
+it 1472 spr 39124 39125
+
+it 1473 copy 1444
+it 1473 name Cobwebbed Iron-Bound Door I
+it 1473 desc An old door, thick with cobwebs.
+it 1473 ref cobwebbed door
+it 1473 spr 39126 39127
+
+it 1474 copy 1445
+it 1474 name Cobwebbed Iron-Bound Door II
+it 1474 desc An old door, thick with cobwebs.
+it 1474 ref cobwebbed door
+it 1474 spr 39128 39129
+
+it 1475 copy 1446
+it 1475 name Cobwebbed Iron Door I
+it 1475 desc An old door, thick with cobwebs.
+it 1475 ref cobwebbed door
+it 1475 spr 39130 39131
+
+it 1476 copy 1447
+it 1476 name Cobwebbed Iron Door II
+it 1476 desc An old door, thick with cobwebs.
+it 1476 ref cobwebbed door
+it 1476 spr 39132 39133
+
+it 1477 copy 1448
+it 1477 name Cobwebbed Temple Door I
+it 1477 desc An old door, thick with cobwebs.
+it 1477 ref cobwebbed door
+it 1477 spr 39134 39135
+
+it 1478 copy 1449
+it 1478 name Cobwebbed Temple Door II
+it 1478 desc An old door, thick with cobwebs.
+it 1478 ref cobwebbed door
+it 1478 spr 39136 39137
+
+it 1479 copy 1450
+it 1479 name Cobwebbed Sandstone Door I
+it 1479 desc An old door, thick with cobwebs.
+it 1479 ref cobwebbed door
+it 1479 spr 39138 39139
+
+it 1480 copy 1451
+it 1480 name Cobwebbed Sandstone Door II
+it 1480 desc An old door, thick with cobwebs.
+it 1480 ref cobwebbed door
+it 1480 spr 39140 39141
+
+it 1481 copy 1452
+it 1481 name Cobwebbed Iron Gate I
+it 1481 desc An old door, thick with cobwebs.
+it 1481 ref cobwebbed door
+it 1481 spr 39142 39143
+
+it 1482 copy 1453
+it 1482 name Cobwebbed Iron Gate II
+it 1482 desc An old door, thick with cobwebs.
+it 1482 ref cobwebbed door
+it 1482 spr 39144 39145
+
+it 1483 copy 1454
+it 1483 name Cobwebbed Curtain I
+it 1483 desc An old door, thick with cobwebs.
+it 1483 ref cobwebbed door
+it 1483 spr 39146 39147
+
+it 1484 copy 1455
+it 1484 name Cobwebbed Curtain II
+it 1484 desc An old door, thick with cobwebs.
+it 1484 ref cobwebbed door
+it 1484 spr 39148 39149

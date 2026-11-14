@@ -474,6 +474,22 @@ brush paints them at random) and **soft edges into grass**:
 - The edge table is `tools/sprites/world_ground.json` (also built into the editor as `WORLD_GROUND`): re-run
   `world_ground.py <Client folder>` after changing the look, then rebuild the table into `mapedit_template.py`.
 
+## Cobwebs (Nov 14)
+
+Cobwebbed, lightly dusty copies of the game's things (the originals unchanged), sprites 39000+
+(`tools/sprites/cobwebs.py`; copies in `tools/sprites/art/cobwebs_v1`):
+- **Walls** 39000-39050: 17 walls (the game's common ones and the 8 new walls), 3 web placements each. The webs hang
+  from the middle of a face's top edge or sit at its foot, never at the block's sides, so webbed walls join their
+  neighbours cleanly. Editor, Walls tab: **Cobwebbed walls** (each paints one of its 3 at random).
+- **Furniture** 39200-39224: chests, bookshelves, tables, candles (candles webbed at the foot). Editor, Objects tab:
+  **Cobwebbed furniture**, decoration drawn into the tile (a chest there can't be opened).
+- **Loose cobwebs** 39300-39304: hanging webs (↘ and ↗), a web on the floor, torn scraps, a big web with a spider.
+  Objects tab: **Cobwebs** (nothing blocks).
+- **Doors** 39100-39149 (closed / open): sprites ready; their templates (`tools/world/cobweb_doors.txt`, 1460+) go
+  into the live world with the next world update.
+
+Not published yet.
+
 ## Snow ground (Nov 14)
 
 Three snow grounds like the sands (the game's grass grain recoloured, 4 variants each, soft auto edges against grass):
