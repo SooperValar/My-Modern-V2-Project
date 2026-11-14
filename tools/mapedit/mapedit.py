@@ -2689,9 +2689,9 @@ RANK_SHORT = dict(zip(          # server helper.c rank_name -> who_rank_name (th
 
 
 def HL(t):
-    """a highlighted line in a Discord ```ansi block: white text on a blue band (desktop Discord; phones show it plain).
+    """a heading line in a Discord ```ansi block: bold blue text, no band (Cody, Nov 14; desktop Discord, phones show it plain).
     Discord now draws ansi backgrounds in standard colours: 40 black, 42 green, 44 blue (Cody picked blue, Nov 14)"""
-    return '\x1b[1;37;44m' + t + '\x1b[0m'
+    return '\x1b[1;34m' + t + '\x1b[0m'
 
 
 class DiscordLink:
