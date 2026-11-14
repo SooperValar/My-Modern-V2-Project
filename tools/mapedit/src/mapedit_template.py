@@ -2794,11 +2794,11 @@ class DiscordLink:
                 return
             r = self.ctl.console('feed 0', 3) or ''
             lines = r.splitlines(); nxt = next((int(l.split()[1]) for l in lines if l.startswith('next ')), 0)
-        chat, system = [], []
+        chat, system, status = [], [], []
         for l in lines:
             m = re.match(r'(\d+) ([CS]) (.*)$', l)
-            if m:
-                (chat if m.group(2) == 'C' else system).append(m.group(3))
+            if m:                             # [Server] messages (restart warnings...) go to #server-status (Cody)
+                (chat if m.group(2) == 'C' else status if m.group(3).startswith('[Server]') else system).append(m.group(3))
         self.feed_next = nxt
         ch_hook, sys_hook = self._hook('discord-chat-webhook.txt'), self._hook('discord-system-webhook.txt')
         for t in chat:
@@ -2806,6 +2806,8 @@ class DiscordLink:
             self._post(ch_hook, text, name)
         if system:
             self._post(sys_hook, '\n'.join(system))
+        if status:
+            self._post(self._hook('discord-webhook.txt'), '\n'.join(':loudspeaker: ' + t[len('[Server]'):].strip() for t in status))
 
     def _status_board(self):
         hook = self._hook('discord-board-webhook.txt')

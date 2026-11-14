@@ -484,11 +484,11 @@ along you are. **#ranks**: all 24 ranks and the experience each starts at (yours
 
 The game and Discord are linked through the editor (setup: `docs/HOSTING.md` "Discord links"): in-game shouts go to
 **#game-chat** under the player's name, and what people write in #game-chat shows in game as **"[Discord] Name: text"**
-(a bot; bad words refused); announcements, players entering / leaving, [Server] messages and the guard's "Hear ye, hear ye!" (a new rank; since Nov 14 also arching: Arch-Templar, Arch-Harakim, Warrior, Sorcerer, Seyan'Du) go to **#system**;
+(a bot; bad words refused); announcements, players entering / leaving and the guard's "Hear ye, hear ye!" (a new rank; since Nov 14 also arching: Arch-Templar, Arch-Harakim, Warrior, Sorcerer, Seyan'Du) go to **#system**;
 **#status** has two messages kept up to date: who is online, and the **rankings** (top 10 by experience + the best 3 of
 each class), then who is online with the game time and the moon (as `#time` in game, which now also shows the moon; when a Good Moon starts, everyone in game and #system gets "A Good Moon rises!"): a game day is 80 real minutes and a
 28-day month has a **Bad Moon** (new moon) on day 1 (spells 15% weaker, regeneration halved) and a **Good Moon** (full moon) on day 15 (spells
-15% stronger, regeneration doubled); the board says which is on, or how long (real time) until the next one. GitHub pushes can go to **#github** (a GitHub webhook, no code). Server console: `feed`, `dshout`, `rankings`.
+15% stronger, regeneration doubled); the board says which is on, or how long (real time) until the next one. [Server] messages (restart warnings) go to **#server-status** with the up / down posts. GitHub pushes can go to **#github** (a GitHub webhook, no code). Server console: `feed`, `dshout`, `rankings`.
 
 ## Cobwebs (Nov 14)
 
