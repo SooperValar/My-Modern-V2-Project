@@ -2324,6 +2324,11 @@ class World:
                             else:
                                 for k in range(4):
                                     struct.pack_into('<I', self.item, o + I_DATA + 4 * k, (1 << (bit % 32)) if bit // 32 == k else 0)
+                        if op.get('fresh'):       # the builder's one-of-each-look list: start clean, nothing from another placed copy
+                            drv = self.item[o + I_DRIVER]
+                            clear = {2: 4, 6: 3, 16: 2}.get(drv, 0)      # door: key, locked, pick difficulty, key vanishes; portal: x, y, lab; ladder: offset
+                            for k in range(clear):
+                                struct.pack_into('<I', self.item, o + I_DATA + 4 * k, 0)
                         t[1] = 0          # an item replaces an object sprite (as in the game)
                         t[4] = i
                     else:                             # a plain piece: drawn into the tile

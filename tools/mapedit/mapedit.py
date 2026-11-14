@@ -2324,6 +2324,11 @@ class World:
                             else:
                                 for k in range(4):
                                     struct.pack_into('<I', self.item, o + I_DATA + 4 * k, (1 << (bit % 32)) if bit // 32 == k else 0)
+                        if op.get('fresh'):       # the builder's one-of-each-look list: start clean, nothing from another placed copy
+                            drv = self.item[o + I_DRIVER]
+                            clear = {2: 4, 6: 3, 16: 2}.get(drv, 0)      # door: key, locked, pick difficulty, key vanishes; portal: x, y, lab; ladder: offset
+                            for k in range(clear):
+                                struct.pack_into('<I', self.item, o + I_DATA + 4 * k, 0)
                         t[1] = 0          # an item replaces an object sprite (as in the game)
                         t[4] = i
                     else:                             # a plain piece: drawn into the tile
@@ -4607,10 +4612,6 @@ function cellTemp(t) {
   if (brushKey(brush) === c.dataset.k) c.classList.add('sel');
   c.title = `${t[1]} · template ${t[0]} · ${t[6] ? 'item' : 'drawn into the tile'}${t[5] & 1 ? ' · blocks walking' : ''}${t[5] & 2 ? ' · blocks sight' : ''}`;
   c.appendChild(thumb(t[2], 64, 64)); const l = document.createElement('div'); l.className = 'lab'; l.textContent = t[1]; c.appendChild(l);
-  if (t.versions && t.versions.length > 1) {
-    c.insertAdjacentHTML('beforeend', `<span class="badge" title="${t.versions.length} versions with this look (they differ in their settings); this places template ${t[0]} (${esc(t.versions.find(v => v[0] === t[0])[1])}). Set the placed one's own settings in the tile panel.">×${t.versions.length}</span>`);
-    c.title += ` · one of ${t.versions.length} versions with this look`;
-  }
   c.onclick = () => setBrush({ kind: 'place', t });
   c.oncontextmenu = e => { e.preventDefault(); openTemplate('item', t[0]); };
   c.title += ' · right-click to edit the template';
@@ -6892,7 +6893,7 @@ function opFor(x, y, alt) {
   }
   if (b.kind === 'mix') return { op: 'floor', x, y, s: mixPick(b.items), set: false };
   if (b.kind === 'object') return { op: 'object', x, y, s: b.vars && b.vars.length ? b.vars[Math.floor(Math.random() * b.vars.length)] : b.s, block: b.block };
-  if (b.kind === 'place') return { op: 'place', x, y, t: b.t[0] };
+  if (b.kind === 'place') return allVersions ? { op: 'place', x, y, t: b.t[0] } : { op: 'place', x, y, t: b.t[0], fresh: 1 };   // fresh: no lock, no destination carried over from wherever this template was used
   if (b.kind === 'area') return { op: 'area', x, y, a: b.name, floor: areaFloor };
   return null;
 }
@@ -6951,6 +6952,11 @@ async function edit(ops, lbl, reselect) {
     const pt = pal.templates.find(t => t[0] === ops[0].t);
     if (pt && pt[4] === 75 && chestCopy && chestCopy.temp === pt[0]) placeChestCopy(ops[0].x, ops[0].y);
     else if (pt && pt[4] === 75) { selectTile(ops[0].x, ops[0].y); openChest(ops[0].x, ops[0].y); }
+    else if (pt && (pt[4] === 6 || pt[4] === 16) && ops[0].fresh) {      // a new portal / ladder: say where it leads right away
+      const x = ops[0].x, y = ops[0].y, lad = pt[4] === 16;
+      selectTile(x, y).then(() => { destPick = { x, y, rel: lad }; cv.style.cursor = 'cell';
+        toast(`Now click the spot on the map where this ${lad ? 'ladder' : 'portal'} should lead. (Esc: decide later in the tile panel)`); });
+    }
   }
 }
 async function undoRedo(w) {

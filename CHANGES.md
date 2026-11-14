@@ -478,9 +478,11 @@ brush paints them at random) and **soft edges into grass**:
 
 Many item templates look the same and differ only in their settings (each locked door its own key, each portal its own
 destination, each exploration point its own number): the Walls and Objects tabs now show **one of each look** (same
-pictures, driver, blocking and kind), named without "Locked" / "Unlocked" and trailing numbers, with a **×N** badge
-(e.g. Door ×19, Exploration Point ×83). 831 object templates show as 383. The one placed is the most used version without
-a key of its own (doors), so a new door starts unlocked. **Show every version** (a tick box above the list, remembered)
+pictures, driver, blocking and kind), named without "Locked" / "Unlocked" and trailing numbers (831 object templates show as 383).
+
+Placing one has nothing to do with any copy placed before: it starts **fresh**: a door with no lock, a portal or
+ladder / hole with no destination (the editor asks right away: click the spot on the map it should lead to; Esc decides
+later in the tile panel), an exploration point with a new number of its own. **Show every version** (a tick box above the list, remembered)
 or searching a template number lists them all again. The Items tab is never grouped (keys open doors by their own template).
 
 The placed piece gets its own settings in the tile panel (they are the item's own data, not the template's):
