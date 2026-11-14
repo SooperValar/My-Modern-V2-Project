@@ -12,6 +12,7 @@ world, quests, the editor, the client and Discord. Merged Nov 10 from the old TO
 
 ## Up next (in order)
 
+0. ★ **Quest plan, area by area**: Bandit Hollow built Nov 14; next the Wolfwood / Old Quarry - [Quests](#6-quests)
 1. ★ **Soulstone levels too low** (MAJOR) - [Fixes](#1-fixes-and-balance)
 2. ★ **Discord**: built Nov 14 (CHANGES.md "Discord"); waiting on Cody's webhooks / bot (HOSTING.md "Discord links")
 3. ★ **Walking speed, speed modes and attack speed** (look at it together first) - [Systems](#2-gameplay-systems)
@@ -196,6 +197,21 @@ A river south of Aston and a flooded mine quest like Lab 11 (without the darknes
 ---
 
 ## 6. Quests
+
+### ◐ The quest plan: new areas and quests (Nov 14)
+The plan is in the "Quest Map and Plan" doc and the "Quest Planner" sheet (Cody's claude.ai artifacts): 41 town-style
+quests in 18 new areas and 3 hub towns (Fenwatch for band C, Stonehold for D, the Last Bastion for E-F), bounty halls,
+item rewards (rings, amulets, belts, new potions) and two skill quests (Swimming, Karate). Left out of questing by Cody:
+the towers, the three Pentagram Quests, Black Stronghold, Underground I and II, Elysium, Staffer Corner; each lab counts
+as one special quest. Build one area at a time from the bottom, with `tools/world/bandit_hollow/` as the pattern.
+- [x] **Bandit Hollow** (east road, Sergeant to Master Sergeant; CHANGES.md "Bandit Hollow").
+- [ ] **Wolfwood + Hunters' Lodge** (wolf and bear heads bounty, Old Greyfang): needs wolf and bear sprites.
+- [ ] **Old Quarry** (Brann, the Golem Overseer, the Deep Grolm Chieftain; Stoneskin potion).
+- [ ] Rat-Catcher's Cellars and the Old Graveyard (band A extras; the graveyard ties in with the Graveyard quest below).
+- [ ] Then Fenwatch and its areas, Stonehold, the Last Bastion. Code needed on the way: Swimming made useful, the new
+  potion effects (Stoneskin, Clear Water, Elixir of the Good Moon, Fireward, Frozen Heart, Draught of the Void), the Ring
+  of the Good Moon.
+- Gold rewards: the sheet's 1/10 of the exp is far too much (19G fits a Sergeant quest, 190G does not): use about 1/100.
 
 ### ● `#quest` list: order and rewards (was #9)
 The look is approved and live (column table, 15 a page); the editor's Quests page sets the order, rewards, exp and

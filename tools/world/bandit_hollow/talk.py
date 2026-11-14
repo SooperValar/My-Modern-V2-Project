@@ -1,0 +1,110 @@
+#!/usr/bin/env python3
+"""npctalk.dat lines for Bandit Hollow, from made.json (the template numbers build_hollow.py made).
+    talk.py > bandit_hollow_talk.txt      (appended to .dat/npctalk.dat by apply)"""
+import json, os
+M = json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'made.json')))
+H, T, W = M['hollis'], M['tobias'], M['wynn']
+print("""# ---- Bandit Hollow (Nov 14; tools/world/bandit_hollow) ----
+quest 1 Red Harlan
+step 1 1 Kill Red Harlan, the bandit chief in Bandit Hollow (down the east road from Aston), and bring his head to Sergeant Hollis at the east gate.
+step 1 2 Done: Sergeant Hollis paid you for Red Harlan's head.
+quest 2 The Stolen Ledger
+step 2 1 Get Tobias's ledger back from the Bandit Quartermaster in Bandit Hollow and bring it to Tobias at Aston's east gate.
+step 2 2 Done: Tobias has his ledger back.
+quest 3 Moonwort
+step 3 1 Take the Bundle of Moonwort from the Bandit Poisoner in Bandit Hollow and bring it to Wynn at her hut on the east road.
+step 3 2 Done: Wynn has her moonwort back.
+
+npc %(H)d Sergeant Hollis (Red Harlan)
+when give %(head)d
+if quest 1 < 2
+answer Red Harlan's head! Aston owes you, %%s. Here - his belt, and the city's thanks.
+give item %(belt)d
+give exp 1900
+give gold 1900
+set quest 1 2
+keep
+end
+when give %(head)d
+answer We've already settled Harlan's account, %%s. Bury that thing.
+end
+when near
+if quest 1 = 0
+if rank < 4
+answer Stay inside the walls, %%s. The east road belongs to the bandits now - come back when you are a Sergeant.
+end
+when near
+if quest 1 = 0
+answer Hail, %%s. Bandits hold the hollow down the east road. Their chief is Red Harlan - bring me his head and the city will pay.
+set quest 1 1
+end
+when near
+if quest 1 = 1
+answer Red Harlan still breathes, %%s. Follow the road east to the hollow.
+end
+when say quest|task|job|work|bandit*|harlan
+if quest 1 < 2
+answer Red Harlan leads the bandits in the hollow down the east road. Bring me his head, %%s.
+set quest 1 1
+end
+
+npc %(T)d Tobias (The Stolen Ledger)
+when give %(ledger)d
+if quest 2 < 2
+answer My ledger! Every debt I'm owed is in here. Take my signet, %%s - merchants will treat you as one of their own.
+give item %(signet)d
+give exp 1900
+give gold 1900
+set quest 2 2
+keep
+end
+when give %(ledger)d
+answer I have my ledger already, %%s. Keep that copy as a souvenir.
+end
+when near
+if quest 2 = 0
+if rank >= 5
+answer Oh, %%s, thank Skua! Bandits took my wagon on the east road, and my ledger with it. Their Quartermaster has it - bring it back and I'll make it worth your while!
+set quest 2 1
+end
+when near
+if quest 2 = 1
+answer Any sign of my ledger, %%s? The Bandit Quartermaster keeps it in his storehouse.
+end
+when say quest|task|job|work|ledger|wagon
+if quest 2 < 2
+answer The bandits' Quartermaster has my ledger, %%s. He keeps a storehouse in their camp down the east road.
+set quest 2 1
+end
+
+npc %(W)d Wynn (Moonwort)
+when give %(moonwort)d
+if quest 3 < 2
+answer My moonwort! Now it'll cure, not kill. Take these, %%s - a draught of Second Wind each, brewed with the last of my old harvest.
+give item %(second)d
+give item %(second)d
+give item %(second)d
+give exp 1900
+give gold 1900
+set quest 3 2
+keep
+end
+when give %(moonwort)d
+answer I've all the moonwort I need now, %%s. Thank you.
+end
+when near
+if quest 3 = 0
+if rank >= 5
+answer Welcome, %%s. The bandits poison their blades with moonwort - their Poisoner stole my whole harvest. Will you get it back for me?
+set quest 3 1
+end
+when near
+if quest 3 = 1
+answer The Poisoner has his hut inside the bandit camp, %%s. Bring my moonwort back.
+end
+when say quest|task|job|work|moonwort|herb*|poison*
+if quest 3 < 2
+answer The bandits' Poisoner took my moonwort, %%s. His hut is inside their camp, down the road.
+set quest 3 1
+end
+""" % dict(M, H=H, T=T, W=W))
