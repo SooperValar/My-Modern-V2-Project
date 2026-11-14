@@ -2326,6 +2326,7 @@ int use_seyan_portal(int cn,int in)
                 do_char_log(cn,0,"You're already Seyan'Du, aren't you?\n");
         } else {
                 do_char_log(cn,0,"The Seyan'Du welcome you among their ranks, %s!\n",ch[cn].name);
+                { char msg[100]; sprintf(msg,"Hear ye, hear ye! %s has become a Seyan'Du!",ch[cn].name); herald_shout(cn,msg); }	// MyV2
                 if (ch[cn].kindred&KIN_MALE) god_racechange(cn,13);
                 else god_racechange(cn,79);
 
@@ -2626,6 +2627,7 @@ void change_to_archtemplar(int cn)
         else god_minor_racechange(cn,549);
 
         do_char_log(cn,1,"You are truly worthy to become a Archtemplar. Congratulations, %s.\n",ch[cn].name);
+        { char msg[100]; sprintf(msg,"Hear ye, hear ye! %s has become an Arch-Templar!",ch[cn].name); herald_shout(cn,msg); }	// MyV2
 }
 
 void change_to_archharakim(int cn)
@@ -2643,6 +2645,7 @@ void change_to_archharakim(int cn)
         else god_minor_racechange(cn,550);
 
         do_char_log(cn,1,"You are truly worthy to become a Archharakim. Congratulations, %s.\n",ch[cn].name);
+        { char msg[100]; sprintf(msg,"Hear ye, hear ye! %s has become an Arch-Harakim!",ch[cn].name); herald_shout(cn,msg); }	// MyV2
 }
 
 void change_to_warrior(int cn)
@@ -2660,6 +2663,7 @@ void change_to_warrior(int cn)
         else god_minor_racechange(cn,552);
 
         do_char_log(cn,1,"You are truly worthy to become a Warrior. Congratulations, %s.\n",ch[cn].name);
+        { char msg[100]; sprintf(msg,"Hear ye, hear ye! %s has become a Warrior!",ch[cn].name); herald_shout(cn,msg); }	// MyV2
 }
 
 void change_to_sorcerer(int cn)
@@ -2677,6 +2681,7 @@ void change_to_sorcerer(int cn)
         else god_minor_racechange(cn,551);
 
         do_char_log(cn,1,"You are truly worthy to become a Sorcerer. Congratulations, %s.\n",ch[cn].name);
+        { char msg[100]; sprintf(msg,"Hear ye, hear ye! %s has become a Sorcerer!",ch[cn].name); herald_shout(cn,msg); }	// MyV2
 }
 
 int shrine_of_change(int cn,int in)

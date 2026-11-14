@@ -328,6 +328,7 @@ void really_update_char(int cn);
 void use_driver(int cn,int in,int worn);
 void discord_feed(char kind,char *format,...);
 void show_moon(int cn);
+void herald_shout(int cn,char *message);
 void do_rank(int cn);
 void do_ranks(int cn);
 int discord_feed_read(int since,void (*put)(int,char,char*));

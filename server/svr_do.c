@@ -573,6 +573,7 @@ void do_shout(int cn,char *text)
 
         if (ch[cn].flags&(CF_PLAYER)) chlog(cn,"Shouts \"%s\"",text);
         if ((ch[cn].flags&CF_PLAYER) && !(ch[cn].flags&CF_INVISIBLE)) discord_feed('C',"%.30s: %.200s",ch[cn].name,text);     // MyV2: to Discord #game-chat
+        else if (!(ch[cn].flags&(CF_PLAYER|CF_USURP))) discord_feed('S',"%.30s: %.200s",ch[cn].name,text);    // an NPC's shout (the guard's "Hear ye") to #system
 
 }
 
@@ -1901,6 +1902,18 @@ static char *commas(int v,char *buf)	// 1234567 -> "1,234,567"
 	sprintf(t,"%d",v); l=strlen(t);
 	for (i=0; i<l; i++) { buf[o++]=t[i]; if (t[i]!='-' && (l-i-1)%3==0 && i<l-1) buf[o++]=','; }
 	buf[o]=0; return buf;
+}
+
+/* the guard (a priest for purple players) shouts it to everyone, as for a new rank (CS, 991203); MyV2: also for arching */
+void herald_shout(int cn,char *message)
+{
+        int n,temp=(ch[cn].kindred & KIN_PURPLE) ? CT_PRIEST : CT_LGUARD;
+        for (n=1; n<MAXCHARS; n++) {
+                if (ch[n].used!=USE_ACTIVE) continue;
+                if (ch[n].flags&CF_BODY) continue;
+                if (ch[n].temp == temp) break;
+        }
+        if (n<MAXCHARS) do_shout(n, message);
 }
 
 void do_rank(int cn)
@@ -5611,7 +5624,7 @@ int may_attack_msg(int cn, int co, int msg)
 
 void do_check_new_level(int cn)
 {
-        int hp=0,end=0,mana=0,diff,rank,temp,n;
+        int hp=0,end=0,mana=0,diff,rank;
 
         if (!IS_PLAYER(cn)) return;
 
@@ -5637,19 +5650,11 @@ void do_check_new_level(int cn)
                 else do_char_log(cn,0,"You rose %d levels! Congratulations! You received %d hitpoints, %d endurance and %d mana.\n",
                                 diff,hp*diff,end*diff,mana*diff);
                 /* CS, 991203: Announce the player's new rank */
-                temp = (ch[cn].kindred & KIN_PURPLE) ? CT_PRIEST : CT_LGUARD;
-                // Find a character with appropriate template
-                for (n=1; n<MAXCHARS; n++) {
-                        if (ch[n].used!=USE_ACTIVE) continue;
-                        if (ch[n].flags&CF_BODY) continue;
-                        if (ch[n].temp == temp) break;
-                }
-                // Have him yell it out
-                if (n<MAXCHARS) {
+                {
                         char message[100];
                         sprintf(message, "Hear ye, hear ye! %s has attained the rank of %s!",
                                 ch[cn].name, rank_name[rank]);
-                        do_shout(n, message);
+                        herald_shout(cn, message);
                 }
 
                 ch[cn].hp[1]=hp*rank;
