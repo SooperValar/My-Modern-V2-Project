@@ -58,7 +58,7 @@ Getting the original client to run on modern Windows. The original `merc.exe` wo
 - **Out-of-date clients**: a player whose client is older than the newest published one (`CLIENT_LATEST` in `gendefs.h`) is told in red on every login: "Your game is out of date (version 2.15.01, the newest is 2.15.02). Please close it and start the game with Launcher.exe: it updates the game for you." A client too old to play at all (below `MINVERSION`) is refused at login; from client 2.15.02 on its login window then says "Game too old: start it with Launcher.exe to update." (older clients say their own "Client version too old. Update needed."). When a new client is published, raise `CLIENT_LATEST` to its version.
 - **Player zip**: the "MyV2 Astonia" folder with the launcher, the game, its graphics and sounds, and `README.txt` (`client/package/`): start with Launcher.exe, the Windows warning, making a character, saving it as a .moa, updates, problems.
 
-**More sprite numbers (client 2.15.06, Nov 12; not published yet):** the client could only show sprites up to 34,767
+**More sprite numbers (client 2.15.06, Nov 12; published Nov 13 with the world sprites, `MINVERSION` 2.15.06):** the client could only show sprites up to 34,767
 (`MAXSPRITE` = 2000+32*1024 in `client/inter.h`); now every 16-bit number, 0-65,535 (`MAXSPRITE` 65536), the most the
 server can send. Map, item and inventory sprites are read as unsigned (`common.h` `ba_sprite` / `it_sprite`, `socket.c`
 inventory / worn / spells / hand), and every sprite drawing / loading function in `dd.c` refuses a number outside the
