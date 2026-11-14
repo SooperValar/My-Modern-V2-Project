@@ -205,7 +205,7 @@ New sprites above 34,767 need client 2.15.06 or later: raise `MINVERSION` when t
 
 **Nov 13, evening:** new doors live (templates 1440-1456, Seyan'Du Door other facing 1456); the server with unsigned
 item sprites is live too. World sprites so far (all in `Client\GFX`, NOT published yet): grounds + desert 35000-35549,
-walls 36000-36077, doors 36500-36581, floors 37000-37067, cacti 38000-38006, arches 36400-36409 (v2 + smooth; saved copies in tools/sprites/art/arches_v2, arches_light; published Nov 14) (CHANGES.md "New ground (world sprites)").
+walls 36000-36077, doors 36500-36581, floors 37000-37067, cacti 38000-38006, trees 38100-38167 (not published yet), arches 36400-36409 (v2 + smooth; saved copies in tools/sprites/art/arches_v2, arches_light; published Nov 14) (CHANGES.md "New ground (world sprites)").
 PUBLISHED Nov 14: client-dist 03db219 (2.15.06 + arches 36400-36409; Cody pushes `client-dist`). Before: Nov 13 late: client-dist 185dc94 (client 2.15.06 + 511 world sprites; Cody pushes `client-dist`);
 `MINVERSION` and `CLIENT_LATEST` 0x020F06 in both server folders (live after the next update-code).
 

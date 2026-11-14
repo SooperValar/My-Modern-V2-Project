@@ -1318,6 +1318,10 @@ function leftUI() {
         const pl = pal.plants.filter(p => match(p[1], p[0]));
         if (pl.length) { sect('New plants · drawn into the tile (block walking)'); const g = grid(); pl.forEach(p => g.appendChild(cellPlant(p))); }
       }
+      if (tab === 'objects' && pal.trees && pal.trees.length) {   // new trees: one cell a kind, paints one of its 4 at random
+        const tr = pal.trees.filter(p => match(p[1], p[0]) || p[3].some(v => String(v) === q));
+        if (tr.length) { sect('New trees · each paints one of its 4 at random (drawn into the tile)'); const g = grid(); tr.forEach(p => g.appendChild(cellPlant(p))); }
+      }
       if (tab === 'objects' && pal.arches) {   // stone arches as wide as you like
         const ar = pal.arches.filter(p => match(p[1], p[0]));
         if (ar.length) { sect('Arches · wider: put N bridges on the tiles right after the first half, and the second half N tiles further (4 + N)'); const g = grid(); ar.forEach(p => g.appendChild(cellPlant(p))); }

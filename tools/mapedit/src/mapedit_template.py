@@ -187,6 +187,19 @@ WORLD_ARCHES = [[942, 'Arch ↘ first half', 1], [36401, 'Arch ↘ bridge', 0], 
                 # the 'light' look: specks out, grain softer
                 [36404, 'Smooth arch ↘ first half', 1], [36406, 'Smooth arch ↘ bridge', 0], [36405, 'Smooth arch ↘ second half (4 tiles ↘)', 1],
                 [36407, 'Smooth arch ↗ first half', 1], [36408, 'Smooth arch ↗ bridge', 0], [36409, 'Smooth arch ↗ second half (4 tiles ↗)', 1]]
+# new trees (tools/sprites/world_trees.py): one cell a kind paints one of its 4 at random; blocks like the game's trees
+WORLD_TREES = [
+    [38100, 'Autumn tree (orange)', 3, [38100, 38101, 38102, 38103]],
+    [38104, 'Autumn tree (red)', 3, [38104, 38105, 38106, 38107]],
+    [38108, 'Autumn tree (yellow)', 3, [38108, 38109, 38110, 38111]],
+    [38120, 'Blossom tree', 3, [38120, 38121, 38122, 38123]],
+    [38130, 'Birch', 3, [38130, 38131, 38132, 38133]],
+    [38140, 'Willow', 3, [38140, 38141, 38142, 38143]],
+    [38150, 'Pine', 3, [38150, 38151, 38152, 38153]],
+    [38154, 'Snowy pine', 3, [38154, 38155, 38156, 38157]],
+    [38160, 'Dead tree', 1, [38160, 38161, 38162, 38163]],
+    [38164, 'Stump / log', 1, [38164, 38165, 38166, 38167]],
+]
 WG_PLAIN = {s: n for n, g in WORLD_GROUND['sets'].items() for s in g['plain']}
 WG_EDGE = {s for g in WORLD_GROUND['sets'].values() for s in g['edges'].values()}
 WG_GRASS = set(WORLD_GROUND['grass'])
@@ -577,6 +590,9 @@ BUILTIN_AREAS = [
     {"name": "Pale Desert", "floors": [[35200, 25.0], [35201, 25.0], [35202, 25.0], [35203, 25.0]], "scatter": [{"k": "o", "s": 38000, "b": 1, "p": 0.0032}, {"k": "o", "s": 38001, "b": 1, "p": 0.0024}, {"k": "o", "s": 38002, "b": 1, "p": 0.0024}, {"k": "o", "s": 38003, "b": 1, "p": 0.0016}, {"k": "o", "s": 38004, "b": 1, "p": 0.0032}, {"k": "o", "s": 38005, "b": 1, "p": 0.004}, {"k": "o", "s": 38006, "b": 1, "p": 0.0032}], "apart": True},
     {"name": "Desert Dunes", "floors": [[35300, 25.0], [35301, 25.0], [35302, 25.0], [35303, 25.0]], "scatter": [{"k": "o", "s": 38000, "b": 1, "p": 0.0016}, {"k": "o", "s": 38001, "b": 1, "p": 0.0012}, {"k": "o", "s": 38002, "b": 1, "p": 0.0012}, {"k": "o", "s": 38003, "b": 1, "p": 0.0008}, {"k": "o", "s": 38004, "b": 1, "p": 0.0016}, {"k": "o", "s": 38005, "b": 1, "p": 0.002}, {"k": "o", "s": 38006, "b": 1, "p": 0.0016}], "apart": True},
     {"name": "Red Desert", "floors": [[35350, 25.0], [35351, 25.0], [35352, 25.0], [35353, 25.0]], "scatter": [{"k": "o", "s": 38000, "b": 1, "p": 0.004}, {"k": "o", "s": 38001, "b": 1, "p": 0.003}, {"k": "o", "s": 38002, "b": 1, "p": 0.003}, {"k": "o", "s": 38003, "b": 1, "p": 0.002}, {"k": "o", "s": 38004, "b": 1, "p": 0.004}, {"k": "o", "s": 38005, "b": 1, "p": 0.005}, {"k": "o", "s": 38006, "b": 1, "p": 0.004}], "apart": True},
+    {"name": "Autumn Forest", "floors": [[1118, 100.0]], "scatter": [{"k": "o", "s": 38100, "b": 3, "p": 0.0035}, {"k": "o", "s": 38101, "b": 3, "p": 0.0035}, {"k": "o", "s": 38102, "b": 3, "p": 0.0035}, {"k": "o", "s": 38103, "b": 3, "p": 0.0035}, {"k": "o", "s": 38104, "b": 3, "p": 0.0035}, {"k": "o", "s": 38105, "b": 3, "p": 0.0035}, {"k": "o", "s": 38106, "b": 3, "p": 0.0035}, {"k": "o", "s": 38107, "b": 3, "p": 0.0035}, {"k": "o", "s": 38108, "b": 3, "p": 0.0035}, {"k": "o", "s": 38109, "b": 3, "p": 0.0035}, {"k": "o", "s": 38110, "b": 3, "p": 0.0035}, {"k": "o", "s": 38111, "b": 3, "p": 0.0035}, {"k": "o", "s": 1114, "b": 3, "p": 0.004}, {"k": "o", "s": 1112, "b": 3, "p": 0.004}, {"k": "o", "s": 38130, "b": 3, "p": 0.002}, {"k": "o", "s": 38131, "b": 3, "p": 0.002}], "apart": True, "from": [0, 0, 0, 0]},
+    {"name": "Pine Forest", "floors": [[1118, 100.0]], "scatter": [{"k": "o", "s": 38150, "b": 3, "p": 0.012}, {"k": "o", "s": 38151, "b": 3, "p": 0.012}, {"k": "o", "s": 38152, "b": 3, "p": 0.012}, {"k": "o", "s": 38153, "b": 3, "p": 0.012}, {"k": "o", "s": 38164, "b": 1, "p": 0.001}, {"k": "o", "s": 38166, "b": 1, "p": 0.001}], "apart": True, "from": [0, 0, 0, 0]},
+    {"name": "Snowy Forest", "floors": [[16670, 25.0], [16671, 25.0], [16672, 25.0], [16673, 25.0]], "scatter": [{"k": "o", "s": 38154, "b": 3, "p": 0.012}, {"k": "o", "s": 38155, "b": 3, "p": 0.012}, {"k": "o", "s": 38156, "b": 3, "p": 0.012}, {"k": "o", "s": 38157, "b": 3, "p": 0.012}, {"k": "o", "s": 38160, "b": 1, "p": 0.001}, {"k": "o", "s": 38161, "b": 1, "p": 0.001}], "apart": True, "from": [0, 0, 0, 0]},
     {"name":"City Park","floors":[[553,22.2],[551,18.6],[554,17.5],[552,17.4]],"scatter":[{"k":"o","s":1114,"b":3,"p":0.00985},
     {"k":"o","s":1238,"b":3,"p":0.00923},
     {"k":"o","s":1112,"b":3,"p":0.00862},
@@ -1136,7 +1152,7 @@ class World:
         return {'floors': fl_sorted, 'objects': ob_sorted, 'templates': temps, 'flags': MF, 'sets': FLOOR_SETS,
                 'ground': [[n, g['plain'][0]] for n, g in WORLD_GROUND['sets'].items()],
                 'wg': {'grass': WORLD_GROUND['grass'], 'order': WG_ORDER, 'sets': WORLD_GROUND['sets']},
-                'plants': WORLD_PLANTS, 'arches': WORLD_ARCHES,
+                'plants': WORLD_PLANTS, 'arches': WORLD_ARCHES, 'trees': WORLD_TREES,
                 'newwalls': WORLD_WALLS,
                 'newfloors': WORLD_FLOORS,
                 'npcs': self.npc_templates()}

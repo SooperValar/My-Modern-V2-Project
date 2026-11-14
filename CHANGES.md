@@ -474,6 +474,20 @@ brush paints them at random) and **soft edges into grass**:
 - The edge table is `tools/sprites/world_ground.json` (also built into the editor as `WORLD_GROUND`): re-run
   `world_ground.py <Client folder>` after changing the look, then rebuild the table into `mapedit_template.py`.
 
+## New trees (Nov 14)
+
+40 trees in the game's style, 4 of each kind in mixed sizes (32x64, 32x96, 64x96), sprites 38100-38167
+(`tools/sprites/world_trees.py`; copies in `tools/sprites/art/trees_v1`):
+- **Autumn** orange 38100-38103, red 38104-38107, yellow 38108-38111; **Blossom** 38120-38123; **Birch** 38130-38133
+  (white bark): the game's own four tree shapes (round, cone, tall, big) with the leaves recoloured.
+- **Willow** 38140-38143 (the crown thins into hanging curtains), **Pine** 38150-38153, **Snowy pine** 38154-38157
+  (top layer white all over, each layer below whitening from the bottom up, ragged lower edges; its layers stack bottom
+  first), **Dead tree** 38160-38163, **Stumps and a log** 38164-38167.
+
+Editor, Objects tab: **New trees**, one cell a kind that paints one of its 4 at random (they block like the game's
+trees; dead trees and stumps block walking only). New area brushes: **Autumn Forest**, **Pine Forest**, **Snowy Forest**
+(on the Winter area's snow floor 16670-16673). Sprites in `Client\GFX`, not published yet.
+
 ## Wider arches (Nov 14)
 
 Stone arches as wide as you like. An arch is two halves, the second **4 tiles** from the first:
