@@ -228,6 +228,14 @@ static void con_cmd(char *line)
 		out("  used\n");
 		return;
 	}
+	if (!strcmp(w[0],"usexy")) {	// usexy <player> <x> <y>: the player uses the item on that spot (tests)
+		int x=atoi(w[2]),y=atoi(w[3]),l0,in;
+		if (!(co=con_player(w[1]))) return;
+		if (x<1 || x>=MAPX-1 || y<1 || y>=MAPY-1 || !(in=map[x+y*MAPX].it)) { out("  No item there.\n"); return; }
+		l0=ch[co].luck; use_driver(co,in,0);
+		out("  used %s (driver %d): luck %d -> %d\n",it[in].name,it[in].driver,l0,ch[co].luck);
+		return;
+	}
 	if (!strcmp(w[0],"kqkill")) {	// kqkill <player> <NPC template>: as if the player killed one (kill quests)
 		if (!(co=con_player(w[1]))) return;
 		talk_set_echo(con_echo);
@@ -474,6 +482,7 @@ static void con_cmd(char *line)
 		    "  talkmoney <npc template> <player> <silver>   try handing money over\n"
 		    "  questgive <player> <npc template>         hand that NPC the item it wants\n"
 		    "  cleartest <player> <npc template>         as if the player killed it (area clears)\n"
+		    "  usexy <player> <x> <y>                    the player uses the item on that spot (tests)\n"
 		    "  kqkill <player> <npc template>            as if the player killed it (kill quests)\n"
 		    "  kills <player>                            the player's #kills\n"
 		    "  kqtime <player> <minutes>                 kill quests: as if taken / handed in that much earlier\n"

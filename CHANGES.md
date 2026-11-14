@@ -545,6 +545,12 @@ the tile panel (only the Copy tool copies a placed piece with its settings):
 - a **sign** named "Sign" with no text (the tile panel opens with its description ready to type);
 - an exploration point with a new number of its own.
 Esc leaves a pick for later. Pasting a lever together with what it works makes the copy work the pasted one.
+**Exploration points: up to 1024** (was 128). Points 0-127 work as in the original (a bit in data 0-3, players
+remember them in character data 46-49); points 128-1023 have data 0-3 = 0 and their number in data 5, and players
+remember those in `.dat/explore.dat` (a row per character: its creation date, then 1024 bits; `use_driver.c`
+`explorer_point`). The editor hands out numbers past 127 once the first 128 are used, and shows "Point number N of 1024".
+Console test: `usexy <player> <x> <y>` (the player uses the item on that spot).
+
 Pasting with the Copy tool makes new copies too (editing one changes only it). A paste with exploration points asks:
 **a new point** (its own number: players get experience for it as well as for the original; the usual) or **the same
 point** (one point in two places, e.g. behind two different choices: whoever found one gets nothing from the other). **Show every version** (a tick box above the list, remembered)

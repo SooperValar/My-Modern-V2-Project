@@ -1160,19 +1160,41 @@ class World:
                 'npcs': self.npc_templates()}
 
     # --- editing: every change remembers the old bytes so a batch can be undone
+    EXPLORE_MAX = 1024      # MyV2: points 0-127 are bits in data 0-3 (the original); 128-1023 have their number in data 5
+
+    def _explore_nr(self, o):
+        """the point number of the exploration point at item offset o, or None"""
+        v = [struct.unpack_from('<I', self.item, o + I_DATA + 4 * k)[0] for k in range(6)]
+        for k in range(4):
+            for j in range(32):
+                if v[k] >> j & 1:
+                    return k * 32 + j
+        return v[5] if 128 <= v[5] < self.EXPLORE_MAX else None
+
     def _free_explore_bit(self, skip):
-        """the lowest exploration point number (0-127: a bit in data 0-3; players remember found ones in ch data 46-49)
-        no other point in the world uses"""
-        used = 0
+        """the lowest exploration point number (0-1023) no other point in the world uses"""
+        used = set()
         for i in range(1, MAXITEM):
             o = i * ITEM_SIZE
             if i != skip and self.item[o + I_USED] and self.item[o + I_DRIVER] == 57:
                 for k in range(4):
-                    used |= struct.unpack_from('<I', self.item, o + I_DATA + 4 * k)[0] << (32 * k)
-        for b in range(128):
-            if not used >> b & 1:
-                return b
+                    w = struct.unpack_from('<I', self.item, o + I_DATA + 4 * k)[0]
+                    for j in range(32):
+                        if w >> j & 1:
+                            used.add(k * 32 + j)
+                v5 = struct.unpack_from('<I', self.item, o + I_DATA + 20)[0]
+                if 128 <= v5 < self.EXPLORE_MAX:
+                    used.add(v5)
+        for b_ in range(self.EXPLORE_MAX):
+            if b_ not in used:
+                return b_
         return None
+
+    def _set_explore(self, o, nr):
+        """give the exploration point at item offset o the number nr"""
+        for k in range(4):
+            struct.pack_into('<I', self.item, o + I_DATA + 4 * k, (1 << (nr % 32)) if nr < 128 and nr // 32 == k else 0)
+        struct.pack_into('<I', self.item, o + I_DATA + 20, nr if nr >= 128 else 0)
 
     def _autoedge(self, rec):
         """new grounds (WORLD_GROUND): the grass tiles around tiles whose floor changed get the right soft-edge tile
@@ -2075,10 +2097,9 @@ class World:
                     if self.item[o + I_DRIVER] == 57 and poles != 'same':   # an exploration point: a number of its own (Cody),
                         bit = self._free_explore_bit(i)                        # unless asked to keep the same point
                         if bit is None:
-                            msgs.append('all 128 exploration point numbers are in use: the pasted one is the same point as the original')
+                            msgs.append('all 1024 exploration point numbers are in use: the pasted one is the same point as the original')
                         else:
-                            for k in range(4):
-                                struct.pack_into('<I', self.item, o + I_DATA + 4 * k, (1 << (bit % 32)) if bit // 32 == k else 0)
+                            self._set_explore(o, bit)
                     if self.item[o + I_DRIVER] == 19 and cl.get('from'):    # a lever working something copied with it: the copy
                         m = struct.unpack_from('<I', self.item, o + I_DATA)[0]   # works the pasted one
                         fx, fy = cl['from']; lx, ly = m % MAPX - fx, m // MAPX - fy
@@ -2357,13 +2378,12 @@ class World:
                         struct.pack_into('<H', self.item, o + I_TEMP, tp)
                         struct.pack_into('<hhH', self.item, o + I_X, x, y, 0)
                         struct.pack_into('<i', self.item, o + I_ACTIVE, 0)
-                        if self.item[o + I_DRIVER] == 57:     # an exploration point needs a bit of its own (data 0-3, 128 in all)
+                        if self.item[o + I_DRIVER] == 57:     # an exploration point needs a number of its own (0-1023)
                             bit = self._free_explore_bit(i)
                             if bit is None:
-                                msgs.append('all 128 exploration point numbers are in use: this one counts as an existing one')
+                                msgs.append('all 1024 exploration point numbers are in use: this one counts as an existing one')
                             else:
-                                for k in range(4):
-                                    struct.pack_into('<I', self.item, o + I_DATA + 4 * k, (1 << (bit % 32)) if bit // 32 == k else 0)
+                                self._set_explore(o, bit)
                         if op.get('fresh'):       # the builder's one-of-each-look list: start clean, nothing from another placed copy
                             drv = self.item[o + I_DRIVER]
                             clear = {2: 4, 20: 4, 6: 3, 16: 2, 19: 1, 42: 10}.get(drv, 0)   # door (2, 20): key, locked, pick difficulty, key vanishes;
@@ -5888,7 +5908,8 @@ function itemEditor(el, r, x, y, ro) {
       xh.textContent = `Gives ${f(n / 2)} to ${f(n * 1.5)} exp (about ${f(n)}), once per character, and +10 luck. Never more than 10% of the player's total experience (plus up to 10% more), so the whole amount needs about ${f(n * 10)} total exp; looking at it, players under ${f(n * 5)} are told it's too early (under ${f(n * 7)}: a bit early).`; };
     xp.value = it.data[4]; show();
     { let nr = -1; for (let k = 0; k < 4; k++) for (let j = 0; j < 32; j++) if ((it.data[k] >>> j) & 1) nr = k * 32 + j;
-      xh.insertAdjacentText('beforeend', nr >= 0 ? ` Point number ${nr} of 128 (each point has its own; a new one placed from the builder gets a free number).` : ''); }
+      if (nr < 0 && it.data[5] >= 128) nr = it.data[5];      // MyV2: points 128-1023 keep their number in data 5
+      xh.insertAdjacentText('beforeend', nr >= 0 ? ` Point number ${nr} of 1024 (each point has its own; a new one placed from the builder gets a free number).` : ' No point number yet: it gives nothing.'); }
     xp.oninput = () => { d4.value = Math.max(0, +xp.value || 0); show(); };
     d4.addEventListener('input', () => { xp.value = d4.value; show(); });
   }

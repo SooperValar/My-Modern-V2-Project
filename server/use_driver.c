@@ -9,6 +9,8 @@ All rights reserved.
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
+#include <fcntl.h>
 
 #include "server.h"
 #include "funcs.h"
@@ -2710,18 +2712,58 @@ int shrine_of_change(int cn,int in)
         return 0;
 }
 
+/* MyV2: exploration points past the original 128. Points 0-127 are bits in data 0-3 (players remember them in
+ * ch data 46-49, as in the original); a point numbered 128-1023 has data 0-3 = 0 and its number in data 5, and
+ * players remember those in .dat/explore.dat: a row per character (its creation date, then 1024 bits). */
+#define EXP_FILE        DATDIR"/explore.dat"
+#define EXP_MAX         1024
+#define EXP_HDR         16
+struct exprow { int stamp; unsigned char bit[EXP_MAX/8]; };
+static int expfd=-2;
+
+static void exp_row(int cn,struct exprow *r,int write_it)
+{
+        char hdr[EXP_HDR];
+        if (expfd==-2) {
+                expfd=open(EXP_FILE,O_RDWR|O_CREAT,0600);
+                if (expfd<0) xlog("cannot open %s",EXP_FILE);
+                else if (pread(expfd,hdr,EXP_HDR,0)!=EXP_HDR || memcmp(hdr,"MYV2EX01",8)) {
+                        memset(hdr,0,EXP_HDR); memcpy(hdr,"MYV2EX01",8); *(int*)(hdr+8)=EXP_MAX;
+                        if (pwrite(expfd,hdr,EXP_HDR,0)!=EXP_HDR) xlog("cannot write %s",EXP_FILE);
+                }
+        }
+        if (expfd<0) { if (!write_it) memset(r,0,sizeof(*r)); return; }
+        if (write_it) {
+                if (pwrite(expfd,r,sizeof(*r),EXP_HDR+(off_t)cn*sizeof(*r))!=sizeof(*r)) xlog("cannot write %s",EXP_FILE);
+                return;
+        }
+        if (pread(expfd,r,sizeof(*r),EXP_HDR+(off_t)cn*sizeof(*r))!=sizeof(*r)) memset(r,0,sizeof(*r));
+        if (r->stamp!=ch[cn].creation_date) { memset(r,0,sizeof(*r)); r->stamp=ch[cn].creation_date; }       // a new character in that slot
+}
+
 int explorer_point(int cn,int in)
 {
-        int exp;
+        int exp,nr=0,found;
+        struct exprow r;
 
-        if (!(ch[cn].data[46]&it[in].data[0]) && !(ch[cn].data[47]&it[in].data[1]) &&
-            !(ch[cn].data[48]&it[in].data[2]) && !(ch[cn].data[49]&it[in].data[3])) {
+        if (!it[in].data[0] && !it[in].data[1] && !it[in].data[2] && !it[in].data[3]) {     // MyV2: a point past 127
+                nr=it[in].data[5];
+                if (nr<128 || nr>=EXP_MAX) return 1;            // not set up
+                exp_row(cn,&r,0);
+                found=(r.bit[nr>>3]>>(nr&7))&1;
+                if (!found) { r.bit[nr>>3]|=1<<(nr&7); exp_row(cn,&r,1); }
+        } else {
+                found=(ch[cn].data[46]&it[in].data[0]) || (ch[cn].data[47]&it[in].data[1]) ||
+                      (ch[cn].data[48]&it[in].data[2]) || (ch[cn].data[49]&it[in].data[3]);
+                if (!found) {
+                        ch[cn].data[46]|=it[in].data[0];
+                        ch[cn].data[47]|=it[in].data[1];
+                        ch[cn].data[48]|=it[in].data[2];
+                        ch[cn].data[49]|=it[in].data[3];
+                }
+        }
 
-                ch[cn].data[46]|=it[in].data[0];
-                ch[cn].data[47]|=it[in].data[1];
-                ch[cn].data[48]|=it[in].data[2];
-                ch[cn].data[49]|=it[in].data[3];
-
+        if (!found) {
                 do_char_log(cn,0,"You found a new exploration point!\n");
                 ch[cn].luck+=10;
 
@@ -2729,7 +2771,7 @@ int explorer_point(int cn,int in)
                 exp=min(ch[cn].points_tot/10,exp);              // not more than 10% of total experience
                 exp+=RANDOM(exp/10+1);                          // some more randomness (needs +1 to avoid division by zero)
 
-                xlog("exp point giving %d (%d) exp, char has %d exp",exp,it[in].data[4],ch[cn].points_tot);
+                xlog("exp point %d giving %d (%d) exp, char has %d exp",nr,exp,it[in].data[4],ch[cn].points_tot);
                 do_give_exp(cn,exp,0,-1);
 
         } else do_char_log(cn,1,"Hmm. Seems somewhat familiar. You've been here before...\n");

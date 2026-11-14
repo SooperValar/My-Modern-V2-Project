@@ -2372,7 +2372,8 @@ function itemEditor(el, r, x, y, ro) {
       xh.textContent = `Gives ${f(n / 2)} to ${f(n * 1.5)} exp (about ${f(n)}), once per character, and +10 luck. Never more than 10% of the player's total experience (plus up to 10% more), so the whole amount needs about ${f(n * 10)} total exp; looking at it, players under ${f(n * 5)} are told it's too early (under ${f(n * 7)}: a bit early).`; };
     xp.value = it.data[4]; show();
     { let nr = -1; for (let k = 0; k < 4; k++) for (let j = 0; j < 32; j++) if ((it.data[k] >>> j) & 1) nr = k * 32 + j;
-      xh.insertAdjacentText('beforeend', nr >= 0 ? ` Point number ${nr} of 128 (each point has its own; a new one placed from the builder gets a free number).` : ''); }
+      if (nr < 0 && it.data[5] >= 128) nr = it.data[5];      // MyV2: points 128-1023 keep their number in data 5
+      xh.insertAdjacentText('beforeend', nr >= 0 ? ` Point number ${nr} of 1024 (each point has its own; a new one placed from the builder gets a free number).` : ' No point number yet: it gives nothing.'); }
     xp.oninput = () => { d4.value = Math.max(0, +xp.value || 0); show(); };
     d4.addEventListener('input', () => { xp.value = d4.value; show(); });
   }
