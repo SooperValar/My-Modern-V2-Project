@@ -474,6 +474,23 @@ brush paints them at random) and **soft edges into grass**:
 - The edge table is `tools/sprites/world_ground.json` (also built into the editor as `WORLD_GROUND`): re-run
   `world_ground.py <Client folder>` after changing the look, then rebuild the table into `mapedit_template.py`.
 
+## One of each look in the builder (Nov 13)
+
+Many item templates look the same and differ only in their settings (each locked door its own key, each portal its own
+destination, each exploration point its own number): the Walls and Objects tabs now show **one of each look** (same
+pictures, driver, blocking and kind), named without "Locked" / "Unlocked" and trailing numbers, with a **×N** badge
+(e.g. Door ×19, Exploration Point ×83). 831 object templates show as 383. The one placed is the most used version without
+a key of its own (doors), so a new door starts unlocked. **Show every version** (a tick box above the list, remembered)
+or searching a template number lists them all again. The Items tab is never grouped (keys open doors by their own template).
+
+The placed piece gets its own settings in the tile panel (they are the item's own data, not the template's):
+- **Doors** (driver 2): "Door · lock": no lock / locked with a key (pick the key item), locked when the game starts,
+  lock-picking difficulty (0 = can't be picked), the key vanishes when used; a special game-code lock (data 0 ≥ 65500,
+  e.g. the Black Stronghold coins) is shown and left alone.
+- **Exploration points** (driver 57): placing one gives it a free point number of its own (a bit in data 0-3, 128 in
+  all; players remember found points by it), so it counts as a new point; the panel shows the number.
+- Portals already had "Leads to" / "Pick on map".
+
 ## Server manager
 
 The **Server** page (rail: Server):

@@ -1103,6 +1103,12 @@ class World:
                 if fs:
                     objs[fs] = objs.get(fs, 0) + 1
             temps = []
+            placed = {}       # how many of each template lie in the world (the builder shows the most used version of a look)
+            iv = memoryview(self.item)
+            for i in range(1, MAXITEM):
+                if iv[i * ITEM_SIZE + I_USED]:
+                    tp = struct.unpack_from('<H', iv, i * ITEM_SIZE + I_TEMP)[0]
+                    placed[tp] = placed.get(tp, 0) + 1
             for t in range(1, MAXTITEM):
                 o = t * ITEM_SIZE
                 if not self.titem[o + I_USED]:
@@ -1113,7 +1119,10 @@ class World:
                               1 if fl & IF_TAKE else 0, self.titem[o + I_DRIVER],
                               (1 if fl & IF_MOVEBLOCK else 0) | (2 if fl & IF_SIGHTBLOCK else 0),
                               1 if fl & (IF_TAKE | IF_LOOK | IF_LOOKSPECIAL | IF_USE | IF_USESPECIAL) else 0,
-                              struct.unpack_from('<H', self.titem, o + I_PLACEMENT)[0], weapon_skill(fl)])
+                              struct.unpack_from('<H', self.titem, o + I_PLACEMENT)[0], weapon_skill(fl),
+                              # 9: second sprite (open door, lit lamp...), 10: how many in the world, 11: data[0] (a door's key)
+                              struct.unpack_from('<H', self.titem, o + I_SPRITE + 2)[0], placed.get(t, 0),
+                              struct.unpack_from('<i', self.titem, o + I_DATA)[0]])
         fl_sorted = sorted(floors.items(), key=lambda a: -a[1])
         ob_sorted = sorted(objs.items(), key=lambda a: -a[1])
         return {'floors': fl_sorted, 'objects': ob_sorted, 'templates': temps, 'flags': MF, 'sets': FLOOR_SETS,
@@ -1125,6 +1134,20 @@ class World:
                 'npcs': self.npc_templates()}
 
     # --- editing: every change remembers the old bytes so a batch can be undone
+    def _free_explore_bit(self, skip):
+        """the lowest exploration point number (0-127: a bit in data 0-3; players remember found ones in ch data 46-49)
+        no other point in the world uses"""
+        used = 0
+        for i in range(1, MAXITEM):
+            o = i * ITEM_SIZE
+            if i != skip and self.item[o + I_USED] and self.item[o + I_DRIVER] == 57:
+                for k in range(4):
+                    used |= struct.unpack_from('<I', self.item, o + I_DATA + 4 * k)[0] << (32 * k)
+        for b in range(128):
+            if not used >> b & 1:
+                return b
+        return None
+
     def _autoedge(self, rec):
         """new grounds (WORLD_GROUND): the grass tiles around tiles whose floor changed get the right soft-edge tile
         (or plain grass again when no new ground is next to them any more)"""
@@ -2294,6 +2317,13 @@ class World:
                         struct.pack_into('<H', self.item, o + I_TEMP, tp)
                         struct.pack_into('<hhH', self.item, o + I_X, x, y, 0)
                         struct.pack_into('<i', self.item, o + I_ACTIVE, 0)
+                        if self.item[o + I_DRIVER] == 57:     # an exploration point needs a bit of its own (data 0-3, 128 in all)
+                            bit = self._free_explore_bit(i)
+                            if bit is None:
+                                msgs.append('all 128 exploration point numbers are in use: this one counts as an existing one')
+                            else:
+                                for k in range(4):
+                                    struct.pack_into('<I', self.item, o + I_DATA + 4 * k, (1 << (bit % 32)) if bit // 32 == k else 0)
                         t[1] = 0          # an item replaces an object sprite (as in the game)
                         t[4] = i
                     else:                             # a plain piece: drawn into the tile

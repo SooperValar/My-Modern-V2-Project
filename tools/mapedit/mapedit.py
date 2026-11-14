@@ -1103,6 +1103,12 @@ class World:
                 if fs:
                     objs[fs] = objs.get(fs, 0) + 1
             temps = []
+            placed = {}       # how many of each template lie in the world (the builder shows the most used version of a look)
+            iv = memoryview(self.item)
+            for i in range(1, MAXITEM):
+                if iv[i * ITEM_SIZE + I_USED]:
+                    tp = struct.unpack_from('<H', iv, i * ITEM_SIZE + I_TEMP)[0]
+                    placed[tp] = placed.get(tp, 0) + 1
             for t in range(1, MAXTITEM):
                 o = t * ITEM_SIZE
                 if not self.titem[o + I_USED]:
@@ -1113,7 +1119,10 @@ class World:
                               1 if fl & IF_TAKE else 0, self.titem[o + I_DRIVER],
                               (1 if fl & IF_MOVEBLOCK else 0) | (2 if fl & IF_SIGHTBLOCK else 0),
                               1 if fl & (IF_TAKE | IF_LOOK | IF_LOOKSPECIAL | IF_USE | IF_USESPECIAL) else 0,
-                              struct.unpack_from('<H', self.titem, o + I_PLACEMENT)[0], weapon_skill(fl)])
+                              struct.unpack_from('<H', self.titem, o + I_PLACEMENT)[0], weapon_skill(fl),
+                              # 9: second sprite (open door, lit lamp...), 10: how many in the world, 11: data[0] (a door's key)
+                              struct.unpack_from('<H', self.titem, o + I_SPRITE + 2)[0], placed.get(t, 0),
+                              struct.unpack_from('<i', self.titem, o + I_DATA)[0]])
         fl_sorted = sorted(floors.items(), key=lambda a: -a[1])
         ob_sorted = sorted(objs.items(), key=lambda a: -a[1])
         return {'floors': fl_sorted, 'objects': ob_sorted, 'templates': temps, 'flags': MF, 'sets': FLOOR_SETS,
@@ -1125,6 +1134,20 @@ class World:
                 'npcs': self.npc_templates()}
 
     # --- editing: every change remembers the old bytes so a batch can be undone
+    def _free_explore_bit(self, skip):
+        """the lowest exploration point number (0-127: a bit in data 0-3; players remember found ones in ch data 46-49)
+        no other point in the world uses"""
+        used = 0
+        for i in range(1, MAXITEM):
+            o = i * ITEM_SIZE
+            if i != skip and self.item[o + I_USED] and self.item[o + I_DRIVER] == 57:
+                for k in range(4):
+                    used |= struct.unpack_from('<I', self.item, o + I_DATA + 4 * k)[0] << (32 * k)
+        for b in range(128):
+            if not used >> b & 1:
+                return b
+        return None
+
     def _autoedge(self, rec):
         """new grounds (WORLD_GROUND): the grass tiles around tiles whose floor changed get the right soft-edge tile
         (or plain grass again when no new ground is next to them any more)"""
@@ -2294,6 +2317,13 @@ class World:
                         struct.pack_into('<H', self.item, o + I_TEMP, tp)
                         struct.pack_into('<hhH', self.item, o + I_X, x, y, 0)
                         struct.pack_into('<i', self.item, o + I_ACTIVE, 0)
+                        if self.item[o + I_DRIVER] == 57:     # an exploration point needs a bit of its own (data 0-3, 128 in all)
+                            bit = self._free_explore_bit(i)
+                            if bit is None:
+                                msgs.append('all 128 exploration point numbers are in use: this one counts as an existing one')
+                            else:
+                                for k in range(4):
+                                    struct.pack_into('<I', self.item, o + I_DATA + 4 * k, (1 << (bit % 32)) if bit // 32 == k else 0)
                         t[1] = 0          # an item replaces an object sprite (as in the game)
                         t[4] = i
                     else:                             # a plain piece: drawn into the tile
@@ -4330,13 +4360,32 @@ function faceRow(cur, onpick, disabled) {
   d.querySelectorAll('button').forEach(b => b.onclick = () => { d.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); onpick(+b.dataset.d); });
   return d;
 }
-function cats() {
-  // [number, name, sprite, take, driver, blocks, item]
-  const t = pal.templates;
+// Many templates look the same and differ only in their settings (each locked door its own key, each portal its own
+// destination, each exploration point its own experience): the builder shows one of each look, and the placed piece
+// gets its own settings in the tile panel. "Show every version" (or searching a template number) lists them all.
+let allVersions = false;
+try { allVersions = localStorage.getItem('myv2.allversions') === '1'; } catch (e) {}
+const lookKey = t => [t[2], t[9] || 0, t[4], t[5], t[6], t[7]].join(':');
+function onePerLook(list) {
+  const groups = new Map();
+  for (const t of list) { const k = lookKey(t); if (!groups.has(k)) groups.set(k, []); groups.get(k).push(t); }
+  const out = [];
+  for (const g of groups.values()) {
+    // the one to place: no key / lock of its own first (doors), then the most used in the world, then the lowest number
+    const pick = g.slice().sort((a, b) => ((a[4] === 2 && a[11]) - (b[4] === 2 && b[11])) || ((b[10] || 0) - (a[10] || 0)) || a[0] - b[0])[0];
+    const rep = pick.slice(); rep.versions = g;
+    if (g.length > 1) rep[1] = pick[1].replace(/^(Unlocked|Locked)\s+/i, '').replace(/(\s+([IVXLC]+|[\d/#.:-]+))+$/, '').replace(/^Explotation/, 'Exploration') || pick[1];
+    out.push(rep);
+  }
+  return out;
+}
+function cats(all) {
+  // [number, name, sprite, take, driver, blocks, item, placement, skill, sprite 2, in the world, data 0]
+  const t = pal.templates, one = l => all || allVersions ? l : onePerLook(l);
   return {
-    walls: t.filter(x => !x[3] && !x[6] && (x[5] & 2)),          // drawn into the tile and block sight: walls, trees, pillars
-    objects: t.filter(x => !x[3] && !(!x[6] && (x[5] & 2))),
-    items: t.filter(x => x[3]),
+    walls: one(t.filter(x => !x[3] && !x[6] && (x[5] & 2))),          // drawn into the tile and block sight: walls, trees, pillars
+    objects: one(t.filter(x => !x[3] && !(!x[6] && (x[5] & 2)))),
+    items: t.filter(x => x[3]),                                         // never grouped: keys open doors by their own template
   };
 }
 function brushKey(b) { return b.kind + ':' + (b.kind === 'area' || b.kind === 'rug' ? b.name : b.kind === 'place' || b.kind === 'npc' ? b.t[0] : b.kind === 'flag' ? b.bit : b.kind === 'mix' ? b.items.map(i => i.s + 'x' + i.w).join(',') : b.s); }
@@ -4558,6 +4607,10 @@ function cellTemp(t) {
   if (brushKey(brush) === c.dataset.k) c.classList.add('sel');
   c.title = `${t[1]} · template ${t[0]} · ${t[6] ? 'item' : 'drawn into the tile'}${t[5] & 1 ? ' · blocks walking' : ''}${t[5] & 2 ? ' · blocks sight' : ''}`;
   c.appendChild(thumb(t[2], 64, 64)); const l = document.createElement('div'); l.className = 'lab'; l.textContent = t[1]; c.appendChild(l);
+  if (t.versions && t.versions.length > 1) {
+    c.insertAdjacentHTML('beforeend', `<span class="badge" title="${t.versions.length} versions with this look (they differ in their settings); this places template ${t[0]} (${esc(t.versions.find(v => v[0] === t[0])[1])}). Set the placed one's own settings in the tile panel.">×${t.versions.length}</span>`);
+    c.title += ` · one of ${t.versions.length} versions with this look`;
+  }
   c.onclick = () => setBrush({ kind: 'place', t });
   c.oncontextmenu = e => { e.preventDefault(); openTemplate('item', t[0]); };
   c.title += ' · right-click to edit the template';
@@ -4718,7 +4771,15 @@ function leftUI() {
       flagControls(w, sect);
       sect('Pick a flag'); lazy(grid(), FLAGS.map((f, i) => i).filter(i => match(FLAGS[i], '')), cellFlag);
     } else {
-      const list = C[tab].filter(t => match(t[1], t[0]));
+      const C2 = /^\d+$/.test(q) && tab !== 'items' ? cats(true) : C;      // a template number: every version
+      const list = C2[tab].filter(t => match(t[1], t[0]));
+      if (tab !== 'items') {
+        const sw = document.createElement('label'); sw.className = 'chk'; sw.style.cssText = 'display:flex;gap:6px;align-items:center;margin:2px 4px 6px;font-size:12px;color:var(--dim)';
+        sw.innerHTML = '<input type="checkbox"><span>Show every version (doors with their own keys, each portal, each exploration point…)</span>';
+        sw.firstChild.checked = allVersions;
+        sw.firstChild.onchange = () => { allVersions = sw.firstChild.checked; try { localStorage.setItem('myv2.allversions', allVersions ? '1' : '0'); } catch (e) {} leftUI(); };
+        w.appendChild(sw);
+      }
       if (tab === 'walls' && pal.newwalls && pal.newwalls.length) {   // new walls: 4 variants each, painted at random
         const nw = pal.newwalls.filter(w => match(w[1], w[0]));
         if (nw.length) { sect('New walls · 4 variants each, painted at random (block walking and sight)'); const g = grid(); nw.forEach(w => g.appendChild(cellPlant([w[0], w[1], 3, w[2]]))); }
@@ -5746,6 +5807,7 @@ function itemEditor(el, r, x, y, ro) {
     ${tele ? `<div class="lb">Leads to</div><div class="dest">x <input type="number" class="dx"> y <input type="number" class="dy">
       <button class="sm pk" title="Then click the spot on the map">Pick on map</button><button class="sm gt">Go there</button></div>
       ${it.data[2] ? '<div class="warn">This is a labyrinth portal (data 2 = ' + it.data[2] + '): it takes players to their next lab part, not to x, y. <button class="sm np">Make it a normal portal</button></div>' : ''}` : ''}
+    ${it.driver === 2 ? `<div class="lb">Door · lock</div><div class="dlock"></div>` : ''}
     ${it.driver === 57 ? `<div class="lb">Exploration point · experience</div><div class="dest"><input type="number" class="xp" min="0" style="width:110px"> exp</div><div class="hint xph" style="line-height:1.5"></div>` : ''}
     <details><summary class="lb" style="cursor:pointer">Data values (advanced, driver ${it.driver})</summary><div class="dgrid">${it.data.map((v, i) => `<input type="number" data-i="${i}" value="${v}" title="data[${i}]">`).join('')}</div></details>
     <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap"><button class="btn pri" style="padding:5px 12px">Save item</button><button class="sm et" title="Change what every ${esc(it.name)} is made from: look, stats, flags…">Edit its template…</button><button class="sm qr" title="What happens when a player uses it, by quest step (a portal that leads elsewhere, a door that only opens after a quest…)">Quest rules…</button></div>`;
@@ -5759,10 +5821,38 @@ function itemEditor(el, r, x, y, ro) {
     const show = () => { const n = Math.max(0, +xp.value || 0), f = v => Math.round(v).toLocaleString();
       xh.textContent = `Gives ${f(n / 2)} to ${f(n * 1.5)} exp (about ${f(n)}), once per character, and +10 luck. Never more than 10% of the player's total experience (plus up to 10% more), so the whole amount needs about ${f(n * 10)} total exp; looking at it, players under ${f(n * 5)} are told it's too early (under ${f(n * 7)}: a bit early).`; };
     xp.value = it.data[4]; show();
+    { let nr = -1; for (let k = 0; k < 4; k++) for (let j = 0; j < 32; j++) if ((it.data[k] >>> j) & 1) nr = k * 32 + j;
+      xh.insertAdjacentText('beforeend', nr >= 0 ? ` Point number ${nr} of 128 (each point has its own; a new one placed from the builder gets a free number).` : ''); }
     xp.oninput = () => { d4.value = Math.max(0, +xp.value || 0); show(); };
     d4.addEventListener('input', () => { xp.value = d4.value; show(); });
   }
-  box.querySelectorAll('input,textarea,button').forEach(e => e.disabled = ro);
+  if (it.driver === 2) {      // a door (use_driver.c use_door): data 0 = the key's template (0 = no lock), 1 = locked now,
+    // 2 = how hard it is to pick (0 = it can't be picked), 3 = the key vanishes when used
+    const dl = box.querySelector('.dlock'), D = i => box.querySelector(`.dgrid input[data-i="${i}"]`); let want = false;
+    const draw = () => {
+      dl.innerHTML = ''; const k = +D(0).value;
+      const row = (lab, el, hint) => { const r = document.createElement('div'); r.className = 'dest'; r.style.cssText = 'display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin:3px 0';
+        r.append(Object.assign(document.createElement('span'), { textContent: lab })); if (el) r.append(el);
+        if (hint) r.append(Object.assign(document.createElement('span'), { className: 'hint', textContent: hint, style: 'margin:0' })); dl.append(r); return r; };
+      const mode = document.createElement('select');
+      mode.innerHTML = '<option value="0">No lock: anyone can open it</option><option value="1">Locked with a key</option>' + (k >= 65500 ? '<option value="2">Special lock (game code)</option>' : '');
+      mode.value = k >= 65500 ? '2' : k || want ? '1' : '0';
+      mode.onchange = () => { want = mode.value === '1'; if (mode.value === '0') { D(0).value = 0; D(1).value = 0; } else if (want && (!k || k >= 65500)) { D(0).value = 0; D(1).value = 1; } draw(); };
+      row('', mode);
+      if (k >= 65500) { row('', null, `Opened by the game's own code (data 0 = ${k}, e.g. the Black Stronghold coins): leave it as is.`); return; }
+      if (mode.value === '1') {
+        row('Key:', qpick(() => +D(0).value, v => { D(0).value = v; draw(); }, 'pick the key item'));
+        const lk = chk('Locked when the game starts (and again after it is closed with the key)', () => +D(1).value === 1, v => { D(1).value = v ? 1 : 0; });
+        row('', lk);
+        const pick = document.createElement('input'); pick.type = 'number'; pick.min = 0; pick.style.width = '80px'; pick.value = +D(2).value;
+        pick.oninput = () => { D(2).value = Math.max(0, +pick.value || 0); };
+        row('Lock-picking:', pick, '0 = it can\'t be picked; else the Lock-Picking skill (+ the lock pick) a player needs, about 60-140 in the game');
+        row('', chk('The key vanishes when it is used', () => +D(3).value !== 0, v => { D(3).value = v ? 1 : 0; }));
+      }
+    };
+    draw();
+  }
+  box.querySelectorAll('input,textarea,button,select').forEach(e => e.disabled = ro);
   const collect = () => {
     const data = {};
     box.querySelectorAll('.dgrid input').forEach(i => { if (+i.value !== it.data[+i.dataset.i]) data[i.dataset.i] = +i.value; });
@@ -7144,7 +7234,7 @@ function choose(r) {
   $('#results').style.display = 'none'; $('#q').blur();
   if (r.type === 'item') {
     const t = pal && pal.templates.find(t => t[0] === r.t);
-    if (t) { setBrush({ kind: 'place', t }); mode = 'map'; tab = t[3] ? 'items' : cats().walls.includes(t) ? 'walls' : 'objects'; document.querySelectorAll('nav button').forEach(x => x.classList.toggle('on', x.dataset.m === 'map')); $('#lsearch').value = String(t[0]); leftUI(); toast('Brush: ' + t[1]); }
+    if (t) { setBrush({ kind: 'place', t }); mode = 'map'; tab = t[3] ? 'items' : cats(true).walls.includes(t) ? 'walls' : 'objects'; document.querySelectorAll('nav button').forEach(x => x.classList.toggle('on', x.dataset.m === 'map')); $('#lsearch').value = String(t[0]); leftUI(); toast('Brush: ' + t[1]); }
     return;
   }
   centerOn(r.x, r.y); selectTile(r.x, r.y);
