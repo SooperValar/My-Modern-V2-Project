@@ -56,6 +56,7 @@ void global_tick(void)
 		globs->mdday++;
 		globs->mdtime=0;
 		xlog("day %d of the year %d begins",globs->mdday,globs->mdyear);
+		if (globs->mdday%28==14) do_announce(0,0,"A Good Moon rises! For the next 80 minutes spells are 15%% stronger and regeneration is doubled.\n");	// MyV2 (also to Discord #system)
 		pay_rent();
 		do_misc();
 	} 
