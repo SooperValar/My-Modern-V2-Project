@@ -2045,7 +2045,7 @@ class World:
                     if t[2]:
                         npcs += 1
                     tiles.append((x - x0, y - y0, t[0], t[1], t[7] & 0xffff, ib))
-            self.clip = {'w': x1 - x0 + 1, 'h': y1 - y0 + 1, 'tiles': tiles}
+            self.clip = {'w': x1 - x0 + 1, 'h': y1 - y0 + 1, 'tiles': tiles, 'from': (x0, y0)}
         return {'w': x1 - x0 + 1, 'h': y1 - y0 + 1, 'items': items, 'npcs': npcs, 'chests': chests}
 
     def _paste(self, rec, x, y, msgs):
@@ -2070,6 +2070,11 @@ class World:
                     o = i * ITEM_SIZE
                     self.item[o:o + ITEM_SIZE] = ib
                     struct.pack_into('<hhH', self.item, o + I_X, tx, ty, 0)
+                    if self.item[o + I_DRIVER] == 19 and cl.get('from'):    # a lever working something copied with it: the copy
+                        m = struct.unpack_from('<I', self.item, o + I_DATA)[0]   # works the pasted one
+                        fx, fy = cl['from']; lx, ly = m % MAPX - fx, m // MAPX - fy
+                        if 0 <= lx < cl['w'] and 0 <= ly < cl['h'] and 0 <= x + lx < MAPX and 0 <= y + ly < MAPY:
+                            struct.pack_into('<I', self.item, o + I_DATA, (x + lx) + (y + ly) * MAPX)
                     t[4] = i
             self.set_tile(tx, ty, t)
             n += 1
@@ -2352,9 +2357,14 @@ class World:
                                     struct.pack_into('<I', self.item, o + I_DATA + 4 * k, (1 << (bit % 32)) if bit // 32 == k else 0)
                         if op.get('fresh'):       # the builder's one-of-each-look list: start clean, nothing from another placed copy
                             drv = self.item[o + I_DRIVER]
-                            clear = {2: 4, 6: 3, 16: 2}.get(drv, 0)      # door: key, locked, pick difficulty, key vanishes; portal: x, y, lab; ladder: offset
+                            clear = {2: 4, 20: 4, 6: 3, 16: 2, 19: 1, 42: 10}.get(drv, 0)   # door (2, 20): key, locked, pick difficulty, key vanishes;
+                            # portal: x, y, lab; ladder: offset; lever: what it works; item chest (42): what it gives
                             for k in range(clear):
                                 struct.pack_into('<I', self.item, o + I_DATA + 4 * k, 0)
+                            nm0 = self.item[o + I_NAME:o + I_NAME + 40].split(b'\0')[0].decode('latin-1')
+                            if drv == 0 and nm0.lower().startswith('sign'):     # a sign: blank, its text written in the tile panel
+                                self.item[o + I_NAME:o + I_NAME + 40] = b'Sign'.ljust(40, b'\0')
+                                self.item[o + I_DESC:o + I_DESC + 200] = b'\0' * 200
                         t[1] = 0          # an item replaces an object sprite (as in the game)
                         t[4] = i
                     else:                             # a plain piece: drawn into the tile

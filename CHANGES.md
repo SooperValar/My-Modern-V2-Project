@@ -534,9 +534,17 @@ Many item templates look the same and differ only in their settings (each locked
 destination, each exploration point its own number): the Walls and Objects tabs now show **one of each look** (same
 pictures, driver, blocking and kind), named without "Locked" / "Unlocked" and trailing numbers (831 object templates show as 383).
 
-Placing one has nothing to do with any copy placed before: it starts **fresh**: a door with no lock, a portal or
-ladder / hole with no destination (the editor asks right away: click the spot on the map it should lead to; Esc decides
-later in the tile panel), an exploration point with a new number of its own. **Show every version** (a tick box above the list, remembered)
+Placing one has nothing to do with any copy placed before: it starts **fresh**, a new instance with its own settings in
+the tile panel (only the Copy tool copies a placed piece with its settings):
+- a door (driver 2 or 20) with no lock;
+- a portal or ladder / hole with no destination (the editor asks right away: click the spot it should lead to);
+- a **lever** (driver 19) that works nothing yet (the editor asks right away: click the door / gate it works; the tile
+  panel shows "Lever · what it works" with Pick on map / Go there);
+- an **item chest** (driver 42) that is empty (the tile panel lists what it gives, one at random each time: pick,
+  add, remove items); editor chests (driver 75) open their chest editor as before;
+- a **sign** named "Sign" with no text (the tile panel opens with its description ready to type);
+- an exploration point with a new number of its own.
+Esc leaves a pick for later. Pasting a lever together with what it works makes the copy work the pasted one. **Show every version** (a tick box above the list, remembered)
 or searching a template number lists them all again. The Items tab is never grouped (keys open doors by their own template).
 
 The placed piece gets its own settings in the tile panel (they are the item's own data, not the template's):

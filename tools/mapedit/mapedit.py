@@ -2045,7 +2045,7 @@ class World:
                     if t[2]:
                         npcs += 1
                     tiles.append((x - x0, y - y0, t[0], t[1], t[7] & 0xffff, ib))
-            self.clip = {'w': x1 - x0 + 1, 'h': y1 - y0 + 1, 'tiles': tiles}
+            self.clip = {'w': x1 - x0 + 1, 'h': y1 - y0 + 1, 'tiles': tiles, 'from': (x0, y0)}
         return {'w': x1 - x0 + 1, 'h': y1 - y0 + 1, 'items': items, 'npcs': npcs, 'chests': chests}
 
     def _paste(self, rec, x, y, msgs):
@@ -2070,6 +2070,11 @@ class World:
                     o = i * ITEM_SIZE
                     self.item[o:o + ITEM_SIZE] = ib
                     struct.pack_into('<hhH', self.item, o + I_X, tx, ty, 0)
+                    if self.item[o + I_DRIVER] == 19 and cl.get('from'):    # a lever working something copied with it: the copy
+                        m = struct.unpack_from('<I', self.item, o + I_DATA)[0]   # works the pasted one
+                        fx, fy = cl['from']; lx, ly = m % MAPX - fx, m // MAPX - fy
+                        if 0 <= lx < cl['w'] and 0 <= ly < cl['h'] and 0 <= x + lx < MAPX and 0 <= y + ly < MAPY:
+                            struct.pack_into('<I', self.item, o + I_DATA, (x + lx) + (y + ly) * MAPX)
                     t[4] = i
             self.set_tile(tx, ty, t)
             n += 1
@@ -2352,9 +2357,14 @@ class World:
                                     struct.pack_into('<I', self.item, o + I_DATA + 4 * k, (1 << (bit % 32)) if bit // 32 == k else 0)
                         if op.get('fresh'):       # the builder's one-of-each-look list: start clean, nothing from another placed copy
                             drv = self.item[o + I_DRIVER]
-                            clear = {2: 4, 6: 3, 16: 2}.get(drv, 0)      # door: key, locked, pick difficulty, key vanishes; portal: x, y, lab; ladder: offset
+                            clear = {2: 4, 20: 4, 6: 3, 16: 2, 19: 1, 42: 10}.get(drv, 0)   # door (2, 20): key, locked, pick difficulty, key vanishes;
+                            # portal: x, y, lab; ladder: offset; lever: what it works; item chest (42): what it gives
                             for k in range(clear):
                                 struct.pack_into('<I', self.item, o + I_DATA + 4 * k, 0)
+                            nm0 = self.item[o + I_NAME:o + I_NAME + 40].split(b'\0')[0].decode('latin-1')
+                            if drv == 0 and nm0.lower().startswith('sign'):     # a sign: blank, its text written in the tile panel
+                                self.item[o + I_NAME:o + I_NAME + 40] = b'Sign'.ljust(40, b'\0')
+                                self.item[o + I_DESC:o + I_DESC + 200] = b'\0' * 200
                         t[1] = 0          # an item replaces an object sprite (as in the game)
                         t[4] = i
                     else:                             # a plain piece: drawn into the tile
@@ -5851,7 +5861,10 @@ function itemEditor(el, r, x, y, ro) {
     ${tele ? `<div class="lb">Leads to</div><div class="dest">x <input type="number" class="dx"> y <input type="number" class="dy">
       <button class="sm pk" title="Then click the spot on the map">Pick on map</button><button class="sm gt">Go there</button></div>
       ${it.data[2] ? '<div class="warn">This is a labyrinth portal (data 2 = ' + it.data[2] + '): it takes players to their next lab part, not to x, y. <button class="sm np">Make it a normal portal</button></div>' : ''}` : ''}
-    ${it.driver === 2 ? `<div class="lb">Door · lock</div><div class="dlock"></div>` : ''}
+    ${it.driver === 2 || it.driver === 20 ? `<div class="lb">Door · lock</div><div class="dlock"></div>` : ''}
+    ${it.driver === 19 ? `<div class="lb">Lever · what it works</div><div class="dest">x <input type="number" class="lx"> y <input type="number" class="ly">
+      <button class="sm lpk" title="Then click the door, gate or other thing on the map">Pick on map</button><button class="sm lgt">Go there</button></div><div class="hint lh"></div>` : ''}
+    ${it.driver === 42 ? `<div class="lb">Chest · what it gives (one of these at random, each time it is opened)</div><div class="cgive"></div>` : ''}
     ${it.driver === 57 ? `<div class="lb">Exploration point · experience</div><div class="dest"><input type="number" class="xp" min="0" style="width:110px"> exp</div><div class="hint xph" style="line-height:1.5"></div>` : ''}
     <details><summary class="lb" style="cursor:pointer">Data values (advanced, driver ${it.driver})</summary><div class="dgrid">${it.data.map((v, i) => `<input type="number" data-i="${i}" value="${v}" title="data[${i}]">`).join('')}</div></details>
     <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap"><button class="btn pri" style="padding:5px 12px">Save item</button><button class="sm et" title="Change what every ${esc(it.name)} is made from: look, stats, flags…">Edit its template…</button><button class="sm qr" title="What happens when a player uses it, by quest step (a portal that leads elsewhere, a door that only opens after a quest…)">Quest rules…</button></div>`;
@@ -5870,7 +5883,32 @@ function itemEditor(el, r, x, y, ro) {
     xp.oninput = () => { d4.value = Math.max(0, +xp.value || 0); show(); };
     d4.addEventListener('input', () => { xp.value = d4.value; show(); });
   }
-  if (it.driver === 2) {      // a door (use_driver.c use_door): data 0 = the key's template (0 = no lock), 1 = locked now,
+  if (it.driver === 19) {     // a lever (use_driver.c use_lever): data 0 = the map spot (x + y*1024) of the item it works
+    const D0 = box.querySelector('.dgrid input[data-i="0"]'), lx = box.querySelector('.lx'), ly = box.querySelector('.ly'), lh = box.querySelector('.lh');
+    const m = it.data[0]; lx.value = m ? m % 1024 : ''; ly.value = m ? Math.floor(m / 1024) : '';
+    const sync = () => { D0.value = (+lx.value || 0) + (+ly.value || 0) * 1024; };
+    lx.oninput = ly.oninput = sync; D0.disabled = true;
+    lh.textContent = m ? 'Using the lever works the item on that spot (opens a door or gate, switches it…), as if it was used.' : 'Not set yet: pick the door, gate or other thing it works.';
+    if (m) api(`/api/tile?x=${m % 1024}&y=${Math.floor(m / 1024)}`).then(t => { if (t && t.item) lh.textContent = `Works: ${t.item.name} at ${m % 1024}, ${Math.floor(m / 1024)}.`; else if (t) lh.textContent = `Nothing usable at ${m % 1024}, ${Math.floor(m / 1024)} yet: put the door or gate there, or pick another spot.`; });
+    box.querySelector('.lpk').onclick = () => { destPick = { x, y, lever: 1 }; toast('Click the door, gate or other thing this lever should work. (Esc cancels)'); cv.style.cursor = 'cell'; };
+    box.querySelector('.lgt').onclick = () => { if (+lx.value || +ly.value) { centerOn(+lx.value, +ly.value); toast('That is what it works. The lever: ' + x + ', ' + y); } };
+  }
+  if (it.driver === 42) {     // an item chest (use_driver.c use_create_item3): data 0-9 = item templates, one at random
+    const cg = box.querySelector('.cgive'), D = i => box.querySelector(`.dgrid input[data-i="${i}"]`);
+    const draw = () => {
+      cg.innerHTML = ''; let n = 0; while (n < 10 && +D(n).value) n++;
+      for (let i = 0; i <= Math.min(n, 9); i++) {
+        const r = document.createElement('div'); r.className = 'dest'; r.style.cssText = 'display:flex;gap:6px;align-items:center;margin:3px 0';
+        r.append(qpick(() => +D(i).value, v => { D(i).value = v || 0;
+          if (!v) { for (let k = i; k < 9; k++) D(k).value = D(k + 1).value; D(9).value = 0; }    // emptied: the rest move up
+          draw(); }, n ? 'add another item' : 'pick the item it gives'));
+        cg.append(r);
+      }
+      if (!n) cg.append(Object.assign(document.createElement('div'), { className: 'hint', textContent: 'Empty: players find nothing. Pick what it gives, then Save item.' }));
+    };
+    draw();
+  }
+  if (it.driver === 2 || it.driver === 20) {      // a door (use_driver.c use_door): data 0 = the key's template (0 = no lock), 1 = locked now,
     // 2 = how hard it is to pick (0 = it can't be picked), 3 = the key vanishes when used
     const dl = box.querySelector('.dlock'), D = i => box.querySelector(`.dgrid input[data-i="${i}"]`); let want = false;
     const draw = () => {
@@ -5916,6 +5954,10 @@ function itemEditor(el, r, x, y, ro) {
 }
 function setDestination(t) {
   const d = destPick; destPick = null; setTool(tool);
+  if (d.lever) {      // a lever: data 0 = the spot of the thing it works
+    return edit([{ op: 'itemedit', x: d.x, y: d.y, data: { 0: t.x + t.y * 1024 } }], `lever at ${d.x},${d.y} works ${t.x},${t.y}`, false)
+      .then(() => { toast(`The lever at ${d.x}, ${d.y} now works what is at ${t.x}, ${t.y} (only this lever).`); centerOn(d.x, d.y); selectTile(d.x, d.y); });
+  }
   const data = d.rel ? { 0: t.x - d.x, 1: t.y - d.y } : { 0: t.x, 1: t.y };     // a ladder / hole keeps an offset from its own spot
   edit([{ op: 'itemedit', x: d.x, y: d.y, data }], `${d.rel ? 'ladder' : 'portal'} at ${d.x},${d.y} leads to ${t.x},${t.y}`, false)
     .then(() => { toast(`The ${d.rel ? 'ladder' : 'portal'} at ${d.x}, ${d.y} now leads to ${t.x}, ${t.y} (only this one).`); centerOn(d.x, d.y); selectTile(d.x, d.y); });
@@ -6995,6 +7037,15 @@ async function edit(ops, lbl, reselect) {
     const pt = pal.templates.find(t => t[0] === ops[0].t);
     if (pt && pt[4] === 75 && chestCopy && chestCopy.temp === pt[0]) placeChestCopy(ops[0].x, ops[0].y);
     else if (pt && pt[4] === 75) { selectTile(ops[0].x, ops[0].y); openChest(ops[0].x, ops[0].y); }
+    else if (pt && pt[4] === 19 && ops[0].fresh) {      // a new lever: say what it works right away
+      const x = ops[0].x, y = ops[0].y;
+      selectTile(x, y).then(() => { destPick = { x, y, lever: 1 }; cv.style.cursor = 'cell';
+        toast('Now click the door, gate or other thing this lever should work. (Esc: decide later in the tile panel)'); });
+    }
+    else if (pt && pt[4] === 42 && ops[0].fresh) { selectTile(ops[0].x, ops[0].y).then(() => toast('A new, empty chest: pick what it gives in the tile panel, then Save item.')); }
+    else if (pt && pt[4] === 0 && ops[0].fresh && /^sign/i.test(pt[1])) {
+      selectTile(ops[0].x, ops[0].y).then(() => { const d = document.querySelector('.ied .ds2'); if (d) d.focus(); toast('A new sign: write what it says (the description), then Save item.'); });
+    }
     else if (pt && (pt[4] === 6 || pt[4] === 16) && ops[0].fresh) {      // a new portal / ladder: say where it leads right away
       const x = ops[0].x, y = ops[0].y, lad = pt[4] === 16;
       selectTile(x, y).then(() => { destPick = { x, y, rel: lad }; cv.style.cursor = 'cell';
