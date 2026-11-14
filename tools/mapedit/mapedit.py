@@ -2679,6 +2679,15 @@ CONSOLE_PORT = 5556
 BACKUP = {'on': False, 'dir': ''}
 
 
+RANK_SHORT = dict(zip(          # server helper.c rank_name -> who_rank_name (the short ranks of the game's who list)
+    ['Private', 'Private First Class', 'Lance Corporal', 'Corporal', 'Sergeant', 'Staff Sergeant', 'Master Sergeant',
+     'First Sergeant', 'Sergeant Major', 'Second Lieutenant', 'First Lieutenant', 'Captain', 'Major', 'Lieutenant Colonel',
+     'Colonel', 'Brigadier General', 'Major General', 'Lieutenant General', 'General', 'Field Marshal', 'Knight of Astonia',
+     'Baron of Astonia', 'Earl of Astonia', 'Warlord of Astonia'],
+    ['Pvt', 'PFC', 'LCp', 'Cpl', 'Sgt', 'SSg', 'MSg', '1Sg', 'SgM', '2Lieu', '1Lieu', 'Captn', 'Major', 'LtCol', 'Colnl',
+     'BrGen', 'MaGen', 'LtGen', 'Genrl', 'FDMAR', 'KNIGT', 'BARON', 'EARL', 'WARLD']))
+
+
 class DiscordLink:
     """Mercenaries of Asgard v2 <-> Discord (all secrets in the Server folder, never in git):
     - discord-chat-webhook.txt    #game-chat: in-game shouts, posted as the player ("Name: text")
@@ -2800,17 +2809,17 @@ class DiscordLink:
         who = self.ctl.console('who', 3) if running else None
         if running and who is None:
             return
+        bar = '-' * 52
         if not running:
-            text = ':red_circle: **Mercenaries of Asgard v2 is offline.**'
+            text = '```diff\nPlayers Online:\n%s\n- The server is offline.\n%s\n```' % (bar, bar)
         else:
             pl = []
             for l in who.splitlines():       # console.c con_who: "  %-20s %-22s %s"
                 if len(l) > 24 and l.startswith('  ') and not l.strip().endswith('online.') and '[god]' not in l and '[imp]' not in l:
                     area = l[46:].replace('[god]', '').replace('[imp]', '').strip()
                     pl.append((l[2:22].strip(), l[23:45].strip(), area or 'the world'))
-            text = ':green_circle: **Mercenaries of Asgard v2 is online** - %d player%s' % (len(pl), '' if len(pl) == 1 else 's')
-            if pl:
-                text += '\n' + '\n'.join('- **%s** (%s) in %s' % p for p in pl[:40])
+            rows = '\n'.join('  %-5s %-16s %s' % (RANK_SHORT.get(r, r[:5]), n, a[:34]) for n, r, a in pl[:40]) or '  Nobody is online right now.'
+            text = '```diff\nPlayers Online:\n%s\n%s\n%s\n  %d player%s online.\n```' % (bar, rows, bar, len(pl), '' if len(pl) == 1 else 's')
         text += '\n-# updated <t:%d:R>' % (int(time.time()) // 60 * 60)
         self._board('status', hook, text)
 
@@ -2825,13 +2834,13 @@ class DiscordLink:
             if len(p) == 5 and p[0].lstrip('-').isdigit():
                 rows.append((int(p[0]), p[1], p[2], p[3]))
         rows.sort(key=lambda x: -x[0])
-        line = lambda k, x: '%d. **%s** - %s, %s (%s exp)' % (k, x[1], x[2], x[3], format(x[0], ','))
-        text = ':trophy: **Rankings**\n' + ('\n'.join(line(k + 1, x) for k, x in enumerate(rows[:10])) or 'No characters yet.')
+        sh = lambda x: RANK_SHORT.get(x[2], x[2][:5])
+        top = '\n'.join('  %2d. %-5s %-16s %-13s %13s' % (k + 1, sh(x), x[1], x[3], format(x[0], ',')) for k, x in enumerate(rows[:10]))
+        text = '```diff\n- Top Characters:\n' + (top or '  No characters yet.') + '\n\n- Best of Each Class:\n'
         for c in ("Seyan'Du", 'Arch-Templar', 'Arch-Harakim', 'Warrior', 'Sorcerer', 'Templar', 'Harakim', 'Mercenary'):
-            top = [x for x in rows if x[3] == c][:3]
-            if top:
-                text += '\n**%s:** %s' % (c, ', '.join('%s (%s)' % (x[1], format(x[0], ',')) for x in top))
-        text += '\n-# updated <t:%d:R>' % (int(time.time()) // 60 * 60)
+            for k, x in enumerate([x for x in rows if x[3] == c][:3]):
+                text += '  %-13s %-5s %-16s %13s\n' % (c if k == 0 else '', sh(x), x[1], format(x[0], ','))
+        text += '```\n-# updated <t:%d:R>' % (int(time.time()) // 60 * 60)
         self._board('rankings', hook, text[:1990])
 
     def _bot(self):
