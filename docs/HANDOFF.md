@@ -47,8 +47,9 @@ Note: the real client source is the project's `client/` folder (the old copies i
 - **Server source is changed in BOTH places and kept identical**: the Windows Server folder and
   the project's `server/`. Never copy a whole file over the other blindly; edit, then copy the
   edited file across and check they match (md5).
-- **Ask before anything that stops or restarts the live game.** Reading status and logs, and
-  preparing updates, is fine. Cody says **"go"** to approve an update-code restart.
+- **Restarts and code updates are pre-approved (Cody, Nov 14):** the server has no regular players and is almost
+  always empty, so stop / restart / update-code / update-world whenever the work needs it, without asking first.
+  Still check `who` first and use `"warn":30` if anyone is online. (Was: ask before every stop and wait for "go".)
 - New sprites get **new numbers**; never replace the game's own sprites (fixing one of Claude's
   own in place is OK).
 - Directions follow the minimap: north = smaller x, west = smaller y. On screen: larger x is
@@ -58,7 +59,7 @@ Note: the real client source is the project's `client/` folder (the old copies i
 - Editing the live game's data directly from a browser tab (POST `/api/edit` via a browser tool)
   was refused by the safety system: don't; ask Cody to do such edits in the editor himself.
   This is only about the browser route: Claude DOES change live world data (templates, NPCs, npctalk.dat, zones...)
-  through the control files and world tools (stop-send / tools / update-world), with Cody's "go" for the stop.
+  through the control files and world tools (stop-send / tools / update-world), (stops are pre-approved, see above).
 
 ## Running and updating the server
 
@@ -72,7 +73,7 @@ Note: the real client source is the project's `client/` folder (the old copies i
   Actions: `status`, `console` (+`"cmd"`), `log`, `start`, `stop`, `restart`,
   `update-code` (+`"warn":30`), `update-world`, `send`, `stop-send`, `get`, `get-world`,
   `reload-editor`. `control\status.json` is kept current.
-- **Server code update**: edit the source in both places, then (after Cody's "go")
+- **Server code update**: edit the source in both places, then
   `{"action":"update-code","warn":30}`: warns players, stops, `claude-sync.sh get` (copies the
   changed Windows source into Ubuntu with a backup in `~/claude-backups/`, then `make`), starts.
 - Console commands (control port 127.0.0.1:5556, or the editor's console): `who`, `status`,
@@ -88,7 +89,7 @@ Note: the real client source is the project's `client/` folder (the old copies i
 ## Changing the world data (item / NPC templates, merchant stock)
 
 The live world is in Ubuntu (`~/.dat`); `Server\.dat` on Windows is only a copy (may be old). For a template change:
-1. `{"action":"stop-send"}` (Cody's "go": the game stops) - the current world is copied to `Server\.dat`.
+1. `{"action":"stop-send"}` (the game stops; pre-approved) - the current world is copied to `Server\.dat`.
 2. In Claude's device shell: build `tools/world/build_lab.c` (`gcc -I server`) and run it on `$HOME/mnt/Server/.dat`
    with the spec (`tools/world/*.txt`).
 3. `{"action":"get"}` if the code changed too (rebuild, no start), then `{"action":"update-world"}` (takes the world from
