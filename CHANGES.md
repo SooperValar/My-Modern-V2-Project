@@ -544,7 +544,10 @@ the tile panel (only the Copy tool copies a placed piece with its settings):
   add, remove items); editor chests (driver 75) open their chest editor as before;
 - a **sign** named "Sign" with no text (the tile panel opens with its description ready to type);
 - an exploration point with a new number of its own.
-Esc leaves a pick for later. Pasting a lever together with what it works makes the copy work the pasted one. **Show every version** (a tick box above the list, remembered)
+Esc leaves a pick for later. Pasting a lever together with what it works makes the copy work the pasted one.
+Pasting with the Copy tool makes new copies too (editing one changes only it). A paste with exploration points asks:
+**a new point** (its own number: players get experience for it as well as for the original; the usual) or **the same
+point** (one point in two places, e.g. behind two different choices: whoever found one gets nothing from the other). **Show every version** (a tick box above the list, remembered)
 or searching a template number lists them all again. The Items tab is never grouped (keys open doors by their own template).
 
 The placed piece gets its own settings in the tile panel (they are the item's own data, not the template's):

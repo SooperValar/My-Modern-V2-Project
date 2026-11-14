@@ -3608,10 +3608,36 @@ async function copyArea(x0, y0, x1, y1) {
   toast(`Copied ${r.w}×${r.h}` + (r.items ? ` with ${r.items} item${r.items > 1 ? 's' : ''}` : '') + (r.npcs ? ` (NPCs are not copied: ${r.npcs} ${r.npcs > 1 ? 'were' : 'was'} there)` : '') +
     '. Click where its top corner should go to paste; Shift+drag copies another area, Esc forgets it.');
 }
+function askChoice(question, opts) {     // a small dialog: [[value, label, hint], ...] -> the picked value, or null (Esc / Cancel)
+  return new Promise(res => {
+    const bg = document.createElement('div'); bg.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;display:flex;align-items:center;justify-content:center';
+    const bx = document.createElement('div'); bx.style.cssText = 'background:var(--panel,#222);color:inherit;border:1px solid var(--line,#555);border-radius:8px;padding:14px;max-width:420px;display:flex;flex-direction:column;gap:8px';
+    bx.append(Object.assign(document.createElement('div'), { textContent: question, style: 'font-weight:600' }));
+    const done = v => { bg.remove(); document.removeEventListener('keydown', esc, true); res(v); };
+    const esc = e => { if (e.key === 'Escape') { e.stopPropagation(); done(null); } };
+    for (const [v, lab, hint] of opts) {
+      const b = document.createElement('button'); b.className = 'btn'; b.style.cssText = 'text-align:left;padding:8px 10px';
+      b.append(Object.assign(document.createElement('div'), { textContent: lab, style: 'font-weight:600' }));
+      if (hint) b.append(Object.assign(document.createElement('div'), { textContent: hint, className: 'hint', style: 'margin:2px 0 0' }));
+      b.onclick = () => done(v); bx.append(b);
+    }
+    const cn = document.createElement('button'); cn.className = 'sm'; cn.textContent = 'Cancel'; cn.style.alignSelf = 'flex-end'; cn.onclick = () => done(null); bx.append(cn);
+    bg.onclick = e => { if (e.target === bg) done(null); };
+    bg.append(bx); document.body.append(bg); document.addEventListener('keydown', esc, true); bx.querySelector('button').focus();
+  });
+}
 async function pasteAt(x, y) {
   if (RO()) return toast('The game server is running: editing is off.', true);
   const c = clip;
-  await edit([{ op: 'paste', x, y }], `pasted ${c.w}×${c.h}`);
+  let poles = 'new';
+  if (c.poles) {      // exploration points: a new point of its own (the usual), or the same point as the original
+    const a = await askChoice(`This paste has ${c.poles === 1 ? 'an exploration point' : c.poles + ' exploration points'}.`,
+      [['new', c.poles === 1 ? 'A new point (its own number)' : 'New points (own numbers)', 'Players get experience for it as well as for the original.'],
+       ['same', 'The same point as the original', 'One point in two places (say, behind two different choices): whoever found one of them gets nothing from the other.']]);
+    if (!a) return;
+    poles = a;
+  }
+  await edit([{ op: 'paste', x, y, poles }], `pasted ${c.w}×${c.h}`);
   const tl = [];
   for (let yy = y; yy < y + c.h + CH; yy += CH) for (let xx = x; xx < x + c.w + CH; xx += CH) tl.push([Math.min(xx, x + c.w - 1), Math.min(yy, y + c.h - 1)]);
   refetch(tl);

@@ -2030,7 +2030,7 @@ class World:
         x0, x1, y0, y1 = max(0, min(x0, x1)), min(MAPX - 1, max(x0, x1)), max(0, min(y0, y1)), min(MAPY - 1, max(y0, y1))
         if (x1 - x0 + 1) * (y1 - y0 + 1) > 40000:
             return {'error': 'That area is too big (at most 200x200 at once).'}
-        tiles, items, npcs, chests = [], 0, 0, []
+        tiles, items, npcs, chests, poles = [], 0, 0, [], 0
         qs = self.talk_load()[0].get('chests', {})
         with self.lock:
             for y in range(y0, y1 + 1):
@@ -2039,6 +2039,8 @@ class World:
                     ib = None
                     if 0 < t[4] < MAXITEM and self.it_u8(t[4], I_USED):
                         ib = bytes(self.item[t[4] * ITEM_SIZE:(t[4] + 1) * ITEM_SIZE]); items += 1
+                        if ib[I_DRIVER] == 57:
+                            poles += 1
                         c = qs.get('%d,%d' % (x, y))
                         if c:
                             chests.append([x - x0, y - y0, c])
@@ -2046,9 +2048,9 @@ class World:
                         npcs += 1
                     tiles.append((x - x0, y - y0, t[0], t[1], t[7] & 0xffff, ib))
             self.clip = {'w': x1 - x0 + 1, 'h': y1 - y0 + 1, 'tiles': tiles, 'from': (x0, y0)}
-        return {'w': x1 - x0 + 1, 'h': y1 - y0 + 1, 'items': items, 'npcs': npcs, 'chests': chests}
+        return {'w': x1 - x0 + 1, 'h': y1 - y0 + 1, 'items': items, 'npcs': npcs, 'chests': chests, 'poles': poles}
 
-    def _paste(self, rec, x, y, msgs):
+    def _paste(self, rec, x, y, msgs, poles='new'):
         cl = getattr(self, 'clip', None)
         if not cl:
             msgs.append('Nothing copied yet.'); return 0
@@ -2070,6 +2072,13 @@ class World:
                     o = i * ITEM_SIZE
                     self.item[o:o + ITEM_SIZE] = ib
                     struct.pack_into('<hhH', self.item, o + I_X, tx, ty, 0)
+                    if self.item[o + I_DRIVER] == 57 and poles != 'same':   # an exploration point: a number of its own (Cody),
+                        bit = self._free_explore_bit(i)                        # unless asked to keep the same point
+                        if bit is None:
+                            msgs.append('all 128 exploration point numbers are in use: the pasted one is the same point as the original')
+                        else:
+                            for k in range(4):
+                                struct.pack_into('<I', self.item, o + I_DATA + 4 * k, (1 << (bit % 32)) if bit // 32 == k else 0)
                     if self.item[o + I_DRIVER] == 19 and cl.get('from'):    # a lever working something copied with it: the copy
                         m = struct.unpack_from('<I', self.item, o + I_DATA)[0]   # works the pasted one
                         fx, fy = cl['from']; lx, ly = m % MAPX - fx, m // MAPX - fy
@@ -2289,7 +2298,7 @@ class World:
                     continue
                 k = op['op']
                 if k == 'paste':              # the copied selection, its top corner on x, y
-                    n += self._paste(rec, x, y, msgs)
+                    n += self._paste(rec, x, y, msgs, op.get('poles', 'new'))
                     continue
                 if k.startswith('npc'):
                     err = self.npc_op(rec, op, x, y)
