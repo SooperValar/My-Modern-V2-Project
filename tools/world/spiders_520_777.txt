@@ -1,0 +1,8 @@
+# Remove the 7 Spider's Webs NW of 520,777 (their 21 spiders: remove_npcs 485 730 520 765 390 391 392)
+remove 499 740
+remove 512 740
+remove 491 742
+remove 512 747
+remove 491 760
+remove 503 760
+remove 512 760
