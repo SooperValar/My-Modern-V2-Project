@@ -283,7 +283,10 @@ Cody looks at in game before making the rest.
 - First mock-up (Nov 12, not in the game): `MyV2\Client\Claude outputs\world_sprites\_test_scene.png` (dirt path,
   desert sand, lighter water on grass, soft edges); scripts in Claude's shell only so far.
 
-### ● Doors for the new walls (Cody, Nov 13)
+### ● Doors for the new walls (Cody, Nov 13) - sprites done, templates waiting for Cody's "go"
+Sprites 36500-36581 in `Client\GFX`; templates 1440-1456 from `tools/world/new_doors.txt` (build_lab; check the numbers
+are free in the live world after stop-send). Same "go" also puts the unsigned item sprite server change live (needed
+for item sprites above 32,767 like these).
 Door sprites that match the new wall materials (sandstone, temple, brick, stone, slate, timber, fieldstone), closed and
 open, both facings. Doors are items (templates with the door driver, an open / closed sprite pair), so new doors need new
 item templates (world data: stop-send, a world tool, update-world), unlike walls and floors, which are only sprites.

@@ -461,6 +461,14 @@ brush paints them at random) and **soft edges into grass**:
   Wood Planks (37010 / 37014), Flagstone (37020 / 37024), Checkered Marble (37030 / 37034), Terracotta Tiles (37040 /
   37044), White Marble (37050 / 37054), Stone Setts (37060 / 37064). Editor: Map → Floors, "New floors" (each paints its
   4 variants at random, like the game's floor sets). The list is `tools/sprites/world_floors.json` (`WORLD_FLOORS`).
+- **New doors (Nov 13, `tools/sprites/world_doors.py`):** eight styles on the game's own door shapes (the slab of Unlocked
+  Door I / II, closed and swung open; the texture on the door's face, its edge plain): Oak (36500), Dark Wood (36510),
+  Iron-Bound (36520), Iron (36530), Temple (36540), Sandstone (36550), Iron Gate (36560, see-through bars), Curtain
+  (36570); each +0 closed I, +1 open I, +2 closed II, +3 open II. Templates 1440-1455 ("Oak Door I", "Oak Door II", ...:
+  copies of Unlocked Door I 22 / II 84, so they open, close and lock the same way), from `tools/world/new_doors.txt`.
+  The **Seyan'Du Door's other facing**: the game had it only as a Door II (915 / 916); the game's two facings are mirror
+  images (1216 is 1212 mirrored), so 36580 / 36581 are 915 / 916 mirrored, template 1456 (a copy of the Seyan'Du Door
+  559, same driver), for walls running the other way.
 - Editor: Map → Floors, "New ground · soft edges into grass" at the top. The sprites are loose PNGs in `Client\GFX`
   (published with the next client update; they need client 2.15.06, numbers above 34,767).
 - The edge table is `tools/sprites/world_ground.json` (also built into the editor as `WORLD_GROUND`): re-run

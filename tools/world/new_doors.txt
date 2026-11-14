@@ -1,0 +1,102 @@
+# New doors (Nov 13, tools/sprites/world_doors.py): each style as a Door I (copy of Unlocked Door I 22) and a Door II
+# (copy of Unlocked Door II 84), sprites closed / open; and the Seyan'Du Door's other facing (copy of 559, mirrored sprites).
+# Check the template numbers are free in the live world first (they were on the Nov 11 copy).
+
+it 1440 copy 22
+it 1440 name Oak Door I
+it 1440 desc A sturdy oak door bound with iron.
+it 1440 ref oak door
+it 1440 spr 36500 36501
+
+it 1441 copy 84
+it 1441 name Oak Door II
+it 1441 desc A sturdy oak door bound with iron.
+it 1441 ref oak door
+it 1441 spr 36502 36503
+
+it 1442 copy 22
+it 1442 name Dark Wood Door I
+it 1442 desc A dark wooden door, studded with iron.
+it 1442 ref dark wood door
+it 1442 spr 36510 36511
+
+it 1443 copy 84
+it 1443 name Dark Wood Door II
+it 1443 desc A dark wooden door, studded with iron.
+it 1443 ref dark wood door
+it 1443 spr 36512 36513
+
+it 1444 copy 22
+it 1444 name Iron-Bound Door I
+it 1444 desc A heavy door, banded and framed in iron.
+it 1444 ref iron-bound door
+it 1444 spr 36520 36521
+
+it 1445 copy 84
+it 1445 name Iron-Bound Door II
+it 1445 desc A heavy door, banded and framed in iron.
+it 1445 ref iron-bound door
+it 1445 spr 36522 36523
+
+it 1446 copy 22
+it 1446 name Iron Door I
+it 1446 desc A riveted iron door.
+it 1446 ref iron door
+it 1446 spr 36530 36531
+
+it 1447 copy 84
+it 1447 name Iron Door II
+it 1447 desc A riveted iron door.
+it 1447 ref iron door
+it 1447 spr 36532 36533
+
+it 1448 copy 22
+it 1448 name Temple Door I
+it 1448 desc A white door trimmed with gold.
+it 1448 ref temple door
+it 1448 spr 36540 36541
+
+it 1449 copy 84
+it 1449 name Temple Door II
+it 1449 desc A white door trimmed with gold.
+it 1449 ref temple door
+it 1449 spr 36542 36543
+
+it 1450 copy 22
+it 1450 name Sandstone Door I
+it 1450 desc A sandstone door with a carved diamond.
+it 1450 ref sandstone door
+it 1450 spr 36550 36551
+
+it 1451 copy 84
+it 1451 name Sandstone Door II
+it 1451 desc A sandstone door with a carved diamond.
+it 1451 ref sandstone door
+it 1451 spr 36552 36553
+
+it 1452 copy 22
+it 1452 name Iron Gate I
+it 1452 desc An iron gate. You can see through the bars.
+it 1452 ref iron gate
+it 1452 spr 36560 36561
+
+it 1453 copy 84
+it 1453 name Iron Gate II
+it 1453 desc An iron gate. You can see through the bars.
+it 1453 ref iron gate
+it 1453 spr 36562 36563
+
+it 1454 copy 22
+it 1454 name Curtain I
+it 1454 desc A heavy red curtain.
+it 1454 ref curtain
+it 1454 spr 36570 36571
+
+it 1455 copy 84
+it 1455 name Curtain II
+it 1455 desc A heavy red curtain.
+it 1455 ref curtain
+it 1455 spr 36572 36573
+
+it 1456 copy 559
+it 1456 spr 36580 36581
