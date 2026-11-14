@@ -2334,7 +2334,7 @@ function moveNpc(t) {
 // ---- the item on the selected tile: name, description, where a portal leads, data values
 let destPick = null;   // {x, y}: the next click on the map sets where this portal leads
 function itemEditor(el, r, x, y, ro) {
-  const it = r.item, tele = it.driver === 6;
+  const it = r.item, lad = it.driver === 16, tele = it.driver === 6 || lad;   // 6: a portal (leads to x, y); 16: a ladder / hole (leads by an offset from its own spot)
   const box = document.createElement('div'); box.className = 'ied';
   box.innerHTML = `<div class="lb">Item name</div><input type="text" maxlength="39" class="nm2">
     <div class="lb">Description (what players read when they look at it)</div><textarea maxlength="199" class="ds2"></textarea>
@@ -2348,7 +2348,7 @@ function itemEditor(el, r, x, y, ro) {
   el.appendChild(box);
   const nm = box.querySelector('.nm2'), ds = box.querySelector('.ds2');
   nm.value = it.name; ds.value = it.desc || '';
-  if (tele) { box.querySelector('.dx').value = it.data[0]; box.querySelector('.dy').value = it.data[1]; }
+  if (tele) { box.querySelector('.dx').value = lad ? x + it.data[0] : it.data[0]; box.querySelector('.dy').value = lad ? y + it.data[1] : it.data[1]; }
   box.querySelectorAll('.dgrid input').forEach(i => { if (tele && (i.dataset.i === '0' || i.dataset.i === '1')) i.disabled = true; });
   if (it.driver === 57) {     // an exploration point ("pole"): use_driver.c explorer_point(), data[4] = its experience
     const xp = box.querySelector('.xp'), xh = box.querySelector('.xph'), d4 = box.querySelector('.dgrid input[data-i="4"]');
@@ -2390,7 +2390,7 @@ function itemEditor(el, r, x, y, ro) {
   const collect = () => {
     const data = {};
     box.querySelectorAll('.dgrid input').forEach(i => { if (+i.value !== it.data[+i.dataset.i]) data[i.dataset.i] = +i.value; });
-    if (tele) { data[0] = +box.querySelector('.dx').value; data[1] = +box.querySelector('.dy').value; }
+    if (tele) { data[0] = +box.querySelector('.dx').value - (lad ? x : 0); data[1] = +box.querySelector('.dy').value - (lad ? y : 0); }
     return { op: 'itemedit', x, y, name: nm.value, desc: ds.value, data };
   };
   box.querySelector('.btn').onclick = () => edit([collect()], 'item ' + nm.value, true);
@@ -2398,7 +2398,7 @@ function itemEditor(el, r, x, y, ro) {
   box.querySelector('.qr').disabled = false; box.querySelector('.qr').onclick = () => openTemplate('use', [x, y, it.name]);
   if (tele) {
     const pk = box.querySelector('.pk');
-    pk.onclick = () => { destPick = { x, y }; pk.classList.add('on'); toast('Click the spot on the map where this portal should lead. (Esc cancels)'); cv.style.cursor = 'cell'; };
+    pk.onclick = () => { destPick = { x, y, rel: lad }; pk.classList.add('on'); toast(`Click the spot on the map where this ${lad ? 'ladder' : 'portal'} should lead. (Esc cancels)`); cv.style.cursor = 'cell'; };
     const np = box.querySelector('.np');
     if (np) np.onclick = () => edit([{ op: 'itemedit', x, y, data: { 2: 0, 3: 0 } }], 'normal portal', true);
     box.querySelector('.gt').onclick = () => { const dx = +box.querySelector('.dx').value, dy = +box.querySelector('.dy').value; centerOn(dx, dy); toast('That is where it leads. Its own spot: ' + x + ', ' + y); };
@@ -2406,8 +2406,9 @@ function itemEditor(el, r, x, y, ro) {
 }
 function setDestination(t) {
   const d = destPick; destPick = null; setTool(tool);
-  edit([{ op: 'itemedit', x: d.x, y: d.y, data: { 0: t.x, 1: t.y } }], `portal at ${d.x},${d.y} leads to ${t.x},${t.y}`, false)
-    .then(() => { toast(`The portal at ${d.x}, ${d.y} now leads to ${t.x}, ${t.y}.`); centerOn(d.x, d.y); selectTile(d.x, d.y); });
+  const data = d.rel ? { 0: t.x - d.x, 1: t.y - d.y } : { 0: t.x, 1: t.y };     // a ladder / hole keeps an offset from its own spot
+  edit([{ op: 'itemedit', x: d.x, y: d.y, data }], `${d.rel ? 'ladder' : 'portal'} at ${d.x},${d.y} leads to ${t.x},${t.y}`, false)
+    .then(() => { toast(`The ${d.rel ? 'ladder' : 'portal'} at ${d.x}, ${d.y} now leads to ${t.x}, ${t.y} (only this one).`); centerOn(d.x, d.y); selectTile(d.x, d.y); });
 }
 
 // ---------------------------------------------------------------- template editor (NPCs and items)

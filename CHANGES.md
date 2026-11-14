@@ -489,7 +489,10 @@ The placed piece gets its own settings in the tile panel (they are the item's ow
   e.g. the Black Stronghold coins) is shown and left alone.
 - **Exploration points** (driver 57): placing one gives it a free point number of its own (a bit in data 0-3, 128 in
   all; players remember found points by it), so it counts as a new point; the panel shows the number.
-- Portals already had "Leads to" / "Pick on map".
+- **Ladders and holes** (driver 16: they move the player by an offset from their own spot): the same "Leads to" /
+  "Pick on map" / "Go there" as portals, for this one ladder only (the panel shows the spot it leads to and stores the
+  offset). Before, the only way was its template, and saving a template changes every placed copy that still had the
+  old value. Portals (driver 6) already had it.
 
 ## Server manager
 
