@@ -485,8 +485,8 @@ Cobwebbed, lightly dusty copies of the game's things (the originals unchanged), 
   **Cobwebbed furniture**, decoration drawn into the tile (a chest there can't be opened).
 - **Loose cobwebs** 39300-39304: hanging webs (↘ and ↗), a web on the floor, torn scraps, a big web with a spider.
   Objects tab: **Cobwebs** (nothing blocks).
-- **Doors** 39100-39149 (closed / open): sprites ready; their templates (`tools/world/cobweb_doors.txt`, 1460+) go
-  into the live world with the next world update.
+- **Doors** 39100-39149 (closed / open), templates 1460-1484 ("Cobwebbed Door I" ..., each a copy of its own door;
+  `tools/world/cobweb_doors.txt`, live since Nov 14): in the builder's Objects list like any door, placed unlocked.
 
 Not published yet.
 
