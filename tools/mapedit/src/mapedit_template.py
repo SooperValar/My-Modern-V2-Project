@@ -2843,9 +2843,10 @@ class DiscordLink:
         if not after:                         # first time: start after the newest message
             r = self._http('GET', '%s/channels/%s/messages?limit=1' % (self.API, cid), bot=tok)
             if isinstance(r, list):
-                self.state['bot_after'] = r[0]['id'] if r else '0'; self._save()
-            elif r.get('_error'):
-                print('Discord bot:', r)
+                self.state['bot_after'] = r[0]['id'] if r else '0'; self.state.pop('bot_error', None); self._save()
+            elif r.get('_error') and self.state.get('bot_error') != str(r['_error']):
+                print('Discord bot:', r)      # 401: the token is wrong; 403 / 404: the bot can't see the channel
+                self.state['bot_error'] = str(r['_error']); self._save()
             return
         r = self._http('GET', '%s/channels/%s/messages?after=%s&limit=50' % (self.API, cid, after), bot=tok)
         if not isinstance(r, list):
