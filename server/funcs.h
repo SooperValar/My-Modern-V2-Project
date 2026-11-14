@@ -327,6 +327,7 @@ void really_update_char(int cn);
 //-- use --
 void use_driver(int cn,int in,int worn);
 void discord_feed(char kind,char *format,...);
+void show_moon(int cn);
 int discord_feed_read(int since,void (*put)(int,char,char*));
 void item_tick(void);
 void map_tick(void);

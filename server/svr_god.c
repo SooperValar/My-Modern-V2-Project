@@ -880,10 +880,7 @@ void god_top(int cn)
                 (globs->mdday>3 ? "th" : ""),
                 globs->mdyear,globs->mdtime/3600,(globs->mdtime/60)%60);
 
-        if ((globs->mdday%28)+1==1) do_char_log(cn,1,"New Moon tonight!\n");
-        else if ((globs->mdday%28)+1<14) do_char_log(cn,1,"The Moon is growing.\n");
-        else if ((globs->mdday%28)+1==15) do_char_log(cn,1,"Full Moon tonight!\n");
-        else do_char_log(cn,1,"The moon is dwindling.\n");
+        show_moon(cn);	// MyV2: Good Moon / Bad Moon
 }
 
 void god_create(int cn,int x)

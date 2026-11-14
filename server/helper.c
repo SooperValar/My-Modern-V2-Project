@@ -921,6 +921,22 @@ void show_time(int cn)
 		month==3 ? "rd" : "",
 		month>3  ? "th" : "",
 		year);
+	show_moon(cn);	// MyV2
+}
+
+/* MyV2: the moon (Cody, Nov 14: "Good Moon" / "Bad Moon"). A game day is 86400 ticks (80 real minutes), a month 28 days:
+ * the Bad Moon (new moon, day 1) makes spells 15% weaker and halves regeneration, the Good Moon (full moon, day 15)
+ * makes spells 15% stronger and doubles it (skill_driver.c, svr_do.c). Discord #status says the same. */
+void show_moon(int cn)
+{
+	int d=globs->mdday%28,left,until;
+
+	left=(86400-globs->mdtime)/TICKS/60;					// real minutes
+	if (d==0) { do_char_log(cn,1,"Bad Moon tonight! Spells are 15%% weaker and regeneration is halved (%dh %02dm more).\n",left/60,left%60); return; }
+	if (d==14) { do_char_log(cn,1,"Good Moon tonight! Spells are 15%% stronger and regeneration is doubled (%dh %02dm more).\n",left/60,left%60); return; }
+	until=(((d<14 ? 14 : 28)-d)*86400-globs->mdtime)/TICKS/60;
+	if (d<14) do_char_log(cn,1,"The Moon is growing. Good Moon in about %dh %02dm.\n",until/60,until%60);
+	else do_char_log(cn,1,"The Moon is dwindling. Bad Moon in about %dh %02dm.\n",until/60,until%60);
 }
 
 void scprintf(char *dst,char *format,...)

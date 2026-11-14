@@ -509,9 +509,9 @@ static void info(int cn)
 		(globs->mdday>3 ? "th" : ""),
 		globs->mdyear,globs->mdtime/3600,(globs->mdtime/60)%60);
 
-	if (globs->mdday%28+1==1) printf("New Moon tonight!<br><br>");
+	if (globs->mdday%28+1==1) printf("Bad Moon tonight!<br><br>");
 	else if (globs->mdday%28+1<15) printf("The Moon is growing.<br><br>");
-	else if (globs->mdday%28+1==15) printf("Full Moon tonight!<br><br>");
+	else if (globs->mdday%28+1==15) printf("Good Moon tonight!<br><br>");
 	else printf("The moon is dwindling.<br><br>");
 
 	fflush(stdout);
