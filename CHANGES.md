@@ -474,6 +474,12 @@ brush paints them at random) and **soft edges into grass**:
 - The edge table is `tools/sprites/world_ground.json` (also built into the editor as `WORLD_GROUND`): re-run
   `world_ground.py <Client folder>` after changing the look, then rebuild the table into `mapedit_template.py`.
 
+## Snow ground (Nov 14)
+
+Three snow grounds like the sands (the game's grass grain recoloured, 4 variants each, soft auto edges against grass):
+**soft snow** 35400-35449, **bluish snow** 35450-35499, **bright snow** 35600-35649 (`tools/sprites/world_ground.py`).
+In the editor's Floors tab under New ground. Not published yet.
+
 ## New trees (Nov 14)
 
 40 trees in the game's style, 4 of each kind in mixed sizes (32x64, 32x96, 64x96), sprites 38100-38167
@@ -486,7 +492,7 @@ brush paints them at random) and **soft edges into grass**:
 
 Editor, Objects tab: **New trees**, one cell a kind that paints one of its 4 at random (they block like the game's
 trees; dead trees and stumps block walking only). New area brushes: **Autumn Forest**, **Pine Forest**, **Snowy Forest**
-(on the Winter area's snow floor 16670-16673). Sprites in `Client\GFX`, not published yet.
+(on the new soft snow). Sprites in `Client\GFX`, not published yet.
 
 ## Wider arches (Nov 14)
 

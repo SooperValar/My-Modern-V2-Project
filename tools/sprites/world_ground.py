@@ -26,6 +26,10 @@ SETS = {   # name: first sprite, how it is made
     'golden sand': {'first': 35250, 'kind': 'earth', 'hsv': (0.11, 0.50, 0.80), 'grain': 0.6},
     'dune sand':   {'first': 35300, 'kind': 'earth', 'hsv': (0.112, 0.44, 0.82), 'grain': 0.45, 'ripples': 0.045},
     'red desert':  {'first': 35350, 'kind': 'earth', 'hsv': (0.075, 0.48, 0.74), 'grain': 0.6},
+    # snow (Nov 14; Cody liked all three)
+    'soft snow':   {'first': 35400, 'kind': 'earth', 'hsv': (0.60, 0.05, 0.93), 'grain': 0.35},
+    'bluish snow': {'first': 35450, 'kind': 'earth', 'hsv': (0.58, 0.09, 0.90), 'grain': 0.45},
+    'bright snow': {'first': 35600, 'kind': 'earth', 'hsv': (0.60, 0.03, 0.97), 'grain': 0.25},
 }
 SIDES = [(1, 0), (0, 1), (-1, 0), (0, -1)]
 CORNERS = [(1, 1), (-1, 1), (-1, -1), (1, -1)]      # corner k lies between side k and side k+1
