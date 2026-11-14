@@ -203,6 +203,11 @@ New sprites above 34,767 need client 2.15.06 or later: raise `MINVERSION` when t
 
 ## Open items (details in docs/TODO.md and docs/HOSTING.md)
 
+**Nov 13, evening:** new doors live (templates 1440-1456, Seyan'Du Door other facing 1456); the server with unsigned
+item sprites is live too. World sprites so far (all in `Client\GFX`, NOT published yet): grounds + desert 35000-35549,
+walls 36000-36077, doors 36500-36581, floors 37000-37067, cacti 38000-38006 (CHANGES.md "New ground (world sprites)").
+Publish them with client 2.15.06 when Cody is ready, and raise `MINVERSION` to 0x020F06 then.
+
 **Nov 13:** new ground with soft edges (path, dusty path, clear water; sprites 35000+ in `Client\GFX`, editor Floors tab,
 auto edges; CHANGES.md "New ground"). Cody plays with client 2.15.06 via `play.bat` (Launcher.exe would put the published
 2.15.05 back). Publishing waits until the world sprites are further along.
