@@ -2832,8 +2832,20 @@ class DiscordLink:
             t, dd, yr = int(m.group(1)), int(m.group(2)), int(m.group(3))
             day, month = dd % 28 + 1, dd // 28 + 1
             th = lambda n: 'st' if n in (1, 21) else 'nd' if n in (2, 22) else 'rd' if n in (3, 23) else 'th'
-            moon = 'It is a new moon.' if day == 1 else 'The moon is full.' if day == 15 else \
-                'The moon is growing...' if day < 15 else 'The moon is dwindling...'
+            # the moon (svr_glob.c, skill_driver.c, svr_do.c regen): a game day is 86400 ticks = 80 real minutes; the
+            # 28-day month has a new moon on day 1 (spells 15% weaker, regeneration halved) and a full moon on day 15
+            # (spells 15% stronger, regeneration doubled)
+            real = lambda ticks: '%dh %02dm' % (ticks // 18 // 3600, ticks // 18 // 60 % 60)
+            d = dd % 28
+            until = lambda target: ((target - d) % 28) * 86400 - t
+            if d == 0:
+                moon = 'New Moon tonight! Spells are 15%% weaker and regeneration is halved (%s more).' % real(86400 - t)
+            elif d == 14:
+                moon = 'Full Moon tonight! Spells are 15%% stronger and regeneration is doubled (%s more).' % real(86400 - t)
+            elif d < 14:
+                moon = 'The Moon is growing. Full Moon in about %s.' % real(until(14))
+            else:
+                moon = 'The moon is dwindling. New Moon in about %s.' % real(until(0))
             text += '\n```ansi\nIt\'s %d:%02d on the %d%s of the %d%s month of the year %d.\n  %s\n```' % (
                 t // 3600, t // 60 % 60, day, th(day), month, th(month), yr, moon)
         text += '\n-# updated <t:%d:R>' % (int(time.time()) // 60 * 60)
