@@ -476,11 +476,14 @@ brush paints them at random) and **soft edges into grass**:
 
 ## Wider arches (Nov 14)
 
-The game's stone arches come in two halves: **↗** 937 + 944 (the second half 5 tiles up-right) and **↘** 942 + 934 (the
-second half 4 tiles down-right). Two new **arch bridges** (sprites 36400 ↗, 36401 ↘; `tools/sprites/arch_bridge.py`,
-cut from the arch's own stone) make them as wide as you like: move the second half N tiles further and put a bridge on
-each of the N tiles just before it. The editor's Objects tab has an **Arches** section with all six pieces (halves
-block walking, bridges don't). Sprites in `Client\GFX`, not published yet.
+Stone arches as wide as you like. An arch is two halves, the second **4 tiles** from the first:
+- **↘** (down-right): the game's 942 + 934, bridge 36401.
+- **↗** (up-right): 36402 + 36403 (the same arch mirrored; the game's own ↗ arch 937 + 944 can't be widened cleanly,
+  its end isn't level), bridge 36400.
+
+To widen by N tiles: put N bridges on the tiles right after the first half and the second half N tiles further (4 + N).
+The bridges are cut from the arch's own stone (`tools/sprites/arch_bridge.py`). The editor's Objects tab has an
+**Arches** section with all six pieces (halves block walking, bridges don't). Sprites in `Client\GFX`, not published yet.
 
 ## One of each look in the builder (Nov 13)
 

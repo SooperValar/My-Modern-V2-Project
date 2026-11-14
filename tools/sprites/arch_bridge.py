@@ -3,11 +3,11 @@
 
     arch_bridge.py <folder with the game's sprites as NNNNN.png, or the client folder> <out folder>
 
-The game's arches come in two halves that meet when the second half stands a fixed number of tiles away:
-  along map y (screen up-right):   937 + 944 (or 945) five tiles further   -> bridge 36400
-  along map x (screen down-right): 942 (or 943) + 934 (or 935) four tiles further -> bridge 36401
-To widen an arch by N tiles: move the second half N tiles further and put a bridge on each of the N tiles just
-before it (the tiles it stood on and the ones after).
+An arch is two halves, the second 4 tiles from the first:
+  down-right (map x): 942 + 934                      -> bridge 36401
+  up-right (map y):   36402 + 36403 (the same arch mirrored) -> bridge 36400
+To widen an arch by N tiles: put N bridges on the tiles right after the first half and the second half N tiles
+further (4 + N).
 Each beam column is cut from the original piece's own stone near the join and resampled into a straight band, so it
 matches the arch. (Geometry worked out from the pieces; see the scene test in the Nov 13 notes.)
 """
@@ -35,14 +35,17 @@ def bridge(src, cols, xs, top_fn, thick, w, h, seed):
     return out
 
 def build(get):
-    # along y: 32x96, beam in the left half only (the right half is the next piece's), top 26 at x 0, rising 1 in 2
-    by = bridge(get(937), list(range(128, 144)), range(16), lambda lx: 26 - lx / 2.0, 26, 32, 96, 1)
-    # along x: 96x128, beam at x 16..31 (it belongs one tile further back than the tile it stands on, so a bridge
-    # can stand on the tiles just before the second half), top 28.5 at x 16, falling 1 in 2
-    bx = bridge(get(942), list(range(64, 80)), range(16, 32), lambda lx: 28 + (lx - 15) / 2.0, 29, 96, 128, 2)
-    return {36400: by, 36401: bx}
+    """36401: bridge for the down-right arch 942 + 934 (64x128, the beam in its right half: it belongs three tiles
+    further down-right than the tile it stands on, so bridges go on the tiles right after the first half).
+    The up-right arch is the down-right one mirrored (the game's own up-right arch 937 + 944 can't be widened
+    cleanly: its end isn't level): 36402 first half (934 mirrored), 36403 second half (942 mirrored), 36400 bridge."""
+    bx = bridge(get(942), list(range(64, 80)), range(48, 64), lambda lx: 52 + (lx - 47) / 2.0, 29, 64, 128, 2)
+    flip = lambda im: im.transpose(Image.FLIP_LEFT_RIGHT)
+    by = Image.new('RGBA', bx.size, (0, 0, 0, 0))
+    by.alpha_composite(flip(bx), (48, -24))      # mirrored, and moved so it too stands on the tiles right after the first half
+    return {36401: bx, 36400: by, 36402: flip(get(934)), 36403: flip(get(942))}
 
-NAMES = {36400: 'Arch bridge (up-right)', 36401: 'Arch bridge (down-right)'}
+NAMES = {36400: 'Arch bridge (up-right)', 36401: 'Arch bridge (down-right)', 36402: 'Arch up-right, first half', 36403: 'Arch up-right, second half'}
 
 if __name__ == '__main__':
     src, out = sys.argv[1], sys.argv[2]

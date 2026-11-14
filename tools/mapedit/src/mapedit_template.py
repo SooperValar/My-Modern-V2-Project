@@ -179,11 +179,11 @@ WORLD_WALLS = json.loads('''[[36000, "Sandstone Wall", [36000, 36001, 36002, 360
 # new plants (tools/sprites/world_plants.py): [sprite, name, blocks (1 walking, 2 sight)], drawn into the tile like the area brushes' trees
 WORLD_PLANTS = [[38000, 'Saguaro', 1], [38001, 'Saguaro (left arm)', 1], [38002, 'Saguaro (right arm)', 1], [38003, 'Saguaro (no arms)', 1],
                 [38004, 'Barrel cactus (flowers)', 1], [38005, 'Barrel cactus', 1], [38006, 'Prickly pear', 1]]
-# the game's stone arches and the bridges that widen them (tools/sprites/arch_bridge.py). An arch is two halves; the
-# second stands a fixed number of tiles from the first. Wider: move the second half N tiles further and put a bridge
-# on each of the N tiles just before it.
-WORLD_ARCHES = [[937, 'Arch ↗ first half', 1], [36400, 'Arch ↗ bridge', 0], [944, 'Arch ↗ second half (5 tiles ↗)', 1],
-                [942, 'Arch ↘ first half', 1], [36401, 'Arch ↘ bridge', 0], [934, 'Arch ↘ second half (4 tiles ↘)', 1]]
+# stone arches and the bridges that widen them (tools/sprites/arch_bridge.py). An arch is two halves, the second 4 tiles
+# from the first; the up-right one is the game's down-right arch mirrored. Wider: N bridges on the tiles right after the
+# first half, the second half N tiles further.
+WORLD_ARCHES = [[942, 'Arch ↘ first half', 1], [36401, 'Arch ↘ bridge', 0], [934, 'Arch ↘ second half (4 tiles ↘)', 1],
+                [36402, 'Arch ↗ first half', 1], [36400, 'Arch ↗ bridge', 0], [36403, 'Arch ↗ second half (4 tiles ↗)', 1]]
 WG_PLAIN = {s: n for n, g in WORLD_GROUND['sets'].items() for s in g['plain']}
 WG_EDGE = {s for g in WORLD_GROUND['sets'].values() for s in g['edges'].values()}
 WG_GRASS = set(WORLD_GROUND['grass'])
