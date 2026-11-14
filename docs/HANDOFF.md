@@ -214,7 +214,7 @@ auto edges; CHANGES.md "New ground"). Cody plays with client 2.15.06 via `play.b
 
 **Nov 12, late:** client 2.15.06 (sprite numbers up to 65,535) built: `Client\merc_new.exe`, NOT published (Cody publishes
 everything together with the new world sprites, before players get the game). Server side (unsigned item sprites) in
-both server folders, built on the test server, NOT live yet (needs an update-code with Cody's "go"). World sprites:
+both server folders, live since Nov 13 (with the doors). World sprites:
 first mock-up only (TODO "World sprites").
 
 **Nov 12: waypoints are done and live** (tested by Cody; client 2.15.05 published and pushed, client-dist 0633098;
