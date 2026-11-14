@@ -180,6 +180,7 @@ static void con_cmd(char *line)
 	if (!strcmp(w[0],"feed")) { out("next %d\n",discord_feed_read(atoi(w[1]),feed_put)); return; }	// MyV2: Discord
 	if (!strcmp(w[0],"dshout")) { con_dshout(w[1],after(line,2)); return; }
 	if (!strcmp(w[0],"rankings")) { con_rankings(); return; }
+	if (!strcmp(w[0],"gametime")) { out("%d %d %d\n",globs->mdtime,globs->mdday,globs->mdyear); return; }	// MyV2: Discord #status
 	if (!strcmp(w[0],"talktest")) {	// talktest <NPC template> <player> <text>: as if the player said it there
 		int t=atoi(w[1]),cn=0;
 		for (n=1; n<MAXCHARS; n++) if (ch[n].used==USE_ACTIVE && ch[n].temp==t && !(ch[n].flags&(CF_PLAYER|CF_BODY))) { cn=n; break; }
@@ -521,6 +522,7 @@ static void con_cmd(char *line)
 		    "  feed <since>                              shouts and system messages for Discord, after number since\n"
 		    "  dshout <name> <text>                      a Discord #game-chat line, shown in game like a shout\n"
 		    "  rankings                                  every player: exp|name|rank|class|online\n"
+		    "  gametime                                  game time: seconds of the day, day, year\n"
 		    "  kqkill <player> <npc template>            as if the player killed it (kill quests)\n"
 		    "  kills <player>                            the player's #kills\n"
 		    "  kqtime <player> <minutes>                 kill quests: as if taken / handed in that much earlier\n"

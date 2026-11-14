@@ -2826,8 +2826,30 @@ class DiscordLink:
                     pl.append((l[2:22].strip(), l[23:45].strip(), area or 'the world'))
             rows = '\n'.join('  %-5s %-16s %s' % (RANK_SHORT.get(r, r[:5]), n, a[:34]) for n, r, a in pl[:40]) or '  Nobody is online right now.'
             text = '```ansi\n%s\n%s\n%s\n%s\n  %d player%s online.\n```' % (HL('Players Online:'), bar, rows, bar, len(pl), '' if len(pl) == 1 else 's')
+        gt = self.ctl.console('gametime', 3) if running else None
+        m = re.match(r'\s*(\d+) (\d+) (\d+)', gt or '')
+        if m:                                 # like the game's #time (helper.c show_time) and its moon (svr_glob.c)
+            t, dd, yr = int(m.group(1)), int(m.group(2)), int(m.group(3))
+            day, month = dd % 28 + 1, dd // 28 + 1
+            th = lambda n: 'st' if n in (1, 21) else 'nd' if n in (2, 22) else 'rd' if n in (3, 23) else 'th'
+            moon = 'It is a new moon.' if day == 1 else 'The moon is full.' if day == 15 else \
+                'The moon is growing...' if day < 15 else 'The moon is dwindling...'
+            text += '\n```ansi\nIt\'s %d:%02d on the %d%s of the %d%s month of the year %d.\n  %s\n```' % (
+                t // 3600, t // 60 % 60, day, th(day), month, th(month), yr, moon)
         text += '\n-# updated <t:%d:R>' % (int(time.time()) // 60 * 60)
         self._board('status', hook, text)
+
+    def _reorder(self):
+        """#status: the rankings first, who's online below (Cody, Nov 14): the old messages go, new ones are posted"""
+        hook = self._hook('discord-board-webhook.txt')
+        if not hook or self.state.get('order') == 2:
+            return
+        for k in ('status', 'rankings'):
+            mid = self.state.pop(k + '_' + hook[-12:], None)
+            if mid:
+                self._http('DELETE', hook + '/messages/' + mid)
+        self.last = {}
+        self.state['order'] = 2; self._save()
 
     def _rankings(self):
         hook = self._hook('discord-board-webhook.txt')
@@ -2888,8 +2910,8 @@ class DiscordLink:
     def _loop(self):
         while True:
             now = time.time()
-            for what, every, attr in ((self._feed, 3, 'feed_t'), (self._bot, 3, 'bot_t'), (self._status_board, 60, 'board_t'),
-                                      (self._rankings, 600, 'rank_t')):
+            for what, every, attr in ((self._reorder, 60, 'order_t'), (self._feed, 3, 'feed_t'), (self._bot, 3, 'bot_t'),
+                                      (self._rankings, 600, 'rank_t'), (self._status_board, 60, 'board_t')):
                 if now - getattr(self, attr, 0) >= every:
                     setattr(self, attr, now)
                     try:
