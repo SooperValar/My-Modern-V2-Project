@@ -69,7 +69,7 @@ inga = me.tpl_read(W.tchar, 50 * me.CHAR_SIZE, me.CT_FIELDS)
 EDDA = made({'op': 'ctempnew', 'from': 25, 'name': 'Huntmaster Edda'})
 dd = list(me.tpl_read(W.tchar, EDDA * me.CHAR_SIZE, me.CT_FIELDS)['data'])
 for i in list(range(20, 24)) + list(range(32, 36)) + [41]: dd[i] = 0
-dd[49], dd[50], dd[51], dd[66], dd[37], dd[72] = WHEAD, 0, 63, 0, 1, 0
+dd[49], dd[50], dd[51], dd[66], dd[37], dd[72] = WHEAD, 0, 160, 0, 1, 0
 W.apply([{'op': 'ctempset', 't': EDDA, 'fields': {'data': dd, 'item': [0] * 40, 'sprite': inga['sprite'], 'kindred': inga['kindred'], 'alignment': 10000,
           'description': 'The huntmaster of the Wolfwood, a weathered woman in a coat of wolf pelts, a bow over her shoulder.'},
           'text': ['Ha!', 'You picked the wrong hunter, %s!', "Welcome, %s. I pay for every wolf head, more for dire wolves. Bring me Old Greyfang's fang and you'll have something special."],
@@ -80,13 +80,13 @@ def extra(want, exp, give):
     t = made({'op': 'ctempnew', 'from': EDDA, 'name': 'Huntmaster Edda'})
     d2 = list(dd); d2[49], d2[51], d2[66] = want, exp, give
     W.apply([{'op': 'ctempset', 't': t, 'fields': {'data': d2}, 'text': [None, None, ''], 'respawn': False}], 'Edda extra'); return t
-EDDA_DIRE, EDDA_FANG = extra(DHEAD, 240, 0), extra(FANG, 14000, AMULET)
+EDDA_DIRE, EDDA_FANG = extra(DHEAD, 600, 0), extra(FANG, 14000, AMULET)
 qs, npcs = W.talk_load()
 qs['alias'][EDDA_DIRE] = EDDA; qs['alias'][EDDA_FANG] = EDDA
 top = max([v for v in qs['order'].values() if v > 0] or [0])
 for k, t in enumerate((EDDA, EDDA_DIRE, EDDA_FANG)): qs['order'][t] = top + 1 + k
-qs['qrew'][EDDA] = {'lim': 0, 'first': 0, 'gold': 300, 'st': [], 'rmin': 4, 'rmax': -1, 'n': 1}
-qs['qrew'][EDDA_DIRE] = {'lim': 0, 'first': 0, 'gold': 1200, 'st': [], 'rmin': 6, 'rmax': -1, 'n': 1}
+qs['qrew'][EDDA] = {'lim': 0, 'first': 0, 'gold': 800, 'st': [], 'rmin': 4, 'rmax': -1, 'n': 1}
+qs['qrew'][EDDA_DIRE] = {'lim': 0, 'first': 0, 'gold': 3000, 'st': [], 'rmin': 6, 'rmax': -1, 'n': 1}
 qs['qrew'][EDDA_FANG] = {'lim': 1, 'first': 0, 'gold': 70000, 'st': [], 'rmin': 7, 'rmax': -1, 'n': 1}
 print(W.talk_save(qs, npcs))
 def rank_of(t): return me.RANKS[me.points2rank(struct.unpack_from('<i', W.tchar, t * me.CHAR_SIZE + 709)[0])]

@@ -492,7 +492,7 @@ Cody made the area (zones "Eastern Forest", "Deep Forest", "Dire Wolves Den", "W
 - **31 Dire Wolves** (Master Sergeant) in the Deep Forest and the Dire Wolves Den, thicker the closer to Old Greyfang (`add_wolves.py`: spots weighted by the distance to him, closer together near him): 7 within 10 tiles of him, 4 at 10-20, 11 at 20-35, 9 further out.
 - **Old Greyfang** (First Sergeant) at 414,541 in the den.
 - Every wolf is its own template (from the Spider, not "simple"), wolf group 33, and carries its head (Greyfang his fang).
-- **Huntmaster Edda** (a Templar woman: kindred Templar + female, the female Templar look 8144) in Wynn & Edda's Hut at 514,654, with her item quests (`#quest`): Wolf Head 63 exp + 3G, Dire Wolf Head 240 exp + 12G (both as often as you like, from Sergeant / Master Sergeant), Greyfang's Fang -> Greyfang Amulet, 14,000 exp + 700G (once, from First Sergeant).
+- **Huntmaster Edda** (a Templar woman: kindred Templar + female, the female Templar look 8144) in Wynn & Edda's Hut at 514,654, with her item quests (`#quest`): Wolf Head 160 exp + 8G, Dire Wolf Head 600 exp + 30G (10 heads = one standard quest, 5% of the rank's climb; the Quest Planner's per-head share is 0.5% now) (both as often as you like, from Sergeant / Master Sergeant), Greyfang's Fang -> Greyfang Amulet, 14,000 exp + 700G (once, from First Sergeant).
 - **Wynn** is a Harakim woman now (kindred Harakim + female, the female Harakim look 6096).
 - NPC templates 2057-2100 and more (`made.json`).
 
