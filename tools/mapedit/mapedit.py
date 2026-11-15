@@ -8164,7 +8164,7 @@ function questsRender() {
   box.querySelector('.qsave').onclick = questsSave;
   const sc = document.createElement('div'); sc.className = 'qscroll'; box.appendChild(sc);
   const tb = document.createElement('table'); tb.className = 'qtab'; sc.appendChild(tb);
-  tb.innerHTML = '<thead><tr><th></th><th>#</th><th>NPC</th><th>Where</th><th>Wants</th><th>Teaches</th><th>Gives item</th><th>Exp</th><th>Gold</th><th>Times · rank</th><th>Says (#quest &lt;n&gt;)</th><th>Listed</th><th></th></tr></thead>';
+  tb.innerHTML = '<thead><tr><th></th><th>#</th><th>NPC</th><th>Where</th><th>Wants</th><th>Teaches</th><th>Gives item</th><th>Exp</th><th>Gold</th><th>Settings</th><th>Says (#quest &lt;n&gt;)</th><th>Listed</th><th></th></tr></thead>';
   const body = document.createElement('tbody'); tb.appendChild(body);
   const main = QS.filter(q => !q.puzzle), puz = QS.filter(q => q.puzzle);
   let nr = 0;
@@ -8198,9 +8198,10 @@ function questsRender() {
       if (q.data[66] && !q.data[50]) { const nn = num(() => q.rew.n || 1, v => { q.rew.n = Math.max(1, Math.min(50, v || 1)); re(); }, 1, 50); nn.className = 'cnt'; nn.title = 'How many of the item it gives (the first reward)'; const x = document.createElement('span'); x.className = 'x'; x.textContent = '×'; gi.prepend(nn, x); } }
     const ex = num(() => q.data[51], v => { q.data[51] = v; re(); }, 0, 99999999); ex.className = 'exp'; td().appendChild(ex);
     td().appendChild(goldIn(() => q.rew.gold, v => { q.rew.gold = v; re(); }));
-    const tb2 = document.createElement('button'); tb2.className = 'tm' + (QOpen.has(q.t) ? ' on' : ''); tb2.textContent = qTimes(q);
+    const tb2 = document.createElement('button'); tb2.className = 'tm' + (QOpen.has(q.t) ? ' on' : ''); tb2.textContent = QOpen.has(q.t) ? 'Settings ▴' : 'Settings ▾';
+    const tsum = document.createElement('div'); tsum.className = 'hint'; tsum.style.cssText = 'margin:3px 0 0;font-size:11px'; tsum.textContent = qTimes(q);
     tb2.title = 'How often a player can do it, and a different reward after the first times'; tb2.onclick = () => { QOpen.has(q.t) ? QOpen.delete(q.t) : QOpen.add(q.t); re(); };
-    td().appendChild(tb2);
+    { const c3 = td(); c3.append(tb2, tsum); }
     const hi = document.createElement('input'); hi.type = 'text'; hi.className = 'hintin'; hi.maxLength = 159; hi.value = q.hint; hi.placeholder = '(nothing)';
     hi.title = '%s = the player\'s name; a text starting with # is a code, not shown'; hi.onchange = () => { q.hint = hi.value; re(); }; td('hintc').appendChild(hi);
     const ls = td('keep');
@@ -8228,24 +8229,21 @@ function questsRender() {
     nmd.firstChild.onclick = () => gotoNpc(q.giver, 'conv'); nmd.lastChild.textContent = `chain quest ${q.chain} · template ${q.giver}`; w.appendChild(nmd); who.appendChild(w);
     const wh = td('where'); wh.textContent = (q.where || '–').replace(/^Aston, /, '');
     const parts = q.parts || [];
-    const wants = td(); wants.colSpan = 2; tr.removeChild(tr.lastChild); tr.appendChild(wants);
-    wants.innerHTML = `<b style="color:var(--gold2)">${esc(q.cname)}</b> <span class="hint">· ${parts.length} part${parts.length === 1 ? '' : 's'}, one at a time</span>`;
-    parts.forEach((p, k) => { const d = document.createElement('div'); d.className = 'hint'; d.style.margin = '2px 0 0'; d.textContent = `${k + 1}. ${p.text}`; wants.appendChild(d); });
-    const gv = td(); parts.forEach((p, k) => { const d = document.createElement('div'); d.style.fontSize = '12px'; d.textContent = `${k + 1}. ${p.items.length ? p.items.join(', ') : '–'}${p.rank >= 0 ? ' (' + RANK_SHORT[p.rank] + '+)' : ''}`; gv.appendChild(d); });
-    const ex = td(); parts.forEach((p, k) => { const d = document.createElement('div'); d.style.fontSize = '12px'; d.textContent = p.exp ? p.exp.toLocaleString() : '–'; ex.appendChild(d); });
+    const wants = td(); wants.colSpan = 2;
+    wants.innerHTML = `<b style="color:var(--gold2)">${esc(q.cname)}</b> <span class="hint">· chain quest, ${parts.length} part${parts.length === 1 ? '' : 's'}</span>`;
+    const gv = td(); gv.innerHTML = `<span class="hint">${parts.reduce((n, p) => n + p.items.length, 0)} item${parts.reduce((n, p) => n + p.items.length, 0) === 1 ? '' : 's'} over ${parts.length} parts</span>`;
+    const ex = td(); ex.textContent = parts.reduce((n, p) => n + p.exp, 0).toLocaleString(); ex.title = 'All parts together';
     td().textContent = '–';
-    const tm = td(); const b2 = document.createElement('button'); b2.className = 'tm'; b2.textContent = 'chain quest · its lines'; b2.title = 'Its items, rewards and steps are set in the giver\'s Conversations (and its name and journal below, under Chain quests)';
-    b2.onclick = () => gotoNpc(q.giver, 'conv'); tm.appendChild(b2);
-    const R2 = q.rew, opts = n => [[-1, n], ...RANK_SHORT.map((r, k) => [k, r])];
-    const rr = document.createElement('div'); rr.className = 'ipick'; rr.style.marginTop = '4px';
-    rr.append(sel(opts('any'), () => R2.rmin ?? -1, v => { R2.rmin = v; questsRender(); }), document.createTextNode('–'), sel(opts('any'), () => R2.rmax ?? -1, v => { R2.rmax = v; questsRender(); }));
-    rr.title = 'Who #quest lists it for (lowest and highest rank). A part with its own "rank" condition in the lines asks for at least that.'; tm.appendChild(rr);
+    const tm = td(); const b2 = document.createElement('button'); b2.className = 'tm' + (QOpen.has(q.t) ? ' on' : ''); b2.textContent = QOpen.has(q.t) ? 'Settings ▴' : 'Settings ▾';
+    b2.onclick = () => { QOpen.has(q.t) ? QOpen.delete(q.t) : QOpen.add(q.t); questsRender(); };
+    const sm = document.createElement('div'); sm.className = 'hint'; sm.style.cssText = 'margin:3px 0 0;font-size:11px'; sm.textContent = 'chain' + ((q.rew.rmin ?? -1) >= 0 ? ' · ' + RANK_SHORT[q.rew.rmin] + '+' : '');
+    tm.append(b2, sm);
     const says = td('hintc'); says.innerHTML = '<span class="hint">#quest shows the journal line of the part a player is at</span>';
     const ls = td('keep'); const c = document.createElement('input'); c.type = 'checkbox'; c.checked = q.listed; c.onchange = () => { q.listed = c.checked; questsRender(); }; ls.appendChild(c);
     td('keep');
     return tr;
   };
-  const add = (q, i, list) => { body.appendChild(q.chain ? chainRow(q, i, list) : rowFor(q, i, list)); if (QOpen.has(q.t) && !q.chain) body.appendChild(repRow(q)); };
+  const add = (q, i, list) => { body.appendChild(q.chain ? chainRow(q, i, list) : rowFor(q, i, list)); if (QOpen.has(q.t)) body.appendChild(q.chain ? chainRep(q) : repRow(q)); };
   main.forEach((q, i) => add(q, i, main));
   if (puz.length) {
     const h = document.createElement('tr'); h.innerHTML = `<td colspan="13" class="keep" style="padding-top:14px;color:var(--dim2);font-size:12px"><button class="sm">${QPuz ? 'Hide' : 'Show'}</button> Labyrinth and tower trades · puzzle steps, never in #quest (${puz.length})</td>`; body.appendChild(h);
@@ -8323,6 +8321,33 @@ function qTimes0(q) {
   return (r.lim === 1 ? 'once' : r.lim ? r.lim + ' times' : 'forever') + (n > 1 ? `, ${n} rewards` : '');
 }
 const qOrd = n => n + (n % 10 === 1 && n % 100 !== 11 ? 'st' : n % 10 === 2 && n % 100 !== 12 ? 'nd' : n % 10 === 3 && n % 100 !== 13 ? 'rd' : 'th');
+function chainRep(q) {                // a chain quest's settings: its parts, who #quest lists it for, where its lines are
+  const tr = document.createElement('tr'); tr.className = 'rep';
+  const td = document.createElement('td'); td.colSpan = 13; tr.appendChild(td);
+  const g = document.createElement('div'); g.className = 'qrep'; td.appendChild(g);
+  const lb = t => { const l = document.createElement('div'); l.className = 'lb'; l.textContent = t; g.appendChild(l); return l; };
+  const ln = () => { const r = document.createElement('div'); r.className = 'ln'; g.appendChild(r); return r; };
+  const sp = t => { const e = document.createElement('span'); e.textContent = t; return e; };
+  lb('A chain quest'); ln().innerHTML = `<span>Quest ${q.chain}, given by <b>${esc(q.name)}</b>. #quest lists one part at a time, the one a player is at (marked »), with that part's journal line.</span>`;
+  (q.parts || []).forEach((p, k) => {
+    lb(`Part ${k + 1}`);
+    const r = ln(); r.style.flexDirection = 'column'; r.style.alignItems = 'flex-start';
+    r.append(sp(p.text || '(no journal line)'));
+    const w = document.createElement('div'); w.className = 'hint'; w.style.margin = 0;
+    w.textContent = `Reward: ${p.items.length ? p.items.join(', ') : 'no item'}${p.exp ? ', ' + p.exp.toLocaleString() + ' exp' : ''}${p.rank >= 0 ? ' · from ' + RANK_NAMES[p.rank] + ' (its lines ask for it)' : ''}`;
+    r.append(w);
+  });
+  lb('Which ranks #quest lists it for');
+  const R = q.rew, opts = none => [[-1, none], ...RANK_NAMES.map((n, i) => [i, `${i} · ${n}`])];
+  const rr = ln();
+  rr.append(sp('from'), sel(opts('any rank'), () => R.rmin ?? -1, v => { R.rmin = v; if (R.rmax >= 0 && v > R.rmax) R.rmax = v; questsRender(); }),
+    sp('up to'), sel(opts('no limit'), () => R.rmax ?? -1, v => { R.rmax = v; if (v >= 0 && R.rmin > v) R.rmin = v; questsRender(); }));
+  lb('Its items, rewards and steps');
+  const r3 = ln();
+  const ob = document.createElement('button'); ob.className = 'btn sec'; ob.textContent = `Open ${q.name}'s Conversations`; ob.onclick = () => gotoNpc(q.giver, 'conv');
+  r3.append(ob, sp(' · its name and journal lines are under Chain quests below'));
+  return tr;
+}
 function repRow(q) {                  // the Times settings under a quest's row: how often, and the rewards turn-in by turn-in
   const tr = document.createElement('tr'); tr.className = 'rep';
   const td = document.createElement('td'); td.colSpan = 13; tr.appendChild(td);

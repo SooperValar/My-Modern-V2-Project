@@ -2304,7 +2304,7 @@ void do_quest(int cn,char *a,char *b)
 			ni=chain_step(-t,cn,ci,8,&ex,&lo,&pa,&ps);
 			if (ni && ci[0]>0 && ci[0]<MAXTITEM) snprintf(rew,sizeof(rew),"\xbb%s",it_temp[ci[0]].name); else strcpy(rew,"\xbb-");
 			if (ex>0) qol_num(ex,exp); else strcpy(exp,"-");
-			do_char_log(cn,q[n].known ? 3 : 1,"%2d  %-12.12s %-16.16s %-14.14s %7s\n",n+1,ch_temp[g].name,area[0] ? area : "?",rew,exp);
+			do_char_log(cn,q[n].known ? 3 : 1,"%2d  %-12.12s %-16.16s %-14.14s %7s\n",n+1,chain_name(-t),area[0] ? area : "?",rew,exp);	// (its name: the chain is easier to tell apart than its giver)
 			chains++;
 			continue;
 		}
