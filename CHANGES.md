@@ -508,6 +508,9 @@ A first Wolfwood (forest, trail, Hunters' Lodge, 16 Grey Wolves, 9 Dire Wolves, 
 - **Tools**: `tools/sprites/glrender.py` (a small glTF renderer: skinned animation, no Blender needed) and `tools/sprites/make_creature.py <model> <base> <out>` (the frame layout: engine.c eng_char, svr_act.c act_turn_*). The same pack has a fox, husky, deer, stag, bull, horse and more, so other animals can be made the same way.
 - **One test wolf** (template 2057, from the Spider 392, same strength; not "simple animation", so a usurped wolf can pick up, drop, give and use) in the field by the east road at 532,624 (`tools/world/wolf/test_wolf.py`).
 
+## Quest givers made friendly (Nov 15)
+- Tobias, Wynn, Brann and Huntmaster Edda were copies of Jamil (template 25), whose alignment is -750: an enemy, so players could attack them and they'd drop loot. They are 10,000 now, like the other quest givers (Hollis, Inga).
+
 ## Editor: an NPC's class and look together (Nov 15)
 - In the NPC editor's General tab: **Class** (Mercenary, Templar, Harakim, Seyan'Du, Arch-Templar, Arch-Harakim, Warrior, Sorcerer, or no class for monsters and animals) and **man / woman** set its kind (kindred) like a player's; then **Base look**, the game's own look for that class; then **Cosmetic look**: tick "own look" and pick it with **Choose a look**: a list with a picture of every look an NPC has in the game (and the class looks), named by the NPCs that have it, with a search (wolf, guard, Inga...); only when it should look different (a recoloured monster, a wolf). Changing the class changes the look too, unless it has its own. The old number field "Class" is called **Monster class** now.
 

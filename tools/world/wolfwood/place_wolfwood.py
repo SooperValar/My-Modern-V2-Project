@@ -70,7 +70,7 @@ EDDA = made({'op': 'ctempnew', 'from': 25, 'name': 'Huntmaster Edda'})
 dd = list(me.tpl_read(W.tchar, EDDA * me.CHAR_SIZE, me.CT_FIELDS)['data'])
 for i in list(range(20, 24)) + list(range(32, 36)) + [41]: dd[i] = 0
 dd[49], dd[50], dd[51], dd[66], dd[37], dd[72] = WHEAD, 0, 63, 0, 1, 0
-W.apply([{'op': 'ctempset', 't': EDDA, 'fields': {'data': dd, 'item': [0] * 40, 'sprite': inga['sprite'], 'kindred': inga['kindred'],
+W.apply([{'op': 'ctempset', 't': EDDA, 'fields': {'data': dd, 'item': [0] * 40, 'sprite': inga['sprite'], 'kindred': inga['kindred'], 'alignment': 10000,
           'description': 'The huntmaster of the Wolfwood, a weathered woman in a coat of wolf pelts, a bow over her shoulder.'},
           'text': ['Ha!', 'You picked the wrong hunter, %s!', "Welcome, %s. I pay for every wolf head, more for dire wolves. Bring me Old Greyfang's fang and you'll have something special."],
           'respawn': False}], 'Edda')
