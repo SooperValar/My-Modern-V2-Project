@@ -6914,8 +6914,42 @@ function ipick(get, set, opts) {   // an item template: number, name, Pick…, �
   e.onclick = () => { if (+n.value) openTemplate('item', +n.value); };
   d.append(n, th, nm, b, x, e); show(); return d;
 }
+// every look an NPC has in the game (and the class looks), for the NPC editor's look picker
+function npcLooks() {
+  const m = new Map();
+  for (const l of NPC_LOOKS) { m.set(l[2], { s: l[2], names: [l[0] + ' man'] }); m.set(l[3], { s: l[3], names: [l[0] + ' woman'] }); }
+  for (const t of (pal && pal.npcs) || []) {
+    if (!t[9]) continue;
+    const e = m.get(t[9]) || { s: t[9], names: [] }; m.set(t[9], e);
+    if (!e.names.includes(t[1]) && e.names.length < 6) e.names.push(t[1]);
+  }
+  return [...m.values()];
+}
+function lookName(s2) { const e = npcLooks().find(x => x.s === s2); return e ? e.names.slice(0, 3).join(', ') : s2 ? 'sprite ' + s2 : 'none'; }
+function lookPopup(anchor, pick) {
+  const p = $('#ipop'), r = anchor.getBoundingClientRect();
+  p.style.display = 'flex'; p.style.width = '520px'; p.style.maxHeight = '520px';
+  p.style.left = Math.min(window.innerWidth - 530, r.left) + 'px'; p.style.top = Math.max(8, Math.min(window.innerHeight - 530, r.bottom + 4)) + 'px';
+  const q = p.querySelector('input'), lst = p.querySelector('.lst'); q.value = ''; q.placeholder = 'Search a look by an NPC that has it (wolf, guard, Inga…)';
+  const fill = () => {
+    const s = q.value.trim().toLowerCase();
+    const looks = npcLooks().filter(e => !s || e.names.some(n => n.toLowerCase().includes(s)) || String(e.s) === s);
+    lst.innerHTML = ''; lst.style.display = 'grid'; lst.style.gridTemplateColumns = 'repeat(4, 1fr)'; lst.style.gap = '4px';
+    for (const e of looks) {
+      const d = document.createElement('div'); d.className = 'r'; d.style.cssText = 'flex-direction:column;gap:2px;padding:4px;text-align:center';
+      d.title = e.names.join(', ') + ' · sprite ' + e.s;
+      d.append(thumb(e.s + 8, 56, 64));
+      const a = document.createElement('span'); a.style.cssText = 'font-size:11px;line-height:1.2;max-height:2.4em;overflow:hidden'; a.textContent = e.names.slice(0, 2).join(', '); d.append(a);
+      d.onmousedown = ev => { ev.preventDefault(); p.style.display = 'none'; p.style.width = ''; p.style.maxHeight = ''; lst.style.display = ''; pick(e.s); };
+      lst.append(d);
+    }
+    if (!looks.length) { lst.style.display = ''; lst.innerHTML = '<div class="hint" style="padding:6px">Nothing matches.</div>'; }
+  };
+  q.oninput = fill; fill(); setTimeout(() => q.focus(), 0);
+}
 function itemPopup(anchor, pick, filter) {
   const p = $('#ipop'), r = anchor.getBoundingClientRect();
+  p.style.width = ''; p.style.maxHeight = ''; p.querySelector('.lst').style.display = '';      // (the look picker makes it a grid)
   p.style.display = 'flex'; p.style.left = Math.min(window.innerWidth - 350, r.left) + 'px'; p.style.top = Math.min(window.innerHeight - 390, r.bottom + 4) + 'px';
   const q = p.querySelector('input'), lst = p.querySelector('.lst'); q.value = ''; q.placeholder = 'Search an item by name or number';
   const fill = () => {
@@ -6975,9 +7009,12 @@ const NPC_TABS = {
     if (base) sp.append(chk('own look', () => own, on => { ownLookT = on ? TP.t : null; if (!on) c.sprite = base; tplRender(); }));
     if (own) {
       const th = thumb(c.sprite + 8, 48);
-      sp.append(num(() => c.sprite, v => { c.sprite = v; th.dataset.spr = v + 8; paintThumb(th); }, 0, 65535), th);
+      const nm = document.createElement('span'); nm.className = 'nm'; nm.textContent = lookName(c.sprite);
+      const pk = document.createElement('button'); pk.className = 'btn sec'; pk.textContent = 'Choose a look ▾';
+      pk.onclick = () => lookPopup(pk, v => { c.sprite = v; tplRender(); });
+      sp.append(th, nm, pk, num(() => c.sprite, v => { c.sprite = v; th.dataset.spr = v + 8; paintThumb(th); nm.textContent = lookName(v); }, 0, 65535));
     }
-    row(g, base ? 'Cosmetic look' : 'Look (sprite base)', sp, base ? 'Only if it should not look like its class: tick, then the sprite number (copy it from another NPC).' : 'Copy the number from another NPC to look like it.');
+    row(g, base ? 'Cosmetic look' : 'Look (sprite base)', sp, base ? 'Only if it should not look like its class: tick, then choose the look from the list (every look an NPC has in the game).' : 'Choose it from the list (every look an NPC has in the game), or type its number.');
     row(g, 'Facing', faceRow(c.dir, v => c.dir = v));
     row(g, 'Alignment', num(() => c.alignment, v => c.alignment = v, -32768, 32767), 'Below 0: an enemy (players may attack it, it drops loot). Above 0: friendly.');
     const gold = document.createElement('div'); gold.className = 'ipick';
