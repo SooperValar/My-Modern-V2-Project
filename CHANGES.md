@@ -508,6 +508,9 @@ A first Wolfwood (forest, trail, Hunters' Lodge, 16 Grey Wolves, 9 Dire Wolves, 
 - **Tools**: `tools/sprites/glrender.py` (a small glTF renderer: skinned animation, no Blender needed) and `tools/sprites/make_creature.py <model> <base> <out>` (the frame layout: engine.c eng_char, svr_act.c act_turn_*). The same pack has a fox, husky, deer, stag, bull, horse and more, so other animals can be made the same way.
 - **One test wolf** (template 2057, from the Spider 392, same strength; not "simple animation", so a usurped wolf can pick up, drop, give and use) in the field by the east road at 532,624 (`tools/world/wolf/test_wolf.py`).
 
+## Editor: an NPC's class and look together (Nov 15)
+- In the NPC editor's General tab: **Class** (Mercenary, Templar, Harakim, Seyan'Du, Arch-Templar, Arch-Harakim, Warrior, Sorcerer, or no class for monsters and animals) and **man / woman** set its kind (kindred) like a player's; then **Base look**, the game's own look for that class; then **Cosmetic look**: tick "own look" and give a sprite only when it should look different (a recoloured monster, a wolf). Changing the class changes the look too, unless it has its own. The old number field "Class" is called **Monster class** now.
+
 ## Editor: erase a rectangle (Nov 15)
 - A new tool next to the eraser, **Erase a rectangle** (key **R**): drag over an area and its walls, objects and items go (floors stay), like the rectangle tool paints. Shift+drag with the eraser does the same.
 - The brush card at the bottom left hides on the Zones, Waypoints and Merchants tabs (it stayed stuck there).

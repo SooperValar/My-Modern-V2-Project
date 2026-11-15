@@ -6794,6 +6794,10 @@ function chk(label, get, set) {
 }
 function chks(items) { const d = document.createElement('div'); d.className = 'chks'; items.forEach(i => d.append(i)); return d; }
 // ---- Merchants tab: what each merchant sells (with pages in the game when more than 40), what he buys, his prices
+// NPC classes: name, kindred bit, the look of a man, of a woman (the game's own player templates)
+let ownLookT = null;     // the NPC whose "own look" box is ticked while its sprite is still the base one
+const NPC_LOOKS = [['Mercenary', 0x1, 5072, 7120], ['Templar', 0x10, 2000, 8144], ['Harakim', 0x40, 4048, 6096], ["Seyan'Du", 0x2, 3024, 11216],
+  ['Arch-Templar', 0x20, 23504, 24528], ['Arch-Harakim', 0x200, 29648, 30672], ['Warrior', 0x400, 25552, 26576], ['Sorcerer', 0x800, 28624, 27600]];
 const MK_KINDS = [[1, 'Armor'], [2, 'Weapons'], [4, 'Magic'], [8, 'Other']];
 function merchantsTab(w, sect, q) {
   const box = document.createElement('div'); box.className = 'list'; w.appendChild(box);
@@ -6945,17 +6949,42 @@ const NPC_TABS = {
     row(g, 'Name', txt(() => c.name, v => { const same = c.reference === c.name; c.name = v; if (same) c.reference = v; }, 39), 'Names must be unique for players to tell them apart; the reference is used in sentences ("the guard").');
     row(g, 'Reference', txt(() => c.reference, v => c.reference = v, 39));
     row(g, 'Description', txt(() => c.description, v => c.description = v, 199, true), 'What players read when they look at it.');
+    // class and look: the class (and man / woman) gives the base look, the game's own for that class; a cosmetic look
+    // replaces it only where it differs (a recoloured monster, a wolf...)
+    const CMASK = 0xE73, GMASK = 0x180;
+    const cls = NPC_LOOKS.find(l => c.kindred & l[1]);
+    const gen = c.kindred & 0x100 ? 'f' : c.kindred & 0x80 ? 'm' : '';
+    const base = cls ? cls[gen === 'f' ? 3 : 2] : 0;
+    const cr = document.createElement('div'); cr.className = 'ipick';
+    const setCls = (bitsC, g2) => {
+      const nl = NPC_LOOKS.find(l => l[1] === bitsC), nb = nl ? nl[g2 === 'f' ? 3 : 2] : 0;
+      if (nb && (!base || c.sprite === base)) c.sprite = nb;            // no cosmetic look: it takes the new class's look
+      c.kindred = (c.kindred & ~(CMASK | GMASK)) | bitsC | (g2 === 'f' ? 0x100 : g2 === 'm' ? 0x80 : 0);
+      tplRender();
+    };
+    cr.append(sel([[0, 'no class (monster, animal…)'], ...NPC_LOOKS.map(l => [l[1], l[0]])], () => cls ? cls[1] : 0, v => setCls(+v, gen || 'm')),
+      (() => { const s2 = document.createElement('select'); s2.innerHTML = '<option value="m">man</option><option value="f">woman</option><option value="">–</option>';
+        s2.value = gen; s2.onchange = () => setCls(cls ? cls[1] : 0, s2.value); return s2; })());
+    row(g, 'Class', cr, 'Its class and whether a man or a woman: like a player of that class (its kind; quests and spells can tell). The class gives the base look.');
+    if (base) {
+      const bl = document.createElement('div'); bl.className = 'ipick'; bl.append(thumb(base + 8, 48), document.createTextNode(` the ${cls[0]} ${gen === 'f' ? 'woman' : 'man'} (sprite ${base})`));
+      row(g, 'Base look', bl);
+    }
+    const own = !base || c.sprite !== base || ownLookT === TP.t;
     const sp = document.createElement('div'); sp.className = 'ipick';
-    const th = thumb(c.sprite + 8, 48);
-    sp.append(num(() => c.sprite, v => { c.sprite = v; th.dataset.spr = v + 8; paintThumb(th); }, 0, 65535), th);
-    row(g, 'Look (sprite base)', sp, 'Copy the number from another NPC to look like it.');
+    if (base) sp.append(chk('own look', () => own, on => { ownLookT = on ? TP.t : null; if (!on) c.sprite = base; tplRender(); }));
+    if (own) {
+      const th = thumb(c.sprite + 8, 48);
+      sp.append(num(() => c.sprite, v => { c.sprite = v; th.dataset.spr = v + 8; paintThumb(th); }, 0, 65535), th);
+    }
+    row(g, base ? 'Cosmetic look' : 'Look (sprite base)', sp, base ? 'Only if it should not look like its class: tick, then the sprite number (copy it from another NPC).' : 'Copy the number from another NPC to look like it.');
     row(g, 'Facing', faceRow(c.dir, v => c.dir = v));
     row(g, 'Alignment', num(() => c.alignment, v => c.alignment = v, -32768, 32767), 'Below 0: an enemy (players may attack it, it drops loot). Above 0: friendly.');
     const gold = document.createElement('div'); gold.className = 'ipick';
     gold.append(num(() => Math.floor(c.gold / 100), v => c.gold = v * 100 + c.gold % 100, 0), document.createTextNode(' gold '),
       num(() => c.gold % 100, v => c.gold = Math.floor(c.gold / 100) * 100 + v, 0, 99), document.createTextNode(' silver'));
     row(g, 'Money it carries', gold);
-    row(g, 'Class', num(() => c.class, v => c.class = v), 'Monster class (some quests count kills of a class).');
+    row(g, 'Monster class', num(() => c.class, v => c.class = v), 'A number (some quests count kills of a class).');
     const g2 = grid2(b, 'Flags');
     row(g2, '', chks(NPC_FLAGS.map(([bt, l]) => chk(l, () => bit(c.flags, bt), on => c.flags = setBit(c.flags, bt, on)))));
   },
