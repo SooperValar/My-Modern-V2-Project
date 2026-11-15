@@ -48,7 +48,7 @@ def main():
     tex = fur(3.0, 0.35)
     depth = float(sys.argv[sys.argv.index('--depth') + 1]) if '--depth' in sys.argv else 0.55
     oy = float(sys.argv[sys.argv.index('--ground') + 1]) if '--ground' in sys.argv else 59
-    R = lambda anim, t, yaw: render(m, anim, t, yaw=yaw, scale=sc, fix=fix, tex=tex, depth=depth, oy=oy)
+    R = lambda anim, t, yaw: render(m, anim, t, yaw=yaw, scale=sc, fix=fix, tex=tex, depth=depth, oy=oy, shadow=0.5)
     ln = {a: m.anim_length(a) for a in m.anims}
     os.makedirs(out, exist_ok=True)
     frames = {}

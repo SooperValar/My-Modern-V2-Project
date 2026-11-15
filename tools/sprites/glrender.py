@@ -222,7 +222,7 @@ def raster(P, N, C, W, H, Q=None, tex=None):
     return img, msk
 
 
-def render(model, anim=None, t=0.0, yaw=0.0, scale=30.0, size=64, ox=32.0, oy=56.0, ss=4, fix=None, outline=True, tex=None, depth=1.0):
+def render(model, anim=None, t=0.0, yaw=0.0, scale=30.0, size=64, ox=32.0, oy=56.0, ss=4, fix=None, outline=True, tex=None, depth=1.0, shadow=0.0):
     """one sprite: scale = pixels per model unit; (ox, oy) = where the model's origin (on the ground) lands.
     fix: an optional function on the posed triangles (e.g. to centre / normalise the model)."""
     P, N, C = model.triangles(anim, t)
@@ -237,9 +237,22 @@ def render(model, anim=None, t=0.0, yaw=0.0, scale=30.0, size=64, ox=32.0, oy=56
     s = (img * m[..., None]).reshape(size, ss, size, ss, 3).sum((1, 3))
     col = s / np.maximum(1e-9, m.reshape(size, ss, size, ss).sum((1, 3)))[..., None]
     solid = a >= 0.4
+    sha = None
+    if shadow:      # its own shadow: the body pressed flat onto the ground (light from above, a little from the upper left)
+        F = P.copy(); h = F[..., 1].copy(); F[..., 1] = 0; F[..., 0] += h * 0.25; F[..., 2] -= h * 0.10
+        Vf = F @ R.T
+        Xf = Vf[..., 0] * S + ox * ss; Yf = -Vf[..., 1] * S + oy * ss; Zf = Vf[..., 2]
+        _, ms = raster(np.stack([Xf, Yf, Zf], -1), Nn, C, size * ss, size * ss)
+        cov = ms.reshape(size, ss, size, ss).mean((1, 3))
+        k = np.array([0.25, 0.5, 0.25]); cov = np.apply_along_axis(lambda r: np.convolve(r, k, 'same'), 0, cov)
+        cov = np.apply_along_axis(lambda r: np.convolve(r, k, 'same'), 1, cov)
+        sha = np.clip(cov * 1.6, 0, 1) * shadow
     out = np.zeros((size, size, 4), np.uint8)
     out[..., :3] = np.clip(col * 255, 0, 255).astype(np.uint8)
     out[..., 3] = np.where(solid, 255, 0)
+    if sha is not None:
+        sh = (~solid) & (sha > 0.06)
+        out[sh, :3] = 0; out[sh, 3] = (sha[sh] * 255).astype(np.uint8)
     if outline:     # a dark edge where the sprite meets the background, as the game's renders have
         e = solid & ~(np.roll(solid, 1, 0) & np.roll(solid, -1, 0) & np.roll(solid, 1, 1) & np.roll(solid, -1, 1))
         out[e, :3] = (out[e, :3] * 0.55).astype(np.uint8)
