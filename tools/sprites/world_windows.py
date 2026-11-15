@@ -47,6 +47,23 @@ def geometry_any(block, capcol):
     return g
 
 
+SILL_TOP, SILL_H = 32, 16       # the lower block's top (the sill) in the game's 1218: a diamond from row 32 down to 48
+
+
+def is_sill(x, y):
+    d = abs(x - 15.5) / 2.0
+    return SILL_TOP + d - 0.5 <= y <= SILL_TOP + SILL_H - d + 0.5
+
+
+def sill_colour(func, name):
+    """the material's plain colour (its average over a face), lit from above like a cap"""
+    r = WW.variant_rng(name, 0); n = WW.Noise(5); acc = [0, 0, 0]; k = 0
+    for u in range(16):
+        for v in range(0, 44, 2):
+            c = func(u, v, 'L', n, r); acc = [a + b for a, b in zip(acc, c)]; k += 1
+    return tuple(min(255, a / k * 1.08) for a in acc)
+
+
 def build(client):
     S = WG.Sprites(client)
     geo0, capcol = WW.geometry(S.get(WW.SHAPE))
@@ -58,6 +75,11 @@ def build(client):
         for grain, suffix in ((0, ''), (WW.GRAIN, ' (grain)')):
             n = FIRST + 4 * k
             win = WW.make_wall(wgeo, capcol, func, captint, WW.Noise(first * 7), WW.variant_rng(name, 0), grain=grain)
+            sc = sill_colour(func, name); px = win.load(); gr = random.Random(n)
+            for (x, y) in wgeo:      # the sill: the lower block's top, plain like the game's (no bricks / stones on it)
+                if is_sill(x, y):
+                    g = 1 + (grain or 0.08) * 0.6 * (gr.random() - 0.5)
+                    px[x, y] = tuple(max(0, min(255, int(a * g))) for a in sc) + (255,)
             cut = WW.make_wall(cgeo, ccap, func, captint, WW.Noise(first * 7), WW.variant_rng(name, 0), grain=grain)
             out[n], out[n + 1], out[n + 2], out[n + 3] = win, cut, win, cut
             names.append([n, '%s%s, window' % (name, suffix), 1])
