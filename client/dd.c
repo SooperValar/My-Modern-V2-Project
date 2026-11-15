@@ -1972,6 +1972,7 @@ void dd_shadow(int nr,int xpos,int ypos,int xoff,int yoff)
 
 	if (nr>=2000 && nr<16336) { ok=1; disp=14; }
 	if (nr>17360) { ok=1; disp=14; }
+	if (nr>=43000 && nr<50000) return;	// MyV2 2.15.07: the 3D-rendered monsters (tools/sprites/make_creature.py) bring their own shadow, under the body
 
 	if (!ok) return;
 
