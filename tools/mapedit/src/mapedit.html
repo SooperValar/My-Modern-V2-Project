@@ -1318,6 +1318,10 @@ function leftUI() {
         const wi = pal.windows.filter(w => match(w[1], w[0]));
         if (wi.length) { sect('Windows · the new walls with an open slit like the game\'s brick windows: blocks walking, you see through'); const g = grid(); wi.forEach(w => g.appendChild(cellPlant(w))); }
       }
+      if (tab === 'objects' && pal.fences && pal.fences.length) {   // new fences: six pieces a type (two straight, four corners)
+        const fe = pal.fences.filter(p => match(p[1], p[0]));
+        if (fe.length) { sect('New fences · split-rail, wattle, wrought iron, low stone wall, log palisade, hedge: two straight pieces and four corners each'); const g = grid(); fe.forEach(p => g.appendChild(cellPlant(p))); }
+      }
       if (tab === 'objects' && pal.plants && pal.plants.length) {   // new plants (cacti...): drawn into the tile, like the area brushes' trees
         const pl = pal.plants.filter(p => match(p[1], p[0]));
         if (pl.length) { sect('New plants · drawn into the tile (block walking)'); const g = grid(); pl.forEach(p => g.appendChild(cellPlant(p))); }

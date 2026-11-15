@@ -475,6 +475,10 @@ brush paints them at random) and **soft edges into grass**:
 - The edge table is `tools/sprites/world_ground.json` (also built into the editor as `WORLD_GROUND`): re-run
   `world_ground.py <Client folder>` after changing the look, then rebuild the table into `mapedit_template.py`.
 
+## New fences (Nov 14)
+- Six new fence types beside the game's red Wooden Fence, on its layout (the fence on the tile's middle line; two straight pieces and four corners, each followed by its hidden-walls copy): **Split-Rail Fence** (weathered posts, two rails), **Wattle Fence** (woven sticks between stakes), **Wrought Iron Fence** (black bars with spear tips), **Low Fieldstone Wall** (knee-high dry stone), **Log Palisade** (sharpened logs, man-high; blocks sight too) and **Hedge** (trimmed, waist-high). Sprites 40100-40211 (`tools/sprites/world_fences.py`): type t from 40100 + 20t; +0 along y, +2 along x, +4/+6/+8/+10 the corners (left: -y and -x, right: +y and +x, top: -x and +y, bottom: -y and +x), each N+1 its copy.
+- Editor: Objects tab, section "New fences" (WORLD_FENCES).
+
 ## Window walls (Nov 14)
 - Every new wall material (Sandstone, White Temple, Red Brick, Mossy Stone, Cracked Stone, Dark Slate, Timber-Framed, Fieldstone; clean and grain) has a **window** in the game's own style: the block with an open slit through it, like the Red / Grey Brick window (1218) - a top slab over a low block whose top is a plain sill (no bricks or stones on it, as in the game), and you see through the gap. One piece works in a wall running either way. Placed with "blocks walking" only (not sight), like the game's windows.
 - Sprites 36600-36663 (`tools/sprites/world_windows.py`, made on the game's own 1218 / 1219 shapes): 36600 + 4k the window, +1 its **cut-down hidden-walls form** (a low slab, like 1219); +2/+3 the same pair again (numbers kept from a first draft).
