@@ -508,6 +508,9 @@ A first Wolfwood (forest, trail, Hunters' Lodge, 16 Grey Wolves, 9 Dire Wolves, 
 - **Tools**: `tools/sprites/glrender.py` (a small glTF renderer: skinned animation, no Blender needed) and `tools/sprites/make_creature.py <model> <base> <out>` (the frame layout: engine.c eng_char, svr_act.c act_turn_*). The same pack has a fox, husky, deer, stag, bull, horse and more, so other animals can be made the same way.
 - **One test wolf** (template 2057, from the Spider 392, same strength; not "simple animation", so a usurped wolf can pick up, drop, give and use) in the field by the east road at 532,624 (`tools/world/wolf/test_wolf.py`).
 
+## Fix: quest items that vanished (Nov 15)
+- Red Harlan's Head, the Stolen Ledger, the Bundle of Moonwort, the Foreman's Seal, the Chieftain's Stone Axe, the Stoneskin Potion and Greyfang's Fang were made as copies of labyrinth items and kept their "labyrinth item" flag, so the server took them away from any player outside a labyrinth (they vanished on pick-up; only the console test worked). The flag is off on the templates and on every copy in the world; the build scripts clear it now. Found through the editor's new "(Quest)" mark (Stoneskin showed it).
+
 ## Editor: quest items marked "(Quest)" (Nov 15)
 - Everywhere an item is picked (rewards, a merchant's stock, chest rewards, quests, an NPC's items) and in a merchant's stock list, a quest item shows **(Quest)** in orange: an item some NPC wants for a quest, or one a labyrinth needs.
 

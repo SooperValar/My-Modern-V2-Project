@@ -104,7 +104,8 @@ run('shed door, safe spot')
 
 # ---------------------------------------------------------------- items
 def item(src, name, desc, **f):
-    t = made({'op': 'itempnew', 'from': src, 'name': name}); f['description'] = desc
+    t = made({'op': 'itempnew', 'from': src, 'name': name})
+    f['flags'] = me.tpl_read(W.titem, t * me.ITEM_SIZE, me.IT_FIELDS)['flags'] & ~me.IF_LABYDESTROY   # (copied from a labyrinth item: it would vanish outside one); f['description'] = desc
     W.apply([{'op': 'itempset', 't': t, 'fields': f}], 'item'); return t
 SEAL = item(1270, "Foreman's Seal", "A brass seal on a chain, stamped with the quarry's mark. The Golem Overseer wore it.", sprite=[602, 0])
 AXE = item(1270, "Chieftain's Stone Axe", 'A heavy axe of chipped slate, bound with gut. The Deep Grolm Chieftain carried it.', sprite=[1725, 0])

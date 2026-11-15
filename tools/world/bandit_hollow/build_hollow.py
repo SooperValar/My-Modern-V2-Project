@@ -145,6 +145,7 @@ run('no monsters at the hut')
 # ---------------------------------------------------------------- items
 def item(src, name, desc, **f):
     t = made({'op': 'itempnew', 'from': src, 'name': name})
+    f['flags'] = me.tpl_read(W.titem, t * me.ITEM_SIZE, me.IT_FIELDS)['flags'] & ~me.IF_LABYDESTROY   # (copied from a labyrinth item: it would vanish outside one)
     f['description'] = desc
     W.apply([{'op': 'itempset', 't': t, 'fields': f}], 'item')
     return t
