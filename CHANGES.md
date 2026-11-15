@@ -498,6 +498,10 @@ A first Wolfwood (forest, trail, Hunters' Lodge, 16 Grey Wolves, 9 Dire Wolves, 
 - **Tools**: `tools/sprites/glrender.py` (a small glTF renderer: skinned animation, no Blender needed) and `tools/sprites/make_creature.py <model> <base> <out>` (the frame layout: engine.c eng_char, svr_act.c act_turn_*). The same pack has a fox, husky, deer, stag, bull, horse and more, so other animals can be made the same way.
 - **One test wolf** (template 2057, from the Spider 392, same strength; not "simple animation", so a usurped wolf can pick up, drop, give and use) in the field by the east road at 532,624 (`tools/world/wolf/test_wolf.py`).
 
+## Editor: erase a rectangle (Nov 15)
+- A new tool next to the eraser, **Erase a rectangle** (key **R**): drag over an area and its walls, objects and items go (floors stay), like the rectangle tool paints. Shift+drag with the eraser does the same.
+- The brush card at the bottom left hides on the Zones, Waypoints and Merchants tabs (it stayed stuck there).
+
 ## Item quests can give several of their item (Nov 15)
 - On the Quests page, **Gives item** has a **count** in front of it (1-50, "3 × Potion of Second Wind"): the first reward hands over that many (Wynn gives 3 Potions of Second Wind). The NPC says "Here are 3 of my Potion of Second Wind in exchange."; `#quest` shows "3 Potion of Second Wind". Later steps give one. Kept in `npctalk.dat` as `qcount <template> <n>` (npctalk.c, svr_do.c).
 

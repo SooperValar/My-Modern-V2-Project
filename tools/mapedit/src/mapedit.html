@@ -549,7 +549,7 @@ table.pl button:hover { color: var(--text); border-color: var(--gold); }
   <div id="foot">
     <div class="sect">Keys</div>
     <div class="keys">
-      <kbd>V</kbd> select · <kbd>B</kbd> brush · <kbd>U</kbd> rectangle · <kbd>F</kbd> fill · <kbd>E</kbd> erase · <kbd>I</kbd> pick · <kbd>H</kbd> or <kbd>Space</kbd> move<br>
+      <kbd>V</kbd> select · <kbd>B</kbd> brush · <kbd>U</kbd> rectangle · <kbd>F</kbd> fill · <kbd>E</kbd> erase · <kbd>R</kbd> erase a rectangle · <kbd>I</kbd> pick · <kbd>H</kbd> or <kbd>Space</kbd> move<br>
       Right-drag moves · wheel zooms · <kbd>[</kbd> <kbd>]</kbd> brush size<br>
       <kbd>Alt</kbd> paints the opposite (clears a flag, erases)<br>
       <kbd>Ctrl Z</kbd> / <kbd>Ctrl Y</kbd> undo / redo · <kbd>Ctrl S</kbd> save<br>
@@ -639,12 +639,14 @@ const TOOLS = [     // the editor's own icon set: diamond tiles, quill, pickaxe,
   ['rect', 'U', 'Rectangle: drag an area', '<rect x="4" y="6" width="16" height="12" stroke-dasharray="3 2.2"/><rect x="2.6" y="4.6" width="2.8" height="2.8" fill="currentColor"/><rect x="18.6" y="4.6" width="2.8" height="2.8" fill="currentColor"/><rect x="2.6" y="16.6" width="2.8" height="2.8" fill="currentColor"/><rect x="18.6" y="16.6" width="2.8" height="2.8" fill="currentColor"/>'],
   ['fill', 'F', 'Fill: a room (up to its walls, indoors or outdoors like the tile you click) or, with a floor, a patch of the same floor', '<rect x="7.6" y="7.6" width="4" height="4" fill="currentColor" fill-opacity=".35"/><rect x="12.4" y="7.6" width="4" height="4" fill="currentColor" fill-opacity=".35"/><rect x="7.6" y="12.4" width="4" height="4" fill="currentColor" fill-opacity=".35"/><rect x="12.4" y="12.4" width="4" height="4" fill="currentColor" fill-opacity=".35"/><path d="M12 5.6V1.2M10.2 3 12 1.2 13.8 3M12 18.4v4.4M10.2 21 12 22.8 13.8 21M5.6 12H1.2M3 10.2 1.2 12 3 13.8M18.4 12h4.4M21 10.2 22.8 12 21 13.8"/>'],
   ['erase', 'E', 'Erase: remove walls, objects and items (floor stays)', '<g transform="rotate(-38 12 12)"><rect x="3" y="8" width="18" height="8" rx="1.6"/><path d="M10 8v8"/><path d="M4.6 8h5.4v8H4.6A1.6 1.6 0 0 1 3 14.4V9.6A1.6 1.6 0 0 1 4.6 8z" fill="currentColor" fill-opacity=".35"/></g><path d="M13 21.5h8" opacity=".55"/>'],
+  ['erasebox', 'R', 'Erase a rectangle: drag over an area to clear its walls, objects and items (floor stays). Shift+drag does it with the eraser too', '<rect x="3" y="5" width="18" height="14" stroke-dasharray="3 2.2"/><g transform="rotate(-38 12 12) translate(3.5 3.2) scale(.7)"><rect x="3" y="8" width="18" height="8" rx="1.6"/><path d="M10 8v8"/><path d="M4.6 8h5.4v8H4.6A1.6 1.6 0 0 1 3 14.4V9.6A1.6 1.6 0 0 1 4.6 8z" fill="currentColor" fill-opacity=".35"/></g>'],
   ['pick', 'I', 'Pick: take what is on a tile as the brush', '<g transform="rotate(45 12 12)"><rect x="9.6" y="0.6" width="4.8" height="5.4" rx="2.4" fill="currentColor" fill-opacity=".35"/><rect x="8.4" y="6" width="7.2" height="2" rx=".6"/><path d="M10.6 8h2.8v9.4L12 20.4l-1.4-3z"/><path d="M10.6 13h2.8" opacity=".55"/></g><path d="M4.2 18.2c-.8 1.1-1.3 1.9-1.3 2.5a1.3 1.3 0 0 0 2.6 0c0-.6-.5-1.4-1.3-2.5z" fill="currentColor" stroke="none"/>'],
   ['copy', 'C', 'Copy and paste: drag to copy an area (floors, walls, objects, flags, items; not NPCs), then click to paste it, as often as you like. Shift+drag copies a new area, Esc forgets the copy', '<rect x="3" y="3" width="12" height="12" rx="1.2" stroke-dasharray="2.6 1.8"/><rect x="9" y="9" width="12" height="12" rx="1.2" fill="currentColor" fill-opacity=".35"/>'],
   ['pan', 'H', 'Move the view', '<g transform="translate(12 12.4) scale(.56) translate(-12 -12)" stroke-width="2.7"><path d="M8 13V6a1.5 1.5 0 0 1 3 0v6M11 11V4a1.5 1.5 0 0 1 3 0v7M14 11V5.5a1.5 1.5 0 0 1 3 0V13M17 9.5a1.5 1.5 0 0 1 3 0V15a6 6 0 0 1-6 6h-1a7 7 0 0 1-5.5-2.7L4.3 14a1.6 1.6 0 0 1 2.4-2l1.3 1.3"/></g><path d="M12 4.2V.9M10.5 2.4 12 .9l1.5 1.5M12 20.2v3M10.5 21.7 12 23.2l1.5-1.5M4.2 12H.9M2.4 10.5.9 12l1.5 1.5M19.8 12h3.3M21.6 10.5 23.1 12l-1.5 1.5"/>'],
 ];
 
 // ---------------------------------------------------------------- helpers
+const isErase = () => tool === 'erase' || tool === 'erasebox';
 const RO = () => info.running && !info.live;     // view only: the server runs and live editing is not available
 async function api(path, body) {
   const r = await fetch(path, body === undefined ? {} : { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
@@ -1108,7 +1110,7 @@ function setBrush(b, keepTool) {
   const k = brushKey(b);
   recent = [b, ...recent.filter(r => brushKey(r) !== k)].slice(0, 120);
   try { localStorage.setItem('myv2.recent', JSON.stringify(recent)); } catch (e) {}
-  if (!keepTool && (tool === 'select' || tool === 'pick' || tool === 'pan' || tool === 'erase' || tool === 'copy')) setTool('brush');
+  if (!keepTool && (tool === 'select' || tool === 'pick' || tool === 'pan' || tool === 'erase' || tool === 'erasebox' || tool === 'copy')) setTool('brush');
   card(); document.querySelectorAll('#palwrap [data-k]').forEach(el => el.classList.toggle('sel', el.dataset.k === k));
 }
 function card() {
@@ -3696,7 +3698,7 @@ function footprint(x, y) {
 }
 function opFor(x, y, alt) {
   const b = brush;
-  if (tool === 'erase' || (alt && (b.kind === 'place' || b.kind === 'object' || b.kind === 'area' || b.kind === 'scatter'))) return { op: 'erase', x, y };
+  if (isErase() || (alt && (b.kind === 'place' || b.kind === 'object' || b.kind === 'area' || b.kind === 'scatter'))) return { op: 'erase', x, y };
   if (b.kind === 'flag') return { op: 'flag', x, y, bit: b.bit, mode: alt !== flagRemove ? 0 : 1 };
   if (alt) return null;
   if (b.kind === 'floor') {     // a floor with variants: pick the variant here, so the map shows it at once (not after the save)
@@ -3711,7 +3713,7 @@ function opFor(x, y, alt) {
   return null;
 }
 function label(alt) {
-  if (tool === 'erase') return 'erase';
+  if (isErase()) return 'erase';
   const b = brush;
   if (b.kind === 'flag') return (alt !== flagRemove ? 'cleared ' : 'set ') + FLAGS[b.bit];
   if (alt) return 'erase';
@@ -3800,7 +3802,7 @@ async function undoRedo(w) {
 function fill(x, y, alt) {
   const s = T(x, y);
   if (!s) return;
-  const byFloor = brush.kind === 'floor' && tool !== 'erase' && !alt;
+  const byFloor = brush.kind === 'floor' && !isErase() && !alt;
   const g0 = s.d.g[s.i];
   const ok = (t) => {
     if (!t) return false;
@@ -3948,14 +3950,14 @@ cv.addEventListener('mousedown', e => {
     rect = { a: t, b: t, copy: true }; redrawTop(); return;
   }
   if (RO()) { toast('The game server is running: editing is off.', true); return; }
-  if (brush.kind === 'npc' && tool !== 'erase') {     // NPCs go one at a time
+  if (brush.kind === 'npc' && !isErase()) {     // NPCs go one at a time
     if (e.altKey) edit([{ op: 'npcremove', x: t.x, y: t.y }], 'removed an NPC');
     else edit([{ op: 'npcplace', x: t.x, y: t.y, t: brush.t[0], dir: brush.dir || 4 }], `placed ${brush.t[1]} (facing ${FACEN[brush.dir || 4]})`);
     return;
   }
-  if (brush.kind === 'rug' && tool !== 'erase' && !e.altKey) { if (tool === 'fill') return toast('A rug is laid with a rectangle: drag on the map.', true); rect = { a: t, b: t }; redrawTop(); return; }
+  if (brush.kind === 'rug' && !isErase() && !e.altKey) { if (tool === 'fill') return toast('A rug is laid with a rectangle: drag on the map.', true); rect = { a: t, b: t }; redrawTop(); return; }
   if (tool === 'fill') { fill(t.x, t.y, e.altKey); return; }
-  if (tool === 'rect' || e.shiftKey) { rect = { a: t, b: t, alt: e.altKey }; redrawTop(); return; }
+  if (tool === 'rect' || tool === 'erasebox' || e.shiftKey) { rect = { a: t, b: t, alt: e.altKey }; redrawTop(); return; }
   stroke = { ops: [], seen: new Set(), alt: e.altKey };
   paintAt(t);
 });
@@ -3992,7 +3994,7 @@ window.addEventListener('mouseup', () => {
     const x0 = Math.min(rect.a.x, rect.b.x), x1 = Math.max(rect.a.x, rect.b.x), y0 = Math.min(rect.a.y, rect.b.y), y1 = Math.max(rect.a.y, rect.b.y), alt = rect.alt;
     if (rect.learn) { rect = null; redrawTop(); finishAreaLearn(x0, y0, x1, y1); return; }
     if (rect.rug) { rect = null; redrawTop(); finishRugLearn(x0, y0, x1, y1); return; }
-    if (brush.kind === 'rug' && !alt && tool !== 'erase') {
+    if (brush.kind === 'rug' && !alt && !isErase()) {
       rect = null;
       const R = rugByName(brush.name);
       if (!R) { redrawTop(); return toast('That rug is gone: pick another.', true); }
@@ -4042,7 +4044,7 @@ window.addEventListener('keydown', e => {
     if (rugLearn) { rugLearn = false; rect = null; setTool(tool); redrawTop(); toast('Cancelled.'); return; }
     if (areaLearn) { areaLearn = false; rect = null; setTool(tool); redrawTop(); toast('Cancelled.'); return; }
     if (destPick || npcPick) { destPick = npcPick = null; setTool(tool); toast('Cancelled.'); return; } toggleWorld(false); rect = null; selTile = null; redrawTop(); return; }
-  const map = { v: 'select', b: 'brush', u: 'rect', f: 'fill', e: 'erase', i: 'pick', h: 'pan', c: 'copy' };
+  const map = { v: 'select', b: 'brush', u: 'rect', f: 'fill', e: 'erase', r: 'erasebox', i: 'pick', h: 'pan', c: 'copy' };
   if (map[k]) return setTool(map[k]);
   if (k === '[') return stepSize(-1);
   if (k === ']') return stepSize(1);
