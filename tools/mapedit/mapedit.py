@@ -141,6 +141,10 @@ def template_points(t):
 MF = ['move block', 'sight block', 'indoors', 'under water', 'no lag', 'no monsters', 'bank', 'tavern',
       'no magic', 'death trap', 'no light', 'arena', 'lit', 'no expire', 'no fight']
 MF_MOVEBLOCK, MF_SIGHTBLOCK = 1, 2
+IF_ARMOR = 1 << 8
+IF_LABYDESTROY = 1 << 30
+IF_WEAPON = (1 << 16) | (1 << 17) | (1 << 18) | (1 << 19) | (1 << 20)
+IF_USEDESTROY = 1 << 21
 CF_PLAYER, CF_BODY = 1 << 5, 1 << 17
 IF_MOVEBLOCK, IF_SIGHTBLOCK, IF_TAKE, IF_LOOK, IF_LOOKSPECIAL, IF_USE, IF_USESPECIAL = 1, 2, 4, 16, 32, 512, 1024
 
@@ -1125,11 +1129,13 @@ class World:
 
     def palette(self):
         with self.lock:
-            floors, objs = {}, {}
+            floors, objs, inside = {}, {}, {}
             mv = memoryview(self.map)
             for k in range(MAPX * MAPY):
                 s, fs = struct.unpack_from('<HH', mv, k * MAP_SIZE)
                 floors[s] = floors.get(s, 0) + 1
+                if mv[k * MAP_SIZE + 20] & 4:          # MF_INDOORS: the Floors tab sorts inside floors from outside ground
+                    inside[s] = inside.get(s, 0) + 1
                 if fs:
                     objs[fs] = objs.get(fs, 0) + 1
             temps = []
@@ -1139,6 +1145,12 @@ class World:
                 if iv[i * ITEM_SIZE + I_USED]:
                     tp = struct.unpack_from('<H', iv, i * ITEM_SIZE + I_TEMP)[0]
                     placed[tp] = placed.get(tp, 0) + 1
+            wanted = set()      # item templates some NPC asks for (its data 49): quest items
+            if self.tchar is not None:
+                for n in range(1, MAXTCHARS):
+                    if self.tchar[n * CHAR_SIZE + C_USED]:
+                        v = struct.unpack_from('<i', self.tchar, n * CHAR_SIZE + C_DATA + 49 * 4)[0]
+                        if v > 0: wanted.add(v)
             for t in range(1, MAXTITEM):
                 o = t * ITEM_SIZE
                 if not self.titem[o + I_USED]:
@@ -1152,8 +1164,12 @@ class World:
                               struct.unpack_from('<H', self.titem, o + I_PLACEMENT)[0], weapon_skill(fl),
                               # 9: second sprite (open door, lit lamp...), 10: how many in the world, 11: data[0] (a door's key)
                               struct.unpack_from('<H', self.titem, o + I_SPRITE + 2)[0], placed.get(t, 0),
-                              struct.unpack_from('<i', self.titem, o + I_DATA)[0]])
-        fl_sorted = sorted(floors.items(), key=lambda a: -a[1])
+                              struct.unpack_from('<i', self.titem, o + I_DATA)[0],
+                              # 12: for the Items tab's sections: 1 used up when used (potions, flowers), 2 a weapon, 4 a labyrinth
+                              # item (vanishes when its owner leaves the labyrinth), 8 an NPC asks for it (quest), 16 armor
+                              (1 if fl & IF_USEDESTROY else 0) | (2 if fl & IF_WEAPON else 0) | (4 if fl & IF_LABYDESTROY else 0) |
+                              (8 if t in wanted else 0) | (16 if fl & IF_ARMOR else 0)])
+        fl_sorted = sorted([(k, v, inside.get(k, 0)) for k, v in floors.items()], key=lambda a: -a[1])
         ob_sorted = sorted(objs.items(), key=lambda a: -a[1])
         return {'floors': fl_sorted, 'objects': ob_sorted, 'templates': temps, 'flags': MF, 'sets': FLOOR_SETS,
                 'ground': [[n, g['plain'][0]] for n, g in WORLD_GROUND['sets'].items()],
@@ -2401,6 +2417,8 @@ class World:
                             if drv == 0 and nm0.lower().startswith('sign'):     # a sign: blank, its text written in the tile panel
                                 self.item[o + I_NAME:o + I_NAME + 40] = b'Sign'.ljust(40, b'\0')
                                 self.item[o + I_DESC:o + I_DESC + 200] = b'\0' * 200
+                        if op.get('clr'):         # flags to take off the placed copy (a labyrinth quest item placed elsewhere)
+                            struct.pack_into('<Q', self.item, o + I_FLAGS, struct.unpack_from('<Q', self.item, o + I_FLAGS)[0] & ~int(op['clr']))
                         t[1] = 0          # an item replaces an object sprite (as in the game)
                         t[4] = i
                     else:                             # a plain piece: drawn into the tile
@@ -3890,6 +3908,11 @@ nav .grow { flex: 1; }
 .subtabs button:hover { color: #fff3d6; border-color: #8a7140; }
 .subtabs button.on { color: #ffe39a; border-color: #d6a443; background: linear-gradient(180deg, #4a3a1c, #2a2014); box-shadow: 0 0 8px rgba(214,164,67,.25); }
 #lsearch { margin: 10px; }
+.subhead { font-size: 10.5px; letter-spacing: .06em; text-transform: uppercase; color: #8d7d5e; padding: 10px 2px 6px; }
+#card.mix::-webkit-scrollbar { width: 13px; }
+#card.mix::-webkit-scrollbar-thumb { background: #5a4a2c; border-radius: 6px; border: 3px solid var(--panel); }
+#card.mix::-webkit-scrollbar-track { background: transparent; }
+#card.mix { scrollbar-width: auto; }
 .sect { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--dim2); padding: 6px 12px 6px; }
 #palwrap { flex: 1; overflow-y: auto; padding: 0 8px 10px 10px; min-height: 0; }
 .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
@@ -4400,6 +4423,7 @@ let info = { running: false, online: 0, dirty: 0, undo: 0, redo: 0, areas: [], g
 let pal = null, mode = 'map', tab = 'builder', tool = 'brush';
 let brush = { kind: 'floor', s: 142, set: true };
 let recent = [];
+try { recent = JSON.parse(localStorage.getItem('myv2.recent') || '[]').filter(b => b && b.kind); } catch (e) {}
 let size = 1;
 const show = { floors: true, walls: true, items: true, chars: true, see: false, light: false, grid: false, names: true, npcnames: false };
 try { show.npcnames = localStorage.getItem('myv2.npcnames') === '1'; } catch (e) {}
@@ -4737,7 +4761,7 @@ function cats(all) {
     items: t.filter(x => x[3]),                                         // never grouped: keys open doors by their own template
   };
 }
-function brushKey(b) { return b.kind + ':' + (b.kind === 'area' || b.kind === 'rug' ? b.name : b.kind === 'place' || b.kind === 'npc' ? b.t[0] : b.kind === 'flag' ? b.bit : b.kind === 'mix' ? b.items.map(i => i.s + 'x' + i.w).join(',') : b.kind === 'scatter' ? b.items.map(scatterKey).join(',') : b.s); }
+function brushKey(b) { return b.kind + ':' + (b.kind === 'area' || b.kind === 'rug' ? b.name : b.kind === 'place' ? b.t[0] + (b.clr ? 'c' : '') : b.kind === 'npc' ? b.t[0] : b.kind === 'flag' ? b.bit : b.kind === 'mix' ? b.items.map(i => i.s + 'x' + i.w).join(',') : b.kind === 'scatter' ? b.items.map(scatterKey).join(',') : b.s); }
 // ---- floor mixes: several floors painted at random, each with a weight
 let mixes = [];
 try { mixes = JSON.parse(localStorage.getItem('myv2.mixes') || '[]'); } catch (e) {}
@@ -4759,7 +4783,7 @@ function toggleMix(s) {   // Ctrl/Shift+click on a floor
 // ---- scatter brushes: trees, plants, flowers, rocks or items painted at random, each with a weight, on free ground only
 // (Ctrl+click pieces in the Objects / Walls / Items tabs; saved ones live in this browser). Painted with the area brushes'
 // own placing (free tiles only, "keep apart" for pieces that block), floor left as it is; Alt+paint removes pieces.
-let scatters = [];
+let scatters = [], scAdd = false;     // scAdd: the scatter card's "Add item" is on: a click on a piece adds it
 try { scatters = JSON.parse(localStorage.getItem('myv2.scatters') || '[]'); } catch (e) {}
 function saveScatters() { try { localStorage.setItem('myv2.scatters', JSON.stringify(scatters)); } catch (e) {} }
 const SC_TREE = (s, name) => ({ k: 'o', s, b: 3, w: 5, name });
@@ -4818,7 +4842,10 @@ function scatterCard(c) {
   d.querySelector('input').oninput = e => { brush.dens = +e.target.value / 100; d.querySelector('.pct').textContent = e.target.value + ' / 100'; };
   c.appendChild(d);
   const b = document.createElement('div'); b.className = 'mixbtns';
-  b.innerHTML = '<label class="chk" style="margin-right:6px" title="Pieces that block walking never stand right next to each other, so there is always a way through"><input type="checkbox"><span>Keep apart</span></label><button data-a="save" title="Keep this brush in the list (in this browser)">Save brush</button>';
+  b.innerHTML = '<label class="chk" style="margin-right:6px" title="Pieces that block walking never stand right next to each other, so there is always a way through"><input type="checkbox"><span>Keep apart</span></label><button data-a="add" title="Then click trees, plants, flowers, rocks or items on the left to add them (or take them out)"></button><button data-a="save" title="Keep this brush in the list (in this browser)">Save brush</button>';
+  const ab = b.querySelector('[data-a=add]'); ab.textContent = scAdd ? 'Done adding' : 'Add item';
+  if (scAdd) { ab.style.borderColor = 'var(--gold)'; ab.style.color = 'var(--gold2)'; }
+  ab.onclick = () => { scAdd = !scAdd; card(); if (scAdd) toast('Click pieces on the left (Objects, Walls or Items) to add them to this brush; click one that is in it to take it out. "Done adding" when finished.'); };
   const cb = b.querySelector('input'); cb.checked = !!brush.apart; cb.onchange = () => { brush.apart = cb.checked; };
   b.querySelector('[data-a=save]').onclick = () => {
     const name = prompt('Name for this scatter brush (e.g. River bank trees):', brush.name || '');
@@ -4878,9 +4905,10 @@ async function addSimilar() {
 }
 function setBrush(b, keepTool) {
   if (chestCopy && !(b && b.kind === 'place' && b.t && b.t[0] === chestCopy.temp)) chestCopy = null;   // another brush: no more copies
-  brush = b;
+  brush = b; if (b.kind !== 'scatter') scAdd = false;
   const k = brushKey(b);
-  recent = [b, ...recent.filter(r => brushKey(r) !== k)].slice(0, 24);
+  recent = [b, ...recent.filter(r => brushKey(r) !== k)].slice(0, 120);
+  try { localStorage.setItem('myv2.recent', JSON.stringify(recent)); } catch (e) {}
   if (!keepTool && (tool === 'select' || tool === 'pick' || tool === 'pan' || tool === 'erase' || tool === 'copy')) setTool('brush');
   card(); document.querySelectorAll('#palwrap [data-k]').forEach(el => el.classList.toggle('sel', el.dataset.k === k));
 }
@@ -4979,7 +5007,7 @@ function cellPlant([s, name, block, vars]) {     // a new plant or wall: an obje
   const l = document.createElement('div'); l.className = 'lab'; l.textContent = name; c.appendChild(l);
   if (inScatter('o' + s)) { c.classList.add('inmix'); c.insertAdjacentHTML('beforeend', '<span class="badge">scatter</span>'); }
   c.title += ' · Ctrl+click: add to a scatter brush';
-  c.onclick = e => (e.ctrlKey || e.metaKey || e.shiftKey) ? toggleScatter({ k: 'o', s, b: block, vars, w: 5, name }) : setBrush(vars ? { kind: 'object', s, block, vars, name } : { kind: 'object', s, block, name });
+  c.onclick = e => (e.ctrlKey || e.metaKey || e.shiftKey || (scAdd && brush.kind === 'scatter')) ? toggleScatter({ k: 'o', s, b: block, vars, w: 5, name }) : setBrush(vars ? { kind: 'object', s, block, vars, name } : { kind: 'object', s, block, name });
   return c;
 }
 function cellMix(m, saved) {
@@ -5049,7 +5077,7 @@ function cellTemp(t) {
   if (brushKey(brush) === c.dataset.k) c.classList.add('sel');
   c.title = `${t[1]} · template ${t[0]} · ${t[6] ? 'item' : 'drawn into the tile'}${t[5] & 1 ? ' · blocks walking' : ''}${t[5] & 2 ? ' · blocks sight' : ''}`;
   c.appendChild(thumb(t[2], 64, 64)); const l = document.createElement('div'); l.className = 'lab'; l.textContent = t[1]; c.appendChild(l);
-  c.onclick = e => (e.ctrlKey || e.metaKey || e.shiftKey) ? toggleScatter(t[6] ? { k: 't', t: t[0], w: 5, name: t[1] } : { k: 'o', s: t[2], b: t[5] & 3, w: 5, name: t[1] }) : setBrush({ kind: 'place', t });
+  c.onclick = e => (e.ctrlKey || e.metaKey || e.shiftKey || (scAdd && brush.kind === 'scatter')) ? toggleScatter(t[6] ? { k: 't', t: t[0], w: 5, name: t[1] } : { k: 'o', s: t[2], b: t[5] & 3, w: 5, name: t[1] }) : setBrush(placeBrush(t));
   if (inScatter(t[6] ? 't' + t[0] : 'o' + t[2])) { c.classList.add('inmix'); c.insertAdjacentHTML('beforeend', '<span class="badge">scatter</span>'); }
   c.oncontextmenu = e => { e.preventDefault(); openTemplate('item', t[0]); };
   c.title += ' · right-click to edit the template · Ctrl+click: add to a scatter brush';
@@ -5065,6 +5093,51 @@ function cellNpc(t) {
   c.title += ' · right-click to edit';
   return c;
 }
+// which section a template goes in (Objects and Items tabs), worked out from its own data and name
+function objectKind(t) {
+  const n = t[1], d = t[4];
+  if ([40, 42, 53, 59, 75].includes(d) || /chest/i.test(n)) return 'Chests';
+  if ([2, 35, 66].includes(d) || /door|gate/i.test(n)) return 'Doors';
+  if ([6, 15, 16, 45, 46, 62, 71].includes(d) || /portal|ladder|hole|stair|teleport/i.test(n)) return 'Transport';
+  if ([22, 25, 26].includes(d) || /mine wall|stone pile/i.test(n)) return 'Mines';
+  if ([54, 69, 70].includes(d) || /candle|torch|brazier|lamp|lantern|light|fire|campfire/i.test(n)) return 'Torches';
+  if (/fence/i.test(n)) return 'Fences';
+  if (d === 43 || /web/i.test(n)) return 'Webs';
+  if (d === 1 || /plant|flower|bush|mushroom|fern|shrub|cact|vine|weed/i.test(n)) return 'Plants';
+  if (/\bsign\b/i.test(n)) return 'Signs';
+  return 'Misc.';
+}
+function itemKind(t) {
+  const n = t[1], d = t[4], pl = t[7], f = t[12] || 0;
+  if (/scroll/i.test(n) || d === 48) return 'Scrolls';
+  if (f & 1) return 'Potions';
+  if ([68, 73, 74].includes(d)) return 'Misc.';
+  if ((f & 2) || (pl & (256 | 2048 | 512))) return 'Weapons';
+  if (pl & (1 | 4 | 8 | 32 | 64 | 128 | 1024)) return 'Armor';
+  if (pl & 4096) return 'Rings';
+  if (pl & 2) return 'Jewelry';
+  if (/key/i.test(n)) return 'Keys';
+  if (f & (4 | 8)) return 'Quest';
+  return 'Misc.';
+}
+// which Builder section a recently used brush goes in
+function recentKind(b) {
+  if (b.kind === 'flag') return 'Flags';
+  if (b.kind === 'floor' || b.kind === 'mix' || b.kind === 'rug' || b.kind === 'area') return 'Floors';
+  if (b.kind === 'scatter') return 'Objects';
+  if (b.kind === 'object') return (b.block & 2) ? 'Walls' : 'Objects';
+  if (b.kind === 'place') return b.t[3] ? 'Items' : (!b.t[6] && (b.t[5] & 2)) ? 'Walls' : 'Objects';
+  return null;
+}
+// a template as the brush; a labyrinth quest item asks whether to keep the flag that makes it vanish when its owner
+// leaves the labyrinth (placed elsewhere it would just disappear) - by default the placed copies go without it
+function placeBrush(t) {
+  if (t[3] && ((t[12] || 0) & 4)) {
+    const keep = confirm(`${t[1]} is a labyrinth item: it vanishes when a player carrying it leaves the labyrinth.\n\nOK = place it without that (it stays like a normal item)\nCancel = keep it (for placing inside a labyrinth)`);
+    return keep ? { kind: 'place', t, clr: 1 << 30 } : { kind: 'place', t };
+  }
+  return { kind: 'place', t };
+}
 function cellRecent(b) {
   if (b.kind === 'area') { const a = areaByName(b.name); if (a) return cellArea(a); }
   if (b.kind === 'npc') return cellNpc(b.t);
@@ -5074,7 +5147,7 @@ function cellRecent(b) {
   if (b.kind === 'flag') return cellFlag(b.bit);
   if (b.kind === 'place') return cellTemp(b.t);
   const c = document.createElement('div'); c.className = 'cell'; c.dataset.k = brushKey(b);
-  c.appendChild(thumb(b.s, 64, 64)); const l = document.createElement('div'); l.className = 'lab'; l.textContent = 'obj ' + b.s; c.appendChild(l);
+  c.appendChild(thumb(b.s, 64, 64)); const l = document.createElement('div'); l.className = 'lab'; l.textContent = b.name || 'obj ' + b.s; c.appendChild(l);
   c.onclick = () => setBrush(b); return c;
 }
 function leftUI() {
@@ -5105,31 +5178,41 @@ function leftUI() {
   }
   if (mode === 'map') {
     const C = cats();
-    if (tab === 'builder') {
-      if (match('chest', '')) { sect('Chests'); grid().appendChild(cellChest()); }
-      if (recent.length) { sect('Recently used'); lazy(grid(), recent.filter(b => match(b.kind === 'place' ? b.t[1] : b.kind === 'flag' ? FLAGS[b.bit] : b.kind === 'mix' ? (b.name || 'mix') : '', b.kind === 'place' ? b.t[0] : b.s ?? '')), cellRecent); }
-      mixSection();
-      sect('Floors and flags');
-      const g = grid();
-      const fl = FLAGS.map((f, i) => i).filter(i => match(FLAGS[i], ''));
-      const fs = pal.floors.filter(([s]) => match('', s)).slice(0, 60);
-      lazy(g, [...fl.map(b => ['f', b]), ...fs.map(f => ['g', f])], ([k, v]) => k === 'f' ? cellFlag(v) : cellFloor(v[0], v[1]));
-      sect('Walls'); lazy(grid(), C.walls.filter(t => match(t[1], t[0])).slice(0, 24), cellTemp);
-      sect('Objects'); lazy(grid(), C.objects.filter(t => match(t[1], t[0])).slice(0, 24), cellTemp);
+    if (tab === 'builder') {   // what you used lately, by kind
+      const rname = b => b.kind === 'place' || b.kind === 'npc' ? b.t[1] : b.kind === 'flag' ? FLAGS[b.bit] : (b.name || '');
+      const rnum = b => b.kind === 'place' || b.kind === 'npc' ? b.t[0] : b.s ?? '';
+      for (const k of ['Flags', 'Floors', 'Walls', 'Objects', 'Items']) {
+        sect(k + ' · recently used');
+        const l = recent.filter(b => recentKind(b) === k && match(rname(b), rnum(b)));
+        if (l.length) lazy(grid(), l, cellRecent);
+        else w.insertAdjacentHTML('beforeend', `<div class="empty">Nothing yet: what you pick in the ${k} tab shows up here.</div>`);
+      }
     } else if (tab === 'floors') {
-      const list = pal.floors.filter(([s]) => match('', s));
-      if (/^\d+$/.test(q) && !list.some(([s]) => String(s) === q)) list.unshift([+q, 0]);
-      if (!q && pal.ground && pal.ground.length) {   // new grounds: 4 random variants, the grass around them gets soft edges by itself
-        sect('New ground · soft edges into grass (painted grass next to it blends in by itself)');
-        const g = grid(); pal.ground.forEach(([nm, s]) => { const c = cellFloor(s, 0); c.querySelector('.lab').textContent = nm; c.title = nm + ' · 4 random variants; the grass tiles around it get soft edges by themselves'; g.appendChild(c); });
+      const sub = t => { const d = document.createElement('div'); d.className = 'subhead'; d.textContent = t; w.appendChild(d); };
+      // Areas: rugs and floor sets (the game's own and your saved mixes)
+      sect('Areas · rugs and floor sets');
+      rugSection(w, sub, grid, match);
+      const saved = mixes.filter(m => match(m.name, ''));
+      const sets = Object.entries(pal.sets).filter(([k]) => match('', k)).map(([k, v]) => ({ name: 'set ' + k, items: v.map(s2 => ({ s: s2, w: 5 })) }));
+      if (saved.length || sets.length) { sub('Floor sets · your mixes and the game\'s own sets (Ctrl+click floors to mix)'); const g = grid(); saved.forEach(m => g.appendChild(cellMix(m, true))); sets.forEach(m => g.appendChild(cellMix(m, false))); }
+      // the game's floors by where they lie: inside (indoors) or outside, the rest as tiles
+      const ground = new Set([...(pal.wg ? pal.wg.grass : []), ...Object.values(pal.wg ? pal.wg.sets : {}).flatMap(g => [...g.plain, ...Object.values(g.edges)])]);
+      const newfl = new Set((pal.newfloors || []).flatMap(f => f[2] || [f[0]]));
+      const kind = ([s2, n, nin]) => ground.has(s2) ? 'g' : newfl.has(s2) ? 'f' : !n ? 't' : nin / n >= 0.6 ? 'f' : nin / n <= 0.15 ? 'g' : 't';
+      const list = pal.floors.filter(([s2]) => s2 && match('', s2));
+      if (/^\d+$/.test(q) && !list.some(([s2]) => String(s2) === q)) list.unshift([+q, 0, 0]);
+      sect('Floors · inside: rooms, halls, houses');
+      const nf = (pal.newfloors || []).filter(f => match(f[1], f[0]));
+      if (nf.length) { sub('New floors · 4 variants each, painted at random'); const g = grid(); nf.forEach(([s2, nm]) => { const c = cellFloor(s2, 0); c.querySelector('.lab').textContent = nm; c.title = nm + ' · 4 random variants'; g.appendChild(c); }); }
+      sub('The game\'s floors used mostly indoors · Ctrl+click to mix'); lazy(grid(), list.filter(f => kind(f) === 'f' && !newfl.has(f[0])), f => cellFloor(f[0], f[1]));
+      sect('Grounds · outside: grass, paths, sand, snow, water');
+      if (!q && pal.ground && pal.ground.length) {
+        sub('New ground · soft edges into grass');
+        const g = grid(); pal.ground.forEach(([nm, s2]) => { const c = cellFloor(s2, 0); c.querySelector('.lab').textContent = nm; c.title = nm + ' · 4 random variants; the grass tiles around it get soft edges by themselves'; g.appendChild(c); });
       }
-      if (pal.newfloors && pal.newfloors.length) {   // new floors: 4 variants each, painted at random
-        const nf = pal.newfloors.filter(f => match(f[1], f[0]));
-        if (nf.length) { sect('New floors · 4 variants each, painted at random'); const g = grid(); nf.forEach(([s, nm]) => { const c = cellFloor(s, 0); c.querySelector('.lab').textContent = nm; c.title = nm + ' · 4 random variants'; g.appendChild(c); }); }
-      }
-      rugSection(w, sect, grid, match);
-      if (!q) mixSection(true);
-      sect('Floors · by how often they are used · Ctrl+click to mix'); lazy(grid(), list, f => cellFloor(f[0], f[1]));
+      sub('The game\'s ground used mostly outdoors · Ctrl+click to mix'); lazy(grid(), list.filter(f => kind(f) === 'g' && !ground.has(f[0])), f => cellFloor(f[0], f[1]));
+      sect('Tiles · everything else (used both inside and out, or rarely)');
+      lazy(grid(), list.filter(f => kind(f) === 't'), f => cellFloor(f[0], f[1]));
     } else if (tab === 'npcs') {
       const all = pal.npcs || [], blue = all.filter(t => !t[8] || (t[7] && !t[4])), made = blue.filter(t => t[7]);
       const seg = document.createElement('div'); seg.className = 'seg';
@@ -5220,46 +5303,43 @@ function leftUI() {
         sw.firstChild.onchange = () => { allVersions = sw.firstChild.checked; try { localStorage.setItem('myv2.allversions', allVersions ? '1' : '0'); } catch (e) {} leftUI(); };
         w.appendChild(sw);
       }
-      if (tab === 'walls' && pal.newwalls && pal.newwalls.length) {   // new walls: 4 variants each, painted at random
-        const nw = pal.newwalls.filter(w => match(w[1], w[0]));
-        if (nw.length) { sect('New walls · 4 variants each, painted at random (block walking and sight)'); const g = grid(); nw.forEach(w => g.appendChild(cellPlant([w[0], w[1], 3, w[2]]))); }
+      // each tab's sections, in order; every piece goes into one of them
+      const ORDER = {
+        walls: [['Walls', 'building and cave walls'], ['Webbed Walls', 'cobwebbed copies, each paints one of its 3 at random'], ['Windows', 'open slits like the game\'s brick windows: block walking, you see through'],
+                ['Trees', 'block walking and sight; the new ones paint one of their 4 at random'], ['Columns', 'pillars and columns'], ['Misc.', 'arches, gates, rubble…']],
+        objects: [['Chests', 'put one in and choose what it gives'], ['Scatter Brushes', 'paint trees, plants, flowers or rocks at random · Ctrl+click pieces (or Add item) to make your own'],
+                  ['Torches', 'candles, braziers, lamps, torches, fires'], ['Fences', ''], ['Plants', 'flowers, bushes, cacti'], ['Webs', 'webs on their own and webbed objects'],
+                  ['Transport', 'portals, holes, ladders'], ['Doors', 'doors and gates'], ['Signs', ''], ['Mines', 'mine walls and stone piles players can mine'], ['Misc.', 'everything else']],
+        items: [['Weapons', ''], ['Armor', 'helmets, body armor, sleeves, leggings, boots, cloaks, belts'], ['Rings', ''], ['Jewelry', 'amulets and other jewelry'],
+                ['Quest', 'items NPCs ask for, and labyrinth items'], ['Potions', 'potions, flowers, drinks'], ['Scrolls', 'spell and attribute scrolls'], ['Keys', ''], ['Misc.', 'everything else']],
+      }[tab];
+      const S = new Map(ORDER.map(([k]) => [k, []]));
+      const put = (k, f) => S.get(k).push(f);
+      const plant = p => () => cellPlant(p), temp = t => () => cellTemp(t);
+      if (tab === 'walls') {
+        for (const nw of (pal.newwalls || []).filter(x => match(x[1], x[0]))) put('Walls', plant([nw[0], nw[1], 3, nw[2]]));
+        for (const t of list) put(/tree/i.test(t[1]) ? 'Trees' : /pillar|column/i.test(t[1]) ? 'Columns' : /window/i.test(t[1]) ? 'Windows' : /wall/i.test(t[1]) && !/rubble/i.test(t[1]) ? 'Walls' : 'Misc.', temp(t));
+        for (const p of (pal.cobwebs ? pal.cobwebs.walls : []).filter(x => match(x[1], x[0]))) put('Webbed Walls', plant(p));
+        for (const p of (pal.windows || []).filter(x => match(x[1], x[0]))) put('Windows', plant(p));
+        for (const p of (pal.trees || []).filter(x => match(x[1], x[0]) || x[3].some(v => String(v) === q))) put('Trees', plant(p));
+        for (const p of (pal.arches || []).filter(x => match(x[1], x[0]))) put('Misc.', plant(p));
+      } else if (tab === 'objects') {
+        if (match('chest', '')) put('Chests', () => cellChest());
+        for (const m of [...SCATTER_PRESETS, ...scatters].filter(m => match(m.name, ''))) put('Scatter Brushes', () => cellScatter(m, scatters.includes(m)));
+        for (const t of list) if (!/window/i.test(t[1])) put(objectKind(t), temp(t));     // (the windows are in Walls)
+        for (const p of (pal.fences || []).filter(x => match(x[1], x[0]))) put('Fences', plant(p));
+        for (const p of (pal.plants || []).filter(x => match(x[1], x[0]))) put('Plants', plant(p));
+        if (pal.cobwebs) for (const p of [...pal.cobwebs.webs, ...(pal.cobwebs.more || []), ...pal.cobwebs.furniture].filter(x => match(x[1], x[0]))) put('Webs', plant(p));
+      } else {
+        for (const t of list) put(itemKind(t), temp(t));
       }
-      if (tab === 'walls' && pal.windows && pal.windows.length) {   // window walls: one face has a window
-        const wi = pal.windows.filter(w => match(w[1], w[0]));
-        if (wi.length) { sect('Windows · the new walls with an open slit like the game\'s brick windows: blocks walking, you see through'); const g = grid(); wi.forEach(w => g.appendChild(cellPlant(w))); }
+      for (const [k, note] of ORDER) {
+        const l = S.get(k);
+        if (!l.length && q) continue;
+        sect(k + (note ? ' · ' + note : ''));
+        if (l.length) lazy(grid(), l, f => f());
+        else w.insertAdjacentHTML('beforeend', '<div class="empty">Nothing here yet.</div>');
       }
-      if (tab === 'objects' && !q) {   // scatter brushes: the editor's own and the ones saved in this browser
-        sect('Scatter brushes · paint trees, plants, flowers or rocks at random · Ctrl+click any pieces below to make your own'); const g = grid();
-        SCATTER_PRESETS.forEach(m => g.appendChild(cellScatter(m, false))); scatters.forEach(m => g.appendChild(cellScatter(m, true)));
-      }
-      if (tab === 'objects' && pal.fences && pal.fences.length) {   // new fences: six pieces a type (two straight, four corners)
-        const fe = pal.fences.filter(p => match(p[1], p[0]));
-        if (fe.length) { sect('New fences · split-rail, wattle, wrought iron, low stone wall, log palisade, hedge, brown wooden: two straight pieces and four corners each'); const g = grid(); fe.forEach(p => g.appendChild(cellPlant(p))); }
-      }
-      if (tab === 'objects' && pal.plants && pal.plants.length) {   // new plants (cacti...): drawn into the tile, like the area brushes' trees
-        const pl = pal.plants.filter(p => match(p[1], p[0]));
-        if (pl.length) { sect('New plants · drawn into the tile (block walking)'); const g = grid(); pl.forEach(p => g.appendChild(cellPlant(p))); }
-      }
-      if (pal.cobwebs && (tab === 'objects' || tab === 'walls')) {   // cobwebbed copies (39000+)
-        const C = pal.cobwebs, f = l => l.filter(p => match(p[1], p[0]) || (p[3] && p[3].some && p[3].some(v => String(v) === q)));
-        if (tab === 'walls') { const l = f(C.walls); if (l.length) { sect('Cobwebbed walls · each paints one of its 3 at random'); const g = grid(); l.forEach(p => g.appendChild(cellPlant(p))); } }
-        else {
-          let l = f(C.webs); if (l.length) { sect('Cobwebs · on their own, nothing blocks'); const g = grid(); l.forEach(p => g.appendChild(cellPlant(p))); }
-          l = f(C.more || []); if (l.length) { sect('Cobwebbed trees, stumps, fences & pillars'); const g = grid(); l.forEach(p => g.appendChild(cellPlant(p))); }
-          l = f(C.furniture); if (l.length) { sect('Cobwebbed furniture · decoration (a chest here can\'t be opened)'); const g = grid(); l.forEach(p => g.appendChild(cellPlant(p))); }
-        }
-      }
-      if (tab === 'objects' && pal.trees && pal.trees.length) {   // new trees: one cell a kind, paints one of its 4 at random
-        const tr = pal.trees.filter(p => match(p[1], p[0]) || p[3].some(v => String(v) === q));
-        if (tr.length) { sect('New trees · each paints one of its 4 at random (drawn into the tile)'); const g = grid(); tr.forEach(p => g.appendChild(cellPlant(p))); }
-      }
-      if (tab === 'objects' && pal.arches) {   // stone arches as wide as you like
-        const ar = pal.arches.filter(p => match(p[1], p[0]));
-        if (ar.length) { sect('Arches · wider: put N bridges on the tiles right after the first half, and the second half N tiles further (4 + N)'); const g = grid(); ar.forEach(p => g.appendChild(cellPlant(p))); }
-      }
-      if (tab === 'objects' && match('chest', '')) { sect('Chests · put one in and choose what it gives'); grid().appendChild(cellChest()); }
-      sect({ walls: 'Walls · drawn into the tile, they block', objects: 'Objects · furniture, decoration, doors, chests…', items: 'Items · things players can pick up' }[tab]);
-      lazy(grid(), list, cellTemp);
     }
   } else if (mode === 'npcs') {
     w.innerHTML = '<div class="empty">Loading…</div>';
@@ -7424,7 +7504,7 @@ function opFor(x, y, alt) {
   if (b.kind === 'mix') return { op: 'floor', x, y, s: mixPick(b.items), set: false };
   if (b.kind === 'scatter') return { op: 'area', x, y, floor: false, pr: scatterProfile(b) };
   if (b.kind === 'object') return { op: 'object', x, y, s: b.vars && b.vars.length ? b.vars[Math.floor(Math.random() * b.vars.length)] : b.s, block: b.block };
-  if (b.kind === 'place') return allVersions ? { op: 'place', x, y, t: b.t[0] } : { op: 'place', x, y, t: b.t[0], fresh: 1 };   // fresh: no lock, no destination carried over from wherever this template was used
+  if (b.kind === 'place') { const o = allVersions ? { op: 'place', x, y, t: b.t[0] } : { op: 'place', x, y, t: b.t[0], fresh: 1 }; if (b.clr) o.clr = b.clr; return o; }   // fresh: no lock, no destination carried over from wherever this template was used
   if (b.kind === 'area') return { op: 'area', x, y, a: b.name, floor: areaFloor };
   return null;
 }

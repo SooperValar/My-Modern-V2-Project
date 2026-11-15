@@ -141,6 +141,10 @@ def template_points(t):
 MF = ['move block', 'sight block', 'indoors', 'under water', 'no lag', 'no monsters', 'bank', 'tavern',
       'no magic', 'death trap', 'no light', 'arena', 'lit', 'no expire', 'no fight']
 MF_MOVEBLOCK, MF_SIGHTBLOCK = 1, 2
+IF_ARMOR = 1 << 8
+IF_LABYDESTROY = 1 << 30
+IF_WEAPON = (1 << 16) | (1 << 17) | (1 << 18) | (1 << 19) | (1 << 20)
+IF_USEDESTROY = 1 << 21
 CF_PLAYER, CF_BODY = 1 << 5, 1 << 17
 IF_MOVEBLOCK, IF_SIGHTBLOCK, IF_TAKE, IF_LOOK, IF_LOOKSPECIAL, IF_USE, IF_USESPECIAL = 1, 2, 4, 16, 32, 512, 1024
 
@@ -1125,11 +1129,13 @@ class World:
 
     def palette(self):
         with self.lock:
-            floors, objs = {}, {}
+            floors, objs, inside = {}, {}, {}
             mv = memoryview(self.map)
             for k in range(MAPX * MAPY):
                 s, fs = struct.unpack_from('<HH', mv, k * MAP_SIZE)
                 floors[s] = floors.get(s, 0) + 1
+                if mv[k * MAP_SIZE + 20] & 4:          # MF_INDOORS: the Floors tab sorts inside floors from outside ground
+                    inside[s] = inside.get(s, 0) + 1
                 if fs:
                     objs[fs] = objs.get(fs, 0) + 1
             temps = []
@@ -1139,6 +1145,12 @@ class World:
                 if iv[i * ITEM_SIZE + I_USED]:
                     tp = struct.unpack_from('<H', iv, i * ITEM_SIZE + I_TEMP)[0]
                     placed[tp] = placed.get(tp, 0) + 1
+            wanted = set()      # item templates some NPC asks for (its data 49): quest items
+            if self.tchar is not None:
+                for n in range(1, MAXTCHARS):
+                    if self.tchar[n * CHAR_SIZE + C_USED]:
+                        v = struct.unpack_from('<i', self.tchar, n * CHAR_SIZE + C_DATA + 49 * 4)[0]
+                        if v > 0: wanted.add(v)
             for t in range(1, MAXTITEM):
                 o = t * ITEM_SIZE
                 if not self.titem[o + I_USED]:
@@ -1152,8 +1164,12 @@ class World:
                               struct.unpack_from('<H', self.titem, o + I_PLACEMENT)[0], weapon_skill(fl),
                               # 9: second sprite (open door, lit lamp...), 10: how many in the world, 11: data[0] (a door's key)
                               struct.unpack_from('<H', self.titem, o + I_SPRITE + 2)[0], placed.get(t, 0),
-                              struct.unpack_from('<i', self.titem, o + I_DATA)[0]])
-        fl_sorted = sorted(floors.items(), key=lambda a: -a[1])
+                              struct.unpack_from('<i', self.titem, o + I_DATA)[0],
+                              # 12: for the Items tab's sections: 1 used up when used (potions, flowers), 2 a weapon, 4 a labyrinth
+                              # item (vanishes when its owner leaves the labyrinth), 8 an NPC asks for it (quest), 16 armor
+                              (1 if fl & IF_USEDESTROY else 0) | (2 if fl & IF_WEAPON else 0) | (4 if fl & IF_LABYDESTROY else 0) |
+                              (8 if t in wanted else 0) | (16 if fl & IF_ARMOR else 0)])
+        fl_sorted = sorted([(k, v, inside.get(k, 0)) for k, v in floors.items()], key=lambda a: -a[1])
         ob_sorted = sorted(objs.items(), key=lambda a: -a[1])
         return {'floors': fl_sorted, 'objects': ob_sorted, 'templates': temps, 'flags': MF, 'sets': FLOOR_SETS,
                 'ground': [[n, g['plain'][0]] for n, g in WORLD_GROUND['sets'].items()],
@@ -2401,6 +2417,8 @@ class World:
                             if drv == 0 and nm0.lower().startswith('sign'):     # a sign: blank, its text written in the tile panel
                                 self.item[o + I_NAME:o + I_NAME + 40] = b'Sign'.ljust(40, b'\0')
                                 self.item[o + I_DESC:o + I_DESC + 200] = b'\0' * 200
+                        if op.get('clr'):         # flags to take off the placed copy (a labyrinth quest item placed elsewhere)
+                            struct.pack_into('<Q', self.item, o + I_FLAGS, struct.unpack_from('<Q', self.item, o + I_FLAGS)[0] & ~int(op['clr']))
                         t[1] = 0          # an item replaces an object sprite (as in the game)
                         t[4] = i
                     else:                             # a plain piece: drawn into the tile

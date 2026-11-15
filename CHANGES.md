@@ -487,7 +487,14 @@ brush paints them at random) and **soft edges into grass**:
 - Editor: Walls tab, section "Windows": the game's 4, then the game's other walls, then the new walls (49 in all).
 
 ## Editor: tabs as columns (Nov 15)
-- In the Map's left panel the tabs (Builder, Floors, Areas, Walls, Objects, Items, NPCs, Merchants, Flags, Zones, Waypoints, in that order) are a column, and the open tab's sections are a second column of sub-tabs: Walls -> New walls, Windows, Cobwebbed walls, Walls; Objects -> Scatter brushes, New fences, New plants, Cobwebs, ..., Objects; and so on. Only the picked section shows; the editor remembers the pick per tab. While searching, every section shows and a sub-tab jumps to its section. A tab with one section has no second column.
+- In the Map's left panel the tabs (Builder, Floors, Areas, Walls, Objects, Items, NPCs, Merchants, Flags, Zones, Waypoints) are a column, and the open tab's categories a second column. Only the picked category shows; the editor remembers the pick per tab. While searching, every category shows and a click jumps to it. A tab with one category has no second column.
+- **Builder**: Flags, Floors, Walls, Objects, Items - each with what you used lately of that kind (remembered in this browser, up to 120).
+- **Floors**: **Areas** (rugs, and floor sets: your mixes and the game's own sets), **Floors** (inside: the new floors and the game's floors that lie mostly indoors), **Grounds** (outside: the new grounds and the game's floors that lie mostly outdoors), **Tiles** (the rest: used both inside and out, or not at all).
+- **Walls**: **Walls** (building and cave walls, the new walls), **Webbed Walls**, **Windows**, **Trees** (the game's and the new ones), **Columns**, **Misc.** (arches, gates, rubble...).
+- **Objects**: **Chests**, **Scatter Brushes**, **Torches** (candles, braziers, lamps, lights, fires), **Fences**, **Plants**, **Webs** (webs on their own and webbed objects), **Transport** (portals, holes, ladders), **Doors**, **Signs**, **Mines** (what players can mine; walls that can't be mined are in Walls), **Misc.**
+- **Items**: **Weapons**, **Armor**, **Rings**, **Jewelry**, **Quest** (items an NPC asks for, labyrinth items), **Potions** (potions, flowers, drinks), **Scrolls**, **Keys**, **Misc.** Sorted from each template's own data, so new items find their place.
+- **Labyrinth items placed elsewhere**: picking one asks whether to keep the flag that makes it vanish when its carrier leaves the labyrinth; by default the placed copy goes without it.
+- **Scatter brush card**: a wider scroll bar, and **Add item** next to Save brush: while it is on, a click on any piece on the left adds it to the brush (or takes it out); "Done adding" ends it.
 
 ## Scatter brushes in the editor (Nov 15)
 - **Scatter brushes** (Objects tab, at the top): paint trees, plants, flowers, rocks or items at random. The editor's own: Mixed trees, Autumn trees, Pines, Birches & blossom, Wildflowers, Undergrowth, Rocks.
