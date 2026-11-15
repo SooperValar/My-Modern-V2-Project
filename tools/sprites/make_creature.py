@@ -7,7 +7,7 @@ Renders all 448 frames of a character sprite set with glrender.py (the game's ca
     base+192..447   8 actions x 4 directions (up, down, left, right) x 8 frames (attacks, use, pick up...)
 Direction order everywhere: up, down, left, right, left-up, left-down, right-up, right-down.
 
-    make_creature.py <model.gltf> <base> <out folder> [--length px] [--depth 0.55] [--ground 59] [--preview file.png]
+    make_creature.py <model.gltf> <base> <out folder> [--length px] [--depth 0.55] [--ground 59] [--shadow 0.32] [--preview file.png]
 --depth squeezes the ground towards the viewer: the game's shadow is the sprite flipped under its bottom edge, so a long
 animal's far feet would float above it at the true 30 degree angle (Cody, Nov 15).
 """
@@ -48,7 +48,8 @@ def main():
     tex = fur(3.0, 0.35)
     depth = float(sys.argv[sys.argv.index('--depth') + 1]) if '--depth' in sys.argv else 0.55
     oy = float(sys.argv[sys.argv.index('--ground') + 1]) if '--ground' in sys.argv else 59
-    R = lambda anim, t, yaw: render(m, anim, t, yaw=yaw, scale=sc, fix=fix, tex=tex, depth=depth, oy=oy, shadow=0.5)
+    shd = float(sys.argv[sys.argv.index('--shadow') + 1]) if '--shadow' in sys.argv else 0.32   # its own shadow's darkness (Cody: 0.5 was darker than the game's)
+    R = lambda anim, t, yaw: render(m, anim, t, yaw=yaw, scale=sc, fix=fix, tex=tex, depth=depth, oy=oy, shadow=shd)
     ln = {a: m.anim_length(a) for a in m.anims}
     os.makedirs(out, exist_ok=True)
     frames = {}
