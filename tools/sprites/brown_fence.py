@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """The game's red Wooden Fence (1172-1183) recoloured to brown wood (Nov 14), keeping its shapes and shading:
-each pixel's brightness picks a colour on a brown-wood ramp, with a faint grain. 40220-40231 in the game's
+each pixel keeps its brightness, in brown instead of red. 40220-40231 in the game's
 order: 40220 along y (from 1172), 40222 along x (1174), 40224-40230 the corners (1176, 1178, 1180, 1182), each
 N+1 its hidden-walls copy (from the game's N+1). Adds the type to world_fences.json.
     brown_fence.py <client folder> [--out <folder>]"""
@@ -8,6 +8,7 @@ import json, os, random, sys
 HERE = os.path.dirname(os.path.abspath(__file__))
 FIRST, SRC = 40220, 1172
 RAMP = ((34, 20, 8), (92, 60, 30), (146, 104, 60))
+LIGHT = (158, 112, 66)            # the brown at the red's brightest
 
 
 def ramp(t):
@@ -30,8 +31,12 @@ def main():
             for x in range(im.width):
                 c = px[x, y]
                 if not c[3]: continue
-                t = (max(c[:3]) - lo) / max(1, hi - lo)
-                t = 0.06 + 0.78 * t + 0.08 * (r.random() - 0.5) + 0.05 * ((y * 3 + x) % 4 == 0)
+                # the game's own shading kept as it is: brown = a light brown times this pixel's brightness against the
+                # brightest red (the red's shadow is about half its light, so the brown's is too - no near-black)
+                br = max(c[:3]) / max(1, hi)
+                g = 1 + 0.06 * (r.random() - 0.5)
+                px[x, y] = tuple(max(0, min(255, int(v * br * g))) for v in LIGHT) + (255,)
+                continue
                 px[x, y] = ramp(max(0, min(1, t))) + (255,)
         im.save(os.path.join(out, '%05d.png' % (FIRST + k)))
     p = os.path.join(HERE, 'world_fences.json'); f = json.load(open(p))
