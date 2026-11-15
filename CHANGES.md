@@ -476,7 +476,8 @@ brush paints them at random) and **soft edges into grass**:
   `world_ground.py <Client folder>` after changing the look, then rebuild the table into `mapedit_template.py`.
 
 ## Window walls (Nov 14)
-- Every new wall material (Sandstone, White Temple, Red Brick, Mossy Stone, Cracked Stone, Dark Slate, Timber-Framed, Fieldstone; clean and grain) has a **window** version: a dark glass pane with a glint, a frame and mullion cross in the material's dark tone, and a sill. Two of each: for a wall running north-south (the window in the block's left face) and for one running east-west (right face). Sprites 36600-36663 (`tools/sprites/world_windows.py`): 36600 + 4k left-face window, +2 right-face window, each N+1 its **cut-down hidden-walls form** (a low slab of the same material, like the game's 1200 -> 1201).
+- Every new wall material (Sandstone, White Temple, Red Brick, Mossy Stone, Cracked Stone, Dark Slate, Timber-Framed, Fieldstone; clean and grain) has a **window** in the game's own style: the block with an open slit through it, like the Red / Grey Brick window (1218) - a top slab over a low block, and you see through the gap. One piece works in a wall running either way. Placed with "blocks walking" only (not sight), like the game's windows.
+- Sprites 36600-36663 (`tools/sprites/world_windows.py`, made on the game's own 1218 / 1219 shapes): 36600 + 4k the window, +1 its **cut-down hidden-walls form** (a low slab, like 1219); +2/+3 the same pair again (numbers kept from a first draft).
 - Editor: Walls tab, section "Windows" (WORLD_WINDOWS from `world_windows.json`).
 
 ## Bandit Hollow (Nov 14)

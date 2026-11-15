@@ -1,17 +1,15 @@
 #!/usr/bin/env python3
 """Window versions of the new walls (Nov 14, Cody: "all the new walls should have a window variant, so houses can
-have a window"). Every material of world_walls.py, clean and grain, gets a window in either face of the block, and
-each of those its own cut-down "hidden walls" form (sprite+1: a low slab of the same material, like the game's
-1200 -> 1201), so hide walls shows the wall cut down instead of a missing sprite. Numbered from 36600:
+have a window"), in the game's own window style: the wall block with an open slit through it (the game's 1218
+Red / Grey Brick window: a top slab over a low block, you see through the gap; placed with "blocks walking" only,
+not sight). The game's own shapes are used (1218 for the window, 1219 for its cut-down hidden-walls form), filled
+with each material of world_walls.py, clean and grain. Numbered from 36600:
 
-    36600 + 4*k   window in the left face  (a wall running north-south: the face toward the viewer looks west)
-    36601 + 4*k   its hidden form
-    36602 + 4*k   window in the right face (a wall running east-west: the face looks south)
-    36603 + 4*k   its hidden form
+    36600 + 4*k   the window wall          36601 + 4*k   its hidden form (sprite+1)
+    36602 + 4*k   the same again (kept so the numbers of the first draft stay filled), 36603 its hidden form
     k = 0..15: the materials of world_walls.json in order (Sandstone, Sandstone grain, White Temple, ...)
 
-The window: a dark glass pane with a glint, a frame and a cross of mullions in the material's dark tone, a lighter
-sill under it. Writes the PNGs and world_windows.json (the editor's WORLD_WINDOWS: [sprite, name, blocks]).
+Writes the PNGs and world_windows.json (the editor's WORLD_WINDOWS: [sprite, name, blocks 1 = walking only]).
 
     world_windows.py <client folder> [--out <folder>] [--sheet <png>] [--scene <png>]
 """
@@ -37,39 +35,32 @@ def geometry_cut(block):
     return g, cap
 
 
-def windowed(func, side):
-    """the material with a window cut into one face"""
-    def f(u, v, face, n, r):
-        c = func(u, v, face, n, r)
-        if face != side: return c
-        dark = tuple(a * 0.45 for a in c)
-        if U0 - 1 <= u <= U1 + 1 and abs(v - (V1 + 1)) < 1.0:          # the sill
-            return tuple(min(255, a * 1.3) for a in func(u, v + 3, face, n, r))
-        if U0 <= u <= U1 and V0 <= v <= V1:
-            if u in (U0, U1) or v < V0 + 1 or v > V1 - 1: return dark     # the frame
-            if abs(u - (U0 + U1) / 2.0) < 0.6 or abs(v - (V0 + V1) / 2.0) < 0.6: return dark   # mullions
-            t = (v - V0) / (V1 - V0)
-            glass = (34 + 14 * t, 44 + 16 * t, 62 + 14 * t)
-            if abs((u - U0) - (v - V0) * 0.5 - 1.5) < 0.8 and v < (V0 + V1) / 2.0: glass = (120, 136, 156)   # a glint
-            return glass
-        return c
-    return f
+def geometry_any(block, capcol):
+    """like world_walls.geometry, but the cap colour counts as cap anywhere (the window's slab and its sill)"""
+    px = block.load(); g = {}
+    for y in range(64):
+        for x in range(32):
+            if px[x, y][3] == 0: continue
+            if all(abs(a - b) < 14 for a, b in zip(px[x, y][:3], capcol)): g[x, y] = ('cap', 0, 0)
+            elif x < 16: g[x, y] = ('L', x, y - 12 - x / 2.0)
+            else: g[x, y] = ('R', x - 16, y - 20 + (x - 16) / 2.0)
+    return g
 
 
 def build(client):
     S = WG.Sprites(client)
-    geo, capcol = WW.geometry(S.get(WW.SHAPE))
-    cgeo, ccap = geometry_cut(S.get(1201))
+    geo0, capcol = WW.geometry(S.get(WW.SHAPE))
+    wgeo = geometry_any(S.get(1218), capcol)
+    cgeo, ccap = geometry_cut(S.get(1219))
     out, names, k = {}, [], 0
-    for name, func, captint in WW.MATERIALS:
-        first = WW.FIRST + WW.MATERIALS.index((name, func, captint)) * 10
+    for m, (name, func, captint) in enumerate(WW.MATERIALS):
+        first = WW.FIRST + m * 10
         for grain, suffix in ((0, ''), (WW.GRAIN, ' (grain)')):
-            for j, (side, where) in enumerate((('L', 'north-south wall'), ('R', 'east-west wall'))):
-                n = FIRST + 4 * k + 2 * j
-                f = windowed(func, side)
-                out[n] = WW.make_wall(geo, capcol, f, captint, WW.Noise(first * 7), WW.variant_rng(name, 0), grain=grain)
-                out[n + 1] = WW.make_wall(cgeo, ccap, func, captint, WW.Noise(first * 7), WW.variant_rng(name, 0), grain=grain)
-                names.append([n, '%s%s, window (%s)' % (name, suffix, where), 3])
+            n = FIRST + 4 * k
+            win = WW.make_wall(wgeo, capcol, func, captint, WW.Noise(first * 7), WW.variant_rng(name, 0), grain=grain)
+            cut = WW.make_wall(cgeo, ccap, func, captint, WW.Noise(first * 7), WW.variant_rng(name, 0), grain=grain)
+            out[n], out[n + 1], out[n + 2], out[n + 3] = win, cut, win, cut
+            names.append([n, '%s%s, window' % (name, suffix), 1])
             k += 1
     return out, names
 
@@ -87,7 +78,7 @@ def scene(out, names, client, path):
             for y in range(by, by + 6):
                 edge = x in (bx, bx + 4) or y in (by, by + 5)
                 if not edge: Wm[x, y] = ('f', 0); continue
-                if x == bx + 4 and y in (by + 2, by + 3): Wm[x, y] = ('s', FIRST + 4 * k + 2)    # east-west wall: right face
+                if x == bx + 4 and y in (by + 2, by + 3): Wm[x, y] = ('s', FIRST + 4 * k)    # east-west wall: right face
                 elif y == by and x == bx + 2: Wm[x, y] = ('s', FIRST + 4 * k)                    # north-south wall: left face
                 else: Wm[x, y] = ('s', wfirst + r.randrange(4))
     img = Image.new('RGBA', (32 * N + 64, 16 * N + 120), (0, 0, 0, 255))
