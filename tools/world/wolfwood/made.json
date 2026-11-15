@@ -35,5 +35,7 @@
  "greyfang": 2082,
  "edda": 2083,
  "edda_dire": 2084,
- "edda_fang": 2085
+ "edda_fang": 2085,
+ "sign": 2020,
+ "bones": 2021
 }
