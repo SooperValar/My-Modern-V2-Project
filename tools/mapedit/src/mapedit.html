@@ -22,8 +22,8 @@ kbd { background: var(--panel3); border: 1px solid var(--line); border-radius: 3
 svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; display: block; }
 
 /* layout */
-#app { display: grid; grid-template-columns: 64px 280px 1fr 280px; grid-template-rows: 52px 1fr; height: 100%; }
-#app.noright { grid-template-columns: 64px 280px 1fr 0; }
+#app { --lw: 280px; display: grid; grid-template-columns: 64px var(--lw) 1fr 280px; grid-template-rows: 52px 1fr; height: 100%; }
+#app.noright { grid-template-columns: 64px var(--lw) 1fr 0; }
 header { grid-column: 1 / -1; display: flex; align-items: center; gap: 14px; padding: 0 14px; border-bottom: 1px solid var(--line); background: var(--rail); }
 .logo { display: flex; align-items: center; gap: 10px; font-weight: 600; font-size: 15px; min-width: 316px; }
 .logo img { width: 32px; height: 32px; border-radius: 6px; image-rendering: pixelated; box-shadow: 0 0 0 1px #3b3d44; }
@@ -79,6 +79,15 @@ nav .grow { flex: 1; }
 #palwrap .row button.sm { color: var(--dim); border: 1px solid var(--line); border-radius: 5px; padding: 1px 7px; font-size: 11px; }
 #palwrap .row button.sm:hover { color: var(--text); border-color: var(--gold); }
 .tabs button.title { grid-column: 1 / -1; flex-direction: row; justify-content: center; gap: 8px; font-size: 12.5px; padding: 7px; }
+/* map mode: the tabs as a column, the open tab's sections as a second column (sub-tabs), then the palette */
+#left:not(.single) { flex-direction: row; }
+#lmain { flex: 1; min-width: 0; display: flex; flex-direction: column; min-height: 0; }
+#left:not(.single) .tabs { grid-template-columns: 1fr; align-content: start; width: 78px; flex: none; border-bottom: none; border-right: 1px solid #3a3022; overflow-y: auto; padding: 10px 6px; }
+.subtabs { width: 108px; flex: none; display: flex; flex-direction: column; gap: 4px; padding: 10px 6px; border-right: 1px solid #3a3022; overflow-y: auto; }
+#left.single .subtabs { display: none; }
+.subtabs button { text-align: left; padding: 6px 7px; border-radius: 3px; color: #a8987a; font-size: 11.5px; line-height: 1.2; background: linear-gradient(180deg, #29231a, #1c1913); border: 1px solid #40362a; }
+.subtabs button:hover { color: #fff3d6; border-color: #8a7140; }
+.subtabs button.on { color: #ffe39a; border-color: #d6a443; background: linear-gradient(180deg, #4a3a1c, #2a2014); box-shadow: 0 0 8px rgba(214,164,67,.25); }
 #lsearch { margin: 10px; }
 .sect { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--dim2); padding: 6px 12px 6px; }
 #palwrap { flex: 1; overflow-y: auto; padding: 0 8px 10px 10px; min-height: 0; }
@@ -460,9 +469,12 @@ table.pl button:hover { color: var(--text); border-color: var(--gold); }
 
 <aside id="left">
   <div class="tabs" id="tabs"></div>
-  <input id="lsearch" type="text" placeholder="Search name or number" autocomplete="off">
-  <div id="palwrap"></div>
-  <div id="card"></div>
+  <div class="subtabs" id="subtabs"></div>
+  <div id="lmain">
+    <input id="lsearch" type="text" placeholder="Search name or number" autocomplete="off">
+    <div id="palwrap"></div>
+    <div id="card"></div>
+  </div>
 </aside>
 
 <main id="view">
@@ -1530,7 +1542,36 @@ function leftUI() {
       <p><b style="color:var(--gold2)">Save to the game</b> writes the map; the files from before are kept as a backup, and <b>Undo last save</b> puts them back. Afterwards the lighting can be recomputed with <span class="mono">./server light</span> (button in the right panel after a save).</p>
       <p><b style="color:var(--gold2)">NPCs</b> (tab NPCs): pick one, choose where it faces, click a free tile. You get your own copy of it (a new template from 2000 up) that spawns and respawns on that tile, with its items, about a second after the server starts; until then it shows faded. Select an NPC to turn it, move it or remove it. Alt+click with an NPC picked removes the NPC on that tile.</p>
       <p><b style="color:var(--gold2)">Pentagrams</b> still need build mode in the game (they are numbered there).</p></div>`;
+  }  subtabsUI(w, q);
+}
+// ---- sub-tabs (map mode): the second column lists the open tab's sections; only the picked one shows (all while searching)
+let subSel = {};
+try { subSel = JSON.parse(localStorage.getItem('myv2.subtabs') || '{}'); } catch (e) {}
+function subtabsUI(w, q) {
+  const col = $('#subtabs'), left = $('#left'); col.innerHTML = '';
+  left.classList.toggle('single', mode !== 'map');
+  const groups = []; let cur = null;
+  if (mode === 'map') for (const el of [...w.children]) {
+    if (el.classList.contains('sect')) { cur = { title: el.textContent, els: [el] }; groups.push(cur); }
+    else if (cur) cur.els.push(el);
   }
+  const lw = mode !== 'map' ? '280px' : groups.length >= 2 ? '474px' : '366px';
+  if ($('#app').style.getPropertyValue('--lw') !== lw) { $('#app').style.setProperty('--lw', lw); setTimeout(resize, 0); }
+  col.style.display = groups.length >= 2 ? '' : 'none';
+  if (groups.length < 2) return;
+  const short = t => t.split(' · ')[0].trim();
+  let pick = groups.find(g => short(g.title) === subSel[tab]) || groups[0];
+  const show = g => {
+    pick = g; if (!q) { subSel[tab] = short(g.title); try { localStorage.setItem('myv2.subtabs', JSON.stringify(subSel)); } catch (e) {} }
+    groups.forEach(x => x.els.forEach(el => { el.style.display = (q || x === g) ? '' : 'none'; }));
+    col.querySelectorAll('button').forEach((b, i) => b.classList.toggle('on', !q && groups[i] === g));
+  };
+  groups.forEach(g => {
+    const b = document.createElement('button'); b.textContent = short(g.title); b.title = g.title;
+    b.onclick = () => { if (q) { g.els[0].scrollIntoView({ block: 'start' }); return; } show(g); $('#palwrap').scrollTop = 0; };
+    col.appendChild(b);
+  });
+  show(pick);
 }
 $('#lsearch').oninput = () => leftUI();
 document.querySelectorAll('nav button').forEach(b => b.onclick = () => {
