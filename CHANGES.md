@@ -486,6 +486,15 @@ brush paints them at random) and **soft edges into grass**:
 - **Windows for the game's own walls too**: the game had them only for Grey Brick (1218), Red Stone (1232) and Marble (1168 / 1170). Now every other wall has one, cut the same way from the wall's own picture with a plain sill in its colour: Greek Wall I-III, the three Mine Walls, Stone Wall I-V and the pebbled Dark Stone Wall, Black Stone, Brown Stone, both Lava Walls, the Black Stronghold walls (plain, with holes, with embers), Dark Stone, Earth Wall I-II and the Green Glowing Stone Wall. Sprites 36700-36757 (`tools/sprites/game_wall_windows.py`): 36700 + 2i the window, +1 its hidden form (the wall's own cut-down picture). Not done: pillars, arches, the Black Stronghold buttresses and the magic gates (not plain walls), and the cobwebbed walls.
 - Editor: Walls tab, section "Windows": the game's 4, then the game's other walls, then the new walls (49 in all).
 
+## The Wolfwood: Cody's area, the wolves and Huntmaster Edda (Nov 15)
+Cody made the area (zones "Eastern Forest", "Deep Forest", "Dire Wolves Den", "Wynn & Edda's Hut"); Claude placed the NPCs (`tools/world/wolfwood/place_wolfwood.py`, then `off_road.py`):
+- **24 Grey Wolves** (Sergeant) spread through the Eastern Forest, none within 3 tiles of its road.
+- **15 Dire Wolves** (Master Sergeant): 9 close together in the Dire Wolves Den, 6 spread thinner through the rest of the Deep Forest.
+- **Old Greyfang** (First Sergeant) at 414,541 in the den.
+- Every wolf is its own template (from the Spider, not "simple"), wolf group 33, and carries its head (Greyfang his fang).
+- **Huntmaster Edda** (a woman: Inga's look) in Wynn & Edda's Hut at 514,654, with her item quests (`#quest`): Wolf Head 63 exp + 3G, Dire Wolf Head 240 exp + 12G (both as often as you like, from Sergeant / Master Sergeant), Greyfang's Fang -> Greyfang Amulet, 14,000 exp + 700G (once, from First Sergeant).
+- NPC templates 2057-2100 (`made.json`).
+
 ## The Wolfwood: taken out again, Cody builds the area (Nov 15)
 A first Wolfwood (forest, trail, Hunters' Lodge, 16 Grey Wolves, 9 Dire Wolves, Old Greyfang, Huntmaster Edda and her head bounties) was built and then taken out again at Cody's wish (`tools/world/wolfwood/clear_wolfwood.py`): the map is back as it was before, the NPCs, their templates, Edda's quests and the zones are gone. Cody makes the area himself; then Claude places the NPCs (the build script's NPC and quest part can be reused: `build_wolfwood.py`).
 - Kept for then: the sprites (Grey Wolf 43000, **Dire Wolf 43500** (dark, bigger), **Old Greyfang 44000** (pale, biggest), item pictures **Wolf Head 44500**, **Dire Wolf Head 44501**; published) and the item templates 2016-2019 (Wolf Head, Dire Wolf Head, Greyfang's Fang, Greyfang Amulet +2 Bravery +2 Agility), Sign (Wolfwood) and Pile of Bones (bones picture 418).
