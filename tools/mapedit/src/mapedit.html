@@ -1320,7 +1320,7 @@ function leftUI() {
       }
       if (tab === 'objects' && pal.fences && pal.fences.length) {   // new fences: six pieces a type (two straight, four corners)
         const fe = pal.fences.filter(p => match(p[1], p[0]));
-        if (fe.length) { sect('New fences · split-rail, wattle, wrought iron, low stone wall, log palisade, hedge: two straight pieces and four corners each'); const g = grid(); fe.forEach(p => g.appendChild(cellPlant(p))); }
+        if (fe.length) { sect('New fences · split-rail, wattle, wrought iron, low stone wall, log palisade, hedge, brown wooden: two straight pieces and four corners each'); const g = grid(); fe.forEach(p => g.appendChild(cellPlant(p))); }
       }
       if (tab === 'objects' && pal.plants && pal.plants.length) {   // new plants (cacti...): drawn into the tile, like the area brushes' trees
         const pl = pal.plants.filter(p => match(p[1], p[0]));

@@ -477,6 +477,7 @@ brush paints them at random) and **soft edges into grass**:
 
 ## New fences (Nov 14)
 - Six new fence types beside the game's red Wooden Fence, on its layout (the fence on the tile's middle line; two straight pieces and four corners, each followed by its hidden-walls copy): **Split-Rail Fence** (weathered posts, two rails), **Wattle Fence** (woven sticks between stakes), **Wrought Iron Fence** (black bars with spear tips), **Low Fieldstone Wall** (knee-high dry stone), **Log Palisade** (sharpened logs, man-high; blocks sight too) and **Hedge** (trimmed, waist-high). Sprites 40100-40211 (`tools/sprites/world_fences.py`): type t from 40100 + 20t; +0 along y, +2 along x, +4/+6/+8/+10 the corners (left: -y and -x, right: +y and +x, top: -x and +y, bottom: -y and +x), each N+1 its copy.
+- **Brown Wooden Fence**: the game's red picket fence (1172-1183) recoloured to brown wood, same shapes and shading: 40220-40231 in the game's order (`tools/sprites/brown_fence.py`).
 - Editor: Objects tab, section "New fences" (WORLD_FENCES).
 
 ## Window walls (Nov 14)
