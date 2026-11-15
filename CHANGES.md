@@ -486,6 +486,11 @@ brush paints them at random) and **soft edges into grass**:
 - **Windows for the game's own walls too**: the game had them only for Grey Brick (1218), Red Stone (1232) and Marble (1168 / 1170). Now every other wall has one, cut the same way from the wall's own picture with a plain sill in its colour: Greek Wall I-III, the three Mine Walls, Stone Wall I-V and the pebbled Dark Stone Wall, Black Stone, Brown Stone, both Lava Walls, the Black Stronghold walls (plain, with holes, with embers), Dark Stone, Earth Wall I-II and the Green Glowing Stone Wall. Sprites 36700-36757 (`tools/sprites/game_wall_windows.py`): 36700 + 2i the window, +1 its hidden form (the wall's own cut-down picture). Not done: pillars, arches, the Black Stronghold buttresses and the magic gates (not plain walls), and the cobwebbed walls.
 - Editor: Walls tab, section "Windows": the game's 4, then the game's other walls, then the new walls (49 in all).
 
+## Test: the first 3D-rendered monster, a Grey Wolf (Nov 15)
+- **Sprites 43000-43447**: a full animated character set (standing and walking in 8 directions, the 16 turns, 8 actions in 4 directions: bite, sniff the ground, flinch) rendered from the Quaternius "Ultimate Animated Animal Pack" wolf (CC0, glTF in `MyV2\3d Models\`) at the game's camera (30 degrees down, 64x64, lit from the upper left, dark edge, fur grain that moves with the body). In the client's `GFX` folder (not published yet).
+- **Tools**: `tools/sprites/glrender.py` (a small glTF renderer: skinned animation, no Blender needed) and `tools/sprites/make_creature.py <model> <base> <out>` (the frame layout: engine.c eng_char, svr_act.c act_turn_*). The same pack has a fox, husky, deer, stag, bull, horse and more, so other animals can be made the same way.
+- **One test wolf** (template 2057, from the Spider 392, same strength) in the field by the east road at 532,624 (`tools/world/wolf/test_wolf.py`).
+
 ## Item quests can give several of their item (Nov 15)
 - On the Quests page, **Gives item** has a **count** in front of it (1-50, "3 × Potion of Second Wind"): the first reward hands over that many (Wynn gives 3 Potions of Second Wind). The NPC says "Here are 3 of my Potion of Second Wind in exchange."; `#quest` shows "3 Potion of Second Wind". Later steps give one. Kept in `npctalk.dat` as `qcount <template> <n>` (npctalk.c, svr_do.c).
 
