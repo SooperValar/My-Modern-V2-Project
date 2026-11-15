@@ -509,7 +509,7 @@ A first Wolfwood (forest, trail, Hunters' Lodge, 16 Grey Wolves, 9 Dire Wolves, 
 - **One test wolf** (template 2057, from the Spider 392, same strength; not "simple animation", so a usurped wolf can pick up, drop, give and use) in the field by the east road at 532,624 (`tools/world/wolf/test_wolf.py`).
 
 ## Quest givers made friendly (Nov 15)
-- Tobias, Wynn, Brann and Huntmaster Edda were copies of Jamil (template 25), whose alignment is -750: an enemy, so players could attack them and they'd drop loot. They are 10,000 now, like the other quest givers (Hollis, Inga).
+- Tobias, Wynn, Brann and Huntmaster Edda were copies of Jamil (template 25, alignment -750, as in the original game). They are 10,000 now, the game's mark of a shopkeeper or quest giver: area spells leave them alone and killing one costs the killer luck. (Alignment doesn't decide who can be attacked; the editor's hint for it says what it does now.)
 
 ## Editor: an NPC's class and look together (Nov 15)
 - In the NPC editor's General tab: **Class** (Mercenary, Templar, Harakim, Seyan'Du, Arch-Templar, Arch-Harakim, Warrior, Sorcerer, or no class for monsters and animals) and **man / woman** set its kind (kindred) like a player's; then **Base look**, the game's own look for that class; then **Cosmetic look**: tick "own look" and pick it with **Choose a look**: a list with a picture of every look an NPC has in the game (and the class looks), named by the NPCs that have it, with a search (wolf, guard, Inga...); only when it should look different (a recoloured monster, a wolf). Changing the class changes the look too, unless it has its own. The old number field "Class" is called **Monster class** now.

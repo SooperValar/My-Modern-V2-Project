@@ -7016,7 +7016,7 @@ const NPC_TABS = {
     }
     row(g, base ? 'Cosmetic look' : 'Look (sprite base)', sp, base ? 'Only if it should not look like its class: tick, then choose the look from the list (every look an NPC has in the game).' : 'Choose it from the list (every look an NPC has in the game), or type its number.');
     row(g, 'Facing', faceRow(c.dir, v => c.dir = v));
-    row(g, 'Alignment', num(() => c.alignment, v => c.alignment = v, -32768, 32767), 'Below 0: an enemy (players may attack it, it drops loot). Above 0: friendly.');
+    row(g, 'Alignment', num(() => c.alignment, v => c.alignment = v, -32768, 32767), 'Good or evil, not who may attack it (anyone can). Exactly 10,000 = a shopkeeper or quest giver: area spells leave it alone, and killing it costs the killer luck ("a god looks into your soul"). Killing any NPC moves the killer\'s alignment by minus this / 50. Below 0: it may loot graves and sometimes carries a random unique item.');
     const gold = document.createElement('div'); gold.className = 'ipick';
     gold.append(num(() => Math.floor(c.gold / 100), v => c.gold = v * 100 + c.gold % 100, 0), document.createTextNode(' gold '),
       num(() => c.gold % 100, v => c.gold = Math.floor(c.gold / 100) * 100 + v, 0, 99), document.createTextNode(' silver'));
