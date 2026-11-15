@@ -2335,9 +2335,12 @@ class World:
                 self._save_map(rec, x, y)
                 t = self.tile(x, y)
                 if k == 'area':               # an area brush: its floor mix, and maybe one of its loose pieces
-                    pr = self.area_get(op.get('a', ''))
+                    pr = op['pr'] if isinstance(op.get('pr'), dict) else self.area_get(op.get('a', ''))     # pr: a scatter brush's own list
                     if not pr:
                         msgs.append('no area brush called %s' % op.get('a')); continue
+                    if isinstance(op.get('pr'), dict):     # a scatter brush: only pieces, numbers checked
+                        pr = {'scatter': [e for e in pr.get('scatter', []) if isinstance(e, dict) and e.get('k') in ('o', 't')][:64],
+                              'dens': max(0.0, min(1.0, float(pr.get('dens', 0.1) or 0))), 'apart': bool(pr.get('apart'))}
                     if op.get('floor', True) and pr.get('floors'):     # also on the black void (new ground)
                         fs = [f for f in pr['floors'] if not (len(f) > 2 and f[2])] or pr['floors']     # [floor, weight, off]
                         t[0] = int(random.choices([f[0] for f in fs], weights=[max(0.01, float(f[1])) for f in fs])[0])

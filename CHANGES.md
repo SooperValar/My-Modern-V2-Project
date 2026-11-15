@@ -486,6 +486,11 @@ brush paints them at random) and **soft edges into grass**:
 - **Windows for the game's own walls too**: the game had them only for Grey Brick (1218), Red Stone (1232) and Marble (1168 / 1170). Now every other wall has one, cut the same way from the wall's own picture with a plain sill in its colour: Greek Wall I-III, the three Mine Walls, Stone Wall I-V and the pebbled Dark Stone Wall, Black Stone, Brown Stone, both Lava Walls, the Black Stronghold walls (plain, with holes, with embers), Dark Stone, Earth Wall I-II and the Green Glowing Stone Wall. Sprites 36700-36757 (`tools/sprites/game_wall_windows.py`): 36700 + 2i the window, +1 its hidden form (the wall's own cut-down picture). Not done: pillars, arches, the Black Stronghold buttresses and the magic gates (not plain walls), and the cobwebbed walls.
 - Editor: Walls tab, section "Windows": the game's 4, then the game's other walls, then the new walls (49 in all).
 
+## Scatter brushes in the editor (Nov 15)
+- **Scatter brushes** (Objects tab, at the top): paint trees, plants, flowers, rocks or items at random. The editor's own: Mixed trees, Autumn trees, Pines, Birches & blossom, Wildflowers, Undergrowth, Rocks.
+- **Make your own**: Ctrl+click (or Shift+click) any pieces in the Objects, Walls or Items tabs - the game's trees, the new trees (each paints its 4 variants), flowers, plants, rocks, fences, items - and they become one brush. The card shows each piece with a slider for how often it is picked, **How full** (pieces per 100 free tiles) and **Keep apart** (pieces that block walking never stand next to each other, so there is always a way through). **Save brush** keeps it, by name, in the list (in this browser); right-click a saved one to delete it.
+- Paints only on free ground and keeps the floor (the area brushes' own placing); Alt+paint removes pieces; works with the brush sizes, rectangle and fill.
+
 ## Old Quarry (Nov 15)
 The second area of the quest plan: Master Sergeant to First Sergeant, south of the east road.
 - **The trail**: from the east road at 533,652 south across the field to the quarry's mouth. **Brann**, the foreman, waits there by his shed (no monsters around it).

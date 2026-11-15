@@ -2335,9 +2335,12 @@ class World:
                 self._save_map(rec, x, y)
                 t = self.tile(x, y)
                 if k == 'area':               # an area brush: its floor mix, and maybe one of its loose pieces
-                    pr = self.area_get(op.get('a', ''))
+                    pr = op['pr'] if isinstance(op.get('pr'), dict) else self.area_get(op.get('a', ''))     # pr: a scatter brush's own list
                     if not pr:
                         msgs.append('no area brush called %s' % op.get('a')); continue
+                    if isinstance(op.get('pr'), dict):     # a scatter brush: only pieces, numbers checked
+                        pr = {'scatter': [e for e in pr.get('scatter', []) if isinstance(e, dict) and e.get('k') in ('o', 't')][:64],
+                              'dens': max(0.0, min(1.0, float(pr.get('dens', 0.1) or 0))), 'apart': bool(pr.get('apart'))}
                     if op.get('floor', True) and pr.get('floors'):     # also on the black void (new ground)
                         fs = [f for f in pr['floors'] if not (len(f) > 2 and f[2])] or pr['floors']     # [floor, weight, off]
                         t[0] = int(random.choices([f[0] for f in fs], weights=[max(0.01, float(f[1])) for f in fs])[0])
@@ -4721,7 +4724,7 @@ function cats(all) {
     items: t.filter(x => x[3]),                                         // never grouped: keys open doors by their own template
   };
 }
-function brushKey(b) { return b.kind + ':' + (b.kind === 'area' || b.kind === 'rug' ? b.name : b.kind === 'place' || b.kind === 'npc' ? b.t[0] : b.kind === 'flag' ? b.bit : b.kind === 'mix' ? b.items.map(i => i.s + 'x' + i.w).join(',') : b.s); }
+function brushKey(b) { return b.kind + ':' + (b.kind === 'area' || b.kind === 'rug' ? b.name : b.kind === 'place' || b.kind === 'npc' ? b.t[0] : b.kind === 'flag' ? b.bit : b.kind === 'mix' ? b.items.map(i => i.s + 'x' + i.w).join(',') : b.kind === 'scatter' ? b.items.map(scatterKey).join(',') : b.s); }
 // ---- floor mixes: several floors painted at random, each with a weight
 let mixes = [];
 try { mixes = JSON.parse(localStorage.getItem('myv2.mixes') || '[]'); } catch (e) {}
@@ -4739,6 +4742,92 @@ function toggleMix(s) {   // Ctrl/Shift+click on a floor
   if (!items.length) return;
   if (items.length === 1) setBrush({ kind: 'floor', s: items[0].s, set: false });
   else setBrush({ kind: 'mix', items, name: '' });
+}
+// ---- scatter brushes: trees, plants, flowers, rocks or items painted at random, each with a weight, on free ground only
+// (Ctrl+click pieces in the Objects / Walls / Items tabs; saved ones live in this browser). Painted with the area brushes'
+// own placing (free tiles only, "keep apart" for pieces that block), floor left as it is; Alt+paint removes pieces.
+let scatters = [];
+try { scatters = JSON.parse(localStorage.getItem('myv2.scatters') || '[]'); } catch (e) {}
+function saveScatters() { try { localStorage.setItem('myv2.scatters', JSON.stringify(scatters)); } catch (e) {} }
+const SC_TREE = (s, name) => ({ k: 'o', s, b: 3, w: 5, name });
+const SC_NEW = (first, name) => ({ k: 'o', s: first, b: 3, w: 5, vars: [first, first + 1, first + 2, first + 3], name });
+const SC_T = (t, name, w) => ({ k: 't', t, w: w || 5, name });
+const SCATTER_PRESETS = [
+  { name: 'Mixed trees', dens: 0.12, apart: true, items: [SC_TREE(1112, 'Tree I'), SC_TREE(1114, 'Tree II'), SC_TREE(1238, 'Tree III'), SC_TREE(1240, 'Tree IV'), SC_TREE(880, 'Tree I (tall)'), SC_TREE(882, 'Tree I (big)')] },
+  { name: 'Autumn trees', dens: 0.1, apart: true, items: [SC_NEW(38100, 'Autumn tree (orange)'), SC_NEW(38104, 'Autumn tree (red)'), SC_NEW(38108, 'Autumn tree (yellow)')] },
+  { name: 'Pines', dens: 0.12, apart: true, items: [SC_NEW(38150, 'Pine')] },
+  { name: 'Birches & blossom', dens: 0.08, apart: true, items: [SC_NEW(38130, 'Birch'), SC_NEW(38120, 'Blossom tree')] },
+  { name: 'Wildflowers', dens: 0.12, apart: false, items: [SC_T(16, 'Red Flower'), SC_T(45, 'Purple Flower'), SC_T(137, 'Yellow Flower'), SC_T(138, 'Blue Flower'), SC_T(139, 'Green Flower'), SC_T(17, 'Small green plant', 3)] },
+  { name: 'Undergrowth', dens: 0.15, apart: false, items: [SC_T(17, 'Small green plant'), SC_T(47, 'Small dark-green plant'), SC_T(1133, 'Growing Mushroom', 1)] },
+  { name: 'Rocks', dens: 0.04, apart: true, items: [SC_TREE(16352, 'Rock'), SC_TREE(16360, 'Rock II'), SC_TREE(16368, 'Rock III'), SC_TREE(16376, 'Grey rock')] },
+];
+const scatterKey = e => e.k === 't' ? 't' + e.t : 'o' + e.s;
+function pieceOf(b) {      // the current single-piece brush as a scatter entry
+  if (b.kind === 'object') return { k: 'o', s: b.s, b: b.block || 0, vars: b.vars, w: 5, name: b.name || 'Piece ' + b.s };
+  if (b.kind === 'place') return b.t[6] ? { k: 't', t: b.t[0], w: 5, name: b.t[1] } : { k: 'o', s: b.t[2], b: b.t[5] & 3, w: 5, name: b.t[1] };
+  return null;
+}
+function toggleScatter(e) {   // Ctrl/Shift+click on a piece
+  const was = brush.kind === 'scatter';
+  let items = was ? brush.items.map(i => ({ ...i })) : (pieceOf(brush) ? [pieceOf(brush)] : []);
+  const k = items.findIndex(i => scatterKey(i) === scatterKey(e));
+  if (k >= 0) items.splice(k, 1); else items.push(e);
+  if (!items.length) return;
+  setBrush({ kind: 'scatter', items, dens: was ? brush.dens : 0.1, apart: was ? brush.apart : true, name: was ? brush.name : '' }, true);
+  if (!was) toast('Scatter brush: Ctrl+click more pieces to add them; set how many and how often on the card.');
+}
+function scatterProfile(b) {
+  const tot = b.items.reduce((a, i) => a + i.w, 0) || 1, sc = [];
+  for (const i of b.items) {
+    const p = i.w / tot;
+    if (i.k === 'o') { const vs = i.vars && i.vars.length ? i.vars : [i.s]; vs.forEach(s => sc.push({ k: 'o', s, b: i.b || 0, p: p / vs.length })); }
+    else sc.push({ k: 't', t: i.t, p });
+  }
+  return { scatter: sc, dens: b.dens, apart: !!b.apart };
+}
+const inScatter = (k) => brush.kind === 'scatter' && brush.items.some(i => scatterKey(i) === k);
+function scatterCard(c) {
+  const tot = () => brush.items.reduce((a, i) => a + i.w, 0) || 1;
+  c.innerHTML = `<div class="mixhd"><span class="t"></span><span class="s">${brush.items.length} pieces</span></div>`;
+  c.querySelector('.t').textContent = brush.name ? 'Scatter: ' + brush.name : 'Scatter brush';
+  for (const it of brush.items) {
+    const r = document.createElement('div'); r.className = 'mixrow';
+    r.appendChild(thumb(scatterSprite(it), 30));
+    r.insertAdjacentHTML('beforeend', `<span class="num" style="width:auto;flex:0 1 92px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span><input type="range" min="1" max="10" value="${it.w}" title="How often this one is picked"><span class="pct">${Math.round(it.w / tot() * 100)}%</span><button class="x" title="Take it out">×</button>`);
+    r.querySelector('.num').textContent = it.name || (it.k === 't' ? iname(it.t) : 'Piece ' + it.s); r.querySelector('.num').title = r.querySelector('.num').textContent;
+    r.querySelector('input').oninput = e => { it.w = +e.target.value; c.querySelectorAll('.mixrow.pc').forEach((row, k) => row.querySelector('.pct').textContent = Math.round(brush.items[k].w / tot() * 100) + '%'); };
+    r.classList.add('pc');
+    r.querySelector('.x').onclick = () => { const items = brush.items.filter(i => i !== it); if (!items.length) return; setBrush({ ...brush, items }, true); };
+    c.appendChild(r);
+  }
+  const d = document.createElement('div'); d.className = 'mixrow';
+  d.innerHTML = `<span class="num" style="width:auto">How full</span><input type="range" min="1" max="60" value="${Math.round(brush.dens * 100)}" title="How many pieces per 100 free tiles"><span class="pct" style="width:64px">${Math.round(brush.dens * 100)} / 100</span>`;
+  d.querySelector('input').oninput = e => { brush.dens = +e.target.value / 100; d.querySelector('.pct').textContent = e.target.value + ' / 100'; };
+  c.appendChild(d);
+  const b = document.createElement('div'); b.className = 'mixbtns';
+  b.innerHTML = '<label class="chk" style="margin-right:6px" title="Pieces that block walking never stand right next to each other, so there is always a way through"><input type="checkbox"><span>Keep apart</span></label><button data-a="save" title="Keep this brush in the list (in this browser)">Save brush</button>';
+  const cb = b.querySelector('input'); cb.checked = !!brush.apart; cb.onchange = () => { brush.apart = cb.checked; };
+  b.querySelector('[data-a=save]').onclick = () => {
+    const name = prompt('Name for this scatter brush (e.g. River bank trees):', brush.name || '');
+    if (!name) return;
+    scatters = scatters.filter(m => m.name !== name); scatters.unshift({ name, dens: brush.dens, apart: !!brush.apart, items: brush.items.map(i => ({ ...i })) }); saveScatters();
+    brush.name = name; card(); leftUI(); toast('Saved the scatter brush "' + name + '"');
+  };
+  c.appendChild(b);
+  c.insertAdjacentHTML('beforeend', '<div class="s">Paints only on free ground and keeps the floor. Ctrl+click trees, plants, flowers, rocks or items on the left to add or remove them · Alt+paint removes pieces.</div>');
+}
+function cellScatter(m, saved) {
+  const c = document.createElement('div'); c.className = 'cell'; c.dataset.k = brushKey({ kind: 'scatter', items: m.items });
+  if (brushKey(brush) === c.dataset.k) c.classList.add('sel');
+  c.title = (m.name || 'Scatter') + ': ' + m.items.map(i => i.name || scatterKey(i)).join(', ') + (saved ? ' · right-click to delete' : ' · one of the editor\'s own');
+  const cv = document.createElement('canvas'); cv.width = 64; cv.height = 64;
+  const g = cv.getContext('2d'), n = Math.min(3, m.items.length);
+  m.items.slice(0, 3).forEach((it, k) => { const t = thumb(scatterSprite(it), 40, 40); setTimeout(() => g.drawImage(t, n === 1 ? 12 : k * 12, n === 1 ? 12 : 24 - k * 8), 300); });
+  c.appendChild(cv);
+  const l = document.createElement('div'); l.className = 'lab'; l.textContent = m.name || 'scatter'; c.appendChild(l);
+  c.onclick = () => setBrush({ kind: 'scatter', items: m.items.map(i => ({ ...i })), dens: m.dens, apart: m.apart, name: m.name });
+  if (saved) c.oncontextmenu = e => { e.preventDefault(); if (confirm('Delete the scatter brush "' + m.name + '"?')) { scatters = scatters.filter(x => x !== m); saveScatters(); leftUI(); } };
+  return c;
 }
 const avgCache = new Map();
 function avgColor(n) {   // the average color of a floor sprite (to find look-alikes)
@@ -4781,8 +4870,9 @@ function setBrush(b, keepTool) {
   card(); document.querySelectorAll('#palwrap [data-k]').forEach(el => el.classList.toggle('sel', el.dataset.k === k));
 }
 function card() {
-  const c = $('#card'); c.innerHTML = ''; c.classList.toggle('mix', brush.kind === 'mix');
+  const c = $('#card'); c.innerHTML = ''; c.classList.toggle('mix', brush.kind === 'mix' || brush.kind === 'scatter');
   if (brush.kind === 'mix') return mixCard(c);
+  if (brush.kind === 'scatter') return scatterCard(c);
   if (brush.kind === 'rug') return rugCard(c);
   if (brush.kind === 'area') {
     const a = areaByName(brush.name) || { name: brush.name, floors: [], scatter: [] };
@@ -4872,7 +4962,9 @@ function cellPlant([s, name, block, vars]) {     // a new plant or wall: an obje
   if (brushKey(brush) === c.dataset.k) c.classList.add('sel');
   c.title = `${name} · sprite ${vars ? vars.join(', ') + ' (at random)' : s}`; c.appendChild(thumb(s, 64, 64));
   const l = document.createElement('div'); l.className = 'lab'; l.textContent = name; c.appendChild(l);
-  c.onclick = () => setBrush(vars ? { kind: 'object', s, block, vars } : { kind: 'object', s, block });
+  if (inScatter('o' + s)) { c.classList.add('inmix'); c.insertAdjacentHTML('beforeend', '<span class="badge">scatter</span>'); }
+  c.title += ' · Ctrl+click: add to a scatter brush';
+  c.onclick = e => (e.ctrlKey || e.metaKey || e.shiftKey) ? toggleScatter({ k: 'o', s, b: block, vars, w: 5, name }) : setBrush(vars ? { kind: 'object', s, block, vars, name } : { kind: 'object', s, block, name });
   return c;
 }
 function cellMix(m, saved) {
@@ -4940,9 +5032,10 @@ function cellTemp(t) {
   if (brushKey(brush) === c.dataset.k) c.classList.add('sel');
   c.title = `${t[1]} · template ${t[0]} · ${t[6] ? 'item' : 'drawn into the tile'}${t[5] & 1 ? ' · blocks walking' : ''}${t[5] & 2 ? ' · blocks sight' : ''}`;
   c.appendChild(thumb(t[2], 64, 64)); const l = document.createElement('div'); l.className = 'lab'; l.textContent = t[1]; c.appendChild(l);
-  c.onclick = () => setBrush({ kind: 'place', t });
+  c.onclick = e => (e.ctrlKey || e.metaKey || e.shiftKey) ? toggleScatter(t[6] ? { k: 't', t: t[0], w: 5, name: t[1] } : { k: 'o', s: t[2], b: t[5] & 3, w: 5, name: t[1] }) : setBrush({ kind: 'place', t });
+  if (inScatter(t[6] ? 't' + t[0] : 'o' + t[2])) { c.classList.add('inmix'); c.insertAdjacentHTML('beforeend', '<span class="badge">scatter</span>'); }
   c.oncontextmenu = e => { e.preventDefault(); openTemplate('item', t[0]); };
-  c.title += ' · right-click to edit the template';
+  c.title += ' · right-click to edit the template · Ctrl+click: add to a scatter brush';
   return c;
 }
 function cellNpc(t) {
@@ -4959,6 +5052,7 @@ function cellRecent(b) {
   if (b.kind === 'area') { const a = areaByName(b.name); if (a) return cellArea(a); }
   if (b.kind === 'npc') return cellNpc(b.t);
   if (b.kind === 'mix') return cellMix(b, false);
+  if (b.kind === 'scatter') return cellScatter(b, false);
   if (b.kind === 'floor') return cellFloor(b.s, 0);
   if (b.kind === 'flag') return cellFlag(b.bit);
   if (b.kind === 'place') return cellTemp(b.t);
@@ -5116,6 +5210,10 @@ function leftUI() {
       if (tab === 'walls' && pal.windows && pal.windows.length) {   // window walls: one face has a window
         const wi = pal.windows.filter(w => match(w[1], w[0]));
         if (wi.length) { sect('Windows · the new walls with an open slit like the game\'s brick windows: blocks walking, you see through'); const g = grid(); wi.forEach(w => g.appendChild(cellPlant(w))); }
+      }
+      if (tab === 'objects' && !q) {   // scatter brushes: the editor's own and the ones saved in this browser
+        sect('Scatter brushes · paint trees, plants, flowers or rocks at random · Ctrl+click any pieces below to make your own'); const g = grid();
+        SCATTER_PRESETS.forEach(m => g.appendChild(cellScatter(m, false))); scatters.forEach(m => g.appendChild(cellScatter(m, true)));
       }
       if (tab === 'objects' && pal.fences && pal.fences.length) {   // new fences: six pieces a type (two straight, four corners)
         const fe = pal.fences.filter(p => match(p[1], p[0]));
@@ -7270,7 +7368,7 @@ function footprint(x, y) {
 }
 function opFor(x, y, alt) {
   const b = brush;
-  if (tool === 'erase' || (alt && (b.kind === 'place' || b.kind === 'object' || b.kind === 'area'))) return { op: 'erase', x, y };
+  if (tool === 'erase' || (alt && (b.kind === 'place' || b.kind === 'object' || b.kind === 'area' || b.kind === 'scatter'))) return { op: 'erase', x, y };
   if (b.kind === 'flag') return { op: 'flag', x, y, bit: b.bit, mode: alt !== flagRemove ? 0 : 1 };
   if (alt) return null;
   if (b.kind === 'floor') {     // a floor with variants: pick the variant here, so the map shows it at once (not after the save)
@@ -7278,6 +7376,7 @@ function opFor(x, y, alt) {
     return vs && vs.length ? { op: 'floor', x, y, s: vs[Math.floor(Math.random() * vs.length)], set: false } : { op: 'floor', x, y, s: b.s, set: b.set };
   }
   if (b.kind === 'mix') return { op: 'floor', x, y, s: mixPick(b.items), set: false };
+  if (b.kind === 'scatter') return { op: 'area', x, y, floor: false, pr: scatterProfile(b) };
   if (b.kind === 'object') return { op: 'object', x, y, s: b.vars && b.vars.length ? b.vars[Math.floor(Math.random() * b.vars.length)] : b.s, block: b.block };
   if (b.kind === 'place') return allVersions ? { op: 'place', x, y, t: b.t[0] } : { op: 'place', x, y, t: b.t[0], fresh: 1 };   // fresh: no lock, no destination carried over from wherever this template was used
   if (b.kind === 'area') return { op: 'area', x, y, a: b.name, floor: areaFloor };
@@ -7289,6 +7388,7 @@ function label(alt) {
   if (b.kind === 'flag') return (alt !== flagRemove ? 'cleared ' : 'set ') + FLAGS[b.bit];
   if (alt) return 'erase';
   if (b.kind === 'area') return 'area ' + b.name + (areaFloor ? '' : ' (pieces only)');
+  if (b.kind === 'scatter') return 'scatter ' + (b.name || b.items.map(i => i.name || scatterKey(i)).slice(0, 3).join('/'));
   return b.kind === 'floor' ? 'floor ' + b.s : b.kind === 'mix' ? (b.name ? 'mix ' + b.name : 'floor mix ' + b.items.map(i => i.s).join('/')) : b.kind === 'place' ? b.t[1] : 'object ' + b.s;
 }
 // new grounds: the soft grass edges around a painted tile, drawn at once as the editor will save them (_autoedge)
