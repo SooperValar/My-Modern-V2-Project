@@ -176,3 +176,8 @@ Shown by `/who`, by NPCs when asked where you are, and in server logs. A spot in
 | 166 | Grave Yard | 480,554 | 480,556 | "in the Grave Yard" |
 | 167 | Bandit Hollow | 498,662 | 572,748 | "in Bandit Hollow" |
 | 168 | Wynn's Hut | 540,674 | 546,688 | "in Wynn's Hut" |
+| 169 | East Guard House | 521,605 | 528,612 | "in the East Guard House" |
+| 170 | Harlan's Hideout | 525,726 | 545,738 | "in the Harlan's Hideout" |
+| 171 | Bandit Cave | 806,100 | 813,107 | "in the Bandit Cave" |
+| 172 | Old Quarry | 576,640 | 642,712 | "in Old Quarry" |
+| 173 | Deep Grolm Caves | 616,713 | 644,744 | "in the Deep Grolm Caves" |

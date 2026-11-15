@@ -1,0 +1,54 @@
+#!/usr/bin/env python3
+"""A new monster look from an existing animated one (Nov 14): every frame of a character sprite set (base+0..1023)
+recoloured, keeping its shading - each pixel's brightness picks a colour on a ramp, so all 8 directions and every
+walk / attack / death frame stay as the original drew them. The new set gets its own base (an NPC's sprite).
+
+    recolor_creature.py <client folder> <source base> <new base> <ramp name> [--out <folder>]
+
+Ramps (dark, mid, light): sandstone, slate, ... (RAMPS below). Made so far (CHANGES.md "Old Quarry"):
+    41000 Quarry Golem   (the Golem, 17360, in sandstone)
+    42100 Deep Grolm     (the Grolm, 12240, in cave slate)
+"""
+import os, sys
+HERE = os.path.dirname(os.path.abspath(__file__))
+RAMPS = {
+    'sandstone': ((40, 30, 18), (128, 102, 68), (204, 180, 134)),
+    'slate': ((18, 22, 30), (70, 82, 98), (150, 164, 182)),
+}
+
+
+def ramp(r, t):
+    d, m, l = r
+    if t < 0.5: k = t / 0.5; return tuple(int(d[i] + (m[i] - d[i]) * k) for i in range(3))
+    k = (t - 0.5) / 0.5; return tuple(int(m[i] + (l[i] - m[i]) * k) for i in range(3))
+
+
+def main():
+    client, src, dst, name = sys.argv[1], int(sys.argv[2]), int(sys.argv[3]), sys.argv[4]
+    out = sys.argv[sys.argv.index('--out') + 1] if '--out' in sys.argv else os.path.join(client, 'GFX')
+    sys.argv = [sys.argv[0], client, '/tmp']
+    exec(open(os.path.join(HERE, '..', 'world', 'spritesheets.py')).read().split('ids=sorted')[0], globals())
+    R = RAMPS[name]; os.makedirs(out, exist_ok=True)
+    frames = {k: load(src + k) for k in range(1024)}
+    frames = {k: im.convert('RGBA') for k, im in frames.items() if im}
+    lums = []
+    for im in list(frames.values())[:60]:
+        lums += [max(p[:3]) for p in (im.get_flattened_data() if hasattr(im, "get_flattened_data") else im.getdata()) if p[3] and not (p[0] > 240 and p[1] < 16 and p[2] > 240)]
+    lums.sort(); lo, hi = lums[len(lums) // 50], lums[-len(lums) // 50]
+    n = 0
+    for k, im in frames.items():
+        px = im.load()
+        for y in range(im.height):
+            for x in range(im.width):
+                c = px[x, y]
+                if not c[3]: continue
+                if c[0] > 240 and c[1] < 16 and c[2] > 240: px[x, y] = (0, 0, 0, 0); continue
+                t = (max(c[:3]) - lo) / max(1, hi - lo)
+                px[x, y] = ramp(R, max(0, min(1, t))) + (255,)
+        p = os.path.join(out, '%05d.png' % (dst + k))
+        im.save(p); n += 1
+    print('%d frames: %d -> %d (%s)' % (n, src, dst, name))
+
+
+if __name__ == '__main__':
+    main()

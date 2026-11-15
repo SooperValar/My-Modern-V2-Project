@@ -486,6 +486,17 @@ brush paints them at random) and **soft edges into grass**:
 - **Windows for the game's own walls too**: the game had them only for Grey Brick (1218), Red Stone (1232) and Marble (1168 / 1170). Now every other wall has one, cut the same way from the wall's own picture with a plain sill in its colour: Greek Wall I-III, the three Mine Walls, Stone Wall I-V and the pebbled Dark Stone Wall, Black Stone, Brown Stone, both Lava Walls, the Black Stronghold walls (plain, with holes, with embers), Dark Stone, Earth Wall I-II and the Green Glowing Stone Wall. Sprites 36700-36757 (`tools/sprites/game_wall_windows.py`): 36700 + 2i the window, +1 its hidden form (the wall's own cut-down picture). Not done: pillars, arches, the Black Stronghold buttresses and the magic gates (not plain walls), and the cobwebbed walls.
 - Editor: Walls tab, section "Windows": the game's 4, then the game's other walls, then the new walls (49 in all).
 
+## Old Quarry (Nov 15)
+The second area of the quest plan: Master Sergeant to First Sergeant, south of the east road.
+- **The trail**: from the east road at 533,652 south across the field to the quarry's mouth. **Brann**, the foreman, waits there by his shed (no monsters around it).
+- **The pit** (zone "Old Quarry", 576,640 - 642,712): an oval quarry floor of dusty stone inside a rim of rock walls, with rock outcrops, stacks of cut stone and a fire in the middle. 10 **Quarry Golems** (Master Sergeant) and the **Golem Overseer** (First Sergeant; carries the Foreman's Seal).
+- **The Deep Grolm Caves** (zone, 616,713 - 644,744): a dark cave at the pit's far end, reached by a passage, lit by four torches. 7 **Deep Grolms** (First Sergeant) and the **Deep Grolm Chieftain** (Sergeant Major; carries his stone axe).
+- **New monster looks, recoloured from the game's own animated monsters** (every frame, all directions; `tools/sprites/recolor_creature.py`): the Quarry Golem is the Golem in sandstone (sprites 41000+), the Deep Grolm the Grolm in cave slate (42100+).
+- **Two quests** (journal quests 4 and 5, from Brann, each once per character; numbers from the Quest Planner sheet):
+  - the **Foreman's Seal** from the Golem Overseer -> **Quarryman's Amulet** (+20 endurance, Master Sergeant), 6,000 exp, 300G. Brann turns away players below Master Sergeant.
+  - the **Chieftain's Stone Axe** (after the seal, from First Sergeant) -> 2 **Stoneskin Potions** (+8 armor for 10 minutes; a timed potion like the Agility Potion, no new code), 10,000 exp, 500G.
+- Built with `tools/world/old_quarry/build_quarry.py` and `talk.py` (items 2012-2015, NPCs 2037-2056 in `made.json`).
+
 ## Bandit Hollow (Nov 14)
 The first area of the quest plan (the "Quest Map and Plan" doc and "Quest Planner" sheet): ranks Sergeant to Master Sergeant.
 - **The east road**: a dirt trail from Aston's east gate (533,601) across the field and on to **Bandit Hollow** (x 498-572, y 662-748), a clearing in a thick forest. Zones "Bandit Hollow" and "Wynn's Hut".

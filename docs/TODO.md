@@ -205,15 +205,16 @@ item rewards (rings, amulets, belts, new potions) and two skill quests (Swimming
 the towers, the three Pentagram Quests, Black Stronghold, Underground I and II, Elysium, Staffer Corner; each lab counts
 as one special quest. Build one area at a time from the bottom, with `tools/world/bandit_hollow/` as the pattern.
 - [x] **Bandit Hollow** (east road, Sergeant to Master Sergeant; CHANGES.md "Bandit Hollow").
-- [ ] **Wolfwood + Hunters' Lodge** (wolf and bear heads bounty, Old Greyfang): needs wolf and bear sprites.
-- [ ] **Old Quarry** (Brann, the Golem Overseer, the Deep Grolm Chieftain; Stoneskin potion).
+- [ ] **Wolfwood + Hunters' Lodge** (wolf and bear heads bounty, Old Greyfang): the game has no four-legged animals but spiders; recolour existing monsters instead, or try one 3D-rendered wolf first (Cody's call). New monster looks otherwise come from `tools/sprites/recolor_creature.py` (sprite 14, base 16336, is NOT a creature: it is a sheet of world objects).
+- [x] **Old Quarry** (Nov 15; CHANGES.md "Old Quarry").
 - [ ] Rat-Catcher's Cellars and the Old Graveyard (band A extras; the graveyard ties in with the Graveyard quest below).
 - [ ] Then Fenwatch and its areas, Stonehold, the Last Bastion. Code needed on the way: Swimming made useful, the new
-  potion effects (Stoneskin, Clear Water, Elixir of the Good Moon, Fireward, Frozen Heart, Draught of the Void), the Ring
+  potion effects (Clear Water, Elixir of the Good Moon, Fireward, Frozen Heart, Draught of the Void), the Ring
   of the Good Moon.
 - The new walls 36000-36077 have no cut-down hidden form either (their +1 is the next variant, so hide walls shows a whole wall). The window walls do it right (N+1 = a low slab); the plain ones would need renumbering or a client rule.
 - New object sprite sets have no real cut-down "hidden" form: with hide walls on, a new tree shows the next variant
   (the original trees show stumps). Make proper hidden forms some time; run `tools/world/check_hide_sprites.py` after each build.
+- Timed potions need no code: armor[1] / attrib[i][1] / skill[n][1] with a duration, like the Agility Potion (Stoneskin, Fireward, Draught of the Void). Still code: Clear Water / Second Wind-style full restores are fine already (end / mana [0]); Elixir of the Good Moon (spell power) and Frozen Heart (regeneration) need some.
 - Rewards follow Cody's Quest Planner sheet (he set gold to 1/20 of the exp, Nov 14).
 
 ### ● `#quest` list: order and rewards (was #9)
