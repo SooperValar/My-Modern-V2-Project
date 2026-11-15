@@ -919,7 +919,9 @@ function faceRow(cur, onpick, disabled) {
 // gets its own settings in the tile panel. "Show every version" (or searching a template number) lists them all.
 let allVersions = false;
 try { allVersions = localStorage.getItem('myv2.allversions') === '1'; } catch (e) {}
-const lookKey = t => [t[2], t[9] || 0, t[4], t[5], t[6], t[7]].join(':');
+// one cell per look: the same picture in the same category is one piece (chests with their own contents, portals with
+// their own destinations, locked doors with their own keys: the placed piece gets its settings in the tile panel)
+const lookKey = t => [t[2], t[6], t[5] & 3, (t[5] & 2) && !t[6] ? 'w' : objectKind(t)].join(':');
 function onePerLook(list) {
   const groups = new Map();
   for (const t of list) { const k = lookKey(t); if (!groups.has(k)) groups.set(k, []); groups.get(k).push(t); }

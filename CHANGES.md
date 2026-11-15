@@ -494,6 +494,7 @@ brush paints them at random) and **soft edges into grass**:
 - **Objects**: **Chests**, **Scatter Brushes**, **Torches** (candles, braziers, lamps, lights, fires), **Fences**, **Plants**, **Webs** (webs on their own and webbed objects), **Transport** (portals, holes, ladders), **Doors**, **Signs**, **Mines** (what players can mine; walls that can't be mined are in Walls), **Misc.**
 - **Items**: **Weapons**, **Armor**, **Rings**, **Jewelry**, **Quest** (items an NPC asks for, labyrinth items), **Potions** (potions, flowers, drinks), **Scrolls**, **Keys**, **Misc.** Sorted from each template's own data, so new items find their place.
 - **Labyrinth items placed elsewhere**: picking one asks whether to keep the flag that makes it vanish when its carrier leaves the labyrinth; by default the placed copy goes without it.
+- **One cell per picture**: pieces that look the same in the same category are one cell (chests with different contents, portals with different destinations, ladders and locked doors with different settings); give the placed piece its contents, destination or key in the tile panel. "Show every version" still lists them all.
 - **Scatter brush card**: a wider scroll bar, and **Add item** next to Save brush: while it is on, a click on any piece on the left adds it to the brush (or takes it out); "Done adding" ends it.
 
 ## Scatter brushes in the editor (Nov 15)
