@@ -475,6 +475,10 @@ brush paints them at random) and **soft edges into grass**:
 - The edge table is `tools/sprites/world_ground.json` (also built into the editor as `WORLD_GROUND`): re-run
   `world_ground.py <Client folder>` after changing the look, then rebuild the table into `mapedit_template.py`.
 
+## Window walls (Nov 14)
+- Every new wall material (Sandstone, White Temple, Red Brick, Mossy Stone, Cracked Stone, Dark Slate, Timber-Framed, Fieldstone; clean and grain) has a **window** version: a dark glass pane with a glint, a frame and mullion cross in the material's dark tone, and a sill. Two of each: for a wall running north-south (the window in the block's left face) and for one running east-west (right face). Sprites 36600-36663 (`tools/sprites/world_windows.py`): 36600 + 4k left-face window, +2 right-face window, each N+1 its **cut-down hidden-walls form** (a low slab of the same material, like the game's 1200 -> 1201).
+- Editor: Walls tab, section "Windows" (WORLD_WINDOWS from `world_windows.json`).
+
 ## Bandit Hollow (Nov 14)
 The first area of the quest plan (the "Quest Map and Plan" doc and "Quest Planner" sheet): ranks Sergeant to Master Sergeant.
 - **The east road**: a dirt trail from Aston's east gate (533,601) across the field and on to **Bandit Hollow** (x 498-572, y 662-748), a clearing in a thick forest. Zones "Bandit Hollow" and "Wynn's Hut".

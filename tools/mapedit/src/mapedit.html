@@ -1314,6 +1314,10 @@ function leftUI() {
         const nw = pal.newwalls.filter(w => match(w[1], w[0]));
         if (nw.length) { sect('New walls · 4 variants each, painted at random (block walking and sight)'); const g = grid(); nw.forEach(w => g.appendChild(cellPlant([w[0], w[1], 3, w[2]]))); }
       }
+      if (tab === 'walls' && pal.windows && pal.windows.length) {   // window walls: one face has a window
+        const wi = pal.windows.filter(w => match(w[1], w[0]));
+        if (wi.length) { sect('Windows · the new walls with a window: "north-south wall" for a wall running ↘ (window in its left face), "east-west wall" for a wall running ↗ (right face)'); const g = grid(); wi.forEach(w => g.appendChild(cellPlant(w))); }
+      }
       if (tab === 'objects' && pal.plants && pal.plants.length) {   // new plants (cacti...): drawn into the tile, like the area brushes' trees
         const pl = pal.plants.filter(p => match(p[1], p[0]));
         if (pl.length) { sect('New plants · drawn into the tile (block walking)'); const g = grid(); pl.forEach(p => g.appendChild(cellPlant(p))); }
