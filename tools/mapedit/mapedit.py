@@ -4329,6 +4329,7 @@ table.pl button:hover { color: var(--text); border-color: var(--gold); }
 #ipop .r { display: flex; gap: 8px; align-items: center; padding: 3px 6px; border-radius: 5px; cursor: pointer; }
 #ipop .r:hover { background: var(--panel3); }
 #ipop .r .n { color: var(--dim2); font-size: 11px; margin-left: auto; }
+#ipop .r .qitag, .qitag { color: #ffb15c; font-size: 11px; font-weight: 600; }
 </style>
 </head>
 <body>
@@ -6910,6 +6911,7 @@ function merchRender(el) {
     const n = Object.assign(document.createElement('span'), { className: 'hint', textContent: String(i + 1) }); n.style.width = '24px';
     const x = pal.templates.find(q => q[0] === t);
     const nm = Object.assign(document.createElement('span'), { textContent: x ? x[1] : 'template ' + t + ' (empty!)' }); nm.style.flex = '1';
+    if (isQuestItem(x)) nm.append(Object.assign(document.createElement('span'), { className: 'qitag', textContent: ' (Quest)', title: 'A quest item: an NPC wants it, or a labyrinth needs it' }));
     const tn = Object.assign(document.createElement('span'), { className: 'hint', textContent: '#' + t });
     const up = document.createElement('button'); up.className = 'sm'; up.textContent = '↑'; up.disabled = !i; up.title = 'Move up';
     up.onclick = () => { c.stock.splice(i - 1, 0, c.stock.splice(i, 1)[0]); again(); };
@@ -6947,7 +6949,7 @@ function ipick(get, set, opts) {   // an item template: number, name, Pick…, �
   const d = document.createElement('div'); d.className = 'ipick';
   const n = document.createElement('input'); n.type = 'number'; n.min = 0; n.value = get() || 0;
   const th = thumb(0, 24); const nm = document.createElement('span'); nm.className = 'nm';
-  const show = () => { const v = +n.value; const x = v && pal.templates.find(r => r[0] === v); nm.textContent = v ? (x ? x[1] : 'template ' + v + ' (empty!)') : (opts && opts.none) || 'none'; nm.classList.toggle('none', !v); th.dataset.spr = x ? x[2] : 0; paintThumb(th); };
+  const show = () => { const v = +n.value; const x = v && pal.templates.find(r => r[0] === v); nm.textContent = v ? (x ? x[1] + qtag(v) : 'template ' + v + ' (empty!)') : (opts && opts.none) || 'none'; nm.classList.toggle('none', !v); th.dataset.spr = x ? x[2] : 0; paintThumb(th); };
   n.onchange = () => { set(+n.value || 0); show(); };
   const b = document.createElement('button'); b.className = 'sm'; b.textContent = 'Pick…';
   b.onclick = () => itemPopup(b, v => { n.value = v; set(v); show(); }, opts && opts.filter);
@@ -6990,6 +6992,9 @@ function lookPopup(anchor, pick) {
   };
   q.oninput = fill; fill(); setTimeout(() => q.focus(), 0);
 }
+// a quest item: an NPC wants it (an item quest) or a labyrinth needs it (palette flags: 8 wanted, 4 labyrinth)
+const isQuestItem = t => !!t && ((t[12] || 0) & 12) !== 0;
+const qtag = v => { const x = v && pal.templates.find(r => r[0] === v); return x && isQuestItem(x) ? ' (Quest)' : ''; };
 function itemPopup(anchor, pick, filter) {
   const p = $('#ipop'), r = anchor.getBoundingClientRect();
   p.style.width = ''; p.style.maxHeight = ''; p.querySelector('.lst').style.display = '';      // (the look picker makes it a grid)
@@ -7002,6 +7007,7 @@ function itemPopup(anchor, pick, filter) {
     for (const t of items) {
       const e = document.createElement('div'); e.className = 'r'; e.append(thumb(t[2], 26));
       const a = document.createElement('span'); a.textContent = t[1]; e.append(a);
+      if (isQuestItem(t)) { const qi = document.createElement('span'); qi.className = 'qitag'; qi.textContent = '(Quest)'; qi.title = 'An NPC wants it for a quest, or a labyrinth needs it: think twice before selling or giving it'; e.append(qi); }
       const b = document.createElement('span'); b.className = 'n'; b.textContent = t[0]; e.append(b);
       e.onmousedown = ev => { ev.preventDefault(); p.style.display = 'none'; pick(t[0]); };
       lst.append(e);
@@ -8850,7 +8856,7 @@ function clearsBox(el) {
 function qpick(get, set, none) {     // an item: its picture and name (click to pick), × to empty
   const d = document.createElement('div'); d.className = 'qpick';
   const b = document.createElement('button'); b.className = 'pb'; const th = thumb(0, 24, 24); const nm = document.createElement('span'); b.append(th, nm);
-  const show = () => { const v = get(), x = v && pal.templates.find(r => r[0] === v); nm.textContent = v ? (x ? x[1] : 'template ' + v + ' (empty!)') : none; b.classList.toggle('none', !v); b.title = v ? `item template ${v} · click to pick another` : 'Click to pick an item'; th.dataset.spr = x ? x[2] : 0; paintThumb(th); };
+  const show = () => { const v = get(), x = v && pal.templates.find(r => r[0] === v); nm.textContent = v ? (x ? x[1] + qtag(v) : 'template ' + v + ' (empty!)') : none; b.classList.toggle('none', !v); b.title = v ? `item template ${v} · click to pick another` : 'Click to pick an item'; th.dataset.spr = x ? x[2] : 0; paintThumb(th); };
   b.onclick = () => itemPopup(b, v => { set(v); });
   const x = document.createElement('button'); x.className = 'x'; x.textContent = '×'; x.title = 'Empty'; x.onclick = () => set(0);
   d.append(b, x); show(); return d;
