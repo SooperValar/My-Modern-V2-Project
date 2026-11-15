@@ -488,8 +488,8 @@ brush paints them at random) and **soft edges into grass**:
 
 ## The Wolfwood: Cody's area, the wolves and Huntmaster Edda (Nov 15)
 Cody made the area (zones "Eastern Forest", "Deep Forest", "Dire Wolves Den", "Wynn & Edda's Hut"); Claude placed the NPCs (`tools/world/wolfwood/place_wolfwood.py`, then `off_road.py`):
-- **24 Grey Wolves** (Sergeant) spread through the Eastern Forest, none within 3 tiles of its road.
-- **15 Dire Wolves** (Master Sergeant): 9 close together in the Dire Wolves Den, 6 spread thinner through the rest of the Deep Forest.
+- **44 Grey Wolves** (Sergeant) spread through the Eastern Forest, none within 3 tiles of its road.
+- **31 Dire Wolves** (Master Sergeant) in the Deep Forest and the Dire Wolves Den, thicker the closer to Old Greyfang (`add_wolves.py`: spots weighted by the distance to him, closer together near him): 7 within 10 tiles of him, 4 at 10-20, 11 at 20-35, 9 further out.
 - **Old Greyfang** (First Sergeant) at 414,541 in the den.
 - Every wolf is its own template (from the Spider, not "simple"), wolf group 33, and carries its head (Greyfang his fang).
 - **Huntmaster Edda** (a woman: Inga's look) in Wynn & Edda's Hut at 514,654, with her item quests (`#quest`): Wolf Head 63 exp + 3G, Dire Wolf Head 240 exp + 12G (both as often as you like, from Sergeant / Master Sergeant), Greyfang's Fang -> Greyfang Amulet, 14,000 exp + 700G (once, from First Sergeant).
