@@ -2129,6 +2129,21 @@ static int quest_build(int cn,struct qent *q,int max,int all)
 			cnt++;
 		}
 	}
+	// chain quests (npctalk.dat, the Quests page): one row for the part this character is at
+	for (n=1; n<=255 && cnt<max; n++) {
+		int lo,hi,rk,ci[8],ex,pa,ps,g,done;
+		if (!chain_listed(n)) continue;
+		done=quest_get(cn,n)>=chain_last(n);
+		if (done && !all) continue;
+		rk=chain_rank(n,cn,&lo,&hi);
+		if (rk && !all) continue;
+		g=chain_giver(n);
+		area=get_area_m(ch_temp[g].x,ch_temp[g].y,1);
+		if (strstr(area,"Labyrinth") || strstr(area,"Tower")) continue;
+		chain_step(n,cn,ci,8,&ex,&lo,&pa,&ps);
+		q[cnt].t=-n; q[cnt].skill=-1; q[cnt].known=done || rk; q[cnt].ord=chain_order(n); q[cnt].score=ex;
+		cnt++;
+	}
 	qsort(q,cnt,sizeof(*q),quest_cmp);
 	return cnt;
 }
@@ -2171,7 +2186,7 @@ static char *quest_place(int t,char *area)	// where the giver is, without the to
 void do_quest(int cn,char *a,char *b)
 {
 	static struct qent q[400];
-	int n,cnt,all=0,pick=0,page=1,pages,t,i;
+	int n,cnt,all=0,pick=0,page=1,pages,t,i,chains=0;
 	char area[100],rew[80],exp[40],buf[300],*w[2];
 
 	w[0]=a; w[1]=b;
@@ -2187,6 +2202,35 @@ void do_quest(int cn,char *a,char *b)
 	if (pick) {
 		if (pick<1 || pick>cnt) { do_char_log(cn,0,"There is no quest %d. Type #quest%s for the list.\n",pick,all ? " all" : ""); return; }
 		t=q[pick-1].t;
+		if (t<0) {		// a chain quest: the part this character is at
+			int n2=-t,g=chain_giver(n2),ci[8],ni,ex,lo,hi,pa,ps,k,j,c2,rk;
+			const char *jt=chain_step_text(n2,cn);
+			char rb[200];
+			ni=chain_step(n2,cn,ci,8,&ex,&lo,&pa,&ps);
+			strncpy(area,get_area_street(ch_temp[g].x,ch_temp[g].y),99); area[99]=0;
+			if (!strncmp(area,"Aston, ",7)) memmove(area,area+7,strlen(area+7)+1);
+			do_char_log(cn,1,"Quest %d of %d: %s (a chain quest, part %d of %d)\n",pick,cnt,chain_name(n2),pa ? pa : 1,ps ? ps : 1);
+			do_char_log(cn,1,"  Where:  %s, %s\n",ch_temp[g].name,area[0] ? area : "?");
+			if (jt) { quest_words(cn,(char*)jt,buf,sizeof(buf)); do_char_log(cn,1,"  Now:    %s\n",buf); }
+			rb[0]=0;
+			for (k=0; k<ni; k++) {		// each item once, with how many
+				for (j=0; j<k; j++) if (ci[j]==ci[k]) break;
+				if (j<k || ci[k]<=0 || ci[k]>=MAXTITEM) continue;
+				for (c2=0,j=k; j<ni; j++) if (ci[j]==ci[k]) c2++;
+				if (c2>1) snprintf(rb+strlen(rb),sizeof(rb)-strlen(rb),"%s%d %s",rb[0] ? ", " : "",c2,it_temp[ci[k]].name);
+				else snprintf(rb+strlen(rb),sizeof(rb)-strlen(rb),"%s%s",rb[0] ? ", " : "",it_temp[ci[k]].name);
+			}
+			if (ex>0) snprintf(rb+strlen(rb),sizeof(rb)-strlen(rb),"%s%s exp",rb[0] ? " and " : "",qol_num(ex,exp));
+			do_char_log(cn,1,"  Reward: %s\n",rb[0] ? rb : "the next part");
+			rk=chain_rank(n2,cn,&lo,&hi);
+			if (lo>=0 && hi>=0) do_char_log(cn,1,"  Rank:   %s to %s\n",rank_name[lo],rank_name[hi]);
+			else if (lo>=0) do_char_log(cn,1,"  Rank:   %s or higher\n",rank_name[lo]);
+			if (quest_get(cn,n2)>=chain_last(n2)) do_char_log(cn,3,"You have done this one.\n");
+			else if (rk<0) do_char_log(cn,0,"You are not ready for this part yet.\n");
+			else if (rk>0) do_char_log(cn,0,"This one is below your rank.\n");
+			do_char_log(cn,3,"Talk to %s. #journal shows how far you are.\n",ch_temp[g].name);
+			return;
+		}
 		quest_place(t,area);
 		do_char_log(cn,1,"Quest %d of %d: %s\n",pick,cnt,ch_temp[t].name);
 		do_char_log(cn,1,"  Where:  %s\n",area[0] ? area : "?");
@@ -2253,6 +2297,17 @@ void do_quest(int cn,char *a,char *b)
 	do_char_log(cn,2," #  %-12s %-16s %-14s %7s\n","Giver","Where","Reward","Exp");
 	for (n=(page-1)*QUEST_PAGE; n<cnt && n<page*QUEST_PAGE; n++) {
 		t=q[n].t;
+		if (t<0) {		// a chain quest: its giver, the part's first reward (» marks a chain)
+			int ci[8],ni,ex,lo,pa,ps,g=chain_giver(-t);
+			strncpy(area,get_area_street(ch_temp[g].x,ch_temp[g].y),99); area[99]=0;
+			if (!strncmp(area,"Aston, ",7)) memmove(area,area+7,strlen(area+7)+1);
+			ni=chain_step(-t,cn,ci,8,&ex,&lo,&pa,&ps);
+			if (ni && ci[0]>0 && ci[0]<MAXTITEM) snprintf(rew,sizeof(rew),"\xbb%s",it_temp[ci[0]].name); else strcpy(rew,"\xbb-");
+			if (ex>0) qol_num(ex,exp); else strcpy(exp,"-");
+			do_char_log(cn,q[n].known ? 3 : 1,"%2d  %-12.12s %-16.16s %-14.14s %7s\n",n+1,ch_temp[g].name,area[0] ? area : "?",rew,exp);
+			chains++;
+			continue;
+		}
 		quest_place(t,area);
 		if (q[n].skill>=0) {
 			snprintf(rew,sizeof(rew),"%s",skilltab[q[n].skill].name);
@@ -2269,6 +2324,7 @@ void do_quest(int cn,char *a,char *b)
 		do_char_log(cn,q[n].known || (q[n].skill>=0 && !ch[cn].skill[q[n].skill][2]) ? 3 : 1,"%2d  %-12.12s %-16.16s %-14.14s %7s\n",
 			n+1,ch_temp[t].name,area[0] ? area : "?",rew,exp);
 	}
+	if (chains) do_char_log(cn,2,"\xbb a chain quest: one part at a time (#quest <n>: the part you are on).\n");
 	if (page<pages) snprintf(buf,sizeof(buf),"  #quest%s p%d: next page",all ? " all" : "",page+1);
 	else buf[0]=0;
 	do_char_log(cn,2,"#quest%s <n>: details%s%s\n",all ? " all" : "",buf,!all && page>=pages ? "  #quest all: every one" : "");

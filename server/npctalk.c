@@ -205,6 +205,8 @@ static const struct qcls *qcls_find(int t,int co)
 	for (n=0; n<nqcls; n++) if (qcls[n].t==t && (ch[co].kindred&qcls[n].mask)) return &qcls[n];
 	return NULL;
 }	// item quests: repeats and later rewards ("qreward")
+static short corder[QVARS+1];		// #quest: a chain quest's place ("corder <n> <place>"): 0 = after the others, -1 = not listed
+static signed char crank[QVARS+1][2];	// #quest: who it is for ("crank <n> <lowest> <highest>", -1 = none)
 static short qorder[MAXTCHARS];		// #quest: place in the list ("order <template> <n>", the editor's Quests page); 0 = by exp, -1 = not listed
 
 /* ---- area clears (the editor's Quests page): kill every listed NPC of an area for an experience bonus.
@@ -315,7 +317,7 @@ int talk_load(void)
 
 	nent=nstep=0; nchest=0; plen=1; pool[0]=0; talk_loaded=1;
 	memset(hasnear,0,sizeof(hasnear));
-	memset(qorder,0,sizeof(qorder));
+	memset(qorder,0,sizeof(qorder)); memset(corder,0,sizeof(corder)); memset(crank,-1,sizeof(crank));
 	memset(qrew,0,sizeof(qrew));
 	nqcls=0;
 	memset(qalias,0,sizeof(qalias));
@@ -436,6 +438,15 @@ int talk_load(void)
 				struct qstage *st=&qrew[a[0]].st[qrew[a[0]].nst++];
 				st->times=a[1]; st->item=a[2]>0 && a[2]<MAXTITEM ? a[2] : 0; st->exp=a[3]>0 ? a[3] : 0; st->gold=a[4]>0 ? a[4] : 0;
 			} else bad++;
+			continue;
+		}
+		if (!strcmp(w1,"corder")) {		// corder <quest> <place>: a chain quest in #quest (the Quests page)
+			if (sscanf(q,"%d %d",&n,&v)==2 && n>=1 && n<=QVARS && v>=-1 && v<=30000) corder[n]=v; else bad++;
+			continue;
+		}
+		if (!strcmp(w1,"crank")) {		// crank <quest> <lowest rank> <highest rank> (-1 = none)
+			int a2,b2;
+			if (sscanf(q,"%d %d %d",&n,&a2,&b2)==3 && n>=1 && n<=QVARS && a2>=-1 && a2<=23 && b2>=-1 && b2<=23) { crank[n][0]=a2; crank[n][1]=b2; } else bad++;
 			continue;
 		}
 		if (!strcmp(w1,"order")) {
@@ -1932,4 +1943,93 @@ int kq_test_time(int co,int mins)
 	for (a=1; a<=MAXKQ; a++) { if (r.t0[a]) { r.t0[a]-=mins*60; n++; } if (r.tlast[a]) { r.tlast[a]-=mins*60; n++; } }
 	kqrow_put(co,&r);
 	return n;
+}
+
+
+/* ---- chain quests in #quest (the Quests page lists them with the item quests): a named quest number whose lines
+ * live in npctalk.dat. Its giver: the NPC whose line starts it (sets it to its lowest value); its rewards: every
+ * "give item" / "give exp" of the lines that check or move it on; done: the player is at its last journal step. */
+int chain_giver(int n)
+{
+	int k,j,best=0,bv=1<<30;
+	if (!talk_loaded) talk_load();
+	if (n<1 || n>QVARS) return 0;
+	for (k=0; k<nent; k++) {
+		if (ent[k].trig==T_USE || ent[k].temp<=0) continue;
+		for (j=0; j<ent[k].ne; j++) if (ent[k].e[j].type==E_SETQ && ent[k].e[j].a==n && ent[k].e[j].b<bv) { bv=ent[k].e[j].b; best=ent[k].temp; }
+	}
+	return best;
+}
+
+int chain_last(int n)		// its last journal step (0 = none)
+{
+	int k,m=0;
+	if (!talk_loaded) talk_load();
+	for (k=0; k<nstep; k++) if (step[k].n==n && step[k].v>m) m=step[k].v;
+	return m;
+}
+
+int chain_listed(int n)
+{
+	if (!talk_loaded) talk_load();
+	return n>=1 && n<=QVARS && qname[n] && corder[n]>=0 && chain_giver(n) && chain_last(n);
+}
+
+int chain_order(int n) { if (!talk_loaded) talk_load(); return n>=1 && n<=QVARS ? corder[n] : -1; }
+const char *chain_name(int n) { if (!talk_loaded) talk_load(); return n>=1 && n<=QVARS && qname[n] ? pool+qname[n] : "Quest"; }
+
+int chain_rank(int n,int co,int *lo,int *hi)	// as quest_rank_check, for the step co is at: 0 = may, -1 = too low, 1 = too high
+{
+	int r,ci[8],ex,pa,ps;
+	if (!talk_loaded) talk_load();
+	*lo=*hi=-1;
+	if (n<1 || n>QVARS) return 0;
+	chain_step(n,co,ci,8,&ex,lo,&pa,&ps); *hi=crank[n][1];
+	if (co<1 || co>=MAXCHARS) return 0;
+	r=points2rank(ch[co].points_tot);
+	if (*lo>=0 && r<*lo) return -1;
+	if (*hi>=0 && r>*hi) return 1;
+	return 0;
+}
+
+/* the step a player is at: v = their value of quest n (not started: the first journal step). Its rewards: the
+ * "give item" / "give exp" of the lines that fit that value and move the quest on; its lowest rank: those lines' "rank >="
+ * (or the quest's own crank). part / parts: which part this is of how many (the journal steps but the last). */
+int chain_step(int n,int co,int *items,int max,int *exp,int *lo,int *part,int *parts)
+{
+	int k,j,ni=0,v,first=1<<30,sv[64],ns=0,ok,moves;
+	if (!talk_loaded) talk_load();
+	*exp=0; *lo=n>=1 && n<=QVARS ? crank[n][0] : -1; *part=*parts=0;
+	if (n<1 || n>QVARS) return 0;
+	for (k=0; k<nstep && ns<64; k++) if (step[k].n==n) { sv[ns++]=step[k].v; if (step[k].v<first) first=step[k].v; }
+	v=co ? quest_get(co,n) : 0;
+	if (v<first) v=first;
+	for (k=0; k<ns; k++) { if (sv[k]<chain_last(n)) (*parts)++; if (sv[k]<=v && sv[k]<chain_last(n)) (*part)++; }
+	for (k=0; k<nent; k++) {
+		ok=1; moves=0;
+		for (j=0; j<ent[k].nc; j++) if (ent[k].c[j].type==C_QUEST && ent[k].c[j].n==n && !cmp_op(v,ent[k].c[j].op,ent[k].c[j].v)) ok=0;
+		if (!ok) continue;
+		for (j=0; j<ent[k].ne; j++) if ((ent[k].e[j].type==E_SETQ && ent[k].e[j].a==n && ent[k].e[j].b>v) || (ent[k].e[j].type==E_ADDQ && ent[k].e[j].a==n && ent[k].e[j].b>0)) moves=1;
+		if (!moves) continue;
+		for (j=0; j<ent[k].nc; j++) if (ent[k].c[j].type==C_RANK) {
+			int r=ent[k].c[j].op==OP_GE ? ent[k].c[j].v : ent[k].c[j].op==OP_GT ? ent[k].c[j].v+1 : -1;
+			if (r>*lo) *lo=r;
+		}
+		for (j=0; j<ent[k].ne; j++) {
+			if (ent[k].e[j].type==E_EXP) *exp+=ent[k].e[j].a;
+			else if (ent[k].e[j].type==E_ITEM && ni<max) items[ni++]=ent[k].e[j].a;
+		}
+	}
+	return ni;
+}
+
+const char *chain_step_text(int n,int co)	// the journal line for where this player is (not started: the first one)
+{
+	int k,v,first=1<<30,best=-1; const char *t=NULL;
+	if (!talk_loaded) talk_load();
+	for (k=0; k<nstep; k++) if (step[k].n==n && step[k].v<first) first=step[k].v;
+	v=co ? quest_get(co,n) : 0;
+	if (v<first) v=first;
+	for (k=0; k<nstep; k++) if (step[k].n==n && step[k].v<=v && step[k].v>best) { best=step[k].v; t=pool+step[k].str; }
+	return t;
 }

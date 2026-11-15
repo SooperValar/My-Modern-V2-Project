@@ -239,6 +239,7 @@ OPS = ('=', '!=', '<', '>', '<=', '>=')
 def talk_parse(text):
     quests, npcs, cur, e = {}, {}, None, None
     steps, chests, chest, order, qrew, clears, alias = {}, {}, None, {}, {}, {}, {}
+    corder, crank = {}, {}
     kills = {}
     for line in text.splitlines():
         line = line.strip()
@@ -305,6 +306,10 @@ def talk_parse(text):
                 alias[int(a[0])] = int(a[1])
             elif k == 'order' and len(a) >= 2:          # #quest list order (Quests page): template, place (-1 = not listed)
                 order[int(a[0])] = int(a[1])
+            elif k == 'corder' and len(a) >= 2:         # a chain quest's place in #quest (-1 = not listed)
+                corder[int(a[0])] = int(a[1])
+            elif k == 'crank' and len(a) >= 3:          # a chain quest's ranks
+                crank[int(a[0])] = [int(a[1]), int(a[2])]
             elif k == 'quest' and a:
                 quests[int(a[0])] = rest.split(None, 1)[1] if len(a) > 1 else ''
             elif k == 'step' and len(a) >= 2:
@@ -358,7 +363,7 @@ def talk_parse(text):
                 e['acts'].append({'type': k})
         except (IndexError, ValueError):
             continue
-    return {'names': quests, 'steps': steps, 'chests': chests, 'order': order, 'qrew': qrew, 'clears': clears, 'alias': alias,
+    return {'names': quests, 'steps': steps, 'chests': chests, 'order': order, 'qrew': qrew, 'clears': clears, 'alias': alias, 'corder': corder, 'crank': crank,
             'kills': {i: k for i, k in kills.items() if k['giver'] > 0}}, npcs
 
 
@@ -473,6 +478,13 @@ def talk_text(quests, npcs, names):
         out.append('# #quest list: order <NPC template> <place> (-1 = not listed) - the Quests page')
         for t in sorted(od, key=lambda t: (od[t] < 0, abs(od[t]), t)):
             out.append('order %d %d %s' % (t, od[t], names.get(t, '')))
+        out.append('')
+    co = {int(n): int(v) for n, v in (quests.get('corder') or {}).items() if int(v)}
+    cr = {int(n): v for n, v in (quests.get('crank') or {}).items() if int(v[0]) >= 0 or int(v[1]) >= 0}
+    if co or cr:
+        out.append('# chain quests in #quest: corder <quest> <place> (-1 = not listed), crank <quest> <lowest> <highest rank> - the Quests page')
+        for n in sorted(co): out.append('corder %d %d' % (n, co[n]))
+        for n in sorted(cr): out.append('crank %d %d %d' % (n, int(cr[n][0]), int(cr[n][1])))
         out.append('')
     al = {int(t): int(n) for t, n in (quests.get('alias') or {}).items() if int(t) != int(n)}
     if al:
@@ -1408,9 +1420,36 @@ class World:
                     if a.get('type') in ('set', 'add'):
                         refs.setdefault(a['n'], {}).setdefault(str(who), {'who': who, 'label': label, 'kinds': set()})['kinds'].add('moves it on' if a['type'] == 'add' else 'sets it')
         chain = []
+        OPS = {'=': lambda a, b: a == b, '!=': lambda a, b: a != b, '<': lambda a, b: a < b, '>': lambda a, b: a > b, '<=': lambda a, b: a <= b, '>=': lambda a, b: a >= b}
         for n in sorted(set(qs['names']) | set(qs['steps']) | set(refs)):
-            chain.append({'n': n, 'name': qs['names'].get(n, ''), 'steps': sorted(qs['steps'].get(n, []), key=lambda v: int(v[0])),
-                          'refs': [{'who': r['who'], 'label': r['label'], 'kinds': sorted(r['kinds'])} for r in refs.get(n, {}).values()]})
+            steps = sorted(qs['steps'].get(n, []), key=lambda v: int(v[0]))
+            # its giver: the NPC whose line sets it to its lowest value (as the server's chain_giver)
+            giver, gv = 0, 1 << 30
+            for who, ents in npcs.items():
+                if not isinstance(who, int): continue
+                for e in ents:
+                    for a in e.get('acts', []):
+                        if a.get('type') == 'set' and a['n'] == n and a['v'] < gv: giver, gv = who, a['v']
+            # its parts (the journal steps but the last), each with its rewards and lowest rank (as the server's chain_step)
+            parts, vals = [], [int(v[0]) for v in steps]
+            for v in vals[:-1]:
+                items, exp, lo = [], 0, -1
+                for who, ents in npcs.items():
+                    for e in ents:
+                        if any(c.get('type') == 'quest' and c['n'] == n and not OPS.get(c['op'], lambda a, b: False)(v, c['v']) for c in e.get('conds', [])): continue
+                        if not any(a.get('type') == 'set' and a['n'] == n and a['v'] > v or a.get('type') == 'add' and a['n'] == n and a['v'] > 0 for a in e.get('acts', [])): continue
+                        for c in e.get('conds', []):
+                            if c.get('type') == 'rank' and c['op'] in ('>=', '>'): lo = max(lo, c['v'] + (1 if c['op'] == '>' else 0))
+                        for a in e.get('acts', []):
+                            if a.get('type') == 'exp': exp += a['v']
+                            elif a.get('type') == 'item': items.append(self.iname(a['v']) if self.titem is not None else str(a['v']))
+                parts.append({'v': v, 'items': items, 'exp': exp, 'rank': lo, 'text': dict((int(x[0]), x[1]) for x in steps).get(v, '')})
+            gx, gy = struct.unpack_from('<hh', self.tchar, giver * CHAR_SIZE + C_X) if giver and self.tchar is not None else (0, 0)
+            chain.append({'n': n, 'name': qs['names'].get(n, ''), 'steps': steps,
+                          'refs': [{'who': r['who'], 'label': r['label'], 'kinds': sorted(r['kinds'])} for r in refs.get(n, {}).values()],
+                          'giver': giver, 'gname': self.tname(giver) if giver and self.tchar is not None else '', 'sprite': self.tchar_sprite(giver, 4) if giver and self.tchar is not None else 0,
+                          'x': gx, 'y': gy, 'where': self.zone(gx, gy) if (gx or gy) else '', 'parts': parts,
+                          'corder': int(qs.get('corder', {}).get(n, 0)), 'crank': qs.get('crank', {}).get(n, [-1, -1])})
         clears = sorted(qs.get('clears', {}).values(), key=lambda c: c['id'])
         return {'simple': simple, 'chain': chain, 'clears': clears, 'kills': [self.kq_view(k) for k in sorted(qs.get('kills', {}).values(), key=lambda k: k['id'])]}
 
@@ -1606,8 +1645,12 @@ class World:
             msg = 'saved; the game has it now' if r and 'Merchants loaded' in r else 'saved; the game reads it at its next start (it did not answer)'
         return {'msg': msg}
 
-    def quests_order_save(self, order, rewards=None, ctl=None, alias=None, only_alias=False):
+    def quests_order_save(self, order, rewards=None, ctl=None, alias=None, only_alias=False, corder=None, crank=None):
         qs, npcs = self.talk_load()
+        if corder is not None:
+            qs['corder'] = {int(n): max(-1, min(30000, int(v))) for n, v in corder.items() if 1 <= int(n) <= 255}
+        if crank is not None:
+            qs['crank'] = {int(n): [max(-1, min(23, int(v[0]))), max(-1, min(23, int(v[1])))] for n, v in crank.items() if 1 <= int(n) <= 255}
         if alias is not None:
             qs['alias'] = {int(t): int(n) for t, n in alias.items() if 0 < int(t) < MAXTCHARS and 0 < int(n) < MAXTCHARS and int(t) != int(n)}
         if only_alias:                  # a new extra quest: just its NPC link, the order and rewards stay
@@ -3696,7 +3739,7 @@ def make_handler(world, sprites, page, minimap, ctl):
                 ok = any(w in r for w in ('is a new', 'deleted (backup', 'is back'))
                 return self.js({'msg': r} if ok else {'error': r or 'The game did not answer.'})
             if u.path == '/api/questorder':
-                return self.js({'msg': world.quests_order_save(body.get('order') or {}, body.get('rewards'), ctl, body.get('alias'), body.get('only') == 'alias')})
+                return self.js({'msg': world.quests_order_save(body.get('order') or {}, body.get('rewards'), ctl, body.get('alias'), body.get('only') == 'alias', body.get('corder'), body.get('crank'))})
             if u.path == '/api/zones':
                 err = world.zones_save(body.get('zones') or [], ctl)
                 if err and err != 'later':
@@ -8078,6 +8121,14 @@ async function questsLoad() {
   if (r.error) return toast(r.error, true);
   QV = r;
   QS = r.simple.map(q => ({ ...q, listed: q.order >= 0, o: JSON.stringify(qdata(q)) }));
+  // chain quests with a name, a giver and journal steps go in the same list (#quest shows the part a player is at)
+  for (const c of r.chain) {
+    if (!c.name || !c.giver || c.steps.length < 2) continue;
+    const row = { chain: c.n, cname: c.name, t: -c.n, name: c.gname, sprite: c.sprite, x: c.x, y: c.y, where: c.where, giver: c.giver, parts: c.parts,
+                  data: Array(100).fill(0), hint: '', order: c.corder, puzzle: false, count: 1, listed: c.corder >= 0,
+                  rew: { ...qRewNone(), rmin: c.crank[0], rmax: c.crank[1] } };
+    row.o = JSON.stringify(qdata(row)); QS.push(row);
+  }
   qSort(QS);
   QS.forEach(q => { q.o0 = q.listed; q.r0 = JSON.stringify(q.rew); });
   QSorig = JSON.stringify(QS.map(q => [q.t, q.listed, q.rew]));
@@ -8161,7 +8212,40 @@ function questsRender() {
     if (!q.data[49]) tr.title = 'Wants nothing: saving takes the quest away from this NPC';
     return tr;
   };
-  const add = (q, i, list) => { body.appendChild(rowFor(q, i, list)); if (QOpen.has(q.t)) body.appendChild(repRow(q)); };
+  const chainRow = (q, i, list) => {
+    const tr = document.createElement('tr'); tr.className = 'chainq';
+    if (q.listed !== q.o0 || JSON.stringify(q.rew) !== q.r0) tr.classList.add('ch');
+    if (!q.listed) tr.classList.add('off');
+    const td = (cls) => { const c = document.createElement('td'); if (cls) c.className = cls; tr.appendChild(c); return c; };
+    const mv = td('mv keep');
+    const up = document.createElement('button'); up.textContent = '▲'; up.title = 'Earlier in the list'; up.disabled = i === 0;
+    const dn = document.createElement('button'); dn.textContent = '▼'; dn.title = 'Later in the list'; dn.disabled = i === list.length - 1;
+    const sw = (a, b) => { const ia = QS.indexOf(list[a]), ib = QS.indexOf(list[b]); [QS[ia], QS[ib]] = [QS[ib], QS[ia]]; questsRender(); };
+    up.onclick = () => sw(i, i - 1); dn.onclick = () => sw(i, i + 1); mv.append(up, ' ', dn);
+    const nc = td('num'); if (q.listed) nc.textContent = ++nr;
+    const who = td(); const w = document.createElement('div'); w.className = 'who'; w.appendChild(thumb(q.sprite || 0, 30, 30));
+    const nmd = document.createElement('div'); nmd.innerHTML = '<a></a><div class="n"></div>'; nmd.firstChild.textContent = q.name; nmd.firstChild.title = 'Open its Conversations';
+    nmd.firstChild.onclick = () => gotoNpc(q.giver, 'conv'); nmd.lastChild.textContent = `chain quest ${q.chain} · template ${q.giver}`; w.appendChild(nmd); who.appendChild(w);
+    const wh = td('where'); wh.textContent = (q.where || '–').replace(/^Aston, /, '');
+    const parts = q.parts || [];
+    const wants = td(); wants.colSpan = 2; tr.removeChild(tr.lastChild); tr.appendChild(wants);
+    wants.innerHTML = `<b style="color:var(--gold2)">${esc(q.cname)}</b> <span class="hint">· ${parts.length} part${parts.length === 1 ? '' : 's'}, one at a time</span>`;
+    parts.forEach((p, k) => { const d = document.createElement('div'); d.className = 'hint'; d.style.margin = '2px 0 0'; d.textContent = `${k + 1}. ${p.text}`; wants.appendChild(d); });
+    const gv = td(); parts.forEach((p, k) => { const d = document.createElement('div'); d.style.fontSize = '12px'; d.textContent = `${k + 1}. ${p.items.length ? p.items.join(', ') : '–'}${p.rank >= 0 ? ' (' + RANK_SHORT[p.rank] + '+)' : ''}`; gv.appendChild(d); });
+    const ex = td(); parts.forEach((p, k) => { const d = document.createElement('div'); d.style.fontSize = '12px'; d.textContent = p.exp ? p.exp.toLocaleString() : '–'; ex.appendChild(d); });
+    td().textContent = '–';
+    const tm = td(); const b2 = document.createElement('button'); b2.className = 'tm'; b2.textContent = 'chain quest · its lines'; b2.title = 'Its items, rewards and steps are set in the giver\'s Conversations (and its name and journal below, under Chain quests)';
+    b2.onclick = () => gotoNpc(q.giver, 'conv'); tm.appendChild(b2);
+    const R2 = q.rew, opts = n => [[-1, n], ...RANK_SHORT.map((r, k) => [k, r])];
+    const rr = document.createElement('div'); rr.className = 'ipick'; rr.style.marginTop = '4px';
+    rr.append(sel(opts('any'), () => R2.rmin ?? -1, v => { R2.rmin = v; questsRender(); }), document.createTextNode('–'), sel(opts('any'), () => R2.rmax ?? -1, v => { R2.rmax = v; questsRender(); }));
+    rr.title = 'Who #quest lists it for (lowest and highest rank). A part with its own "rank" condition in the lines asks for at least that.'; tm.appendChild(rr);
+    const says = td('hintc'); says.innerHTML = '<span class="hint">#quest shows the journal line of the part a player is at</span>';
+    const ls = td('keep'); const c = document.createElement('input'); c.type = 'checkbox'; c.checked = q.listed; c.onchange = () => { q.listed = c.checked; questsRender(); }; ls.appendChild(c);
+    td('keep');
+    return tr;
+  };
+  const add = (q, i, list) => { body.appendChild(q.chain ? chainRow(q, i, list) : rowFor(q, i, list)); if (QOpen.has(q.t) && !q.chain) body.appendChild(repRow(q)); };
   main.forEach((q, i) => add(q, i, main));
   if (puz.length) {
     const h = document.createElement('tr'); h.innerHTML = `<td colspan="13" class="keep" style="padding-top:14px;color:var(--dim2);font-size:12px"><button class="sm">${QPuz ? 'Hide' : 'Show'}</button> Labyrinth and tower trades · puzzle steps, never in #quest (${puz.length})</td>`; body.appendChild(h);
@@ -8776,10 +8860,14 @@ async function questsSave() {
   }
   // the order: every listed quest gets its place, unticked ones -1 (not listed)
   const order = {}; let k = 0;
-  for (const q of QS) { if (q.puzzle || !q.data[49]) continue; order[q.t] = q.listed ? ++k : -1; }
+  const corder = {}, crank = {};
+  for (const q of QS) {
+    if (q.chain) { corder[q.chain] = q.listed ? ++k : -1; crank[q.chain] = [q.rew.rmin ?? -1, q.rew.rmax ?? -1]; continue; }
+    if (q.puzzle || !q.data[49]) continue; order[q.t] = q.listed ? ++k : -1;
+  }
   const rewards = {}; for (const q of QS) if (q.rew.lim || q.rew.first || q.rew.gold || q.rew.st.length || (q.rew.n || 1) > 1 || (q.rew.rmin ?? -1) >= 0 || (q.rew.rmax ?? -1) >= 0 || qHasCls(q.rew)) rewards[q.t] = q.rew;
   const alias = {}; for (const q of QS) if (q.extra_of) alias[q.t] = q.extra_of;
-  const r = await api('/api/questorder', { order, rewards, alias });
+  const r = await api('/api/questorder', { order, rewards, alias, corder, crank });
   toast((rows.length ? `${rows.length} quest${rows.length === 1 ? '' : 's'} changed${info.running ? '' : ' (Save to the game on the Map page writes them)'}. ` : '') + 'Order: ' + (r.msg || r.error || ''), !!r.error);
   await questsLoad();
 }
