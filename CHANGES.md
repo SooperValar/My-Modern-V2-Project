@@ -478,7 +478,8 @@ brush paints them at random) and **soft edges into grass**:
 ## Window walls (Nov 14)
 - Every new wall material (Sandstone, White Temple, Red Brick, Mossy Stone, Cracked Stone, Dark Slate, Timber-Framed, Fieldstone; clean and grain) has a **window** in the game's own style: the block with an open slit through it, like the Red / Grey Brick window (1218) - a top slab over a low block whose top is a plain sill (no bricks or stones on it, as in the game), and you see through the gap. One piece works in a wall running either way. Placed with "blocks walking" only (not sight), like the game's windows.
 - Sprites 36600-36663 (`tools/sprites/world_windows.py`, made on the game's own 1218 / 1219 shapes): 36600 + 4k the window, +1 its **cut-down hidden-walls form** (a low slab, like 1219); +2/+3 the same pair again (numbers kept from a first draft).
-- Editor: Walls tab, section "Windows" (WORLD_WINDOWS from `world_windows.json`).
+- **Windows for the game's own walls too**: the game had them only for Grey Brick (1218), Red Stone (1232) and Marble (1168 / 1170). Now every other wall has one, cut the same way from the wall's own picture with a plain sill in its colour: Greek Wall I-III, the three Mine Walls, Stone Wall I-V and the pebbled Dark Stone Wall, Black Stone, Brown Stone, both Lava Walls, the Black Stronghold walls (plain, with holes, with embers), Dark Stone, Earth Wall I-II and the Green Glowing Stone Wall. Sprites 36700-36757 (`tools/sprites/game_wall_windows.py`): 36700 + 2i the window, +1 its hidden form (the wall's own cut-down picture). Not done: pillars, arches, the Black Stronghold buttresses and the magic gates (not plain walls), and the cobwebbed walls.
+- Editor: Walls tab, section "Windows": the game's 4, then the game's other walls, then the new walls (49 in all).
 
 ## Bandit Hollow (Nov 14)
 The first area of the quest plan (the "Quest Map and Plan" doc and "Quest Planner" sheet): ranks Sergeant to Master Sergeant.
