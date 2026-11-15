@@ -5177,7 +5177,7 @@ function leftUI() {
   if (mode === 'map') {
     tabs.innerHTML = Object.entries(TABS).map(([k, v]) => `<button data-tab="${k}" class="${k === tab ? 'on' : ''}"><svg viewBox="0 0 24 24">${TAB_ICONS[k]}</svg>${v}</button>`).join('');
     tabs.querySelectorAll('button').forEach(b => b.onclick = () => { tab = b.dataset.tab; $('#lsearch').value = ''; leftUI(); });
-    $('#lsearch').style.display = ''; $('#card').style.display = '';
+    $('#lsearch').style.display = ''; $('#card').style.display = ['zones', 'waypoints', 'merchants'].includes(tab) ? 'none' : '';   // the brush card only where you paint
     $('#lsearch').placeholder = 'Search name or number';
   } else {
     tabs.innerHTML = `<button class="on title"><svg viewBox="0 0 24 24">${TAB_ICONS.title}</svg>${{ npcs: 'NPCs and players', players: 'Player characters', history: 'History', help: 'Help' }[mode]}</button>`;
