@@ -3857,8 +3857,24 @@ header { grid-column: 1 / -1; display: flex; align-items: center; gap: 14px; pad
 #results .r canvas { width: 30px; height: 30px; flex: none; }
 #results .ty { font-size: 10px; text-transform: uppercase; letter-spacing: .06em; color: var(--dim2); width: 46px; flex: none; }
 #results .sub { color: var(--dim); font-size: 11px; margin-left: auto; }
-#pill { margin-left: auto; padding: 4px 12px; border-radius: 99px; font-size: 12px; white-space: nowrap; }
+#pill { margin-left: 10px; padding: 4px 12px; border-radius: 99px; font-size: 12px; white-space: nowrap; }
 #pill.up { background: var(--okbg); color: var(--ok); border: 1px solid #2c4a2f; }
+#hsave { margin-left: auto; display: flex; align-items: center; gap: 6px; }
+#hsave #dirty { margin: 0 4px 0 0; font-size: 12px; white-space: nowrap; max-width: 300px; overflow: hidden; text-overflow: ellipsis; }
+#hsave .btn { padding: 5px 12px; font-size: 12px; }
+#hsave #undosave, #hsave #relight { color: var(--dim); font-size: 12px; padding: 5px 8px; white-space: nowrap; }
+#hsave #undosave:hover:not(:disabled), #hsave #relight:hover { color: var(--text); }
+#hsave #undosave:disabled { opacity: .4; }
+#showdock { position: absolute; right: 26px; top: 62px; z-index: 3; width: 300px; max-height: calc(100% - 320px); min-height: 38px; display: flex; flex-direction: column;
+  background: rgba(23,24,28,.95); border: 1px solid #4d4130; border-radius: 8px; box-shadow: 0 6px 20px rgba(0,0,0,.5); }
+#view.hasban #showdock { top: 96px; }
+#sdhd { display: flex; align-items: center; gap: 8px; padding: 8px 12px; color: #cfc3a6; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; width: 100%; text-align: left; }
+#sdhd:hover { color: #fff3d6; }
+#sdhd .car { margin-left: auto; transition: transform .15s; }
+#showdock.shut #sdhd .car { transform: rotate(-90deg); }
+#showdock.shut #sdbody { display: none; }
+#sdbody { overflow-y: auto; padding: 0 12px 10px; min-height: 0; border-top: 1px solid var(--line); }
+#sdbody .sect { padding: 10px 0 4px; }
 #pill.down { background: var(--goldbg); color: var(--gold2); border: 1px solid #574420; }
 
 nav { background: linear-gradient(180deg, #1f1b15 0%, #15130f 100%); border-right: 1px solid #3a3022; display: flex; flex-direction: column; align-items: center; padding: 10px 0; gap: 8px; }
@@ -4157,7 +4173,8 @@ table.pl button:hover { color: var(--text); border-color: var(--gold); }
 .chk span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .flags2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0 10px; }
 .keys { color: var(--dim); font-size: 12px; line-height: 1.75; }
-#foot { border-top: 1px solid var(--line); padding: 12px 14px; }
+#foot { border-top: 1px solid var(--line); padding: 10px 14px 12px; }
+#foot .sect { padding: 0 0 6px; }
 #dirty { color: var(--dim); margin-bottom: 8px; }
 #dirty.on { color: var(--gold2); }
 .btns { display: flex; gap: 8px; align-items: center; }
@@ -4167,7 +4184,7 @@ table.pl button:hover { color: var(--text); border-color: var(--gold); }
 .btn.ghost { color: var(--dim); }
 .btn.ghost:hover:not(:disabled) { color: var(--text); }
 .btn:disabled { opacity: .4; cursor: default; }
-#undosave { margin-top: 8px; color: var(--dim2); font-size: 12px; padding: 0; }
+#undosave { margin-top: 0; color: var(--dim2); font-size: 12px; padding: 0; }
 #undosave:hover:not(:disabled) { color: var(--text); }
 #undosave:disabled { opacity: .5; cursor: default; }
 /* template editor */
@@ -4277,6 +4294,12 @@ table.pl button:hover { color: var(--text); border-color: var(--gold); }
     <span class="hint"><kbd>Ctrl K</kbd></span>
     <div id="results"></div>
   </div>
+  <div id="hsave">
+    <div id="dirty">No unsaved changes</div>
+    <button class="btn pri" id="save">Save to the game</button>
+    <button class="btn ghost" id="discard">Discard</button>
+    <button id="undosave" title="Put the world back as it was before the last save (from its backup)">Undo last save</button>
+  </div>
   <div id="pill" class="down">…</div>
 </header>
 
@@ -4318,6 +4341,8 @@ table.pl button:hover { color: var(--text); border-color: var(--gold); }
     <button class="rnd" id="tlight" title="Light from lamps, as at night (L)"><svg viewBox="0 0 24 24"><path d="M3.5 11a8.6 8.6 0 0 1 14.6-5.2L20.5 8"/><path d="M20.5 3.3V8h-4.7"/><path d="M20.5 13a8.6 8.6 0 0 1-14.6 5.2L3.5 16"/><path d="M3.5 20.7V16h4.7"/><rect x="10.1" y="12" width="3.8" height="5.6" rx=".5" fill="currentColor" fill-opacity=".3"/><path d="M12 12v-1.1"/><path d="M12 10.6c-1.3-.8-1.4-2.3-.3-3.8.3 1 .8 1.3 1.1 1.4-.1-.7.2-1.4.7-1.8.2 1.5 1 2.1.3 3.4-.3.6-1 1-1.8.8z" fill="currentColor" stroke-width=".9"/></svg></button>
     <button class="rnd" id="tref" title="Load the world again from disk"><svg viewBox="0 0 24 24"><path d="M3.5 11a8.6 8.6 0 0 1 14.6-5.2L20.5 8"/><path d="M20.5 3.3V8h-4.7"/><path d="M20.5 13a8.6 8.6 0 0 1-14.6 5.2L3.5 16"/><path d="M3.5 20.7V16h4.7"/><circle cx="12" cy="12" r="4.9"/><path d="M7.1 12h9.8M12 7.1c-1.7 1.5-1.7 8.3 0 9.8M12 7.1c1.7 1.5 1.7 8.3 0 9.8"/></svg></button>
   </div>
+  <div id="showdock"><button id="sdhd" title="Show or hide this panel"><span>Show &amp; flags</span><span class="car">▾</span></button>
+    <div id="sdbody"><div class="sect">Show</div><div id="layers"></div><div class="sect">Show flags</div><div id="flagshow" class="flags2"></div></div></div>
   <button id="tright" title="Hide the right panel">›</button>
   <div id="zoombar">
     <button id="zout" title="Zoom out (wheel)"><svg viewBox="0 0 24 24"><path d="M12 5 19 12 12 19 5 12z"/><path d="M9 12h6"/></svg></button>
@@ -4336,12 +4361,10 @@ table.pl button:hover { color: var(--text); border-color: var(--gold); }
 
 <aside id="right">
   <div id="rscroll">
-    <div class="sect">Tile</div>
+    <div class="sect">Selected</div>
     <div id="tile">Pick the select tool (<kbd>V</kbd>) and click a tile to see and change what is on it.</div>
-    <div class="sect">Show</div>
-    <div id="layers"></div>
-    <div class="sect">Show flags</div>
-    <div id="flagshow" class="flags2"></div>
+  </div>
+  <div id="foot">
     <div class="sect">Keys</div>
     <div class="keys">
       <kbd>V</kbd> select · <kbd>B</kbd> brush · <kbd>U</kbd> rectangle · <kbd>F</kbd> fill · <kbd>E</kbd> erase · <kbd>I</kbd> pick · <kbd>H</kbd> or <kbd>Space</kbd> move<br>
@@ -4350,14 +4373,6 @@ table.pl button:hover { color: var(--text); border-color: var(--gold); }
       <kbd>Ctrl Z</kbd> / <kbd>Ctrl Y</kbd> undo / redo · <kbd>Ctrl S</kbd> save<br>
       <kbd>M</kbd> world map · <kbd>Ctrl K</kbd> search · <kbd>G</kbd> <kbd>W</kbd> <kbd>L</kbd> grid, walls, light
     </div>
-  </div>
-  <div id="foot">
-    <div id="dirty">No unsaved changes</div>
-    <div class="btns">
-      <button class="btn pri" id="save">Save to the game</button>
-      <button class="btn ghost" id="discard">Discard</button>
-    </div>
-    <button id="undosave" title="Put the world back as it was before the last save (from its backup)">Undo last save</button>
   </div>
 </aside>
 
@@ -5485,6 +5500,8 @@ function toggles() {
 }
 function flipShow(k) { show[k] = !show[k]; layersUI(); redraw(); }
 $('#tgrid').onclick = () => flipShow('grid'); $('#twalls').onclick = () => flipShow('see'); $('#tlight').onclick = () => flipShow('light');
+try { if (localStorage.getItem('myv2.showdock') === '0') $('#showdock').classList.add('shut'); } catch (e) {}
+$('#sdhd').onclick = () => { const shut = $('#showdock').classList.toggle('shut'); try { localStorage.setItem('myv2.showdock', shut ? '0' : '1'); } catch (e) {} };
 $('#tright').onclick = () => {
   const hid = $('#app').classList.toggle('noright');
   $('#tright').textContent = hid ? '‹' : '›'; $('#tright').title = hid ? 'Show the right panel' : 'Hide the right panel';
@@ -7936,7 +7953,7 @@ function relightBtn(on) {
   let b = $('#relight');
   if (!on) { if (b) b.remove(); return; }
   if (b) return;
-  b = document.createElement('button'); b.id = 'relight'; b.className = 'btn ghost'; b.style.cssText = 'padding:0;margin:8px 0 0 14px;font-size:12px'; b.textContent = 'Relight the world'; b.title = 'Recompute the lighting of the whole world (./server light)';
+  b = document.createElement('button'); b.id = 'relight'; b.className = 'btn ghost'; b.textContent = 'Relight the world'; b.title = 'Recompute the lighting of the whole world (./server light)';
   b.onclick = async () => {
     if (!confirm('Recompute the lighting of the whole world? It takes a minute or two.')) return;
     toast('Relighting… a minute or two.');

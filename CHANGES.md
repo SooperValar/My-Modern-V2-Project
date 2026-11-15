@@ -486,6 +486,11 @@ brush paints them at random) and **soft edges into grass**:
 - **Windows for the game's own walls too**: the game had them only for Grey Brick (1218), Red Stone (1232) and Marble (1168 / 1170). Now every other wall has one, cut the same way from the wall's own picture with a plain sill in its colour: Greek Wall I-III, the three Mine Walls, Stone Wall I-V and the pebbled Dark Stone Wall, Black Stone, Brown Stone, both Lava Walls, the Black Stronghold walls (plain, with holes, with embers), Dark Stone, Earth Wall I-II and the Green Glowing Stone Wall. Sprites 36700-36757 (`tools/sprites/game_wall_windows.py`): 36700 + 2i the window, +1 its hidden form (the wall's own cut-down picture). Not done: pillars, arches, the Black Stronghold buttresses and the magic gates (not plain walls), and the cobwebbed walls.
 - Editor: Walls tab, section "Windows": the game's 4, then the game's other walls, then the new walls (49 in all).
 
+## Editor: map view layout (Nov 15)
+- **Save to the game, Discard and Undo last save** sit in the top bar, left of the server status (with the unsaved-changes count, and Relight the world when it is offered).
+- **Show & flags**: the Show and Show flags checkboxes are a panel docked at the top right of the map, under the view buttons. Click its title to fold it away or open it again (remembered in this browser).
+- **The right panel** is for what you select: the **Selected** section shows the picked tile and everything on it that can be changed. **Keys** are always shown at its bottom.
+
 ## Editor: tabs as columns (Nov 15)
 - In the Map's left panel the tabs (Builder, Floors, Areas, Walls, Objects, Items, NPCs, Merchants, Flags, Zones, Waypoints) are a column, and the open tab's categories a second column. Only the picked category shows; the editor remembers the pick per tab. While searching, every category shows and a click jumps to it. A tab with one category has no second column.
 - **Builder**: Flags, Floors, Walls, Objects, Items - each with what you used lately of that kind (remembered in this browser, up to 120).
