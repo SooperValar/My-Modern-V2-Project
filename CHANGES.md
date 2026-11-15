@@ -488,7 +488,7 @@ brush paints them at random) and **soft edges into grass**:
 
 ## Editor: map view layout (Nov 15)
 - **Save to the game, Discard and Undo last save** sit in the top bar, left of the server status (with the unsaved-changes count, and Relight the world when it is offered).
-- **Show & flags**: the Show and Show flags checkboxes are a panel docked at the top right of the map, under the view buttons. Click its title to fold it away or open it again (remembered in this browser).
+- **Show & flags**: a round button (an eye) with the view buttons at the top right of the map. Click it to open the Show and Show flags checkboxes in a panel under it, and again to close it (remembered in this browser).
 - **The right panel** is for what you select: the **Selected** section shows the picked tile and everything on it that can be changed. **Keys** are always shown at its bottom.
 
 ## Editor: tabs as columns (Nov 15)
