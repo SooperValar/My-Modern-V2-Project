@@ -680,6 +680,7 @@ function paintThumb(c) {
   const s = Math.min(c.width / im.width, c.height / im.height, 2);
   g.imageSmoothingEnabled = s < 1;
   g.drawImage(im, (c.width - im.width * s) / 2, (c.height - im.height * s) / 2 + (im.height > im.width ? 0 : c.height * .08), im.width * s, im.height * s);
+  c.dispatchEvent(new Event('painted'));     // (mix / scatter cells redraw their little collage)
 }
 
 // ---------------------------------------------------------------- map data
@@ -1033,7 +1034,9 @@ function cellScatter(m, saved) {
   c.title = (m.name || 'Scatter') + ': ' + m.items.map(i => i.name || scatterKey(i)).join(', ') + (saved ? ' · right-click to delete' : ' · one of the editor\'s own');
   const cv = document.createElement('canvas'); cv.width = 64; cv.height = 64;
   const g = cv.getContext('2d'), n = Math.min(3, m.items.length);
-  m.items.slice(0, 3).forEach((it, k) => { const t = thumb(scatterSprite(it), 40, 40); setTimeout(() => g.drawImage(t, n === 1 ? 12 : k * 12, n === 1 ? 12 : 24 - k * 8), 300); });
+  const ts = m.items.slice(0, 3).map(it => thumb(scatterSprite(it), 40, 40));
+  const draw = () => { g.clearRect(0, 0, 64, 64); ts.forEach((t, k) => g.drawImage(t, n === 1 ? 12 : k * 12, n === 1 ? 12 : 24 - k * 8)); };
+  ts.forEach(t => t.addEventListener('painted', draw)); setTimeout(draw, 50);
   c.appendChild(cv);
   const l = document.createElement('div'); l.className = 'lab'; l.textContent = m.name || 'scatter'; c.appendChild(l);
   c.onclick = () => setBrush({ kind: 'scatter', items: m.items.map(i => ({ ...i })), dens: m.dens, apart: m.apart, name: m.name });
@@ -1184,7 +1187,9 @@ function cellMix(m, saved) {
   c.title = (m.name || 'Mix') + ': ' + m.items.map(i => i.s).join(', ') + (saved ? ' · right-click to delete' : '');
   const cv = document.createElement('canvas'); cv.width = 64; cv.height = 48;
   const g = cv.getContext('2d'), n = Math.min(4, m.items.length);
-  m.items.slice(0, 4).forEach((it, k) => { const t = thumb(it.s, 32, 24); setTimeout(() => g.drawImage(t, (k % 2) * 32, Math.floor(k / 2) * 24 + (n <= 2 ? 12 : 0)), 300); });
+  const ts = m.items.slice(0, 4).map(it => thumb(it.s, 32, 24));
+  const draw = () => { g.clearRect(0, 0, 64, 48); ts.forEach((t, k) => g.drawImage(t, (k % 2) * 32, Math.floor(k / 2) * 24 + (n <= 2 ? 12 : 0))); };
+  ts.forEach(t => t.addEventListener('painted', draw)); setTimeout(draw, 50);      // redrawn as each floor picture arrives
   c.appendChild(cv);
   const l = document.createElement('div'); l.className = 'lab'; l.textContent = m.name || 'mix'; c.appendChild(l);
   c.onclick = () => setBrush({ kind: 'mix', items: m.items.map(i => ({ ...i })), name: m.name });
