@@ -7424,9 +7424,14 @@ function preview(op) {
 async function edit(ops, lbl, reselect) {
   if (!ops.length) return;
   if (RO()) { toast('The game server is running and live editing is not available (the server needs "Update code & restart" once).', true); refetch(ops.filter(o => o.x !== undefined).map(o => [o.x, o.y])); return; }
+  {   // a scatter brush: one click (or a small stroke) always puts something down - at least one piece expected per stroke
+    const sc = ops.filter(o => o.op === 'area' && o.pr);
+    if (sc.length) { const d = Math.max(sc[0].pr.dens || 0, 1 / sc.length); sc.forEach(o => { o.pr = { ...o.pr, dens: Math.min(1, d) }; }); }
+  }
   const r = await api('/api/edit', { ops, label: lbl });
   if (r.error) toast(r.error, true);
   else if (r.msgs && r.msgs.length) toast([...new Set(r.msgs)].slice(0, 3).join('\n'), true);
+  else if (ops.length && ops[0].op === 'area' && ops[0].pr && r.changed !== undefined && !r.undo_added && (r.undo ?? 0) === info.undo) toast('Nothing landed: a scatter brush only puts pieces on free ground - not on walls, objects, items, NPCs, blocked tiles or the black void' + (ops[0].pr.apart ? ', and with "Keep apart" not right next to another blocking piece' : '') + '.', true);
   else if (ops.length && ops[0].op === 'area' && r.changed !== undefined && !r.undo_added && (r.undo ?? 0) === info.undo) toast(ops[0].floor ? 'Nothing changed there.' : 'Nothing changed: with "Also lay the floor" off, the brush only adds pieces on free ground (not on the black void).', true);
   Object.assign(info, { dirty: r.dirty ?? info.dirty, undo: r.undo ?? info.undo, redo: r.redo ?? info.redo }); status();
   if (r.live && ops.some(o => o.op.startsWith('npc') || o.op.includes('temp'))) softReload();
