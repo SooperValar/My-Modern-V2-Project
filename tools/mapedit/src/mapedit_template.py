@@ -1506,7 +1506,7 @@ class World:
                 continue
             fl = struct.unpack_from('<Q', self.tchar, o + C_FLAGS)[0]
             al = struct.unpack_from('<h', self.tchar, o + C_ALIGN)[0]
-            out.append({'t': t, 'name': self.tname(t), 'x': x, 'y': y, 'sprite': self.tchar_sprite(t, 4),
+            out.append({'t': t, 'name': self.tname(t), 'x': x, 'y': y, 'sprite': self.tchar_sprite(t, 4), 'pts': struct.unpack_from('<i', self.tchar, o + 709)[0],
                         'kind': 'merchant' if fl & CF_MERCHANT else 'enemy' if al < 0 else 'friendly'})
         return out
 

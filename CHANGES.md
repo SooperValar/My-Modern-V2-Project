@@ -508,6 +508,10 @@ A first Wolfwood (forest, trail, Hunters' Lodge, 16 Grey Wolves, 9 Dire Wolves, 
 - **Tools**: `tools/sprites/glrender.py` (a small glTF renderer: skinned animation, no Blender needed) and `tools/sprites/make_creature.py <model> <base> <out>` (the frame layout: engine.c eng_char, svr_act.c act_turn_*). The same pack has a fox, husky, deer, stag, bull, horse and more, so other animals can be made the same way.
 - **One test wolf** (template 2057, from the Spider 392, same strength; not "simple animation", so a usurped wolf can pick up, drop, give and use) in the field by the east road at 532,624 (`tools/world/wolf/test_wolf.py`).
 
+## Area clears: average monster rank and a suggested reward (Nov 15)
+- Each area on the Quests page shows **Average rank of monsters** (the ticked NPCs' ranks, averaged) and the list goes from the lowest to the highest.
+- **Suggested reward**: a quest's share of that rank's climb, by how many monsters it takes: up to 10 = Small (3%), up to 25 = Standard (5%), more = Big (7%), rounded; **Use it** puts it in the exp box (then Save).
+
 ## Chain quests in #quest and in the Quests page's list (Nov 15)
 - Each chain quest has a name of its own that says which chain it is: quest 4 is the **Quarry Chain Quest**. `#quest` shows that name in the list (the giver is in `#quest <n>`).
 - The Quests page's list stays slim: the **Settings ▾** button (was "Times · rank", with a short summary under it: "once · Sgt+", "chain") opens a quest's settings under its row: times, ranks, rewards turn-in by turn-in, class rewards; for a chain quest: each part's journal line, reward and rank, which ranks #quest lists it for, and a button to the giver's Conversations. The chain row itself is just its name, "chain quest, 2 parts", and the total exp.
