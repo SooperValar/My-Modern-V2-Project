@@ -4084,6 +4084,9 @@ nav .grow { flex: 1; }
 .qrep .ln input[type=number] { width: 72px; }
 .qtab select { max-width: 150px; }
 .qtab input.hintin { width: 100%; min-width: 110px; }
+.qtab .giv { display: flex; align-items: center; gap: 4px; white-space: nowrap; }
+.qtab .giv .x { color: var(--dim2); font-size: 12px; }
+.qtab .giv input.cnt { width: 44px; padding-left: 6px; padding-right: 2px; }
 .qtab td.hintc { width: 22%; }
 .qchain { border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; margin-bottom: 10px; background: var(--panel2); }
 .qchain .qch { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
@@ -8072,8 +8075,8 @@ function questsRender() {
     const re = () => questsRender();
     td().appendChild(qpick(() => q.data[49], v => { q.data[49] = v; re(); }, 'pick one!'));
     td().appendChild(sel([[0, '–'], ...SKILLS.map((s, k) => [k, s]).filter(x => x[0] > 0)], () => q.data[50], v => { q.data[50] = v; re(); }));
-    { const gi = td(); gi.appendChild(qpick(() => q.data[66], v => { q.data[66] = v; re(); }, 'nothing'));
-      if (q.data[66] && !q.data[50]) { const nn = num(() => q.rew.n || 1, v => { q.rew.n = Math.max(1, Math.min(50, v || 1)); re(); }, 1, 50); nn.style.width = '46px'; nn.title = 'How many of the item it gives (the first reward)'; gi.append(' × ', nn); } }
+    { const gi = document.createElement('div'); gi.className = 'giv'; td().appendChild(gi); gi.appendChild(qpick(() => q.data[66], v => { q.data[66] = v; re(); }, 'nothing'));
+      if (q.data[66] && !q.data[50]) { const nn = num(() => q.rew.n || 1, v => { q.rew.n = Math.max(1, Math.min(50, v || 1)); re(); }, 1, 50); nn.className = 'cnt'; nn.title = 'How many of the item it gives (the first reward)'; const x = document.createElement('span'); x.className = 'x'; x.textContent = '×'; gi.prepend(nn, x); } }
     const ex = num(() => q.data[51], v => { q.data[51] = v; re(); }, 0, 99999999); ex.className = 'exp'; td().appendChild(ex);
     td().appendChild(goldIn(() => q.rew.gold, v => { q.rew.gold = v; re(); }));
     const tb2 = document.createElement('button'); tb2.className = 'tm' + (QOpen.has(q.t) ? ' on' : ''); tb2.textContent = qTimes(q);

@@ -487,7 +487,7 @@ brush paints them at random) and **soft edges into grass**:
 - Editor: Walls tab, section "Windows": the game's 4, then the game's other walls, then the new walls (49 in all).
 
 ## Item quests can give several of their item (Nov 15)
-- On the Quests page, **Gives item** has a **× count** next to it (1-50): the first reward hands over that many (Wynn gives 3 Potions of Second Wind). The NPC says "Here are 3 of my Potion of Second Wind in exchange."; `#quest` shows "3 Potion of Second Wind". Later steps give one. Kept in `npctalk.dat` as `qcount <template> <n>` (npctalk.c, svr_do.c).
+- On the Quests page, **Gives item** has a **count** in front of it (1-50, "3 × Potion of Second Wind"): the first reward hands over that many (Wynn gives 3 Potions of Second Wind). The NPC says "Here are 3 of my Potion of Second Wind in exchange."; `#quest` shows "3 Potion of Second Wind". Later steps give one. Kept in `npctalk.dat` as `qcount <template> <n>` (npctalk.c, svr_do.c).
 
 ## Editor: map view layout (Nov 15)
 - **Save to the game, Discard and Undo last save** sit in the top bar, left of the server status (with the unsaved-changes count, and Relight the world when it is offered).
