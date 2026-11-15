@@ -205,7 +205,7 @@ item rewards (rings, amulets, belts, new potions) and two skill quests (Swimming
 the towers, the three Pentagram Quests, Black Stronghold, Underground I and II, Elysium, Staffer Corner; each lab counts
 as one special quest. Build one area at a time from the bottom, with `tools/world/bandit_hollow/` as the pattern.
 - [x] **Bandit Hollow** (east road, Sergeant to Master Sergeant; CHANGES.md "Bandit Hollow").
-- [ ] **Wolfwood + Hunters' Lodge** (wolf and bear heads bounty, Old Greyfang): the game has no four-legged animals but spiders; recolour existing monsters instead, or try one 3D-rendered wolf first (Cody's call). New monster looks otherwise come from `tools/sprites/recolor_creature.py` (sprite 14, base 16336, is NOT a creature: it is a sheet of world objects).
+- [x] **Wolfwood + Hunters' Lodge** (Nov 15; CHANGES.md; bears became Dire Wolves, Cody's call). Was: the game has no four-legged animals but spiders; recolour existing monsters instead, or try one 3D-rendered wolf first (Cody's call). New monster looks otherwise come from `tools/sprites/recolor_creature.py` (sprite 14, base 16336, is NOT a creature: it is a sheet of world objects).
 - [x] **Old Quarry** (Nov 15; CHANGES.md "Old Quarry").
 - [ ] Rat-Catcher's Cellars and the Old Graveyard (band A extras; the graveyard ties in with the Graveyard quest below).
 - [ ] Then Fenwatch and its areas, Stonehold, the Last Bastion. Code needed on the way: Swimming made useful, the new

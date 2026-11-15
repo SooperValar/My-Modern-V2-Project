@@ -7,7 +7,7 @@ Renders all 448 frames of a character sprite set with glrender.py (the game's ca
     base+192..447   8 actions x 4 directions (up, down, left, right) x 8 frames (attacks, use, pick up...)
 Direction order everywhere: up, down, left, right, left-up, left-down, right-up, right-down.
 
-    make_creature.py <model.gltf> <base> <out folder> [--length px] [--depth 0.55] [--ground 59] [--shadow 0.32] [--preview file.png]
+    make_creature.py <model.gltf> <base> <out folder> [--length px] [--depth 0.55] [--ground 59] [--shadow 0.32] [--tint Main=rrggbb,...] [--preview file.png]
 --depth squeezes the ground towards the viewer: the game's shadow is the sprite flipped under its bottom edge, so a long
 animal's far feet would float above it at the true 30 degree angle (Cody, Nov 15).
 """
@@ -40,6 +40,11 @@ def main():
     for mat in m.J['materials']:      # flat colours are linear: to sRGB
         pb = mat.setdefault('pbrMetallicRoughness', {})
         pb['baseColorFactor'] = [c ** (1 / 2.2) for c in pb.get('baseColorFactor', [1, 1, 1, 1])[:3]] + [1]
+    if '--tint' in sys.argv:          # --tint Main=3d3631,Main_Light=6b6058: a material's colour (sRGB hex), e.g. a darker coat
+        for kv in sys.argv[sys.argv.index('--tint') + 1].split(','):
+            k, v = kv.split('=')
+            for mat in m.J['materials']:
+                if mat.get('name') == k: mat['pbrMetallicRoughness']['baseColorFactor'] = [int(v[i:i + 2], 16) / 255 for i in (0, 2, 4)] + [1]
     P, N, C = m.triangles('Idle', 0)
     lo, hi = P.reshape(-1, 3).min(0), P.reshape(-1, 3).max(0)
     L = max(hi[0] - lo[0], hi[2] - lo[2]); cx, cz = (lo[0] + hi[0]) / 2, (lo[2] + hi[2]) / 2
