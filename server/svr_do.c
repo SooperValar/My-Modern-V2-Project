@@ -2146,11 +2146,11 @@ static void quest_words(int cn,char *s,char *out,int max)	// an NPC text with %s
 
 #define QUEST_PAGE 15
 
-static void quest_reward_text(char *buf,int len,int item,int exp,int gold)	// "Ruby, 500 exp and 10G 50S"
+static void quest_reward_text(char *buf,int len,int item,int cnt,int exp,int gold)	// "Ruby, 500 exp and 10G 50S"; cnt: how many of the item
 {
 	char p[3][80],e[40];
 	int k=0;
-	if (item>0 && item<MAXTITEM) snprintf(p[k++],80,"%s",it_temp[item].name);
+	if (item>0 && item<MAXTITEM) { if (cnt>1) snprintf(p[k++],80,"%d %s",cnt,it_temp[item].name); else snprintf(p[k++],80,"%s",it_temp[item].name); }
 	if (exp>0) snprintf(p[k++],80,"%s exp",qol_num(exp,e));
 	if (gold>0) { if (gold%100) snprintf(p[k++],80,"%dG %dS",gold/100,gold%100); else snprintf(p[k++],80,"%dG",gold/100); }
 	if (k==0) buf[0]=0;
@@ -2195,13 +2195,13 @@ void do_quest(int cn,char *a,char *b)
 		if (q[pick-1].skill>=0) {
 			int g=quest_gold_first(t);
 			snprintf(rew,sizeof(rew),"%s (skill)",skilltab[q[pick-1].skill].name);
-			quest_reward_text(buf,sizeof(buf),quest_class_item(t,cn,ch_temp[t].data[66],0),ch_temp[t].data[51],g);
+			quest_reward_text(buf,sizeof(buf),quest_class_item(t,cn,ch_temp[t].data[66],0),1,ch_temp[t].data[51],g);
 			do_char_log(cn,1,"  Reward: %s%s%s\n",rew,buf[0] ? ", " : "",buf);
 		} else {
 			int it1,ex1,g1,left,later,qc,k,lim,pi,pe,pg,ni,ne,ng,st,shown=0;
 			char later_txt[300];
 			quest_reward_now(t,cn,&it1,&ex1,&g1,&left,&later);
-			quest_reward_text(buf,sizeof(buf),it1,ex1,g1);
+			quest_reward_text(buf,sizeof(buf),it1,quest_item_count(t,later),ex1,g1);
 			do_char_log(cn,1,"  Reward: %s\n",buf[0] ? buf : "nothing");
 			if (quest_reward_steps(t)>1 && left!=0) {	// diminishing rewards: what the next turn-ins give, where it changes
 				qc=quest_count(cn,t); lim=quest_reward_limit(t);
@@ -2210,7 +2210,7 @@ void do_quest(int cn,char *a,char *b)
 					quest_reward_at(t,k,&ni,&ne,&ng,&st);
 					ni=quest_class_item(t,cn,ni,st);		// class rewards
 					if (ni==pi && ne==pe && ng==pg) continue;
-					quest_reward_text(buf,sizeof(buf),ni,ne,ng);
+					quest_reward_text(buf,sizeof(buf),ni,quest_item_count(t,st),ne,ng);
 					snprintf(later_txt+strlen(later_txt),sizeof(later_txt)-strlen(later_txt),"%sfrom the %d%s time: %s",shown ? "; " : "",k+1,
 						(k+1)%10==1 && (k+1)%100!=11 ? "st" : (k+1)%10==2 && (k+1)%100!=12 ? "nd" : (k+1)%10==3 && (k+1)%100!=13 ? "rd" : "th",buf[0] ? buf : "nothing");
 					pi=ni; pe=ne; pg=ng; shown++;
@@ -2260,7 +2260,8 @@ void do_quest(int cn,char *a,char *b)
 		} else {
 			int it1,ex1,g1,left,later;
 			quest_reward_now(t,cn,&it1,&ex1,&g1,&left,&later);
-			if (it1) snprintf(rew,sizeof(rew),"%s",it_temp[it1].name);
+			if (it1 && quest_item_count(t,later)>1) snprintf(rew,sizeof(rew),"%dx %s",quest_item_count(t,later),it_temp[it1].name);
+			else if (it1) snprintf(rew,sizeof(rew),"%s",it_temp[it1].name);
 			else if (g1>0) snprintf(rew,sizeof(rew),"%dG",g1/100);
 			else strcpy(rew,"-");
 			if (ex1>0) qol_num(ex1,exp); else strcpy(exp,"-");

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""npctalk.dat lines for Bandit Hollow, from made.json (the template numbers build_hollow.py made).
+"""SUPERSEDED Nov 15 by tools/world/quest_fix/to_item_quests.py (item quests / one chain quest). npctalk.dat lines for Bandit Hollow, from made.json (the template numbers build_hollow.py made).
     talk.py > bandit_hollow_talk.txt      (appended to .dat/npctalk.dat by apply)"""
 import json, os
 M = json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'made.json')))

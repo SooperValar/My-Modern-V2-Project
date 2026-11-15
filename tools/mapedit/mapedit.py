@@ -288,9 +288,11 @@ def talk_parse(text):
             if k == 'qreward' and len(a) >= 4:        # item quest: times, first times, gold (Quests page); then qstage lines
                 v = [int(x) for x in a[1:7] if x.lstrip('-').isdigit()]
                 old = qrew.get(int(a[0]), {})
-                r = qrew[int(a[0])] = {'lim': v[0], 'first': v[1], 'gold': v[2], 'st': [], 'rmin': old.get('rmin', -1), 'rmax': old.get('rmax', -1)}
+                r = qrew[int(a[0])] = {'lim': v[0], 'first': v[1], 'gold': v[2], 'st': [], 'rmin': old.get('rmin', -1), 'rmax': old.get('rmax', -1), 'n': old.get('n', 1)}
                 if len(v) >= 6 and any(v[3:6]):      # the older one-step form
                     r['st'].append([0, v[3], v[4], v[5]])
+            elif k == 'qcount' and len(a) >= 2:        # how many of the first reward's item
+                qrew.setdefault(int(a[0]), {'lim': 0, 'first': 0, 'gold': 0, 'st': []})['n'] = max(1, int(a[1]))
             elif k == 'qrank' and len(a) >= 3:         # who may do it: lowest and highest rank, -1 = none
                 r = qrew.setdefault(int(a[0]), {'lim': 0, 'first': 0, 'gold': 0, 'st': []})
                 r['rmin'], r['rmax'] = int(a[1]), int(a[2])
@@ -479,7 +481,7 @@ def talk_text(quests, npcs, names):
             out.append('qalias %d %d %s' % (t, al[t], names.get(al[t], '')))
         out.append('')
     qr = {int(t): r for t, r in (quests.get('qrew') or {}).items() if r.get('lim') or r.get('first') or r.get('gold') or r.get('st')
-          or r.get('rmin', -1) >= 0 or r.get('rmax', -1) >= 0 or r.get('cls')}
+          or r.get('rmin', -1) >= 0 or r.get('rmax', -1) >= 0 or r.get('cls') or int(r.get('n', 1) or 1) > 1}
     if qr:
         out.append('# item quests: qreward <NPC template> <times, 0 = forever> <the first reward for the first n times> <its gold>,')
         out.append('# then qstage <NPC template> <times, 0 = every time after> <item> <exp> <gold> for each later reward (gold in silver)')
@@ -488,6 +490,8 @@ def talk_text(quests, npcs, names):
             out.append('qreward %d %d %d %d %s' % (t, int(r.get('lim', 0)), int(r.get('first', 0)), int(r.get('gold', 0)), names.get(t, '')))
             for st in (r.get('st') or [])[:7]:
                 out.append('qstage %d %d %d %d %d' % (t, *[max(0, int(v)) for v in (list(st) + [0] * 4)[:4]]))
+            if int(r.get('n', 1) or 1) > 1:
+                out.append('qcount %d %d' % (t, min(50, int(r['n']))))
             if r.get('rmin', -1) >= 0 or r.get('rmax', -1) >= 0:
                 out.append('qrank %d %d %d' % (t, int(r.get('rmin', -1)), int(r.get('rmax', -1))))
             for c in (r.get('cls') or []):
@@ -1391,7 +1395,7 @@ class World:
                 where = self.zone(x, y) if (x or y) else ''
                 simple.append({'t': t, 'name': self.tname(t), 'sprite': self.tchar_sprite(t, 4), 'extra_of': npc if npc != t else 0,
                                'x': x, 'y': y, 'where': where, 'data': d, 'hint': cstr(self.tchar[o + CT_TEXT + 2 * 160:o + CT_TEXT + 3 * 160]),
-                               'order': order.get(t, 0), 'rew': dict({'lim': 0, 'first': 0, 'gold': 0, 'st': [], 'rmin': -1, 'rmax': -1}, **qrew.get(t, {})), 'puzzle': bool(d[50] == 0 and ('Labyrinth' in where or 'Tower' in where)),
+                               'order': order.get(t, 0), 'rew': dict({'lim': 0, 'first': 0, 'gold': 0, 'st': [], 'rmin': -1, 'rmax': -1, 'n': 1}, **qrew.get(t, {})), 'puzzle': bool(d[50] == 0 and ('Labyrinth' in where or 'Tower' in where)),
                                'count': len(self.living(npc)) + len([p for p in self.pending() if p[2] == npc])})
         refs = {}
         for who, ents in npcs.items():
@@ -1614,7 +1618,7 @@ class World:
             rk = lambda v: max(-1, min(23, int(-1 if v is None else v)))
             qs['qrew'] = {int(t): {'lim': cl(r.get('lim')), 'first': cl(r.get('first')), 'gold': cl(r.get('gold')),
                                    'st': [[cl(v) for v in (list(x) + [0] * 4)[:4]] for x in (r.get('st') or [])[:7]],
-                                   'rmin': rk(r.get('rmin')), 'rmax': rk(r.get('rmax')),
+                                   'rmin': rk(r.get('rmin')), 'rmax': rk(r.get('rmax')), 'n': max(1, min(50, int(r.get('n') or 1))),
                                    'cls': [{'c': '|'.join(n for n in str(c.get('c', '')).lower().split('|') if n in CLASS_NAMES),
                                             's': [max(-1, min(49, int(v))) for v in (c.get('s') if isinstance(c.get('s'), list) else [c.get('s', -1)])][:4] or [-1],
                                             'i': max(-1, min(MAXTITEM - 1, int(c.get('i', -1))))}
@@ -8068,7 +8072,8 @@ function questsRender() {
     const re = () => questsRender();
     td().appendChild(qpick(() => q.data[49], v => { q.data[49] = v; re(); }, 'pick one!'));
     td().appendChild(sel([[0, '–'], ...SKILLS.map((s, k) => [k, s]).filter(x => x[0] > 0)], () => q.data[50], v => { q.data[50] = v; re(); }));
-    td().appendChild(qpick(() => q.data[66], v => { q.data[66] = v; re(); }, 'nothing'));
+    { const gi = td(); gi.appendChild(qpick(() => q.data[66], v => { q.data[66] = v; re(); }, 'nothing'));
+      if (q.data[66] && !q.data[50]) { const nn = num(() => q.rew.n || 1, v => { q.rew.n = Math.max(1, Math.min(50, v || 1)); re(); }, 1, 50); nn.style.width = '46px'; nn.title = 'How many of the item it gives (the first reward)'; gi.append(' × ', nn); } }
     const ex = num(() => q.data[51], v => { q.data[51] = v; re(); }, 0, 99999999); ex.className = 'exp'; td().appendChild(ex);
     td().appendChild(goldIn(() => q.rew.gold, v => { q.rew.gold = v; re(); }));
     const tb2 = document.createElement('button'); tb2.className = 'tm' + (QOpen.has(q.t) ? ' on' : ''); tb2.textContent = qTimes(q);
@@ -8146,7 +8151,7 @@ function goldIn(get, set) {         // gold in G (decimals = silver); kept in si
   const i = document.createElement('input'); i.type = 'number'; i.min = 0; i.step = 1; i.className = 'gold'; i.value = get() ? get() / 100 : 0;
   i.title = 'Gold (1.5 = 1G 50S)'; i.onchange = () => { const v = Math.max(0, Math.round((+i.value || 0) * 100)); i.value = v / 100; set(v); }; return i;
 }
-const qRewNone = () => ({ lim: 0, first: 0, gold: 0, st: [], rmin: -1, rmax: -1, cls: [] });
+const qRewNone = () => ({ lim: 0, first: 0, gold: 0, st: [], rmin: -1, rmax: -1, cls: [], n: 1 });
 const qHasCls = r => Array.isArray(r.cls) && r.cls.length > 0;
 const RANK_SHORT = ['Pvt', 'PFC', 'LCpl', 'Cpl', 'Sgt', 'SSgt', 'MSgt', 'FSgt', 'SgtM', '2Lt', '1Lt', 'Capt', 'Maj', 'LtCol', 'Col', 'BGen', 'MGen', 'LtGen', 'Gen', 'FM', 'Knight', 'Baron', 'Earl', 'Warlord'];
 function qRankText(r) {
@@ -8701,7 +8706,7 @@ async function questsSave() {
   // the order: every listed quest gets its place, unticked ones -1 (not listed)
   const order = {}; let k = 0;
   for (const q of QS) { if (q.puzzle || !q.data[49]) continue; order[q.t] = q.listed ? ++k : -1; }
-  const rewards = {}; for (const q of QS) if (q.rew.lim || q.rew.first || q.rew.gold || q.rew.st.length || (q.rew.rmin ?? -1) >= 0 || (q.rew.rmax ?? -1) >= 0 || qHasCls(q.rew)) rewards[q.t] = q.rew;
+  const rewards = {}; for (const q of QS) if (q.rew.lim || q.rew.first || q.rew.gold || q.rew.st.length || (q.rew.n || 1) > 1 || (q.rew.rmin ?? -1) >= 0 || (q.rew.rmax ?? -1) >= 0 || qHasCls(q.rew)) rewards[q.t] = q.rew;
   const alias = {}; for (const q of QS) if (q.extra_of) alias[q.t] = q.extra_of;
   const r = await api('/api/questorder', { order, rewards, alias });
   toast((rows.length ? `${rows.length} quest${rows.length === 1 ? '' : 's'} changed${info.running ? '' : ' (Save to the game on the Map page writes them)'}. ` : '') + 'Order: ' + (r.msg || r.error || ''), !!r.error);

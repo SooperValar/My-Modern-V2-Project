@@ -486,6 +486,9 @@ brush paints them at random) and **soft edges into grass**:
 - **Windows for the game's own walls too**: the game had them only for Grey Brick (1218), Red Stone (1232) and Marble (1168 / 1170). Now every other wall has one, cut the same way from the wall's own picture with a plain sill in its colour: Greek Wall I-III, the three Mine Walls, Stone Wall I-V and the pebbled Dark Stone Wall, Black Stone, Brown Stone, both Lava Walls, the Black Stronghold walls (plain, with holes, with embers), Dark Stone, Earth Wall I-II and the Green Glowing Stone Wall. Sprites 36700-36757 (`tools/sprites/game_wall_windows.py`): 36700 + 2i the window, +1 its hidden form (the wall's own cut-down picture). Not done: pillars, arches, the Black Stronghold buttresses and the magic gates (not plain walls), and the cobwebbed walls.
 - Editor: Walls tab, section "Windows": the game's 4, then the game's other walls, then the new walls (49 in all).
 
+## Item quests can give several of their item (Nov 15)
+- On the Quests page, **Gives item** has a **× count** next to it (1-50): the first reward hands over that many (Wynn gives 3 Potions of Second Wind). The NPC says "Here are 3 of my Potion of Second Wind in exchange."; `#quest` shows "3 Potion of Second Wind". Later steps give one. Kept in `npctalk.dat` as `qcount <template> <n>` (npctalk.c, svr_do.c).
+
 ## Editor: map view layout (Nov 15)
 - **Save to the game, Discard and Undo last save** sit in the top bar, left of the server status (with the unsaved-changes count, and Relight the world when it is offered).
 - **Show & flags**: a round button (an eye) with the view buttons at the top right of the map. Click it to open the Show and Show flags checkboxes in a panel under it, and again to close it (remembered in this browser).
@@ -513,25 +516,26 @@ The second area of the quest plan: Master Sergeant to First Sergeant, south of t
 - **The pit** (zone "Old Quarry", 576,640 - 642,712): an oval quarry floor of dusty stone inside a rim of rock walls, with rock outcrops, stacks of cut stone and a fire in the middle. 10 **Quarry Golems** (Master Sergeant) and the **Golem Overseer** (First Sergeant; carries the Foreman's Seal).
 - **The Deep Grolm Caves** (zone, 616,713 - 644,744): a dark cave at the pit's far end, reached by a passage, lit by four torches. 7 **Deep Grolms** (First Sergeant) and the **Deep Grolm Chieftain** (Sergeant Major; carries his stone axe).
 - **New monster looks, recoloured from the game's own animated monsters** (every frame, all directions; `tools/sprites/recolor_creature.py`): the Quarry Golem is the Golem in sandstone (sprites 41000+), the Deep Grolm the Grolm in cave slate (42100+).
-- **Two quests** (journal quests 4 and 5, from Brann, each once per character; numbers from the Quest Planner sheet):
+- **A chain quest, "The Old Quarry"** (journal quest 4, from Brann, once per character; numbers from the Quest Planner sheet), in two parts:
   - the **Foreman's Seal** from the Golem Overseer -> **Quarryman's Amulet** (+20 endurance, Master Sergeant), 6,000 exp, 300G. Brann turns away players below Master Sergeant.
-  - the **Chieftain's Stone Axe** (after the seal, from First Sergeant) -> 2 **Stoneskin Potions** (+8 armor for 10 minutes; a timed potion like the Agility Potion, no new code), 10,000 exp, 500G.
-- Built with `tools/world/old_quarry/build_quarry.py` and `talk.py` (items 2012-2015, NPCs 2037-2056 in `made.json`).
+  - then the **Chieftain's Stone Axe** (only after the seal; from First Sergeant: Brann asks for it once the seal is back, and a lower rank is told to come back; the axe brought before the seal is refused) -> 2 **Stoneskin Potions** (+8 armor for 10 minutes; a timed potion like the Agility Potion, no new code), 10,000 exp, 500G.
+- Journal: 1 bring the seal, 2 bring the axe, 3 done.
+- Built with `tools/world/old_quarry/build_quarry.py` and `talk.py` (items 2012-2015, NPCs 2037-2056 in `made.json`); since Nov 15 Brann's lines come from `tools/world/quest_fix/to_item_quests.py`.
 
 ## Bandit Hollow (Nov 14)
 The first area of the quest plan (the "Quest Map and Plan" doc and "Quest Planner" sheet): ranks Sergeant to Master Sergeant.
 - **The east road**: a dirt trail from Aston's east gate (533,601) across the field and on to **Bandit Hollow** (x 498-572, y 662-748), a clearing in a thick forest. Zones "Bandit Hollow" and "Wynn's Hut".
 - **The bandit camp**: a red picket palisade (514,692 - 556,740, gate in its west side with two torches), three campfires with logs to sit on, barrels, the Quartermaster's storehouse, the Poisoner's hut, two sleeping shacks and **Red Harlan's lodge** (fieldstone, door on the west, four fire bowls).
 - **Monsters** (Outlaw look, group 30): 17 Bandits (Sergeant and Staff Sergeant), the **Bandit Quartermaster** (carries the Stolen Ledger), the **Bandit Poisoner** (carries the Bundle of Moonwort), two **Harlan's Guards** and **Red Harlan** (Master Sergeant; carries his head).
-- **Three quests** (npctalk.dat, journal quests 1-3; each once per character; exp and gold as in the Quest Planner sheet: Hollis 1,600 exp and 80G, Tobias and Wynn 1,900 exp and 95G each):
+- **Three item quests**, the town quests' kind (the Quests page's Item quests, `#quest` 21-23; each once per character; exp and gold as in the Quest Planner sheet: Hollis 1,600 exp and 80G, Tobias and Wynn 1,900 exp and 95G each). Each giver says what it wants in its greeting; handing over the item gives the reward:
   - **Sergeant Hollis** (Cityguard, just outside the east gate): Red Harlan's head -> **Harlan's Studded Belt** (+2 Strength, Sergeant).
   - **Tobias** (a robbed merchant by the gate): the Stolen Ledger -> **Merchant's Signet** (ring, +3 Bartering, Staff Sergeant).
   - **Wynn** (herbalist, her hut on the road, with a garden of flowers to pick; no monsters there): the Bundle of Moonwort -> 3 **Potions of Second Wind** (endurance back to full).
-  - Hollis turns away players below Sergeant; Tobias and Wynn offer their quest from Staff Sergeant.
+  - Ranks: Hollis from Sergeant, Tobias and Wynn from Staff Sergeant (a lower rank is told to come back later and gets the item back).
 - **Barrel** (item template 2007): a plain wooden barrel to decorate with (blocks walking, can be looked at); the game's only other barrel, "barrel (portal)" (1100), is the Thieves House's secret way down. The editor's builder shows it as its own piece. The 7 barrels in the bandit camp are this item.
 - **Wagons** (sprites 40000-40007, `tools/sprites/world_wagons.py`; item templates 2008-2011, `tools/world/wagons.py`): a farm wagon with sacks and a crate and a broken one (a wheel off, split side, planks in the grass), each east-west or north-south, drawn in the game's own wood palette and grain. A wagon is an item on its front tile; its second tile needs "blocks walking" (east-west: the tile at y+1; north-south: the tile at x-1). Tobias's broken wagon stands by the east road at 542,610, in a small clearing (8 field trees removed).
 - **Hidden forms** (client sprites 16883, 38168, 39305, 39422): with "hide walls" on, the client draws objects as sprite+1; the barrel, the last stump and the web with a spider had no such sprite ("Sprite 16883 is missing"). Copies added and published; `tools/world/check_hide_sprites.py` lists any others.
-- Built with `tools/world/bandit_hollow/build_hollow.py` (uses the MyV2 Editor's own World class on the .dat; `made.json` lists the template numbers: items 2001-2006, NPCs 2008-2036) and `talk.py` (the npctalk.dat lines). Tested on a copy with the real server (`talknear`, `talktest`, `questgive`, `zone`).
+- Built with `tools/world/bandit_hollow/build_hollow.py` (uses the MyV2 Editor's own World class on the .dat; `made.json` lists the template numbers: items 2001-2006, NPCs 2008-2036) and `talk.py` (the first npctalk.dat lines; since Nov 15 the quests are item quests: `tools/world/quest_fix/to_item_quests.py`). Tested on a copy with the real server (`talknear`, `talktest`, `questgive`, `zone`).
 
 ## #rank and #ranks (Nov 14)
 

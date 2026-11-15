@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""npctalk.dat lines for the Old Quarry, from made.json.   talk.py > old_quarry_talk.txt"""
+"""SUPERSEDED Nov 15 by tools/world/quest_fix/to_item_quests.py (item quests / one chain quest). npctalk.dat lines for the Old Quarry, from made.json.   talk.py > old_quarry_talk.txt"""
 import json, os
 M = json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'made.json')))
 print("""# ---- Old Quarry (Nov 14; tools/world/old_quarry) ----

@@ -454,6 +454,7 @@ int quest_has_class(int t);
 int class_group(int co);
 int quest_reward_limit(int t);
 void quest_reward_at(int t,int cnt,int *item,int *exp,int *gold,int *stp);
+int quest_item_count(int t,int stp);
 int quest_reward_steps(int t);
 int quest_gold_first(int t);
 int talk_quest_trade(int cn,int co,int in,int t);

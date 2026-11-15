@@ -4249,7 +4249,8 @@ function questsRender() {
     const re = () => questsRender();
     td().appendChild(qpick(() => q.data[49], v => { q.data[49] = v; re(); }, 'pick one!'));
     td().appendChild(sel([[0, '–'], ...SKILLS.map((s, k) => [k, s]).filter(x => x[0] > 0)], () => q.data[50], v => { q.data[50] = v; re(); }));
-    td().appendChild(qpick(() => q.data[66], v => { q.data[66] = v; re(); }, 'nothing'));
+    { const gi = td(); gi.appendChild(qpick(() => q.data[66], v => { q.data[66] = v; re(); }, 'nothing'));
+      if (q.data[66] && !q.data[50]) { const nn = num(() => q.rew.n || 1, v => { q.rew.n = Math.max(1, Math.min(50, v || 1)); re(); }, 1, 50); nn.style.width = '46px'; nn.title = 'How many of the item it gives (the first reward)'; gi.append(' × ', nn); } }
     const ex = num(() => q.data[51], v => { q.data[51] = v; re(); }, 0, 99999999); ex.className = 'exp'; td().appendChild(ex);
     td().appendChild(goldIn(() => q.rew.gold, v => { q.rew.gold = v; re(); }));
     const tb2 = document.createElement('button'); tb2.className = 'tm' + (QOpen.has(q.t) ? ' on' : ''); tb2.textContent = qTimes(q);
@@ -4327,7 +4328,7 @@ function goldIn(get, set) {         // gold in G (decimals = silver); kept in si
   const i = document.createElement('input'); i.type = 'number'; i.min = 0; i.step = 1; i.className = 'gold'; i.value = get() ? get() / 100 : 0;
   i.title = 'Gold (1.5 = 1G 50S)'; i.onchange = () => { const v = Math.max(0, Math.round((+i.value || 0) * 100)); i.value = v / 100; set(v); }; return i;
 }
-const qRewNone = () => ({ lim: 0, first: 0, gold: 0, st: [], rmin: -1, rmax: -1, cls: [] });
+const qRewNone = () => ({ lim: 0, first: 0, gold: 0, st: [], rmin: -1, rmax: -1, cls: [], n: 1 });
 const qHasCls = r => Array.isArray(r.cls) && r.cls.length > 0;
 const RANK_SHORT = ['Pvt', 'PFC', 'LCpl', 'Cpl', 'Sgt', 'SSgt', 'MSgt', 'FSgt', 'SgtM', '2Lt', '1Lt', 'Capt', 'Maj', 'LtCol', 'Col', 'BGen', 'MGen', 'LtGen', 'Gen', 'FM', 'Knight', 'Baron', 'Earl', 'Warlord'];
 function qRankText(r) {
@@ -4882,7 +4883,7 @@ async function questsSave() {
   // the order: every listed quest gets its place, unticked ones -1 (not listed)
   const order = {}; let k = 0;
   for (const q of QS) { if (q.puzzle || !q.data[49]) continue; order[q.t] = q.listed ? ++k : -1; }
-  const rewards = {}; for (const q of QS) if (q.rew.lim || q.rew.first || q.rew.gold || q.rew.st.length || (q.rew.rmin ?? -1) >= 0 || (q.rew.rmax ?? -1) >= 0 || qHasCls(q.rew)) rewards[q.t] = q.rew;
+  const rewards = {}; for (const q of QS) if (q.rew.lim || q.rew.first || q.rew.gold || q.rew.st.length || (q.rew.n || 1) > 1 || (q.rew.rmin ?? -1) >= 0 || (q.rew.rmax ?? -1) >= 0 || qHasCls(q.rew)) rewards[q.t] = q.rew;
   const alias = {}; for (const q of QS) if (q.extra_of) alias[q.t] = q.extra_of;
   const r = await api('/api/questorder', { order, rewards, alias });
   toast((rows.length ? `${rows.length} quest${rows.length === 1 ? '' : 's'} changed${info.running ? '' : ' (Save to the game on the Map page writes them)'}. ` : '') + 'Order: ' + (r.msg || r.error || ''), !!r.error);

@@ -185,7 +185,7 @@ static struct tentry ent[MAXENT];
 static char hasnear[MAXTCHARS];		// templates with "when near" lines
 #define QSTAGES 8
 struct qstage { int times, item, exp, gold; };
-struct qrew { int limit, first, gold1, nst; struct qstage st[QSTAGES]; int rmin1, rmax1; };	// rmin1/rmax1: rank + 1, 0 = none
+struct qrew { int limit, first, gold1, nst; struct qstage st[QSTAGES]; int rmin1, rmax1, n1; };	// n1: how many of the first reward's item (0/1 = one)	// rmin1/rmax1: rank + 1, 0 = none
 static struct qrew qrew[MAXTCHARS];
 /* item quests: what some classes get instead ("qclass <t> <classes, joined by |> <skills, joined by ,> <item>": -1 = as for
  * everyone, 0 = none); a quest's rules in file order, the first one that has the player's class counts. Several skills:
@@ -341,9 +341,9 @@ int talk_load(void)
 			int a[7],k=sscanf(q,"%d %d %d %d %d %d %d",&a[0],&a[1],&a[2],&a[3],&a[4],&a[5],&a[6]);
 			n=a[0];
 			if ((k==4 || k==7) && n>0 && n<MAXTCHARS && a[1]>=0 && a[2]>=0 && a[3]>=0) {
-				int r1=qrew[n].rmin1,r2=qrew[n].rmax1;
+				int r1=qrew[n].rmin1,r2=qrew[n].rmax1,c1=qrew[n].n1;
 				memset(&qrew[n],0,sizeof(qrew[n]));
-				qrew[n].rmin1=r1; qrew[n].rmax1=r2;
+				qrew[n].rmin1=r1; qrew[n].rmax1=r2; qrew[n].n1=c1;
 				qrew[n].limit=a[1]; qrew[n].first=a[2]; qrew[n].gold1=a[3];
 				if (k==7 && (a[4] || a[5] || a[6])) { qrew[n].st[0].item=a[4]>0 && a[4]<MAXTITEM ? a[4] : 0; qrew[n].st[0].exp=a[5]>0 ? a[5] : 0; qrew[n].st[0].gold=a[6]>0 ? a[6] : 0; qrew[n].nst=1; }
 			} else bad++;
@@ -398,6 +398,11 @@ int talk_load(void)
 				}
 			}
 			if (!ok) bad++;
+			continue;
+		}
+		if (!strcmp(w1,"qcount")) {		// qcount <t> <n>: the first reward gives n of its item (e.g. 3 potions)
+			int a[2];
+			if (sscanf(q,"%d %d",&a[0],&a[1])==2 && a[0]>0 && a[0]<MAXTCHARS && a[1]>=1 && a[1]<=50) qrew[a[0]].n1=a[1]; else bad++;
 			continue;
 		}
 		if (!strcmp(w1,"qrank")) {		// qrank <t> <lowest rank> <highest rank> (-1 = none): who may do the quest
@@ -1268,6 +1273,13 @@ int quest_reward_now(int t,int co,int *item,int *exp,int *gold,int *left,int *la
 	return *item || *exp>0 || *gold>0;
 }
 
+int quest_item_count(int t,int stp)	// how many of the reward's item: the first reward (stp 0) can give several
+{
+	if (!talk_loaded) talk_load();
+	if (t<1 || t>=MAXTCHARS || stp) return 1;
+	return qrew[t].n1>1 ? qrew[t].n1 : 1;
+}
+
 int quest_reward_limit(int t)
 {
 	if (!talk_loaded) talk_load();
@@ -1315,9 +1327,13 @@ int talk_quest_trade(int cn,int co,int in,int t)	// t: the quest's template (the
 	god_take_from_char(in,cn);
 	it[in].used=USE_EMPTY;
 	if (item) {
-		do_sayx(cn,"Here is your %s in exchange.",it_temp[item].reference);
-		ni=god_create_item(item);
-		if (ni) god_give_char(ni,co);
+		int k,nn=quest_item_count(t,later);
+		if (nn>1) do_sayx(cn,"Here are %d of my %s in exchange.",nn,it_temp[item].name);
+		else do_sayx(cn,"Here is your %s in exchange.",it_temp[item].reference);
+		for (k=0; k<nn; k++) {
+			ni=god_create_item(item);
+			if (ni && !god_give_char(ni,co)) { god_drop_item_fuzzy(ni,ch[co].x,ch[co].y); }
+		}
 	}
 	if (exp>0) do_give_exp(co,exp,0,-1);
 	if (gold>0) { ch[co].gold+=gold; do_update_char(co); do_char_log(co,1,"%s gives you %dG %dS.\n",ch[cn].reference,gold/100,gold%100); }
