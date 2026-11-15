@@ -172,13 +172,14 @@ class Model:
         return P, N, C
 
 
-def camera(yaw_deg, pitch_deg=30.0):
+def camera(yaw_deg, pitch_deg=30.0, depth=1.0):
     """rotation: model yaw (0 = facing the viewer, + = turned to screen right), then the camera's 30 degree tilt.
     Returns R mapping model coords (y up, +z forward) to view coords (x right, y up, z towards the viewer)."""
     y = math.radians(yaw_deg); p = math.radians(pitch_deg)
     Ry = np.array([[math.cos(y), 0, math.sin(y)], [0, 1, 0], [-math.sin(y), 0, math.cos(y)]])
     Rx = np.array([[1, 0, 0], [0, math.cos(p), -math.sin(p)], [0, math.sin(p), math.cos(p)]])
-    return Rx @ Ry
+    D = np.diag([1.0, 1.0, depth])      # depth < 1: the ground squeezed towards the viewer (long animals keep all feet near the shadow)
+    return Rx @ D @ Ry
 
 
 LIGHT = np.array([-0.55, 0.75, 0.45]); LIGHT = LIGHT / np.linalg.norm(LIGHT)   # view space: from the upper left, in front
@@ -221,13 +222,13 @@ def raster(P, N, C, W, H, Q=None, tex=None):
     return img, msk
 
 
-def render(model, anim=None, t=0.0, yaw=0.0, scale=30.0, size=64, ox=32.0, oy=56.0, ss=4, fix=None, outline=True, tex=None):
+def render(model, anim=None, t=0.0, yaw=0.0, scale=30.0, size=64, ox=32.0, oy=56.0, ss=4, fix=None, outline=True, tex=None, depth=1.0):
     """one sprite: scale = pixels per model unit; (ox, oy) = where the model's origin (on the ground) lands.
     fix: an optional function on the posed triangles (e.g. to centre / normalise the model)."""
     P, N, C = model.triangles(anim, t)
     if fix: P = fix(P)
-    R = camera(yaw)
-    V = P @ R.T; Nn = N @ R.T
+    R = camera(yaw, depth=depth)
+    V = P @ R.T; Nn = N @ camera(yaw).T
     S = scale * ss
     X = V[..., 0] * S + ox * ss; Y = -V[..., 1] * S + oy * ss; Z = V[..., 2]
     img, m = raster(np.stack([X, Y, Z], -1), Nn, C, size * ss, size * ss, model.rest, tex)

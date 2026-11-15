@@ -7,7 +7,9 @@ Renders all 448 frames of a character sprite set with glrender.py (the game's ca
     base+192..447   8 actions x 4 directions (up, down, left, right) x 8 frames (attacks, use, pick up...)
 Direction order everywhere: up, down, left, right, left-up, left-down, right-up, right-down.
 
-    make_creature.py <model.gltf> <base> <out folder> [--length px] [--preview file.png]
+    make_creature.py <model.gltf> <base> <out folder> [--length px] [--depth 0.55] [--ground 56] [--preview file.png]
+--depth squeezes the ground towards the viewer: the game's shadow is the sprite flipped under its bottom edge, so a long
+animal's far feet would float above it at the true 30 degree angle (Cody, Nov 15).
 """
 import sys, os, json
 import numpy as np
@@ -44,7 +46,9 @@ def main():
     sc = length / L
     fix = lambda P: P - np.array([cx, lo[1], cz])
     tex = fur(3.0, 0.35)
-    R = lambda anim, t, yaw: render(m, anim, t, yaw=yaw, scale=sc, fix=fix, tex=tex)
+    depth = float(sys.argv[sys.argv.index('--depth') + 1]) if '--depth' in sys.argv else 0.55
+    oy = float(sys.argv[sys.argv.index('--ground') + 1]) if '--ground' in sys.argv else 56
+    R = lambda anim, t, yaw: render(m, anim, t, yaw=yaw, scale=sc, fix=fix, tex=tex, depth=depth, oy=oy)
     ln = {a: m.anim_length(a) for a in m.anims}
     os.makedirs(out, exist_ok=True)
     frames = {}
