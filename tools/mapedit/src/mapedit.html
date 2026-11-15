@@ -576,6 +576,7 @@ table.pl button:hover { color: var(--text); border-color: var(--gold); }
 </div>
 
 <script>
+const SPRITE_V = Date.now();
 'use strict';
 const MAPX = 1024, CH = 32;
 const $ = s => document.querySelector(s);
@@ -652,7 +653,7 @@ function sprite(n) {
     s.img = c; redraw();
     const l = waiting.get(n); if (l) { waiting.delete(n); l.forEach(paintThumb); }
   };
-  im.src = '/sprite/' + n;
+  im.src = '/sprite/' + n + '?v=' + SPRITE_V;     // a new address every page load: a changed sprite shows after F5
   return null;
 }
 function thumb(n, w, h) {
