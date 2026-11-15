@@ -87,7 +87,7 @@ top = max([v for v in qs['order'].values() if v > 0] or [0])
 for k, t in enumerate((EDDA, EDDA_DIRE, EDDA_FANG)): qs['order'][t] = top + 1 + k
 qs['qrew'][EDDA] = {'lim': 0, 'first': 0, 'gold': 800, 'st': [], 'rmin': 4, 'rmax': -1, 'n': 1}
 qs['qrew'][EDDA_DIRE] = {'lim': 0, 'first': 0, 'gold': 3000, 'st': [], 'rmin': 6, 'rmax': -1, 'n': 1}
-qs['qrew'][EDDA_FANG] = {'lim': 1, 'first': 0, 'gold': 70000, 'st': [], 'rmin': 7, 'rmax': -1, 'n': 1}
+qs['qrew'][EDDA_FANG] = {'lim': 1, 'first': 0, 'gold': 0, 'st': [], 'rmin': 7, 'rmax': -1, 'n': 1}
 print(W.talk_save(qs, npcs))
 def rank_of(t): return me.RANKS[me.points2rank(struct.unpack_from('<i', W.tchar, t * me.CHAR_SIZE + 709)[0])]
 print('grey wolves', len(greys), rank_of(greys[0]), '| dire wolves: den', len(den), 'deep forest', len(deep), rank_of(den[0]), '| greyfang', GREYFANG, (gx, gy), rank_of(GREYFANG))

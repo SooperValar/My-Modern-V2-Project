@@ -215,7 +215,7 @@ as one special quest. Build one area at a time from the bottom, with `tools/worl
 - New object sprite sets have no real cut-down "hidden" form: with hide walls on, a new tree shows the next variant
   (the original trees show stumps). Make proper hidden forms some time; run `tools/world/check_hide_sprites.py` after each build.
 - Timed potions need no code: armor[1] / attrib[i][1] / skill[n][1] with a duration, like the Agility Potion (Stoneskin, Fireward, Draught of the Void). Still code: Clear Water / Second Wind-style full restores are fine already (end / mana [0]); Elixir of the Good Moon (spell power) and Frozen Heart (regeneration) need some.
-- Rewards follow Cody's Quest Planner sheet (he set gold to 1/20 of the exp, Nov 14).
+- Rewards follow Cody's Quest Planner sheet. Gold (Nov 15, Cody): only bounties pay gold (1/20 of their exp), or a quest whose only reward is gold; quests with an item or skill give none. Bounties: 10 heads = one standard quest (0.5% of the rank's climb a head).
 
 ### ● `#quest` list: order and rewards (was #9)
 The look is approved and live (column table, 15 a page); the editor's Quests page sets the order, rewards, exp and

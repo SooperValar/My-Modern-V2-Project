@@ -492,7 +492,7 @@ Cody made the area (zones "Eastern Forest", "Deep Forest", "Dire Wolves Den", "W
 - **31 Dire Wolves** (Master Sergeant) in the Deep Forest and the Dire Wolves Den, thicker the closer to Old Greyfang (`add_wolves.py`: spots weighted by the distance to him, closer together near him): 7 within 10 tiles of him, 4 at 10-20, 11 at 20-35, 9 further out.
 - **Old Greyfang** (First Sergeant) at 414,541 in the den.
 - Every wolf is its own template (from the Spider, not "simple"), wolf group 33, and carries its head (Greyfang his fang).
-- **Huntmaster Edda** (a Templar woman: kindred Templar + female, the female Templar look 8144) in Wynn & Edda's Hut at 514,654, with her item quests (`#quest`): Wolf Head 160 exp + 8G, Dire Wolf Head 600 exp + 30G (10 heads = one standard quest, 5% of the rank's climb; the Quest Planner's per-head share is 0.5% now) (both as often as you like, from Sergeant / Master Sergeant), Greyfang's Fang -> Greyfang Amulet, 14,000 exp + 700G (once, from First Sergeant).
+- **Huntmaster Edda** (a Templar woman: kindred Templar + female, the female Templar look 8144) in Wynn & Edda's Hut at 514,654, with her item quests (`#quest`): Wolf Head 160 exp + 8G, Dire Wolf Head 600 exp + 30G (10 heads = one standard quest, 5% of the rank's climb; the Quest Planner's per-head share is 0.5% now) (both as often as you like, from Sergeant / Master Sergeant), Greyfang's Fang -> Greyfang Amulet and 14,000 exp (once, from First Sergeant; no gold).
 - **Wynn** is a Harakim woman now (kindred Harakim + female, the female Harakim look 6096).
 - NPC templates 2057-2100 and more (`made.json`).
 
@@ -507,6 +507,9 @@ A first Wolfwood (forest, trail, Hunters' Lodge, 16 Grey Wolves, 9 Dire Wolves, 
 - **Its own shadow**: the game's shadow is the sprite flipped upside down under the feet, which works for upright figures but put a long animal's body shadow below its paws (it looked like floating). The wolf frames carry their own soft shadow, the body pressed flat under it (half-transparent pixels), and **client 2.15.07** skips the flipped shadow for sprites 43000-49999 (`dd_shadow`, dd.c). Players need 2.15.07 (or they see both shadows); published, and CLIENT_LATEST 0x020F07 tells older clients to update (after the next update-code).
 - **Tools**: `tools/sprites/glrender.py` (a small glTF renderer: skinned animation, no Blender needed) and `tools/sprites/make_creature.py <model> <base> <out>` (the frame layout: engine.c eng_char, svr_act.c act_turn_*). The same pack has a fox, husky, deer, stag, bull, horse and more, so other animals can be made the same way.
 - **One test wolf** (template 2057, from the Spider 392, same strength; not "simple animation", so a usurped wolf can pick up, drop, give and use) in the field by the east road at 532,624 (`tools/world/wolf/test_wolf.py`).
+
+## Gold only for bounties (Nov 15, Cody's rule)
+- Quests that give an item or a skill give no gold; only bounties (heads, as often as you like) pay gold, or a quest whose only reward is gold. Old Greyfang's fang lost its 700G; the Quest Planner's Gold column now fills in only for "Per head" rows.
 
 ## Quest givers made friendly (Nov 15)
 - Tobias, Wynn, Brann and Huntmaster Edda were copies of Jamil (template 25, alignment -750, as in the original game). They are 10,000 now, the game's mark of a shopkeeper or quest giver: area spells leave them alone and killing one costs the killer luck. (Alignment doesn't decide who can be attacked; the editor's hint for it says what it does now.)
