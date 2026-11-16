@@ -369,3 +369,4 @@ Details in `CHANGES.md`.
   (quest template 2004); Players page reset / delete (backup) / restore.
 
 - [ ] **Items page: change many at once** (Cody, Nov 16: later). Tick rows (or all shown) and set / add to a field for all of them (+2 damage, min rank 7, price x1.5).
+- [ ] **Alchemy skill** (Cody, Nov 16: later). A new skill (server skill table, client skill names, trainers); recipes and potions can then need it (Needs / Needed already work with any skill).
