@@ -1087,3 +1087,14 @@ Unchanged except for the version number and the larger view: `merc.dat`, `.moa` 
 - Chests: tier lines with a level range and fitting metals (levels 3-6 in Bronze/Steel/Golden, Golden only at 5-6), with chosen metals at level 16-18, and in the older form (a list of six metals once failed to read, being longer than its buffer; fixed); a Bronze armor of Magic tier made new; gold; once per player refusing the second try; an "once on the server" reward given once and then left out of the draw (the next players got a new Bronze Mage Helm of Heal and another item from the list); first-time rewards for three players in a row, the chest's timer started by the first opening of a closed chest.
 - Fire and Ice sets (`fighttest`): 4 Fire pieces raised the two-handed specials from 19.2 % to 23.3 %; the 6th Fire piece raised melee damage by about 11 % (the burn plus its Strength); 4 Ice pieces raised Blast by 5 (plus the armor's own Willpower and Intuition); with 6 Ice pieces a Gargoyle hitting 3000 times was chilled about 1 time in 5 landed blows, and the thorns did 9.1 (Fire) / 6.5 (Ice, with frost) damage back per attack.
 - Merchants (`shop`): selling and buying back, the remorse ending on leaving (kept at the normal price; a Fire piece destroyed), 43 items on two pages, a 50 % price.
+
+## Quest item pictures (Nov 16)
+
+The quest items have their own pictures (sprites 44510-44521, `Client\GFX`, published: client-dist 39aab4b):
+Stolen Ledger, Potion of Second Wind, Stoneskin Potion, Foreman's Seal, Chieftain's Stone Axe and Merchant's Signet are
+rendered from Quaternius's RPG Pack 2 (CC0, OBJ, `MyV2\3d Models\RPG Pack 2`) with `tools/sprites/item_icon.py`
+(+ `objmodel.py`: .obj files, bottle glass drawn behind the liquid, colour swaps per material); Bundle of Moonwort,
+Harlan's Studded Belt, Quarryman's Amulet and Greyfang's Fang are the game's own pictures reworked; the Greyfang Amulet
+is the Lizard's Teeth Necklace with grey wolf teeth and Greyfang's fang on a gold cap. Red Harlan's Head keeps its picture.
+Item templates and every copy still showing the old picture changed by `tools/world/quest_fix/item_sprites.py` (live).
+Details: `tools/sprites/quest_items/README.txt`.
