@@ -1654,14 +1654,14 @@ class World:
         try:
             with open(self.recipes_path(), encoding='latin-1') as fh:
                 for ln in fh:
-                    w = ln.rstrip('\r\n').split(' ', 6)
-                    if w[0] != 'recipe' or len(w) < 6:
+                    w = ln.rstrip('\r\n').split(' ', 8)
+                    if w[0] != 'recipe' or len(w) < 8:
                         continue
                     try:
-                        a, b, r, f, k = (int(v) for v in w[1:6])
+                        a, b, r, f, k, nd, nv = (int(v) for v in w[1:8])
                     except ValueError:
                         continue
-                    out.append({'a': a, 'b': b, 'res': r, 'flags': f, 'rank': k, 'text': w[6] if len(w) > 6 else ''})
+                    out.append({'a': a, 'b': b, 'res': r, 'flags': f, 'rank': k, 'need': nd, 'needv': nv, 'text': w[8] if len(w) > 8 else ''})
         except OSError:
             pass
         return out
@@ -1674,11 +1674,14 @@ class World:
             if not (ok(a) and ok(b) and ok(res)):
                 bad.append(n + 1); continue
             text = re.sub(r'[\r\n]+', ' ', str(r.get('text') or ''))[:190].strip()
-            rows.append((a, b, res, int(r.get('flags') or 0) & 7, max(0, min(23, int(r.get('rank') or 0))), text))
+            nd = int(r.get('need', -1) if r.get('need') is not None else -1)
+            nd = nd if 0 <= nd < 50 or 100 <= nd < 105 else -1
+            nv = max(0, min(1000, int(r.get('needv') or 0))) if nd >= 0 else 0
+            rows.append((a, b, res, int(r.get('flags') or 0) & 7, max(0, min(23, int(r.get('rank') or 0))), nd if nv else -1, nv, text))
         if bad:
             return {'error': 'Recipe %s: pick all three items first.' % ', '.join(map(str, bad))}
         seen = {}
-        for a, b, res, f, k, t in rows:
+        for a, b, res, f, k, nd, nv, t in rows:
             for key in ((a, b),) + (() if f & 4 else ((b, a),)):
                 if key in seen and seen[key] != (a, b, res):
                     return {'error': 'Two recipes use the same two items (%s and %s): the game would only ever use the first.' % key}
@@ -1690,9 +1693,9 @@ class World:
             shutil.copy2(p, os.path.join(bk, 'recipes-%s.dat' % time.strftime('%Y%m%d-%H%M%S')))
         with open(p + '.tmp', 'w', encoding='latin-1', errors='replace') as fh:
             fh.write('# Recipes (MyV2 Editor, Items page; the server: recipe.c, console "recipereload").\n'
-                     '# recipe <item A> <item B> <result> <flags: 1 keep A, 2 keep B, 4 only B held + A used> <min rank> <text>\n')
+                     '# recipe <item A> <item B> <result> <flags: 1 keep A, 2 keep B, 4 only B held + A used> <min rank> <need: skill 0-49, attribute 100-104, -1 none> <need value> <text>\n')
             for row in rows:
-                fh.write('recipe %d %d %d %d %d %s\n' % row)
+                fh.write('recipe %d %d %d %d %d %d %d %s\n' % row)
         os.replace(p + '.tmp', p)
         msg = 'saved'
         if ctl and server_running():
@@ -7606,7 +7609,7 @@ const ITEM_TABS = {
     // max HP / End / Mana) for that long. The first column of attributes and skills does nothing for a drink.
     const drink = bit(c.flags, 21) && !c.placement;
     if (drink) {
-      b.insertAdjacentHTML('beforeend', '<div class="note"><b>A drink</b> (used up when used, not worn). <b>Right away</b>: Hit points, Endurance and Mana there are given back once when it is drunk (999 = all of it; negative hurts). <b>While it lasts</b>: everything there (Hit points / Endurance / Mana: more maximum) is a spell on the player for the <b>Lasts</b> time below (0 = no spell, only the right-away part). The right-away column of attributes and skills does nothing for a drink.</div>');
+      b.insertAdjacentHTML('beforeend', '<div class="note"><b>A drink</b> (used up when used, not worn). <b>Right away</b>: Hit points, Endurance and Mana there are given back once when it is drunk (999 = all of it; negative hurts). <b>While it lasts</b>: everything there (Hit points / Endurance / Mana: more maximum) is a spell on the player for the <b>Lasts</b> time below (0 = no spell, only the right-away part). The right-away column of attributes and skills does nothing for a drink. <b>Needed</b>: what the player must have <i>right now</i> (with his gear and spells) to drink it: a skill also has to be learned.</div>');
       const g = grid2(b), sec = document.createElement('span'); sec.className = 'hint'; sec.style.marginLeft = '8px';
       const show = () => { const t = c.duration / 18; sec.textContent = !c.duration ? 'no spell' : t < 60 ? Math.round(t) + ' seconds' : t < 3600 ? (t / 60).toFixed(t % 60 ? 1 : 0) + ' minutes' : (t / 3600).toFixed(1) + ' hours'; };
       const d = document.createElement('div'); d.className = 'ipick';
@@ -7751,8 +7754,8 @@ function recipesRender(el) {
   const dirty = rcDirty();
   box.innerHTML = `<div class="qhd"><h3>Recipes · players make items</h3><button class="btn sec rnew" ${ro ? 'disabled' : ''}>+ New recipe</button>
       <button class="btn sec rund" ${dirty ? '' : 'disabled'}>Undo changes</button><button class="btn pri rsave" ${dirty && !ro ? '' : 'disabled'}>Save</button></div>
-    <div class="hint">A player holds <b>B</b> under the mouse cursor and uses <b>A</b> in his backpack (or the other way round, unless you untick it): both are used up (one of a stack) and he gets the <b>result</b>. Tick <b>Keep</b> for a tool that stays (a mortar, a knife). For a necklace that takes teeth one by one, make one recipe a step: <i>Necklace + Tooth → Necklace (1 tooth)</i>, <i>Necklace (1 tooth) + Tooth → Necklace (2 teeth)</i>…; an NPC can then ask for the finished one in a quest. Make new items for the steps on the Items list with <b>Copy…</b>. ${info.running ? (ro ? '<b style="color:var(--bad)">The game is running without live editing: saving is off.</b>' : 'Saving gives them to the running game at once.') : 'Saving writes them; the game reads them when it starts.'}</div>`;
-  box.querySelector('.rnew').onclick = () => { RC.push({ a: 0, b: 0, res: 0, flags: 0, rank: 0, text: '' }); itemsRender(); };
+    <div class="hint">A player holds <b>B</b> under the mouse cursor and uses <b>A</b> in his backpack (or the other way round, unless you untick it): both are used up (one of a stack) and he gets the <b>result</b>. Tick <b>Keep</b> for a tool that stays (a mortar, a knife). <b>Needs</b>: a skill or attribute the player must have at that value or more, counting his gear and spells (a skill also has to be learned). For a necklace that takes teeth one by one, make one recipe a step: <i>Necklace + Tooth → Necklace (1 tooth)</i>, <i>Necklace (1 tooth) + Tooth → Necklace (2 teeth)</i>…; an NPC can then ask for the finished one in a quest. Make new items for the steps on the Items list with <b>Copy…</b>. ${info.running ? (ro ? '<b style="color:var(--bad)">The game is running without live editing: saving is off.</b>' : 'Saving gives them to the running game at once.') : 'Saving writes them; the game reads them when it starts.'}</div>`;
+  box.querySelector('.rnew').onclick = () => { RC.push({ a: 0, b: 0, res: 0, flags: 0, rank: 0, need: -1, needv: 0, text: '' }); itemsRender(); };
   box.querySelector('.rund').onclick = () => { if (confirm('Forget your changes to the recipes?')) { RC = JSON.parse(RC0); itemsRender(); } };
   box.querySelector('.rsave').onclick = async () => {
     const r = await api('/api/recipes', { recipes: RC });
@@ -7761,7 +7764,7 @@ function recipesRender(el) {
   };
   const sc = document.createElement('div'); sc.className = 'qscroll'; box.appendChild(sc);
   const tb = document.createElement('table'); tb.className = 'qtab'; sc.appendChild(tb);
-  tb.innerHTML = '<thead><tr><th>A · used</th><th></th><th>B · held</th><th></th><th>Makes</th><th>Keep</th><th>Either way</th><th>Min. rank</th><th>Message (empty: "You made …")</th><th></th></tr></thead>';
+  tb.innerHTML = '<thead><tr><th>A · used</th><th></th><th>B · held</th><th></th><th>Makes</th><th>Keep</th><th>Either way</th><th>Min. rank</th><th>Needs (current value)</th><th>Message (empty: "You made …")</th><th></th></tr></thead>';
   const body = document.createElement('tbody'); tb.appendChild(body);
   const key = (a, b) => a + ',' + b, used = {};
   RC.forEach((r, i) => { for (const k of [key(r.a, r.b)].concat(r.flags & 4 ? [] : [key(r.b, r.a)])) (used[k] = used[k] || []).push(i); });
@@ -7779,6 +7782,12 @@ function recipesRender(el) {
     td().append(chk('', () => !(r.flags & 4), on => { r.flags = on ? r.flags & ~4 : r.flags | 4; itemsRender(); }));
     const rk = td(); const sl = document.createElement('select'); sl.innerHTML = '<option value="0">anyone</option>' + RANK_NAMES.map((n, k) => k ? `<option value="${k}">${n}</option>` : '').join('');
     sl.value = r.rank; sl.onchange = () => { r.rank = +sl.value; itemsRender(); }; rk.append(sl);
+    const nd = td(); nd.style.whiteSpace = 'nowrap';
+    const ns = document.createElement('select');
+    ns.innerHTML = '<option value="-1">nothing</option><optgroup label="Skills">' + SKILLS.map((n, k) => `<option value="${k}">${esc(n)}</option>`).join('') + '</optgroup><optgroup label="Attributes">' + ATTRS.map((n, k) => `<option value="${100 + k}">${esc(n)}</option>`).join('') + '</optgroup>';
+    if (r.need === undefined) r.need = -1;
+    ns.value = r.need; ns.onchange = () => { r.need = +ns.value; if (r.need < 0) r.needv = 0; else if (!r.needv) r.needv = 10; itemsRender(); }; nd.append(ns);
+    if (r.need >= 0) { const nv = num(() => r.needv || 0, v => { r.needv = v; itemsRender(); }, 1, 1000); nv.style.width = '64px'; nv.style.marginLeft = '4px'; nd.append(nv); }
     const tx = document.createElement('input'); tx.type = 'text'; tx.maxLength = 190; tx.value = r.text; tx.style.width = '100%'; tx.style.minWidth = '180px';
     tx.oninput = () => { r.text = tx.value; const sb = box.querySelector('.rsave'); sb.disabled = !rcDirty() || RO(); box.querySelector('.rund').disabled = !rcDirty(); }; td().append(tx);
     const x = document.createElement('button'); x.className = 'sm'; x.textContent = 'Delete'; x.onclick = () => { RC.splice(i, 1); itemsRender(); }; td().append(x);
@@ -7787,7 +7796,7 @@ function recipesRender(el) {
     if (r.a && r.b && RC_GAME.some(([a, b]) => (a === r.a && b === r.b) || (a === r.b && b === r.a))) tr.title = 'Replaces what the game itself does with these two';
     body.appendChild(tr);
   });
-  if (!RC.length) body.innerHTML = '<tr><td colspan="10" class="hint" style="padding:12px 6px">No recipes yet. <b>+ New recipe</b> to make one.</td></tr>';
+  if (!RC.length) body.innerHTML = '<tr><td colspan="11" class="hint" style="padding:12px 6px">No recipes yet. <b>+ New recipe</b> to make one.</td></tr>';
   // the game's own
   const gb = document.createElement('details'); gb.style.marginTop = '18px';
   gb.open = !!IV.gameOpen; gb.ontoggle = () => { IV.gameOpen = gb.open; };
@@ -7799,7 +7808,7 @@ function recipesRender(el) {
     const tr = document.createElement('tr');
     tr.innerHTML = `<td>${esc(tname(a))} <span class="hint">${a}</span></td><td>${esc(tname(b))} <span class="hint">${b}</span></td><td>${esc(tname(res))} <span class="hint">${res}</span></td><td></td>`;
     const c = document.createElement('button'); c.className = 'sm'; c.textContent = 'Make a recipe of it'; c.disabled = RO();
-    c.onclick = () => { RC.push({ a, b, res, flags: a >= 207 && a <= 215 ? 4 : 0, rank: 0, text: '' }); itemsRender(); };
+    c.onclick = () => { RC.push({ a, b, res, flags: a >= 207 && a <= 215 ? 4 : 0, rank: 0, need: -1, needv: 0, text: '' }); itemsRender(); };
     tr.lastChild.append(c); gbd.append(tr);
   }
   gb.append(gt); box.append(gb);

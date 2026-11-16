@@ -1654,14 +1654,14 @@ class World:
         try:
             with open(self.recipes_path(), encoding='latin-1') as fh:
                 for ln in fh:
-                    w = ln.rstrip('\r\n').split(' ', 6)
-                    if w[0] != 'recipe' or len(w) < 6:
+                    w = ln.rstrip('\r\n').split(' ', 8)
+                    if w[0] != 'recipe' or len(w) < 8:
                         continue
                     try:
-                        a, b, r, f, k = (int(v) for v in w[1:6])
+                        a, b, r, f, k, nd, nv = (int(v) for v in w[1:8])
                     except ValueError:
                         continue
-                    out.append({'a': a, 'b': b, 'res': r, 'flags': f, 'rank': k, 'text': w[6] if len(w) > 6 else ''})
+                    out.append({'a': a, 'b': b, 'res': r, 'flags': f, 'rank': k, 'need': nd, 'needv': nv, 'text': w[8] if len(w) > 8 else ''})
         except OSError:
             pass
         return out
@@ -1674,11 +1674,14 @@ class World:
             if not (ok(a) and ok(b) and ok(res)):
                 bad.append(n + 1); continue
             text = re.sub(r'[\r\n]+', ' ', str(r.get('text') or ''))[:190].strip()
-            rows.append((a, b, res, int(r.get('flags') or 0) & 7, max(0, min(23, int(r.get('rank') or 0))), text))
+            nd = int(r.get('need', -1) if r.get('need') is not None else -1)
+            nd = nd if 0 <= nd < 50 or 100 <= nd < 105 else -1
+            nv = max(0, min(1000, int(r.get('needv') or 0))) if nd >= 0 else 0
+            rows.append((a, b, res, int(r.get('flags') or 0) & 7, max(0, min(23, int(r.get('rank') or 0))), nd if nv else -1, nv, text))
         if bad:
             return {'error': 'Recipe %s: pick all three items first.' % ', '.join(map(str, bad))}
         seen = {}
-        for a, b, res, f, k, t in rows:
+        for a, b, res, f, k, nd, nv, t in rows:
             for key in ((a, b),) + (() if f & 4 else ((b, a),)):
                 if key in seen and seen[key] != (a, b, res):
                     return {'error': 'Two recipes use the same two items (%s and %s): the game would only ever use the first.' % key}
@@ -1690,9 +1693,9 @@ class World:
             shutil.copy2(p, os.path.join(bk, 'recipes-%s.dat' % time.strftime('%Y%m%d-%H%M%S')))
         with open(p + '.tmp', 'w', encoding='latin-1', errors='replace') as fh:
             fh.write('# Recipes (MyV2 Editor, Items page; the server: recipe.c, console "recipereload").\n'
-                     '# recipe <item A> <item B> <result> <flags: 1 keep A, 2 keep B, 4 only B held + A used> <min rank> <text>\n')
+                     '# recipe <item A> <item B> <result> <flags: 1 keep A, 2 keep B, 4 only B held + A used> <min rank> <need: skill 0-49, attribute 100-104, -1 none> <need value> <text>\n')
             for row in rows:
-                fh.write('recipe %d %d %d %d %d %s\n' % row)
+                fh.write('recipe %d %d %d %d %d %d %d %s\n' % row)
         os.replace(p + '.tmp', p)
         msg = 'saved'
         if ctl and server_running():

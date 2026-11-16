@@ -430,6 +430,14 @@ static void con_cmd(char *line)
 		out("  Recipes loaded: %d.\n",n);
 		return;
 	}
+	if (!strcmp(w[0],"usetest")) {	// usetest <player> <backpack slot>: he uses that item (a potion: drinks it) - for testing
+		int pl,a=atoi(w[2]),in;
+		if (!(pl=con_player(w[1]))) return;
+		if (a<0 || a>39 || !(in=ch[pl].item[a])) { out("  Nothing in that backpack slot.\n"); return; }
+		use_driver(pl,in,1);
+		out("  Used. Slot %d now: %s\n",a,ch[pl].item[a] ? it[ch[pl].item[a]].name : "empty");
+		return;
+	}
 	if (!strcmp(w[0],"recipetest")) {	// recipetest <player> <backpack slot used> <backpack slot held>: try a recipe as if he did it
 		int pl,a=atoi(w[2]),b=atoi(w[3]),in,held,k;
 		if (!(pl=con_player(w[1]))) return;
@@ -523,6 +531,7 @@ static void con_cmd(char *line)
 		    "  merchreload                   read the merchants (.dat/merchants.dat) again\n"
 		    "  recipereload                  read the recipes (.dat/recipes.dat) again\n"
 		    "  recipetest <player> <used slot> <held slot>  try a recipe with two of his backpack items\n"
+		    "  usetest <player> <backpack slot>  he uses that item (drinks a potion)\n"
 		    "  wpreload / wplist             read the waypoints (.dat/waypoints.dat) again / list them\n"
 		    "  wpfound <player> [all|none|<nr>]   the waypoints a player has found; set all, none, or switch one\n"
 		    "  wpuse <player> <x> <y>        try clicking the waypoint piece there\n"

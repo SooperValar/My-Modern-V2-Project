@@ -1123,3 +1123,10 @@ items. "What the game itself already does" lists the built-in 30 with "Make a re
 Console: `recipereload`, `recipetest <player> <used slot> <held slot>` (tested on a test server: flask + red flower,
 and the reverse order). Live since Nov 16 (update-code).
 
+**Needs a skill (Nov 16, later):** a recipe can need a skill (or an attribute) at a value - the player's current value,
+with gear and spells; a skill must also be learned ("You need Bartering 150 to make that."). recipes.dat lines are now
+`recipe <A> <B> <result> <flags> <min rank> <need: skill 0-49 / attribute 100-104 / -1> <need value> <text>`.
+Drinks (used up when used, not worn) now check their **Needed** column when drunk, against the current values
+(before, only Min. rank was checked; no drink in the game had Needed values). Item Needed values are bytes: 127 at most.
+Console `usetest <player> <slot>` (he uses that item). Tested on the test server; live since Nov 16.
+

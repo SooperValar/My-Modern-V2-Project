@@ -2958,6 +2958,7 @@ void use_driver(int cn,int in,int carried)
                         		do_char_log(cn,0,"You're not experienced enough to use this.\n");
                         		return;
                         	}
+                        	if (!use_needs_ok(cn,in)) return;	// MyV2: the Needed column (recipe.c)
 
                                 chlog(cn,"Used %s",it[in].name);
 
