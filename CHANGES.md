@@ -1098,3 +1098,14 @@ Harlan's Studded Belt, Quarryman's Amulet and Greyfang's Fang are the game's own
 is the Lizard's Teeth Necklace with grey wolf teeth and Greyfang's fang on a gold cap. Red Harlan's Head keeps its picture.
 Item templates and every copy still showing the old picture changed by `tools/world/quest_fix/item_sprites.py` (live).
 Details: `tools/sprites/quest_items/README.txt`.
+
+## Editor: Items page (Nov 16)
+
+A new **Items** page (left bar, under Map): every item template in one list with its picture, number, name, kind
+(weapon and its skill, armor and where it is worn, ring, amulet, used up, quest...), min. rank, value, weapon and armor
+value, and how many copies exist on the map, with NPCs and with players. Search, a kind filter (default: everything
+players can pick up) and sortable columns (both remembered). Click a row to edit the template; **Copy...** makes a new
+item from one, **+ New item** an empty one (`itempblank`). Applying a template change now also changes the copies NPCs
+and players carry, wear or keep in a depot (before: only those on the map), wherever a copy still has the template's
+old value (`itempset` with `copies: 'all'`; the box in the template's footer, ticked by default, shows the counts).
+

@@ -1814,7 +1814,42 @@ class World:
         r['onmap'] = sum(1 for i in range(1, MAXITEM) if self.item[i * ITEM_SIZE + I_USED] == USE_ACTIVE
                          and self.it_u16(i, I_TEMP) == t and not self.it_u16(i, I_CARRIED))
         r['made'] = 1 if t >= NPC_FIRST_NEW else 0
+        r['held_npc'] = r['held_player'] = 0      # copies carried / worn / in a depot
+        for i in range(1, MAXITEM):
+            if self.item[i * ITEM_SIZE + I_USED] == USE_ACTIVE and self.it_u16(i, I_TEMP) == t:
+                c = self.it_u16(i, I_CARRIED)
+                if c:
+                    r['held_player' if self.is_player(c) else 'held_npc'] += 1
         return r
+
+    def itemlist(self):
+        """the Items page: every item template with what the list shows, and how many copies exist where"""
+        with self.lock:
+            cnt = {}
+            for i in range(1, MAXITEM):
+                o = i * ITEM_SIZE
+                if self.item[o + I_USED] != USE_ACTIVE:
+                    continue
+                tp, c = self.it_u16(i, I_TEMP), self.it_u16(i, I_CARRIED)
+                k = cnt.setdefault(tp, [0, 0, 0])
+                k[0 if not c else 2 if self.is_player(c) else 1] += 1
+            wanted = set()
+            if self.tchar is not None:
+                for n in range(1, MAXTCHARS):
+                    if self.tchar[n * CHAR_SIZE + C_USED]:
+                        v = struct.unpack_from('<i', self.tchar, n * CHAR_SIZE + C_DATA + 49 * 4)[0]
+                        if v > 0: wanted.add(v)
+            out = []
+            for t in range(1, MAXTITEM):
+                o = t * ITEM_SIZE
+                if not self.titem[o + I_USED]:
+                    continue
+                r = tpl_read(self.titem, o, {k: IT_FIELDS[k] for k in ('name', 'flags', 'value', 'placement', 'sprite', 'armor', 'weapon', 'min_rank', 'driver')})
+                out.append({'t': t, 'name': r['name'], 'flags': r['flags'], 'value': r['value'], 'placement': r['placement'],
+                            'sprite': r['sprite'][0], 'armor': r['armor'][0], 'weapon': r['weapon'][0], 'min_rank': r['min_rank'],
+                            'driver': r['driver'], 'n': cnt.get(t, [0, 0, 0]), 'made': 1 if t >= NPC_FIRST_NEW else 0,
+                            'quest': 1 if t in wanted else 0})
+            return out
 
     def _respawn_template(self, rec, tp):
         """like the game's reset_char: the NPCs of this template go, and it spawns again (with the changes) at its spot"""
@@ -1967,14 +2002,15 @@ class World:
             before = bytes(self.titem[base:base + ITEM_SIZE])
             tpl_write(self.titem, base, IT_FIELDS, op.get('fields') or {})
             after = bytes(self.titem[base:base + ITEM_SIZE])
-            if op.get('update_map', True) and after != before:
+            everywhere = op.get('copies') == 'all'      # also the carried ones (NPCs, players: backpack, worn, depot)
+            if (op.get('update_map', True) or everywhere) and after != before:
                 # the copies lying on the map get the new values - wherever a copy still had the template's old value
                 # (so their own changes, like a portal's destination or a sign's text, stay)
                 old, new = tpl_read(before, 0, IT_FIELDS), tpl_read(after, 0, IT_FIELDS)
                 chg = {k2 for k2 in IT_FIELDS if old[k2] != new[k2]}
                 for i in range(1, MAXITEM):
                     o = i * ITEM_SIZE
-                    if self.item[o + I_USED] != USE_ACTIVE or self.it_u16(i, I_TEMP) != t or self.it_u16(i, I_CARRIED):
+                    if self.item[o + I_USED] != USE_ACTIVE or self.it_u16(i, I_TEMP) != t or (self.it_u16(i, I_CARRIED) and not everywhere):
                         continue
                     cur = tpl_read(self.item, o, {k2: IT_FIELDS[k2] for k2 in chg})
                     upd = {}
@@ -1988,8 +2024,22 @@ class World:
                         self._save_item(rec, i)
                         tpl_write(self.item, o, IT_FIELDS, upd)
                         x, y = self.it_u16(i, I_X), self.it_u16(i, I_Y)
-                        if 0 <= x < MAPX and 0 <= y < MAPY:
+                        if not self.it_u16(i, I_CARRIED) and 0 <= x < MAPX and 0 <= y < MAPY:
                             self._save_map(rec, x, y)
+            return ''
+        if k == 'itempblank':        # + New item on the Items page: an empty one that can be picked up and looked at
+            t = next((n for n in range(NPC_FIRST_NEW, MAXTITEM) if not self.titem[n * ITEM_SIZE + I_USED]), 0)
+            if not t:
+                return 'no free item template number left'
+            self._keep(rec, 'T', t)
+            o = t * ITEM_SIZE
+            self.titem[o:o + ITEM_SIZE] = b'\0' * ITEM_SIZE
+            self.titem[o + I_USED] = USE_ACTIVE
+            struct.pack_into('<H', self.titem, o + I_TEMP, t)
+            name = str(op.get('name') or 'New item')
+            tpl_write(self.titem, o, IT_FIELDS, {'name': name, 'reference': name.lower(), 'flags': IF_TAKE | IF_LOOK,
+                                                 'sprite': [int(op.get('sprite') or 0), 0]})
+            self.made = ('item', t)
             return ''
         if k == 'itempnew':
             src = int(op['from'])
@@ -2374,7 +2424,7 @@ class World:
                     else:
                         n += 1
                     continue
-                if op['op'] in ('ctempset', 'ctempnew', 'ctempblank', 'itempset', 'itempnew'):
+                if op['op'] in ('ctempset', 'ctempnew', 'ctempblank', 'itempset', 'itempnew', 'itempblank'):
                     err = self.temp_op(rec, op)
                     if err:
                         msgs.append(err)
@@ -3634,6 +3684,8 @@ def make_handler(world, sprites, page, minimap, ctl):
                 return self.js(world.class_caps())
             if u.path == '/api/zonenpcs':
                 return self.js(world.zone_npcs(q.get('zone', '')))
+            if u.path == '/api/itemlist':
+                return self.js(world.itemlist())
             if u.path == '/api/itemp':
                 return self.js(world.itemp(int(q['t'])) or {'error': 'no such item template'})
             if u.path == '/api/history':

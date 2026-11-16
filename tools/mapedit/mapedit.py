@@ -1814,7 +1814,42 @@ class World:
         r['onmap'] = sum(1 for i in range(1, MAXITEM) if self.item[i * ITEM_SIZE + I_USED] == USE_ACTIVE
                          and self.it_u16(i, I_TEMP) == t and not self.it_u16(i, I_CARRIED))
         r['made'] = 1 if t >= NPC_FIRST_NEW else 0
+        r['held_npc'] = r['held_player'] = 0      # copies carried / worn / in a depot
+        for i in range(1, MAXITEM):
+            if self.item[i * ITEM_SIZE + I_USED] == USE_ACTIVE and self.it_u16(i, I_TEMP) == t:
+                c = self.it_u16(i, I_CARRIED)
+                if c:
+                    r['held_player' if self.is_player(c) else 'held_npc'] += 1
         return r
+
+    def itemlist(self):
+        """the Items page: every item template with what the list shows, and how many copies exist where"""
+        with self.lock:
+            cnt = {}
+            for i in range(1, MAXITEM):
+                o = i * ITEM_SIZE
+                if self.item[o + I_USED] != USE_ACTIVE:
+                    continue
+                tp, c = self.it_u16(i, I_TEMP), self.it_u16(i, I_CARRIED)
+                k = cnt.setdefault(tp, [0, 0, 0])
+                k[0 if not c else 2 if self.is_player(c) else 1] += 1
+            wanted = set()
+            if self.tchar is not None:
+                for n in range(1, MAXTCHARS):
+                    if self.tchar[n * CHAR_SIZE + C_USED]:
+                        v = struct.unpack_from('<i', self.tchar, n * CHAR_SIZE + C_DATA + 49 * 4)[0]
+                        if v > 0: wanted.add(v)
+            out = []
+            for t in range(1, MAXTITEM):
+                o = t * ITEM_SIZE
+                if not self.titem[o + I_USED]:
+                    continue
+                r = tpl_read(self.titem, o, {k: IT_FIELDS[k] for k in ('name', 'flags', 'value', 'placement', 'sprite', 'armor', 'weapon', 'min_rank', 'driver')})
+                out.append({'t': t, 'name': r['name'], 'flags': r['flags'], 'value': r['value'], 'placement': r['placement'],
+                            'sprite': r['sprite'][0], 'armor': r['armor'][0], 'weapon': r['weapon'][0], 'min_rank': r['min_rank'],
+                            'driver': r['driver'], 'n': cnt.get(t, [0, 0, 0]), 'made': 1 if t >= NPC_FIRST_NEW else 0,
+                            'quest': 1 if t in wanted else 0})
+            return out
 
     def _respawn_template(self, rec, tp):
         """like the game's reset_char: the NPCs of this template go, and it spawns again (with the changes) at its spot"""
@@ -1967,14 +2002,15 @@ class World:
             before = bytes(self.titem[base:base + ITEM_SIZE])
             tpl_write(self.titem, base, IT_FIELDS, op.get('fields') or {})
             after = bytes(self.titem[base:base + ITEM_SIZE])
-            if op.get('update_map', True) and after != before:
+            everywhere = op.get('copies') == 'all'      # also the carried ones (NPCs, players: backpack, worn, depot)
+            if (op.get('update_map', True) or everywhere) and after != before:
                 # the copies lying on the map get the new values - wherever a copy still had the template's old value
                 # (so their own changes, like a portal's destination or a sign's text, stay)
                 old, new = tpl_read(before, 0, IT_FIELDS), tpl_read(after, 0, IT_FIELDS)
                 chg = {k2 for k2 in IT_FIELDS if old[k2] != new[k2]}
                 for i in range(1, MAXITEM):
                     o = i * ITEM_SIZE
-                    if self.item[o + I_USED] != USE_ACTIVE or self.it_u16(i, I_TEMP) != t or self.it_u16(i, I_CARRIED):
+                    if self.item[o + I_USED] != USE_ACTIVE or self.it_u16(i, I_TEMP) != t or (self.it_u16(i, I_CARRIED) and not everywhere):
                         continue
                     cur = tpl_read(self.item, o, {k2: IT_FIELDS[k2] for k2 in chg})
                     upd = {}
@@ -1988,8 +2024,22 @@ class World:
                         self._save_item(rec, i)
                         tpl_write(self.item, o, IT_FIELDS, upd)
                         x, y = self.it_u16(i, I_X), self.it_u16(i, I_Y)
-                        if 0 <= x < MAPX and 0 <= y < MAPY:
+                        if not self.it_u16(i, I_CARRIED) and 0 <= x < MAPX and 0 <= y < MAPY:
                             self._save_map(rec, x, y)
+            return ''
+        if k == 'itempblank':        # + New item on the Items page: an empty one that can be picked up and looked at
+            t = next((n for n in range(NPC_FIRST_NEW, MAXTITEM) if not self.titem[n * ITEM_SIZE + I_USED]), 0)
+            if not t:
+                return 'no free item template number left'
+            self._keep(rec, 'T', t)
+            o = t * ITEM_SIZE
+            self.titem[o:o + ITEM_SIZE] = b'\0' * ITEM_SIZE
+            self.titem[o + I_USED] = USE_ACTIVE
+            struct.pack_into('<H', self.titem, o + I_TEMP, t)
+            name = str(op.get('name') or 'New item')
+            tpl_write(self.titem, o, IT_FIELDS, {'name': name, 'reference': name.lower(), 'flags': IF_TAKE | IF_LOOK,
+                                                 'sprite': [int(op.get('sprite') or 0), 0]})
+            self.made = ('item', t)
             return ''
         if k == 'itempnew':
             src = int(op['from'])
@@ -2374,7 +2424,7 @@ class World:
                     else:
                         n += 1
                     continue
-                if op['op'] in ('ctempset', 'ctempnew', 'ctempblank', 'itempset', 'itempnew'):
+                if op['op'] in ('ctempset', 'ctempnew', 'ctempblank', 'itempset', 'itempnew', 'itempblank'):
                     err = self.temp_op(rec, op)
                     if err:
                         msgs.append(err)
@@ -3634,6 +3684,8 @@ def make_handler(world, sprites, page, minimap, ctl):
                 return self.js(world.class_caps())
             if u.path == '/api/zonenpcs':
                 return self.js(world.zone_npcs(q.get('zone', '')))
+            if u.path == '/api/itemlist':
+                return self.js(world.itemlist())
             if u.path == '/api/itemp':
                 return self.js(world.itemp(int(q['t'])) or {'error': 'no such item template'})
             if u.path == '/api/history':
@@ -4058,10 +4110,30 @@ nav .grow { flex: 1; }
 #banner { position: absolute; left: 0; right: 0; top: 0; background: var(--badbg); color: #ffd6cf; border-bottom: 1px solid #5a2c26; padding: 7px 14px 7px 70px; z-index: 4; display: none; font-size: 12px; }
 #toast { position: absolute; left: 50%; transform: translateX(-50%); bottom: 16px; max-width: 70%; background: var(--panel); border: 1px solid var(--line); border-left: 3px solid var(--gold); padding: 8px 14px; border-radius: 7px; display: none; z-index: 12; white-space: pre-line; }
 
-#qp { grid-column: 4 / 5; grid-row: 2; overflow-y: auto; padding: 16px 14px 60px; display: none; background: var(--bg); min-width: 0; }
+#qp, #ip { grid-column: 4 / 5; grid-row: 2; overflow-y: auto; padding: 16px 14px 60px; display: none; background: var(--bg); min-width: 0; }
 #app.qmode { grid-template-columns: 64px 0 0 1fr; }
 #app.qmode #left, #app.qmode #right { display: none; }
 #app.qmode #qp { display: block; }
+#app.imode { grid-template-columns: 64px 0 0 1fr; }
+#app.imode #left, #app.imode #right { display: none; }
+#app.imode #ip { display: block; }
+#app.imode #toast { position: fixed; left: calc(50% + 32px); }
+#ip .qhd { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
+#ip .qhd h3 { margin: 0; flex: 1; }
+#ip .hint { color: var(--dim2); font-size: 12px; margin: 0 0 10px; }
+#ip .ifilt { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 10px; }
+#ip .ifilt input[type=search] { width: 260px; background: var(--panel2); color: var(--text); border: 1px solid var(--line); border-radius: 6px; padding: 6px 9px; }
+#ip .ifilt input[type=search]:focus { border-color: var(--gold); outline: none; }
+#ip .qtab th.so { cursor: pointer; user-select: none; }
+#ip .qtab th.so:hover, #ip .qtab th.by { color: var(--gold2); }
+#ip .qtab tr.it { cursor: pointer; }
+#ip .qtab tr.it:hover td { background: rgba(214,164,67,.06); }
+#ip .qtab td.r { text-align: right; white-space: nowrap; }
+#ip .qtab td.k { color: var(--dim); font-size: 12px; white-space: nowrap; }
+#ip .qtab td.cp { color: var(--dim); font-size: 12px; white-space: nowrap; }
+#ip .qtab .who canvas { width: 32px; height: 32px; }
+#ip button.sm { color: var(--dim); border: 1px solid var(--line); border-radius: 5px; padding: 1px 7px; font-size: 12px; white-space: nowrap; }
+#ip button.sm:hover { color: var(--text); border-color: var(--gold); }
 #app.qmode #toast { position: fixed; left: calc(50% + 32px); }
 #qp .box { margin-bottom: 16px; }
 #qp .box.qitems { min-width: 0; }
@@ -4353,6 +4425,7 @@ table.pl button:hover { color: var(--text); border-color: var(--gold); }
 
 <nav>
   <button data-m="map" class="on" title="Build the map"><span class="ico"><svg viewBox="0 0 24 24"><path d="M4 5c3-1.5 5 1.5 8 0s5-1.5 8 0v14c-3-1.5-5 1.5-8 0s-5-1.5-8 0z"/><path d="M7 9.5l2 1.5 3-2 2 2.5" stroke-dasharray="1.6 1.6"/><path d="M15.5 13.5l3 3M18.5 13.5l-3 3"/></svg></span>Map</button>
+  <button data-m="items" title="Every item: edit one for all its copies, or make new ones"><span class="ico"><svg viewBox="0 0 24 24"><path d="M19 3l-9.5 9.5M19 3v4l-8 8M19 3h-4l-8 8"/><path d="M6.5 13.5l4 4M4 20l3.5-3.5"/></svg></span>Items</button>
   <button data-m="players" title="Player characters: stats, backpack, depot, history, character file"><span class="ico"><svg viewBox="0 0 24 24"><path d="M5 13c0-5 3-9 7-9s7 4 7 9v5l-2 2H7l-2-2z"/><path d="M5 12.5h14M12 12.5V20M8.5 15.5h1.5M14 15.5h1.5"/></svg></span>Players</button>
   <button data-m="npcs" title="Every NPC and player in the world"><span class="ico"><svg viewBox="0 0 24 24"><path d="M12 3c-4 0-6.5 3.5-6.5 8.5V21h13v-9.5C18.5 6.5 16 3 12 3z"/><path d="M8.5 13c.5-3 1.8-4.5 3.5-4.5s3 1.5 3.5 4.5c-1 1.5-2.2 2-3.5 2s-2.5-.5-3.5-2z"/></svg></span>NPCs</button>
   <button data-m="quests" title="Every quest on one page: item quests (#quest) and chain quests (#journal)"><span class="ico"><svg viewBox="0 0 24 24"><path d="M6 3h10l3 3v15H6z"/><path d="M16 3v3h3"/><path d="M9 10h7M9 14h7M9 18h4"/><path d="M3.5 7.5l1.2 1.2 2-2.4" stroke-width="1.6"/></svg></span>Quests</button>
@@ -4426,6 +4499,7 @@ table.pl button:hover { color: var(--text); border-color: var(--gold); }
 </aside>
 
 <section id="qp"></section>
+<section id="ip"></section>
 <section id="srv">
   <div class="sgrid">
     <div class="box">
@@ -5532,6 +5606,8 @@ document.querySelectorAll('nav button').forEach(b => b.onclick = () => {
   mode = b.dataset.m; document.querySelectorAll('nav button').forEach(x => x.classList.toggle('on', x === b)); $('#lsearch').value = '';
   $('#app').classList.toggle('srvmode', mode === 'server');
   $('#app').classList.toggle('qmode', mode === 'quests');
+  $('#app').classList.toggle('imode', mode === 'items');
+  if (mode === 'items') { itemsLoad(); return; }
   if (mode === 'server') { srvRefresh(); logRefresh(true); return; }
   if (mode === 'quests') { if (!qAnyDirty()) { QS = null; questsRender(); questsLoad(); } else questsRender(); return; }
   leftUI(); setTimeout(resize, 0);
@@ -6723,7 +6799,7 @@ function tplRender() {
   el.querySelector('.ttl span').textContent = c.name || '(no name)';
   el.querySelector('.ttl small').textContent = TP.kind === 'npc'
     ? `${RANK_NAMES[rankOf(npcPoints(c))]} · NPC template ${TP.t}${c.made ? ' · made with the editor' : ''} · ${c.count} in the world${c.pending ? ' · ' + c.pending + ' waiting to spawn' : ''}${c.x || c.y ? ` · spawns at ${c.x}, ${c.y}` : ' · not placed'}`
-    : `Item template ${TP.t}${c.made ? ' · made with the editor' : ''} · ${c.onmap} lying on the map`;
+    : `Item template ${TP.t}${c.made ? ' · made with the editor' : ''} · ${c.onmap} on the map · ${c.held_npc || 0} with NPCs · ${c.held_player || 0} with players`;
   const tabs = tplTabs();
   el.querySelector('.mtabs').innerHTML = Object.entries(tabs).map(([k, v]) => `<button data-k="${k}" class="${k === TP.tab ? 'on' : ''}">${v}</button>`).join('');
   el.querySelectorAll('.mtabs button').forEach(b => b.onclick = () => { TP.tab = b.dataset.k; tplRender(); });
@@ -6732,7 +6808,7 @@ function tplRender() {
   const ft = el.querySelector('.mft');
   ft.innerHTML = TP.kind === 'npc'
     ? `<label class="chk"><input type="checkbox" id="tresp" checked><span>Respawn the ones in the world with the changes</span></label>`
-    : `<label class="chk"><input type="checkbox" id="tmap" checked><span>Also change the ${c.onmap} on the map (where they still have the old value)</span></label>`;
+    : `<label class="chk" title="Only the values a copy still has from the template change; what a copy changed itself (a portal's destination, a sign's text, an upgraded stat) stays."><input type="checkbox" id="tmap" checked><span>Also change the copies that exist: ${c.onmap} on the map, ${c.held_npc || 0} with NPCs, ${c.held_player || 0} with players</span></label>`;
   ft.insertAdjacentHTML('beforeend', `<span class="sp"></span><button class="btn sec" id="tnew">Save as a new ${TP.kind === 'npc' ? 'NPC' : 'item'}…</button>
     <button class="btn ghost" id="tcancel">Close</button><button class="btn pri" id="tapply">Apply</button>`);
   $('#tcancel').onclick = closeTemplate;
@@ -6745,7 +6821,7 @@ function tplChanged() {
   const out = {}, o = TP.orig, c = TP.cur;
   if (TP.kind === 'use' || TP.kind === 'chest' || TP.kind === 'area' || TP.kind === 'merchant') return out;
   // a player's gear and depot change item by item (padditem / pitem), an NPC template's with the other fields
-  const skip = ['t', 'count', 'pending', 'made', 'names', 'onmap', 'text', 'items', 'depot', 'rank', 'kin_name', 'ip', 'quests', 'online', 'c'];
+  const skip = ['t', 'count', 'pending', 'made', 'names', 'onmap', 'held_npc', 'held_player', 'text', 'items', 'depot', 'rank', 'kin_name', 'ip', 'quests', 'online', 'c'];
   if (TP.kind === 'player') skip.push('item', 'worn', 'citem');
   for (const k of Object.keys(c)) {
     if (skip.includes(k)) continue;
@@ -6773,7 +6849,7 @@ async function tplApply(asNew) {
   }
   if (Object.keys(f).length || text) {
     const op = TP.kind === 'npc' ? { op: 'ctempset', t, fields: f, text, respawn: asNew ? false : $('#tresp').checked }
-      : { op: 'itempset', t, fields: f, update_map: asNew ? false : $('#tmap').checked };
+      : { op: 'itempset', t, fields: f, update_map: asNew ? false : $('#tmap').checked, copies: !asNew && $('#tmap').checked ? 'all' : '' };
     await edit([op], `${asNew ? 'new' : 'changed'} ${TP.kind === 'npc' ? 'NPC' : 'item'} template ${t} (${f.name || TP.cur.name})`);
   } else if (!asNew && !TP.talk) return toast('Nothing changed.');
   if (TP.kind === 'item') {     // the palette and the map show the new name and look
@@ -6789,6 +6865,7 @@ async function tplApply(asNew) {
     toast(`New NPC ${t} made. Click a free tile to place it.`);
   } else chunks.clear(), redraw();
   if (mode === 'map') leftUI();
+  if (mode === 'items') itemsLoad();
   TP.orig = JSON.parse(JSON.stringify(TP.cur));
   openTemplate(TP.kind, t);
 }
@@ -7479,6 +7556,102 @@ const ITEM_TABS = {
     for (let i = 0; i < 10; i++) { const l = document.createElement('label'); l.innerHTML = `<span>data ${i}${c.driver === 6 && i < 2 ? (i ? ' · portal y' : ' · portal x') : ''}</span>`; l.append(num(() => c.data[i], v => c.data[i] = v)); dg.append(l); }
   },
 };
+
+// ---------------------------------------------------------------- the Items page: every item template
+let IL = null;                                  // the list from /api/itemlist
+const IV = { q: '', kind: 'take', sort: 'name', dir: 1, shown: 150 };
+try { Object.assign(IV, JSON.parse(localStorage.getItem('myv2.items') || '{}'), { shown: 150 }); } catch (e) {}
+function itemKind(r) {
+  const f = r.flags;
+  if (bit(f, 3)) return ['Money', 'other'];
+  const ws = weaponSkill(f);
+  if (ws >= 0) return ['Weapon · ' + SKILLS[ws], 'weapon'];
+  const pl = PLACES.filter(([v]) => r.placement & v).map(([, l]) => l);
+  if (r.placement & 4096) return ['Ring', 'jewel'];
+  if (r.placement & 2) return ['Amulet', 'jewel'];
+  if (bit(f, 8)) return ['Armor' + (pl.length ? ' · ' + pl.join(', ') : ''), 'armor'];
+  if (pl.length) return ['Worn · ' + pl.join(', '), 'armor'];
+  if (bit(f, 21)) return ['Used up when used', 'use'];
+  if (bit(f, 2)) return ['Item', 'other'];
+  return ['On the map (can\'t pick up)', 'map'];
+}
+const ITEM_KINDS = [['take', 'Everything players can pick up'], ['weapon', 'Weapons'], ['armor', 'Armor and worn things'], ['jewel', 'Rings and amulets'],
+  ['use', 'Used up when used (potions…)'], ['quest', 'Quest items'], ['other', 'Other items'], ['map', 'On the map (doors, chests, lamps…)'], ['made', 'Made with the editor'], ['all', 'Everything']];
+async function itemsLoad() {
+  const el = $('#ip'); if (!IL) el.innerHTML = '<div class="empty">Loading…</div>';
+  const r = await api('/api/itemlist');
+  if (r.error) { el.innerHTML = ''; return toast(r.error, true); }
+  IL = r; IL.forEach(x => { [x.kname, x.kind] = itemKind(x); }); itemsRender();
+}
+function itemsSave() { try { localStorage.setItem('myv2.items', JSON.stringify({ kind: IV.kind, sort: IV.sort, dir: IV.dir })); } catch (e) {} }
+function itemsRender() {
+  const el = $('#ip'), ro = RO(); el.innerHTML = '';
+  const box = document.createElement('div'); box.className = 'box'; el.appendChild(box);
+  box.innerHTML = `<div class="qhd"><h3>Items · every item template</h3><button class="btn sec inew" ${ro ? 'disabled' : ''}>+ New item</button></div>
+    <div class="hint">An item template is the base every copy of an item is made from. Click one to edit it: <b>Apply</b> changes the template and, if you leave the box ticked, the copies that already exist (on the map, with NPCs and with players), wherever they still have the template's old value (what a copy changed itself stays). <b>Copy</b> makes a new item from one (a stronger version, a new quest item). ${info.running ? (ro ? '<b style="color:var(--bad)">The game is running without live editing: editing is off.</b>' : 'Changes go into the running game at once.') : 'Then <b>Save to the game</b> on the Map page.'}</div>
+    <div class="ifilt"><input type="search" class="iq" placeholder="Search a name or number"><select class="ik">${ITEM_KINDS.map(([k, l]) => `<option value="${k}" ${k === IV.kind ? 'selected' : ''}>${l}</option>`).join('')}</select><span class="hint ic" style="margin:0"></span></div>`;
+  const q = box.querySelector('.iq'); q.value = IV.q;
+  q.oninput = () => { IV.q = q.value; IV.shown = 150; fill(); };
+  box.querySelector('.ik').onchange = e => { IV.kind = e.target.value; IV.shown = 150; itemsSave(); fill(); };
+  box.querySelector('.inew').onclick = itemNew;
+  const sc = document.createElement('div'); sc.className = 'qscroll'; box.appendChild(sc);
+  const tb = document.createElement('table'); tb.className = 'qtab'; sc.appendChild(tb);
+  const COLS = [['', ''], ['t', '#'], ['name', 'Name'], ['kname', 'Kind'], ['min_rank', 'Min. rank'], ['value', 'Value'], ['weapon', 'Weapon'], ['armor', 'Armor'], ['copies', 'Copies: map · NPCs · players'], ['', '']];
+  tb.innerHTML = '<thead><tr>' + COLS.map(([k, l]) => `<th class="${k ? 'so' : ''} ${k && k === IV.sort ? 'by' : ''}" data-k="${k}">${l}${k && k === IV.sort ? (IV.dir > 0 ? ' ▲' : ' ▼') : ''}</th>`).join('') + '</tr></thead>';
+  tb.querySelectorAll('th.so').forEach(th => th.onclick = () => { const k = th.dataset.k; if (IV.sort === k) IV.dir = -IV.dir; else { IV.sort = k; IV.dir = ['name', 'kname', 't'].includes(k) ? 1 : -1; } itemsSave(); itemsRender(); });
+  const body = document.createElement('tbody'); tb.appendChild(body);
+  const more = document.createElement('div'); more.style.cssText = 'padding:10px 4px'; box.appendChild(more);
+  function fill() {
+    const s = IV.q.trim().toLowerCase();
+    let l = IL.filter(r => {
+      if (s && !(r.name.toLowerCase().includes(s) || String(r.t) === s)) return false;
+      if (IV.kind === 'all') return true;
+      if (IV.kind === 'take') return bit(r.flags, 2);
+      if (IV.kind === 'quest') return r.quest;
+      if (IV.kind === 'made') return r.made;
+      return r.kind === IV.kind;
+    });
+    const key = IV.sort, val = r => key === 'copies' ? r.n[0] + r.n[1] + r.n[2] : r[key];
+    l.sort((a, b) => { const x = val(a), y = val(b); return (typeof x === 'string' ? x.localeCompare(y) : x - y) * IV.dir || a.name.localeCompare(b.name) || a.t - b.t; });
+    box.querySelector('.ic').textContent = `${l.length} item${l.length === 1 ? '' : 's'}`;
+    body.innerHTML = '';
+    for (const r of l.slice(0, IV.shown)) {
+      const tr = document.createElement('tr'); tr.className = 'it';
+      const td = cls => { const c = document.createElement('td'); if (cls) c.className = cls; tr.appendChild(c); return c; };
+      td().append(thumb(r.sprite, 32));
+      td('num').textContent = r.t;
+      const nm = td(); nm.innerHTML = `<span></span>${r.quest ? ' <span class="qitag">(Quest)</span>' : ''}${r.made ? ' <span style="color:var(--dim2);font-size:11px">· new</span>' : ''}`; nm.firstChild.textContent = r.name || '(no name)';
+      td('k').textContent = r.kname;
+      td('r').textContent = r.min_rank ? RANK_NAMES[r.min_rank] || r.min_rank : '–';
+      td('r').textContent = r.value ? (Math.floor(r.value / 100) ? Math.floor(r.value / 100) + 'g' : '') + (r.value % 100 ? ' ' + r.value % 100 + 's' : '') : '–';
+      td('r').textContent = r.weapon || '–'; td('r').textContent = r.armor || '–';
+      td('cp').textContent = `${r.n[0]} · ${r.n[1]} · ${r.n[2]}`;
+      const a = td(); a.style.whiteSpace = 'nowrap';
+      const cb = document.createElement('button'); cb.className = 'sm'; cb.textContent = 'Copy…'; cb.title = 'Make a new item from this one'; cb.disabled = ro;
+      cb.onclick = e => { e.stopPropagation(); itemCopy(r); }; a.append(cb);
+      tr.onclick = () => openTemplate('item', r.t);
+      body.appendChild(tr);
+    }
+    more.innerHTML = '';
+    if (l.length > IV.shown) { const b = document.createElement('button'); b.className = 'btn sec'; b.textContent = `Show more (${l.length - IV.shown} left)`; b.onclick = () => { IV.shown += 300; fill(); }; more.append(b); }
+  }
+  fill();
+}
+async function itemMade(r, name) {
+  if (r.error || !r.made) return toast(r.error || (r.msgs || []).join('\n') || 'Could not make it.', true);
+  if (pal) pal.templates = (await api('/api/palette')).templates || pal.templates;
+  toast(`New item ${r.made[1]}: ${name}`); await itemsLoad(); openTemplate('item', r.made[1]);
+}
+async function itemNew() {
+  if (RO()) return;
+  const name = prompt('Name for the new item:', 'New item'); if (!name) return;
+  itemMade(await api('/api/edit', { ops: [{ op: 'itempblank', name }], label: 'new item template ' + name }), name);
+}
+async function itemCopy(r) {
+  if (RO()) return;
+  const name = prompt(`A new item made from ${r.name} (${r.t}). Its name:`, r.name); if (!name) return;
+  itemMade(await api('/api/edit', { ops: [{ op: 'itempnew', from: r.t, name }], label: 'new item template ' + name + ' (from ' + r.t + ')' }), name);
+}
 
 // ---------------------------------------------------------------- player characters
 const PFLAGS = [[11, 'Staff'], [23, 'Imp (can impersonate monsters)'], [1, 'God'], [45, 'Greater god'], [2, 'Creator (#build)'], [0, 'Immortal'],
