@@ -475,6 +475,8 @@ int wp2h_chance(int cn,int axe);
 int set_pieces(int cn,int set);
 int set_of_temp(int t);
 int merch_load(void);
+int recipe_load(void);
+int recipe_try(int cn,int in);
 int merch_kinds(int co);
 int merch_buys(int co,int in);
 int merch_sell_price(int cn,int co,int in);

@@ -1645,6 +1645,61 @@ class World:
             msg = 'saved; the game has it now' if r and 'Merchants loaded' in r else 'saved; the game reads it at its next start (it did not answer)'
         return {'msg': msg}
 
+    # --- recipes: .dat/recipes.dat, read by the server (recipe.c; console "recipereload") - the Items page, Recipes
+    def recipes_path(self):
+        return os.path.join(self.dat, 'recipes.dat')
+
+    def recipes(self):
+        out = []
+        try:
+            with open(self.recipes_path(), encoding='latin-1') as fh:
+                for ln in fh:
+                    w = ln.rstrip('\r\n').split(' ', 6)
+                    if w[0] != 'recipe' or len(w) < 6:
+                        continue
+                    try:
+                        a, b, r, f, k = (int(v) for v in w[1:6])
+                    except ValueError:
+                        continue
+                    out.append({'a': a, 'b': b, 'res': r, 'flags': f, 'rank': k, 'text': w[6] if len(w) > 6 else ''})
+        except OSError:
+            pass
+        return out
+
+    def recipes_save(self, body, ctl=None):
+        ok = lambda t: 0 < t < MAXTITEM and self.titem[t * ITEM_SIZE + I_USED]
+        rows, bad = [], []
+        for n, r in enumerate(body.get('recipes') or []):
+            a, b, res = int(r.get('a') or 0), int(r.get('b') or 0), int(r.get('res') or 0)
+            if not (ok(a) and ok(b) and ok(res)):
+                bad.append(n + 1); continue
+            text = re.sub(r'[\r\n]+', ' ', str(r.get('text') or ''))[:190].strip()
+            rows.append((a, b, res, int(r.get('flags') or 0) & 7, max(0, min(23, int(r.get('rank') or 0))), text))
+        if bad:
+            return {'error': 'Recipe %s: pick all three items first.' % ', '.join(map(str, bad))}
+        seen = {}
+        for a, b, res, f, k, t in rows:
+            for key in ((a, b),) + (() if f & 4 else ((b, a),)):
+                if key in seen and seen[key] != (a, b, res):
+                    return {'error': 'Two recipes use the same two items (%s and %s): the game would only ever use the first.' % key}
+                seen[key] = (a, b, res)
+        p = self.recipes_path()
+        if os.path.exists(p):
+            bk = os.path.join(self.dat, 'mapedit-backups')
+            os.makedirs(bk, exist_ok=True)
+            shutil.copy2(p, os.path.join(bk, 'recipes-%s.dat' % time.strftime('%Y%m%d-%H%M%S')))
+        with open(p + '.tmp', 'w', encoding='latin-1', errors='replace') as fh:
+            fh.write('# Recipes (MyV2 Editor, Items page; the server: recipe.c, console "recipereload").\n'
+                     '# recipe <item A> <item B> <result> <flags: 1 keep A, 2 keep B, 4 only B held + A used> <min rank> <text>\n')
+            for row in rows:
+                fh.write('recipe %d %d %d %d %d %s\n' % row)
+        os.replace(p + '.tmp', p)
+        msg = 'saved'
+        if ctl and server_running():
+            r = ctl.console('recipereload', 5)
+            msg = 'saved; the game has them now' if r and 'Recipes loaded' in r else 'saved; the game reads them at its next start (it did not answer: it needs the newer server)'
+        return {'msg': msg}
+
     def quests_order_save(self, order, rewards=None, ctl=None, alias=None, only_alias=False, corder=None, crank=None):
         qs, npcs = self.talk_load()
         if corder is not None:
@@ -3684,6 +3739,8 @@ def make_handler(world, sprites, page, minimap, ctl):
                 return self.js(world.class_caps())
             if u.path == '/api/zonenpcs':
                 return self.js(world.zone_npcs(q.get('zone', '')))
+            if u.path == '/api/recipes':
+                return self.js({'recipes': world.recipes()})
             if u.path == '/api/itemlist':
                 return self.js(world.itemlist())
             if u.path == '/api/itemp':
@@ -3770,6 +3827,8 @@ def make_handler(world, sprites, page, minimap, ctl):
                 return self.js(world.kq_giver(int(body.get('t', 0))))
             if u.path == '/api/merchants':
                 return self.js(world.merchants_save(body, ctl))
+            if u.path == '/api/recipes':
+                return self.js(world.recipes_save(body, ctl))
             if u.path == '/api/playeraction':          # reset to a brand new character / delete (with a backup) / restore: done by the game
                 if not (ctl and server_running()):
                     return self.js({'error': 'Start the game first: resetting, deleting and restoring characters is done by the running game.'})
@@ -7586,7 +7645,7 @@ const ITEM_TABS = {
 
 // ---------------------------------------------------------------- the Items page: every item template
 let IL = null;                                  // the list from /api/itemlist
-const IV = { q: '', kind: 'take', sort: 'name', dir: 1, shown: 150 };
+const IV = { q: '', kind: 'take', sort: 'name', dir: 1, shown: 150, view: 'items' };
 try { Object.assign(IV, JSON.parse(localStorage.getItem('myv2.items') || '{}'), { shown: 150 }); } catch (e) {}
 function itemKind(r) {
   const f = r.flags;
@@ -7608,11 +7667,26 @@ async function itemsLoad() {
   const el = $('#ip'); if (!IL) el.innerHTML = '<div class="empty">Loading…</div>';
   const r = await api('/api/itemlist');
   if (r.error) { el.innerHTML = ''; return toast(r.error, true); }
-  IL = r; IL.forEach(x => { [x.kname, x.kind] = itemKind(x); }); itemsRender();
+  IL = r; IL.forEach(x => { [x.kname, x.kind] = itemKind(x); });
+  if (IV.view === 'recipes' && !RC) { const rr = await api('/api/recipes'); RC = (rr.recipes || []).map(x => ({ ...x })); RC0 = JSON.stringify(RC); }
+  itemsRender();
 }
-function itemsSave() { try { localStorage.setItem('myv2.items', JSON.stringify({ kind: IV.kind, sort: IV.sort, dir: IV.dir })); } catch (e) {} }
+function itemsSave() { try { localStorage.setItem('myv2.items', JSON.stringify({ kind: IV.kind, sort: IV.sort, dir: IV.dir, view: IV.view })); } catch (e) {} }
+function itemsTop(el) {     // Items | Recipes
+  const sw = document.createElement('div'); sw.className = 'seg md'; sw.style.cssText = 'margin:0 0 12px;width:260px';
+  sw.innerHTML = `<button data-v="items" class="${IV.view === 'items' ? 'on' : ''}">Items</button><button data-v="recipes" class="${IV.view === 'recipes' ? 'on' : ''}">Recipes${rcDirty() ? ' •' : ''}</button>`;
+  sw.querySelectorAll('button').forEach(b => b.onclick = async () => {
+    if (IV.view === b.dataset.v) return;
+    IV.view = b.dataset.v; itemsSave();
+    if (IV.view === 'recipes' && !RC) { const rr = await api('/api/recipes'); RC = (rr.recipes || []).map(x => ({ ...x })); RC0 = JSON.stringify(RC); }
+    itemsRender();
+  });
+  el.appendChild(sw);
+}
 function itemsRender() {
   const el = $('#ip'), ro = RO(); el.innerHTML = '';
+  itemsTop(el);
+  if (IV.view === 'recipes') return recipesRender(el);
   const box = document.createElement('div'); box.className = 'box'; el.appendChild(box);
   box.innerHTML = `<div class="qhd"><h3>Items · every item template</h3><button class="btn sec inew" ${ro ? 'disabled' : ''}>+ New item</button></div>
     <div class="hint">An item template is the base every copy of an item is made from. Click one to edit it: <b>Apply</b> changes the template and, if you leave the box ticked, the copies that already exist (on the map, with NPCs and with players), wherever they still have the template's old value (what a copy changed itself stays). <b>Copy</b> makes a new item from one (a stronger version, a new quest item). ${info.running ? (ro ? '<b style="color:var(--bad)">The game is running without live editing: editing is off.</b>' : 'Changes go into the running game at once.') : 'Then <b>Save to the game</b> on the Map page.'}</div>
@@ -7663,6 +7737,72 @@ function itemsRender() {
     if (l.length > IV.shown) { const b = document.createElement('button'); b.className = 'btn sec'; b.textContent = `Show more (${l.length - IV.shown} left)`; b.onclick = () => { IV.shown += 300; fill(); }; more.append(b); }
   }
   fill();
+}
+// ---- Recipes (recipe.c, .dat/recipes.dat): a player holds one item and uses another, and gets a new one
+let RC = null, RC0 = '';
+const rcDirty = () => RC && JSON.stringify(RC) !== RC0;
+// what the game itself does (use_driver.c: driver 4 flasks, driver 14 the leather necklace); a recipe with the same two items replaces it
+const RC_GAME = [[100, 18, 101], [100, 46, 102], [100, 141, 145], [100, 140, 144], [100, 142, 143], [100, 197, 219], [100, 198, 220], [100, 199, 218], [100, 294, 295],
+  [143, 140, 147], [144, 142, 147], [147, 141, 148], [218, 197, 223], [218, 198, 221], [219, 198, 222], [219, 199, 223], [220, 197, 222], [220, 199, 221],
+  [221, 197, 224], [222, 199, 224], [223, 198, 224], ...[207, 208, 209, 210, 211, 212, 213, 214, 215].map(t => [t, 206, t + 1])];
+const tname = t => { const x = pal && pal.templates.find(r => r[0] === t); return x ? x[1] : 'template ' + t; };
+function recipesRender(el) {
+  const ro = RO(), box = document.createElement('div'); box.className = 'box'; el.appendChild(box);
+  const dirty = rcDirty();
+  box.innerHTML = `<div class="qhd"><h3>Recipes · players make items</h3><button class="btn sec rnew" ${ro ? 'disabled' : ''}>+ New recipe</button>
+      <button class="btn sec rund" ${dirty ? '' : 'disabled'}>Undo changes</button><button class="btn pri rsave" ${dirty && !ro ? '' : 'disabled'}>Save</button></div>
+    <div class="hint">A player holds <b>B</b> under the mouse cursor and uses <b>A</b> in his backpack (or the other way round, unless you untick it): both are used up (one of a stack) and he gets the <b>result</b>. Tick <b>Keep</b> for a tool that stays (a mortar, a knife). For a necklace that takes teeth one by one, make one recipe a step: <i>Necklace + Tooth → Necklace (1 tooth)</i>, <i>Necklace (1 tooth) + Tooth → Necklace (2 teeth)</i>…; an NPC can then ask for the finished one in a quest. Make new items for the steps on the Items list with <b>Copy…</b>. ${info.running ? (ro ? '<b style="color:var(--bad)">The game is running without live editing: saving is off.</b>' : 'Saving gives them to the running game at once.') : 'Saving writes them; the game reads them when it starts.'}</div>`;
+  box.querySelector('.rnew').onclick = () => { RC.push({ a: 0, b: 0, res: 0, flags: 0, rank: 0, text: '' }); itemsRender(); };
+  box.querySelector('.rund').onclick = () => { if (confirm('Forget your changes to the recipes?')) { RC = JSON.parse(RC0); itemsRender(); } };
+  box.querySelector('.rsave').onclick = async () => {
+    const r = await api('/api/recipes', { recipes: RC });
+    if (r.error) return toast(r.error, true);
+    RC0 = JSON.stringify(RC); toast('Recipes ' + r.msg); itemsRender();
+  };
+  const sc = document.createElement('div'); sc.className = 'qscroll'; box.appendChild(sc);
+  const tb = document.createElement('table'); tb.className = 'qtab'; sc.appendChild(tb);
+  tb.innerHTML = '<thead><tr><th>A · used</th><th></th><th>B · held</th><th></th><th>Makes</th><th>Keep</th><th>Either way</th><th>Min. rank</th><th>Message (empty: "You made …")</th><th></th></tr></thead>';
+  const body = document.createElement('tbody'); tb.appendChild(body);
+  const key = (a, b) => a + ',' + b, used = {};
+  RC.forEach((r, i) => { for (const k of [key(r.a, r.b)].concat(r.flags & 4 ? [] : [key(r.b, r.a)])) (used[k] = used[k] || []).push(i); });
+  RC.forEach((r, i) => {
+    const tr = document.createElement('tr');
+    const td = () => { const c = document.createElement('td'); tr.appendChild(c); return c; };
+    const set = k => v => { r[k] = v; itemsRender(); };
+    td().append(qpick(() => r.a, set('a'), 'Pick item A'));
+    td().textContent = '+';
+    td().append(qpick(() => r.b, set('b'), 'Pick item B'));
+    td().textContent = '→';
+    td().append(qpick(() => r.res, set('res'), 'Pick the result'));
+    const kp = td(); kp.style.whiteSpace = 'nowrap';
+    for (const [bt, l] of [[1, 'A'], [2, 'B']]) { const c = chk(l, () => !!(r.flags & bt), on => { r.flags = on ? r.flags | bt : r.flags & ~bt; itemsRender(); }); c.style.marginRight = '8px'; c.title = 'Keep ' + l + ' (not used up)'; kp.append(c); }
+    td().append(chk('', () => !(r.flags & 4), on => { r.flags = on ? r.flags & ~4 : r.flags | 4; itemsRender(); }));
+    const rk = td(); const sl = document.createElement('select'); sl.innerHTML = '<option value="0">anyone</option>' + RANK_NAMES.map((n, k) => k ? `<option value="${k}">${n}</option>` : '').join('');
+    sl.value = r.rank; sl.onchange = () => { r.rank = +sl.value; itemsRender(); }; rk.append(sl);
+    const tx = document.createElement('input'); tx.type = 'text'; tx.maxLength = 190; tx.value = r.text; tx.style.width = '100%'; tx.style.minWidth = '180px';
+    tx.oninput = () => { r.text = tx.value; const sb = box.querySelector('.rsave'); sb.disabled = !rcDirty() || RO(); box.querySelector('.rund').disabled = !rcDirty(); }; td().append(tx);
+    const x = document.createElement('button'); x.className = 'sm'; x.textContent = 'Delete'; x.onclick = () => { RC.splice(i, 1); itemsRender(); }; td().append(x);
+    const clash = [key(r.a, r.b)].some(k => (used[k] || []).length > 1) || (!(r.flags & 4) && (used[key(r.b, r.a)] || []).length > 1);
+    if (clash && r.a && r.b) { tr.classList.add('ch'); tr.title = 'Another recipe uses the same two items'; }
+    if (r.a && r.b && RC_GAME.some(([a, b]) => (a === r.a && b === r.b) || (a === r.b && b === r.a))) tr.title = 'Replaces what the game itself does with these two';
+    body.appendChild(tr);
+  });
+  if (!RC.length) body.innerHTML = '<tr><td colspan="10" class="hint" style="padding:12px 6px">No recipes yet. <b>+ New recipe</b> to make one.</td></tr>';
+  // the game's own
+  const gb = document.createElement('details'); gb.style.marginTop = '18px';
+  gb.open = !!IV.gameOpen; gb.ontoggle = () => { IV.gameOpen = gb.open; };
+  gb.innerHTML = `<summary class="hint" style="cursor:pointer">What the game itself already does (${RC_GAME.length}: the flasks and flowers, the Leather Necklace and Lizard's Teeth) · a recipe with the same two items replaces it</summary>`;
+  const gt = document.createElement('table'); gt.className = 'qtab'; gt.style.marginTop = '6px';
+  gt.innerHTML = '<thead><tr><th>Used</th><th>Held</th><th>Makes</th><th></th></tr></thead>';
+  const gbd = document.createElement('tbody'); gt.append(gbd);
+  for (const [a, b, res] of RC_GAME) {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${esc(tname(a))} <span class="hint">${a}</span></td><td>${esc(tname(b))} <span class="hint">${b}</span></td><td>${esc(tname(res))} <span class="hint">${res}</span></td><td></td>`;
+    const c = document.createElement('button'); c.className = 'sm'; c.textContent = 'Make a recipe of it'; c.disabled = RO();
+    c.onclick = () => { RC.push({ a, b, res, flags: a >= 207 && a <= 215 ? 4 : 0, rank: 0, text: '' }); itemsRender(); };
+    tr.lastChild.append(c); gbd.append(tr);
+  }
+  gb.append(gt); box.append(gb);
 }
 async function itemMade(r, name) {
   if (r.error || !r.made) return toast(r.error || (r.msgs || []).join('\n') || 'Could not make it.', true);

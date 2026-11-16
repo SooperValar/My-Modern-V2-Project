@@ -1645,6 +1645,61 @@ class World:
             msg = 'saved; the game has it now' if r and 'Merchants loaded' in r else 'saved; the game reads it at its next start (it did not answer)'
         return {'msg': msg}
 
+    # --- recipes: .dat/recipes.dat, read by the server (recipe.c; console "recipereload") - the Items page, Recipes
+    def recipes_path(self):
+        return os.path.join(self.dat, 'recipes.dat')
+
+    def recipes(self):
+        out = []
+        try:
+            with open(self.recipes_path(), encoding='latin-1') as fh:
+                for ln in fh:
+                    w = ln.rstrip('\r\n').split(' ', 6)
+                    if w[0] != 'recipe' or len(w) < 6:
+                        continue
+                    try:
+                        a, b, r, f, k = (int(v) for v in w[1:6])
+                    except ValueError:
+                        continue
+                    out.append({'a': a, 'b': b, 'res': r, 'flags': f, 'rank': k, 'text': w[6] if len(w) > 6 else ''})
+        except OSError:
+            pass
+        return out
+
+    def recipes_save(self, body, ctl=None):
+        ok = lambda t: 0 < t < MAXTITEM and self.titem[t * ITEM_SIZE + I_USED]
+        rows, bad = [], []
+        for n, r in enumerate(body.get('recipes') or []):
+            a, b, res = int(r.get('a') or 0), int(r.get('b') or 0), int(r.get('res') or 0)
+            if not (ok(a) and ok(b) and ok(res)):
+                bad.append(n + 1); continue
+            text = re.sub(r'[\r\n]+', ' ', str(r.get('text') or ''))[:190].strip()
+            rows.append((a, b, res, int(r.get('flags') or 0) & 7, max(0, min(23, int(r.get('rank') or 0))), text))
+        if bad:
+            return {'error': 'Recipe %s: pick all three items first.' % ', '.join(map(str, bad))}
+        seen = {}
+        for a, b, res, f, k, t in rows:
+            for key in ((a, b),) + (() if f & 4 else ((b, a),)):
+                if key in seen and seen[key] != (a, b, res):
+                    return {'error': 'Two recipes use the same two items (%s and %s): the game would only ever use the first.' % key}
+                seen[key] = (a, b, res)
+        p = self.recipes_path()
+        if os.path.exists(p):
+            bk = os.path.join(self.dat, 'mapedit-backups')
+            os.makedirs(bk, exist_ok=True)
+            shutil.copy2(p, os.path.join(bk, 'recipes-%s.dat' % time.strftime('%Y%m%d-%H%M%S')))
+        with open(p + '.tmp', 'w', encoding='latin-1', errors='replace') as fh:
+            fh.write('# Recipes (MyV2 Editor, Items page; the server: recipe.c, console "recipereload").\n'
+                     '# recipe <item A> <item B> <result> <flags: 1 keep A, 2 keep B, 4 only B held + A used> <min rank> <text>\n')
+            for row in rows:
+                fh.write('recipe %d %d %d %d %d %s\n' % row)
+        os.replace(p + '.tmp', p)
+        msg = 'saved'
+        if ctl and server_running():
+            r = ctl.console('recipereload', 5)
+            msg = 'saved; the game has them now' if r and 'Recipes loaded' in r else 'saved; the game reads them at its next start (it did not answer: it needs the newer server)'
+        return {'msg': msg}
+
     def quests_order_save(self, order, rewards=None, ctl=None, alias=None, only_alias=False, corder=None, crank=None):
         qs, npcs = self.talk_load()
         if corder is not None:
@@ -3684,6 +3739,8 @@ def make_handler(world, sprites, page, minimap, ctl):
                 return self.js(world.class_caps())
             if u.path == '/api/zonenpcs':
                 return self.js(world.zone_npcs(q.get('zone', '')))
+            if u.path == '/api/recipes':
+                return self.js({'recipes': world.recipes()})
             if u.path == '/api/itemlist':
                 return self.js(world.itemlist())
             if u.path == '/api/itemp':
@@ -3770,6 +3827,8 @@ def make_handler(world, sprites, page, minimap, ctl):
                 return self.js(world.kq_giver(int(body.get('t', 0))))
             if u.path == '/api/merchants':
                 return self.js(world.merchants_save(body, ctl))
+            if u.path == '/api/recipes':
+                return self.js(world.recipes_save(body, ctl))
             if u.path == '/api/playeraction':          # reset to a brand new character / delete (with a backup) / restore: done by the game
                 if not (ctl and server_running()):
                     return self.js({'error': 'Start the game first: resetting, deleting and restoring characters is done by the running game.'})

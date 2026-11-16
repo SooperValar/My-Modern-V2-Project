@@ -425,6 +425,24 @@ static void con_cmd(char *line)
 		wp_console_found(pl,w[2],out);
 		return;
 	}
+	if (!strcmp(w[0],"recipereload")) {	// read .dat/recipes.dat again (the editor's Items page, Recipes)
+		n=recipe_load();
+		out("  Recipes loaded: %d.\n",n);
+		return;
+	}
+	if (!strcmp(w[0],"recipetest")) {	// recipetest <player> <backpack slot used> <backpack slot held>: try a recipe as if he did it
+		int pl,a=atoi(w[2]),b=atoi(w[3]),in,held,k;
+		if (!(pl=con_player(w[1]))) return;
+		if (a<0 || a>39 || b<0 || b>39 || a==b || !(in=ch[pl].item[a]) || !(held=ch[pl].item[b]) || ch[pl].citem) { out("  Two different filled backpack slots, and nothing on his cursor.\n"); return; }
+		ch[pl].item[b]=0; ch[pl].citem=held;
+		n=recipe_try(pl,in);
+		if (ch[pl].citem==held) { ch[pl].citem=0; for (k=0; k<40; k++) if (!ch[pl].item[k]) { ch[pl].item[k]=held; break; } }
+		out("  %s\n",n ? "A recipe was used (see his log)." : "No recipe for these two.");
+		for (k=0; k<40; k++) if ((in=ch[pl].item[k])) out("  slot %2d: %s (%d)%s\n",k,it[in].name,it[in].temp,stack_count(in)>1 ? " stack" : "");
+		if (ch[pl].citem) out("  cursor: %s\n",it[ch[pl].citem].name);
+		do_update_char(pl);
+		return;
+	}
 	if (!strcmp(w[0],"merchreload")) {	// read .dat/merchants.dat again (the editor's Merchants tab)
 		n=merch_load();
 		out("  Merchants loaded: %d merchant%s with their own settings.\n",n,n==1 ? "" : "s");
@@ -503,6 +521,8 @@ static void con_cmd(char *line)
 		    "  talkreload                    read the NPC dialogue file again\n"
 		    "  zonereload                    read the zones (.dat/zones.dat) again\n"
 		    "  merchreload                   read the merchants (.dat/merchants.dat) again\n"
+		    "  recipereload                  read the recipes (.dat/recipes.dat) again\n"
+		    "  recipetest <player> <used slot> <held slot>  try a recipe with two of his backpack items\n"
 		    "  wpreload / wplist             read the waypoints (.dat/waypoints.dat) again / list them\n"
 		    "  wpfound <player> [all|none|<nr>]   the waypoints a player has found; set all, none, or switch one\n"
 		    "  wpuse <player> <x> <y>        try clicking the waypoint piece there\n"

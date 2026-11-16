@@ -2821,6 +2821,9 @@ void use_driver(int cn,int in,int carried)
 
         if (cn && !carried) ch[cn].cerrno=ERR_FAILED;   // will be overriden later if another result is desired
 
+        // MyV2: recipes (recipe.c, .dat/recipes.dat): using an item while holding another makes a new one
+        if (cn && carried && ch[cn].citem && recipe_try(cn,in)) { ch[cn].cerrno=ERR_SUCCESS; return; }
+
         if ((it[in].flags&IF_USE) || !cn) {
                 // check prerequisites (cost, minium stats etc) !!!
                 // remove cost !!!

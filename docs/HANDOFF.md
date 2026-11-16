@@ -78,7 +78,7 @@ Note: the real client source is the project's `client/` folder (the old copies i
   changed Windows source into Ubuntu with a backup in `~/claude-backups/`, then `make`), starts.
 - Console commands (control port 127.0.0.1:5556, or the editor's console): `who`, `status`,
   `announce`, `tell`, `kick`, `raise`, `lower`, `gold`, `quest`, `talkreload`, `talktest`,
-  `talkkill`, `talkuse`, `talknear`, `talkmoney`, `zonereload`, `zone <x> <y>`, `chesttest <player> <x> <y> [real]`, `kqkill <player> <NPC template>`, `kills <player>`, `kqtime <player> <minutes>`, `edpatch`, `wear <player> <template>|off`, `fighttest <player> <NPC template> <rounds> [back|kill]` (test server only), `merchreload`, `shop <player> <merchant template> [buy|sell|page|leave]`.
+  `talkkill`, `talkuse`, `talknear`, `talkmoney`, `zonereload`, `zone <x> <y>`, `chesttest <player> <x> <y> [real]`, `kqkill <player> <NPC template>`, `kills <player>`, `kqtime <player> <minutes>`, `edpatch`, `wear <player> <template>|off`, `fighttest <player> <NPC template> <rounds> [back|kill]` (test server only), `merchreload`, `shop <player> <merchant template> [buy|sell|page|leave]`, `recipereload`, `recipetest <player> <used slot> <held slot>`.
 - **Test server** (for trying server changes without touching the live game): in Claude's device
   shell, `~/ctest` holds a copy of the server source and data. Copy the changed files there,
   `make server` (a full build may need two runs within the 3-minute limit). **Always check port
@@ -232,6 +232,8 @@ Claude's own request for the Server / Client folders was refused automatically: 
 Cody makes the first ones and tries them.
 
 **Restarts (Nov 15, after two slips):** a restart is pre-approved only while nobody is online: gate it in the same command, `grep -q '"online": 0' status.json && echo '{...stop-send...}' > requests/x.json`, and if someone is on (often Cody testing), ask first.
+
+**Nov 16, later:** editor Items page (every item template; edits reach carried copies), drinks' Stats tab, Value price table, and **recipes** (server/recipe.c, `.dat/recipes.dat`, Items page -> Recipes; live). Test server for this session was `~/sb` (Iluvatar got test items there only).
 
 **Where we left off (Nov 16):** quest items have their own pictures (44510-44521, live, client-dist 39aab4b published locally; Cody pushes `client-dist`). Item pipeline: `tools/sprites/item_icon.py <model.gltf|.obj> <out.png>` (32x32 at the game camera; `--glass/--liquid` for bottles, `--recol Mat=rrggbb`, `--roll`). Models: `MyV2\3d Models\` Fantasy Props (glTF), RPG Pack 1/2 (OBJ/FBX, flat colours: the better match for the game's item look).
 

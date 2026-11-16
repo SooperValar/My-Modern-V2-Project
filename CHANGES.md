@@ -1109,3 +1109,17 @@ item from one, **+ New item** an empty one (`itempblank`). Applying a template c
 and players carry, wear or keep in a depot (before: only those on the map), wherever a copy still has the template's
 old value (`itempset` with `copies: 'all'`; the box in the template's footer, ticked by default, shows the counts).
 
+## Recipes: players make items (Nov 16)
+
+New: **recipes** (`server/recipe.c`, `.dat/recipes.dat`). A player holds item B under the mouse cursor and uses item A
+(or the other way round): both are used up (one of a stack) and he gets the result. Per recipe: keep A / keep B (a tool
+that stays), "either way" (else only B held + A used), a minimum rank, and the message he reads. Recipes are checked
+before the game's own combinations (`use_driver.c`: the flasks and flowers, driver 4; the Leather Necklace and Lizard's
+Teeth, driver 14), so a recipe with the same two items replaces what the game did. Chains (a necklace taking teeth one
+by one) are one recipe a step; an NPC can then ask for the finished item in a quest.
+Editor: **Items page -> Recipes**: a table with item pickers (A + B -> result), Keep, Either way, Min. rank, Message;
+Save writes recipes.dat and has the running game read it (`recipereload`). It refuses two recipes with the same two
+items. "What the game itself already does" lists the built-in 30 with "Make a recipe of it".
+Console: `recipereload`, `recipetest <player> <used slot> <held slot>` (tested on a test server: flask + red flower,
+and the reverse order). Live since Nov 16 (update-code).
+
