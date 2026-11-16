@@ -1149,3 +1149,5 @@ Every bot post is a code block (```, the up / down notices coloured with ```ansi
 ## Rat-Catcher's cellar: the ratlings (Nov 16)
 
 The small room in Underground I (886-891, 24-30), where the hole in the quest giver's house (528,465 in Aston) lands (888,25): two **Young Ratlings** (templates 2138, 2139; Lance Corporal, Ratling stats at 65%, 3,000 points) and the **Ratling Broodmother** (2140; Corporal, 80%, 11,000 points). `tools/world/rat_cellar/place_ratlings.py` (made.json). Live.
+
+**Mirela and her quest (Nov 16):** Mirela (template 2141, a woman), Aston's rat-catcher, in her house at 525,468 (the hole there lands in the ratling cellar). She wants the **Broodmother's Tail** (item 2022, sprite 44522; the Ratling Broodmother carries it) and gives the **Rat-Catcher's Ring** (2023, sprite 44523, +1 Agility worn): once, Lance Corporal and up, 200 exp (standard: 5% of the Lance Corporal climb), no gold. `tools/world/rat_cellar/mirela.py`. Live; sprites published (client-dist, Cody pushes).

@@ -9,3 +9,5 @@ Rendered (item_icon.py + objmodel.py, Quaternius RPG Pack 2 OBJ models, CC0, MyV
 Game sprites edited (game_edits.py): 44516 Moonwort (1460), 44517 Studded Belt (16665), 44519 Quarryman's Amulet (1750), 44520 Greyfang's Fang (334)
 44521 Greyfang Amulet: greyfang_amulet.py, after the Lizard's Teeth Necklace (309).
 item_icon.py needs glrender.py (tools/sprites).
+44522 Broodmother's Tail: rat_tail.py (drawn).
+44523 Rat-Catcher's Ring: item_icon.py Ring4.obj --size 13 --bright 2.2 --recol Golden=c8ccd4 (RPG Pack 2).
