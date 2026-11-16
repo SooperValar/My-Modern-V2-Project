@@ -367,3 +367,5 @@ Details in `CHANGES.md`.
 - Nov 5: Ingrid / Gordon class rewards; Warrior templates start Immunity / Surround Hit at 4; Identify / Light / Recall
   fixed at 250; `{skill}` greetings; several item quests per NPC (`qalias`); Greenling Eye Collection -> Robin
   (quest template 2004); Players page reset / delete (backup) / restore.
+
+- [ ] **Items page: change many at once** (Cody, Nov 16: later). Tick rows (or all shown) and set / add to a field for all of them (+2 damage, min rank 7, price x1.5).
