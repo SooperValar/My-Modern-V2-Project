@@ -3624,18 +3624,31 @@ const ITEM_TABS = {
     row(g3, '', chks(PLACES.map(([v, l]) => chk(l, () => !!(c.placement & v), on => c.placement = on ? c.placement | v : c.placement & ~v))));
   },
   stats(b, c) {
-    b.insertAdjacentHTML('beforeend', '<div class="note"><b>When worn</b> adds to the player while worn (or a spell while it lasts), <b>When active</b> while it is turned on, <b>Needed</b> is what the player must have to wear or use it.</div>');
+    // a drink (used up when used, not worn): use_driver.c adds HP / End / Mana of the first column once, then, if it has a
+    // duration, skill_driver.c spell_from_item() makes a spell of the second column (attributes, skills, armor, weapon,
+    // max HP / End / Mana) for that long. The first column of attributes and skills does nothing for a drink.
+    const drink = bit(c.flags, 21) && !c.placement;
+    if (drink) {
+      b.insertAdjacentHTML('beforeend', '<div class="note"><b>A drink</b> (used up when used, not worn). <b>Right away</b>: Hit points, Endurance and Mana there are given back once when it is drunk (999 = all of it; negative hurts). <b>While it lasts</b>: everything there (Hit points / Endurance / Mana: more maximum) is a spell on the player for the <b>Lasts</b> time below (0 = no spell, only the right-away part). The right-away column of attributes and skills does nothing for a drink.</div>');
+      const g = grid2(b), sec = document.createElement('span'); sec.className = 'hint'; sec.style.marginLeft = '8px';
+      const show = () => { const t = c.duration / 18; sec.textContent = !c.duration ? 'no spell' : t < 60 ? Math.round(t) + ' seconds' : t < 3600 ? (t / 60).toFixed(t % 60 ? 1 : 0) + ' minutes' : (t / 3600).toFixed(1) + ' hours'; };
+      const d = document.createElement('div'); d.className = 'ipick';
+      const n = num(() => c.duration, v => { c.duration = v; show(); }, 0); n.addEventListener('input', () => { c.duration = Math.max(0, Math.round(+n.value || 0)); show(); });
+      d.append(n, document.createTextNode(' ticks'), sec); show();
+      row(g, 'Lasts', d, '18 ticks = 1 second: 1080 = 1 minute, 10800 = 10 minutes. Only one spell of the same kind at a time (Advanced: data 1).');
+    } else b.insertAdjacentHTML('beforeend', '<div class="note"><b>When worn</b> adds to the player while worn (or a spell while it lasts), <b>When active</b> while it is turned on, <b>Needed</b> is what the player must have to wear or use it.</div>');
+    const H = drink ? ['Right away', 'While it lasts', 'Needed'] : ['When worn', 'When active', 'Needed'];
     const cols = document.createElement('div'); cols.className = 'cols'; b.append(cols);
-    const mk = () => { const t = document.createElement('table'); t.className = 'st'; t.innerHTML = '<tr><th></th><th>When worn</th><th>When active</th><th>Needed</th></tr>'; return t; };
-    const put3 = (t, name, arr, base, lo, hi) => { const r = t.insertRow(); r.insertCell().textContent = name; for (let k = 0; k < 3; k++) r.insertCell().append(num(() => arr[base + k], v => arr[base + k] = v, lo, hi)); };
+    const mk = () => { const t = document.createElement('table'); t.className = 'st'; t.innerHTML = `<tr><th></th><th>${H[0]}</th><th>${H[1]}</th><th>${H[2]}</th></tr>`; return t; };
+    const put3 = (t, name, arr, base, lo, hi, inert) => { const r = t.insertRow(); r.insertCell().textContent = name; for (let k = 0; k < 3; k++) { const i = num(() => arr[base + k], v => arr[base + k] = v, lo, hi); if (k === 0 && inert && drink) { i.style.opacity = '.35'; i.title = 'Does nothing for a drink'; } r.insertCell().append(i); } };
     const t1 = mk();
-    ATTRS.forEach((a, z) => put3(t1, a, c.attrib, z * 3, -128, 127));
+    ATTRS.forEach((a, z) => put3(t1, a, c.attrib, z * 3, -128, 127, true));
     put3(t1, 'Hit points', c.hp, 0, -32768, 32767); put3(t1, 'Endurance', c.end, 0, -32768, 32767); put3(t1, 'Mana', c.mana, 0, -32768, 32767);
-    const t3 = document.createElement('table'); t3.className = 'st'; t3.innerHTML = '<tr><th></th><th>Normal</th><th>Active</th></tr>';
-    const put2 = (name, arr, lo, hi) => { const r = t3.insertRow(); r.insertCell().textContent = name; for (let k = 0; k < 2; k++) r.insertCell().append(num(() => arr[k], v => arr[k] = v, lo, hi)); };
+    const t3 = document.createElement('table'); t3.className = 'st'; t3.innerHTML = `<tr><th></th><th>${drink ? 'Right away' : 'Normal'}</th><th>${drink ? 'While it lasts' : 'Active'}</th></tr>`;
+    const put2 = (name, arr, lo, hi) => { const r = t3.insertRow(); r.insertCell().textContent = name; for (let k = 0; k < 2; k++) { const i = num(() => arr[k], v => arr[k] = v, lo, hi); if (k === 0 && drink) { i.style.opacity = '.35'; i.title = 'Does nothing for a drink'; } r.insertCell().append(i); } };
     put2('Armor value', c.armor, -128, 127); put2('Weapon value', c.weapon, -128, 127); put2('Light', c.light, -32768, 32767); put2('Damage to attackers', c.gethit_dam, -128, 127);
     const h = document.createElement('div'); h.innerHTML = '<h4>Attributes</h4>'; h.append(t1); h.insertAdjacentHTML('beforeend', '<h4>Armor, weapon, light</h4>'); h.append(t3); cols.append(h);
-    const t2 = mk(); SKILLS.forEach((s, z) => put3(t2, s, c.skill, z * 3, -128, 127));
+    const t2 = mk(); SKILLS.forEach((s, z) => put3(t2, s, c.skill, z * 3, -128, 127, true));
     const h2 = document.createElement('div'); h2.innerHTML = '<h4>Skills</h4>'; h2.append(t2); cols.append(h2);
   },
   adv(b, c) {
