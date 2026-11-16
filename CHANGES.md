@@ -1137,7 +1137,7 @@ Console `usetest <player> <slot>` (he uses that item). Tested on the test server
 
 ## Discord: new channel layout, everything as code (Nov 16)
 
-Cody's layout: Server (updates, commits, announcements, status, game-chat), Community (chat, screenshots, trade,
+Cody's layout: Server (updates, commits, announcements, info, game-chat), Community (chat, screenshots, trade,
 guides), Feedback (suggestions, balance, bugs). The editor's Discord link (all webhooks in the Server folder, never in git):
 - `discord-updates-webhook.txt` (new) -> #updates: written on the editor's Server page ("Discord #updates", Post), or the
   control request `{"action":"discord","channel":"updates","msg":...}`.
@@ -1145,7 +1145,7 @@ guides), Feedback (suggestions, balance, bugs). The editor's Discord link (all w
   line 2 may give the repo folder (default `MyV2\Client\Claude outputs\My-Modern-V2-Project`). Needs git in Ubuntu.
 - `discord-system-webhook.txt` -> #announcements: guard shouts, announcements, entering / leaving, [Server] messages,
   and now the server going up / down / crash notices too (unless a `discord-webhook.txt` exists).
-- `discord-board-webhook.txt` -> #status (who's online, rankings: in place, as before).
+- `discord-board-webhook.txt` -> #info (who's online, rankings: in place, as before).
 - `discord-chat-webhook.txt` + `discord-bot.txt` (line 2: the channel id) -> #game-chat, plain text as before.
 Every bot post is a code block (```, the up / down notices coloured with ```ansi) except #game-chat.
 

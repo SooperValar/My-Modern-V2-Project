@@ -2901,7 +2901,7 @@ class DiscordLink:
     - discord-system-webhook.txt  #announcements: guard shouts, game announcements, players entering / leaving,
                                   [Server] messages and the server going up / down (unless discord-webhook.txt exists)
     - discord-chat-webhook.txt    #game-chat: in-game shouts, posted as the player ("Name: text"), plain text
-    - discord-board-webhook.txt   #status: two messages kept up to date in place: who is online, and the rankings
+    - discord-board-webhook.txt   #info (was #status): two messages kept up to date in place: who is online, and the rankings
                                   (top 10 by experience + the best 3 of each class)
     - discord-bot.txt             line 1 the bot's token, line 2 the #game-chat channel id: messages written there are
                                   shown in game ("[Discord] Name: text"; bad words refused by the server)
