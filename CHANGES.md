@@ -1134,3 +1134,18 @@ Console `usetest <player> <slot>` (he uses that item). Tested on the test server
 **The game's own combinations as recipes (Nov 16):** the 30 (flasks and flowers, Leather Necklace + Lizard's Tooth) are in the live recipes.dat, exactly as the game did them (only that way round: flag 4, no message, no needs); copy in `tools/world/recipes/recipes_builtin_nov16.dat`. Mixes not listed still do what the code does (a Black Potion).
 
 **Rings and the Amulet of the Sun as recipes too (Nov 16):** 39 more in the live recipes.dat (now 69): plain golden ring + ruby / emerald / sapphire / topaz / amethyst / diamond, plain silver ring + ruby / emerald / sapphire (ring used, gem held), and the six Amulet of the Sun part combinations (either way). Still in the code only: Piece of Gold / Silver used alone -> a plain ring, and the "too powerful for a silver ring" / "needs a golden ring" refusals.
+
+## Discord: new channel layout, everything as code (Nov 16)
+
+Cody's layout: Server (updates, commits, announcements, status, game-chat), Community (chat, screenshots, trade,
+guides), Feedback (suggestions, balance, bugs). The editor's Discord link (all webhooks in the Server folder, never in git):
+- `discord-updates-webhook.txt` (new) -> #updates: written on the editor's Server page ("Discord #updates", Post), or the
+  control request `{"action":"discord","channel":"updates","msg":...}`.
+- `discord-commits-webhook.txt` (new) -> #commits: the project's commits once pushed (origin/main), checked every minute;
+  line 2 may give the repo folder (default `MyV2\Client\Claude outputs\My-Modern-V2-Project`). Needs git in Ubuntu.
+- `discord-system-webhook.txt` -> #announcements: guard shouts, announcements, entering / leaving, [Server] messages,
+  and now the server going up / down / crash notices too (unless a `discord-webhook.txt` exists).
+- `discord-board-webhook.txt` -> #status (who's online, rankings: in place, as before).
+- `discord-chat-webhook.txt` + `discord-bot.txt` (line 2: the channel id) -> #game-chat, plain text as before.
+Every bot post is a code block (```, the up / down notices coloured with ```ansi) except #game-chat.
+

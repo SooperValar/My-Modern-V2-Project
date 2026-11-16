@@ -615,6 +615,9 @@ table.pl button:hover { color: var(--text); border-color: var(--gold); }
     <div class="box">
       <h3>Announce</h3>
       <div class="row2"><input type="text" id="sann" placeholder="A message every player sees as [Server] …"><button class="btn sec" id="sannb">Send</button></div>
+      <h3 style="margin-top:16px">Discord #updates</h3>
+      <textarea id="sdisc" rows="4" style="width:100%;box-sizing:border-box;resize:vertical" placeholder="Update notes or an announcement for Discord #updates. Posted as a code block."></textarea>
+      <div class="row2" style="justify-content:flex-end;margin-top:6px"><span id="sdiscn" style="color:var(--dim2);font-size:12px;margin-right:auto"></span><button class="btn sec" id="sdiscb">Post to #updates</button></div>
       <h3 style="margin-top:16px">Console</h3>
       <div class="row2"><input type="text" id="scmd" placeholder="help · who · raise Bob 5000 · gold Bob 50 · tell Bob hi · kick Bob"><button class="btn sec" id="scmdb">Run</button></div>
       <div id="conout"></div>
@@ -638,6 +641,18 @@ table.pl button:hover { color: var(--text); border-color: var(--gold); }
 
 <script>
 const SPRITE_V = Date.now();
+document.addEventListener('DOMContentLoaded', () => {
+  const t = document.querySelector('#sdisc'), n = document.querySelector('#sdiscn'), b = document.querySelector('#sdiscb');
+  if (!t) return;
+  t.oninput = () => { n.textContent = t.value.length ? t.value.length + ' / 1900' : ''; };
+  b.onclick = async () => {
+    if (!t.value.trim()) return;
+    if (!confirm('Post this to Discord #updates?')) return;
+    const r = await api('/api/srv/discord', { text: t.value });
+    if (r.error) return toast(r.error, true);
+    toast('Posted to #updates.'); t.value = ''; n.textContent = '';
+  };
+});
 'use strict';
 const MAPX = 1024, CH = 32;
 const $ = s => document.querySelector(s);

@@ -2874,10 +2874,33 @@ def HL(t):
     return '\x1b[1;34m' + t + '\x1b[0m'
 
 
+def dcode(text, lang=''):
+    """a Discord code block (Cody, Nov 16: everything the bots post is code, except #game-chat)"""
+    t = str(text).replace('```', "'''").strip('\n')
+    return '```%s\n%s\n```' % (lang, t)
+
+
+def dhook(server_dir, *names):
+    """the first webhook address found in these files of the Server folder (secrets: never in the project or git)"""
+    for n in names:
+        try:
+            for l in open(os.path.join(server_dir, n), encoding='utf-8-sig').read().splitlines():
+                l = l.strip()
+                if l.startswith(('https://discord.com/api/webhooks/', 'https://discordapp.com/api/webhooks/')):
+                    return l
+        except OSError:
+            pass
+    return ''
+
+
 class DiscordLink:
-    """Mercenaries of Asgard v2 <-> Discord (all secrets in the Server folder, never in git):
-    - discord-chat-webhook.txt    #game-chat: in-game shouts, posted as the player ("Name: text")
-    - discord-system-webhook.txt  #system: announcements, players entering / leaving, [Server] messages
+    """Mercenaries of Asgard v2 <-> Discord (all secrets in the Server folder, never in git). Every post is a code block
+    except #game-chat (Cody, Nov 16). The channels (Nov 16 layout, Server category):
+    - discord-updates-webhook.txt  #updates: update notes and announcements written on the editor's Server page
+    - discord-commits-webhook.txt  #commits: the project's commits once pushed (origin/main); line 2 may name the repo folder
+    - discord-system-webhook.txt  #announcements: guard shouts, game announcements, players entering / leaving,
+                                  [Server] messages and the server going up / down (unless discord-webhook.txt exists)
+    - discord-chat-webhook.txt    #game-chat: in-game shouts, posted as the player ("Name: text"), plain text
     - discord-board-webhook.txt   #status: two messages kept up to date in place: who is online, and the rankings
                                   (top 10 by experience + the best 3 of each class)
     - discord-bot.txt             line 1 the bot's token, line 2 the #game-chat channel id: messages written there are
@@ -2985,9 +3008,10 @@ class DiscordLink:
             name, _, text = t.partition(': ')
             self._post(ch_hook, text, name)
         if system:
-            self._post(sys_hook, '\n'.join(system))
+            self._post(sys_hook, dcode('\n'.join(system)))
         if status:
-            self._post(self._hook('discord-webhook.txt'), '\n'.join(':loudspeaker: ' + t[len('[Server]'):].strip() for t in status))
+            self._post(dhook(self.dir, 'discord-webhook.txt', 'discord-system-webhook.txt'),
+                       dcode('\n'.join('[Server] ' + t[len('[Server]'):].strip() for t in status)))
 
     def _status_board(self):
         hook = self._hook('discord-board-webhook.txt')
@@ -3065,6 +3089,36 @@ class DiscordLink:
         text += '```\n-# updated <t:%d:R>' % (int(time.time()) // 60 * 60)
         self._board('rankings', hook, text[:1990])
 
+    def _commits(self):
+        """#commits: what was pushed to the project (origin/main moves when Cody pushes), oldest first, as code"""
+        cfg = self._file('discord-commits-webhook.txt')
+        hook = cfg[0] if cfg and cfg[0].startswith(('https://discord.com/api/webhooks/', 'https://discordapp.com/api/webhooks/')) else ''
+        if not hook:
+            return
+        repo = cfg[1] if len(cfg) > 1 else os.path.join(os.path.dirname(self.dir), 'Client', 'Claude outputs', 'My-Modern-V2-Project')
+        try:
+            out = subprocess.run(['git', '-c', 'safe.directory=*', '-C', repo, 'log', '--format=%H%x1f%h%x1f%s', '-n', '30', 'origin/main'],
+                                 capture_output=True, text=True, timeout=20).stdout
+        except Exception:
+            return
+        rows = [l.split('\x1f') for l in out.splitlines() if l.count('\x1f') == 2]
+        if not rows:
+            return
+        last = self.state.get('commit_last')
+        self.state['commit_last'] = rows[0][0]
+        if not last or last == rows[0][0]:
+            if not last: self._save()
+            return
+        new = []
+        for full, short, subj in rows:
+            if full == last:
+                break
+            new.append((short, subj))
+        new = new[:15][::-1]
+        body = HL('%d new commit%s · main' % (len(new), '' if len(new) == 1 else 's')) + '\n' + '\n'.join('  %s  %s' % (h, t[:150]) for h, t in new)
+        self._post(hook, dcode(body, 'ansi'))
+        self._save()
+
     def _bot(self):
         cfg = self._file('discord-bot.txt')
         if len(cfg) < 2 or not cfg[1].isdigit():
@@ -3104,7 +3158,7 @@ class DiscordLink:
     def _loop(self):
         while True:
             now = time.time()
-            for what, every, attr in ((self._reorder, 60, 'order_t'), (self._feed, 3, 'feed_t'), (self._bot, 3, 'bot_t'),
+            for what, every, attr in ((self._reorder, 60, 'order_t'), (self._feed, 3, 'feed_t'), (self._bot, 3, 'bot_t'), (self._commits, 60, 'commit_t'),
                                       (self._rankings, 600, 'rank_t'), (self._status_board, 60, 'board_t')):
                 if now - getattr(self, attr, 0) >= every:
                     setattr(self, attr, now)
@@ -3220,20 +3274,22 @@ class ServerCtl:
         self.bk_info = {'time': time.strftime('%Y-%m-%d %H:%M'), 'ok': ok, 'msg': line, 'dir': BACKUP['dir']}
         return ok, line
 
-    # --- Discord: posts to a channel webhook (server up / going down / back after a crash). The webhook address is a
-    # secret: it lives only in <Server folder>/discord-webhook.txt (one line), never in the project or git.
-    def discord_url(self):
-        p = os.path.join(os.path.dirname(self.control), 'discord-webhook.txt') if self.control else ''
-        try:
-            u = open(p, encoding='utf-8-sig').read().strip()     # (Notepad may add a BOM)
-            return u if u.startswith('https://discord.com/api/webhooks/') or u.startswith('https://discordapp.com/api/webhooks/') else ''
-        except OSError:
+    # --- Discord: posts to a channel webhook, as a code block (server up / going down / back after a crash: #announcements,
+    # or discord-webhook.txt if it exists; channel 'updates': #updates). The webhook addresses are secrets: they live only
+    # in the Server folder, never in the project or git.
+    def discord_url(self, channel='announcements'):
+        d = os.path.dirname(self.control) if self.control else ''
+        if not d:
             return ''
+        if channel == 'updates':
+            return dhook(d, 'discord-updates-webhook.txt')
+        return dhook(d, 'discord-webhook.txt', 'discord-system-webhook.txt')
 
-    def discord(self, text, wait=False):
-        url = self.discord_url()
+    def discord(self, text, wait=False, channel='announcements', lang=''):
+        url = self.discord_url(channel)
         if not url:
-            return 'no webhook (put its address in discord-webhook.txt in the Server folder)'
+            return 'no webhook for #%s (put its address in %s in the Server folder)' % (channel, 'discord-updates-webhook.txt' if channel == 'updates' else 'discord-system-webhook.txt')
+        text = dcode(text, lang)
         def post():
             import urllib.request
             try:
@@ -3267,12 +3323,12 @@ class ServerCtl:
             return                            # the editor just started: no post for the state it found
         was, prev_up = prev
         if running and not was:
-            self.discord(':green_circle: **Mercenaries of Asgard v2 is online.** Come on in!')
+            self.discord('\x1b[1;32m● Mercenaries of Asgard v2 is online.\x1b[0m Come on in!', lang='ansi')
         elif was and not running:
             why = self.stopping
-            self.discord(':red_circle: The server is offline' + (' for %s. It will be back soon.' % why if why else '.'))
+            self.discord('\x1b[1;31m● The server is offline\x1b[0m' + (' for %s. It will be back soon.' % why if why else '.'), lang='ansi')
         elif running and was and prev_up is not None and up is not None and up + 30 < prev_up:
-            self.discord(':warning: The server restarted by itself (a crash?) and is **online** again.')
+            self.discord('\x1b[1;33m● The server restarted by itself\x1b[0m (a crash?) and is online again.', lang='ansi')
 
     # --- the control port
     def console(self, cmd, timeout=5):
@@ -3424,7 +3480,7 @@ class ServerCtl:
             self._log('the server is not running'); return True
         st = self.status()
         self.stopping = reason
-        self.discord(':yellow_circle: The server goes down for %s%s.' % (reason, ' in %d seconds' % warn if warn and st.get('online') else ''))
+        self.discord('\x1b[1;33m● The server goes down\x1b[0m for %s%s.' % (reason, ' in %d seconds' % warn if warn and st.get('online') else ''), lang='ansi')
         if warn and st.get('online'):
             self._log('warning %d player(s): going down in %d seconds' % (st['online'], warn))
             self.console('announce The server goes down for %s in %d seconds.' % (reason, warn))
@@ -3519,8 +3575,8 @@ class ServerCtl:
             elif act == 'log':
                 entry['result'] = 'done'
                 self._answer(rid, {'ok': True, 'log': self.log_tail(int(req.get('lines', 200)))})
-            elif act == 'discord':              # post a message to the Discord channel (a test, an announcement)
-                err = self.discord(str(req.get('msg', ''))[:1900], wait=True)
+            elif act == 'discord':              # post to Discord (channel: announcements / updates), as a code block
+                err = self.discord(str(req.get('msg', ''))[:1900], wait=True, channel=str(req.get('channel', 'announcements')))
                 entry['result'] = 'done' if not err else 'failed'
                 self._answer(rid, {'ok': not err, 'error': err})
             elif act == 'backup':               # a backup now (into recent/ only)
@@ -3762,6 +3818,12 @@ def make_handler(world, sprites, page, minimap, ctl):
             u = urlparse(self.path)
             n = int(self.headers.get('Content-Length') or 0)
             body = json.loads(self.rfile.read(n) or b'{}')
+            if u.path == '/api/srv/discord':      # the Server page: a post to #updates (as a code block)
+                t = str(body.get('text', '')).strip()[:1900]
+                if not t:
+                    return self.js({'error': 'Write something first.'})
+                err = ctl.discord(t, wait=True, channel='updates')
+                return self.js({'error': err} if err else {'ok': True})
             if u.path == '/api/srv/cmd':
                 r = ctl.console(str(body.get('cmd', '')))
                 return self.js({'output': r} if r is not None else {'error': 'The server does not answer on its control port (is it running, with the new code?).'})
@@ -4595,6 +4657,9 @@ table.pl button:hover { color: var(--text); border-color: var(--gold); }
     <div class="box">
       <h3>Announce</h3>
       <div class="row2"><input type="text" id="sann" placeholder="A message every player sees as [Server] …"><button class="btn sec" id="sannb">Send</button></div>
+      <h3 style="margin-top:16px">Discord #updates</h3>
+      <textarea id="sdisc" rows="4" style="width:100%;box-sizing:border-box;resize:vertical" placeholder="Update notes or an announcement for Discord #updates. Posted as a code block."></textarea>
+      <div class="row2" style="justify-content:flex-end;margin-top:6px"><span id="sdiscn" style="color:var(--dim2);font-size:12px;margin-right:auto"></span><button class="btn sec" id="sdiscb">Post to #updates</button></div>
       <h3 style="margin-top:16px">Console</h3>
       <div class="row2"><input type="text" id="scmd" placeholder="help · who · raise Bob 5000 · gold Bob 50 · tell Bob hi · kick Bob"><button class="btn sec" id="scmdb">Run</button></div>
       <div id="conout"></div>
@@ -4618,6 +4683,18 @@ table.pl button:hover { color: var(--text); border-color: var(--gold); }
 
 <script>
 const SPRITE_V = Date.now();
+document.addEventListener('DOMContentLoaded', () => {
+  const t = document.querySelector('#sdisc'), n = document.querySelector('#sdiscn'), b = document.querySelector('#sdiscb');
+  if (!t) return;
+  t.oninput = () => { n.textContent = t.value.length ? t.value.length + ' / 1900' : ''; };
+  b.onclick = async () => {
+    if (!t.value.trim()) return;
+    if (!confirm('Post this to Discord #updates?')) return;
+    const r = await api('/api/srv/discord', { text: t.value });
+    if (r.error) return toast(r.error, true);
+    toast('Posted to #updates.'); t.value = ''; n.textContent = '';
+  };
+});
 'use strict';
 const MAPX = 1024, CH = 32;
 const $ = s => document.querySelector(s);
