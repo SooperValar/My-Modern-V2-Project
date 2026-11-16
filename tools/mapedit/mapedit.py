@@ -4121,6 +4121,11 @@ nav .grow { flex: 1; }
 #ip .qhd { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
 #ip .qhd h3 { margin: 0; flex: 1; }
 #ip .hint { color: var(--dim2); font-size: 12px; margin: 0 0 10px; }
+.vprice { margin-left: 18px; border-collapse: collapse; font-size: 12px; color: var(--dim); }
+.vprice th { font-weight: 600; font-size: 10px; text-transform: uppercase; letter-spacing: .05em; color: var(--dim2); padding: 0 10px 2px 0; text-align: right; }
+.vprice td { padding: 0 10px 0 0; text-align: right; white-space: nowrap; }
+.vprice td:first-child, .vprice th:first-child { text-align: left; }
+.vprice td:nth-child(2) { color: var(--gold2); }
 #ip .ifilt { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 10px; }
 #ip .ifilt input[type=search] { width: 260px; background: var(--panel2); color: var(--text); border: 1px solid var(--line); border-radius: 6px; padding: 6px 9px; }
 #ip .ifilt input[type=search]:focus { border-color: var(--gold); outline: none; }
@@ -7518,9 +7523,18 @@ const ITEM_TABS = {
       row(g, k ? 'Look when on/active' : 'Look', sp, k ? 'For doors, torches and the like (0 = same).' : '');
     }
     const val = document.createElement('div'); val.className = 'ipick';
-    val.append(num(() => Math.floor(c.value / 100), v => c.value = v * 100 + c.value % 100, 0), document.createTextNode(' gold '),
-      num(() => c.value % 100, v => c.value = Math.floor(c.value / 100) * 100 + v, 0, 99), document.createTextNode(' silver'));
-    row(g, 'Value', val, 'What merchants pay for it.');
+    const vg = num(() => Math.floor(c.value / 100), v => c.value = v * 100 + c.value % 100, 0), vs = num(() => c.value % 100, v => c.value = Math.floor(c.value / 100) * 100 + v, 0, 99);
+    const bd = document.createElement('table'); bd.className = 'vprice';
+    const money = n => { const g = Math.floor(n / 100), sv = n % 100; return g ? g + 'g' + (sv ? ' ' + sv + 's' : '') : sv + 's'; };
+    const paint = () => {      // svr_do.c barter(): a merchant sells for 4x the value and buys for 1/4, Bartering brings both to the value at 150
+      const v = Math.max(0, Math.round(+vg.value || 0)) * 100 + Math.min(99, Math.max(0, Math.round(+vs.value || 0)));
+      const sell = b => Math.max(v, v * 4 - Math.trunc(v * b / 50)), buy = b => Math.min(v, Math.trunc(v / 4) + Math.trunc(v * b / 200));
+      bd.innerHTML = '<tr><th>Bartering</th><th>Player pays</th><th>Merchant pays</th></tr>' +
+        [0, 50, 100, 150].map(b => `<tr><td>${b}${b === 150 ? '+' : ''}</td><td>${money(sell(b))}</td><td>${money(buy(b))}</td></tr>`).join('');
+    };
+    vg.addEventListener('input', paint); vs.addEventListener('input', paint); paint();
+    val.append(vg, document.createTextNode(' gold '), vs, document.createTextNode(' silver'), bd);
+    row(g, 'Value', val, 'The base price. Merchants sell for 4x and buy for a quarter; Bartering 150 brings both to the value. A merchant\'s own "Sells at / Pays" % (Merchants tab) changes it further; a stack counts each piece.');
     row(g, 'Min. rank to wear', num(() => c.min_rank, v => c.min_rank = v, 0, 127));
     row(g, 'Driver', num(() => c.driver, v => c.driver = v, 0, 255), 'The special code it runs when used (6 = portal, 1 = door, …). Its values are on Advanced.');
     for (const [title, fl] of ITEM_FLAGS) { const g2 = grid2(b, title); row(g2, '', chks(fl.map(([bt, l]) => chk(l, () => bit(c.flags, bt), on => c.flags = setBit(c.flags, bt, on))))); }
