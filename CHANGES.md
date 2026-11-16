@@ -1130,3 +1130,5 @@ Drinks (used up when used, not worn) now check their **Needed** column when drun
 (before, only Min. rank was checked; no drink in the game had Needed values). Item Needed values are bytes: 127 at most.
 Console `usetest <player> <slot>` (he uses that item). Tested on the test server; live since Nov 16.
 
+
+**The game's own combinations as recipes (Nov 16):** the 30 (flasks and flowers, Leather Necklace + Lizard's Tooth) are in the live recipes.dat, exactly as the game did them (only that way round: flag 4, no message, no needs); copy in `tools/world/recipes/recipes_builtin_nov16.dat`. Mixes not listed still do what the code does (a Black Potion).
