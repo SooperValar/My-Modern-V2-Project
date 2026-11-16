@@ -233,6 +233,8 @@ Cody makes the first ones and tries them.
 
 **Restarts (Nov 15, after two slips):** a restart is pre-approved only while nobody is online: gate it in the same command, `grep -q '"online": 0' status.json && echo '{...stop-send...}' > requests/x.json`, and if someone is on (often Cody testing), ask first.
 
+**Settled by Cody (Nov 16), don't raise again:** the exp / reward balance suggestions (Old Greyfang, Thieves Basement, Lizard Temple, Dungeon of Doors) are done; Azrael stays unticked in the Haunted Castle area clear on purpose (not a normal monster, not reached the normal way).
+
 **Nov 16, later:** editor Items page (every item template; edits reach carried copies), drinks' Stats tab, Value price table, and **recipes** (server/recipe.c, `.dat/recipes.dat`, Items page -> Recipes; live). Test server for this session was `~/sb` (Iluvatar got test items there only).
 
 **Where we left off (Nov 16):** quest items have their own pictures (44510-44521, live, client-dist 39aab4b published locally; Cody pushes `client-dist`). Item pipeline: `tools/sprites/item_icon.py <model.gltf|.obj> <out.png>` (32x32 at the game camera; `--glass/--liquid` for bottles, `--recol Mat=rrggbb`, `--roll`). Models: `MyV2\3d Models\` Fantasy Props (glTF), RPG Pack 1/2 (OBJ/FBX, flat colours: the better match for the game's item look).
