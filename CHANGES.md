@@ -1145,3 +1145,7 @@ is GitHub's own Discord hook. Webhooks (in the Server folder, never in git):
 - `discord-board-webhook.txt` -> #info (who's online, rankings: in place, as before).
 - `discord-chat-webhook.txt` + `discord-bot.txt` (line 2: the channel id) -> #game-chat, plain text as before.
 Every bot post is a code block (```, the up / down notices coloured with ```ansi) except #game-chat.
+
+## Rat-Catcher's cellar: the ratlings (Nov 16)
+
+The small room in Underground I (886-891, 24-30), where the hole in the quest giver's house (528,465 in Aston) lands (888,25): two **Young Ratlings** (templates 2138, 2139; Lance Corporal, Ratling stats at 65%, 3,000 points) and the **Ratling Broodmother** (2140; Corporal, 80%, 11,000 points). `tools/world/rat_cellar/place_ratlings.py` (made.json). Live.
