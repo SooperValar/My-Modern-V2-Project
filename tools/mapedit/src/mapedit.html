@@ -3767,7 +3767,13 @@ const rcDirty = () => RC && JSON.stringify(RC) !== RC0;
 // what the game itself does (use_driver.c: driver 4 flasks, driver 14 the leather necklace); a recipe with the same two items replaces it
 const RC_GAME = [[100, 18, 101], [100, 46, 102], [100, 141, 145], [100, 140, 144], [100, 142, 143], [100, 197, 219], [100, 198, 220], [100, 199, 218], [100, 294, 295],
   [143, 140, 147], [144, 142, 147], [147, 141, 148], [218, 197, 223], [218, 198, 221], [219, 198, 222], [219, 199, 223], [220, 197, 222], [220, 199, 221],
-  [221, 197, 224], [222, 199, 224], [223, 198, 224], ...[207, 208, 209, 210, 211, 212, 213, 214, 215].map(t => [t, 206, t + 1])];
+  [221, 197, 224], [222, 199, 224], [223, 198, 224], ...[207, 208, 209, 210, 211, 212, 213, 214, 215].map(t => [t, 206, t + 1]),
+  // rings (build_ring, driver 24): a plain golden / silver ring used with a gem held; MyV2 topaz / amethyst / diamond only in gold
+  ...[[339, 362], [340, 363], [341, 364], [342, 365], [343, 366], [344, 367], [345, 368], [346, 369], [347, 370], [487, 490], [488, 491], [489, 492]].map(([g, r]) => [337, g, r]),
+  ...Array.from({ length: 12 }, (_, k) => [337, 1390 + k, 1378 + k]),
+  ...[[339, 348], [340, 349], [341, 350], [342, 351], [343, 352], [344, 353], [345, 354], [346, 355], [347, 356]].map(([g, r]) => [338, g, r]),
+  // the Amulet of the Sun (build_amulet, driver 32): its parts, either way round
+  [471, 472, 476], [471, 473, 474], [472, 473, 475], [471, 475, 466], [472, 474, 466], [473, 476, 466]];
 const tname = t => { const x = pal && pal.templates.find(r => r[0] === t); return x ? x[1] : 'template ' + t; };
 function recipesRender(el) {
   const ro = RO(), box = document.createElement('div'); box.className = 'box'; el.appendChild(box);
@@ -3820,7 +3826,7 @@ function recipesRender(el) {
   // the game's own
   const gb = document.createElement('details'); gb.style.marginTop = '18px';
   gb.open = !!IV.gameOpen; gb.ontoggle = () => { IV.gameOpen = gb.open; };
-  gb.innerHTML = `<summary class="hint" style="cursor:pointer">What the game itself already does (${RC_GAME.length}: the flasks and flowers, the Leather Necklace and Lizard's Teeth) · a recipe with the same two items replaces it</summary>`;
+  gb.innerHTML = `<summary class="hint" style="cursor:pointer">What the game itself already does (${RC_GAME.length}: flasks and flowers, the Leather Necklace and Lizard's Teeth, rings and gems, the Amulet of the Sun) · a recipe with the same two items replaces it</summary>`;
   const gt = document.createElement('table'); gt.className = 'qtab'; gt.style.marginTop = '6px';
   gt.innerHTML = '<thead><tr><th>Used</th><th>Held</th><th>Makes</th><th></th></tr></thead>';
   const gbd = document.createElement('tbody'); gt.append(gbd);
@@ -3828,7 +3834,7 @@ function recipesRender(el) {
     const tr = document.createElement('tr');
     tr.innerHTML = `<td>${esc(tname(a))} <span class="hint">${a}</span></td><td>${esc(tname(b))} <span class="hint">${b}</span></td><td>${esc(tname(res))} <span class="hint">${res}</span></td><td></td>`;
     const c = document.createElement('button'); c.className = 'sm'; c.textContent = 'Make a recipe of it'; c.disabled = RO();
-    c.onclick = () => { RC.push({ a, b, res, flags: a >= 207 && a <= 215 ? 4 : 0, rank: 0, need: -1, needv: 0, text: '' }); itemsRender(); };
+    c.onclick = () => { RC.push({ a, b, res, flags: a >= 471 && a <= 476 ? 0 : 4, rank: 0, need: -1, needv: 0, text: '' }); itemsRender(); };
     tr.lastChild.append(c); gbd.append(tr);
   }
   gb.append(gt); box.append(gb);

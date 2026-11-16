@@ -1132,3 +1132,5 @@ Console `usetest <player> <slot>` (he uses that item). Tested on the test server
 
 
 **The game's own combinations as recipes (Nov 16):** the 30 (flasks and flowers, Leather Necklace + Lizard's Tooth) are in the live recipes.dat, exactly as the game did them (only that way round: flag 4, no message, no needs); copy in `tools/world/recipes/recipes_builtin_nov16.dat`. Mixes not listed still do what the code does (a Black Potion).
+
+**Rings and the Amulet of the Sun as recipes too (Nov 16):** 39 more in the live recipes.dat (now 69): plain golden ring + ruby / emerald / sapphire / topaz / amethyst / diamond, plain silver ring + ruby / emerald / sapphire (ring used, gem held), and the six Amulet of the Sun part combinations (either way). Still in the code only: Piece of Gold / Silver used alone -> a plain ring, and the "too powerful for a silver ring" / "needs a golden ring" refusals.
