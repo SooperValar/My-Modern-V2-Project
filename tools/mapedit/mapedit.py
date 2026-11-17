@@ -5785,7 +5785,7 @@ async function selectTile(x, y) {
   if ((r.char && !r.char.player) || r.pending) npcEditor(el, r, x, y, ro);
   const pr = (r.char || r.pending || {}).patrol;
   if (pr && pr.length) { selPatrol = [[x, y], ...pr]; redrawTop(); }
-  if (r.item) { lootEditor(el, r, x, y, ro); itemEditor(el, r, x, y, ro); }
+  if (r.item) { lootEditor(el, r, x, y, ro); const df = decorFacing(x, y, r.item, ro); if (df) el.appendChild(df); itemEditor(el, r, x, y, ro); }
   const fl = $('#tfl');
   FLAGS.forEach((f, i) => {
     const on = r.flags.includes({ 'blocks walking': 'move block', 'blocks sight': 'sight block', 'no fighting': 'no fight' }[f] || f);
@@ -5871,6 +5871,30 @@ function chestFacing(x, y, it, ro, after) {
     d.append(b);
   });
   return d;
+}
+// the facing of a placed decoration (Nov 16): the same thing for each wall - S, W: seen from the front; N, E: its back
+// (the wall is in front of it; it shows with hide walls). tools/sprites/wall_decor*.py, sprites 48000-48025.
+const W4 = (s, w, n, e) => [[s, 0, 'S', 'wall south'], [w, 0, 'W', 'wall west'], [n, 0, 'N', 'wall north (its back)'], [e, 0, 'E', 'wall east (its back)']];
+const DECOR_FACES = [
+  [[792, 0, 'S', 'facing south'], [48020, 0, 'W', 'facing west'], [48021, 0, 'N', 'facing north'], [48022, 0, 'E', 'facing east']],
+  [[914, 0, 'S', 'facing south'], [48023, 0, 'W', 'facing west'], [48024, 0, 'N', 'facing north'], [48025, 0, 'E', 'facing east']],
+  W4(572, 48001, 48004, 48007), W4(580, 48002, 48005, 48008), W4(48000, 48003, 48006, 48009), W4(16553, 16552, 48010, 48011),
+  W4(16554, 16555, 48012, 48013), W4(16556, 16557, 48014, 48015), W4(16908, 16897, 48018, 48019), W4(16909, 16898, 48018, 48019),
+  W4(620, 622, 626, 624)];
+function decorFacing(x, y, it, ro) {
+  const set = DECOR_FACES.find(s => s.some(f => f[0] === it.sprite));
+  if (!set) return null;
+  const cur = set.findIndex(f => f[0] === it.sprite);
+  const d = document.createElement('div'); d.className = 'faces';
+  set.forEach((f, i) => {
+    const b = document.createElement('button'); b.className = 'face' + (i === cur ? ' on' : ''); b.disabled = ro; b.title = f[3];
+    b.append(thumb(f[0], 44, 44), Object.assign(document.createElement('span'), { className: 'fl', textContent: f[2] }));
+    b.onclick = async () => { if (i === cur) return; await edit([{ op: 'itemedit', x, y, sprite: [f[0], f[1]] }], `turned ${it.name || 'the item'} at ${x},${y}: ${f[3]}`, false); selectTile(x, y); };
+    d.append(b);
+  });
+  const box = document.createElement('div'); box.className = 'ied';
+  const l = document.createElement('div'); l.className = 'lb'; l.textContent = 'Facing'; box.append(l, d);
+  return box;
 }
 function chestDirty() { return TP && TP.kind === 'chest' && JSON.stringify(TP.C) + '|' + TP.name !== TP.Corig; }
 

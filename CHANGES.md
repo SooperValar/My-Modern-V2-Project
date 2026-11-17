@@ -1184,3 +1184,20 @@ East of Fenwatch (zone "Drowned Village", x 416-504, y 853-950), for Sergeant Ma
   - **Bounty Master Corwin**: Drowned Sailor Head and Bog-man Head, 2,500 exp + 125G each, as often as you like, from Second Lieutenant.
 - **Swimming** (server `svr_do.c`, `driver.c`, `data.h` SWIM_FULL, `skill.c`): under water a player loses breath (about 4.5 hitpoints a second, no regeneration) as before; now each point of Swimming takes 1/125 of that away, **none left at Swimming 125**. This also holds in the game's other under-water places (the Underwater Pentagram area). No class had Swimming in its skill list, so the teaching NPC gives it to the player's class on the spot (up to 60 raised, difficulty 5, like Perception).
 - **Item pictures** 44524-44532 (`tools/sprites/quest_items/drowned_village.py`): the two heads (cut from the monsters' own frames), compass, hex-doll, net, pouch, ring, belt (drawn: a coiled sealskin belt with a silver fish buckle; a first recolour of the game's thin belt strip looked bad), draught. Items 2024-2032; the quest items and heads have no value (can't be sold) and no labyrinth flag.
+
+## Wall decorations for all four walls, turned shrines (Nov 16-17)
+
+Items are drawn at full height even with hide walls (F6), so a decoration on the far side of a wall shows there: it now
+has its back. Sprites 48000-48025 (`tools/sprites/wall_decor*.py`, `tools/sprites/art/shrines_cody/`; published):
+- pictures (Misty Plains, Sunset) and the framed Mirror: W versions and wooden backs for N / E walls; the framed Mirror
+  (1246) now hangs like the pictures (48000; its template and every copy; the two on a north wall at 614,530 / 622,530
+  got the back);
+- round mirrors and shields (the game had S and W): wooden / leather backs for N and E;
+- bookshelves: the book-of-wisdom shelf for S, a plain back (no books) for N and E;
+- temple shrine (792) and Seyan'Du shrine (914) turned W / N / E: the temple's statue and bowl drawn by Cody, the sides
+  turning with it (the shadowy side only shows facing S and E; the shiny side everywhere else).
+Skeletons in Chains already had all four (620 S, 622 W, 626 N, 624 E).
+Item templates 2033-2050 ("..., wall W", "..., back, wall N" ...; `tools/world/wall_decor_items.py`, live). Editor: a
+**Facing** row (S / W / N / E) in the side panel for a placed shrine, picture, mirror, shield, bookshelf or skeleton in
+chains: one click turns that one (shrines keep their own settings this way).
+

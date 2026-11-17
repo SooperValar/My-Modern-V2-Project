@@ -14,11 +14,15 @@ spec = importlib.util.spec_from_file_location('mapedit', os.environ.get('MAPEDIT
 me = importlib.util.module_from_spec(spec); spec.loader.exec_module(me)
 W = me.World(DAT, os.path.dirname(os.path.abspath(DAT)), os.path.join(DAT, 'mapedit-areas.json'))
 J = {int(k): v for k, v in json.load(open(os.path.join(HERE, '..', 'sprites', 'wall_decor.json'))).items()}
+F = {k: me.IT_FIELDS[k] for k in ('name', 'sprite', 'flags', 'driver')}
+TPL = {}
+for t in range(1, me.MAXTITEM):                 # read once (itemp() counts every copy: far too slow in a loop)
+    if W.titem[t * me.ITEM_SIZE + me.I_USED]:
+        TPL[t] = me.tpl_read(W.titem, t * me.ITEM_SIZE, F)
 def base_for(sprite):
     best = None
-    for t in range(1, me.MAXTITEM):
-        it = W.itemp(t)
-        if it and it['sprite'][0] == sprite and not (it['flags'] >> 2) & 1:
+    for t, it in TPL.items():
+        if it['sprite'][0] == sprite and not (it['flags'] >> 2) & 1:
             if it['driver'] == 0: return t
             best = best or t
     return best
