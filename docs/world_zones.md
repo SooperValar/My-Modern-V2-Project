@@ -192,3 +192,6 @@ Shown by `/who`, by NPCs when asked where you are, and in server logs. A spot in
 | 182 | Fenwatch Marsh | 406,835 | 494,852 | "in the Fenwatch Marsh" |
 | 183 | Fenwatch Marsh | 406,770 | 423,834 | "in the Fenwatch Marsh" |
 | 184 | Fenwatch Marsh | 477,770 | 494,834 | "in the Fenwatch Marsh" |
+| 185 | Drowned Village | 416,853 | 504,950 | "in the Drowned Village" |
+| 186 | Flooded Chapel | 454,896 | 468,912 | "in the Flooded Chapel" |
+| 187 | Flooded Chapel | 460,884 | 461,895 | "in the Flooded Chapel" |

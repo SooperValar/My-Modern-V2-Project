@@ -8,12 +8,16 @@ walk / attack / death frame stay as the original drew them. The new set gets its
 Ramps (dark, mid, light): sandstone, slate, ... (RAMPS below). Made so far (CHANGES.md "Old Quarry"):
     41000 Quarry Golem   (the Golem, 17360, in sandstone)
     42100 Deep Grolm     (the Grolm, 12240, in cave slate)
+    50000 Drowned Sailor (the Undead, 19408, drowned); 50500 Bog-man (the Grolm, 12240, bog); 51000 Sea Golem (the Golem, 17360, seagolem)
 """
 import os, sys
 HERE = os.path.dirname(os.path.abspath(__file__))
 RAMPS = {
     'sandstone': ((40, 30, 18), (128, 102, 68), (204, 180, 134)),
     'slate': ((18, 22, 30), (70, 82, 98), (150, 164, 182)),
+    'drowned': ((10, 28, 30), (54, 112, 104), (160, 214, 196)),      # Drowned Sailor: the Undead, sea-green
+    'bog': ((26, 20, 10), (92, 74, 40), (164, 150, 96)),              # Bog-man: the Grolm, mud brown
+    'seagolem': ((8, 24, 40), (40, 104, 128), (150, 210, 220)),       # Sea Golem (Fenwatch): the Golem, blue-green
 }
 
 
