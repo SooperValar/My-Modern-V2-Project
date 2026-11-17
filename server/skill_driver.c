@@ -88,7 +88,21 @@ int spell_immunity(int power,int immun)
         else return power-immun;
 }
 
-int spell_race_mod(int power,int kindred)
+/* MyV2 (Nov 16): the Good Moon for one character: tonight's full moon, an Elixir of the Good Moon still working
+ * (a spell item with temp SPT_GOODMOON: the potion template's data[1]), or a worn Ring of the Good Moon (an item
+ * with data[9]==SPT_GOODMOON). With it spells are 15% stronger, and a Bad Moon does not weaken them. */
+int has_good_moon(int cn)
+{
+	int n,in;
+
+	if (globs->fullmoon) return 1;
+	if (cn<1 || cn>=MAXCHARS) return 0;
+	for (n=0; n<20; n++) if ((in=ch[cn].spell[n])!=0 && it[in].temp==SPT_GOODMOON) return 1;
+	for (n=0; n<20; n++) if ((in=ch[cn].worn[n])!=0 && !(it[in].flags&IF_SPELL) && it[in].data[9]==SPT_GOODMOON) return 1;
+	return 0;
+}
+
+int spell_race_mod(int power,int kindred,int cn)	// cn: the caster (0 = nobody: only tonight's moon counts)
 {
         double mod;
 
@@ -102,8 +116,8 @@ int spell_race_mod(int power,int kindred)
 	else if (kindred&KIN_TEMPLAR) mod=0.90;
 	else mod=1.00; 	
 
-	if (globs->newmoon) mod-=0.15;
-	if (globs->fullmoon) mod+=0.15;
+	if (has_good_moon(cn)) mod+=0.15;
+	else if (globs->newmoon) mod-=0.15;
 
         return (int)(power*mod);
 }
@@ -227,7 +241,7 @@ int spell_light(int cn,int co,int power)
         in=god_create_item(1);
         if (!in) { xlog("god_create_item failed in skill_light"); return 0; }
 
-	power=spell_race_mod(power,ch[cn].kindred);
+	power=spell_race_mod(power,ch[cn].kindred,cn);
         strcpy(it[in].name,"Light");
         it[in].flags|=IF_SPELL;
         it[in].light[1]=min(250,power*4);
@@ -320,7 +334,7 @@ int spell_protect(int cn,int co,int power)
                 power=tmp;
         }
 
-	power=spell_race_mod(power,ch[cn].kindred);
+	power=spell_race_mod(power,ch[cn].kindred,cn);
         strcpy(it[in].name,"Protection");
         it[in].flags|=IF_SPELL;
         it[in].armor[1]=power/4+4;
@@ -407,7 +421,7 @@ int spell_enhance(int cn,int co,int power)
                 power=tmp;
         }
 
-	power=spell_race_mod(power,ch[cn].kindred);
+	power=spell_race_mod(power,ch[cn].kindred,cn);
         strcpy(it[in].name,"Enhance Weapon");
         it[in].flags|=IF_SPELL;
         it[in].weapon[1]=power/4+4;
@@ -492,7 +506,7 @@ int spell_bless(int cn,int co,int power)
                 power=tmp;
         }
 
-	power=spell_race_mod(power,ch[cn].kindred);
+	power=spell_race_mod(power,ch[cn].kindred,cn);
         strcpy(it[in].name,"Bless");
         it[in].flags|=IF_SPELL;
         for (n=0; n<5; n++)
@@ -624,8 +638,8 @@ int spell_mshield(int cn,int co,int power)
         strcpy(it[in].name,"Magic Shield");
         it[in].flags|=IF_SPELL;
         it[in].sprite[1]=95;
-        //it[in].duration=it[in].active=spell_race_mod(ch[cn].skill[SK_MSHIELD][5]*256,ch[cn].kindred);
-        it[in].duration=it[in].active=spell_race_mod(power*256,ch[cn].kindred);
+        //it[in].duration=it[in].active=spell_race_mod(ch[cn].skill[SK_MSHIELD][5]*256,ch[cn].kindred,cn);
+        it[in].duration=it[in].active=spell_race_mod(power*256,ch[cn].kindred,cn);
         it[in].armor[1]=it[in].active/1024+1;
         it[in].temp=SK_MSHIELD;
         it[in].power=it[in].active/256;
@@ -674,7 +688,7 @@ void skill_mshield(int cn)
 int spell_heal(int cn,int co,int power)
 {
         if (cn!=co) {
-                ch[co].a_hp+=spell_race_mod(power*2500,ch[cn].kindred);
+                ch[co].a_hp+=spell_race_mod(power*2500,ch[cn].kindred,cn);
                 if (ch[co].a_hp>ch[co].hp[5]*1000) ch[co].a_hp=ch[co].hp[5]*1000;
                 if (ch[co].skill[SK_SENSE][5]+10>power)
                         do_char_log(co,1,"%s cast heal on you.\n",ch[cn].reference);
@@ -740,7 +754,7 @@ int spell_curse(int cn,int co,int power)
 
         power=spell_immunity(power,ch[co].skill[SK_IMMUN][5]);
 
-	power=spell_race_mod(power,ch[cn].kindred);
+	power=spell_race_mod(power,ch[cn].kindred,cn);
         strcpy(it[in].name,"Curse");
         it[in].flags|=IF_SPELL;
         for (n=0; n<5; n++)
@@ -1098,7 +1112,7 @@ void skill_blast(int cn)
 
         power=ch[cn].skill[SK_BLAST][5];
 
-        power=spell_race_mod(spell_immunity(power,ch[co].skill[SK_IMMUN][5]),ch[cn].kindred);
+        power=spell_race_mod(spell_immunity(power,ch[co].skill[SK_IMMUN][5]),ch[cn].kindred,cn);
 
         dam=power*2;
 
@@ -1275,7 +1289,7 @@ int spell_stun(int cn,int co,int power)
 
         power=spell_immunity(power,ch[co].skill[SK_IMMUN][5]);
 
-	power=spell_race_mod(power,ch[cn].kindred);
+	power=spell_race_mod(power,ch[cn].kindred,cn);
         strcpy(it[in].name,"Stun");
         it[in].flags|=IF_SPELL;
         it[in].sprite[1]=91;
@@ -1435,7 +1449,7 @@ void skill_dispel(int cn)
 
         if (spellcost(cn,25)) return;
 
-        if (chance_base(cn,spell_race_mod(ch[cn].skill[SK_DISPEL][5],ch[cn].kindred),12,pwr)) {
+        if (chance_base(cn,spell_race_mod(ch[cn].skill[SK_DISPEL][5],ch[cn].kindred,cn),12,pwr)) {
                 if (cn!=co && ch[co].skill[SK_SENSE][5]>ch[cn].skill[SK_DISPEL][5]+5)
                         do_char_log(co,1,"%s tried to cast dispel magic on you but failed.\n",ch[cn].reference);
                 return;
@@ -1554,7 +1568,7 @@ void skill_ghost(int cn)
 
         base=(ch[cn].skill[SK_GHOST][5]*4)/11;
 
-        base=spell_race_mod(base,ch[cn].kindred);
+        base=spell_race_mod(base,ch[cn].kindred,cn);
 
         // MyV2 rebalance (docs/REBALANCE.md): a Harakim summoning with a staff in hand calls a stronger ghost
         // (GC_STAFF_HARAKIM / GC_STAFF_ARCH percent), and the caster's Intelligence adds 1 % per 10 points

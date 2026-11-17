@@ -4354,6 +4354,11 @@ void do_regenerate(int cn)
                         }
 
                         if (it[in].temp==649) uwater=0;
+                        // MyV2 (Nov 16): Potion of the Frozen Heart: fast hitpoint regeneration while it lasts
+                        if (it[in].temp==SPT_FROZENHEART && !nohp && ch[cn].a_hp<ch[cn].hp[5]*1000) {
+                                ch[cn].a_hp+=FROZEN_REGEN;
+                                if (ch[cn].a_hp>ch[cn].hp[5]*1000) ch[cn].a_hp=ch[cn].hp[5]*1000;
+                        }
 
                         if (it[in].temp==SK_MSHIELD) {
                                 old=it[in].armor[1];

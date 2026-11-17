@@ -253,6 +253,9 @@ extern unsigned int mapmarker;
 #define SK_STEALTH      8
 #define SK_PERCEPT      9
 #define SK_SWIM         10
+#define SPT_GOODMOON    65001           // MyV2: "temp" of the Elixir of the Good Moon's spell item (potion data[1]); also data[9] of the Ring of the Good Moon
+#define SPT_FROZENHEART 65002           // MyV2: "temp" of the Potion of the Frozen Heart's spell item (potion data[1])
+#define FROZEN_REGEN    200             // MyV2: hitpoints/1000 a tick while the Frozen Heart lasts (about 3.6 hitpoints a second)
 #define SWIM_FULL       125             // MyV2: Swimming at which being under water costs no breath at all
 #define SK_MSHIELD      11
 #define SK_BARTER       12
