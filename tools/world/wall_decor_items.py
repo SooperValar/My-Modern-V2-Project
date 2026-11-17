@@ -31,7 +31,7 @@ if MIRROR:
         if W.item[o + me.I_USED] == me.USE_ACTIVE and W.it_u16(i, me.I_TEMP) == MIRROR and not W.it_u16(i, me.I_CARRIED):
             x, y = W.it_u16(i, me.I_X), W.it_u16(i, me.I_Y); n = W.tile(x, y - 1)
             if n[1] and n[7] & 1:                 # its wall is to the north: the back
-                W._save_item(W.undo[-1] if W.undo else {}, i); struct.pack_into('<H', W.item, o + 537, 48006)
+                struct.pack_into('<H', W.item, o + 537, 48006)
                 print('  mirror at', x, y, 'gets its back')
 # 2. the new looks
 made = []
