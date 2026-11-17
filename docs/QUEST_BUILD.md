@@ -149,8 +149,8 @@ with the Barrow Hills update. The +15% and the Frozen Heart healing are easiest 
   player": not enforced yet.
 - **Potion of the Frozen Heart** (band E): a timed potion with `data[1] = 65002` (`SPT_FROZENHEART`); while it lasts
   the character regains `FROZEN_REGEN` = 200/1000 hitpoint a tick (3.6 a second) in `svr_do.c`'s regeneration loop.
-- **Karate**: the teaching NPC now gives Karate (like Swimming) to the player's class first (`driver.c`), for
-  Brother Anselm's quest (band D).
+- **Karate**: taken out again Nov 17 (Cody: no use for it yet). Brother Anselm's Karate quest (band D) waits until Karate
+  has a use: then put `|| nr==SK_KARATE` back next to SK_SWIM in `driver.c` `npc_give` (see the comment there).
 - **Test plan**: on a scratch copy make the elixir and the frozen-heart potion (arealib `item`), give them to Iluvatar
   (editor World op `padditem`), start the test server, `usetest Iluvatar <slot>`, and check: no crash; the character's
   spells list holds an item with temp 65001 / 65002 (stop the server, read char.dat / item.dat); hitpoints rise while

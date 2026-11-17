@@ -202,7 +202,7 @@ A river south of Aston and a flooded mine quest like Lab 11 (without the darknes
 ### ◐ The quest plan: new areas and quests (Nov 14)
 The plan is in the "Quest Map and Plan" doc and the "Quest Planner" sheet (Cody's claude.ai artifacts): 41 town-style
 quests in 18 new areas and 3 hub towns (Fenwatch for band C, Stonehold for D, the Last Bastion for E-F), bounty halls,
-item rewards (rings, amulets, belts, new potions) and two skill quests (Swimming, Karate). Left out of questing by Cody:
+item rewards (rings, amulets, belts, new potions) and two skill quests (Swimming; Karate on hold, Cody Nov 17: no use for it yet). Left out of questing by Cody:
 the towers, the three Pentagram Quests, Black Stronghold, Underground I and II, Elysium, Staffer Corner; each lab counts
 as one special quest. Build one area at a time from the bottom, with `tools/world/bandit_hollow/` as the pattern.
 - [x] **Bandit Hollow** (east road, Sergeant to Master Sergeant; CHANGES.md "Bandit Hollow").
