@@ -36,10 +36,10 @@ def tunnel(a, b, w=1):
                 if abs(dx) + abs(dy) <= w: out.add((x + dx, y + dy))
     return out
 S = -6                                               # the big cave sits 6 tiles further from the road than first drawn
-HALL = (541, 781 + S, 7, 7); NEST = (521, 773 + S, 5, 5); EGGS = [(521, 788 + S, 4.5, 4.5), (561, 773 + S, 5, 4.5), (561, 789 + S, 4.5, 4.5)]
+HALL = (541, 781 + S, 7, 7); NEST_ROOM = (521, 773 + S, 5, 5); EGGS = [(521, 788 + S, 4.5, 4.5), (561, 773 + S, 5, 4.5), (561, 789 + S, 4.5, 4.5)]
 POOL_IN = ellipse(541, 781 + S, 3.2, 3.0, 0.08)
-hatch = ellipse(*HALL) | ellipse(*NEST) | set().union(*(ellipse(*e) for e in EGGS))
-for c in (NEST,) + tuple(EGGS): hatch |= tunnel((HALL[0], HALL[1]), (c[0], c[1]))
+hatch = ellipse(*HALL) | ellipse(*NEST_ROOM) | set().union(*(ellipse(*e) for e in EGGS))
+for c in (NEST_ROOM,) + tuple(EGGS): hatch |= tunnel((HALL[0], HALL[1]), (c[0], c[1]))
 H_EXIT = [(541, 788 + S), (541, 795)]                # the tunnel out toward the road (longer now)
 hatch |= tunnel(*H_EXIT)
 GROTTO = (582, 842, 8, 9)                            # the Archmage's Grotto: the smaller cave; its tunnel opens north (Cody, Nov 17)
@@ -118,24 +118,36 @@ for cx, cy, rx, ry in EGGS: P += [(BONES, round(cx) + 1, round(cy) - 1)]
 P += [(BONES, 579, 838), (BONES, 586, 839), (BONES, 523, 771 + S)]
 for x, y in PITS: P += [(BONES, x + 1, y - 1)]
 A.place(*P)
-# lizard eggs (tools/sprites/world_eggs.py: 38300-38306, one big egg a tile; Cody: 3-4 a chamber): the Nest, the egg chambers, the pits
-EGG = [38300, 38302, 38304, 38300, 38302, 38304, 38306]          # whole eggs mostly, now and then a hatched one
+# lizard eggs (Cody, Nov 17: one big egg a tile, 3-4 a chamber; option 4): usable nest items, server item driver 77
+# (use_driver.c use_lizard_egg): using one gives a Lizard Egg (Corwin's egg bounty), or 1 time in 5 a Lizard Hatchling
+# breaks out and attacks; the nest then shows the broken shell (38306) until the egg regrows (5 minutes).
+EGG_ITEM = A.quest_item('Lizard Egg', 'A leathery lizard egg, still warm. The Fenwatch Bounty Office pays for these.', 44536)
+HATCHLING = A.monster(406, 'Lizard Hatchling', 'Second Lieutenant', 0, 0, sprite=54000, group=36, place=False,
+                      text=['Hsss!', 'Hsss! Hsss!'], desc='A lizard fresh out of the egg, pale and wet, all teeth and temper.')
+IF_MOVEBLOCK, IF_LOOK, IF_USE, IF_USESPECIAL, IF_USEACTIVATE = 1, 1 << 4, 1 << 9, 1 << 10, 1 << 22
+NEST = []
+for spr, kind in ((38300, 'cream'), (38302, 'pale'), (38304, 'green')):
+    t = A.made({'op': 'itempnew', 'from': 137, 'name': 'Lizard Egg'})
+    A.W.apply([{'op': 'itempset', 't': t, 'fields': {'description': 'A big leathery egg in a nest of reeds and straw. Something stirs inside.',
+               'sprite': [spr, 38306], 'driver': 77, 'data': [EGG_ITEM, HATCHLING, 20] + [0] * 7, 'duration': 18 * 300, 'value': 0,
+               'flags': IF_MOVEBLOCK | IF_LOOK | IF_USE | IF_USESPECIAL | IF_USEACTIVATE}}], 'egg nest'); NEST.append(t)
 def clutches(n, ok, box, apart=3):
     got = 0
     for p in sorted(set((random.randint(box[0], box[2]), random.randint(box[1], box[3])) for _ in range(400))):
         if got >= n: break
         t = A.tile(*p)
         if ok(*p) and not t[1] and not t[4] and not (t[7] & 1) and all(abs(p[0] - q[0]) + abs(p[1] - q[1]) >= apart for q in placed):
-            A.op(op='object', x=p[0], y=p[1], s=random.choice(EGG), block=1); placed.append(p); got += 1
+            A.op(op='place', x=p[0], y=p[1], t=random.choice(NEST), fresh=1); placed.append(p); got += 1
 placed = []
 inside = lambda b: (lambda x, y: (x, y) in caves and ((x - b[0]) / b[2]) ** 2 + ((y - b[1]) / b[3]) ** 2 <= 0.7)
-clutches(4, inside(NEST), (NEST[0] - 5, NEST[1] - 5, NEST[0] + 5, NEST[1] + 5))
+clutches(4, inside(NEST_ROOM), (NEST_ROOM[0] - 5, NEST_ROOM[1] - 5, NEST_ROOM[0] + 5, NEST_ROOM[1] + 5))
 for e in EGGS: clutches(random.choice([3, 4]), inside(e), (int(e[0] - 5), int(e[1] - 5), int(e[0] + 5), int(e[1] + 5)))
 for cx, cy in PITS: clutches(random.choice([2, 3]), lambda x, y: (x, y) in mud, (cx - 3, cy - 3, cx + 3, cy + 3))
 A.run('lizard eggs'); print(len(placed), 'eggs')
 A.marsh_edges((X0 - 2, Y0, X1, Y1))
-A.zone(505, 757, 570, 797, 'the Hatchery')
+A.zone(505, 757, 570, 797, 'Hatchery')
 A.zone(512, 762, 527, 774, "Broodmother's Nest")
 A.zone(565, 832, 592, 853, "Archmage's Grotto")
 A.zone(X0, Y0, X1, Y1, 'Lizard Hatcheries')
-A.save(); print(len(torches), 'cave lights')
+import json; json.dump({'egg_item': EGG_ITEM, 'hatchling': HATCHLING, 'nests': NEST, 'eggs': placed}, open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'made_terrain.json'), 'w'), indent=1)
+A.save(); print(len(torches), 'cave lights; egg item', EGG_ITEM, 'hatchling', HATCHLING, 'nests', NEST)

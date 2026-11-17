@@ -8,14 +8,14 @@ with exp per quest, Reward Guide, New Areas). Their Status column is not kept up
 
 ---
 
-## 1. Where things stand (Nov 17, noon)
+## 1. Where things stand (Nov 17, afternoon)
 
 | Band | Ranks | Hub | Areas | State |
 |---|---|---|---|---|
 | A | Private - Corporal | Aston | Rat-Catcher's Cellars; Old Graveyard | cellars live; graveyard not built |
 | B | Sergeant - First Sergeant | Aston | Bandit Hollow, Wolfwood, Old Quarry | all live |
-| C | Sergeant Major - Captain | **Fenwatch** (live) | Drowned Village (live); Barrow Hills (live Nov 17); **Lizard Hatcheries (next)** | see below |
-| D | Major - Brigadier General | Stonehold | Golem Foundry, Monastery, Ashen Fields, Gargoyle Spires | space reserved |
+| C | Sergeant Major - Captain | **Fenwatch** (live) | Drowned Village, Barrow Hills, Lizard Hatcheries: **all live (Nov 17)** | band C done |
+| D | Major - Brigadier General | **Stonehold (next)** | Golem Foundry, Monastery, Ashen Fields, Gargoyle Spires | space reserved |
 | E | Major General - Field Marshal | Last Bastion | Frostfang Peaks, Barbarian Highlands, Citadel of Kael, Abyssal Rift | space reserved |
 | F | Knight - Warlord | Last Bastion | Shattered Throne, Heart of the Rift (4-step chain) | space reserved |
 
@@ -69,14 +69,15 @@ past Elysium -> Last Bastion.** The Barrow Hills are a dead end off Fenwatch's n
 
 ## 4. Numbers in use (check again before making new ones)
 
-- Item templates up to **2054** (2024-2032 Drowned Village; 2033-2050 wall decorations; 2051-2054 Barrow Hills).
-  NPC templates up to **2239** (2206-2239 Barrow Hills, `barrow_hills/made.json`). `itempnew` / `ctempnew` take the next free number by themselves.
-- Monster groups (NPC data 42/44): 30 bandits, 31 quarry golems, 32 deep grolms, 33 wolves, 34 Drowned Village, 35 Barrow Hills.
-  **Next: 36.** Undead in a group listed in `SLOW_UNDEAD_GROUP` (`data.h`: 34, 35) regenerate like Lab 11's (~4 hp/s, not ~12):
+- Item templates up to **2063** (2024-2032 Drowned Village; 2033-2050 wall decorations; 2051-2054 Barrow Hills;
+  2055-2063 Lizard Hatcheries). NPC templates up to **2273** (2206-2239 Barrow Hills; 2240-2273 Lizard Hatcheries). `itempnew` / `ctempnew` take the next free number by themselves.
+- Monster groups (NPC data 42/44): 30 bandits, 31 quarry golems, 32 deep grolms, 33 wolves, 34 Drowned Village, 35 Barrow Hills, 36 Lizard Hatcheries.
+  **Next: 37.** Undead in a group listed in `SLOW_UNDEAD_GROUP` (`data.h`: 34, 35) regenerate like Lab 11's (~4 hp/s, not ~12):
   add each new undead area's group there (Cody, Nov 17).
 - Sprites: monster recolours 41000+ (Quarry Golem), 42100+ (Deep Grolm), 50000+ Drowned Sailor, 50500+ Bog-man,
-  51000-51981 Sea Golem, 52000+ Barrow Wight: **next free block 53000** (a recolour fills base+0..1023, so step by 1000 to be safe; 500 worked
-  for the Undead and Grolm). 3D creatures 43000-44447 (wolves). Item pictures 44500-44535: **next 44536**.
+  51000-51981 Sea Golem, 52000+ Barrow Wight, 53000+ the Broodmother, 54000+ Lizard Hatchling: **next free block 55000** (a recolour fills base+0..1023, so step by 1000 to be safe; 500 worked
+  for the Undead and Grolm). 3D creatures 43000-44447 (wolves). Item pictures 44500-44541: **next 44542**. World objects: lizard eggs 38300-38307.
+  Server item drivers: 77 = lizard egg in a nest (`use_lizard_egg`); next free 78.
   World: marsh grounds and edges 35650-35995, reeds 38200-38207. Waypoints: 1-6 used (`next 7` in waypoints.dat).
 - Fenwatch NPCs (`tools/world/fenwatch/made.json`): Joss 2142, Ilse 2143, Aldous 2144, Petra 2145, Rook 2146, Bounty
   Master Corwin 2147, Marta (inn) 2148, Odger (store) 2149, Brigit (smith) 2150, guards 2151-2158.
@@ -170,32 +171,17 @@ now heal ~4 hp/s), the two hand-ins, the item pictures.
 Device-shell lesson: the VM disk is small (~10 GB, ~0.7 GB free): every World.save writes a ~140 MB backup in
 `.dat/mapedit-backups`; delete scratch copies and their backups as you go.
 
-## 8. Next: the Lizard Hatcheries (Captain) - terrain previewed, waiting for Cody's OK
+## 8. The Lizard Hatcheries: DONE, live Nov 17
 
-**Terrain** `tools/world/lizard_hatcheries/build_hatcheries.py` (v5, Nov 17; previews `fenwatch_preview\hatcheries_*_v5.png`):
-box x 495-595, **y 757-860** (widened west from 765 to set the big cave back; the strip was empty void). Cody's choices
-(Nov 17): Fenwatch's marsh carried on (marsh grass, mud, murky lakes that can't be walked on, reeds, willows) instead of
-grass / sand / clear water; lakes and mud kept 5-6 tiles from the road; caves in the brown mine rock (wall 122, floor 116,
-indoors) lit by **Earth Light II (item template 171)**, the game's own cave light (template 91, the stick torch, is a
-carryable item that starts unlit: not a fixture). The road (path) from Fenwatch's south gate runs through the middle and
-leaves the south edge open (x 595, y ~806-809) for the pass to Stonehold; no-monster strip x 495-496.
-- **The Hatchery** (west of the road, set back): great hall with a murky pool (541,775), **the Broodmother's Nest** (521,767;
-  zone), three egg chambers (521,782 / 561,767 / 561,783), a long tunnel out to a path from the road (mouth 541,797).
-- **The Archmage's Grotto** (east, far end; zone 565,832 - 592,853): the smaller cave, pool inside, entered **from the north**
-  (mouth 567,842) by its own path off the road at x 560.
-- Egg pits: mud hollows (518,826 / 541,846 / 568,824 / 534,818) with bones. Eggs: Cody to say whether to draw egg sprites.
-- All checked walkable from the road (flood fill).
-
-**Monsters** (group 36; lizards aren't undead): about 20 Lizard Knights (Captain; 406, sprite 13264), about 8 Lizard
-Archmages (413 scaled to Captain). **Bosses swapped by Cody (Nov 17)**: **the Broodmother** (Major; Lizard Knight 1154
-scaled; a dark red recolour of 13264 at 53000; carries the **Broodmother's Crown**) rules the big cave, in her Nest; the
-**Hatchery Archmage** (Captain, stronger; carries the **Archmage's Phial**) rules the Grotto. All lizards carry a
-**Lizard Head**. Hatchery monsters stay out of Fenwatch's marsh (the no-monster strip).
-**Quests**: Aldous: Crown -> **Scaled Belt** (+4 armor, +3 Strength, rank 11), 52,000 exp; Rook (by name): Phial -> 2
-**Elixirs of the Good Moon** (`n=2`; section 6's code is live; potion = timed potion, duration 10800, data[1] 65001),
-52,000 exp; Corwin `extra_quest(Lizard Head, 5200 exp, gold=26000 (260G), lim=0, rmin=11)`.
-Item pictures from 44536 (Lizard Head cut from the lizard's frame like the Drowned Village heads; crown: Crown.obj; phial:
-a potion render; belt: drawn; elixir: potion render).
+CHANGES.md "Lizard Hatcheries". Scripts `tools/world/lizard_hatcheries/build_hatcheries.py` (terrain, caves, cave lights,
+the egg nests and the Lizard Egg / Hatchling templates -> `made_terrain.json`) and `place_hatcheries.py` (monsters, items,
+quests -> `made.json`). Cody's choices on the way: Fenwatch's marsh carried on; lakes kept back from the road; the big cave
+set further back (area widened to y 757); the Grotto entered from the north; bosses swapped (Broodmother: big cave,
+Archmage: Grotto); eggs: one big egg a tile, fuller nests, a ragged hatched egg; **option 4**: using an egg gives a Lizard Egg
+(pseudo-bounty at Corwin: 2,600 exp + 130G; later Alchemy) or 1 in 5 hatches a Lizard Hatchling that attacks; regrow 5 min.
+Tested on the test server (spawns, all hand-ins, 20 egg uses: 13 eggs, 5 hatchlings). **For Cody to try in game**.
+Lessons: the egg's two looks are the item's sprite pair (whole / hatched, `active` = regrowing); `usexy <player> <x> <y>`
+tests a map item; the device VM disk is small: delete scratch copies and `.dat/mapedit-backups` there as you go.
 
 ## 9. After band C
 

@@ -1208,6 +1208,35 @@ north gate road (the North Road, y ~800-802), which ends at a ring of standing s
   (+3 Intuition, +6 Identify), 37,000 exp. Item templates 2051-2054; pictures 44533 (tablet), 44534 (torc, both items),
   44535 (ring) (`tools/sprites/quest_items/barrow_hills.py`, README.txt). Published: client-dist 0161385.
 
+## Lizard Hatcheries (Nov 17)
+
+South of Fenwatch (zone "Lizard Hatcheries", x 495-595, y 757-860), for Captain; reached by Fenwatch's south gate road,
+which runs on through the area and leaves its far (south) edge open for the pass to Stonehold.
+- **The marsh carried on** (Cody's choice): marsh grass, mud flats, murky lakes (can't be walked on), reeds, willows, dead
+  trees, a few rock outcrops; lakes and mud kept back from the road. A no-monster strip (x 495-496) keeps the lizards out of
+  Fenwatch's marsh.
+- **Two caves** in the brown mine rock (dark inside, lit by the game's cave lights, Earth Light II): the **Hatchery** (zone),
+  set well back west of the road: a great hall with a pool, the **Broodmother's Nest** (zone) and three egg chambers, a long
+  tunnel out to a path from the road; and the **Archmage's Grotto** (zone), a smaller cave at the far end, entered from the
+  north by its own path.
+- **Lizard eggs** (new world sprites 38300-38307, `tools/sprites/world_eggs.py`): one big leathery egg a tile in a nest of
+  twigs, reeds and straw (cream, pale, greenish); 24 of them, 3-4 a chamber and 2-3 in each mud pit outside. **Using an egg**
+  (server item driver 77, `use_lizard_egg` in `use_driver.c`): you lift a **Lizard Egg** out of the nest - or, 1 time in 5,
+  it splits open and a **Lizard Hatchling** (Second Lieutenant, pale yellow-green look 54000) attacks you. Either way the
+  nest shows a broken shell until the egg regrows (5 minutes). The nest eggs are item templates 2056-2058 (data: the egg
+  item, the hatchling, the chance; duration = the regrow time).
+- **Monsters** (group 36; `tools/world/lizard_hatcheries/place_hatcheries.py`, `made.json`): 20 **Lizard Knights** (Captain;
+  12 out on the marsh, 8 in the Hatchery), 8 **Lizard Archmages** (Captain; 5 in the Hatchery, 3 in the Grotto),
+  **the Broodmother** (Major, dark red look 53000) in her Nest with the **Broodmother's Crown**, the **Hatchery Archmage** (a
+  strong Captain) in the Grotto with the **Archmage's Phial**. Every lizard carries a **Lizard Head**.
+- **Quests** (item quests, `#quest`): **Aldous**: the Broodmother's Crown -> **Scaled Belt** (+4 armor, +3 Strength, Captain),
+  52,000 exp. **Rook**: the Archmage's Phial -> 2 **Elixirs of the Good Moon** (spells +15% for 10 minutes, no Bad Moon
+  weakening), 52,000 exp. **Bounty Master Corwin**: Lizard Head 5,200 exp + 260G, **Lizard Egg** 2,600 exp + 130G, as often as
+  you like, from Captain (the egg: a pseudo-bounty for now; later an Alchemy ingredient). Aldous's, Rook's and Corwin's
+  greetings name what they want. Items 2055 (Lizard Egg), 2059-2063; pictures 44536-44541
+  (`tools/sprites/quest_items/lizard_hatcheries.py`). Built with `build_hatcheries.py` (terrain, eggs) and
+  `place_hatcheries.py`. Published: client-dist c71f5d4.
+
 ## New potion effects (server, Nov 17; written by Fable Nov 16)
 
 Live since Nov 17 (tested on the test server: both potions drunk, their effect on the character, no crash):

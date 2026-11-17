@@ -181,8 +181,8 @@ stopped via `stop-send`, then `update-world` and `reload-editor`):
 - Tested from outside (laptop on a phone hotspot) and the launcher's update path (version 1 -> 2).
 
 ## Sprite numbers (Nov 12)
-Taken since (Nov 15-17): 43000-44001 wolves (3D, own shadow); 44500-44535 heads and quest items (next 44536); 48000-48025 wall
-decorations; 50000+ recoloured monsters (Drowned Sailor 50000, Bog-man 50500, Sea Golem 51000, Barrow Wight 52000; next 53000). Check
+Taken since (Nov 15-17): 43000-44001 wolves (3D, own shadow); 44500-44541 heads and quest items (next 44542); 38300-38307 lizard eggs (world objects); 48000-48025 wall
+decorations; 50000+ recoloured monsters (Drowned Sailor 50000, Bog-man 50500, Sea Golem 51000, Barrow Wight 52000, Broodmother 53000, Lizard Hatchling 54000; next 55000). Check
 `Client\GFX` before taking a number.
 
 Client 2.15.06 shows sprites 0-65,535 (before: up to 34,767). Free for new sprites: 34,192 and up. Not free: the gaps
@@ -263,6 +263,13 @@ project's next session. What the second chat did Nov 15-17 (all live, CHANGES.md
 - Open from that chat (Cody decides): the Seyan'Du shrine's turned tops are generated (Cody may redraw them like the
   temple's); signs could get a readable west version (mirroring flips their text); the window walls face one way only;
   TODO: Alchemy skill, change many items at once, a bigger world only if the towns don't fit.
+
+**Where we left off (Nov 17, afternoon): the Lizard Hatcheries are complete and live - band C is done.** Marsh + two
+caves, usable lizard eggs (server item driver 77: a Lizard Egg for Corwin's pseudo-bounty, or 1 in 5 a Lizard Hatchling
+attacks), lizards, the Broodmother and the Hatchery Archmage, quests on Aldous / Rook / Corwin (CHANGES.md "Lizard
+Hatcheries"; client-dist c71f5d4 published locally, Cody pushes). Karate was taken out again (Cody: no use yet). Next:
+**Stonehold** (band D hub) and its areas, following the quest plan (QUEST_BUILD.md section 9). Cody hasn't played the
+Drowned Village, the Barrow Hills or the Hatcheries yet.
 
 **Where we left off (Nov 17, noon): the Barrow Hills are complete and live** (terrain with two medium tombs, Barrow
 Skeletons, pale Barrow Wights 52000+, the Scribe, King Ulfgar, Aldous's and Petra's quests; items 2051-2054, pictures

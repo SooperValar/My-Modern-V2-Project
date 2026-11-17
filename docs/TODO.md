@@ -12,7 +12,7 @@ world, quests, the editor, the client and Discord. Merged Nov 10 from the old TO
 
 ## Up next (in order)
 
-0. ★ **Quest plan, area by area**: bands A-B done, Fenwatch + Drowned Village (Nov 16) + Barrow Hills (Nov 17) live; next the Lizard Hatcheries: **follow `docs/QUEST_BUILD.md`** - [Quests](#6-quests)
+0. ★ **Quest plan, area by area**: bands A-B done, Fenwatch + Drowned Village (Nov 16) + Barrow Hills + Lizard Hatcheries (Nov 17) live: band C done; next Stonehold (band D): **follow `docs/QUEST_BUILD.md`** - [Quests](#6-quests)
 1. ★ **Soulstone levels too low** (MAJOR) - [Fixes](#1-fixes-and-balance)
 2. ★ **Discord**: built Nov 14 (CHANGES.md "Discord"); waiting on Cody's webhooks / bot (HOSTING.md "Discord links")
 3. ★ **Walking speed, speed modes and attack speed** (look at it together first) - [Systems](#2-gameplay-systems)
@@ -215,7 +215,7 @@ as one special quest. Build one area at a time from the bottom, with `tools/worl
   - [x] the marsh / Wolfwood border blended (`blend_wolfwood.py`). Left as it is: the Wolfwood's dark dirt road turns into the brown path at the border.
   - [x] **Drowned Village** (Nov 16; CHANGES.md "Drowned Village"): terrain, monsters, items, quests and Swimming are live. For Cody to try in game: the under-water loss with and without Swimming, how hard the fights are, the item pictures (the heads and the net are the weakest), Ilse's two hand-ins.
   - [x] **Barrow Hills** (Nov 17; CHANGES.md "Barrow Hills"): terrain with two medium tombs, Barrow Skeletons, pale Barrow Wights, the Scribe, King Ulfgar; Aldous (Torc -> amulet) and Petra (Tablet -> Scholar's Ring). Undead in groups 34/35 heal ~4 hp/s (Cody: the full rate made them too hard). For Cody to try in game.
-  - [ ] Lizard Hatcheries (**carries the through road south to Stonehold's pass**; docs/QUEST_BUILD.md) (x 505-595, y 765-860, south gate): Lizard Knights (406), Archmages (413 scaled to Captain), Hatchery Archmage, the Broodmother (Major, dark red). Aldous: Broodmother's Crown -> Scaled Belt (+4 armor, +3 Str), 52,000; Rook: Archmage's Phial -> 2 Elixirs of the Good Moon (code: +15% spells for 10 min, shared with the later Ring), 52,000; Bounty: Lizard Head 5,200 exp + 260G.
+  - [x] **Lizard Hatcheries** (Nov 17; CHANGES.md "Lizard Hatcheries"): marsh and two caves, usable lizard eggs (Lizard Egg pseudo-bounty, 1 in 5 hatches), Lizard Knights / Archmages, the Broodmother (Nest), the Hatchery Archmage (Grotto); Aldous (Crown -> Scaled Belt), Rook (Phial -> 2 Elixirs of the Good Moon), Corwin (Lizard Head, Lizard Egg). The road to Stonehold runs through. For Cody to try in game.
   - Recolours from sprite 52000 up (50000-51999 used; 48000-49999 is another session's), item pictures from 44533. No gold on item quests (Ulfgar's "and gold" dropped).
 - [ ] Then Stonehold, the Last Bastion. **Space and routes (Nov 16; Cody: keep room for every planned area and a route from hub to hub; **approved by Cody Nov 16**; picture `docs/world_space_plan.png`, all boxes checked empty in the live map, x = south, y = east):**
   - Band C: Barrow Hills 320,770 - 405,850 (north gate); Lizard Hatcheries 505,765 - 595,860 (south gate).
@@ -381,5 +381,5 @@ Details in `CHANGES.md`.
   (quest template 2004); Players page reset / delete (backup) / restore.
 
 - [ ] **Items page: change many at once** (Cody, Nov 16: later). Tick rows (or all shown) and set / add to a field for all of them (+2 damage, min rank 7, price x1.5).
-- [ ] **Alchemy skill** (Cody, Nov 16: later). A new skill (server skill table, client skill names, trainers); recipes and potions can then need it (Needs / Needed already work with any skill).
+- [ ] **Alchemy skill** (Cody, Nov 16: later). Lizard Eggs (the Hatcheries' nests) are meant to become an Alchemy ingredient (Cody, Nov 17). A new skill (server skill table, client skill names, trainers); recipes and potions can then need it (Needs / Needed already work with any skill).
 - [ ] **A bigger world (only if needed)** (Cody, Nov 16): build the hub towns in the free space first (64% of the 1024x1024 map is empty: lower right x 640-1024 / y 450-1024, bottom middle x 128-640 / y 750-1024, right of centre x 640-800 / y 100-450; picture: Client\Claude outputs\world_free_space.png). Enlarging the map means MAPX/MAPY (about 420 uses in the server), NPC spots packed as x+y*1024 (data 10-35), map.dat, the editor and the client: a Fable job, test server first, full backup.

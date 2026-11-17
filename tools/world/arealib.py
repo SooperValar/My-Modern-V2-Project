@@ -159,9 +159,10 @@ class Area:
         hp[0] = round(hp[0] * pct / 100); en[0] = round(en[0] * pct / 100); mn[0] = round(mn[0] * pct / 100)
         for i in range(50): s[i * 6] = min(255, round(s[i * 6] * pct / 100))
         return {'attrib': a, 'hp': hp, 'end': en, 'mana': mn, 'skill': s}
-    def monster(self, src, name, rank, x, y, d=None, items=(), text=None, desc=None, sprite=None, group=None, pct=None, nudge=0):
+    def monster(self, src, name, rank, x, y, d=None, items=(), text=None, desc=None, sprite=None, group=None, pct=None, nudge=0, place=True):
         """a new NPC template copied from src and placed. rank: a rank name ('Captain') - its strength (attributes, hp, end, mana,
-        skills) is scaled until the template's rank is that one (the middle of the range that fits, plus nudge %, kept inside that range); or give pct yourself."""
+        skills) is scaled until the template's rank is that one (the middle of the range that fits, plus nudge %, kept inside that range); or give pct yourself.
+        place=False: only the template (e.g. a monster that something else brings out: pop_create_char)"""
         t = self.made({'op': 'ctempnew', 'from': src, 'name': name})
         dd = list(self.tc(t)['data'])
         for i in list(range(10, 24)) + list(range(32, 36)) + [29, 41]: dd[i] = 0
@@ -180,6 +181,7 @@ class Area:
             assert fit, 'no strength of template %d gives rank %s' % (src, rank)
             pct = max(fit[0], min(fit[-1], fit[len(fit) // 2] + nudge))      # nudge within the rank: it stays the rank asked for
         self.last_pct = pct; setp(pct)
+        if not place: return t
         n, msgs = self.W.apply([{'op': 'npcplace', 't': t, 'x': x, 'y': y, 'dir': d or random.choice([1, 2, 3, 4])}], 'place')
         for m in msgs: print('  !', name, m)
         self.used.add((x, y)); return t
