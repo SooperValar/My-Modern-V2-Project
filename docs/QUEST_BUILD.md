@@ -1,0 +1,208 @@
+# Quest plan: how to build the next areas (hand-off, Nov 17)
+
+For a fresh chat continuing Cody's quest plan (new areas, monsters, NPCs, quests, rewards, hub towns). Read
+`docs/HANDOFF.md` first (tools, rules, server control), then this. `docs/TODO.md` "The quest plan" has the checklist;
+`CHANGES.md` describes what is built ("Fenwatch", "Drowned Village", "Bandit Hollow", "Old Quarry"...).
+The plan itself: Cody's claude.ai artifacts "Quest Map and Plan" (doc) and "Quest Planner" (sheet: Planned Quests
+with exp per quest, Reward Guide, New Areas). Their Status column is not kept up to date: TODO.md is.
+
+---
+
+## 1. Where things stand (Nov 17 morning)
+
+| Band | Ranks | Hub | Areas | State |
+|---|---|---|---|---|
+| A | Private - Corporal | Aston | Rat-Catcher's Cellars; Old Graveyard | cellars live; graveyard not built |
+| B | Sergeant - First Sergeant | Aston | Bandit Hollow, Wolfwood, Old Quarry | all live |
+| C | Sergeant Major - Captain | **Fenwatch** (live) | Drowned Village (live); **Barrow Hills (next)**; Lizard Hatcheries | see below |
+| D | Major - Brigadier General | Stonehold | Golem Foundry, Monastery, Ashen Fields, Gargoyle Spires | space reserved |
+| E | Major General - Field Marshal | Last Bastion | Frostfang Peaks, Barbarian Highlands, Citadel of Kael, Abyssal Rift | space reserved |
+| F | Knight - Warlord | Last Bastion | Shattered Throne, Heart of the Rift (4-step chain) | space reserved |
+
+**Waiting on Cody** (ask, don't guess):
+- the redrawn Fisher-King's Belt picture (44531) OK? Redraw the two bounty head pictures (44524, 44525)?
+- client-dist publish: `publish_client.py` takes everything in `Client\GFX`, including the other session's sprites in
+  48000-49999. Ask before publishing whether that session's sprites may go out.
+- Drowned Village not yet tried in play by Cody (fights, Swimming under water, the six hand-ins).
+- He is rearranging Fenwatch's NPCs in the editor: always find NPCs **by name** (`Area.by_name`), never by old position.
+
+## 2. Cody's rules for this work (all settled; don't re-ask)
+
+- Plan first, show it, wait for OK. **Before saving any new terrain, show a rendered preview** (section 5). He may say
+  "I'll build this one": then he draws the area and zones and you place NPCs, items, quests.
+- One area at a time: build, test, make live, show the result, then the next.
+- **Gold**: only bounties pay gold (1/20 of their exp: 2,500 exp -> 125G), or a quest whose only reward is gold. Item or
+  skill quests give no gold. Bounties: 10 heads = one standard quest.
+- Exp per quest: the Quest Planner's Planned Quests column H. Reward items take the quest's rank as their rank requirement.
+- New items get pictures in the game's style; quest items **value 0** (can't be sold) and **no labyrinth flag**
+  (`IF_LABYDESTROY`, 1<<30: items copied from lab items vanish outside a lab). `Area.item` / `quest_item` do both.
+- New sprites always get new numbers. **48000-49999 belongs to another session: never use it.**
+- Stops / restarts only with nobody online, gated in the same command (`grep -q '"online": 0' status.json && ...`).
+  `tools/world/deploy.sh` does this.
+- **Leave a route to the next hub** in every hub area (a through road ending in an open gap, no tree wall across it),
+  and keep to the space plan (section 3).
+- Swimming: full reduction of the under-water loss at Swimming 125 (live).
+- Server code: edit in BOTH `Server\` (Windows) and the project's `server/`, keep them identical (cmp), test on the
+  test server first. Commit every change (Cody pushes). After each commit move `.git/HEAD.lock`, `.git/index.lock`,
+  `.git/objects/maintenance.lock` aside (`mv` to `.git/staleNNN-...`; no delete permission).
+- End every reply with "▶ Do this now" steps.
+
+## 3. The space plan (approved by Cody Nov 16)
+
+Picture: `docs/world_space_plan.png` (column = map y = east, row = map x = south, like the minimap). All boxes were
+empty in the live map. **Route: Aston -> east -> Fenwatch -> south through the Lizard Hatcheries -> Stonehold -> south
+past Elysium -> Last Bastion.** The Barrow Hills are a dead end off Fenwatch's north gate.
+
+| Area | Box x0,y0 - x1,y1 | Entered from |
+|---|---|---|
+| Barrow Hills (C, 1st Lieutenant) | 320,770 - 405,850 | Fenwatch north gate (424, 800-802) |
+| Lizard Hatcheries (C, Captain) | 505,765 - 595,860 | Fenwatch south gate (476, 800-802); **through road south, y 800-815, open at x 595** |
+| pass | 596,800 - 649,815 | |
+| Stonehold (D hub) | 650,775 - 715,845 | |
+| Golem Foundry / Monastery / Ashen Fields / Gargoyle Spires | 650,670-740,765 / 650,855-740,950 / 725,690-815,785 / 745,845-830,940 | Stonehold |
+| pass (east of Elysium 776-822, 795-825, which stays walled off) | 716,828 - 834,842 | |
+| Last Bastion (E-F hub) | 835,800 - 895,865 | |
+| Frostfang / Barbarian Highlands / Citadel of Kael / Abyssal Rift | 835,690-925,790 / 835,880-925,975 / 900,795-1010,870 / 930,880-1020,975 | Last Bastion |
+| Shattered Throne / Heart of the Rift (F) | 835,590-925,685 / 930,590-1020,685 | Last Bastion (Throne sealed until the Rift is done) |
+| free for later | 645,455-1020,585; 645,105-795,445; x 130-315, y 755-900 | |
+
+## 4. Numbers in use (check again before making new ones)
+
+- Item templates up to **2050** (2024-2032 Drowned Village; 2033-2050 the other session's wall decorations).
+  NPC templates up to **2205**. `itempnew` / `ctempnew` take the next free number by themselves.
+- Monster groups (NPC data 42/44): 30 bandits, 31 quarry golems, 32 deep grolms, 33 wolves, 34 Drowned Village. **Next: 35.**
+- Sprites: monster recolours 41000+ (Quarry Golem), 42100+ (Deep Grolm), 50000+ Drowned Sailor, 50500+ Bog-man,
+  51000-51981 Sea Golem: **next free block 52000** (a recolour fills base+0..1023, so step by 1000 to be safe; 500 worked
+  for the Undead and Grolm). 3D creatures 43000-44447 (wolves). Item pictures 44500-44532: **next 44533**.
+  World: marsh grounds and edges 35650-35995, reeds 38200-38207. Waypoints: 1-6 used (`next 7` in waypoints.dat).
+- Fenwatch NPCs (`tools/world/fenwatch/made.json`): Joss 2142, Ilse 2143, Aldous 2144, Petra 2145, Rook 2146, Bounty
+  Master Corwin 2147, Marta (inn) 2148, Odger (store) 2149, Brigit (smith) 2150, guards 2151-2158.
+  Joss / Ilse / Corwin already hold quests (Drowned Village); a giver with a quest gets more via `Area.extra_quest`.
+  **Aldous, Petra and Rook have greetings only**: their first quest goes on them with `Area.quest`.
+- Rank indexes (`me.RANKS`): 8 Sergeant Major, 9 Second Lieutenant, 10 First Lieutenant, 11 Captain, 12 Major,
+  13 Lieutenant Colonel, 14 Colonel, 15 Brigadier General, 16 Major General ... 19 Field Marshal, 20 Knight ... 23 Warlord.
+- Attribute indexes for rewards: 0 Bravery, 1 Willpower, 2 Intuition, 3 Agility, 4 Strength (the plan's "Intelligence"
+  = Intuition). Skills: 9 Perception, 10 Swimming, 1 Karate, 18 Enhance Weapon, 22 Identify, 23 Resistance, 24 Blast,
+  28 Regenerate, 30 Meditate, 32 Immunity, 33 Surround Hit, 35 Warcry.
+
+## 5. Tools (all in the project)
+
+**Device shell setup** (each new session; Cody must have added the `MyV2` folder: paths are `$HOME/mnt/MyV2/...`):
+- Test server: `mkdir -p ~/ctest/.obj; cp $HOME/mnt/MyV2/Server/{*.c,*.h,*.S,Makefile} ~/ctest/; cd ~/ctest; make -j4 server`
+  (run make 2-3 times within the 3-minute limit until `server` exists). Check port 5556 is free before starting a
+  test server (`ss -ltn | grep 5556`); start `(./server > out.txt 2>&1 &)`, talk to 127.0.0.1:5556, `pkill -f "^./server"`.
+  `./server light > light.txt 2>&1` recomputes lights on `~/ctest/.dat` (redirect: its output is huge).
+- A scratch copy of the live world: `mkdir -p ~/fw/x/.dat; for f in $HOME/mnt/MyV2/Server/.dat/*; do [ -f "$f" ] && cp "$f" ~/fw/x/.dat/; done`
+  (`Server\.dat` is the world as of the last stop-send).
+
+**`tools/world/arealib.py`** (written by Fable Nov 16; its docstring lists everything): `Area(dat, seed)` wraps the
+MyV2 Editor's World class. Map edits (`op`, `run`, `clear`, `house`, `fence`, `place`, `marsh_edges`, `zone`),
+templates (`item`, `quest_item`, `worn`, `monster` (scales a copy until it has the rank you name), `person` (a friendly
+quest giver)), placing (`spots`, `free`), quests (`quest`, `extra_quest`, `carry`, `by_name`), `save(made, here)`.
+**Only partly tried**: its code is lifted from the Fenwatch / Drowned Village scripts, which worked, but `monster`'s rank
+search, `quest` / `extra_quest` and `worn` have not been run as written. Test each on a scratch copy first and fix
+what breaks. The working originals to compare with: `tools/world/drowned_village/place_village.py`,
+`tools/world/fenwatch/place_fenwatch.py`.
+
+**`tools/world/render_region.py`** `<Client folder> <.dat> x0 y0 x1 y1 out.png [scale]`: the preview from the real
+sprites (fixed Nov 17: magenta keyed out; finds spritesheets.py itself). Use scale 0.4-0.8 for a whole area. NPCs show
+only after the server has spawned them (a stop-send copy). To show Cody a picture: copy it to
+`Client\Claude outputs\fenwatch_preview\<new name>.png` (always a new file name), `device_stage_files`, `SendUserFile`.
+
+**`tools/world/deploy.sh [--code] script.py ...`** (written by Fable, **never run yet**): stop-send if nobody is
+online, run the scripts on `Server\.dat`, relight via `~/ctest`, `get` the code if `--code`, update-world,
+reload-editor, then print spawn failures ("Could not drop char N" = an NPC on a blocked or tavern tile). Until it has
+been tried once, do the steps by hand as HANDOFF describes and compare. After reload-editor Cody may need the editor's
+round "Load the world again from disk" button (the editor won't restart while it has unsaved changes).
+
+**Sprites**: `tools/sprites/recolor_creature.py <Client> <src base> <new base> <ramp>` (ramps in the file: sandstone,
+slate, drowned, bog, seagolem; add one per new monster). Source bases: Undead / Lord 19408, Skeleton 10192, Lizard
+13264, Grolm 12240, Golem 17360, Gargoyle 18384, Ice Gargoyle 21456, Mage 4048, Ghost 9168. Item pictures:
+`tools/sprites/item_icon.py <model.obj|.gltf> <out.png> [--size --yaw --bright --recol Mat=rrggbb --glass --liquid]`
+with `MyV2\3d Models\RPG Pack 2\OBJ` (rings Ring1-7, Necklace1-3, Crown, Crown2, Potion*, Scroll, Skull, Bone...) and
+`Fantasy Props`; examples in `tools/sprites/quest_items/README.txt` and `drowned_village.py`. A belt: draw it (see
+the Fisher-King's Belt in `drowned_village.py`; recolouring the game's thin belt strip looked bad).
+Marsh / ground sprites: `tools/sprites/world_marsh.py`, `world_ground.py`.
+
+**Testing quests** (test server console): `questgive <player> <npc template>` hands the NPC its wanted item and prints
+exp / gold; `zone <x> <y>`; `wplist`; `merchreload`; `usetest <player> <slot>` drinks a potion; `fighttest`.
+Test character on the test server: Iluvatar.
+
+## 6. Unfinished code (Fable, Nov 16): committed, untested, not live
+
+In both server folders (identical), compiled on a test server without errors, **never run**. An `update-code` puts it
+live, so test it first:
+- **Elixir of the Good Moon** (Rook's reward, Lizard Hatcheries): `has_good_moon(cn)` in `skill_driver.c` is true at
+  full moon, or while the character has a spell item with `temp == SPT_GOODMOON` (65001, `data.h`), or wears an item
+  with `data[9] == SPT_GOODMOON`. Then spells are +15% and a Bad Moon doesn't weaken them. `spell_race_mod()` now takes
+  the caster as a third argument (all 12 calls in skill_driver.c changed).
+  **To make the potion**: copy the Stoneskin Potion (2015, a timed potion: driver 0, `duration` 10800 = 10 minutes at
+  18 ticks a second), set `duration` 10800, `armor [0, 0]`, `data[1] = 65001` (the spell item's temp; `spell_from_item`
+  in skill_driver.c copies it), `data[0]` = the buff icon sprite (0 = the default 93).
+- **Ring of the Good Moon** (band F end reward, later): any worn item with `data[9] = 65001` (copy a ring with
+  `driver=0`, data cleared, as Mirela's ring in `rat_cellar/mirela.py`). Nothing else reads `data[9]` of a worn
+  item (checked: build.c / use_driver.c use it for other items, svr_do.c only for hidden items). The plan says "one per
+  player": not enforced yet.
+- **Potion of the Frozen Heart** (band E): a timed potion with `data[1] = 65002` (`SPT_FROZENHEART`); while it lasts
+  the character regains `FROZEN_REGEN` = 200/1000 hitpoint a tick (3.6 a second) in `svr_do.c`'s regeneration loop.
+- **Karate**: the teaching NPC now gives Karate (like Swimming) to the player's class first (`driver.c`), for
+  Brother Anselm's quest (band D).
+- **Test plan**: on a scratch copy make the elixir and the frozen-heart potion (arealib `item`), give them to Iluvatar
+  (editor World op `padditem`), start the test server, `usetest Iluvatar <slot>`, and check: no crash; the character's
+  spells list holds an item with temp 65001 / 65002 (stop the server, read char.dat / item.dat); hitpoints rise while
+  Frozen Heart lasts. The +15% itself is easiest to see in play (Cody: cast Bless with and without the elixir).
+  Then `update-code` (with `"warn":30`) and note it in CHANGES.md.
+- Not needed: Clear Water / Second Wind (full restores: potion `mana`/`end` [0] = 999), Stoneskin / Fireward /
+  Draught of the Void (timed potions with `armor[1]` / `skill[n][1]` / `attrib[i][1]`, no code).
+
+## 7. Next: the Barrow Hills (First Lieutenant), step by step
+
+1. **Terrain** `tools/world/barrow_hills/build_barrow.py` (Fable; uses arealib; x 320-409, y 768-852, leaves
+   Fenwatch's marsh south of a wavy line at x ~404). Grass upland, the North Road from Fenwatch's north gate (x 372-423,
+   y 800-802), a ring of standing stones at 366,805, six small barrows, the **Scribe's Barrow** (352,782) and the
+   **King's Barrow** (337,806; three fire bowls inside), dark rock walls with a door gap each, dark inside (indoors flag),
+   graves, bones. Zones: Barrow Hills, King's Barrow, Scribe's Barrow. Opens the marsh's north tree wall at the road;
+   no-monster strip x 407-408.
+   Fable rendered it once on a copy: `Client\Claude outputs\fenwatch_preview\barrow_hills_v1.png`. **Cody has not
+   seen it.** Things to look at before showing it: the rock pillars (ROCKS) may be too many; the barrows are hard black
+   rings of wall (maybe lower them or use mossy stone / earth walls); since it is a dead end, the road only needs to
+   reach the barrows. Render again, fix, **show Cody, wait for OK**.
+2. **Monsters** (new script `place_barrow.py` with arealib; group 35; look up ranks with `Area.monster(..., rank)`):
+   about 15 Barrow Skeletons (Sergeant Major - Second Lieutenant; Skeleton 422, its own sprite 10192), about 18 Barrow
+   Wights (First Lieutenant; Lord 336, a new pale ramp e.g. `wight: ((30,34,40),(120,130,140),(214,220,226))` on 19408 ->
+   52000), the **Barrow Wight Scribe** in the Scribe's Barrow (First Lieutenant, a bit stronger; carries the
+   **Rune-Carved Tablet**), **Barrow King Ulfgar** in the King's Barrow (Captain; carries **Ulfgar's Torc**). Keep
+   monsters off the road's first tiles and out of the no-monster strip. Show Cody a picture of the new monster look first.
+3. **Items** (pictures from 44533): Rune-Carved Tablet (quest item; e.g. a recoloured stone `Parchment`/`Book` render or
+   drawn), Ulfgar's Torc (quest item; `Necklace` render in gold/bronze), **Ulfgar's Torc amulet** reward (copy 191
+   Amulet of Resistance; +3 Bravery, +5 Resistance, rank 10, value ~8000; the quest item and the reward can be two
+   items with one picture), **Scholar's Ring** (copy 338 with `clear=(1<<9)|(1<<10), driver=0, data=[0]*10`;
+   +3 Intuition, +6 Identify, rank 10).
+4. **Quests**: Aldous (by name) `quest(want=Torc, exp=51000, give=amulet, rmin=10)`; Petra (by name)
+   `quest(want=Tablet, exp=37000, give=Scholar's Ring, rmin=10)`; both once (`lim=1`), no gold. Give each a greeting
+   that names what they want (as Joss / Ilse do).
+5. Test on the test server (`questgive`, spawns in the log), make live, update CHANGES.md ("Barrow Hills"), TODO,
+   HANDOFF, `docs/world_minimap.png` / `world_zones.png` (`tools/world/worldmap.py`, `worldzones.py`), commit,
+   publish sprites if Cody agrees (section 1), show Cody.
+
+## 8. Then: the Lizard Hatcheries (Captain)
+
+Box 505,765 - 595,860 off Fenwatch's south gate (476, 800-802; the gate road ends at the marsh's tree rim around x 495).
+**A through road down the middle (y 800-815) that leaves the south edge (x 595) open** for the pass to Stonehold.
+Sandstone / temple-wall halls (W_SANDSTONE, W_TEMPLE), warm pools (clear water), egg pits (new sprites or barrels /
+bones), the Broodmother's chamber at the far end. Monsters: about 20 Lizard Knights (Captain; 406, sprite 13264),
+about 8 Lizard Archmages (Captain; 413 scaled down), the **Hatchery Archmage** (Captain, stronger; carries the
+**Archmage's Phial**), **the Broodmother** (Major; Lizard Knight 1154 scaled; a dark red recolour of 13264; carries the
+**Broodmother's Crown**). All Lizards carry a **Lizard Head**. Quests: Aldous: Crown -> **Scaled Belt** (+4 armor, +3
+Strength, rank 11), 52,000 exp; Rook (by name): Phial -> 2 **Elixirs of the Good Moon** (`n=2`; needs section 6's code
+live), 52,000 exp; Corwin `extra_quest(Lizard Head, 5200 exp, gold=26000 (260G), lim=0, rmin=11)`.
+Hatchery monsters must not walk into Fenwatch's marsh: a no-monster strip at its north edge, like the other areas.
+
+## 9. After band C
+
+Stonehold (a mountain mining town: Hagar, Anselm, Varo, Rhea, the Stonehold Watch bounty), then its four areas, then
+the pass and the Last Bastion. Each as above: plan from the Quest Planner rows -> Cody's OK -> preview -> build ->
+test -> live. New monster looks needed from band D on: monk sprites (Monastery), frost giant, rift-spawn, guardian
+and two bosses (bands E-F): recolours where they will do, else the 3D pipeline (`tools/sprites/make_creature.py`,
+models in `MyV2\3d Models`; HANDOFF "wolf"). Code still to write later: Fireward / Draught of the Void need none
+(timed potions); "one Ring of the Good Moon per player" if wanted.

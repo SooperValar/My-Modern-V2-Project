@@ -1,16 +1,23 @@
 #!/usr/bin/env python3
-"""iso preview of a map region: render.py <client> <dat> x0 y0 x1 y1 out.png [scale]"""
+"""iso preview of a map region from the real sprites: render_region.py <client folder> <.dat folder> x0 y0 x1 y1 out.png [scale]
+NPCs placed as templates are only drawn once the server has spawned them into char.dat (a stop-send copy of a live world)."""
 import struct,os,sys
 argv=sys.argv; C,D=argv[1],argv[2]; x0,y0,x1,y1=map(int,argv[3:7]); OUTP=argv[7]; SC=float(argv[8]) if len(argv)>8 else 1
 sys.argv=[argv[0],C,'/tmp']
-src=open(os.path.expanduser('~/mnt/My-Modern-V2-Project/tools/world/spritesheets.py')).read().split('ids=sorted')[0]
+src=open(os.path.join(os.path.dirname(os.path.abspath(__file__)),'spritesheets.py')).read().split('ids=sorted')[0]
 exec(src)
 from PIL import Image
 m=open(D+'/map.dat','rb').read(); it=open(D+'/item.dat','rb').read(); ch=open(D+'/char.dat','rb').read()
 cache={}
 def L(n):
     if n not in cache:
-        try: cache[n]=load(n)
+        try:
+            im_=load(n).convert('RGBA'); px=im_.load()
+            for yy in range(im_.height):
+                for xx in range(im_.width):
+                    r,g,b,a=px[xx,yy]
+                    if r>235 and g<25 and b>235: px[xx,yy]=(0,0,0,0)
+            cache[n]=im_
         except Exception: cache[n]=None
     return cache[n]
 def T(x,y): return struct.unpack_from('<HHIIIHhQ',m,(x+y*1024)*28)

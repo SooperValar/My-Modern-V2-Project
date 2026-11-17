@@ -12,7 +12,7 @@ world, quests, the editor, the client and Discord. Merged Nov 10 from the old TO
 
 ## Up next (in order)
 
-0. ★ **Quest plan, area by area**: Bandit Hollow built Nov 14; next the Wolfwood / Old Quarry - [Quests](#6-quests)
+0. ★ **Quest plan, area by area**: bands A-B done, Fenwatch + Drowned Village live (Nov 16); next the Barrow Hills, then the Lizard Hatcheries: **follow `docs/QUEST_BUILD.md`** - [Quests](#6-quests)
 1. ★ **Soulstone levels too low** (MAJOR) - [Fixes](#1-fixes-and-balance)
 2. ★ **Discord**: built Nov 14 (CHANGES.md "Discord"); waiting on Cody's webhooks / bot (HOSTING.md "Discord links")
 3. ★ **Walking speed, speed modes and attack speed** (look at it together first) - [Systems](#2-gameplay-systems)
@@ -213,17 +213,15 @@ as one special quest. Build one area at a time from the bottom, with `tools/worl
   - [x] its people, merchants and waypoint (Nov 16; `place_fenwatch.py`, template numbers in `made.json`): the six quest givers have greetings only, their quests (data 49 / 51 / 66 and the qrew / order lines, as in `rat_cellar/mirela.py`) come with their areas. Cody may add a waypoint picture (Waypoints tab) and change the merchants' stock.
   - [x] the marsh / Wolfwood border blended (`blend_wolfwood.py`). Left as it is: the Wolfwood's dark dirt road turns into the brown path at the border.
   - [x] **Drowned Village** (Nov 16; CHANGES.md "Drowned Village"): terrain, monsters, items, quests and Swimming are live. For Cody to try in game: the under-water loss with and without Swimming, how hard the fights are, the item pictures (the heads and the net are the weakest), Ilse's two hand-ins.
-  - [ ] Barrow Hills (x 335-415, y 770-850, north gate): Barrow Skeletons (422), Barrow Wights (1Lt, Lord 336, pale recolour), the Scribe, King Ulfgar (Captain). Aldous: Ulfgar's Torc -> amulet (+3 Bravery, +5 Resistance), 51,000; Petra: Rune-Carved Tablet -> Scholar's Ring (+3 Int, +6 Identify), 37,000.
-  - [ ] Lizard Hatcheries (x 500-590, y 770-860, south gate): Lizard Knights (406), Archmages (413 scaled to Captain), Hatchery Archmage, the Broodmother (Major, dark red). Aldous: Broodmother's Crown -> Scaled Belt (+4 armor, +3 Str), 52,000; Rook: Archmage's Phial -> 2 Elixirs of the Good Moon (code: +15% spells for 10 min, shared with the later Ring), 52,000; Bounty: Lizard Head 5,200 exp + 260G.
-  - Recolours from sprite 42600 up, item pictures from 44524. No gold on item quests (Ulfgar's "and gold" dropped).
-- [ ] Then Stonehold, the Last Bastion. **Space and routes (Nov 16; Cody: keep room for every planned area and a route from hub to hub; proposal, waiting for his OK; picture `docs/world_space_plan.png`, all boxes checked empty in the live map, x = south, y = east):**
+  - [ ] Barrow Hills (terrain script written, not live; a dead end now: the route to Stonehold goes south through the Hatcheries; **step-by-step in docs/QUEST_BUILD.md**) (x 320-405, y 770-850, north gate): Barrow Skeletons (422), Barrow Wights (1Lt, Lord 336, pale recolour), the Scribe, King Ulfgar (Captain). Aldous: Ulfgar's Torc -> amulet (+3 Bravery, +5 Resistance), 51,000; Petra: Rune-Carved Tablet -> Scholar's Ring (+3 Int, +6 Identify), 37,000.
+  - [ ] Lizard Hatcheries (**carries the through road south to Stonehold's pass**; docs/QUEST_BUILD.md) (x 505-595, y 765-860, south gate): Lizard Knights (406), Archmages (413 scaled to Captain), Hatchery Archmage, the Broodmother (Major, dark red). Aldous: Broodmother's Crown -> Scaled Belt (+4 armor, +3 Str), 52,000; Rook: Archmage's Phial -> 2 Elixirs of the Good Moon (code: +15% spells for 10 min, shared with the later Ring), 52,000; Bounty: Lizard Head 5,200 exp + 260G.
+  - Recolours from sprite 52000 up (50000-51999 used; 48000-49999 is another session's), item pictures from 44533. No gold on item quests (Ulfgar's "and gold" dropped).
+- [ ] Then Stonehold, the Last Bastion. **Space and routes (Nov 16; Cody: keep room for every planned area and a route from hub to hub; **approved by Cody Nov 16**; picture `docs/world_space_plan.png`, all boxes checked empty in the live map, x = south, y = east):**
   - Band C: Barrow Hills 320,770 - 405,850 (north gate); Lizard Hatcheries 505,765 - 595,860 (south gate).
   - **Route to Stonehold: south**, out of the Lizard Hatcheries' south side (a through road down its middle, y 800-815, ending in an open gap), a pass 596,800 - 649,815, to Stonehold 650,775 - 715,845. (The north strip above the Barrow Hills is not all free: the Sunken Dark lab is at about x 180-290, y 900-1000.)
   - Band D around Stonehold: Golem Foundry 650,670 - 740,765; Monastery 650,855 - 740,950; Ashen Fields 725,690 - 815,785; Gargoyle Spires 745,845 - 830,940. Elysium (776-822, 795-825) stays where it is, walled off.
   - Pass to the Last Bastion: 716,828 - 834,842 (just east of Elysium). Last Bastion 835,800 - 895,865; band E: Frostfang Peaks 835,690 - 925,790; Barbarian Highlands 835,880 - 925,975; Citadel of Kael 900,795 - 1010,870; Abyssal Rift 930,880 - 1020,975; band F: Shattered Throne 835,590 - 925,685; Heart of the Rift 930,590 - 1020,685.
   - Left free for later: 645,455 - 1020,585; 645,105 - 795,445; the north strip x 130-315, y 755-900. Every hub area is built with its road to the next hub in place, ending in an open gap.
-  potion effects (Clear Water, Elixir of the Good Moon, Fireward, Frozen Heart, Draught of the Void), the Ring
-  of the Good Moon.
 - The new walls 36000-36077 have no cut-down hidden form either (their +1 is the next variant, so hide walls shows a whole wall). The window walls do it right (N+1 = a low slab); the plain ones would need renumbering or a client rule.
 - New object sprite sets have no real cut-down "hidden" form: with hide walls on, a new tree shows the next variant
   (the original trees show stumps). Make proper hidden forms some time; run `tools/world/check_hide_sprites.py` after each build.
