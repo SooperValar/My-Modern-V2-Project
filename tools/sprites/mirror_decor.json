@@ -1,0 +1,62 @@
+{
+ "48000": {
+  "from": 572,
+  "name": "Picture of Misty Plains (west wall)"
+ },
+ "48001": {
+  "from": 580,
+  "name": "Picture of Sunset (west wall)"
+ },
+ "48002": {
+  "from": 1246,
+  "name": "Mirror (framed) (west wall)"
+ },
+ "48003": {
+  "from": 16552,
+  "name": "Mirror (round) (west wall)"
+ },
+ "48004": {
+  "from": 16553,
+  "name": "Mirror (round) II (west wall)"
+ },
+ "48005": {
+  "from": 16897,
+  "name": "Bookshelf 1 (west wall)"
+ },
+ "48006": {
+  "from": 16898,
+  "name": "Bookshelf 2 (west wall)"
+ },
+ "48007": {
+  "from": 16908,
+  "name": "Bookshelf 3 (west wall)"
+ },
+ "48008": {
+  "from": 16909,
+  "name": "Bookshelf 4 (west wall)"
+ },
+ "48009": {
+  "from": 16910,
+  "name": "Bookshelf 5 (book of wisdom) (west wall)"
+ },
+ "48010": {
+  "from": 16911,
+  "name": "Bookshelf 5, the book taken (west wall)"
+ },
+ "48011": {
+  "from": 620,
+  "name": "Skeleton in Chains (west wall)"
+ },
+ "48012": {
+  "from": 622,
+  "name": "Skeleton in Chains II (west wall)"
+ },
+ "48013": {
+  "from": 624,
+  "name": "Skeleton in Chains III (west wall)"
+ },
+ "48014": {
+  "from": 626,
+  "name": "Skeleton in Chains IV (west wall)"
+ }
+}
