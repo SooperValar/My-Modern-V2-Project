@@ -184,7 +184,25 @@ Tested on the test server (spawns, all hand-ins, 20 egg uses: 13 eggs, 5 hatchli
 Lessons: the egg's two looks are the item's sprite pair (whole / hatched, `active` = regrowing); `usexy <player> <x> <y>`
 tests a map item; the device VM disk is small: delete scratch copies and `.dat/mapedit-backups` there as you go.
 
-## 9. After band C
+## 9. Next: Stonehold (band D hub) - planned with Cody Nov 17, terrain previewed
+
+Quest rows: the Quest Planner's Planned Quests 21-29 (exp there; the Watch bounty's gold is now 1/200 of its exp: 13,000 exp
+-> 65G, not the sheet's 650G). Cody's answers (Nov 17):
+- **Brother Anselm's first quest** (Abbot's Prayer Beads) gives a **Monk's Wrap** belt (+Agility, +endurance) instead of Karate.
+- **A trader with a rotating random stock** of Rare and Epic gear: a couple of pieces of various kinds, changing now and then.
+  Needs server code in `merch.c` (e.g. a `rotate` line in merchants.dat: how many, how often, tiers, metals, levels); build it
+  on the chests' tier rewards (`npctalk.c` "reward tier", `tier.c`).
+- **The look**: a town in a hollow ringed by granite cliffs (the game's pale rock blocks 1204 / 1206), houses backed into the
+  rock, a fort wall and gatehouse across the north entrance; the game's own sprites only.
+**Terrain** `tools/world/stonehold/build_stonehold.py` (v2 preview `fenwatch_preview\stonehold_v2.png`, `stonehold_town_v2.png`):
+the pass x 596-649 (canyon, road y ~806-808 from the Hatcheries' exit), the town x 650-715 / y 775-845: square (682,810, free
+for waypoint 7), Watch Barracks, the Granite Hearth (inn), Hagar's Forge, Varo's Temple, Trader's House, two houses, a mine adit;
+gates with road stubs ending open: west (681,766) -> Golem Foundry, east (681,854) -> Monastery, south-west (724,784) -> Ashen
+Fields, south-east (724,835) -> the pass to the Last Bastion / Gargoyle Spires. No monsters in the pass or town.
+Then: the townspeople, the rotating trader, waypoint 7; then the Foundry, Ashen Fields, Spires; the Monastery last (new monk
+sprites, 3D pipeline).
+
+## 10. After band D
 
 Stonehold (a mountain mining town: Hagar, Anselm, Varo, Rhea, the Stonehold Watch bounty), then its four areas, then
 the pass and the Last Bastion. Each as above: plan from the Quest Planner rows -> Cody's OK -> preview -> build ->
