@@ -3,16 +3,18 @@
 grass, mud flats, murky lakes (can't be walked on), reeds and willows, with rock outcrops, on both sides of the **through
 road to Stonehold** (path, y ~801-809, leaving the area's south edge at x 595 open for the pass). Kept back from the road
 (Cody, Nov 17): lakes, pits and caves start a good way off it.
-West of the road: **the Hatchery**, a cave in the brown mine rock (wall 122, floor 116, dark inside, cave lights: template
-171 Earth Light II): a great hall with a warm pool, the Archmage's sanctum and three egg chambers off it, a tunnel out toward the road.
-East of the road: egg pits in the mud among the lakes, and at the far end the **Broodmother's Chamber**, a second cave.
+West of the road, set well back from it: **the Hatchery**, a cave in the brown mine rock (wall 122, floor 116, dark inside,
+cave lights: template 171 Earth Light II): a great hall with a warm pool, **the Broodmother's Nest** and three egg chambers off
+it, a long tunnel out toward the road. East of the road: egg pits in the mud among the lakes, and at the far end the
+**Archmage's Grotto**, a smaller cave entered from the north (its own path from the road). (Cody, Nov 17: the Broodmother is
+the big cave's boss, the Archmage the small cave's.)
 
     build_hatcheries.py <.dat folder>      (game stopped; tools/world/arealib.py)      then place_hatcheries.py"""
 import sys, os, random, math
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
 from arealib import *
 A = Area(sys.argv[1], seed=1123)
-X0, X1, Y0, Y1 = 495, 595, 765, 860
+X0, X1, Y0, Y1 = 495, 595, 757, 860            # (y from 757: the big cave was moved back from the road, Cody Nov 17)
 ROCK, CAVEFLOOR, CAVE_TORCH = 122, 116, 171         # cave light: 'Earth Light II', a fire on a rock mound, always lit (the game's caves use it)
 def road_y(x): return 801 + min(5, max(0, (x - 495) // 4)) + int(round(0.8 * math.sin(x / 7.0)))
 road = {(x, road_y(x) + d) for x in range(486, X1 + 1) for d in (0, 1, 2)}
@@ -33,20 +35,21 @@ def tunnel(a, b, w=1):
             for dy in range(-w, w + 1):
                 if abs(dx) + abs(dy) <= w: out.add((x + dx, y + dy))
     return out
-HALL = (541, 781, 7, 7); SANCTUM = (521, 773, 5, 5); EGGS = [(521, 788, 4.5, 4.5), (561, 773, 5, 4.5), (561, 789, 4.5, 4.5)]
-POOL_IN = ellipse(541, 781, 3.2, 3.0, 0.08)
-hatch = ellipse(*HALL) | ellipse(*SANCTUM) | set().union(*(ellipse(*e) for e in EGGS))
-for c in (SANCTUM,) + tuple(EGGS): hatch |= tunnel((HALL[0], HALL[1]), (c[0], c[1]))
-H_EXIT = [(541, 788), (541, 795)]                    # the tunnel out toward the road
+S = -6                                               # the big cave sits 6 tiles further from the road than first drawn
+HALL = (541, 781 + S, 7, 7); NEST = (521, 773 + S, 5, 5); EGGS = [(521, 788 + S, 4.5, 4.5), (561, 773 + S, 5, 4.5), (561, 789 + S, 4.5, 4.5)]
+POOL_IN = ellipse(541, 781 + S, 3.2, 3.0, 0.08)
+hatch = ellipse(*HALL) | ellipse(*NEST) | set().union(*(ellipse(*e) for e in EGGS))
+for c in (NEST,) + tuple(EGGS): hatch |= tunnel((HALL[0], HALL[1]), (c[0], c[1]))
+H_EXIT = [(541, 788 + S), (541, 795)]                # the tunnel out toward the road (longer now)
 hatch |= tunnel(*H_EXIT)
-BROOD = (582, 842, 8, 9)
-brood = ellipse(*BROOD) | tunnel((582, 834), (582, 826))
-BROOD_POOL = ellipse(584, 846, 3.0, 3.4, 0.1)
-caves = hatch | brood
+GROTTO = (582, 842, 8, 9)                            # the Archmage's Grotto: the smaller cave; its tunnel opens north (Cody, Nov 17)
+grotto = ellipse(*GROTTO) | tunnel((576, 842), (569, 842))
+GROTTO_POOL = ellipse(585, 846, 3.0, 3.4, 0.1)
+caves = hatch | grotto
 def rock_ring(c, r=1):
     return {(x + dx, y + dy) for x, y in c for dx in range(-r, r + 1) for dy in range(-r, r + 1)} - c
-walls = rock_ring(hatch) | rock_ring(brood)
-mouths = {(x, 797) for x in (540, 541, 542)} | {(x, 824) for x in (581, 582, 583)}     # where each tunnel opens (no rock across)
+walls = rock_ring(hatch) | rock_ring(grotto)
+mouths = {(x, 797) for x in (540, 541, 542)} | {(567, y) for y in (841, 842, 843)}     # where each tunnel opens (no rock across)
 walls -= mouths
 caves |= mouths
 # ---- outdoors: lakes and mud flats, kept back from the road
@@ -59,20 +62,21 @@ def blob(cx, cy, r, rough=0.35):
     return out
 lakes, mud = set(), set()
 for cx, cy, r in [(527, 840, 5.5), (550, 828, 4), (510, 852, 3.5), (556, 850, 4.5), (505, 777, 4), (580, 776, 4.5), (590, 790, 2.5)]: lakes |= blob(cx, cy, r, 0.3)
-PITS = [(518, 826), (541, 846), (566, 832), (534, 818)]                   # egg pits: mud hollows
+PITS = [(518, 826), (541, 846), (568, 824), (534, 818)]                   # egg pits: mud hollows
 for cx, cy in PITS: mud |= blob(cx, cy, 3.6)
 for cx, cy, r in [(510, 836, 3), (570, 858, 3), (500, 795, 2.5), (588, 815, 2.5), (548, 858, 3)]: mud |= blob(cx, cy, r)
-lakes = {p for p in lakes if road_dist(*p) >= 6}; mud = {p for p in mud if road_dist(*p) >= 5} - lakes
+grotto_path = tunnel((566, 842), (560, 842), 2) | tunnel((560, 842), (560, 812), 2)
+lakes = {p for p in lakes if road_dist(*p) >= 6} - grotto_path; mud = {p for p in mud if road_dist(*p) >= 5} - lakes - grotto_path
 OUTCROPS = [(500, 822), (529, 856), (575, 852), (593, 829), (503, 768), (586, 768), (566, 812)]   # rock outcrops, cave-like
 outcrop = set()
-for cx, cy in OUTCROPS: outcrop |= {p for p in blob(cx, cy, 1.6, 0.4) if road_dist(*p) >= 5}
+for cx, cy in OUTCROPS: outcrop |= {p for p in blob(cx, cy, 1.6, 0.4) if road_dist(*p) >= 5} - grotto_path
 for x in range(X0, X1 + 1):
     for y in range(Y0, Y1 + 1):
         if (x, y) in road: continue
         A.clear(x, y); A.op(op='flag', x=x, y=y, bit=2, mode=0)              # the void here was flagged indoors
         if (x, y) in caves:
             A.op(op='floor', x=x, y=y, s=CAVEFLOOR, set=False); A.op(op='flag', x=x, y=y, bit=2, mode=1)
-            if (x, y) in POOL_IN or (x, y) in BROOD_POOL: A.op(op='floor', x=x, y=y, s=random.choice(MURK), set=False); A.op(op='flag', x=x, y=y, bit=0, mode=1)
+            if (x, y) in POOL_IN or (x, y) in GROTTO_POOL: A.op(op='floor', x=x, y=y, s=random.choice(MURK), set=False); A.op(op='flag', x=x, y=y, bit=0, mode=1)
             continue
         if (x, y) in walls or (x, y) in outcrop:
             A.op(op='floor', x=x, y=y, s=CAVEFLOOR, set=False); A.op(op='object', x=x, y=y, s=ROCK, block=3); continue
@@ -94,7 +98,7 @@ for x in range(X0, X1 + 1):
         elif r < 0.050 and road_dist(x, y) > 3: A.op(op='object', x=x, y=y, s=random.choice(REEDS), block=0)
 for x, y in road:
     if X0 - 9 <= x <= X1: A.clear(x, y); A.op(op='flag', x=x, y=y, bit=2, mode=0); A.op(op='floor', x=x, y=y, s=random.choice(PATH), set=False)
-spur = tunnel((541, 798), (541, road_y(541)), 1) | tunnel((582, 823), (582, road_y(582) + 2), 1)       # paths from the road to the cave mouths
+spur = tunnel((541, 798), (541, road_y(541)), 1) | tunnel((566, 842), (560, 842), 1) | tunnel((560, 842), (560, road_y(560) + 2), 1)       # paths from the road to the cave mouths
 for x, y in spur - road - caves:
     A.clear(x, y); A.op(op='flag', x=x, y=y, bit=2, mode=0); A.op(op='floor', x=x, y=y, s=random.choice(PATH), set=False)
 A.run('Lizard Hatcheries: marsh, lakes, caves, road')
@@ -105,17 +109,18 @@ for y in range(Y0, Y1 + 1):
     for x in (495, 496): A.op(op='flag', x=x, y=y, bit=5, mode=1)
 A.run('open the tree wall, no-monster strip')
 # cave torches along the cave walls (inside, on a floor tile next to the rock), a few apart; bones in the egg chambers
-inner = [p for p in caves if p not in POOL_IN and p not in BROOD_POOL and p not in mouths and any((p[0] + dx, p[1] + dy) in walls for dx, dy in ((1, 0), (0, 1), (-1, 0), (0, -1)))]
+inner = [p for p in caves if p not in POOL_IN and p not in GROTTO_POOL and p not in mouths and any((p[0] + dx, p[1] + dy) in walls for dx, dy in ((1, 0), (0, 1), (-1, 0), (0, -1)))]
 random.shuffle(inner); torches = []
 for p in sorted(inner):
     if all(abs(p[0] - q[0]) + abs(p[1] - q[1]) >= 9 for q in torches): torches.append(p)
 P = [(CAVE_TORCH, x, y) for x, y in torches]
 for cx, cy, rx, ry in EGGS: P += [(BONES, round(cx) + 1, round(cy) - 1)]
-P += [(BONES, 579, 838), (BONES, 586, 839), (BONES, 523, 771)]
+P += [(BONES, 579, 838), (BONES, 586, 839), (BONES, 523, 771 + S)]
 for x, y in PITS: P += [(BONES, x + 1, y - 1)]
 A.place(*P)
 A.marsh_edges((X0 - 2, Y0, X1, Y1))
-A.zone(505, 765, 570, 797, 'the Hatchery')
-A.zone(573, 825, 592, 853, "Broodmother's Chamber")
+A.zone(505, 757, 570, 797, 'the Hatchery')
+A.zone(512, 762, 527, 774, "Broodmother's Nest")
+A.zone(565, 832, 592, 853, "Archmage's Grotto")
 A.zone(X0, Y0, X1, Y1, 'Lizard Hatcheries')
 A.save(); print(len(torches), 'cave lights')
