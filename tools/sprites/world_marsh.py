@@ -7,7 +7,7 @@ soft edges on a marsh-grass base, and reeds.
 Grounds (4 plain variants + 46 edge tiles that blend GRASS into them, as in world_ground.py):
   marsh grass 35700-35749 (dark, wet olive grass), marsh mud 35750-35799, murky water 35800-35849.
 Edges on a MARSH GRASS base (46 each, in the order of world_ground.all_masks()):
-  murky water creeping in 35850-35895, marsh mud 35900-35945, path (35000) 35950-35995.
+  murky water creeping in 35850-35895, marsh mud 35900-35945, path (35000) 35950-35995, forest floor (1118) 35650-35695.
 Reeds: 38200, 38202, 38204, 38206 (32x64, drawn into the tile, block nothing), each N+1 its cut-down form for
 "hide walls". Writes tools/sprites/world_marsh.json (the tables) beside this script."""
 import json, math, os, random, sys
@@ -18,7 +18,7 @@ import world_ground as wg
 
 GROUNDS = {'marsh grass': (35700, 'earth', (0.205, 0.58, 0.36)), 'marsh mud': (35750, 'earth', (0.085, 0.50, 0.30)),
            'murky water': (35800, 'water', (78, 128, 112))}
-ON_MARSH = {'murky water': 35850, 'marsh mud': 35900, 'path': 35950}
+ON_MARSH = {'murky water': 35850, 'marsh mud': 35900, 'path': 35950, 'forest floor': 35650}   # forest floor: the game's 1118 (the Wolfwood's ground)
 REEDS = [38200, 38202, 38204, 38206]
 
 def murky(src, seed, rgb):
@@ -67,6 +67,7 @@ def build(client):
             out[first + 4 + i] = wg.blend(grass[i % 4], plain[name][(i // 4) % 4], m, seed=first + m); edges[str(m)] = first + 4 + i
         table['grass_base'][name] = {'plain': [first + k for k in range(4)], 'edges': edges}
     plain['path'] = [S.get(n) for n in (35000, 35001, 35002, 35003)]
+    plain['forest floor'] = [S.get(1118)] * 4
     for name, first in ON_MARSH.items():
         edges = {}
         for i, m in enumerate(masks):
