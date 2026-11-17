@@ -37,6 +37,9 @@ Note: the real client source is the project's `client/` folder (the old copies i
 ## Cody's standing rules
 
 - Always end with clear **"▶ Do this now"** steps.
+- **Delete old files on your own** (Cody, Nov 17): superseded previews, scratch files, stale git locks. At the start of a
+  session ask once for delete permission on the `MyV2` folder (`device_request_delete_permission`), then `rm` instead of
+  moving files aside (git's `.lock` / `tmp_obj_*` leftovers included). Don't ask Cody to delete things.
 - **Keep the hand-off documents current as we go** (this file, `docs/TODO.md`, `CHANGES.md`): Cody starts a new chat
   only about once a week, so every session should leave them complete enough for a cold start.
 - `CHANGES.md` describes the game as it is now, in the section where a thing belongs (player features, Editor,

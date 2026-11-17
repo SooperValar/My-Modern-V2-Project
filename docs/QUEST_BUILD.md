@@ -164,11 +164,13 @@ live, so test it first:
    **King's Barrow** (337,806; three fire bowls inside), dark rock walls with a door gap each, dark inside (indoors flag),
    graves, bones. Zones: Barrow Hills, King's Barrow, Scribe's Barrow. Opens the marsh's north tree wall at the road;
    no-monster strip x 407-408.
-   **Nov 17: reworked and shown to Cody** (`fenwatch_preview\barrow_hills_v4.png`, `barrow_tombs_v4.png`): mossy stone
+   **Nov 17: reworked and shown to Cody** (now `fenwatch_preview\barrow_hills_v5.png`, `barrow_tombs_v5.png`). Cody asked
+   for **two medium tombs (6x6) with room for a couple of monsters each**: at 334,836 (door at 340,836) and 368,779 (door
+   374,779, a trail from the standing stones); put 2-3 Barrow Skeletons / Wights inside each in step 2. Mossy stone
    (W_MOSSY) for the King's / Scribe's Barrows, fieldstone for the six small ones, dirt floor inside (was cave), the
    scattered rock pillars gone (only the standing-stone ring keeps them; LOOSE_ROCKS 1274-1278 draw as red cones: don't
-   use), trails reach both named doors. **Waiting for Cody's OK**, then build it live (stop-send, script on
-   `Server\.dat`, relight, update-world). Fable's first render was `barrow_hills_v1.png`. Things to look at before showing it: the rock pillars (ROCKS) may be too many; the barrows are hard black
+   use), trails reach both named doors. **v5 waiting for Cody's OK**, then build it live (stop-send, script on
+   `Server\.dat`, relight, update-world).  Things to look at before showing it: the rock pillars (ROCKS) may be too many; the barrows are hard black
    rings of wall (maybe lower them or use mossy stone / earth walls); since it is a dead end, the road only needs to
    reach the barrows. Render again, fix, **show Cody, wait for OK**.
 2. **Monsters** (new script `place_barrow.py` with arealib; group 35; look up ranks with `Area.monster(..., rank)`):

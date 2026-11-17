@@ -17,7 +17,8 @@ for x in range(372, 424):
 CIRCLE = (366, 805)                               # the standing stones
 BARROWS = [  # centre x, y, radius x, y, door side ('s' = toward Fenwatch ...), name
     (337, 806, 10, 12, 's', 'king'), (352, 782, 6, 7, 'e', 'scribe'),
-    (384, 782, 4, 5, 's', ''), (392, 822, 4, 5, 'w', ''), (374, 836, 5, 4, 'w', ''), (350, 834, 4, 5, 'n', ''), (336, 778, 4, 4, 's', ''), (380, 812, 4, 4, 'n', '')]
+    (384, 782, 4, 5, 's', ''), (392, 822, 4, 5, 'w', ''), (374, 836, 5, 4, 'w', ''), (350, 834, 4, 5, 'n', ''), (336, 778, 4, 4, 's', ''), (380, 812, 4, 4, 'n', ''),
+    (334, 836, 6, 6, 's', 'medium'), (368, 779, 6, 6, 's', 'medium')]     # two medium tombs (Cody, Nov 17): room for a couple of monsters each
 INFLOOR = [989]                                    # dirt inside the tombs (was the red-black cave floor)
 ell = lambda x, y, cx, cy, rx, ry: ((x - cx) / rx) ** 2 + ((y - cy) / ry) ** 2
 def barrow_at(x, y, pad=0.0):
@@ -35,7 +36,7 @@ def trail(x0, y0, x1, y1):
     for i in range(n + 1):
         x, y = round(x0 + (x1 - x0) * i / n), round(y0 + (y1 - y0) * i / n)
         for d in ((0, 0), (1, 0), (0, 1)): paths.add((x + d[0], y + d[1]))
-trail(372, 801, 347, 806); trail(366, 800, 358, 790); trail(358, 790, 352, 789)      # up to the King's and Scribe's doors
+trail(372, 801, 347, 806); trail(366, 800, 358, 790); trail(358, 790, 352, 789); trail(366, 800, 374, 779)      # up to the medium tomb's door too; the King's and Scribe's doors
 for x in range(X0, X1 + 1):
     for y in range(Y0, Y1 + 1):
         if x > edge(y) and (x, y) not in road: continue                 # Fenwatch's marsh stays
@@ -74,10 +75,10 @@ for k in range(10):                               # the standing stones: a ring 
     if (x, y) not in paths: A.op(op='object', x=x, y=y, s=ROCKS[k % 4], block=3)
 A.run('standing stones')
 P = [(FIREBOWL, 337, 800), (FIREBOWL, 337, 812), (FIREBOWL, 331, 806), (BONES, 340, 803), (BONES, 334, 810), (BONES, 352, 780), (TORCH, 352, 784), (BONES, 366, 805),
-     (TOMBSTONE, 362, 812), (TOMBSTONE, 371, 797), (TOMBSTONE, 389, 795), (TOMBSTONE, 396, 812), (TOMBSTONE, 345, 822), (TOMBSTONE, 328, 792), (TOMBSTONE, 360, 842), (BONES, 384, 782), (BONES, 392, 822)]
+     (TOMBSTONE, 362, 812), (TOMBSTONE, 371, 797), (TOMBSTONE, 389, 795), (TOMBSTONE, 396, 812), (TOMBSTONE, 345, 822), (TOMBSTONE, 328, 792), (TOMBSTONE, 360, 842), (BONES, 384, 782), (BONES, 392, 822), (BONES, 333, 834), (TOMBSTONE, 336, 839), (BONES, 367, 777), (TOMBSTONE, 365, 782)]
 A.place(*P)
 A.marsh_edges((398, Y0, 412, Y1))
 for b in BARROWS:
-    if b[5]: A.zone(b[0] - b[2], b[1] - b[3], b[0] + b[2], b[1] + b[3], "King's Barrow" if b[5] == 'king' else "Scribe's Barrow")
+    if b[5] in ('king', 'scribe'): A.zone(b[0] - b[2], b[1] - b[3], b[0] + b[2], b[1] + b[3], "King's Barrow" if b[5] == 'king' else "Scribe's Barrow")
 A.zone(X0, Y0, 403, Y1, 'Barrow Hills')
 A.save()
