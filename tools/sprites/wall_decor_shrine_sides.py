@@ -19,7 +19,7 @@ def faces(base, orig, left, right):
     return out
 for i, s in enumerate((792, 914)):
     a = ld(s)
-    for j, (left, right) in enumerate((('plain', 'front'), ('plain', 'plain'), ('shadow', 'plain'))):   # W, N, E
+    for j, (left, right) in enumerate((('front', 'front'), ('front', 'front'), ('shadow', 'front'))):   # W, N, E: the shiny side everywhere but the shadowy one (Cody)
         n = 48020 + 3 * i + j
         top = np.array(Image.open('out/%05d.png' % n).convert('RGBA')).astype(float)
         save(n, faces(top, a, left, right))

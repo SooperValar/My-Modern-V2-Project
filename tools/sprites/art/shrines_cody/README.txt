@@ -1,2 +1,3 @@
 Temple shrine (792) turned, drawn by Cody (Nov 16), scaled to game size by Claude: 48020 W (statue at the front corner), 48021 N (from behind: statue at the right corner), 48022 E (statue at the back corner). These replace the generated ones from wall_decor_shrines.py.
 Nov 16, later: the sides turn too (wall_decor_shrine_sides.py): S front+shadow (the game), W plain+front, N plain back+plain side, E shadow+plain back. 48020-48025 here are the finished sprites (in Client\GFX).
+Then (Cody): no plain sides - the shiny decorated side on every face but the shadowy one (S right, E left).
