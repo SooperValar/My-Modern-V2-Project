@@ -370,3 +370,4 @@ Details in `CHANGES.md`.
 
 - [ ] **Items page: change many at once** (Cody, Nov 16: later). Tick rows (or all shown) and set / add to a field for all of them (+2 damage, min rank 7, price x1.5).
 - [ ] **Alchemy skill** (Cody, Nov 16: later). A new skill (server skill table, client skill names, trainers); recipes and potions can then need it (Needs / Needed already work with any skill).
+- [ ] **A bigger world (only if needed)** (Cody, Nov 16): build the hub towns in the free space first (64% of the 1024x1024 map is empty: lower right x 640-1024 / y 450-1024, bottom middle x 128-640 / y 750-1024, right of centre x 640-800 / y 100-450; picture: Client\Claude outputs\world_free_space.png). Enlarging the map means MAPX/MAPY (about 420 uses in the server), NPC spots packed as x+y*1024 (data 10-35), map.dat, the editor and the client: a Fable job, test server first, full backup.
