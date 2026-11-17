@@ -181,8 +181,8 @@ stopped via `stop-send`, then `update-world` and `reload-editor`):
 - Tested from outside (laptop on a phone hotspot) and the launcher's update path (version 1 -> 2).
 
 ## Sprite numbers (Nov 12)
-Taken since (Nov 15-17): 43000-44001 wolves (3D, own shadow); 44500-44531 heads and quest items; 48000-48025 wall
-decorations; 50000+ recoloured monsters (Drowned Sailor 50000, Bog-man 50500, Sea Golem 51000; next 52000). Check
+Taken since (Nov 15-17): 43000-44001 wolves (3D, own shadow); 44500-44535 heads and quest items (next 44536); 48000-48025 wall
+decorations; 50000+ recoloured monsters (Drowned Sailor 50000, Bog-man 50500, Sea Golem 51000, Barrow Wight 52000; next 53000). Check
 `Client\GFX` before taking a number.
 
 Client 2.15.06 shows sprites 0-65,535 (before: up to 34,767). Free for new sprites: 34,192 and up. Not free: the gaps
@@ -264,7 +264,14 @@ project's next session. What the second chat did Nov 15-17 (all live, CHANGES.md
   temple's); signs could get a readable west version (mirroring flips their text); the window walls face one way only;
   TODO: Alchemy skill, change many items at once, a bigger world only if the towns don't fit.
 
-**Where we left off (Nov 17, morning): the quest plan (new areas) continues in `docs/QUEST_BUILD.md`** - read it before any world-building work: state, Cody's rules, the approved space plan and route, numbers in use, tools (`tools/world/arealib.py`, `deploy.sh`, `render_region.py`), the unfinished code, and the next two areas step by step. Fable's session ran out mid-way; its Good Moon / Frozen Heart / Karate code is **committed but untested and not live** (server/data.h, driver.c, skill_driver.c, svr_do.c; identical in the Windows Server folder): an `update-code` would put it live, so test it first (QUEST_BUILD.md section 6). The Barrow Hills terrain script exists but has not been run on the live world. Live (Nov 17): wall decorations for all four walls + turned shrines (CHANGES.md), templates 2033-2050, editor Facing row; client-dist published locally (Cody pushes).
+**Where we left off (Nov 17, noon): the Barrow Hills are complete and live** (terrain with two medium tombs, Barrow
+Skeletons, pale Barrow Wights 52000+, the Scribe, King Ulfgar, Aldous's and Petra's quests; items 2051-2054, pictures
+44533-44535; client-dist 0161385 published locally, Cody pushes). Server: undead in monster groups 34 / 35 heal like
+Lab 11's (`SLOW_UNDEAD_GROUP`), and Fable's Good Moon / Frozen Heart / Karate code is **now live** (tested first).
+Next: the **Lizard Hatcheries** (`docs/QUEST_BUILD.md` section 8). Cody hasn't played the Barrow Hills or the Drowned
+Village yet.
+
+**Where we left off (Nov 17, morning): the quest plan (new areas) continues in `docs/QUEST_BUILD.md`** - read it before any world-building work: state, Cody's rules, the approved space plan and route, numbers in use, tools (`tools/world/arealib.py`, `deploy.sh`, `render_region.py`), the unfinished code, and the next two areas step by step. Fable's session ran out mid-way (its Good Moon / Frozen Heart / Karate code went live Nov 17, after testing). Live (Nov 17): wall decorations for all four walls + turned shrines (CHANGES.md), templates 2033-2050, editor Facing row; client-dist published locally (Cody pushes).
 
 **Where we left off (Nov 16, 22:35): the Drowned Village is complete and live** (monsters, items 2024-2032, quests on Joss / Ilse / Corwin, Swimming in the server code; client-dist published locally, Cody pushes). Next: the Barrow Hills (plan in TODO.md; and TODO "Space and routes": where every planned area goes, `docs/world_space_plan.png`; the route to Stonehold is proposed through the Lizard Hatcheries, south, not the Barrow Hills; Cody's OK pending), then the Lizard Hatcheries with the Elixir of the Good Moon. Recoloured monsters now go to 50000 and up (Drowned Sailor 50000, Bog-man 50500, Sea Golem 51000; next free 52000). Cody edits Fenwatch live in the editor: before any stop, the gate on `"online": 0` as always; after `reload-editor` he may have to press the editor's round "Load the world again from disk" button (the editor does not restart while it has unsaved changes, and F5 alone then shows the old world). Sprite range 48000-49999 is another session's.
 

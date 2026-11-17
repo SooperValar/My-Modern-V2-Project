@@ -12,7 +12,7 @@ world, quests, the editor, the client and Discord. Merged Nov 10 from the old TO
 
 ## Up next (in order)
 
-0. ★ **Quest plan, area by area**: bands A-B done, Fenwatch + Drowned Village live (Nov 16); next the Barrow Hills, then the Lizard Hatcheries: **follow `docs/QUEST_BUILD.md`** - [Quests](#6-quests)
+0. ★ **Quest plan, area by area**: bands A-B done, Fenwatch + Drowned Village (Nov 16) + Barrow Hills (Nov 17) live; next the Lizard Hatcheries: **follow `docs/QUEST_BUILD.md`** - [Quests](#6-quests)
 1. ★ **Soulstone levels too low** (MAJOR) - [Fixes](#1-fixes-and-balance)
 2. ★ **Discord**: built Nov 14 (CHANGES.md "Discord"); waiting on Cody's webhooks / bot (HOSTING.md "Discord links")
 3. ★ **Walking speed, speed modes and attack speed** (look at it together first) - [Systems](#2-gameplay-systems)
@@ -59,7 +59,8 @@ Look at how graves pick their sprite and facing. (Chests have only the game's tw
 222/223; north / east were tried three ways and dropped. Graves may have the same limit.)
 
 ### ○ Undead regeneration and underwater damage balance
-After more testing.
+After more testing. Nov 17: the quest areas' undead (groups in `SLOW_UNDEAD_GROUP`, data.h) heal ~4 hp/s like Lab 11's;
+the game's other undead keep ~12 hp/s. The Graveyard undead (below) should go in that list too.
 
 ---
 
@@ -213,7 +214,7 @@ as one special quest. Build one area at a time from the bottom, with `tools/worl
   - [x] its people, merchants and waypoint (Nov 16; `place_fenwatch.py`, template numbers in `made.json`): the six quest givers have greetings only, their quests (data 49 / 51 / 66 and the qrew / order lines, as in `rat_cellar/mirela.py`) come with their areas. Cody may add a waypoint picture (Waypoints tab) and change the merchants' stock.
   - [x] the marsh / Wolfwood border blended (`blend_wolfwood.py`). Left as it is: the Wolfwood's dark dirt road turns into the brown path at the border.
   - [x] **Drowned Village** (Nov 16; CHANGES.md "Drowned Village"): terrain, monsters, items, quests and Swimming are live. For Cody to try in game: the under-water loss with and without Swimming, how hard the fights are, the item pictures (the heads and the net are the weakest), Ilse's two hand-ins.
-  - [~] Barrow Hills (terrain LIVE Nov 17 with two medium tombs; monsters, items, quests next; a dead end now: the route to Stonehold goes south through the Hatcheries; **step-by-step in docs/QUEST_BUILD.md**) (x 320-405, y 770-850, north gate): Barrow Skeletons (422), Barrow Wights (1Lt, Lord 336, pale recolour), the Scribe, King Ulfgar (Captain). Aldous: Ulfgar's Torc -> amulet (+3 Bravery, +5 Resistance), 51,000; Petra: Rune-Carved Tablet -> Scholar's Ring (+3 Int, +6 Identify), 37,000.
+  - [x] **Barrow Hills** (Nov 17; CHANGES.md "Barrow Hills"): terrain with two medium tombs, Barrow Skeletons, pale Barrow Wights, the Scribe, King Ulfgar; Aldous (Torc -> amulet) and Petra (Tablet -> Scholar's Ring). Undead in groups 34/35 heal ~4 hp/s (Cody: the full rate made them too hard). For Cody to try in game.
   - [ ] Lizard Hatcheries (**carries the through road south to Stonehold's pass**; docs/QUEST_BUILD.md) (x 505-595, y 765-860, south gate): Lizard Knights (406), Archmages (413 scaled to Captain), Hatchery Archmage, the Broodmother (Major, dark red). Aldous: Broodmother's Crown -> Scaled Belt (+4 armor, +3 Str), 52,000; Rook: Archmage's Phial -> 2 Elixirs of the Good Moon (code: +15% spells for 10 min, shared with the later Ring), 52,000; Bounty: Lizard Head 5,200 exp + 260G.
   - Recolours from sprite 52000 up (50000-51999 used; 48000-49999 is another session's), item pictures from 44533. No gold on item quests (Ulfgar's "and gold" dropped).
 - [ ] Then Stonehold, the Last Bastion. **Space and routes (Nov 16; Cody: keep room for every planned area and a route from hub to hub; **approved by Cody Nov 16**; picture `docs/world_space_plan.png`, all boxes checked empty in the live map, x = south, y = east):**

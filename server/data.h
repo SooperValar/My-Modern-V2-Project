@@ -347,6 +347,7 @@ extern unsigned int mapmarker;
 #define LAB11_TEMPS_FROM 1200   // its character templates
 #define LAB11_TEMPS_TO  1259
 #define LAB11_UNDEAD_REGEN 220  // their undead regenerate 220/1000 hp a tick (about 4 hp/s) instead of 650
+#define SLOW_UNDEAD_GROUP(g) ((g)==34 || (g)==35)  // monster groups (data[CHD_GROUP]) whose undead regenerate like Lab 11's: 34 Drowned Village, 35 Barrow Hills (Cody, Nov 17)
 #define LAB11_PAGE_SPR	18170	// torn page sprites: 18170+mask-1 for page masks 1..14 (bit 0 = page 1)
 // Lab 11's whole area ("Labyrinth, Sunken Dark"); while it is unfinished, every
 // player death in it is an arena death (keeps items, no hitpoint/mana loss)

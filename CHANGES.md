@@ -1185,7 +1185,7 @@ East of Fenwatch (zone "Drowned Village", x 416-504, y 853-950), for Sergeant Ma
 - **Swimming** (server `svr_do.c`, `driver.c`, `data.h` SWIM_FULL, `skill.c`): under water a player loses breath (about 4.5 hitpoints a second, no regeneration) as before; now each point of Swimming takes 1/125 of that away, **none left at Swimming 125**. This also holds in the game's other under-water places (the Underwater Pentagram area). No class had Swimming in its skill list, so the teaching NPC gives it to the player's class on the spot (up to 60 raised, difficulty 5, like Perception).
 - **Item pictures** 44524-44532 (`tools/sprites/quest_items/drowned_village.py`): the two heads (cut from the monsters' own frames), compass, hex-doll, net, pouch, ring, belt (drawn: a coiled sealskin belt with a silver fish buckle; a first recolour of the game's thin belt strip looked bad), draught. Items 2024-2032; the quest items and heads have no value (can't be sold) and no labyrinth flag.
 
-## Barrow Hills (Nov 17; terrain live, monsters and quests to come)
+## Barrow Hills (Nov 17)
 
 North of Fenwatch (zone "Barrow Hills", x 320-403, y 768-852), for First Lieutenant; a dead end reached by Fenwatch's
 north gate road (the North Road, y ~800-802), which ends at a ring of standing stones (366,805) with trails on.
@@ -1195,6 +1195,28 @@ north gate road (the North Road, y ~800-802), which ends at a ring of standing s
 - Grass upland, dead and old trees, stumps, tombstones; a pine / old-tree rim. Fenwatch's marsh north tree wall is opened
   at the road and thinned; a no-monster strip (x 407-408) keeps the hills' monsters out of the marsh.
 - Built with `tools/world/barrow_hills/build_barrow.py` (uses `tools/world/arealib.py`).
+- **Monsters** (group 35; `tools/world/barrow_hills/place_barrow.py`, numbers in `made.json`): 15 **Barrow Skeletons**
+  (the Skeleton's own look; Sergeant Major and Second Lieutenant), 17 **Barrow Wights** (First Lieutenant; the Undead Lord
+  recoloured grave-pale, sprites 52000+), two wights and a skeleton in each medium tomb, two wight guards in the King's
+  Barrow; the **Barrow Wight Scribe** in the Scribe's Barrow (a strong First Lieutenant; carries the **Rune-Carved
+  Tablet**) and **Barrow King Ulfgar** in the King's Barrow (Captain, the Lord's own dark look; carries **Ulfgar's Torc**).
+- **Undead regenerate less here** (and in the Drowned Village): undead in monster groups 34 and 35 heal like Lab 11's,
+  about 4 hitpoints a second instead of about 12 (server `svr_do.c`, `SLOW_UNDEAD_GROUP` in `data.h`; Cody, Nov 17: the full
+  rate made them too hard to kill at their rank). Holy water still works on them.
+- **Quests** (item quests, `#quest`; once each, from First Lieutenant, no gold): **Aldous**: Ulfgar's Torc -> the
+  **Ulfgar's Torc** amulet (+3 Bravery, +5 Resistance), 51,000 exp. **Petra**: the Rune-Carved Tablet -> **Scholar's Ring**
+  (+3 Intuition, +6 Identify), 37,000 exp. Item templates 2051-2054; pictures 44533 (tablet), 44534 (torc, both items),
+  44535 (ring) (`tools/sprites/quest_items/barrow_hills.py`, README.txt). Published: client-dist 0161385.
+
+## New potion effects and Karate for every class (server, Nov 17; written by Fable Nov 16)
+
+Live since Nov 17 (tested on the test server: both potions drunk, their effect on the character, no crash):
+- **Elixir of the Good Moon** (spell item `SPT_GOODMOON` 65001, `skill_driver.c` `has_good_moon`): while it lasts (or at full
+  moon, or wearing an item with data[9] = 65001: the later Ring of the Good Moon) spells are 15% stronger and a Bad Moon
+  doesn't weaken them. A potion: a timed potion with data[1] = 65001 (made with the Lizard Hatcheries).
+- **Potion of the Frozen Heart** (`SPT_FROZENHEART` 65002, `svr_do.c`): while it lasts, 3.6 extra hitpoints a second.
+- **Karate**: the teaching NPC gives Karate to the player's class first (`driver.c`), like Swimming (for Brother Anselm, band D).
+No such potions are in the world yet.
 
 ## Wall decorations for all four walls, turned shrines (Nov 16-17)
 

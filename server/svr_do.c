@@ -4283,8 +4283,8 @@ void do_regenerate(int cn)
         // Epic effects Regeneration / Clarity / Stamina (tier.c)
         if (ch[cn].flags&(CF_PLAYER|CF_USURP)) tier_regen(cn,ch_base_status(ch[cn].status)<=7,moonmult,nohp,noend,nomana);
 
-        if (ch[cn].flags&CF_UNDEAD) {   // Lab 11's undead regenerate less than the usual 650
-                int reg=(ch[cn].temp>=LAB11_TEMPS_FROM && ch[cn].temp<=LAB11_TEMPS_TO) ? LAB11_UNDEAD_REGEN : 650;
+        if (ch[cn].flags&CF_UNDEAD) {   // Lab 11's undead and the quest areas' (SLOW_UNDEAD_GROUP) regenerate less than the usual 650
+                int reg=((ch[cn].temp>=LAB11_TEMPS_FROM && ch[cn].temp<=LAB11_TEMPS_TO) || (!(ch[cn].flags&CF_PLAYER) && SLOW_UNDEAD_GROUP(ch[cn].data[CHD_GROUP]))) ? LAB11_UNDEAD_REGEN : 650;
                 ch[cn].a_hp+=reg; hp=1; gothp+=reg;
         }
 

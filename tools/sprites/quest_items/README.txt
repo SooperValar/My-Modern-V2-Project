@@ -11,3 +11,5 @@ Game sprites edited (game_edits.py): 44516 Moonwort (1460), 44517 Studded Belt (
 item_icon.py needs glrender.py (tools/sprites).
 44522 Broodmother's Tail: rat_tail.py (drawn).
 44523 Rat-Catcher's Ring: item_icon.py Ring4.obj --size 13 --bright 2.2 --recol Golden=c8ccd4 (RPG Pack 2).
+44533 Rune-Carved Tablet, 44534 Ulfgar's Torc (quest item and amulet): barrow_hills.py (drawn).
+44535 Scholar's Ring: item_icon.py Ring5.obj --size 13 --bright 2.2 --recol Golden=c8ccd4 (RPG Pack 2).

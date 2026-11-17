@@ -8,13 +8,13 @@ with exp per quest, Reward Guide, New Areas). Their Status column is not kept up
 
 ---
 
-## 1. Where things stand (Nov 17 morning)
+## 1. Where things stand (Nov 17, noon)
 
 | Band | Ranks | Hub | Areas | State |
 |---|---|---|---|---|
 | A | Private - Corporal | Aston | Rat-Catcher's Cellars; Old Graveyard | cellars live; graveyard not built |
 | B | Sergeant - First Sergeant | Aston | Bandit Hollow, Wolfwood, Old Quarry | all live |
-| C | Sergeant Major - Captain | **Fenwatch** (live) | Drowned Village (live); **Barrow Hills (next)**; Lizard Hatcheries | see below |
+| C | Sergeant Major - Captain | **Fenwatch** (live) | Drowned Village (live); Barrow Hills (live Nov 17); **Lizard Hatcheries (next)** | see below |
 | D | Major - Brigadier General | Stonehold | Golem Foundry, Monastery, Ashen Fields, Gargoyle Spires | space reserved |
 | E | Major General - Field Marshal | Last Bastion | Frostfang Peaks, Barbarian Highlands, Citadel of Kael, Abyssal Rift | space reserved |
 | F | Knight - Warlord | Last Bastion | Shattered Throne, Heart of the Rift (4-step chain) | space reserved |
@@ -69,12 +69,14 @@ past Elysium -> Last Bastion.** The Barrow Hills are a dead end off Fenwatch's n
 
 ## 4. Numbers in use (check again before making new ones)
 
-- Item templates up to **2050** (2024-2032 Drowned Village; 2033-2050 the other session's wall decorations).
-  NPC templates up to **2205**. `itempnew` / `ctempnew` take the next free number by themselves.
-- Monster groups (NPC data 42/44): 30 bandits, 31 quarry golems, 32 deep grolms, 33 wolves, 34 Drowned Village. **Next: 35.**
+- Item templates up to **2054** (2024-2032 Drowned Village; 2033-2050 wall decorations; 2051-2054 Barrow Hills).
+  NPC templates up to **2239** (2206-2239 Barrow Hills, `barrow_hills/made.json`). `itempnew` / `ctempnew` take the next free number by themselves.
+- Monster groups (NPC data 42/44): 30 bandits, 31 quarry golems, 32 deep grolms, 33 wolves, 34 Drowned Village, 35 Barrow Hills.
+  **Next: 36.** Undead in a group listed in `SLOW_UNDEAD_GROUP` (`data.h`: 34, 35) regenerate like Lab 11's (~4 hp/s, not ~12):
+  add each new undead area's group there (Cody, Nov 17).
 - Sprites: monster recolours 41000+ (Quarry Golem), 42100+ (Deep Grolm), 50000+ Drowned Sailor, 50500+ Bog-man,
-  51000-51981 Sea Golem: **next free block 52000** (a recolour fills base+0..1023, so step by 1000 to be safe; 500 worked
-  for the Undead and Grolm). 3D creatures 43000-44447 (wolves). Item pictures 44500-44532: **next 44533**.
+  51000-51981 Sea Golem, 52000+ Barrow Wight: **next free block 53000** (a recolour fills base+0..1023, so step by 1000 to be safe; 500 worked
+  for the Undead and Grolm). 3D creatures 43000-44447 (wolves). Item pictures 44500-44535: **next 44536**.
   World: marsh grounds and edges 35650-35995, reeds 38200-38207. Waypoints: 1-6 used (`next 7` in waypoints.dat).
 - Fenwatch NPCs (`tools/world/fenwatch/made.json`): Joss 2142, Ilse 2143, Aldous 2144, Petra 2145, Rook 2146, Bounty
   Master Corwin 2147, Marta (inn) 2148, Odger (store) 2149, Brigit (smith) 2150, guards 2151-2158.
@@ -100,7 +102,8 @@ past Elysium -> Last Bastion.** The Barrow Hills are a dead end off Fenwatch's n
 MyV2 Editor's World class. Map edits (`op`, `run`, `clear`, `house`, `fence`, `place`, `marsh_edges`, `zone`),
 templates (`item`, `quest_item`, `worn`, `monster` (scales a copy until it has the rank you name), `person` (a friendly
 quest giver)), placing (`spots`, `free`), quests (`quest`, `extra_quest`, `carry`, `by_name`), `save(made, here)`.
-**Only partly tried**: its code is lifted from the Fenwatch / Drowned Village scripts, which worked, but `monster`'s rank
+**Tried Nov 17 (Barrow Hills)**: `monster` (rank search; `nudge` stays inside the rank; `A.last_pct` holds the
+strength it found), `quest`, `worn`, `quest_item`, `spots`, `by_name` all worked as written. `extra_quest` and `person` are still untried. Its code is lifted from the Fenwatch / Drowned Village scripts, which worked, but `monster`'s rank
 search, `quest` / `extra_quest` and `worn` have not been run as written. Test each on a scratch copy first and fix
 what breaks. The working originals to compare with: `tools/world/drowned_village/place_village.py`,
 `tools/world/fenwatch/place_fenwatch.py`.
@@ -129,10 +132,10 @@ Marsh / ground sprites: `tools/sprites/world_marsh.py`, `world_ground.py`.
 exp / gold; `zone <x> <y>`; `wplist`; `merchreload`; `usetest <player> <slot>` drinks a potion; `fighttest`.
 Test character on the test server: Iluvatar.
 
-## 6. Unfinished code (Fable, Nov 16): committed, untested, not live
+## 6. Fable's potion / Karate code: LIVE since Nov 17 (tested on the test server)
 
-In both server folders (identical), compiled on a test server without errors, **never run**. An `update-code` puts it
-live, so test it first:
+Tested Nov 17 (test potions drunk with `usetest`: spell items with temp 65001 / 65002 on the character, no crash) and live
+with the Barrow Hills update. The +15% and the Frozen Heart healing are easiest to see in play. What it is:
 - **Elixir of the Good Moon** (Rook's reward, Lizard Hatcheries): `has_good_moon(cn)` in `skill_driver.c` is true at
   full moon, or while the character has a spell item with `temp == SPT_GOODMOON` (65001, `data.h`), or wears an item
   with `data[9] == SPT_GOODMOON`. Then spells are +15% and a Bad Moon doesn't weaken them. `spell_race_mod()` now takes
@@ -156,42 +159,18 @@ live, so test it first:
 - Not needed: Clear Water / Second Wind (full restores: potion `mana`/`end` [0] = 999), Stoneskin / Fireward /
   Draught of the Void (timed potions with `armor[1]` / `skill[n][1]` / `attrib[i][1]`, no code).
 
-## 7. Next: the Barrow Hills (First Lieutenant), step by step
+## 7. The Barrow Hills: DONE, live Nov 17
 
-1. **Terrain** `tools/world/barrow_hills/build_barrow.py` (Fable; uses arealib; x 320-409, y 768-852, leaves
-   Fenwatch's marsh south of a wavy line at x ~404). Grass upland, the North Road from Fenwatch's north gate (x 372-423,
-   y 800-802), a ring of standing stones at 366,805, six small barrows, the **Scribe's Barrow** (352,782) and the
-   **King's Barrow** (337,806; three fire bowls inside), dark rock walls with a door gap each, dark inside (indoors flag),
-   graves, bones. Zones: Barrow Hills, King's Barrow, Scribe's Barrow. Opens the marsh's north tree wall at the road;
-   no-monster strip x 407-408.
-   **Nov 17: reworked and shown to Cody** (now `fenwatch_preview\barrow_hills_v5.png`, `barrow_tombs_v5.png`). Cody asked
-   for **two medium tombs (6x6) with room for a couple of monsters each**: at 334,836 (door at 340,836) and 368,779 (door
-   374,779, a trail from the standing stones); put 2-3 Barrow Skeletons / Wights inside each in step 2. Mossy stone
-   (W_MOSSY) for the King's / Scribe's Barrows, fieldstone for the six small ones, dirt floor inside (was cave), the
-   scattered rock pillars gone (only the standing-stone ring keeps them; LOOSE_ROCKS 1274-1278 draw as red cones: don't
-   use), trails reach both named doors. **Cody OK'd v5; LIVE since Nov 17 11:34** (done by hand: stop-send, the script on
-   `Server\.dat`, `./server light` in `~/ctest`, map.dat back, update-world, reload-editor; no spawn errors).  Things to look at before showing it: the rock pillars (ROCKS) may be too many; the barrows are hard black
-   rings of wall (maybe lower them or use mossy stone / earth walls); since it is a dead end, the road only needs to
-   reach the barrows. Render again, fix, **show Cody, wait for OK**.
-2. **Monsters** (new script `place_barrow.py` with arealib; group 35; look up ranks with `Area.monster(..., rank)`):
-   about 15 Barrow Skeletons (Sergeant Major - Second Lieutenant; Skeleton 422, its own sprite 10192), about 18 Barrow
-   Wights (First Lieutenant; Lord 336, a new pale ramp e.g. `wight: ((30,34,40),(120,130,140),(214,220,226))` on 19408 ->
-   52000), the **Barrow Wight Scribe** in the Scribe's Barrow (First Lieutenant, a bit stronger; carries the
-   **Rune-Carved Tablet**), **Barrow King Ulfgar** in the King's Barrow (Captain; carries **Ulfgar's Torc**). Keep
-   monsters off the road's first tiles and out of the no-monster strip. Show Cody a picture of the new monster look first (Nov 17: `fenwatch_preview\barrow_wight_v2.png` shows the Lord, ramp `wight` and ramp `wightpale`; waiting for his pick; nothing written to `Client\GFX` yet).
-3. **Items** (pictures from 44533): Rune-Carved Tablet (quest item; e.g. a recoloured stone `Parchment`/`Book` render or
-   drawn), Ulfgar's Torc (quest item; `Necklace` render in gold/bronze), **Ulfgar's Torc amulet** reward (copy 191
-   Amulet of Resistance; +3 Bravery, +5 Resistance, rank 10, value ~8000; the quest item and the reward can be two
-   items with one picture), **Scholar's Ring** (copy 338 with `clear=(1<<9)|(1<<10), driver=0, data=[0]*10`;
-   +3 Intuition, +6 Identify, rank 10).
-4. **Quests**: Aldous (by name) `quest(want=Torc, exp=51000, give=amulet, rmin=10)`; Petra (by name)
-   `quest(want=Tablet, exp=37000, give=Scholar's Ring, rmin=10)`; both once (`lim=1`), no gold. Give each a greeting
-   that names what they want (as Joss / Ilse do).
-5. Test on the test server (`questgive`, spawns in the log), make live, update CHANGES.md ("Barrow Hills"), TODO,
-   HANDOFF, `docs/world_minimap.png` / `world_zones.png` (`tools/world/worldmap.py`, `worldzones.py`), commit,
-   publish sprites if Cody agrees (section 1), show Cody.
+CHANGES.md "Barrow Hills". Scripts: `tools/world/barrow_hills/build_barrow.py` (terrain; Cody asked for two medium tombs
+with room for a few monsters), `place_barrow.py` (monsters, items, quests; `made.json`). Previews in
+`Client\Claude outputs\fenwatch_preview\barrow_*_v5.png`, `barrow_wight_v2.png`. How it went live (deploy.sh still
+untried): stop-send, the script on `Server\.dat`, (terrain: `./server light` in `~/ctest`, map.dat back), `get` when the
+code changed, update-world, reload-editor, `log` for "Could not drop". **For Cody to try in game**: the fights (wights
+now heal ~4 hp/s), the two hand-ins, the item pictures.
+Device-shell lesson: the VM disk is small (~10 GB, ~0.7 GB free): every World.save writes a ~140 MB backup in
+`.dat/mapedit-backups`; delete scratch copies and their backups as you go.
 
-## 8. Then: the Lizard Hatcheries (Captain)
+## 8. Next: the Lizard Hatcheries (Captain)
 
 Box 505,765 - 595,860 off Fenwatch's south gate (476, 800-802; the gate road ends at the marsh's tree rim around x 495).
 **A through road down the middle (y 800-815) that leaves the south edge (x 595) open** for the pass to Stonehold.
@@ -202,7 +181,7 @@ about 8 Lizard Archmages (Captain; 413 scaled down), the **Hatchery Archmage** (
 **Broodmother's Crown**). All Lizards carry a **Lizard Head**. Quests: Aldous: Crown -> **Scaled Belt** (+4 armor, +3
 Strength, rank 11), 52,000 exp; Rook (by name): Phial -> 2 **Elixirs of the Good Moon** (`n=2`; needs section 6's code
 live), 52,000 exp; Corwin `extra_quest(Lizard Head, 5200 exp, gold=26000 (260G), lim=0, rmin=11)`.
-Hatchery monsters must not walk into Fenwatch's marsh: a no-monster strip at its north edge, like the other areas.
+Group 36; add 36 to `SLOW_UNDEAD_GROUP` only if any of them are undead (lizards aren't). Hatchery monsters must not walk into Fenwatch's marsh: a no-monster strip at its north edge, like the other areas.
 
 ## 9. After band C
 
