@@ -169,8 +169,8 @@ live, so test it first:
    374,779, a trail from the standing stones); put 2-3 Barrow Skeletons / Wights inside each in step 2. Mossy stone
    (W_MOSSY) for the King's / Scribe's Barrows, fieldstone for the six small ones, dirt floor inside (was cave), the
    scattered rock pillars gone (only the standing-stone ring keeps them; LOOSE_ROCKS 1274-1278 draw as red cones: don't
-   use), trails reach both named doors. **v5 waiting for Cody's OK**, then build it live (stop-send, script on
-   `Server\.dat`, relight, update-world).  Things to look at before showing it: the rock pillars (ROCKS) may be too many; the barrows are hard black
+   use), trails reach both named doors. **Cody OK'd v5; LIVE since Nov 17 11:34** (done by hand: stop-send, the script on
+   `Server\.dat`, `./server light` in `~/ctest`, map.dat back, update-world, reload-editor; no spawn errors).  Things to look at before showing it: the rock pillars (ROCKS) may be too many; the barrows are hard black
    rings of wall (maybe lower them or use mossy stone / earth walls); since it is a dead end, the road only needs to
    reach the barrows. Render again, fix, **show Cody, wait for OK**.
 2. **Monsters** (new script `place_barrow.py` with arealib; group 35; look up ranks with `Area.monster(..., rank)`):
@@ -178,7 +178,7 @@ live, so test it first:
    Wights (First Lieutenant; Lord 336, a new pale ramp e.g. `wight: ((30,34,40),(120,130,140),(214,220,226))` on 19408 ->
    52000), the **Barrow Wight Scribe** in the Scribe's Barrow (First Lieutenant, a bit stronger; carries the
    **Rune-Carved Tablet**), **Barrow King Ulfgar** in the King's Barrow (Captain; carries **Ulfgar's Torc**). Keep
-   monsters off the road's first tiles and out of the no-monster strip. Show Cody a picture of the new monster look first.
+   monsters off the road's first tiles and out of the no-monster strip. Show Cody a picture of the new monster look first (Nov 17: `fenwatch_preview\barrow_wight_v2.png` shows the Lord, ramp `wight` and ramp `wightpale`; waiting for his pick; nothing written to `Client\GFX` yet).
 3. **Items** (pictures from 44533): Rune-Carved Tablet (quest item; e.g. a recoloured stone `Parchment`/`Book` render or
    drawn), Ulfgar's Torc (quest item; `Necklace` render in gold/bronze), **Ulfgar's Torc amulet** reward (copy 191
    Amulet of Resistance; +3 Bravery, +5 Resistance, rank 10, value ~8000; the quest item and the reward can be two

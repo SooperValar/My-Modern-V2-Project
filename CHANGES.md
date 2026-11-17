@@ -1185,6 +1185,17 @@ East of Fenwatch (zone "Drowned Village", x 416-504, y 853-950), for Sergeant Ma
 - **Swimming** (server `svr_do.c`, `driver.c`, `data.h` SWIM_FULL, `skill.c`): under water a player loses breath (about 4.5 hitpoints a second, no regeneration) as before; now each point of Swimming takes 1/125 of that away, **none left at Swimming 125**. This also holds in the game's other under-water places (the Underwater Pentagram area). No class had Swimming in its skill list, so the teaching NPC gives it to the player's class on the spot (up to 60 raised, difficulty 5, like Perception).
 - **Item pictures** 44524-44532 (`tools/sprites/quest_items/drowned_village.py`): the two heads (cut from the monsters' own frames), compass, hex-doll, net, pouch, ring, belt (drawn: a coiled sealskin belt with a silver fish buckle; a first recolour of the game's thin belt strip looked bad), draught. Items 2024-2032; the quest items and heads have no value (can't be sold) and no labyrinth flag.
 
+## Barrow Hills (Nov 17; terrain live, monsters and quests to come)
+
+North of Fenwatch (zone "Barrow Hills", x 320-403, y 768-852), for First Lieutenant; a dead end reached by Fenwatch's
+north gate road (the North Road, y ~800-802), which ends at a ring of standing stones (366,805) with trails on.
+- **Tombs**: the **King's Barrow** (zone, 327,794 - 347,818; door 347,806; three fire bowls, bones) and the **Scribe's
+  Barrow** (zone, 346,775 - 358,789; door 352,789; a candle, bones) in mossy stone; two medium tombs (334,836 and
+  368,779, room for a few monsters each) in mossy stone; six small ones in fieldstone. Dirt floors, dark inside (indoors).
+- Grass upland, dead and old trees, stumps, tombstones; a pine / old-tree rim. Fenwatch's marsh north tree wall is opened
+  at the road and thinned; a no-monster strip (x 407-408) keeps the hills' monsters out of the marsh.
+- Built with `tools/world/barrow_hills/build_barrow.py` (uses `tools/world/arealib.py`).
+
 ## Wall decorations for all four walls, turned shrines (Nov 16-17)
 
 Items are drawn at full height even with hide walls (F6), so a decoration on the far side of a wall shows there: it now

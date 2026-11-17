@@ -9,6 +9,7 @@ Ramps (dark, mid, light): sandstone, slate, ... (RAMPS below). Made so far (CHAN
     41000 Quarry Golem   (the Golem, 17360, in sandstone)
     42100 Deep Grolm     (the Grolm, 12240, in cave slate)
     50000 Drowned Sailor (the Undead, 19408, drowned); 50500 Bog-man (the Grolm, 12240, bog); 51000 Sea Golem (the Golem, 17360, seagolem)
+    52000 Barrow Wight   (the Undead Lord, 19408, wight)
 """
 import os, sys
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -18,6 +19,8 @@ RAMPS = {
     'drowned': ((10, 28, 30), (54, 112, 104), (160, 214, 196)),      # Drowned Sailor: the Undead, sea-green
     'bog': ((26, 20, 10), (92, 74, 40), (164, 150, 96)),              # Bog-man: the Grolm, mud brown
     'seagolem': ((8, 24, 40), (40, 104, 128), (150, 210, 220)),       # Sea Golem (Fenwatch): the Golem, blue-green
+    'wight': ((30, 34, 40), (120, 130, 140), (214, 220, 226)),       # Barrow Wight (Barrow Hills): the Lord, grave-pale
+    'wightpale': ((52, 60, 70), (168, 180, 192), (236, 242, 246)),  # Barrow Wight, the paler choice
 }
 
 
