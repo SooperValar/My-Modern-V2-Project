@@ -102,6 +102,30 @@ class Area:
                     if new is None and f in medge: new = random.choice(MARSH)
                     if new is not None and new != f: self.op(op='floor', x=x, y=y, s=new, set=False)
         self.run('marsh edges')
+    def ground_edges(self, box, kinds=None):
+        """soft edges on plain grass inside box where it meets clear water / golden sand / dusty path / path (tools/sprites/
+        world_ground.json, the editor's auto edges); the first kind in the list that touches a tile wins"""
+        tab = json.load(open(os.path.join(HERE, '..', 'sprites', 'world_ground.json')))['sets']
+        kinds = kinds or ['clear water', 'golden sand', 'pale sand', 'dusty path', 'path']
+        kind = {}
+        for k in kinds:
+            for s in tab[k]['plain']: kind[s] = k
+        sides = [(1, 0), (0, 1), (-1, 0), (0, -1)]; corn = [(1, 1), (-1, 1), (-1, -1), (1, -1)]
+        def mask(x, y, k):
+            m = 0
+            for i, (dx, dy) in enumerate(sides):
+                if kind.get(self.floor(x + dx, y + dy)) == k: m |= 1 << i
+            for i, (dx, dy) in enumerate(corn):
+                if kind.get(self.floor(x + dx, y + dy)) == k and not m & (1 << i) and not m & (1 << ((i + 1) % 4)): m |= 16 << i
+            return m
+        n = 0
+        for x in range(box[0], box[2] + 1):
+            for y in range(box[1], box[3] + 1):
+                if self.floor(x, y) not in GRASS: continue
+                for k in kinds:
+                    m = mask(x, y, k)
+                    if m and str(m) in tab[k]['edges']: self.op(op='floor', x=x, y=y, s=tab[k]['edges'][str(m)], set=False); n += 1; break
+        self.run('ground edges'); return n
     def zone(self, x0, y0, x1, y1, name, flag=1):
         p = os.path.join(self.dat, 'zones.dat'); s = open(p, encoding='latin-1').read()
         line = '%d %d %d %d %d %s' % (x0, y0, x1, y1, flag, name)
