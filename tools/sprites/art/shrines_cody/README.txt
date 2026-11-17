@@ -1,0 +1,1 @@
+Temple shrine (792) turned, drawn by Cody (Nov 16), scaled to game size by Claude: 48020 W (statue at the front corner), 48021 N (from behind: statue at the right corner), 48022 E (statue at the back corner). These replace the generated ones from wall_decor_shrines.py.
