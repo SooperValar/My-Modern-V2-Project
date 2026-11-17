@@ -264,6 +264,11 @@ project's next session. What the second chat did Nov 15-17 (all live, CHANGES.md
   temple's); signs could get a readable west version (mirroring flips their text); the window walls face one way only;
   TODO: Alchemy skill, change many items at once, a bigger world only if the towns don't fit.
 
+**Where we left off (Nov 17, evening): Stonehold's ground is live** (the pass from the Hatcheries and the cliff town,
+CHANGES.md "Stonehold"). Also today: bounty gold lowered to 1/200 of the exp (Cody); the Soulstone Mine idea (TODO). Next:
+Stonehold's people, the ten gate guards, the rotating Rare / Epic trader (new merch.c code) and waypoint 7 - plan in
+QUEST_BUILD.md section 9; show Cody before it goes live.
+
 **Where we left off (Nov 17, afternoon): the Lizard Hatcheries are complete and live - band C is done.** Marsh + two
 caves, usable lizard eggs (server item driver 77: a Lizard Egg for Corwin's pseudo-bounty, or 1 in 5 a Lizard Hatchling
 attacks), lizards, the Broodmother and the Hatchery Archmage, quests on Aldous / Rook / Corwin (CHANGES.md "Lizard

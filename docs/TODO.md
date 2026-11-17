@@ -12,7 +12,7 @@ world, quests, the editor, the client and Discord. Merged Nov 10 from the old TO
 
 ## Up next (in order)
 
-0. ★ **Quest plan, area by area**: bands A-B done, Fenwatch + Drowned Village (Nov 16) + Barrow Hills + Lizard Hatcheries (Nov 17) live: band C done; next Stonehold (band D): **follow `docs/QUEST_BUILD.md`** - [Quests](#6-quests)
+0. ★ **Quest plan, area by area**: bands A-B done, Fenwatch + Drowned Village (Nov 16) + Barrow Hills + Lizard Hatcheries (Nov 17) live: band C done; Stonehold's ground live (Nov 17), its people next: **follow `docs/QUEST_BUILD.md`** - [Quests](#6-quests)
 1. ★ **Soulstone levels too low** (MAJOR) - [Fixes](#1-fixes-and-balance)
 2. ★ **Discord**: built Nov 14 (CHANGES.md "Discord"); waiting on Cody's webhooks / bot (HOSTING.md "Discord links")
 3. ★ **Walking speed, speed modes and attack speed** (look at it together first) - [Systems](#2-gameplay-systems)

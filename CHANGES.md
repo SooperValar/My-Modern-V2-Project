@@ -1208,6 +1208,20 @@ north gate road (the North Road, y ~800-802), which ends at a ring of standing s
   (+3 Intuition, +6 Identify), 37,000 exp. Item templates 2051-2054; pictures 44533 (tablet), 44534 (torc, both items),
   44535 (ring) (`tools/sprites/quest_items/barrow_hills.py`, README.txt). Published: client-dist 0161385.
 
+## Stonehold and the pass (Nov 17; ground live, townspeople to come)
+
+The band D hub (zone "Stonehold", x 650-715, y 775-845; Major to Brigadier General), reached from the Lizard Hatcheries' road:
+- **Stonehold Pass** (zone, x 596-649): a narrow canyon of pale granite cliffs (the game's rock blocks 1204 / 1206) with snow
+  along its edges, pines and dead trees; the road climbs from the Hatcheries' south edge to the town.
+- **The town**: a hollow ringed by granite cliffs, its buildings cut into the rock: the **Watch Barracks**, the **Granite
+  Hearth** (inn), **Hagar's Forge**, **Varo's Temple**, the **Trader's House** (zones), two houses, an old mine adit in the
+  south cliff (dead end for now: the Soulstone Mine idea, TODO). A fieldstone fort wall with a two-tower gatehouse across the
+  north entrance; cobbled streets to the square (682,810, kept for waypoint 7); snow patches, pines and boulders.
+- **Five ways out**, each with a guard post (two guards, facing away from town; placed with the townspeople): the north gate
+  (the pass), west (-> Golem Foundry), east (-> Monastery), south-west (-> Ashen Fields), south-east (-> the Last Bastion's
+  pass and the Gargoyle Spires). The roads to areas not built yet end open at the town's edge. No monsters in town or pass.
+- Built with `tools/world/stonehold/build_stonehold.py` (guard posts in `made_terrain.json`).
+
 ## Bounty gold lowered (Nov 17)
 
 Bounties pay **1/200 of their exp in gold** (was 1/20: a head paid 10-20 times what the monster carries, and ten Lizard

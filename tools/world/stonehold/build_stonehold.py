@@ -127,9 +127,9 @@ P = [(TORCH, WALL_X + 2, 805), (TORCH, WALL_X + 2, 809), (TORCH, 676, 809), (TOR
      (BONES, 713, 809)]
 A.place(*P)
 A.ground_edges((P0, 797, X1, Y1), kinds=['soft snow'])
-for b, wall, floor, door, side, name in B:
-    if name: A.zone(b[0], b[1], b[2], b[3], name)
-A.zone(X0, Y0, X1, Y1, 'Stonehold')
+for b, wall, floor, door, side, name in B:                 # zone flag 1 = "in the ...", 0 = "in ..." (area.c)
+    if name: A.zone(b[0], b[1], b[2], b[3], name.replace('the ', ''), flag=0 if "'s " in name else 1)
+A.zone(X0, Y0, X1, Y1, 'Stonehold', flag=0)
 A.zone(P0, 797, X0 - 1, 818, 'Stonehold Pass')
 import json; json.dump({'posts': POSTS, 'square': SQUARE}, open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'made_terrain.json'), 'w'), indent=1)
 A.save(); print('guard posts', POSTS)
