@@ -23,7 +23,7 @@ struct s_skilltab skilltab[MAXSKILL]={
         {8,     'G',    "Stealth",      "Moving without being seen or heard.",          {AT_INT,AT_WILL,AT_AGIL}},
         {9,     'G',    "Perception",   "Seeing and hearing.",                          {AT_INT,AT_WILL,AT_AGIL}},
 
-/*u*/   {10,    'M',    "Swimming",     "Moving through water without drowning.",       {AT_INT,AT_WILL,AT_AGIL}},
+/*u*/   {10,    'M',    "Swimming",     "Holding your breath under water: none lost at 125.",       {AT_INT,AT_WILL,AT_AGIL}},
         {11,    'R',    "Magic Shield", "Spell: Create a magic shield.",                {AT_WILL,AT_WILL,AT_INT}},
 
         {12,    'G',    "Bartering",    "Getting good prices from merchants.",          {AT_BRAVE,AT_INT,AT_WILL}},

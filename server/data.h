@@ -253,6 +253,7 @@ extern unsigned int mapmarker;
 #define SK_STEALTH      8
 #define SK_PERCEPT      9
 #define SK_SWIM         10
+#define SWIM_FULL       125             // MyV2: Swimming at which being under water costs no breath at all
 #define SK_MSHIELD      11
 #define SK_BARTER       12
 #define SK_REPAIR       13

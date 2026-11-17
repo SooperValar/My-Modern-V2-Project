@@ -4388,7 +4388,12 @@ void do_regenerate(int cn)
         }
 
         if (uwater && (ch[cn].flags&(CF_PLAYER))) {
-                ch[cn].a_hp-=250+gothp;
+                // MyV2 (Nov 16): Swimming. Each point cuts the loss of breath (and gives back the lost regeneration)
+                // by 1/125: none left at Swimming 125 (SWIM_FULL). Without the skill: as before.
+                int sw=ch[cn].skill[SK_SWIM][0] ? ch[cn].skill[SK_SWIM][5] : 0;
+                if (sw>SWIM_FULL) sw=SWIM_FULL;
+                if (sw<0) sw=0;
+                ch[cn].a_hp-=(250+gothp)*(SWIM_FULL-sw)/SWIM_FULL;
                 if (ch[cn].a_hp<500) do_char_killed(0,cn);
         }
 

@@ -533,6 +533,8 @@ int npc_give(int cn,int co,int in,int money)
                 if ((nr=teach)!=0) {
                         // (the original's built-in "stun = immunity, curse = surround hit for Templars, both for
                         // Seyan'Du" is now class rewards in npctalk.dat: qclass 90 / 111, Quests page)
+                        // MyV2 (Nov 16): Swimming was in no class's skill list (nobody taught it); every class can learn it now
+                        if (IS_PLAYER(co) && nr==SK_SWIM && !ch[co].skill[nr][2]) { ch[co].skill[nr][2]=60; ch[co].skill[nr][3]=5; }
                         if (IS_PLAYER(co) && !ch[co].skill[nr][2]) {
                                 do_sayx(cn,"I cannot teach %s to one of your kind, %s.",skilltab[nr].name,ch[co].name);
                                 god_take_from_char(in,cn);
