@@ -4,6 +4,10 @@
  * "merchreload"):
  *   merchant <template> sell <pct> buy <pct> gold <silver> kinds <mask>
  *   stock <template> <item template>...        (lines add up; the order is the shop's order)
+ *   rotate <template> <count> <minutes> <tiers> <level from> <level to>
+ *       (MyV2, Nov 17: a rotating stock of new tiered helmets / body armor, e.g. Stonehold's trader: every <minutes> he
+ *        clears what he holds and rolls <count> new pieces with tier_chest_reward(); tiers: bit 1 Magic, 2 Rare, 3 Epic.
+ *        Give such a merchant "kinds 0" so he buys nothing: his own items are then only the rotating pieces.)
  * sell / buy: % of the normal price (0 = normal), gold: the most he pays for one item (0 = his own gold),
  * kinds: what he buys (1 armor, 2 weapons, 4 magic, 8 other; -1 = as before). A merchant template that is not in
  * the file works as before: his stock is his sale list (data[0..9]) plus his template's backpack, he buys the kind
@@ -44,9 +48,12 @@ int barter(int cn,int opr,int flag);
 
 static struct mconf {
 	int temp,sell,buy,gold,kinds,hasstock,n;
+	int rot_n,rot_min,rot_tiers,rot_lo,rot_hi;		// "rotate" (0 = no rotating stock)
 	int stock[MERCH_STOCK];
 } mconf[MERCH_MAX];
 static int nmconf=0,merch_loaded=0;
+static int rot_next[MERCH_MAX];		// ticker of each merchant's next rotation (0: at the first look after a start)
+int tier_chest_reward(int tiers,int metals_mask,int piece,int lo,int hi);
 static unsigned char tidied[MAXCHARS];	// his slots from before this server start were looked at
 
 /* read merchants.dat; returns the number of merchants in it, -1 = error */
@@ -62,6 +69,18 @@ int merch_load(void)
 	if (!(f=fopen(MERCH_FILE,"r"))) return 0;
 	while (fgets(line,sizeof(line),f)) {
 		if (line[0]=='#' || line[0]=='\n' || line[0]=='\r') continue;
+		if (!strncmp(line,"rotate ",7)) {
+			int a[6];
+			if (sscanf(line+7,"%d %d %d %d %d %d",&t,&a[0],&a[1],&a[2],&a[3],&a[4])!=6 || t<=0 || t>=MAXTCHARS) { bad++; continue; }
+			for (i=0; i<nmconf && mconf[i].temp!=t; i++) ;
+			if (i==nmconf) {
+				if (nmconf>=MERCH_MAX) { bad++; continue; }
+				m=&mconf[nmconf++];
+				memset(m,0,sizeof(*m)); m->temp=t; m->kinds=-1;
+			} else m=&mconf[i];
+			m->rot_n=max(0,min(20,a[0])); m->rot_min=max(1,a[1]); m->rot_tiers=a[2]; m->rot_lo=a[3]; m->rot_hi=a[4];
+			continue;
+		}
 		if (!strncmp(line,"merchant ",9) || !strncmp(line,"stock ",6)) {
 			int isstock=line[0]=='s';
 			p=line+(isstock ? 6 : 9);
@@ -283,6 +302,40 @@ static void set_slot(int co,int m,int t)
 	} else if (t<0) ch[co].item[m]=-t;
 }
 
+/* is a rotating stock ("rotate") due for its change? */
+static int rotate_due(int co)
+{
+	struct mconf *m=conf(co);
+	int i;
+
+	if (!m || !m->rot_n) return 0;
+	i=(int)(m-mconf);
+	return !rot_next[i] || globs->ticker>=rot_next[i];
+}
+
+/* a rotating stock ("rotate"): when it's time, what he holds goes and <count> new tiered pieces come */
+static void rotate(int co)
+{
+	struct mconf *m=conf(co);
+	int n,in,d,i;
+
+	if (!rotate_due(co)) return;
+	i=(int)(m-mconf);
+	rot_next[i]=globs->ticker+TICKS*60*m->rot_min;
+	for (n=0; n<62; n++) if ((in=ch[co].depot[n])) {
+		unslot(co,in);
+		if (it[in].used==USE_ACTIVE && it[in].carried==co) it[in].used=USE_EMPTY;
+		ch[co].depot[n]=0;
+	}
+	for (n=0,d=0; n<m->rot_n; n++) {
+		if (!(in=tier_chest_reward(m->rot_tiers,0,0,m->rot_lo,m->rot_hi))) continue;
+		while (d<62 && ch[co].depot[d]) d++;
+		if (d>=62) { it[in].used=USE_EMPTY; break; }
+		it[in].carried=co; it[in].x=it[in].y=0; PAID(in)=0; it[in].t_bought=it[in].t_sold=0;
+		ch[co].depot[d]=in;
+	}
+}
+
 /* the entries of merchant co's shop: item templates (>0) and depot items (<0, the item number) */
 static int entries(int co,int *ent)
 {
@@ -290,6 +343,7 @@ static int entries(int co,int *ent)
 
 	scnt=stock_list(co,stock);
 	tidy(co,stock,scnt);
+	rotate(co);
 	for (n=0; n<scnt; n++) ent[cnt++]=stock[n];
 	for (n=0; n<62; n++) if ((in=ch[co].depot[n])) ent[cnt++]=-in;
 	return cnt;
@@ -342,6 +396,11 @@ int merch_take(int cn,int co,int nr)
 	int in,pr,d,ent[MERCH_STOCK+62],cnt,pages,*pp,tmp;
 
 	if (nr<0 || nr>=40) return 0;
+	if (rotate_due(co)) {	// his wares changed while cn looked: show the new ones, don't sell what now sits in that slot
+		merch_fill(cn,co);
+		do_char_log(cn,0,"%s has just laid out new wares. Have a look first.\n",ch[co].name);
+		return 1;
+	}
 	merch_fill(cn,co);
 	if (!(in=ch[co].item[nr]) || (in&0x80000000)) return 0;
 	if (SAMPLE(in) && (it[in].temp==GODSHOP_ARROW_TEMP || it[in].temp==GODSHOP_ARROW_TEMP+1)) {
