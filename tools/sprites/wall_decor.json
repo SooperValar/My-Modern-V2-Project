@@ -1,0 +1,106 @@
+{
+ "48000": {
+  "name": "Mirror (framed), hung like the pictures, wall S",
+  "from": 1246
+ },
+ "48001": {
+  "name": "Picture of Misty Plains, wall W",
+  "from": 572
+ },
+ "48002": {
+  "name": "Picture of Sunset, wall W",
+  "from": 580
+ },
+ "48003": {
+  "name": "Mirror (framed), wall W",
+  "from": 1246
+ },
+ "48004": {
+  "name": "Picture of Misty Plains, back, wall N",
+  "from": 572
+ },
+ "48005": {
+  "name": "Picture of Sunset, back, wall N",
+  "from": 580
+ },
+ "48006": {
+  "name": "Mirror (framed), back, wall N",
+  "from": 1246
+ },
+ "48007": {
+  "name": "Picture of Misty Plains, back, wall E",
+  "from": 572
+ },
+ "48008": {
+  "name": "Picture of Sunset, back, wall E",
+  "from": 580
+ },
+ "48009": {
+  "name": "Mirror (framed), back, wall E",
+  "from": 1246
+ },
+ "48010": {
+  "name": "Mirror (round), back, wall N",
+  "from": 16553
+ },
+ "48011": {
+  "name": "Mirror (round), back, wall E",
+  "from": 16552
+ },
+ "48012": {
+  "name": "Shield (black), back, wall N",
+  "from": 16554
+ },
+ "48013": {
+  "name": "Shield (black), back, wall E",
+  "from": 16555
+ },
+ "48014": {
+  "name": "Shield (gold), back, wall N",
+  "from": 16556
+ },
+ "48015": {
+  "name": "Shield (gold), back, wall E",
+  "from": 16557
+ },
+ "48016": {
+  "name": "Bookshelf (book of wisdom), wall S",
+  "from": 16910
+ },
+ "48017": {
+  "name": "Bookshelf (book of wisdom taken), wall S",
+  "from": 16911
+ },
+ "48018": {
+  "name": "Bookshelf, back, wall N",
+  "from": 16908
+ },
+ "48019": {
+  "name": "Bookshelf, back, wall E",
+  "from": 16897
+ },
+ "48020": {
+  "name": "Shrine (temple), facing W",
+  "from": 792
+ },
+ "48021": {
+  "name": "Shrine (temple), from behind (wall N)",
+  "from": 792
+ },
+ "48022": {
+  "name": "Shrine (temple), from behind (wall E)",
+  "from": 792
+ },
+ "48023": {
+  "name": "Seyan'Du Shrine, facing W",
+  "from": 914
+ },
+ "48024": {
+  "name": "Seyan'Du Shrine, from behind (wall N)",
+  "from": 914
+ },
+ "48025": {
+  "name": "Seyan'Du Shrine, from behind (wall E)",
+  "from": 914
+ }
+}
