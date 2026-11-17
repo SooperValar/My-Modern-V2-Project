@@ -184,6 +184,15 @@ The map is fixed at 1024 x 1024 tiles (`MAPX` / `MAPY` in `gendefs.h`), shared b
 the editor and probably the client. To find out first: how much free space is left (`docs/world_minimap.png`), and what
 growing the map would touch. A big change; maybe new areas fit in the free space first.
 
+### ○ The Soulstone Mine: Mine, 4th Level (Cody, Nov 17)
+A fourth mine level reached from **Stonehold's old mine adit** (the dead-end tunnel in the town's south cliff, 707-715 /
+806-812, built Nov 17 and kept for this). Called the **Soulstone Mine**: mining it (like the mine levels' rock piles, use
+driver 22 `use_pile`, which gives silver, gems and the odd creature) can also turn up **soulstones**, as well as gems.
+**Harder than Mine, 3rd Level** (Gargoyle Knights Lieutenant Colonel / Gargoyle Mages Colonel): e.g. Brigadier General and
+up. To decide: monsters (theme, ranks), size and where on the map (Mines 2 and 3 are at x 700-839, y 20-89), how the adit
+leads down (ladder / hole like the other mine levels), the soulstone chance and levels (ties in with "Soulstone levels too
+low" above: stones here could be the fix for higher ranks), and whether it counts as a Stonehold area (bounty, quest).
+
 ### ○ Underground III (was #16)
 A third level below Underground I (840,0-1024,157) and Underground II (822,176-1020,333; reached by the hole at
 925,101 -> 925,301). Theme: Deeplings or Firelings (to choose). To decide: theme, level range (above Underground II's
