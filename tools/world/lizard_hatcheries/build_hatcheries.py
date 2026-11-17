@@ -118,6 +118,21 @@ for cx, cy, rx, ry in EGGS: P += [(BONES, round(cx) + 1, round(cy) - 1)]
 P += [(BONES, 579, 838), (BONES, 586, 839), (BONES, 523, 771 + S)]
 for x, y in PITS: P += [(BONES, x + 1, y - 1)]
 A.place(*P)
+# egg clutches (tools/sprites/world_eggs.py: 38300-38306): in the Broodmother's Nest, the egg chambers and the outdoor pits
+EGG = [38300, 38302, 38304, 38306]
+def clutches(n, ok, box, apart=2):
+    got = 0
+    for p in sorted(set((random.randint(box[0], box[2]), random.randint(box[1], box[3])) for _ in range(400))):
+        if got >= n: break
+        t = A.tile(*p)
+        if ok(*p) and not t[1] and not t[4] and not (t[7] & 1) and all(abs(p[0] - q[0]) + abs(p[1] - q[1]) >= apart for q in placed):
+            A.op(op='object', x=p[0], y=p[1], s=random.choice(EGG), block=1); placed.append(p); got += 1
+placed = []
+inside = lambda b: (lambda x, y: (x, y) in caves and ((x - b[0]) / b[2]) ** 2 + ((y - b[1]) / b[3]) ** 2 <= 0.7)
+clutches(5, inside(NEST), (NEST[0] - 5, NEST[1] - 5, NEST[0] + 5, NEST[1] + 5))
+for e in EGGS: clutches(3, inside(e), (int(e[0] - 5), int(e[1] - 5), int(e[0] + 5), int(e[1] + 5)))
+for cx, cy in PITS: clutches(3, lambda x, y: (x, y) in mud, (cx - 3, cy - 3, cx + 3, cy + 3))
+A.run('egg clutches'); print(len(placed), 'egg clutches')
 A.marsh_edges((X0 - 2, Y0, X1, Y1))
 A.zone(505, 757, 570, 797, 'the Hatchery')
 A.zone(512, 762, 527, 774, "Broodmother's Nest")
