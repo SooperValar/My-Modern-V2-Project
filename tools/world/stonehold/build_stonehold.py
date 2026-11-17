@@ -1,0 +1,116 @@
+#!/usr/bin/env python3
+"""Stonehold, the band D hub (Nov 17), and the pass up to it from the Lizard Hatcheries.
+
+A mountain mining town in a hollow ringed by granite cliffs (the game's pale rock blocks 1204 / 1206),
+houses of slate and fieldstone backed into the rock, a short fort wall and gatehouse closing the north entrance where the
+pass comes in, cobbled streets to a square (its centre 682,810 is kept free for waypoint 7), the Watch barracks, an inn,
+Hagar's forge, Varo's temple, the trader's house, two houses and an old mine adit cut into the south cliff. Snow patches
+on the high meadow by the cliffs. Gates (gaps in the cliffs, roads ending open at the area's edge for areas still to come):
+west -> Golem Foundry, east -> Monastery, south-west -> Ashen Fields, south-east -> the pass to the Last Bastion and the
+Gargoyle Spires. North = smaller x.
+
+    build_stonehold.py <.dat folder>      (game stopped; tools/world/arealib.py)      then place_stonehold.py"""
+import sys, os, random, math
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
+from arealib import *
+A = Area(sys.argv[1], seed=1125)
+X0, X1, Y0, Y1 = 650, 715, 775, 845                       # the town (the space plan's box)
+P0, P1 = 596, 649                                          # the pass, x
+CLIFF = [1204, 1206]                                       # pale granite blocks (mixed with the dark 1210 they looked like a checkerboard)
+BOULDER = 1208                                             # a lone rounded granite block
+SNOW = [35400, 35401, 35402, 35403]
+SQUARE = (682, 810)
+def rough(cx, cy, rx, ry, k=0.10, seed=0):
+    rnd = random.Random(seed); ph = rnd.random() * 6
+    def inside(x, y):
+        a = math.atan2((y - cy) / ry, (x - cx) / rx); f = 1 + k * math.sin(3 * a + ph) + k * 0.6 * math.sin(5 * a + 2 * ph)
+        return ((x - cx) / rx) ** 2 + ((y - cy) / ry) ** 2 <= f * f
+    return inside
+hollow = rough(683, 810, 29, 32, 0.08, 5)                  # the town's floor; everything else in the box is cliff
+def line(a, b, w=1):
+    out = set(); n = max(abs(b[0] - a[0]), abs(b[1] - a[1]), 1)
+    for i in range(n + 1):
+        x, y = round(a[0] + (b[0] - a[0]) * i / n), round(a[1] + (b[1] - a[1]) * i / n)
+        for dx in range(-w, w + 1):
+            for dy in range(-w, w + 1):
+                if abs(dx) + abs(dy) <= w: out.add((x, y + 0) if False else (x + dx, y + dy))
+    return out
+# ---- roads: the pass, the north gate, streets to the square and the four other gates (roads end open at the box's edge)
+def pass_y(x): return 807 + int(round(1.2 * math.sin((x - P0) / 7.0)))
+road = {(x, pass_y(x) + d) for x in range(P0, X0 + 7) for d in (-1, 0, 1)}
+streets = set()
+streets |= line((656, 807), SQUARE, 1)                      # north gate - square
+streets |= line(SQUARE, (681, 775), 1) | line((681, 775), (681, 766), 1)      # west gate -> Golem Foundry
+streets |= line(SQUARE, (681, 845), 1) | line((681, 845), (681, 854), 1)      # east gate -> Monastery
+streets |= line(SQUARE, (712, 786), 1) | line((712, 786), (724, 784), 1)      # south-west gate -> Ashen Fields
+streets |= line(SQUARE, (712, 834), 1) | line((712, 834), (724, 835), 1)      # south-east gate -> Last Bastion pass / Spires
+square = {(x, y) for x in range(675, 690) for y in range(803, 818) if ((x - 682) / 6.8) ** 2 + ((y - 810) / 6.8) ** 2 <= 1}
+paved = streets | square
+gates = {p for p in streets if not (X0 <= p[0] <= X1 and Y0 <= p[1] <= Y1) or not hollow(*p)}   # the cuts through the cliff
+# ---- buildings: (box, wall, floor, door tile, side, name)
+B = [((657, 786, 666, 798), W_SLATE, FLAGSTONE, (666, 792), 's', 'Watch Barracks'),
+     ((657, 816, 667, 830), W_TIMBER, OAK, (667, 823), 's', 'the Granite Hearth'),
+     ((671, 779, 679, 788), W_FIELDSTONE, FLAGSTONE, (679, 783), 's', "Hagar's Forge"),
+     ((672, 832, 682, 842), W_FIELDSTONE, SETTS, (672, 837), 'n', "Varo's Temple"),
+     ((692, 779, 699, 787), W_SLATE, OAK, (692, 783), 'n', "Trader's House"),
+     ((699, 817, 706, 825), W_SLATE, OAK, (699, 821), 'n', ''),
+     ((693, 834, 700, 841), W_FIELDSTONE, OAK, (693, 837), 'n', '')]
+inbox = lambda x, y, b: b[0] <= x <= b[2] and b[1] <= y <= b[3]
+MINE = (707, 806, 715, 812)                                # the old adit: a short tunnel into the south cliff
+mine = {(x, y) for x in range(708, 716) for y in range(808, 811)}
+snow = set()
+for cx, cy, r in [(661, 800, 3), (662, 836, 3.5), (708, 793, 3.5), (707, 829, 3.5), (667, 779, 2.5), (689, 843, 3), (701, 792, 2.5), (686, 780, 2.5), (703, 842, 2.5), (670, 843, 2.5), (713, 818, 2)]:
+    snow |= {(x, y) for x in range(int(cx - r - 1), int(cx + r + 2)) for y in range(int(cy - r - 1), int(cy + r + 2)) if math.hypot(x - cx, y - cy) <= r + random.uniform(-0.5, 0.4)}
+# ---- the pass
+for x in range(P0, X0):
+    for y in range(797, 819):
+        A.clear(x, y); A.op(op='flag', x=x, y=y, bit=2, mode=0); A.op(op='flag', x=x, y=y, bit=5, mode=1)
+        if (x, y) in road: A.op(op='floor', x=x, y=y, s=random.choice(PATH), set=False); continue
+        d = abs(y - pass_y(x))
+        wall = 6 + int(round(1.5 * math.sin(x / 4.0 + (0 if y < pass_y(x) else 2)) + random.uniform(-0.6, 0.6)))
+        if d >= wall:
+            A.op(op='floor', x=x, y=y, s=random.choice(SNOW), set=False); A.op(op='object', x=x, y=y, s=random.choice(CLIFF), block=3); continue
+        A.op(op='floor', x=x, y=y, s=random.choice(SNOW if d >= wall - 1 and random.random() < 0.5 else GRASS), set=False)
+        if d >= 3 and random.random() < 0.05: A.op(op='object', x=x, y=y, s=random.choice(DEAD + PINE), block=1)
+A.run('the pass')
+# ---- the town
+for x in range(X0, X1 + 1):
+    for y in range(Y0, Y1 + 1):
+        A.clear(x, y); A.op(op='flag', x=x, y=y, bit=2, mode=0); A.op(op='flag', x=x, y=y, bit=5, mode=1)
+        if (x, y) in paved or (x, y) in road: A.op(op='floor', x=x, y=y, s=random.choice(SETTS), set=False); continue
+        if (x, y) in mine: A.op(op='floor', x=x, y=y, s=116, set=False); A.op(op='flag', x=x, y=y, bit=2, mode=1); continue
+        if not hollow(x, y) or (inbox(x, y, MINE) and (x, y) not in mine):
+            A.op(op='floor', x=x, y=y, s=random.choice(SNOW), set=False); A.op(op='object', x=x, y=y, s=random.choice(CLIFF if not inbox(x, y, MINE) else [1210]), block=3); continue
+        A.op(op='floor', x=x, y=y, s=random.choice(SNOW if (x, y) in snow else GRASS), set=False)
+        if (x, y) not in snow and not any(inbox(x, y, (b[0] - 1, b[1] - 1, b[2] + 1, b[3] + 1)) for b, *_ in B) and not any((x + dx, y + dy) in paved for dx in (-1, 0, 1) for dy in (-1, 0, 1)):
+            r = random.random()
+            if r < 0.018: A.op(op='object', x=x, y=y, s=random.choice(PINE), block=3)
+            elif r < 0.026: A.op(op='object', x=x, y=y, s=BOULDER, block=3)
+            elif r < 0.032: A.op(op='object', x=x, y=y, s=random.choice(DEAD), block=1)
+for x, y in streets:
+    if not (X0 <= x <= X1 and Y0 <= y <= Y1):                # the road stubs beyond the box, to the next areas
+        A.clear(x, y); A.op(op='flag', x=x, y=y, bit=2, mode=0); A.op(op='floor', x=x, y=y, s=random.choice(SETTS), set=False)
+        for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+            q = (x + dx, y + dy)
+            if q not in streets: A.op(op='floor', x=q[0], y=q[1], s=random.choice(SNOW), set=False); A.op(op='object', x=q[0], y=q[1], s=random.choice(CLIFF), block=3)
+A.run('Stonehold: ground, cliffs, streets')
+# the fort wall across the north entrance, with a gatehouse (two towers) and the gate on the road
+WALL_X = 659                                               # where the entrance widens: the wall is seen from the pass
+for y in range(780, 841):
+    if not hollow(WALL_X, y) or 805 <= y <= 809: continue
+    A.op(op='erase', x=WALL_X, y=y); A.op(op='object', x=WALL_X, y=y, s=random.choice(W_FIELDSTONE), block=3)
+for x, y in [(WALL_X - 1, 803), (WALL_X, 803), (WALL_X - 1, 804), (WALL_X, 804), (WALL_X - 1, 810), (WALL_X, 810), (WALL_X - 1, 811), (WALL_X, 811)]:
+    A.op(op='erase', x=x, y=y); A.op(op='object', x=x, y=y, s=random.choice(W_FIELDSTONE), block=3)
+A.run('north wall and gatehouse')
+for b, wall, floor, door, side, name in B: A.house(b, wall, floor, door_side=side, door=door)
+A.run('houses')
+P = [(TORCH, 657, 805), (TORCH, 657, 809), (TORCH, 676, 809), (TORCH, 688, 811), (TORCH, 682, 777), (TORCH, 680, 843), (TORCH, 711, 789), (TORCH, 711, 831),
+     (TORCH, 709, 807), (FIREBOWL, 674, 781), (FIREBOWL, 677, 786), (FIREBOWL, 675, 835), (FIREBOWL, 679, 835), (BARREL, 658, 818), (BARREL, 659, 818), (BARREL, 709, 811),
+     (BONES, 713, 809)]
+A.place(*P)
+A.ground_edges((P0, 797, X1, Y1), kinds=['soft snow'])
+for b, wall, floor, door, side, name in B:
+    if name: A.zone(b[0], b[1], b[2], b[3], name)
+A.zone(X0, Y0, X1, Y1, 'Stonehold')
+A.zone(P0, 797, X0 - 1, 818, 'Stonehold Pass')
+A.save()
