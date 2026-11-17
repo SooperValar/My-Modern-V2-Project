@@ -2426,6 +2426,43 @@ int use_blook_penta(int cn,int in)
         return 1;
 }
 
+/* MyV2 (Nov 17): a lizard egg in its nest (Lizard Hatcheries). data[0] = the item a player takes from it (Lizard Egg),
+ * data[1] = the NPC template that may hatch from it instead (Lizard Hatchling), data[2] = that chance in percent.
+ * Taken or hatched, the egg shows its second sprite (the broken shell) until it is active no more: set up with
+ * IF_USE|IF_USESPECIAL|IF_USEACTIVATE and duration = the regrow time; item_tick_expire turns it whole again. */
+int use_lizard_egg(int cn,int in)
+{
+        int in2,co;
+
+        if (!cn) return 0;
+        if (it[in].active) { do_char_log(cn,0,"Only broken shell is left in this nest.\n"); return 0; }
+
+        if (it[in].data[1]>0 && it[in].data[1]<MAXTCHARS && RANDOM(100)<(int)it[in].data[2]) {
+                co=pop_create_char(it[in].data[1],0);
+                if (co) {
+                        if (!god_drop_char_fuzzy(co,it[in].x,it[in].y)) { god_destroy_items(co); ch[co].used=USE_EMPTY; co=0; }
+                }
+                if (co) {
+                        npc_add_enemy(co,cn,1);
+                        do_char_log(cn,0,"The egg splits open - a hatchling lizard snaps at you!\n");
+                        chlog(cn,"Hatched a %s from a lizard egg",ch[co].name);
+                        return 1;
+                }
+        }
+
+        if (it[in].data[0]<=0 || it[in].data[0]>=MAXTITEM) return 0;
+        in2=god_create_item(it[in].data[0]);
+        if (!in2) return 0;
+        if (!god_give_char(in2,cn)) {
+                do_char_log(cn,0,"Your backpack is full, so you can't take the %s.\n",it[in2].reference);
+                it[in2].used=USE_EMPTY;
+                return 0;
+        }
+        do_char_log(cn,1,"You lift a %s out of the nest.\n",it[in2].reference);
+        chlog(cn,"Took %s from a nest",it[in2].name);
+        return 1;
+}
+
 int use_create_npc(int cn,int in)
 {
         int co;
@@ -2907,6 +2944,7 @@ void use_driver(int cn,int in,int carried)
                                 case 74:        ret=use_upgrade_stone(cn,in); break;
                                 case 75:        ret=talk_chest_open(cn,in); break;	// MyV2 chest (npctalk.c, set up in the MyV2 Editor)
                                 case 76:        ret=use_waypoint(cn,in); break;	// MyV2 waypoint (waypoint.c)
+                                case 77:        ret=use_lizard_egg(cn,in); break;	// MyV2 lizard egg in a nest (Lizard Hatcheries)
                                 /* CS, 991127: offering to shrines in Lab 8 */
                                 case 63:        ret=use_lab8_shrine(cn,in); break;
                                 /* CS, 991127: offering money to shrine in Lab 8 */

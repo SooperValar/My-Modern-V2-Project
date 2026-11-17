@@ -10,6 +10,7 @@ Ramps (dark, mid, light): sandstone, slate, ... (RAMPS below). Made so far (CHAN
     42100 Deep Grolm     (the Grolm, 12240, in cave slate)
     50000 Drowned Sailor (the Undead, 19408, drowned); 50500 Bog-man (the Grolm, 12240, bog); 51000 Sea Golem (the Golem, 17360, seagolem)
     52000 Barrow Wight   (the Undead Lord, 19408, wight)
+    53000 the Broodmother (the Lizard, 13264, brood); 54000 Lizard Hatchling (the Lizard, 13264, hatchling)
 """
 import os, sys
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -21,6 +22,8 @@ RAMPS = {
     'seagolem': ((8, 24, 40), (40, 104, 128), (150, 210, 220)),       # Sea Golem (Fenwatch): the Golem, blue-green
     'wight': ((30, 34, 40), (120, 130, 140), (214, 220, 226)),       # Barrow Wight (Barrow Hills): the Lord, grave-pale
     'wightpale': ((52, 60, 70), (168, 180, 192), (236, 242, 246)),  # Barrow Wight, the paler choice
+    'brood': ((22, 4, 6), (110, 22, 20), (200, 84, 60)),             # the Broodmother (Lizard Hatcheries): the Lizard, dark red
+    'hatchling': ((40, 46, 14), (150, 164, 70), (226, 232, 160)),     # Lizard Hatchling: the Lizard, pale yellow-green
 }
 
 
