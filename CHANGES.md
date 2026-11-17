@@ -492,7 +492,7 @@ Cody made the area (zones "Eastern Forest", "Deep Forest", "Dire Wolves Den", "W
 - **31 Dire Wolves** (Master Sergeant) in the Deep Forest and the Dire Wolves Den, thicker the closer to Old Greyfang (`add_wolves.py`: spots weighted by the distance to him, closer together near him): 7 within 10 tiles of him, 4 at 10-20, 11 at 20-35, 9 further out.
 - **Old Greyfang** (First Sergeant) at 414,541 in the den.
 - Every wolf is its own template (from the Spider, not "simple"), wolf group 33, and carries its head (Greyfang his fang).
-- **Huntmaster Edda** (a Templar woman: kindred Templar + female, the female Templar look 8144) in Wynn & Edda's Hut at 514,654, with her item quests (`#quest`): Wolf Head 160 exp + 8G, Dire Wolf Head 600 exp + 30G (10 heads = one standard quest, 5% of the rank's climb; the Quest Planner's per-head share is 0.5% now) (both as often as you like, from Sergeant / Master Sergeant), Greyfang's Fang -> Greyfang Amulet and 14,000 exp (once, from First Sergeant; no gold).
+- **Huntmaster Edda** (a Templar woman: kindred Templar + female, the female Templar look 8144) in Wynn & Edda's Hut at 514,654, with her item quests (`#quest`): Wolf Head 150 exp + 0.75G, Dire Wolf Head 400 exp + 2G (10 heads = one standard quest, 5% of the rank's climb; the Quest Planner's per-head share is 0.5% now) (both as often as you like, from Sergeant / Master Sergeant), Greyfang's Fang -> Greyfang Amulet and 14,000 exp (once, from First Sergeant; no gold).
 - **Wynn** is a Harakim woman now (kindred Harakim + female, the female Harakim look 6096).
 - NPC templates 2057-2100 and more (`made.json`).
 
@@ -1181,7 +1181,7 @@ East of Fenwatch (zone "Drowned Village", x 416-504, y 853-950), for Sergeant Ma
 - **Quests** (item quests, `#quest`; no gold except the bounty):
   - **Joss**: Captain Morrow's Compass -> **teaches Swimming**, 16,000 exp (from Sergeant Major). The Silver Net (the Sentinel carries it) -> **Fisher-King's Belt** (+8 Swimming, +25 hitpoints, Second Lieutenant), 25,000 exp (from Second Lieutenant).
   - **Ilse**: Maud's Hex-Doll -> **Ring of Tides** (+15 mana, +4 Meditate, Sergeant Major), 16,000 exp. Maud's Herb Pouch (Maud carries it too) -> 3 **Draughts of Clear Water** (mana back to full), no exp: two hand-ins, because an item quest gives one kind of item.
-  - **Bounty Master Corwin**: Drowned Sailor Head and Bog-man Head, 2,500 exp + 125G each, as often as you like, from Second Lieutenant.
+  - **Bounty Master Corwin**: Drowned Sailor Head and Bog-man Head, 2,500 exp + 12.5G each, as often as you like, from Second Lieutenant.
 - **Swimming** (server `svr_do.c`, `driver.c`, `data.h` SWIM_FULL, `skill.c`): under water a player loses breath (about 4.5 hitpoints a second, no regeneration) as before; now each point of Swimming takes 1/125 of that away, **none left at Swimming 125**. This also holds in the game's other under-water places (the Underwater Pentagram area). No class had Swimming in its skill list, so the teaching NPC gives it to the player's class on the spot (up to 60 raised, difficulty 5, like Perception).
 - **Item pictures** 44524-44532 (`tools/sprites/quest_items/drowned_village.py`): the two heads (cut from the monsters' own frames), compass, hex-doll, net, pouch, ring, belt (drawn: a coiled sealskin belt with a silver fish buckle; a first recolour of the game's thin belt strip looked bad), draught. Items 2024-2032; the quest items and heads have no value (can't be sold) and no labyrinth flag.
 
@@ -1208,6 +1208,12 @@ north gate road (the North Road, y ~800-802), which ends at a ring of standing s
   (+3 Intuition, +6 Identify), 37,000 exp. Item templates 2051-2054; pictures 44533 (tablet), 44534 (torc, both items),
   44535 (ring) (`tools/sprites/quest_items/barrow_hills.py`, README.txt). Published: client-dist 0161385.
 
+## Bounty gold lowered (Nov 17)
+
+Bounties pay **1/200 of their exp in gold** (was 1/20: a head paid 10-20 times what the monster carries, and ten Lizard
+Heads bought the dearest weapon in any shop). Now: Wolf Head 0.75G, Dire Wolf Head 2G (Huntmaster Edda); Drowned Sailor
+and Bog-man Head 12.5G, Lizard Head 26G, Lizard Egg 13G (Bounty Master Corwin). The exp is unchanged. Cody may adjust later.
+
 ## Lizard Hatcheries (Nov 17)
 
 South of Fenwatch (zone "Lizard Hatcheries", x 495-595, y 757-860), for Captain; reached by Fenwatch's south gate road,
@@ -1231,7 +1237,7 @@ which runs on through the area and leaves its far (south) edge open for the pass
   strong Captain) in the Grotto with the **Archmage's Phial**. Every lizard carries a **Lizard Head**.
 - **Quests** (item quests, `#quest`): **Aldous**: the Broodmother's Crown -> **Scaled Belt** (+4 armor, +3 Strength, Captain),
   52,000 exp. **Rook**: the Archmage's Phial -> 2 **Elixirs of the Good Moon** (spells +15% for 10 minutes, no Bad Moon
-  weakening), 52,000 exp. **Bounty Master Corwin**: Lizard Head 5,200 exp + 260G, **Lizard Egg** 2,600 exp + 130G, as often as
+  weakening), 52,000 exp. **Bounty Master Corwin**: Lizard Head 5,200 exp + 26G, **Lizard Egg** 2,600 exp + 13G, as often as
   you like, from Captain (the egg: a pseudo-bounty for now; later an Alchemy ingredient). Aldous's, Rook's and Corwin's
   greetings name what they want. Items 2055 (Lizard Egg), 2059-2063; pictures 44536-44541
   (`tools/sprites/quest_items/lizard_hatcheries.py`). Built with `build_hatcheries.py` (terrain, eggs) and

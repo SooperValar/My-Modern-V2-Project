@@ -85,7 +85,7 @@ qs, npcs = W.talk_load()
 qs['alias'][EDDA_DIRE] = EDDA; qs['alias'][EDDA_FANG] = EDDA
 top = max([v for v in qs['order'].values() if v > 0] or [0])
 for k, t in enumerate((EDDA, EDDA_DIRE, EDDA_FANG)): qs['order'][t] = top + 1 + k
-qs['qrew'][EDDA] = {'lim': 0, 'first': 0, 'gold': 800, 'st': [], 'rmin': 4, 'rmax': -1, 'n': 1}
+qs['qrew'][EDDA] = {'lim': 0, 'first': 0, 'gold': 75, 'st': [], 'rmin': 4, 'rmax': -1, 'n': 1}
 qs['qrew'][EDDA_DIRE] = {'lim': 0, 'first': 0, 'gold': 3000, 'st': [], 'rmin': 6, 'rmax': -1, 'n': 1}
 qs['qrew'][EDDA_FANG] = {'lim': 1, 'first': 0, 'gold': 0, 'st': [], 'rmin': 7, 'rmax': -1, 'n': 1}
 print(W.talk_save(qs, npcs))

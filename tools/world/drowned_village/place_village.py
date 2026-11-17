@@ -114,7 +114,7 @@ top = max([v for v in qs['order'].values() if v > 0] or [0])
 for k, t in enumerate((JOSS, ILSE, ILSE_POUCH, JOSS_NET, CORWIN, CORWIN_BOG)): qs['order'][t] = top + 1 + k
 R = lambda lim, gold, rmin, n=1: {'lim': lim, 'first': 0, 'gold': gold, 'st': [], 'rmin': rmin, 'rmax': -1, 'n': n}
 qs['qrew'][JOSS] = R(1, 0, 8); qs['qrew'][ILSE] = R(1, 0, 8); qs['qrew'][ILSE_POUCH] = R(1, 0, 8, 3); qs['qrew'][JOSS_NET] = R(1, 0, 9)
-qs['qrew'][CORWIN] = R(0, 12500, 9); qs['qrew'][CORWIN_BOG] = R(0, 12500, 9)
+qs['qrew'][CORWIN] = R(0, 1250, 9); qs['qrew'][CORWIN_BOG] = R(0, 1250, 9)      # 12.5G: 1/200 of the exp (Cody, Nov 17; was 125G)
 print(W.talk_save(qs, npcs)); print(W.save())
 M = {'items': {'sailor_head': SHEAD, 'bogman_head': BHEAD, 'compass': COMPASS, 'doll': DOLL, 'net': NET, 'pouch': POUCH, 'ring': RING, 'belt': FBELT, 'clear_water': CLEAR},
      'sailors': sailors, 'bogmen': bogmen, 'golems': golems, 'sentinel': SENTINEL, 'morrow': MORROW, 'maud': MAUD,

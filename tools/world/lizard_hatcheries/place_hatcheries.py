@@ -57,8 +57,8 @@ ALDOUS, ROOK, CORWIN = A.by_name('Aldous'), A.by_name('Rook'), A.by_name('Bounty
 ALDOUS_CROWN = A.extra_quest(ALDOUS, CROWN, 52000, give=BELT, lim=1, rmin=11)
 A.quest(ROOK, PHIAL, 52000, give=ELIXIR, n=2, lim=1, rmin=11,
         greet="Hm? Ah, %s. South of the gate, past the marsh, the lizards breed in the old caves - and an archmage of theirs brews something wonderful in a grotto there. Bring me its phial and I'll make you two Elixirs of the Good Moon from it.")
-CORWIN_HEAD = A.extra_quest(CORWIN, HEAD, 5200, gold=26000, lim=0, rmin=11)
-CORWIN_EGG = A.extra_quest(CORWIN, EGG_ITEM, 2600, gold=13000, lim=0, rmin=11)
+CORWIN_HEAD = A.extra_quest(CORWIN, HEAD, 5200, gold=2600, lim=0, rmin=11)          # bounty gold = 1/200 of the exp (Cody, Nov 17)
+CORWIN_EGG = A.extra_quest(CORWIN, EGG_ITEM, 2600, gold=1300, lim=0, rmin=11)
 A.W.apply([{'op': 'ctempset', 't': CORWIN, 'fields': {}, 'respawn': True, 'text': [None, None,
            "Fenwatch pays for what crawls out of the marsh, %s: drowned sailors' and bog-men's heads, and from the hatcheries south of town, lizard heads - and their eggs, before they hatch. As many as you bring."]}], 'Corwin greets')
 A.W.apply([{'op': 'ctempset', 't': ALDOUS, 'fields': {}, 'respawn': True, 'text': [None, None,

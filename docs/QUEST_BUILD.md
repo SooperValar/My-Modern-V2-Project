@@ -31,7 +31,8 @@ with exp per quest, Reward Guide, New Areas). Their Status column is not kept up
 - Plan first, show it, wait for OK. **Before saving any new terrain, show a rendered preview** (section 5). He may say
   "I'll build this one": then he draws the area and zones and you place NPCs, items, quests.
 - One area at a time: build, test, make live, show the result, then the next.
-- **Gold**: only bounties pay gold (1/20 of their exp: 2,500 exp -> 125G), or a quest whose only reward is gold. Item or
+- **Gold**: only bounties pay gold - **1/200 of their exp** (Cody, Nov 17: 2,500 exp -> 12.5G, about what the monster itself
+  carries; was 1/20, far too much against shop prices) - or a quest whose only reward is gold. Item or
   skill quests give no gold. Bounties: 10 heads = one standard quest.
 - Exp per quest: the Quest Planner's Planned Quests column H. Reward items take the quest's rank as their rank requirement.
 - New items get pictures in the game's style; quest items **value 0** (can't be sold) and **no labyrinth flag**
@@ -178,7 +179,7 @@ the egg nests and the Lizard Egg / Hatchling templates -> `made_terrain.json`) a
 quests -> `made.json`). Cody's choices on the way: Fenwatch's marsh carried on; lakes kept back from the road; the big cave
 set further back (area widened to y 757); the Grotto entered from the north; bosses swapped (Broodmother: big cave,
 Archmage: Grotto); eggs: one big egg a tile, fuller nests, a ragged hatched egg; **option 4**: using an egg gives a Lizard Egg
-(pseudo-bounty at Corwin: 2,600 exp + 130G; later Alchemy) or 1 in 5 hatches a Lizard Hatchling that attacks; regrow 5 min.
+(pseudo-bounty at Corwin: 2,600 exp + 13G; later Alchemy) or 1 in 5 hatches a Lizard Hatchling that attacks; regrow 5 min.
 Tested on the test server (spawns, all hand-ins, 20 egg uses: 13 eggs, 5 hatchlings). **For Cody to try in game**.
 Lessons: the egg's two looks are the item's sprite pair (whole / hatched, `active` = regrowing); `usexy <player> <x> <y>`
 tests a map item; the device VM disk is small: delete scratch copies and `.dat/mapedit-backups` there as you go.
