@@ -132,7 +132,7 @@ Marsh / ground sprites: `tools/sprites/world_marsh.py`, `world_ground.py`.
 exp / gold; `zone <x> <y>`; `wplist`; `merchreload`; `usetest <player> <slot>` drinks a potion; `fighttest`.
 Test character on the test server: Iluvatar.
 
-## 6. Fable's potion / Karate code: LIVE since Nov 17 (tested on the test server)
+## 6. Fable's potion code: LIVE since Nov 17 (tested on the test server)
 
 Tested Nov 17 (test potions drunk with `usetest`: spell items with temp 65001 / 65002 on the character, no crash) and live
 with the Barrow Hills update. The +15% and the Frozen Heart healing are easiest to see in play. What it is:

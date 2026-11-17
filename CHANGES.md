@@ -1208,14 +1208,14 @@ north gate road (the North Road, y ~800-802), which ends at a ring of standing s
   (+3 Intuition, +6 Identify), 37,000 exp. Item templates 2051-2054; pictures 44533 (tablet), 44534 (torc, both items),
   44535 (ring) (`tools/sprites/quest_items/barrow_hills.py`, README.txt). Published: client-dist 0161385.
 
-## New potion effects and Karate for every class (server, Nov 17; written by Fable Nov 16)
+## New potion effects (server, Nov 17; written by Fable Nov 16)
 
 Live since Nov 17 (tested on the test server: both potions drunk, their effect on the character, no crash):
 - **Elixir of the Good Moon** (spell item `SPT_GOODMOON` 65001, `skill_driver.c` `has_good_moon`): while it lasts (or at full
   moon, or wearing an item with data[9] = 65001: the later Ring of the Good Moon) spells are 15% stronger and a Bad Moon
   doesn't weaken them. A potion: a timed potion with data[1] = 65001 (made with the Lizard Hatcheries).
 - **Potion of the Frozen Heart** (`SPT_FROZENHEART` 65002, `svr_do.c`): while it lasts, 3.6 extra hitpoints a second.
-- **Karate**: the teaching NPC gives Karate to the player's class first (`driver.c`), like Swimming (for Brother Anselm, band D).
+- Karate for every class was part of it too, but is taken out again (Cody, Nov 17: no use for it yet); no NPC teaches it.
 No such potions are in the world yet.
 
 ## Wall decorations for all four walls, turned shrines (Nov 16-17)
