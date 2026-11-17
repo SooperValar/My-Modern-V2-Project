@@ -181,7 +181,7 @@ stopped via `stop-send`, then `update-world` and `reload-editor`):
 
 Client 2.15.06 shows sprites 0-65,535 (before: up to 34,767). Free for new sprites: 34,192 and up. Not free: the gaps
 after each character's 448 frames (appearance tiers, `install_variant.py`, `LOOKTIER_STEP`). Plan for new world sprites
-(TODO "World sprites"): ground 35000+, water 35500+, walls / brick / stone 36000+, floors 37000+, trees / plants /
+(TODO "World sprites"): ground 35000+ (marsh grounds 35700-35995), water 35500+, walls / brick / stone 36000+, floors 37000+, trees / plants /
 cactus 38000+, cobwebbed versions 39000+; more blocks above 40000 when needed. Every ground / floor kind in 4+ variants.
 New sprites above 34,767 need client 2.15.06 or later: raise `MINVERSION` when the first ones go into the world.
 
@@ -236,6 +236,8 @@ Cody makes the first ones and tries them.
 **Settled by Cody (Nov 16), don't raise again:** the exp / reward balance suggestions (Old Greyfang, Thieves Basement, Lizard Temple, Dungeon of Doors) are done; Azrael stays unticked in the Haunted Castle area clear on purpose (not a normal monster, not reached the normal way).
 
 **Nov 16, later:** editor Items page (every item template; edits reach carried copies), drinks' Stats tab, Value price table, and **recipes** (server/recipe.c, `.dat/recipes.dat`, Items page -> Recipes; live). Test server for this session was `~/sb` (Iluvatar got test items there only).
+
+**Where we left off (Nov 16, night): Fenwatch's terrain is live** (CHANGES.md "Fenwatch"; plan and what comes next in TODO.md "The quest plan"). Town x 424-476 / y 770-834, marsh x 406-494 / y 732-852, the Fen Road from the Wolfwood road's end (449,728). Built with `tools/world/fenwatch/build_fenwatch.py` (marsh sprites: `tools/sprites/world_marsh.py`, grounds 35700-35995, reeds 38200-38207; published as client-dist 4aaea69, Cody pushes). Next: the town's NPCs, merchants and waypoint, then the Drowned Village. This session's way of working: previews are rendered with `tools/world/render_region.py` on a copy of `Server\.dat` in the device shell (`~/fw`), copied to `Client\Claude outputs\fenwatch_preview\` (a new file name each time), staged and sent to Cody; the test server is built in `~/ctest` (copy `*.c *.h *.S Makefile`, `mkdir .obj`, `make -j4 server` two or three runs) and `./server light > file` relights a copy of the .dat after a build (redirect its output: it is huge), then map.dat is copied back before `update-world`.
 
 **Where we left off (Nov 16):** quest items have their own pictures (44510-44521, live, client-dist 39aab4b published locally; Cody pushes `client-dist`). Item pipeline: `tools/sprites/item_icon.py <model.gltf|.obj> <out.png>` (32x32 at the game camera; `--glass/--liquid` for bottles, `--recol Mat=rrggbb`, `--roll`). Models: `MyV2\3d Models\` Fantasy Props (glTF), RPG Pack 1/2 (OBJ/FBX, flat colours: the better match for the game's item look).
 

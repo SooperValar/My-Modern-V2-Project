@@ -130,54 +130,65 @@ Shown by `/who`, by NPCs when asked where you are, and in server logs. A spot in
 | 120 | Astonian Inn | 29,137 | 38,144 | "in the Astonian Inn" |
 | 121 | Astonian Inn | 634,466 | 639,477 | "in the Astonian Inn" |
 | 122 | Memorial Park | 577,557 | 633,628 | "in Memorial Park" |
-| 123 | Staffers Corner | 820,158 | 851,161 | "in the Staffers Corner" |
-| 124 | Staffers Corner | 807,151 | 819,168 | "in the Staffers Corner" |
-| 125 | Staffers Corner | 793,146 | 805,156 | "in the Staffers Corner" |
-| 126 | Staffers Corner | 799,158 | 805,168 | "in the Staffers Corner" |
-| 127 | Staffers Corner | 794,163 | 798,165 | "in the Staffers Corner" |
-| 128 | Tower I | 632,240 | 647,257 | "in the Tower I" |
-| 129 | Tower II | 822,337 | 837,352 | "in the Tower II" |
-| 130 | Tower III | 824,360 | 839,373 | "in the Tower III" |
-| 131 | Tower IV | 823,380 | 838,395 | "in the Tower IV" |
-| 132 | Tower V | 822,401 | 837,416 | "in the Tower V" |
-| 133 | Tower VI | 822,420 | 838,435 | "in the Tower VI" |
-| 134 | Tower VII | 844,337 | 860,350 | "in the Tower VII" |
-| 135 | Tower VIII | 844,354 | 860,368 | "in the Tower VIII" |
-| 136 | Tower IX | 845,374 | 861,389 | "in the Tower IX" |
-| 137 | Tower X | 844,395 | 860,411 | "in the Tower X" |
-| 138 | Tower XI | 844,415 | 860,430 | "in the Tower XI" |
-| 139 | Tower XII | 867,337 | 885,356 | "in the Tower XII" |
-| 140 | Tower XIII | 865,361 | 882,376 | "in the Tower XIII" |
-| 141 | Tower XIV | 865,380 | 883,396 | "in the Tower XIV" |
-| 142 | Tower XV | 870,400 | 886,424 | "in the Tower XV" |
-| 143 | Tower XV | 865,416 | 869,424 | "in the Tower XV" |
-| 144 | Tower XVI | 892,337 | 916,359 | "in the Tower XVI" |
-| 145 | Tower XVI | 892,360 | 908,378 | "in the Tower XVI" |
-| 146 | Tower XVII | 892,386 | 911,406 | "in the Tower XVII" |
-| 147 | Tower XVIII | 890,410 | 909,429 | "in the Tower XVIII" |
-| 148 | Tower XIX | 921,337 | 940,356 | "in the Tower XIX" |
-| 149 | Tower XX | 926,360 | 940,378 | "in the Tower XX" |
-| 150 | Tower XX | 924,379 | 942,404 | "in the Tower XX" |
-| 151 | Tower XX | 921,405 | 945,415 | "in the Tower XX" |
-| 152 | Aston Hall | 597,600 | 619,619 | "in Aston Hall" |
-| 153 | Aston Hall | 607,599 | 609,599 | "in Aston Hall" |
-| 154 | Lizard Temple Shrine | 529,198 | 537,204 | "in the Lizard Temple Shrine" |
-| 155 | Lizard Temple Shrine | 529,198 | 537,204 | "in the Lizard Temple Shrine" |
-| 156 | Ice Pents Shrine | 321,294 | 327,300 | "in the Ice Pents Shrine" |
-| 157 | Labyrinth Shrines | 7,520 | 12,592 | "in the Labyrinth Shrines" |
-| 158 | Market | 541,500 | 569,524 | "in the Market" |
-| 159 | Jamil's House | 539,528 | 548,534 | "in Jamil's House" |
-| 160 | Inga's House | 520,524 | 529,534 | "in Inga's House" |
-| 161 | Sirjan's House | 563,528 | 571,534 | "in Sirjan's House" |
-| 162 | Jefferson's House | 582,499 | 588,505 | "in Jefferson's House" |
-| 163 | Joe's House | 582,513 | 598,524 | "in Joe's House" |
-| 164 | Joe's House | 581,523 | 581,523 | "in Joe's House" |
-| 165 | Grave Yard | 456,532 | 479,578 | "in the Grave Yard" |
-| 166 | Grave Yard | 480,554 | 480,556 | "in the Grave Yard" |
-| 167 | Bandit Hollow | 498,662 | 572,748 | "in Bandit Hollow" |
-| 168 | Wynn's Hut | 540,674 | 546,688 | "in Wynn's Hut" |
-| 169 | East Guard House | 521,605 | 528,612 | "in the East Guard House" |
-| 170 | Harlan's Hideout | 525,726 | 545,738 | "in the Harlan's Hideout" |
-| 171 | Bandit Cave | 806,100 | 813,107 | "in the Bandit Cave" |
-| 172 | Old Quarry | 576,640 | 642,712 | "in Old Quarry" |
-| 173 | Deep Grolm Caves | 616,713 | 644,744 | "in the Deep Grolm Caves" |
+| 123 | Staffers Corner | 792,145 | 820,169 | "in the Staffers Corner" |
+| 124 | Tower I | 632,240 | 647,257 | "in the Tower I" |
+| 125 | Tower II | 822,337 | 837,352 | "in the Tower II" |
+| 126 | Tower III | 824,360 | 839,373 | "in the Tower III" |
+| 127 | Tower IV | 823,380 | 838,395 | "in the Tower IV" |
+| 128 | Tower V | 822,401 | 837,416 | "in the Tower V" |
+| 129 | Tower VI | 822,420 | 838,435 | "in the Tower VI" |
+| 130 | Tower VII | 844,337 | 860,350 | "in the Tower VII" |
+| 131 | Tower VIII | 844,354 | 860,368 | "in the Tower VIII" |
+| 132 | Tower IX | 845,374 | 861,389 | "in the Tower IX" |
+| 133 | Tower X | 844,395 | 860,411 | "in the Tower X" |
+| 134 | Tower XI | 844,415 | 860,430 | "in the Tower XI" |
+| 135 | Tower XII | 867,337 | 885,356 | "in the Tower XII" |
+| 136 | Tower XIII | 865,361 | 882,376 | "in the Tower XIII" |
+| 137 | Tower XIV | 865,380 | 883,396 | "in the Tower XIV" |
+| 138 | Tower XV | 870,400 | 886,424 | "in the Tower XV" |
+| 139 | Tower XV | 865,416 | 869,424 | "in the Tower XV" |
+| 140 | Tower XVI | 892,337 | 916,359 | "in the Tower XVI" |
+| 141 | Tower XVI | 892,360 | 908,378 | "in the Tower XVI" |
+| 142 | Tower XVII | 892,386 | 911,406 | "in the Tower XVII" |
+| 143 | Tower XVIII | 890,410 | 909,429 | "in the Tower XVIII" |
+| 144 | Tower XIX | 921,337 | 940,356 | "in the Tower XIX" |
+| 145 | Tower XX | 926,360 | 940,378 | "in the Tower XX" |
+| 146 | Tower XX | 924,379 | 942,404 | "in the Tower XX" |
+| 147 | Tower XX | 921,405 | 945,415 | "in the Tower XX" |
+| 148 | Aston Hall | 597,600 | 619,619 | "in Aston Hall" |
+| 149 | Aston Hall | 607,599 | 609,599 | "in Aston Hall" |
+| 150 | Lizard Temple Shrine | 529,198 | 537,204 | "in the Lizard Temple Shrine" |
+| 151 | Lizard Temple Shrine | 529,198 | 537,204 | "in the Lizard Temple Shrine" |
+| 152 | Ice Pents Shrine | 321,294 | 327,300 | "in the Ice Pents Shrine" |
+| 153 | Labyrinth Shrines | 7,520 | 12,592 | "in the Labyrinth Shrines" |
+| 154 | Market | 541,500 | 569,524 | "in the Market" |
+| 155 | Jamil's House | 539,528 | 548,534 | "in Jamil's House" |
+| 156 | Inga's House | 520,524 | 529,534 | "in Inga's House" |
+| 157 | Sirjan's House | 563,528 | 571,534 | "in Sirjan's House" |
+| 158 | Jefferson's House | 582,499 | 588,505 | "in Jefferson's House" |
+| 159 | Joe's House | 582,513 | 598,524 | "in Joe's House" |
+| 160 | Joe's House | 581,523 | 581,523 | "in Joe's House" |
+| 161 | Grave Yard | 456,532 | 479,578 | "in the Grave Yard" |
+| 162 | Grave Yard | 480,554 | 480,556 | "in the Grave Yard" |
+| 163 | Bandit Hollow | 498,662 | 572,748 | "in Bandit Hollow" |
+| 164 | Wynn & Edda's Hut | 509,652 | 515,662 | "in Wynn & Edda's Hut" |
+| 165 | East Guard House | 521,605 | 528,617 | "in the East Guard House" |
+| 166 | Harlan's Hideout | 525,726 | 545,738 | "in the Harlan's Hideout" |
+| 167 | Bandit Cave | 806,100 | 813,107 | "in the Bandit Cave" |
+| 168 | Old Quarry | 585,633 | 632,706 | "in the Old Quarry" |
+| 169 | Deep Quarry | 618,707 | 641,737 | "in the Deep Quarry" |
+| 170 | Deep Forest | 411,531 | 453,580 | "in the Deep Forest" |
+| 171 | Deep Forest | 411,581 | 479,599 | "in the Deep Forest" |
+| 172 | Dire Wolves Den | 411,531 | 422,564 | "in the Dire Wolves Den" |
+| 173 | Dire Wolves Den | 423,531 | 435,559 | "in the Dire Wolves Den" |
+| 174 | Dire Wolves Den | 436,531 | 453,551 | "in the Dire Wolves Den" |
+| 175 | Wolfwood Forest | 411,600 | 497,731 | "in the Wolfwood Forest" |
+| 176 | Eastern Woods | 498,600 | 572,748 | "in the Eastern Woods" |
+| 177 | Eastern Woods | 573,633 | 584,674 | "in the Eastern Woods" |
+| 178 | Eastern Woods | 573,600 | 574,632 | "in the Eastern Woods" |
+| 179 | Eastern Woods | 498,599 | 574,599 | "in the Eastern Woods" |
+| 180 | Fenwatch | 424,770 | 476,834 | "in Fenwatch" |
+| 181 | Fenwatch Marsh | 406,732 | 494,769 | "in the Fenwatch Marsh" |
+| 182 | Fenwatch Marsh | 406,835 | 494,852 | "in the Fenwatch Marsh" |
+| 183 | Fenwatch Marsh | 406,770 | 423,834 | "in the Fenwatch Marsh" |
+| 184 | Fenwatch Marsh | 477,770 | 494,834 | "in the Fenwatch Marsh" |
