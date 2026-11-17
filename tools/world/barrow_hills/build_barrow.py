@@ -18,6 +18,7 @@ CIRCLE = (366, 805)                               # the standing stones
 BARROWS = [  # centre x, y, radius x, y, door side ('s' = toward Fenwatch ...), name
     (337, 806, 10, 12, 's', 'king'), (352, 782, 6, 7, 'e', 'scribe'),
     (384, 782, 4, 5, 's', ''), (392, 822, 4, 5, 'w', ''), (374, 836, 5, 4, 'w', ''), (350, 834, 4, 5, 'n', ''), (336, 778, 4, 4, 's', ''), (380, 812, 4, 4, 'n', '')]
+INFLOOR = [989]                                    # dirt inside the tombs (was the red-black cave floor)
 ell = lambda x, y, cx, cy, rx, ry: ((x - cx) / rx) ** 2 + ((y - cy) / ry) ** 2
 def barrow_at(x, y, pad=0.0):
     for cx, cy, rx, ry, side, name in BARROWS:
@@ -34,7 +35,7 @@ def trail(x0, y0, x1, y1):
     for i in range(n + 1):
         x, y = round(x0 + (x1 - x0) * i / n), round(y0 + (y1 - y0) * i / n)
         for d in ((0, 0), (1, 0), (0, 1)): paths.add((x + d[0], y + d[1]))
-trail(372, 801, 349, 806); trail(366, 800, 358, 790); trail(358, 790, 353, 790)
+trail(372, 801, 347, 806); trail(366, 800, 358, 790); trail(358, 790, 352, 789)      # up to the King's and Scribe's doors
 for x in range(X0, X1 + 1):
     for y in range(Y0, Y1 + 1):
         if x > edge(y) and (x, y) not in road: continue                 # Fenwatch's marsh stays
@@ -42,11 +43,11 @@ for x in range(X0, X1 + 1):
         b = barrow_at(x, y)
         if b and (x, y) not in doors:
             inside = ell(x, y, b[0], b[1], b[2] - 1.2, b[3] - 1.2) <= 1.0
-            A.op(op='floor', x=x, y=y, s=CAVE, set=False)
+            A.op(op='floor', x=x, y=y, s=random.choice(INFLOOR), set=False)
             if inside: A.op(op='flag', x=x, y=y, bit=2, mode=1)
-            else: A.op(op='object', x=x, y=y, s=124, block=3)           # the dark rock wall
+            else: A.op(op='object', x=x, y=y, s=random.choice(W_MOSSY if b[5] else W_FIELDSTONE), block=3)   # old stone: mossy for the two named tombs
             continue
-        if (x, y) in doors: A.op(op='floor', x=x, y=y, s=CAVE, set=False); continue
+        if (x, y) in doors: A.op(op='floor', x=x, y=y, s=random.choice(INFLOOR), set=False); continue
         if (x, y) in paths: A.op(op='floor', x=x, y=y, s=random.choice(PATH if (x, y) in road or random.random() < 0.8 else GRASS), set=False); continue
         A.op(op='floor', x=x, y=y, s=random.choice(GRASS), set=False)
         if barrow_at(x, y, 2.5) or abs(x - CIRCLE[0]) + abs(y - CIRCLE[1]) < 9: continue
@@ -57,8 +58,8 @@ for x in range(X0, X1 + 1):
             if r < 0.92: A.op(op='object', x=x, y=y, s=random.choice(PINE + OLDTREES), block=3)
         elif r < 0.020: A.op(op='object', x=x, y=y, s=random.choice(DEAD), block=1)
         elif r < 0.032: A.op(op='object', x=x, y=y, s=random.choice(OLDTREES + PINE), block=3)
-        elif r < 0.050: A.op(op='object', x=x, y=y, s=random.choice(ROCKS), block=3)
-        elif r < 0.058: A.op(op='object', x=x, y=y, s=random.choice(STUMPS), block=1)
+        elif r < 0.036: A.op(op='object', x=x, y=y, s=random.choice(DEAD), block=1)
+        elif r < 0.044: A.op(op='object', x=x, y=y, s=random.choice(STUMPS), block=1)
 A.run('Barrow Hills: ground, barrows, trees')
 for x in range(402, 412):                         # open Fenwatch marsh's north tree wall at the road, thin it elsewhere
     for y in range(797, 806): A.op(op='erase', x=x, y=y)
