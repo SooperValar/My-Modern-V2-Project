@@ -178,6 +178,9 @@ stopped via `stop-send`, then `update-world` and `reload-editor`):
 - Tested from outside (laptop on a phone hotspot) and the launcher's update path (version 1 -> 2).
 
 ## Sprite numbers (Nov 12)
+Taken since (Nov 15-17): 43000-44001 wolves (3D, own shadow); 44500-44531 heads and quest items; 48000-48025 wall
+decorations; 50000+ recoloured monsters (Drowned Sailor 50000, Bog-man 50500, Sea Golem 51000; next 52000). Check
+`Client\GFX` before taking a number.
 
 Client 2.15.06 shows sprites 0-65,535 (before: up to 34,767). Free for new sprites: 34,192 and up. Not free: the gaps
 after each character's 448 frames (appearance tiers, `install_variant.py`, `LOOKTIER_STEP`). Plan for new world sprites
@@ -236,6 +239,27 @@ Cody makes the first ones and tries them.
 **Settled by Cody (Nov 16), don't raise again:** the exp / reward balance suggestions (Old Greyfang, Thieves Basement, Lizard Temple, Dungeon of Doors) are done; Azrael stays unticked in the Haunted Castle area clear on purpose (not a normal monster, not reached the normal way).
 
 **Nov 16, later:** editor Items page (every item template; edits reach carried copies), drinks' Stats tab, Value price table, and **recipes** (server/recipe.c, `.dat/recipes.dat`, Items page -> Recipes; live). Test server for this session was `~/sb` (Iluvatar got test items there only).
+
+**One chat from Nov 17 on** (Cody): the world-building (Fable) chat and the editor / sprites chat are merged into this
+project's next session. What the second chat did Nov 15-17 (all live, CHANGES.md has the details):
+- **Editor**: the **Items** page (every item template: search, kind filter, sort, Copy..., + New item; template edits reach
+  copies on the map, with NPCs and with players), **Items -> Recipes** (`server/recipe.c`, `.dat/recipes.dat`: A used +
+  B held -> result; keep A/B, either way, min rank, needs a skill/attribute; the game's 69 built-in combinations - flasks
+  and flowers, Lizard's Teeth, rings and gems, the Amulet of the Sun - are recipes now), drinks' own Stats tab (Right
+  away / While it lasts / Lasts), the Value price table, and the **Facing** row (S/W/N/E) for placed shrines and wall
+  decorations. Console: `recipereload`, `recipetest`, `usetest`. Drinks check their Needed column.
+- **Discord** (editor's DiscordLink): bots post only in #announcements (system webhook: shouts, login/out, [Server],
+  up/down), #info (board webhook: who's online, rankings) and #game-chat (chat webhook + bot, plain text); everything
+  else as code blocks. #updates is Cody's own; #commits is GitHub's own webhook. Community / Feedback: no bots.
+- **Rat-Catcher's cellar**: Mirela (2141, house 525,468; hole 528,465 lands at 888,25 in Underground I), Young Ratlings
+  2138-2139, Ratling Broodmother 2140 (not aggressive until a ratling is hit), Broodmother's Tail 2022 -> Rat-Catcher's
+  Ring 2023. Tools: `tools/world/rat_cellar/`.
+- **Sprites**: quest item pictures 44510-44523 (`tools/sprites/item_icon.py` + `objmodel.py`: glTF or OBJ, RPG Pack
+  models in `MyV2\3d Models\`), wall decorations 48000-48025 for all four walls (backs for N/E: items are drawn even
+  with hide walls) and turned shrines (temple statue drawn by Cody; `tools/sprites/wall_decor*.py`), templates 2033-2050.
+- Open from that chat (Cody decides): the Seyan'Du shrine's turned tops are generated (Cody may redraw them like the
+  temple's); signs could get a readable west version (mirroring flips their text); the window walls face one way only;
+  TODO: Alchemy skill, change many items at once, a bigger world only if the towns don't fit.
 
 **Where we left off (Nov 17, morning): the quest plan (new areas) continues in `docs/QUEST_BUILD.md`** - read it before any world-building work: state, Cody's rules, the approved space plan and route, numbers in use, tools (`tools/world/arealib.py`, `deploy.sh`, `render_region.py`), the unfinished code, and the next two areas step by step. Fable's session ran out mid-way; its Good Moon / Frozen Heart / Karate code is **committed but untested and not live** (server/data.h, driver.c, skill_driver.c, svr_do.c; identical in the Windows Server folder): an `update-code` would put it live, so test it first (QUEST_BUILD.md section 6). The Barrow Hills terrain script exists but has not been run on the live world. Live (Nov 17): wall decorations for all four walls + turned shrines (CHANGES.md), templates 2033-2050, editor Facing row; client-dist published locally (Cody pushes).
 

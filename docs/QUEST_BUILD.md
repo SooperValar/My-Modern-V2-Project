@@ -21,8 +21,8 @@ with exp per quest, Reward Guide, New Areas). Their Status column is not kept up
 
 **Waiting on Cody** (ask, don't guess):
 - the redrawn Fisher-King's Belt picture (44531) OK? Redraw the two bounty head pictures (44524, 44525)?
-- client-dist publish: `publish_client.py` takes everything in `Client\GFX`, including the other session's sprites in
-  48000-49999. Ask before publishing whether that session's sprites may go out.
+- (Settled Nov 17: one chat from now on. The 48000-48025 wall decorations are finished and published; publishing
+  takes everything in `Client\GFX` freely.)
 - Drowned Village not yet tried in play by Cody (fights, Swimming under water, the six hand-ins).
 - He is rearranging Fenwatch's NPCs in the editor: always find NPCs **by name** (`Area.by_name`), never by old position.
 
@@ -36,7 +36,8 @@ with exp per quest, Reward Guide, New Areas). Their Status column is not kept up
 - Exp per quest: the Quest Planner's Planned Quests column H. Reward items take the quest's rank as their rank requirement.
 - New items get pictures in the game's style; quest items **value 0** (can't be sold) and **no labyrinth flag**
   (`IF_LABYDESTROY`, 1<<30: items copied from lab items vanish outside a lab). `Area.item` / `quest_item` do both.
-- New sprites always get new numbers. **48000-49999 belongs to another session: never use it.**
+- New sprites always get new numbers. 48000-48025 are the wall decorations (done); the next free there is 48026.
+  Registry of what is where: HANDOFF.md "Sprite numbers".
 - Stops / restarts only with nobody online, gated in the same command (`grep -q '"online": 0' status.json && ...`).
   `tools/world/deploy.sh` does this.
 - **Leave a route to the next hub** in every hub area (a through road ending in an open gap, no tree wall across it),
