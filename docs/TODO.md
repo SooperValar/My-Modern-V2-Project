@@ -17,6 +17,10 @@ world, quests, the editor, the client and Discord. Merged Nov 10 from the old TO
   furnaces, wrecks, slag) placed by `build_foundry.py`; Cody rearranges in the editor (Objects -> Workshop, the
   Slag heaps / Golem wrecks / Crates scatter brushes, the Foundry Yard / Foundry Floor area brushes).
 - ★ **Add some poles** (Cody's words; ask which kind / where if it isn't clear).
+- ● **Client: hide mode (F6) for the new trees** - `hide_sprite()` (client/engine.c) draws sprite+1, which for the new
+  trees (38100-38163, four variants each) is the next variant or a missing number (Cody saw "Sprite 38144 is missing" by
+  the willows, Nov 17). Stopgap: 38112 / 38124 / 38134 / 38144 / 38158 are copies of the stumps (client-dist). Fix in the
+  next client build: the new trees -> a stump, 38164 + (sprite & 3).
 
 0. ★ **Quest plan, area by area**: bands A-B done, Fenwatch + Drowned Village (Nov 16) + Barrow Hills + Lizard Hatcheries (Nov 17) live: band C done; Stonehold + its people and the Golem Foundry live (Nov 17); next the Ashen Fields: **follow `docs/QUEST_BUILD.md`** - [Quests](#6-quests)
 1. ★ **Soulstone levels too low** (MAJOR) - [Fixes](#1-fixes-and-balance)
