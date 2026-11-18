@@ -1345,3 +1345,9 @@ and one great hall, the Brass Colossus in its own casting pit; anvils, molten ir
   exp + 65G each, any number (stacks). Item pictures 44542-44546 (`quest_items/golem_foundry.py`).
 - Scripts `tools/world/golem_foundry/build_foundry.py` + `place_foundry.py` (made.json). Tested on the test server (spawns,
   reachability, both Hagar quests once, a stack of 5 cores). Client files published: client-dist 7404065.
+
+## Editor: scatter brushes and area brushes for the new areas (Nov 17, evening)
+
+Scatter brushes (Objects tab): Reeds, Marsh trees (willows, dead trees), Snowy pines, Boulders, Slag heaps (the lava
+stones), Golem wrecks, Crates, Lizard egg nests (the working nest items). Area brushes (floor mix + pieces): Marsh,
+Lizard Marsh (with egg nests), Mountain Meadow (snowy grass, snow, snowy pines, boulders), Foundry Yard, Foundry Floor.
