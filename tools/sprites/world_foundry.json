@@ -71,6 +71,12 @@
   "casting mould": 38412,
   "stone furnace": 38414,
   "toppled golem": 38416,
-  "golem limbs": 38418
+  "golem limbs": 38418,
+  "workbench with tools": 38420,
+  "workbench": 38422,
+  "tool rack": 38424,
+  "crates": 38426,
+  "crates and barrel": 38428,
+  "iron-bound crates": 38430
  }
 }

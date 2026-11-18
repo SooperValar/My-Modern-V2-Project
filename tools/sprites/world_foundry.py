@@ -6,6 +6,10 @@ World objects (32x64, drawn into the tile like the eggs; each N+1 its hide-walls
   38406 quench bucket        38408 grindstone                 38410 stack of iron ingots
   38412 casting mould (molten iron poured in)   38414 stone furnace (a bloomery, glowing mouth and top)
   38416 a toppled iron golem (wreck)            38418 wrecked golem limbs
+Shop and workshop pieces (Cody: for the Foundry, and as they are for armor shops, the market and the traders):
+  38420 workbench with tools (drawers, hammer, a blade, chain)   38422 plain workbench   38424 tool rack (an A-frame
+  stand with pickaxe, axe, hammer, blade)   38426 stack of crates   38428 crates, a barrel and a sack
+  38430 stack of iron-bound crates
 Ground: molten iron 36300-36303 (glowing, crusted; blocks walking like water) + 36304-36349: its soft edges creeping
 into the flagstone floor (37020-37023), in the order of world_ground.all_masks(). Writes world_foundry.json.
 3D props from Cody's "3d Models/Fantasy Props" and "RPG Pack 2" (glrender / objmodel), molten parts painted on.
@@ -185,6 +189,54 @@ def wreck(kind):
             m.box((d * math.cos(a), sz[1] / 2, d * math.sin(a)), sz, yaw=r.uniform(0, 3.14), roll=r.uniform(-0.2, 0.2), col=col())
     return prop(m)
 
+def rot(axis, deg):
+    a = math.radians(deg); c, s_ = math.cos(a), math.sin(a)
+    return {'x': np.array([[1, 0, 0], [0, c, -s_], [0, s_, c]]), 'y': np.array([[c, 0, s_], [0, 1, 0], [-s_, 0, c]]),
+            'z': np.array([[c, -s_, 0], [s_, c, 0], [0, 0, 1]])}[axis]
+
+class Group:
+    """several models placed together: parts (model, scale, rotation matrix, offset)"""
+    def __init__(self, parts, scale=1.0):
+        self.parts, self.scale, self.rest = parts, scale, None
+    def triangles(self, anim=None, t=0.0):
+        Ps, Ns, Cs = [], [], []
+        for m, sc, R, off in self.parts:
+            P, N, C = m.triangles(None, 0.0)
+            Ps.append(((P * sc) @ R.T + np.array(off)) * self.scale); Ns.append(N @ R.T); Cs.append(C)
+        P = np.concatenate(Ps); self.rest = P.copy(); return P, np.concatenate(Ns), np.concatenate(Cs)
+
+def shop_pieces():
+    D = M3 + '/Fantasy Props/'; O = M3 + '/RPG Pack 2/OBJ/'; I = np.eye(3); out = {}
+    gm = lambda n: G.Model(D + n + '.gltf')
+    bench, drawers = gm('Workbench'), gm('Workbench_Drawers')
+    hammer = ObjModel(O + 'Hammer_Double.obj'); blade = gm('Sword_Bronze'); chain = gm('Chain_Coil')
+    out[38420] = prop(Group([(bench, 1, I, (0, 0, 0)), (drawers, 1, I, (0, 0, 0)),
+                             (hammer, 0.32, rot('z', 90), (-0.50, 0.97, 0.18)), (blade, 1.3, rot('x', 90), (-0.10, 0.92, -0.05)),
+                             (chain, 0.5, I, (0.55, 0.89, 0.25))], 0.6))
+    out[38422] = prop(Group([(bench, 1, I, (0, 0, 0))], 0.6))
+    stand, pick, axe = gm('WeaponStand'), gm('Pickaxe_Bronze'), gm('Axe_Bronze')
+    # the tool rack: two posts and two rails of dark wood, tools standing in a row against it (steel heads, light hafts)
+    fr = Prim(24); WOOD = (0.36, 0.22, 0.12)
+    for x in (-0.55, 0.55): fr.box((x, 0.6, 0), (0.08, 1.2, 0.08), col=WOOD)
+    for y in (0.35, 1.0): fr.box((0, y, -0.02), (1.18, 0.07, 0.06), col=WOOD)
+    fr.box((0, 0.03, 0.02), (1.25, 0.06, 0.35), col=(0.30, 0.19, 0.10))
+    ax, hm, sw = (ObjModel(O + n + '.obj') for n in ('Axe_small', 'Hammer_Double', 'Sword'))
+    for t in (ax, hm, sw):                  # brighter steel and hafts, so they read at game size
+        t.recol.update({'Steel': np.array([0.62, 0.64, 0.68]), 'LightSteel': np.array([0.80, 0.82, 0.86]), 'DarkSteel': np.array([0.46, 0.47, 0.51]),
+                        'LightWood': np.array([0.72, 0.52, 0.30]), 'DarkWood': np.array([0.45, 0.30, 0.16])})
+    back = rot('x', -9)                     # the tops lean back onto the upper rail
+    out[38424] = prop(Group([(fr, 1, I, (0, 0, 0)), (pick, 0.95, back, (-0.38, 0.47, 0.10)), (ax, 0.68, back, (-0.10, 0.45, 0.10)),
+                             (hm, 0.42, back, (0.16, 0.35, 0.10)), (sw, 0.50, back, (0.42, 0.19, 0.10))], 0.85))
+    crate, mcrate, barrel, bag = gm('Crate_Wooden'), gm('Crate_Metal'), gm('Barrel'), gm('Bag')
+    def stack(c, extra=()):
+        return Group([(c, 0.5, rot('y', 4), (-0.23, 0, -0.23)), (c, 0.5, rot('y', -6), (0.24, 0, -0.22)), (c, 0.5, rot('y', 3), (-0.22, 0, 0.24)),
+                      (c, 0.5, rot('y', 12), (-0.21, 0.47, -0.21))] + list(extra))
+    out[38426] = prop(stack(crate))
+    out[38428] = prop(Group([(crate, 0.5, rot('y', 4), (-0.23, 0, -0.23)), (crate, 0.5, rot('y', 9), (-0.22, 0.47, -0.22)),
+                             (barrel, 0.6, I, (0.24, 0, -0.18)), (bag, 0.55, rot('y', 30), (-0.18, 0, 0.26)), (crate, 0.5, rot('y', -5), (0.25, 0, 0.27))]))
+    out[38430] = prop(stack(mcrate))
+    return out
+
 def build():
     D = M3 + '/Fantasy Props/'; out = {}
     out[38400] = prop(G.Model(D + 'Anvil_Log.gltf'))
@@ -202,6 +254,7 @@ def build():
     out[38412] = mould(5)
     out[38414] = furnace()
     out[38416] = wreck(0); out[38418] = wreck(1)
+    out.update(shop_pieces())
     for k in range(4): out[36300 + k] = molten_tile(36300 + k)
     S2 = wg.Sprites(sys.argv[1]); flag = [S2.get(n) for n in (37020, 37021, 37022, 37023)]
     edges = {}
@@ -210,7 +263,8 @@ def build():
     TABLE.update({'molten': {'plain': [36300, 36301, 36302, 36303], 'edges': edges}, 'floor': [37020, 37021, 37022, 37023],
                   'objects': {'anvil on a log': 38400, 'anvil on a block': 38402, 'crucible': 38404, 'quench bucket': 38406,
                               'grindstone': 38408, 'iron ingots': 38410, 'casting mould': 38412, 'stone furnace': 38414,
-                              'toppled golem': 38416, 'golem limbs': 38418}})
+                              'toppled golem': 38416, 'golem limbs': 38418, 'workbench with tools': 38420, 'workbench': 38422,
+                              'tool rack': 38424, 'crates': 38426, 'crates and barrel': 38428, 'iron-bound crates': 38430}})
     return out
 TABLE = {}
 

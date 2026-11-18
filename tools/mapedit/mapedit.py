@@ -196,6 +196,13 @@ WORLD_ARCHES = [[942, 'Arch ↘ first half', 1], [36401, 'Arch ↘ bridge', 0], 
                 # the 'light' look: specks out, grain softer
                 [36404, 'Smooth arch ↘ first half', 1], [36406, 'Smooth arch ↘ bridge', 0], [36405, 'Smooth arch ↘ second half (4 tiles ↘)', 1],
                 [36407, 'Smooth arch ↗ first half', 1], [36408, 'Smooth arch ↗ bridge', 0], [36409, 'Smooth arch ↗ second half (4 tiles ↗)', 1]]
+# foundry, workshop and shop pieces (tools/sprites/world_foundry.py, Nov 17; Cody: for the Golem Foundry, armor shops, the
+# market and the traders): [sprite, name, blocks]; each N+1 is its hide-walls copy
+WORLD_PROPS = [[38400, 'Anvil on a log', 1], [38402, 'Anvil on a granite block', 1], [38404, 'Crucible of molten iron', 1],
+               [38406, 'Quench bucket', 1], [38408, 'Grindstone', 1], [38410, 'Stack of iron ingots', 1], [38412, 'Casting mould', 1],
+               [38414, 'Stone furnace', 3], [38416, 'Toppled iron golem', 1], [38418, 'Wrecked golem limbs', 1],
+               [38420, 'Workbench with tools', 1], [38422, 'Workbench', 1], [38424, 'Tool rack', 1], [38426, 'Stack of crates', 1],
+               [38428, 'Crates, a barrel and a sack', 1], [38430, 'Stack of iron-bound crates', 1]]
 # new trees (tools/sprites/world_trees.py): one cell a kind paints one of its 4 at random; blocks like the game's trees
 WORLD_TREES = [
     [38100, 'Autumn tree (orange)', 3, [38100, 38101, 38102, 38103]],
@@ -1212,7 +1219,7 @@ class World:
         return {'floors': fl_sorted, 'objects': ob_sorted, 'templates': temps, 'flags': MF, 'sets': FLOOR_SETS,
                 'ground': [[n, g['plain'][0]] for n, g in WORLD_GROUND['sets'].items()],
                 'wg': {'grass': WORLD_GROUND['grass'], 'order': WG_ORDER, 'sets': WORLD_GROUND['sets']},
-                'plants': WORLD_PLANTS, 'fences': WORLD_FENCES, 'windows': WORLD_WINDOWS, 'arches': WORLD_ARCHES, 'trees': WORLD_TREES, 'cobwebs': WORLD_COBWEBS,
+                'plants': WORLD_PLANTS, 'fences': WORLD_FENCES, 'windows': WORLD_WINDOWS, 'arches': WORLD_ARCHES, 'trees': WORLD_TREES, 'cobwebs': WORLD_COBWEBS, 'props': WORLD_PROPS,
                 'newwalls': WORLD_WALLS,
                 'newfloors': WORLD_FLOORS,
                 'npcs': self.npc_templates()}
@@ -5594,7 +5601,7 @@ function leftUI() {
         walls: [['Walls', 'building and cave walls'], ['Webbed Walls', 'cobwebbed copies, each paints one of its 3 at random'], ['Windows', 'open slits like the game\'s brick windows: block walking, you see through'],
                 ['Trees', 'block walking and sight; the new ones paint one of their 4 at random'], ['Columns', 'pillars and columns'], ['Misc.', 'arches, gates, rubble…']],
         objects: [['Chests', 'put one in and choose what it gives'], ['Scatter Brushes', 'paint trees, plants, flowers or rocks at random · Ctrl+click pieces (or Add item) to make your own'],
-                  ['Torches', 'candles, braziers, lamps, torches, fires'], ['Fences', ''], ['Plants', 'flowers, bushes, cacti'], ['Webs', 'webs on their own and webbed objects'],
+                  ['Torches', 'candles, braziers, lamps, torches, fires'], ['Workshop', 'anvils, furnaces, molten iron, benches, tool racks, crates'], ['Fences', ''], ['Plants', 'flowers, bushes, cacti'], ['Webs', 'webs on their own and webbed objects'],
                   ['Transport', 'portals, holes, ladders'], ['Doors', 'doors and gates'], ['Signs', ''], ['Mines', 'mine walls and stone piles players can mine'], ['Misc.', 'everything else']],
         items: [['Weapons', ''], ['Armor', 'helmets, body armor, sleeves, leggings, boots, cloaks, belts'], ['Rings', ''], ['Jewelry', 'amulets and other jewelry'],
                 ['Quest', 'items NPCs ask for, and labyrinth items'], ['Potions', 'potions, flowers, drinks'], ['Scrolls', 'spell and attribute scrolls'], ['Keys', ''], ['Misc.', 'everything else']],
@@ -5615,6 +5622,7 @@ function leftUI() {
         for (const t of list) if (!/window/i.test(t[1])) put(objectKind(t), temp(t));     // (the windows are in Walls)
         for (const p of (pal.fences || []).filter(x => match(x[1], x[0]))) put('Fences', plant(p));
         for (const p of (pal.plants || []).filter(x => match(x[1], x[0]))) put('Plants', plant(p));
+        for (const p of (pal.props || []).filter(x => match(x[1], x[0]))) put('Workshop', plant(p));
         if (pal.cobwebs) for (const p of [...pal.cobwebs.webs, ...(pal.cobwebs.more || []), ...pal.cobwebs.furniture].filter(x => match(x[1], x[0]))) put('Webs', plant(p));
       } else {
         for (const t of list) put(itemKind(t), temp(t));

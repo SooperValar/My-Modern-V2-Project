@@ -94,12 +94,18 @@ for x, y, n in [(677, 724, 'anvil on a log'), (680, 724, 'anvil on a log'), (677
 # the golem works (south-east of the hall): unfinished and broken golems laid out in a row, limbs and plates beside them
 for k, x in enumerate(range(694, 705, 3)):
     obj('toppled golem' if k % 2 == 0 else 'golem limbs', x, 726); obj('golem limbs' if k % 2 == 0 else 'iron ingots', x, 729)
+# workbenches, tool racks and crates (Cody: to finish the look)
+for x, y, n in [(675, 724, 'workbench with tools'), (682, 724, 'workbench'), (685, 699, 'workbench with tools'), (706, 700, 'tool rack'),
+                (699, 704, 'workbench with tools'), (664, 730, 'tool rack'), (690, 729, 'tool rack'), (705, 729, 'crates'), (706, 727, 'iron-bound crates'),
+                (687, 729, 'crates and barrel'), (680, 729, 'crates'), (696, 712, 'workbench'), (697, 709, 'crates'), (672, 699, 'iron-bound crates')]:
+    obj(n, x, y)
 for x, y in [(697, 718), (701, 718), (704, 721)]: A.op(op='place', x=x, y=y, t=random.choice(LAVA_STONES), fresh=1)   # slag inside too
 A.run('foundry pieces')
 # the yard: slag heaps, ore, wrecks, a few snowy pines and boulders
 yt = [(x, y) for x in range(X0, X1 + 1) for y in range(732, Y1 + 1) if yard(x, y) and (x, y) not in road and not any((x + dx, y + dy) in road for dx in (-1, 0, 1) for dy in (-1, 0, 1))]
 random.shuffle(yt); k = 0; used = set()
 def far(p): return all(abs(p[0] - a) + abs(p[1] - b) >= 3 for a, b in used)
+for x, y, n in [(680, 735, 'crates'), (689, 735, 'crates and barrel'), (678, 737, 'iron-bound crates')]: obj(n, x, y)
 for kind, n in (('slag', 14), ('toppled golem', 4), ('golem limbs', 6), ('rock', 6), ('pine', 6), ('boulder', 4)):
     c = 0
     for p in yt:
