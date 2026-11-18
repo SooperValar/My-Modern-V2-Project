@@ -29,7 +29,7 @@ BELT = A.worn(2004, 'Belt of the Colossus', "A wide belt of brass plates on dark
 inhall = lambda x, y: HALL[0] < x < HALL[2] and HALL[1] < y < HALL[3]
 inforge = lambda x, y: FORGE[0] - 1 <= x <= FORGE[2] + 1 and FORGE[1] - 1 <= y <= FORGE[3] + 1
 yard_ok = lambda x, y: y >= HALL[3] + 2 and A.tile(x, y)[0] not in PATH and not any(A.floor(x + dx, y + dy) in PATH for dx in (-1, 0, 1) for dy in (-1, 0, 1)) and y <= 762
-hall_ok = lambda x, y: inhall(x, y) and not inforge(x, y) and abs(y - HALL[3]) > 3 and not (A.tile(x, y)[7] & 1)
+hall_ok = lambda x, y: inhall(x, y) and x >= 670 and not inforge(x, y) and abs(y - HALL[3]) > 3 and not (A.tile(x, y)[7] & 1)   # x < 670: cut off behind the furnace channel
 GT = ['Clank.', 'INTRUDER. %s. REMOVE.']
 GD = 'A golem of dark forged iron, its joints glowing faintly. It still tends the forges - and breaks whatever comes in.'
 golems = []
