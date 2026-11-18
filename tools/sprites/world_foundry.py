@@ -6,7 +6,8 @@ World objects (32x64, drawn into the tile like the eggs; each N+1 its hide-walls
   38406 quench bucket        38408 grindstone                 38410 stack of iron ingots
   38412 casting mould (molten iron poured in)   38414 stone furnace (a bloomery, glowing mouth and top)
   38416 a toppled iron golem (wreck)            38418 wrecked golem limbs
-Ground: molten iron 36300-36303 (glowing, crusted; to block walking like water).
+Ground: molten iron 36300-36303 (glowing, crusted; blocks walking like water) + 36304-36349: its soft edges creeping
+into the flagstone floor (37020-37023), in the order of world_ground.all_masks(). Writes world_foundry.json.
 3D props from Cody's "3d Models/Fantasy Props" and "RPG Pack 2" (glrender / objmodel), molten parts painted on.
 
     world_foundry.py <client folder> [--out <folder>] [--sheet <png>]"""
@@ -202,7 +203,16 @@ def build():
     out[38414] = furnace()
     out[38416] = wreck(0); out[38418] = wreck(1)
     for k in range(4): out[36300 + k] = molten_tile(36300 + k)
+    S2 = wg.Sprites(sys.argv[1]); flag = [S2.get(n) for n in (37020, 37021, 37022, 37023)]
+    edges = {}
+    for i, m in enumerate(wg.all_masks()):
+        out[36304 + i] = wg.blend(flag[i % 4], out[36300 + (i // 4) % 4], m, seed=36304 + m); edges[str(m)] = 36304 + i
+    TABLE.update({'molten': {'plain': [36300, 36301, 36302, 36303], 'edges': edges}, 'floor': [37020, 37021, 37022, 37023],
+                  'objects': {'anvil on a log': 38400, 'anvil on a block': 38402, 'crucible': 38404, 'quench bucket': 38406,
+                              'grindstone': 38408, 'iron ingots': 38410, 'casting mould': 38412, 'stone furnace': 38414,
+                              'toppled golem': 38416, 'golem limbs': 38418}})
     return out
+TABLE = {}
 
 def sheet(sp, path):
     objs = [n for n in sorted(sp) if n >= 38000]
@@ -230,4 +240,6 @@ if __name__ == '__main__':
         for n, im in sp.items():
             im.save(os.path.join(o, '%05d.png' % n))
             if n >= 38000: im.save(os.path.join(o, '%05d.png' % (n + 1)))
+        import json; json.dump(TABLE, open(os.path.join(HERE, 'world_foundry.json'), 'w'), indent=1)
+        print(len(sp), 'sprites written to', o)
     if '--sheet' in sys.argv: sheet(sp, sys.argv[sys.argv.index('--sheet') + 1])
