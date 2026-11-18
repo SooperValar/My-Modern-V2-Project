@@ -99,7 +99,7 @@ def mould(seed):
     for _ in range(18):                   # sand grain
         x, y = r.randrange(32), r.randrange(40, 64)
         if px[x, y][3] and px[x, y][1] > 80: c = px[x, y]; px[x, y] = tuple(max(0, v - 18) for v in c[:3]) + (255,)
-    return glow(im, 16, 57, 15, a=60)
+    return im                             # (no ground glow: round the low bed it read as an odd halo - Cody)
 
 def molten_tile(seed):
     r = random.Random(seed); rr = [r.random() * 6.28 for _ in range(3)]
