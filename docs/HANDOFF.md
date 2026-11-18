@@ -264,6 +264,10 @@ project's next session. What the second chat did Nov 15-17 (all live, CHANGES.md
   temple's); signs could get a readable west version (mirroring flips their text); the window walls face one way only;
   TODO: Alchemy skill, change many items at once, a bigger world only if the towns don't fit.
 
+**Nov 17, 21:53: the Golem Foundry is LIVE** (CHANGES.md "Golem Foundry"; client-dist 7404065, Cody pushes). Next in band D:
+the Ashen Fields (Varo), then the Gargoyle Spires (Rhea; the Spires add Gargoyle Horns to Brann's bounty), the Monastery last.
+Open: molten iron / crucibles / furnaces give no light (only the fire bowls do) - offered Cody hidden light sources.
+
 **Nov 17, 19:55: Stonehold is LIVE** - snowy grass (sprites 36100-36287, client-dist b73a33d, Cody pushes), the townspeople,
 Selwyn's rotating shop, ten gate guards, waypoint 7; the editor knows snowy grass. Snowy pines live too (20:11). Selwyn: priced by level + tier more than metal
 (merch.c rot_value, sell 200), Steel / Emerald / Crystal / Titanium only (live 20:35). Selwyn's prices final for now (Cody, 20:41: Rare x4, Epic x9 in rot_value). Next: the Golem Foundry - plan in QUEST_BUILD 9b, waiting for Cody's answers.

@@ -1320,3 +1320,28 @@ rotating-trader code, unused until its merchants.dat line goes in).
 In groves (willows, dead trees, pines) the trees stood close enough to look like walls to the area learner, so it left
 them out and learned only the floor. Trees, plants, stumps and rocks now never count as walls (`NOT_WALLS` in `mapedit.py`).
 Checked on the Lizard Hatcheries (willows, dead trees and reeds are learned now) and the Wolfwood.
+
+## Golem Foundry (Nov 17; band D, Major) - LIVE
+
+West of Stonehold (zone "Golem Foundry", x 650-740, y 670-765), on Stonehold's west road. Cody's choices: a snowy yard
+and one great hall, the Brass Colossus in its own casting pit; anvils, molten iron and workshop pieces, nothing modern.
+- **The yard**: snowy grass and snow, slag heaps (the game's lava rocks), golem wrecks, ore, crates, snowy pines.
+- **The Foundry Hall** (zone): a slate hall on flagstone; eight stone furnaces along the north wall feeding a channel of
+  **molten iron** (new ground 36300-36349, blocks walking, soft edges into the flagstone) with a branch to the casting
+  moulds; crucibles, ingots, anvils, grindstones, quench buckets, long workbenches, tool racks, crates; the golem works;
+  **the Forgemaster's Forge** (zone) in the south-west corner. Lit by fire bowls.
+- **The Casting Pit** (zone): a round pit behind the hall, a ring of molten iron, one stone bridge in.
+- **New world pieces** (`tools/sprites/world_foundry.py`, from Cody's `3d Models\Fantasy Props` + RPG Pack 2): anvil on a
+  log 38400, anvil on a block 38402, crucible 38404, quench bucket 38406, grindstone 38408, iron ingots 38410, casting
+  mould 38412, stone furnace 38414, golem wrecks 38416 / 38418, tool rack 38424, crate stacks 38426 / 38428 / 38430,
+  **workbench pieces like the game's tables** (fill the tile, join into a bench of any length): 38432 / 38442 legs (bench
+  along map y), 38444 / 38446 legs (along map x), 38434 plain, 38436 hammer and tongs, 38438 blade and chain, 38440 drawer
+  shelf (each N+1 its hide-walls copy; 38420 / 38422 unused). In the editor: **Objects -> Workshop** (for shops too).
+- **Monsters** (group 37; the game's Golem recoloured, `recolor_creature.py`): 22 **Iron Golems** (Major, dark iron 55000),
+  **the Iron Golem Forgemaster** (strong Major, glowing iron 56000; Foundry Heart), **the Brass Colossus** (Lieutenant
+  Colonel, brass 57000, drawn 1.4x bigger: 96x96 frames, `--scale`; Colossus Core). Every golem carries a **Golem Core**.
+- **Quests**: Hagar - Foundry Heart -> **Forgefire Ring** (+4 Strength, +8 Enhance, Major) 71,000 exp; Colossus Core ->
+  **Belt of the Colossus** (+50 hitpoints, +6 armor, Major) 100,000 exp. Watch Sergeant Brann - **Golem Cores**, 13,000
+  exp + 65G each, any number (stacks). Item pictures 44542-44546 (`quest_items/golem_foundry.py`).
+- Scripts `tools/world/golem_foundry/build_foundry.py` + `place_foundry.py` (made.json). Tested on the test server (spawns,
+  reachability, both Hagar quests once, a stack of 5 cores). Client files published: client-dist 7404065.

@@ -70,14 +70,14 @@ past Elysium -> Last Bastion.** The Barrow Hills are a dead end off Fenwatch's n
 
 ## 4. Numbers in use (check again before making new ones)
 
-- Item templates up to **2063** (2024-2032 Drowned Village; 2033-2050 wall decorations; 2051-2054 Barrow Hills;
-  2055-2063 Lizard Hatcheries). NPC templates up to **2292** (2206-2239 Barrow Hills; 2240-2276 Lizard Hatcheries incl. Cody's 3 knight copies; 2277-2292 Stonehold). `itempnew` / `ctempnew` take the next free number by themselves.
+- Item templates up to **2068** (2064-2068 Golem Foundry) (2024-2032 Drowned Village; 2033-2050 wall decorations; 2051-2054 Barrow Hills;
+  2055-2063 Lizard Hatcheries). NPC templates up to **2317** (2206-2239 Barrow Hills; 2240-2276 Lizard Hatcheries incl. Cody's 3 knight copies; 2277-2292 Stonehold; 2293-2317 Golem Foundry). `itempnew` / `ctempnew` take the next free number by themselves.
 - Monster groups (NPC data 42/44): 30 bandits, 31 quarry golems, 32 deep grolms, 33 wolves, 34 Drowned Village, 35 Barrow Hills, 36 Lizard Hatcheries.
-  **Next: 37.** Undead in a group listed in `SLOW_UNDEAD_GROUP` (`data.h`: 34, 35) regenerate like Lab 11's (~4 hp/s, not ~12):
+  37 Golem Foundry. **Next: 38.** Undead in a group listed in `SLOW_UNDEAD_GROUP` (`data.h`: 34, 35) regenerate like Lab 11's (~4 hp/s, not ~12):
   add each new undead area's group there (Cody, Nov 17).
 - Sprites: monster recolours 41000+ (Quarry Golem), 42100+ (Deep Grolm), 50000+ Drowned Sailor, 50500+ Bog-man,
-  51000-51981 Sea Golem, 52000+ Barrow Wight, 53000+ the Broodmother, 54000+ Lizard Hatchling: **next free block 55000** (a recolour fills base+0..1023, so step by 1000 to be safe; 500 worked
-  for the Undead and Grolm). 3D creatures 43000-44447 (wolves). Item pictures 44500-44541: **next 44542**. World objects: lizard eggs 38300-38307. Ground: snowy grass 36100-36287 (next free ground block 36300).
+  51000-51981 Sea Golem, 52000+ Barrow Wight, 53000+ the Broodmother, 54000+ Lizard Hatchling, 55000 Iron Golem, 56000 Forgemaster, 57000 Brass Colossus (96x96): **next free block 58000** (a recolour fills base+0..1023, so step by 1000 to be safe; 500 worked
+  for the Undead and Grolm). 3D creatures 43000-44447 (wolves). Item pictures 44500-44546: **next 44547**. World objects: lizard eggs 38300-38307. Ground: snowy grass 36100-36287, molten iron 36300-36349 (next free ground block 36350). Foundry / workshop objects 38400-38447 (next 38448).
   Server item drivers: 77 = lizard egg in a nest (`use_lizard_egg`); next free 78.
   World: marsh grounds and edges 35650-35995, reeds 38200-38207. Waypoints: 1-6 used (`next 7` in waypoints.dat).
 - Fenwatch NPCs (`tools/world/fenwatch/made.json`): Joss 2142, Ilse 2143, Aldous 2144, Petra 2145, Rook 2146, Bounty
@@ -210,7 +210,7 @@ Snowy grass over town and pass (sprites 36100-36287). Snowy pines live (20:11). 
 Crystal too: remove bit 16 from the metals field, 58 -> 42). **Next**:  the Foundry, Ashen Fields, Spires; the Monastery last (new monk
 sprites, 3D pipeline).
 
-## 9b. Next: the Golem Foundry (Major) - plan drafted Nov 17, waiting for Cody's answers
+## 9b. The Golem Foundry (Major) - **LIVE Nov 17, 21:53** (CHANGES.md "Golem Foundry")
 
 Quest Planner rows 21-22 + 27 (bounty). Area x 650-740 / y 670-765 (empty void now), west of Stonehold; the road leaves
 Stonehold's west gate (681,766) and runs west (-y) into it. Monster group 37 (not undead). Draft:
