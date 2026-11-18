@@ -3,7 +3,11 @@
 recoloured, keeping its shading - each pixel's brightness picks a colour on a ramp, so all 8 directions and every
 walk / attack / death frame stay as the original drew them. The new set gets its own base (an NPC's sprite).
 
-    recolor_creature.py <client folder> <source base> <new base> <ramp name> [--out <folder>]
+    recolor_creature.py <client folder> <source base> <new base> <ramp name> [--out <folder>] [--scale 1.4]
+
+--scale (Nov 17, the Brass Colossus): every frame drawn bigger. The client draws a sprite in 32-px blocks, centred and
+standing on its bottom edge (dd.c copysprite), so a frame grows to the next multiple of 32 and the feet stay on the
+same line as the original's (the bottom margin is kept, not scaled).
 
 Ramps (dark, mid, light): sandstone, slate, ... (RAMPS below). Made so far (CHANGES.md "Old Quarry"):
     41000 Quarry Golem   (the Golem, 17360, in sandstone)
@@ -11,7 +15,7 @@ Ramps (dark, mid, light): sandstone, slate, ... (RAMPS below). Made so far (CHAN
     50000 Drowned Sailor (the Undead, 19408, drowned); 50500 Bog-man (the Grolm, 12240, bog); 51000 Sea Golem (the Golem, 17360, seagolem)
     52000 Barrow Wight   (the Undead Lord, 19408, wight)
     53000 the Broodmother (the Lizard, 13264, brood); 54000 Lizard Hatchling (the Lizard, 13264, hatchling)
-    55000 Iron Golem (the Golem, 17360, iron); 56000 the Forgemaster (17360, forgemaster); 57000 the Brass Colossus (17360, brass)
+    55000 Iron Golem (the Golem, 17360, iron); 56000 the Forgemaster (17360, forgemaster); 57000 the Brass Colossus (17360, brass, --scale 1.4: 96x96 frames)
 """
 import os, sys
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -37,7 +41,23 @@ def ramp(r, t):
     k = (t - 0.5) / 0.5; return tuple(int(m[i] + (l[i] - m[i]) * k) for i in range(3))
 
 
+SCALE = 1.0
+
+def enlarge(im, s):
+    from PIL import Image
+    w, h = im.size; bb = im.getbbox()
+    if not bb: return Image.new('RGBA', (w, h), (0, 0, 0, 0))
+    m = h - bb[3]                                          # the margin under the feet
+    W, H = -(-int(w * s) // 32) * 32, -(-int(h * s) // 32) * 32
+    big = im.resize((round(w * s), round(h * s)), Image.LANCZOS)
+    a = big.split()[3].point(lambda v: 255 if v >= 110 else 0); big.putalpha(a)
+    out = Image.new('RGBA', (W, H), (0, 0, 0, 0))
+    ox = round(W / 2 - w * s / 2); oy = round((H - m) - s * (h - m))
+    out.alpha_composite(big, (ox, oy)); return out
+
 def main():
+    global SCALE
+    if '--scale' in sys.argv: SCALE = float(sys.argv[sys.argv.index('--scale') + 1])
     client, src, dst, name = sys.argv[1], int(sys.argv[2]), int(sys.argv[3]), sys.argv[4]
     out = sys.argv[sys.argv.index('--out') + 1] if '--out' in sys.argv else os.path.join(client, 'GFX')
     sys.argv = [sys.argv[0], client, '/tmp']
@@ -59,6 +79,7 @@ def main():
                 if c[0] > 240 and c[1] < 16 and c[2] > 240: px[x, y] = (0, 0, 0, 0); continue
                 t = (max(c[:3]) - lo) / max(1, hi - lo)
                 px[x, y] = ramp(R, max(0, min(1, t))) + (255,)
+        if SCALE != 1.0: im = enlarge(im, SCALE)
         p = os.path.join(out, '%05d.png' % (dst + k))
         im.save(p); n += 1
     print('%d frames: %d -> %d (%s)' % (n, src, dst, name))
