@@ -6,7 +6,7 @@ out, facing away from the town), and waypoint 7 on the square. Run after build_s
     place_stonehold.py <.dat folder>          (tools/world/arealib.py)  -> made.json
 
 The trader's stock is the server's "rotate" line in merchants.dat (merch.c, Nov 17): every 60 minutes 4 new pieces,
-Rare or Epic (22:8), level 12-16, Steel / Emerald / Crystal / Titanium, at 5x the normal price (Cody, Nov 17). Tiers exist only for helmets and body armor, so the variety is the metal
+Rare or Epic (22:8), level 12-16, Steel / Emerald / Crystal / Titanium, priced by level, tier and metal (merch.c rot_value) at 2x (Cody, Nov 17). Tiers exist only for helmets and body armor, so the variety is the metal
 and the piece. He buys nothing (kinds 0). The Granite Hearth is a tavern (players can log out there) except the
 innkeeper's corner: NPCs can't stand on tavern tiles."""
 import sys, os, json
@@ -64,7 +64,7 @@ A.save()
 # merchants.dat: the innkeeper; the trader buys nothing and has only his rotating stock
 p = os.path.join(DAT, 'merchants.dat'); s = open(p, encoding='latin-1').read().rstrip('\n') + '\n# Stonehold (Nov 17)\n'
 s += 'merchant %d sell 0 buy 0 gold 0 kinds 8\nstock %d 1141 1142 1143\n' % (M['innkeeper'], M['innkeeper'])
-s += 'merchant %d sell 500 buy 0 gold 0 kinds 0\n# rotate <template> <count> <minutes> <tiers: 4 Rare + 8 Epic> <level from> <level to> <metals: 58 = Steel, Emerald, Crystal, Titanium>\nrotate %d 4 60 12 12 16 58\n' % (M['trader'], M['trader'])
+s += 'merchant %d sell 200 buy 0 gold 0 kinds 0\n# rotate <template> <count> <minutes> <tiers: 4 Rare + 8 Epic> <level from> <level to> <metals: 58 = Steel, Emerald, Crystal, Titanium>\nrotate %d 4 60 12 12 16 58\n' % (M['trader'], M['trader'])
 open(p, 'w', encoding='latin-1').write(s)
 # waypoint on the square
 p = os.path.join(DAT, 'waypoints.dat'); L = open(p, encoding='latin-1').read().rstrip('\n').split('\n')

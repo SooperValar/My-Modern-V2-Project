@@ -55,6 +55,7 @@ static struct mconf {
 static int nmconf=0,merch_loaded=0;
 static int rot_next[MERCH_MAX];		// ticker of each merchant's next rotation (0: at the first look after a start)
 int tier_chest_reward(int tiers,int metals_mask,int piece,int lo,int hi);
+static int depot_slot(int co,int in);
 static unsigned char tidied[MAXCHARS];	// his slots from before this server start were looked at
 
 /* read merchants.dat; returns the number of merchants in it, -1 = error */
@@ -194,6 +195,20 @@ static int remorse_for(int cn,int in)	// may cn buy item in back for what he got
  * only for a Seyan'Du who has not found that shrine yet; its price is its value, no bartering */
 #define SHRINE_SCROLL(in) (it[in].driver==23 && it[in].data[3])
 
+/* a rotating stock's price before barter and markup (Nov 17, Cody: the level and the tier count for more than the
+ * metal; high-level steel must not be cheap): 2G at level 0, a quarter more each level (level 12 ~29G, 16 ~71G),
+ * times the tier (Magic 1, Rare 2, Epic 3, Legendary 5), times the metal (Bronze 0.8 ... Titanium 2) */
+static int rot_value(int in)
+{
+	static const int tmul[5]={1,1,2,3,5};
+	static const int mt[][3]={{57,59,80},{63,65,100},{69,71,110},{981,982,125},{75,76,150},{94,95,200}};
+	int v=200,k,lv=IT_TLEVEL(in),t=IT_TIER(in),mp=100;
+
+	for (k=0; k<lv && k<30; k++) v=v*5/4;
+	for (k=0; k<(int)(sizeof(mt)/sizeof(mt[0])); k++) if (IT_TBASE(in)==mt[k][0] || IT_TBASE(in)==mt[k][1]) mp=mt[k][2];
+	return (int)((long long)v*tmul[t>=0 && t<5 ? t : 1]*mp/100);
+}
+
 int merch_sell_price(int cn,int co,int in)
 {
 	struct mconf *m=conf(co);
@@ -201,7 +216,8 @@ int merch_sell_price(int cn,int co,int in)
 
 	if (SHRINE_SCROLL(in)) return it[in].value;
 	if (remorse_for(cn,in)) return PAID(in);
-	pr=barter(cn,do_item_value(in),1);
+	if (m && m->rot_n && IT_TIER(in) && depot_slot(co,in)>=0) pr=barter(cn,rot_value(in),1);	// his rotating pieces
+	else pr=barter(cn,do_item_value(in),1);
 	if (m && m->sell>0) pr=(int)((long long)pr*m->sell/100);
 	return pr;
 }
