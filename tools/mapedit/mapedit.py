@@ -2323,6 +2323,12 @@ class World:
     AREA_STOP = ('candle', 'shield', 'sign', 'torch', 'lamp', 'street', 'shrine', 'inscription', 'hole', 'door',
                  'chest', 'portal', 'book', 'table', 'chair', 'bed', 'lever', 'statue', 'pentagram', 'grave')
 
+    # trees, plants, stumps and rocks are never walls, however close they grow (Nov 17: a grove of willows or dead trees
+    # has blocking neighbours on two sides like a wall, so "Learn from the map" left the marsh's trees out)
+    NOT_WALLS = ({s for tr in WORLD_TREES for s in tr[3]} | {p[0] for p in WORLD_PLANTS} | {p[0] + 1 for p in WORLD_PLANTS} |
+                 {m[0] for m in WORLD_COBWEBS['more'] if any(w in m[1].lower() for w in ('tree', 'stump', 'log'))} |
+                 {1112, 1113, 1114, 1115, 1238, 1239, 1240, 1241, 880, 881, 882, 883, 16352, 16360, 16368, 16376})
+
     def area_learn(self, x0, y0, x1, y1, name=''):
         """measure an area: its floors (weights), and how often each loose piece stands on a free tile"""
         x0, x1 = sorted((max(1, int(x0)), min(MAPX - 2, int(x1))))
@@ -2339,7 +2345,7 @@ class World:
                         seen[s] += 1
                         if sum(1 for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)) if blk(x + dx, y + dy)) >= 2:
                             walled[s] += 1
-            walls = {s for s in seen if walled[s] >= 0.5 * seen[s]}
+            walls = {s for s in seen if s not in self.NOT_WALLS and walled[s] >= 0.5 * seen[s]}
             floors, objs, items, blockers = Counter(), Counter(), Counter(), []
             open_tiles = 0
             for y in range(y0, y1 + 1):

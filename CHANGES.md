@@ -1297,3 +1297,9 @@ Cody: bounty hand-ins stack, and handing them in takes the whole stack.
 Tested on the test server (12 Lizard Heads: 62,400 exp + 312G; 5 Wolf Heads; 4 Bog-man Heads; quest items that aren't
 bounties, like the Broodmother's Crown, still don't stack). Live Nov 17 (update-code; the new build also holds Stonehold's
 rotating-trader code, unused until its merchants.dat line goes in).
+
+## Editor: "Learn from the map" sees the trees (Nov 17, evening)
+
+In groves (willows, dead trees, pines) the trees stood close enough to look like walls to the area learner, so it left
+them out and learned only the floor. Trees, plants, stumps and rocks now never count as walls (`NOT_WALLS` in `mapedit.py`).
+Checked on the Lizard Hatcheries (willows, dead trees and reeds are learned now) and the Wolfwood.
