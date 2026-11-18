@@ -715,6 +715,16 @@ BUILTIN_AREAS = [
     {"k":"t","t":812,"p":0.00725}],"apart":True,"from":[330,246,408,299]}]     # learned from the game's own areas (area_learn), walls and stray pieces left out
 
 
+# names for the floor sets in the Floors tab (Nov 17, Cody): the game's own sets by look, the new floors and grounds by name
+GAME_SET_NAMES = {1003: 'Jungle Floor', 542: 'Grey Cobbles', 551: 'Grass', 133: 'Red Brick Floor', 142: 'Pale Stone Floor',
+                  170: 'Light Stone Floor', 704: 'Fire Cave Floor', 950: 'Dark Stone Floor', 16670: 'Ice', 16933: 'Deep Water'}
+def set_names():
+    n = dict(GAME_SET_NAMES)
+    for f in WORLD_FLOORS: n[f[0]] = f[1]
+    for k, g in WORLD_GROUND['sets'].items(): n[g['plain'][0]] = k[0].upper() + k[1:]
+    return n
+
+
 class World:
     FILES = ('map.dat', 'item.dat', 'char.dat', 'tchar.dat', 'effect.dat', 'titem.dat')
     KIND_FILE = {'m': 'map.dat', 'i': 'item.dat', 'c': 'char.dat', 't': 'tchar.dat', 'f': 'effect.dat', 'T': 'titem.dat'}
@@ -1229,7 +1239,7 @@ class World:
                               (8 if t in wanted else 0) | (16 if fl & IF_ARMOR else 0)])
         fl_sorted = sorted([(k, v, inside.get(k, 0)) for k, v in floors.items()], key=lambda a: -a[1])
         ob_sorted = sorted(objs.items(), key=lambda a: -a[1])
-        return {'floors': fl_sorted, 'objects': ob_sorted, 'templates': temps, 'flags': MF, 'sets': FLOOR_SETS,
+        return {'floors': fl_sorted, 'objects': ob_sorted, 'templates': temps, 'flags': MF, 'sets': FLOOR_SETS, 'setnames': set_names(),
                 'ground': [[n, g['plain'][0]] for n, g in WORLD_GROUND['sets'].items()],
                 'wg': {'grass': WORLD_GROUND['grass'], 'order': WG_ORDER, 'sets': WORLD_GROUND['sets']},
                 'plants': WORLD_PLANTS, 'fences': WORLD_FENCES, 'windows': WORLD_WINDOWS, 'arches': WORLD_ARCHES, 'trees': WORLD_TREES, 'cobwebs': WORLD_COBWEBS, 'props': WORLD_PROPS,
@@ -5485,7 +5495,7 @@ function leftUI() {
   const match = (name, num) => !q || name.toLowerCase().includes(q) || String(num) === q || String(num).startsWith(q);
   function mixSection(withSets) {
     const saved = mixes.filter(m => match(m.name, ''));
-    const sets = withSets ? Object.entries(pal.sets).map(([k, v]) => ({ name: 'set ' + k, items: v.map(s => ({ s, w: 5 })) })) : [];
+    const sets = withSets ? Object.entries(pal.sets).map(([k, v]) => ({ name: (pal.setnames || {})[k] || 'set ' + k, items: v.map(s => ({ s, w: 5 })) })) : [];
     if (!saved.length && !sets.length) return;
     sect(saved.length ? 'Floor mixes' + (sets.length ? ' · and the game\'s own sets' : '') : 'The game\'s own floor sets');
     const g = grid();
@@ -5509,7 +5519,7 @@ function leftUI() {
       sect('Areas · rugs and floor sets');
       rugSection(w, sub, grid, match);
       const saved = mixes.filter(m => match(m.name, ''));
-      const sets = Object.entries(pal.sets).filter(([k]) => match('', k)).map(([k, v]) => ({ name: 'set ' + k, items: v.map(s2 => ({ s: s2, w: 5 })) }));
+      const sets = Object.entries(pal.sets).filter(([k]) => match((pal.setnames || {})[k] || '', k)).map(([k, v]) => ({ name: (pal.setnames || {})[k] || 'set ' + k, items: v.map(s2 => ({ s: s2, w: 5 })) }));
       if (saved.length || sets.length) { sub('Floor sets · your mixes and the game\'s own sets (Ctrl+click floors to mix)'); const g = grid(); saved.forEach(m => g.appendChild(cellMix(m, true))); sets.forEach(m => g.appendChild(cellMix(m, false))); }
       // the game's floors by where they lie: inside (indoors) or outside, the rest as tiles
       const ground = new Set([...(pal.wg ? pal.wg.grass : []), ...Object.values(pal.wg ? pal.wg.sets : {}).flatMap(g => [...g.plain, ...Object.values(g.edges)])]);
