@@ -4,7 +4,8 @@
 World objects (32x64, drawn into the tile like the eggs; each N+1 its hide-walls form, the same picture):
   38400 anvil on a log       38402 anvil on a granite block   38404 crucible of molten iron (glowing)
   38406 quench bucket        38408 grindstone                 38410 stack of iron ingots
-  38412 casting mould (molten iron poured in)
+  38412 casting mould (molten iron poured in)   38414 stone furnace (a bloomery, glowing mouth and top)
+  38416 a toppled iron golem (wreck)            38418 wrecked golem limbs
 Ground: molten iron 36300-36303 (glowing, crusted; to block walking like water).
 3D props from Cody's "3d Models/Fantasy Props" and "RPG Pack 2" (glrender / objmodel), molten parts painted on.
 
@@ -114,6 +115,75 @@ def molten_tile(seed):
             px[x, y] = ((255, 236, 160) if n > 0.8 else (255, 168, 48) if n > 0.56 else (226, 92, 18) if n > 0.34 else (92, 30, 14)) + (255,)
     return t
 
+class Prim:
+    """hand-built geometry: boxes and stacked stone rings (triangles, normals, colours), for glrender.render"""
+    def __init__(self, seed=1):
+        self.P, self.N, self.C = [], [], []; self.r = random.Random(seed); self.rest = None
+    def tri(self, a, b, c, col):
+        a, b, c = map(np.array, (a, b, c)); n = np.cross(b - a, c - a); n = n / max(1e-9, np.linalg.norm(n))
+        self.P.append([a, b, c]); self.N.append([n, n, n]); self.C.append([np.array(col)] * 3)
+    def quad(self, a, b, c, d, col): self.tri(a, b, c, col); self.tri(a, c, d, col)
+    def box(self, c, size, yaw=0.0, roll=0.0, col=(0.4, 0.4, 0.4), jit=0.06):
+        sx, sy, sz = [v / 2 for v in size]; cy_, sy_ = math.cos(yaw), math.sin(yaw); cr, sr = math.cos(roll), math.sin(roll)
+        def T(x, y, z):
+            x, y = x * cr - y * sr, x * sr + y * cr                     # roll (about z), then yaw (about y)
+            return (c[0] + x * cy_ - z * sy_, c[1] + y, c[2] + x * sy_ + z * cy_)
+        v = [T(x, y, z) for x in (-sx, sx) for y in (-sy, sy) for z in (-sz, sz)]
+        for f in ((0, 1, 3, 2), (4, 6, 7, 5), (0, 4, 5, 1), (2, 3, 7, 6), (0, 2, 6, 4), (1, 5, 7, 3)):
+            k = 1 + self.r.uniform(-jit, jit); self.quad(*[v[i] for i in f], tuple(min(1, x * k) for x in col))
+    def rings(self, r0, r1, h, rows, n, col, jit=0.10, y0=0.0):
+        for i in range(rows):
+            ya, yb = y0 + h * i / rows, y0 + h * (i + 1) / rows; ra, rb = r0 + (r1 - r0) * i / rows, r0 + (r1 - r0) * (i + 1) / rows
+            off = 0.5 * (i % 2)
+            for k in range(n):
+                a0, a1 = 2 * math.pi * (k + off) / n, 2 * math.pi * (k + 1 + off) / n
+                kk = 1 + self.r.uniform(-jit, jit)
+                self.quad((ra * math.cos(a0), ya, ra * math.sin(a0)), (ra * math.cos(a1), ya, ra * math.sin(a1)),
+                          (rb * math.cos(a1), yb, rb * math.sin(a1)), (rb * math.cos(a0), yb, rb * math.sin(a0)), tuple(min(1, x * kk) for x in col))
+    def disc(self, y, r, col, c=(0, 0)):
+        for k in range(20):
+            a0, a1 = 2 * math.pi * k / 20, 2 * math.pi * (k + 1) / 20
+            self.tri((c[0], y, c[1]), (c[0] + r * math.cos(a0), y, c[1] + r * math.sin(a0)), (c[0] + r * math.cos(a1), y, c[1] + r * math.sin(a1)), col)
+    def triangles(self, anim=None, t=0.0):
+        P = np.array(self.P, float); self.rest = P.copy(); return P, np.array(self.N, float), np.array(self.C, float)
+
+def facing():
+    """the angle (about y) of a surface that faces the viewer"""
+    R = G.camera(45); return math.atan2(R[2][2], R[2][0])
+
+def furnace():
+    m = Prim(14); STONE = (0.56, 0.53, 0.50)
+    m.rings(0.50, 0.30, 1.55, 7, 12, STONE, jit=0.22)
+    m.rings(0.33, 0.33, 0.12, 1, 12, (0.36, 0.35, 0.34), y0=1.55)            # the rim
+    m.disc(1.665, 0.24, tuple(MAG))                                          # fire showing at the top
+    th = facing(); w = 0.34
+    for i in range(6):                                                       # the mouth: an arch on the front, low down
+        a0, a1 = th - w + 2 * w * i / 6, th - w + 2 * w * (i + 1) / 6
+        top0 = 0.52 + 0.12 * math.cos((i / 6 - 0.5) * math.pi); top1 = 0.52 + 0.12 * math.cos(((i + 1) / 6 - 0.5) * math.pi)
+        r = 0.505
+        m.quad((r * math.cos(a0), 0.02, r * math.sin(a0)), (r * math.cos(a1), 0.02, r * math.sin(a1)),
+               (0.47 * math.cos(a1), top1, 0.47 * math.sin(a1)), (0.47 * math.cos(a0), top0, 0.47 * math.sin(a0)), tuple(MAG))
+    rr = [0.7, 1.9, 2.4]
+    im = paint(prop(m), lambda x, y: molten_px(rr, x * 1.4, y * 1.4, 0.15))
+    return glow(im, 16, 57, 15, a=75)
+
+IRON, RUST = (0.30, 0.30, 0.33), (0.44, 0.26, 0.15)
+def wreck(kind):
+    m = Prim(16 + kind); r = m.r
+    col = lambda: RUST if r.random() < 0.3 else IRON
+    if kind == 0:     # a toppled golem: the torso on its side, the head knocked off, an arm beside it
+        m.box((0.0, 0.22, 0.05), (0.78, 0.42, 0.52), yaw=0.5, roll=0.15, col=IRON)
+        m.box((0.05, 0.47, 0.05), (0.50, 0.12, 0.40), yaw=0.5, roll=0.15, col=RUST)
+        m.box((-0.38, 0.12, -0.30), (0.26, 0.24, 0.26), yaw=1.1, col=IRON)
+        m.box((0.30, 0.09, -0.32), (0.55, 0.17, 0.18), yaw=-0.3, col=col())
+        m.box((0.42, 0.08, 0.36), (0.20, 0.16, 0.20), yaw=0.2, col=col())
+    else:             # limbs and plates lying about
+        for _ in range(7):
+            a, d = r.uniform(0, 6.28), r.uniform(0.10, 0.45)
+            sz = (r.uniform(0.25, 0.55), r.uniform(0.10, 0.22), r.uniform(0.16, 0.26))
+            m.box((d * math.cos(a), sz[1] / 2, d * math.sin(a)), sz, yaw=r.uniform(0, 3.14), roll=r.uniform(-0.2, 0.2), col=col())
+    return prop(m)
+
 def build():
     D = M3 + '/Fantasy Props/'; out = {}
     out[38400] = prop(G.Model(D + 'Anvil_Log.gltf'))
@@ -129,6 +199,8 @@ def build():
     out[38408] = prop(G.Model(D + 'Whetstone.gltf'))
     ing = recol(ObjModel(M3 + '/RPG Pack 2/OBJ/Gold_Ingots.obj'), (0.30, 0.31, 0.34)); out[38410] = prop(ing)
     out[38412] = mould(5)
+    out[38414] = furnace()
+    out[38416] = wreck(0); out[38418] = wreck(1)
     for k in range(4): out[36300 + k] = molten_tile(36300 + k)
     return out
 

@@ -221,7 +221,12 @@ Stonehold's west gate (681,766) and runs west (-y) into it. Monster group 37 (no
   13,000 exp + 65G each, stacks).
 - Quests (Hagar): Foundry Heart -> **Forgefire Ring** (Epic: +Strength, +Enhance) 71,000 exp; Colossus Core -> **Belt of the
   Colossus** (Epic: +hitpoints, +armor) 100,000 exp. Brann: Golem Cores (Gargoyle Horns come with the Spires).
-- Questions for Cody: yard + hall or all indoors; snow outside; the Colossus in its own pit.
+- **Cody's answers (Nov 17, 21:05):** a snowy yard + one big hall; the Brass Colossus in its own casting pit at the back;
+  foundry pieces (Cody: anvils, molten iron, nothing modern) drawn in `tools/sprites/world_foundry.py` (DRAFT, not in GFX
+  yet): anvil on a log 38400, anvil on a granite block 38402, crucible of molten iron 38404, quench bucket 38406,
+  grindstone 38408, iron ingots 38410, casting mould 38412 (no ground glow: Cody), stone furnace 38414, golem wrecks
+  38416 / 38418 (each N+1 its hide-walls copy); molten iron ground 36300-36303 (edges into the hall floor to make). 3D props
+  from Cody's `3d Models\Fantasy Props` (Anvil, Anvil_Log, Cauldron, Bucket_Metal, Whetstone) and RPG Pack 2 (Gold_Ingots).
 
 ## 10. After band D
 
