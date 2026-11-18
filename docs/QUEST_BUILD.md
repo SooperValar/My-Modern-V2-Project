@@ -210,6 +210,19 @@ Snowy grass over town and pass (sprites 36100-36287). Snowy pines live (20:11). 
 Crystal too: remove bit 16 from the metals field, 58 -> 42). **Next**:  the Foundry, Ashen Fields, Spires; the Monastery last (new monk
 sprites, 3D pipeline).
 
+## 9b. Next: the Golem Foundry (Major) - plan drafted Nov 17, waiting for Cody's answers
+
+Quest Planner rows 21-22 + 27 (bounty). Area x 650-740 / y 670-765 (empty void now), west of Stonehold; the road leaves
+Stonehold's west gate (681,766) and runs west (-y) into it. Monster group 37 (not undead). Draft:
+- Look: an old mountain foundry - a slag-strewn yard with snow (Stonehold's snowy grass), then a great dark stone hall,
+  glowing furnaces / fire, the Forgemaster's forge, and a casting pit at the back for the Brass Colossus.
+- Monsters: **Iron Golems** (the Golem recoloured dark iron, Major), **the Iron Golem Forgemaster** (boss: Foundry Heart),
+  **the Brass Colossus** (bigger boss, brass recolour: Colossus Core). Every golem carries a **Golem Core** (Brann's bounty:
+  13,000 exp + 65G each, stacks).
+- Quests (Hagar): Foundry Heart -> **Forgefire Ring** (Epic: +Strength, +Enhance) 71,000 exp; Colossus Core -> **Belt of the
+  Colossus** (Epic: +hitpoints, +armor) 100,000 exp. Brann: Golem Cores (Gargoyle Horns come with the Spires).
+- Questions for Cody: yard + hall or all indoors; snow outside; the Colossus in its own pit.
+
 ## 10. After band D
 
 Stonehold (a mountain mining town: Hagar, Anselm, Varo, Rhea, the Stonehold Watch bounty), then its four areas, then
