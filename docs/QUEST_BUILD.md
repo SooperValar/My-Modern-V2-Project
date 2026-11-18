@@ -228,6 +228,27 @@ Stonehold's west gate (681,766) and runs west (-y) into it. Monster group 37 (no
   38416 / 38418 (each N+1 its hide-walls copy); molten iron ground 36300-36303 (edges into the hall floor to make). 3D props
   from Cody's `3d Models\Fantasy Props` (Anvil, Anvil_Log, Cauldron, Bucket_Metal, Whetstone) and RPG Pack 2 (Gold_Ingots).
 
+## 9c. Exploration points ("poles"): the standard values (Cody, Nov 18 - draft, Cody places them himself)
+
+One pole per large area off a town. Value by the area's **average monster rank** (the editor's area-clear average),
+fitted to the game's own poles (the Labyrinth gorges sit on it: Grolm 5k Sergeant, Undead 20k Sergeant Major, Light&Dark
+25k Second Lieutenant, Seasons 45k Lieutenant Colonel, Sunken Dark 50k Colonel, Tower XX 90k General). A pole pays
+value x 0.5-1.5 (+ up to 10%), never more than 10% of the player's total exp (use_driver.c explorer_point).
+
+| Rank | Value | Rank | Value | Rank | Value |
+|---|---|---|---|---|---|
+| Private | 250 | Sergeant Major | 20,000 | Major General | 70,000 |
+| Private First Class | 500 | Second Lieutenant | 25,000 | Lieutenant General | 80,000 |
+| Lance Corporal | 1,000 | First Lieutenant | 30,000 | General | 90,000 |
+| Corporal | 2,500 | Captain | 35,000 | Field Marshal | 100,000 |
+| Sergeant | 5,000 | Major | 40,000 | Knight | 125,000 |
+| Staff Sergeant | 8,000 | Lieutenant Colonel | 45,000 | Baron | 150,000 |
+| Master Sergeant | 12,000 | Colonel | 50,000 | Earl | 175,000 |
+| First Sergeant | 15,000 | Brigadier General | 60,000 | Warlord | 200,000 |
+
+The game's own poles stay as they are (Cody). Off the table by far: Strange Forest 500 (Master Sergeant), Haunted
+Castle 8,000 (Corporal), Tower VIII 10,000 (Major), Water Gorge 30,000 (Colonel).
+
 ## 10. After band D
 
 Stonehold (a mountain mining town: Hagar, Anselm, Varo, Rhea, the Stonehold Watch bounty), then its four areas, then
