@@ -206,8 +206,7 @@ for waypoint 7), Watch Barracks, the Granite Hearth (inn), Hagar's Forge, Varo's
 gates with road stubs ending open: west (681,766) -> Golem Foundry, east (681,854) -> Monastery, south-west (724,784) -> Ashen
 Fields, south-east (724,835) -> the pass to the Last Bastion / Gargoyle Spires. No monsters in the pass or town.
 **Townspeople live Nov 17** (CHANGES.md "Stonehold"; templates 2277-2292, `made.json`; Selwyn 2282 = merchants.dat `rotate`).
-Snowy grass over town and pass (sprites 36100-36287). Open: snowy pines instead of the 17 green pines (offered, Cody
-didn't answer yet); Selwyn's prices (no markup yet: `sell <%>` on his line). **Next**:  the Foundry, Ashen Fields, Spires; the Monastery last (new monk
+Snowy grass over town and pass (sprites 36100-36287). Snowy pines live (20:11). Open: Selwyn's prices (no markup yet: `sell <%>` on his line). **Next**:  the Foundry, Ashen Fields, Spires; the Monastery last (new monk
 sprites, 3D pipeline).
 
 ## 10. After band D

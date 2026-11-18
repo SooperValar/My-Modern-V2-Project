@@ -265,8 +265,8 @@ project's next session. What the second chat did Nov 15-17 (all live, CHANGES.md
   TODO: Alchemy skill, change many items at once, a bigger world only if the towns don't fit.
 
 **Nov 17, 19:55: Stonehold is LIVE** - snowy grass (sprites 36100-36287, client-dist b73a33d, Cody pushes), the townspeople,
-Selwyn's rotating shop, ten gate guards, waypoint 7; the editor knows snowy grass. Open questions for Cody: snowy pines for
-the town's 17 green pines? a markup on Selwyn's prices? Next: the Golem Foundry (QUEST_BUILD section 9).
+Selwyn's rotating shop, ten gate guards, waypoint 7; the editor knows snowy grass. Snowy pines live too (20:11). Open question for
+Cody: a markup on Selwyn's prices? Next: the Golem Foundry (QUEST_BUILD section 9).
 
 **Later Nov 17:** bounty items stack and are handed in a whole stack (live; CHANGES.md "Bounty items stack"). Cody's 11 new hatchery eggs checked (all work); three Hatchery archmages -> knights (live). Stonehold's
 people + the rotating trader are built and tested on the test server but **not live**: `tools/world/stonehold/place_stonehold.py`

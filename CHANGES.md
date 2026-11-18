@@ -1225,7 +1225,8 @@ The band D hub (zone "Stonehold", x 650-715, y 775-845; Major to Brigadier Gener
   sprites 36100-36287 (`tools/sprites/world_snowgrass.py`): pale, cold alpine grass with snow lying in patches, soft edges
   into green grass, and soft edges on snowy grass for soft snow, the path and the dusty path. Every grass tile of the pass
   and the town became snowy grass (`snowy_stonehold.py`). The editor knows it (Grounds list; painting snow or a path on it
-  gives the snowy edges by themselves, like marsh grass). Published in client-dist b73a33d.
+  gives the snowy edges by themselves, like marsh grass). Published in client-dist b73a33d. The 17 green pines of the pass
+  and the town became **snowy pines** of the same shapes (Cody, Nov 17, 20:10; `snowy_pines.py`).
 - **The townspeople** (`place_stonehold.py`, `made.json`; greetings only, their quests come with the areas): **Hagar** the
   smith (Forge), **Varo** the priest (Temple), **Commander Rhea** of the Stonehold Watch (Arch-Templar look) and **Watch
   Sergeant Brann** the bounty officer (Warrior look) in the Barracks; **Dora** keeps the Granite Hearth (drinks as at the
