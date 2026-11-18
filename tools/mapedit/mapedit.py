@@ -201,8 +201,11 @@ WORLD_ARCHES = [[942, 'Arch ↘ first half', 1], [36401, 'Arch ↘ bridge', 0], 
 WORLD_PROPS = [[38400, 'Anvil on a log', 1], [38402, 'Anvil on a granite block', 1], [38404, 'Crucible of molten iron', 1],
                [38406, 'Quench bucket', 1], [38408, 'Grindstone', 1], [38410, 'Stack of iron ingots', 1], [38412, 'Casting mould', 1],
                [38414, 'Stone furnace', 3], [38416, 'Toppled iron golem', 1], [38418, 'Wrecked golem limbs', 1],
-               [38420, 'Workbench with tools', 1], [38422, 'Workbench', 1], [38424, 'Tool rack', 1], [38426, 'Stack of crates', 1],
-               [38428, 'Crates, a barrel and a sack', 1], [38430, 'Stack of iron-bound crates', 1]]
+               [38424, 'Tool rack', 1], [38426, 'Stack of crates', 1],
+               [38428, 'Crates, a barrel and a sack', 1], [38430, 'Stack of iron-bound crates', 1],
+               # workbench pieces like the game's tables: each fills its tile, side by side they make one long bench
+               [38432, 'Workbench piece, legs', 1], [38434, 'Workbench piece', 1], [38436, 'Workbench piece, hammer and tongs', 1],
+               [38438, 'Workbench piece, blade and chain', 1], [38440, 'Workbench piece, drawer shelf', 1], [38442, 'Workbench piece, legs and hammer', 1]]
 # new trees (tools/sprites/world_trees.py): one cell a kind paints one of its 4 at random; blocks like the game's trees
 WORLD_TREES = [
     [38100, 'Autumn tree (orange)', 3, [38100, 38101, 38102, 38103]],

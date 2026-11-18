@@ -10,6 +10,10 @@ Shop and workshop pieces (Cody: for the Foundry, and as they are for armor shops
   38420 workbench with tools (drawers, hammer, a blade, chain)   38422 plain workbench   38424 tool rack (an A-frame
   stand with pickaxe, axe, hammer, blade)   38426 stack of crates   38428 crates, a barrel and a sack
   38430 stack of iron-bound crates
+Workbench pieces like the game's tables (Cody: bigger, and in parts so a bench can be any length): each covers its whole
+tile at the game's table height, so pieces side by side make one long bench (either way along the map):
+  38432 with legs   38434 plain   38436 hammer and tongs   38438 a blade and chain   38440 a drawer shelf
+  38442 with legs and a hammer   (38420 / 38422, the first one-tile benches, are not used any more)
 Ground: molten iron 36300-36303 (glowing, crusted; blocks walking like water) + 36304-36349: its soft edges creeping
 into the flagstone floor (37020-37023), in the order of world_ground.all_masks(). Writes world_foundry.json.
 3D props from Cody's "3d Models/Fantasy Props" and "RPG Pack 2" (glrender / objmodel), molten parts painted on.
@@ -237,6 +241,41 @@ def shop_pieces():
     out[38430] = prop(stack(mcrate))
     return out
 
+T = 0.45                                   # half a tile in model units (one tile = 32 px wide at PPM 25, yaw 45)
+def bench(legs=False, tools=(), seed=0):
+    m = Prim(seed); r = m.r; OAKC = [(0.50, 0.33, 0.18), (0.46, 0.30, 0.16), (0.54, 0.36, 0.20), (0.44, 0.29, 0.15)]
+    top, th = 0.93, 0.07
+    for k in range(4):                     # four heavy boards, running along model x, small gaps between
+        z0, z1 = -T + k * 2 * T / 4 + 0.012, -T + (k + 1) * 2 * T / 4 - 0.012
+        m.box((0, top - th / 2, (z0 + z1) / 2), (2 * T, th, z1 - z0), col=OAKC[(k + seed) % 4], jit=0.05)
+    m.box((0, top - th - 0.03, -T + 0.03), (2 * T, 0.06, 0.05), col=(0.36, 0.23, 0.12))      # the apron under the edges
+    m.box((0, top - th - 0.03, T - 0.03), (2 * T, 0.06, 0.05), col=(0.36, 0.23, 0.12))
+    if legs:
+        for z in (-T + 0.07, T - 0.07): m.box((0, (top - th) / 2, z), (0.11, top - th, 0.11), col=(0.34, 0.22, 0.12))
+        m.box((0, 0.18, 0), (0.07, 0.07, 2 * T - 0.14), col=(0.34, 0.22, 0.12))                # the stretcher
+    return m, top
+
+def bench_piece(legs=False, kind=None, seed=0):
+    D = M3 + '/Fantasy Props/'; O = M3 + '/RPG Pack 2/OBJ/'; I = np.eye(3)
+    m, top = bench(legs, seed=seed); parts = [(m, 1, I, (0, 0, 0))]
+    hm = ObjModel(O + 'Hammer_Double.obj')
+    hm.recol.update({'Steel': np.array([0.62, 0.64, 0.68]), 'LightSteel': np.array([0.80, 0.82, 0.86]), 'LightWood': np.array([0.72, 0.52, 0.30]), 'DarkWood': np.array([0.45, 0.30, 0.16])})
+    if kind in ('hammer', 'tools'):
+        parts.append((hm, 0.36, rot('y', 35) @ rot('x', 90), (-0.06, top + 0.08, 0.12)))      # lying flat, head and haft on the boards
+    if kind == 'tools':                    # tongs: two long iron jaws, crossed
+        tg = Prim(seed + 3)
+        for a in (-9, 9): tg.box((0, 0.02, 0), (0.62, 0.03, 0.045), yaw=math.radians(a), col=(0.30, 0.30, 0.33))
+        parts.append((tg, 1, I, (0.05, top, -0.20)))
+    if kind == 'blade':
+        parts.append((G.Model(D + 'Sword_Bronze.gltf'), 1.15, rot('x', 90), (0.0, top + 0.02, -0.14)))
+        parts.append((G.Model(D + 'Chain_Coil.gltf'), 0.55, I, (-0.15, top, 0.20)))
+    if kind == 'drawers':                  # the Workbench's own drawer shelf, set on the back of the top
+        dr = G.Model(D + 'Workbench_Drawers.gltf')
+        parts.append((dr, 1.4, I, (-0.72, top - 1.4 * 0.88, 0.25)))
+    g = Group(parts)
+    im = G.render(g, yaw=45, scale=PPM, size=64, ox=32, oy=56.5, fix=None, shadow=0.0 if not legs else 0.3)
+    return im.crop((16, 0, 48, 64))
+
 def build():
     D = M3 + '/Fantasy Props/'; out = {}
     out[38400] = prop(G.Model(D + 'Anvil_Log.gltf'))
@@ -255,6 +294,8 @@ def build():
     out[38414] = furnace()
     out[38416] = wreck(0); out[38418] = wreck(1)
     out.update(shop_pieces())
+    out[38432] = bench_piece(True, seed=1); out[38434] = bench_piece(False, seed=2); out[38436] = bench_piece(False, 'tools', seed=3)
+    out[38438] = bench_piece(False, 'blade', seed=4); out[38440] = bench_piece(False, 'drawers', seed=5); out[38442] = bench_piece(True, 'hammer', seed=6)
     for k in range(4): out[36300 + k] = molten_tile(36300 + k)
     S2 = wg.Sprites(sys.argv[1]); flag = [S2.get(n) for n in (37020, 37021, 37022, 37023)]
     edges = {}
@@ -264,7 +305,8 @@ def build():
                   'objects': {'anvil on a log': 38400, 'anvil on a block': 38402, 'crucible': 38404, 'quench bucket': 38406,
                               'grindstone': 38408, 'iron ingots': 38410, 'casting mould': 38412, 'stone furnace': 38414,
                               'toppled golem': 38416, 'golem limbs': 38418, 'workbench with tools': 38420, 'workbench': 38422,
-                              'tool rack': 38424, 'crates': 38426, 'crates and barrel': 38428, 'iron-bound crates': 38430}})
+                              'tool rack': 38424, 'crates': 38426, 'crates and barrel': 38428, 'iron-bound crates': 38430,
+                              'bench legs': 38432, 'bench': 38434, 'bench tools': 38436, 'bench blade': 38438, 'bench drawers': 38440, 'bench legs hammer': 38442}})
     return out
 TABLE = {}
 

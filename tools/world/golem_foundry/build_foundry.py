@@ -95,10 +95,17 @@ for x, y, n in [(677, 724, 'anvil on a log'), (680, 724, 'anvil on a log'), (677
 for k, x in enumerate(range(694, 705, 3)):
     obj('toppled golem' if k % 2 == 0 else 'golem limbs', x, 726); obj('golem limbs' if k % 2 == 0 else 'iron ingots', x, 729)
 # workbenches, tool racks and crates (Cody: to finish the look)
-for x, y, n in [(675, 724, 'workbench with tools'), (682, 724, 'workbench'), (685, 699, 'workbench with tools'), (706, 700, 'tool rack'),
-                (699, 704, 'workbench with tools'), (664, 730, 'tool rack'), (690, 729, 'tool rack'), (705, 729, 'crates'), (706, 727, 'iron-bound crates'),
-                (687, 729, 'crates and barrel'), (680, 729, 'crates'), (696, 712, 'workbench'), (697, 709, 'crates'), (672, 699, 'iron-bound crates')]:
+for x, y, n in [(706, 700, 'tool rack'), (664, 730, 'tool rack'), (690, 729, 'tool rack'), (705, 729, 'crates'), (706, 727, 'iron-bound crates'),
+                (687, 729, 'crates and barrel'), (680, 729, 'crates'), (697, 709, 'crates'), (672, 699, 'iron-bound crates')]:
     obj(n, x, y)
+def bench_run(tiles):
+    """a long workbench of the multi-part pieces (like the game's tables): legs at both ends, tools between"""
+    mid = ['bench tools', 'bench', 'bench blade', 'bench drawers']
+    for k, (x, y) in enumerate(tiles):
+        obj('bench legs' if k == 0 else 'bench legs hammer' if k == len(tiles) - 1 else mid[(k - 1 + x + y) % len(mid)], x, y)
+for t in ([(675, y) for y in range(723, 727)], [(x, 727) for x in range(681, 685)], [(x, 699) for x in range(685, 688)],
+          [(x, 705) for x in range(699, 702)], [(697, y) for y in range(711, 715)]):
+    bench_run(t)
 for x, y in [(697, 718), (701, 718), (704, 721)]: A.op(op='place', x=x, y=y, t=random.choice(LAVA_STONES), fresh=1)   # slag inside too
 A.run('foundry pieces')
 # the yard: slag heaps, ore, wrecks, a few snowy pines and boulders
