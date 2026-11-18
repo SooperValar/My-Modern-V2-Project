@@ -101,8 +101,9 @@ for x, y, n in [(706, 700, 'tool rack'), (664, 730, 'tool rack'), (690, 729, 'to
 def bench_run(tiles):
     """a long workbench of the multi-part pieces (like the game's tables): legs at both ends, tools between"""
     mid = ['bench tools', 'bench', 'bench blade', 'bench drawers']
+    sx = ' x' if len(tiles) > 1 and tiles[0][1] == tiles[1][1] else ''      # along map x: the other legs
     for k, (x, y) in enumerate(tiles):
-        obj('bench legs' if k == 0 else 'bench legs hammer' if k == len(tiles) - 1 else mid[(k - 1 + x + y) % len(mid)], x, y)
+        obj('bench legs' + sx if k == 0 else 'bench legs hammer' + sx if k == len(tiles) - 1 else mid[(k - 1 + x + y) % len(mid)], x, y)
 for t in ([(675, y) for y in range(723, 727)], [(x, 727) for x in range(681, 685)], [(x, 699) for x in range(685, 688)],
           [(x, 705) for x in range(699, 702)], [(697, y) for y in range(711, 715)]):
     bench_run(t)

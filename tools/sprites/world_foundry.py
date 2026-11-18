@@ -13,7 +13,9 @@ Shop and workshop pieces (Cody: for the Foundry, and as they are for armor shops
 Workbench pieces like the game's tables (Cody: bigger, and in parts so a bench can be any length): each covers its whole
 tile at the game's table height, so pieces side by side make one long bench (either way along the map):
   38432 with legs   38434 plain   38436 hammer and tongs   38438 a blade and chain   38440 a drawer shelf
-  38442 with legs and a hammer   (38420 / 38422, the first one-tile benches, are not used any more)
+  38442 with legs and a hammer   - these legs suit a bench running along the map's y (up-right on screen);
+  38444 with legs, 38446 with legs and a hammer: the same for a bench running along the map's x (down-right)
+  (38420 / 38422, the first one-tile benches, are not used any more)
 Ground: molten iron 36300-36303 (glowing, crusted; blocks walking like water) + 36304-36349: its soft edges creeping
 into the flagstone floor (37020-37023), in the order of world_ground.all_masks(). Writes world_foundry.json.
 3D props from Cody's "3d Models/Fantasy Props" and "RPG Pack 2" (glrender / objmodel), molten parts painted on.
@@ -242,7 +244,7 @@ def shop_pieces():
     return out
 
 T = 0.45                                   # half a tile in model units (one tile = 32 px wide at PPM 25, yaw 45)
-def bench(legs=False, tools=(), seed=0):
+def bench(legs=False, tools=(), seed=0, along='y'):
     m = Prim(seed); r = m.r; OAKC = [(0.50, 0.33, 0.18), (0.46, 0.30, 0.16), (0.54, 0.36, 0.20), (0.44, 0.29, 0.15)]
     top, th = 0.93, 0.07
     for k in range(4):                     # four heavy boards, running along model x, small gaps between
@@ -250,14 +252,17 @@ def bench(legs=False, tools=(), seed=0):
         m.box((0, top - th / 2, (z0 + z1) / 2), (2 * T, th, z1 - z0), col=OAKC[(k + seed) % 4], jit=0.05)
     m.box((0, top - th - 0.03, -T + 0.03), (2 * T, 0.06, 0.05), col=(0.36, 0.23, 0.12))      # the apron under the edges
     m.box((0, top - th - 0.03, T - 0.03), (2 * T, 0.06, 0.05), col=(0.36, 0.23, 0.12))
-    if legs:
+    if legs and along == 'y':          # a bench along map y (model x): the trestle stands across it (model z)
         for z in (-T + 0.07, T - 0.07): m.box((0, (top - th) / 2, z), (0.11, top - th, 0.11), col=(0.34, 0.22, 0.12))
         m.box((0, 0.18, 0), (0.07, 0.07, 2 * T - 0.14), col=(0.34, 0.22, 0.12))                # the stretcher
+    elif legs:                         # a bench along map x (model z): the trestle across model x
+        for x in (-T + 0.07, T - 0.07): m.box((x, (top - th) / 2, 0), (0.11, top - th, 0.11), col=(0.34, 0.22, 0.12))
+        m.box((0, 0.18, 0), (2 * T - 0.14, 0.07, 0.07), col=(0.34, 0.22, 0.12))
     return m, top
 
-def bench_piece(legs=False, kind=None, seed=0):
+def bench_piece(legs=False, kind=None, seed=0, along='y'):
     D = M3 + '/Fantasy Props/'; O = M3 + '/RPG Pack 2/OBJ/'; I = np.eye(3)
-    m, top = bench(legs, seed=seed); parts = [(m, 1, I, (0, 0, 0))]
+    m, top = bench(legs, seed=seed, along=along); parts = [(m, 1, I, (0, 0, 0))]
     hm = ObjModel(O + 'Hammer_Double.obj')
     hm.recol.update({'Steel': np.array([0.62, 0.64, 0.68]), 'LightSteel': np.array([0.80, 0.82, 0.86]), 'LightWood': np.array([0.72, 0.52, 0.30]), 'DarkWood': np.array([0.45, 0.30, 0.16])})
     if kind in ('hammer', 'tools'):
@@ -296,6 +301,7 @@ def build():
     out.update(shop_pieces())
     out[38432] = bench_piece(True, seed=1); out[38434] = bench_piece(False, seed=2); out[38436] = bench_piece(False, 'tools', seed=3)
     out[38438] = bench_piece(False, 'blade', seed=4); out[38440] = bench_piece(False, 'drawers', seed=5); out[38442] = bench_piece(True, 'hammer', seed=6)
+    out[38444] = bench_piece(True, seed=7, along='x'); out[38446] = bench_piece(True, 'hammer', seed=8, along='x')
     for k in range(4): out[36300 + k] = molten_tile(36300 + k)
     S2 = wg.Sprites(sys.argv[1]); flag = [S2.get(n) for n in (37020, 37021, 37022, 37023)]
     edges = {}
@@ -306,7 +312,8 @@ def build():
                               'grindstone': 38408, 'iron ingots': 38410, 'casting mould': 38412, 'stone furnace': 38414,
                               'toppled golem': 38416, 'golem limbs': 38418, 'workbench with tools': 38420, 'workbench': 38422,
                               'tool rack': 38424, 'crates': 38426, 'crates and barrel': 38428, 'iron-bound crates': 38430,
-                              'bench legs': 38432, 'bench': 38434, 'bench tools': 38436, 'bench blade': 38438, 'bench drawers': 38440, 'bench legs hammer': 38442}})
+                              'bench legs': 38432, 'bench': 38434, 'bench tools': 38436, 'bench blade': 38438, 'bench drawers': 38440, 'bench legs hammer': 38442,
+                              'bench legs x': 38444, 'bench legs hammer x': 38446}})
     return out
 TABLE = {}
 
