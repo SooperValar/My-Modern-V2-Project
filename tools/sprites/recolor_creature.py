@@ -11,6 +11,7 @@ Ramps (dark, mid, light): sandstone, slate, ... (RAMPS below). Made so far (CHAN
     50000 Drowned Sailor (the Undead, 19408, drowned); 50500 Bog-man (the Grolm, 12240, bog); 51000 Sea Golem (the Golem, 17360, seagolem)
     52000 Barrow Wight   (the Undead Lord, 19408, wight)
     53000 the Broodmother (the Lizard, 13264, brood); 54000 Lizard Hatchling (the Lizard, 13264, hatchling)
+    55000 Iron Golem (the Golem, 17360, iron); 56000 the Forgemaster (17360, forgemaster); 57000 the Brass Colossus (17360, brass)
 """
 import os, sys
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -24,6 +25,9 @@ RAMPS = {
     'wightpale': ((52, 60, 70), (168, 180, 192), (236, 242, 246)),  # Barrow Wight, the paler choice
     'brood': ((22, 4, 6), (110, 22, 20), (200, 84, 60)),             # the Broodmother (Lizard Hatcheries): the Lizard, dark red
     'hatchling': ((40, 46, 14), (150, 164, 70), (226, 232, 160)),     # Lizard Hatchling: the Lizard, pale yellow-green
+    'iron': ((14, 16, 20), (72, 76, 86), (170, 176, 188)),            # Iron Golem (Golem Foundry): the Golem, dark forged iron
+    'forgemaster': ((24, 10, 6), (96, 60, 46), (255, 168, 72)),      # the Iron Golem Forgemaster: iron glowing hot at the edges
+    'brass': ((44, 26, 6), (164, 116, 40), (252, 222, 128)),         # the Brass Colossus: polished brass
 }
 
 
