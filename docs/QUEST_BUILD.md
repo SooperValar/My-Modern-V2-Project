@@ -71,13 +71,13 @@ past Elysium -> Last Bastion.** The Barrow Hills are a dead end off Fenwatch's n
 ## 4. Numbers in use (check again before making new ones)
 
 - Item templates up to **2063** (2024-2032 Drowned Village; 2033-2050 wall decorations; 2051-2054 Barrow Hills;
-  2055-2063 Lizard Hatcheries). NPC templates up to **2273** (2206-2239 Barrow Hills; 2240-2273 Lizard Hatcheries). `itempnew` / `ctempnew` take the next free number by themselves.
+  2055-2063 Lizard Hatcheries). NPC templates up to **2292** (2206-2239 Barrow Hills; 2240-2276 Lizard Hatcheries incl. Cody's 3 knight copies; 2277-2292 Stonehold). `itempnew` / `ctempnew` take the next free number by themselves.
 - Monster groups (NPC data 42/44): 30 bandits, 31 quarry golems, 32 deep grolms, 33 wolves, 34 Drowned Village, 35 Barrow Hills, 36 Lizard Hatcheries.
   **Next: 37.** Undead in a group listed in `SLOW_UNDEAD_GROUP` (`data.h`: 34, 35) regenerate like Lab 11's (~4 hp/s, not ~12):
   add each new undead area's group there (Cody, Nov 17).
 - Sprites: monster recolours 41000+ (Quarry Golem), 42100+ (Deep Grolm), 50000+ Drowned Sailor, 50500+ Bog-man,
   51000-51981 Sea Golem, 52000+ Barrow Wight, 53000+ the Broodmother, 54000+ Lizard Hatchling: **next free block 55000** (a recolour fills base+0..1023, so step by 1000 to be safe; 500 worked
-  for the Undead and Grolm). 3D creatures 43000-44447 (wolves). Item pictures 44500-44541: **next 44542**. World objects: lizard eggs 38300-38307.
+  for the Undead and Grolm). 3D creatures 43000-44447 (wolves). Item pictures 44500-44541: **next 44542**. World objects: lizard eggs 38300-38307. Ground: snowy grass 36100-36287 (next free ground block 36300).
   Server item drivers: 77 = lizard egg in a nest (`use_lizard_egg`); next free 78.
   World: marsh grounds and edges 35650-35995, reeds 38200-38207. Waypoints: 1-6 used (`next 7` in waypoints.dat).
 - Fenwatch NPCs (`tools/world/fenwatch/made.json`): Joss 2142, Ilse 2143, Aldous 2144, Petra 2145, Rook 2146, Bounty
@@ -190,7 +190,7 @@ Lizard Heads, none on no-monster tiles.
 Lessons: the egg's two looks are the item's sprite pair (whole / hatched, `active` = regrowing); `usexy <player> <x> <y>`
 tests a map item; the device VM disk is small: delete scratch copies and `.dat/mapedit-backups` there as you go.
 
-## 9. Next: Stonehold (band D hub) - planned with Cody Nov 17, **ground LIVE Nov 17**
+## 9. Stonehold (band D hub) - planned with Cody Nov 17, **town LIVE Nov 17** (ground, snowy grass, townspeople, trader, guards, waypoint 7)
 
 Quest rows: the Quest Planner's Planned Quests 21-29 (exp there; the Watch bounty's gold is now 1/200 of its exp: 13,000 exp
 -> 65G, not the sheet's 650G). Cody's answers (Nov 17):
@@ -205,8 +205,9 @@ the pass x 596-649 (canyon, road y ~806-808 from the Hatcheries' exit), the town
 for waypoint 7), Watch Barracks, the Granite Hearth (inn), Hagar's Forge, Varo's Temple (669-678 / 831-840, off the east road), Trader's House, two houses, a mine adit;
 gates with road stubs ending open: west (681,766) -> Golem Foundry, east (681,854) -> Monastery, south-west (724,784) -> Ashen
 Fields, south-east (724,835) -> the pass to the Last Bastion / Gargoyle Spires. No monsters in the pass or town.
-**Next step**: the townspeople (Hagar, Varo, Rhea, the Watch's bounty officer, innkeeper, trader, the ten gate guards),
-the rotating trader (merch.c code), waypoint 7 - show Cody before it goes live; then the Foundry, Ashen Fields, Spires; the Monastery last (new monk
+**Townspeople live Nov 17** (CHANGES.md "Stonehold"; templates 2277-2292, `made.json`; Selwyn 2282 = merchants.dat `rotate`).
+Snowy grass over town and pass (sprites 36100-36287). Open: snowy pines instead of the 17 green pines (offered, Cody
+didn't answer yet); Selwyn's prices (no markup yet: `sell <%>` on his line). **Next**:  the Foundry, Ashen Fields, Spires; the Monastery last (new monk
 sprites, 3D pipeline).
 
 ## 10. After band D

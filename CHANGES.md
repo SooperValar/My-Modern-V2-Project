@@ -1208,7 +1208,7 @@ north gate road (the North Road, y ~800-802), which ends at a ring of standing s
   (+3 Intuition, +6 Identify), 37,000 exp. Item templates 2051-2054; pictures 44533 (tablet), 44534 (torc, both items),
   44535 (ring) (`tools/sprites/quest_items/barrow_hills.py`, README.txt). Published: client-dist 0161385.
 
-## Stonehold and the pass (Nov 17; ground live, townspeople to come)
+## Stonehold and the pass (Nov 17; live: ground, snowy grass, townspeople)
 
 The band D hub (zone "Stonehold", x 650-715, y 775-845; Major to Brigadier General), reached from the Lizard Hatcheries' road:
 - **Stonehold Pass** (zone, x 596-649): a narrow canyon of pale granite cliffs (the game's rock blocks 1204 / 1206) with snow
@@ -1221,6 +1221,18 @@ The band D hub (zone "Stonehold", x 650-715, y 775-845; Major to Brigadier Gener
   (the pass), west (-> Golem Foundry), east (-> Monastery), south-west (-> Ashen Fields), south-east (-> the Last Bastion's
   pass and the Gargoyle Spires). The roads to areas not built yet end open at the town's edge. No monsters in town or pass.
 - Built with `tools/world/stonehold/build_stonehold.py` (guard posts in `made_terrain.json`).
+- **Snowy grass** (Cody: "a snowy grass look... towards the top of a mountain"; his own snow painting kept): new ground
+  sprites 36100-36287 (`tools/sprites/world_snowgrass.py`): pale, cold alpine grass with snow lying in patches, soft edges
+  into green grass, and soft edges on snowy grass for soft snow, the path and the dusty path. Every grass tile of the pass
+  and the town became snowy grass (`snowy_stonehold.py`). The editor knows it (Grounds list; painting snow or a path on it
+  gives the snowy edges by themselves, like marsh grass). Published in client-dist b73a33d.
+- **The townspeople** (`place_stonehold.py`, `made.json`; greetings only, their quests come with the areas): **Hagar** the
+  smith (Forge), **Varo** the priest (Temple), **Commander Rhea** of the Stonehold Watch (Arch-Templar look) and **Watch
+  Sergeant Brann** the bounty officer (Warrior look) in the Barracks; **Dora** keeps the Granite Hearth (drinks as at the
+  Heron; the rest of the inn is a tavern: log out there); **Selwyn** in the Trader's House: a **rotating stock** - every hour
+  4 new Rare or Epic helmets / body armor (22:8), level 12-16, any metal; he buys nothing (new `rotate` line in
+  merchants.dat, `merch.c`; a click while his wares change shows the new ones and buys nothing). Ten gate guards, a
+  Warrior and an Arch-Templar at each way out, facing away from town. **Waypoint 7** on the square.
 
 ## Bounty gold lowered (Nov 17)
 
