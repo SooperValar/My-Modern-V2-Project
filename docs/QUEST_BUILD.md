@@ -183,7 +183,10 @@ Archmage: Grotto); eggs: one big egg a tile, fuller nests, a ragged hatched egg;
 Tested on the test server (spawns, all hand-ins, 20 egg uses: 13 eggs, 5 hatchlings). **For Cody to try in game**.
 Later Nov 17: Cody placed 11 more eggs in the editor (32 now; all checked: nest templates, driver 77, room beside each for a
 hatchling, each used on the test server); three Hatchery archmages became knights (`fewer_mages.py`; Hatchery: 11 knights,
-2 archmages). Eggs placed from templates 2056-2058 work by themselves; painted egg sprites don't.
+2 archmages). Eggs placed from templates 2056-2058 work by themselves; painted egg sprites don't. Cody then added 3 more
+knights in the editor and called the area **final** (Nov 17, 19:41): 26 Lizard Knights, 5 Lizard Archmages, the Broodmother,
+the Hatchery Archmage, 32 eggs; checked: every monster and egg reachable from the road, the copies are group 36 and carry
+Lizard Heads, none on no-monster tiles.
 Lessons: the egg's two looks are the item's sprite pair (whole / hatched, `active` = regrowing); `usexy <player> <x> <y>`
 tests a map item; the device VM disk is small: delete scratch copies and `.dat/mapedit-backups` there as you go.
 
