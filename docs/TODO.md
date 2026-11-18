@@ -12,7 +12,13 @@ world, quests, the editor, the client and Discord. Merged Nov 10 from the old TO
 
 ## Up next (in order)
 
-0. ★ **Quest plan, area by area**: bands A-B done, Fenwatch + Drowned Village (Nov 16) + Barrow Hills + Lizard Hatcheries (Nov 17) live: band C done; Stonehold's ground live (Nov 17), its people next: **follow `docs/QUEST_BUILD.md`** - [Quests](#6-quests)
+**For Nov 18 (Cody, Nov 17 night):**
+- ★ **Clean up the Golem Foundry's object distribution**: the pieces in the yard and the Hall (anvils, benches, crates,
+  furnaces, wrecks, slag) placed by `build_foundry.py`; Cody rearranges in the editor (Objects -> Workshop, the
+  Slag heaps / Golem wrecks / Crates scatter brushes, the Foundry Yard / Foundry Floor area brushes).
+- ★ **Add some poles** (Cody's words; ask which kind / where if it isn't clear).
+
+0. ★ **Quest plan, area by area**: bands A-B done, Fenwatch + Drowned Village (Nov 16) + Barrow Hills + Lizard Hatcheries (Nov 17) live: band C done; Stonehold + its people and the Golem Foundry live (Nov 17); next the Ashen Fields: **follow `docs/QUEST_BUILD.md`** - [Quests](#6-quests)
 1. ★ **Soulstone levels too low** (MAJOR) - [Fixes](#1-fixes-and-balance)
 2. ★ **Discord**: built Nov 14 (CHANGES.md "Discord"); waiting on Cody's webhooks / bot (HOSTING.md "Discord links")
 3. ★ **Walking speed, speed modes and attack speed** (look at it together first) - [Systems](#2-gameplay-systems)
