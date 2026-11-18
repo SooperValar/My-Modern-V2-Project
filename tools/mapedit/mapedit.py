@@ -3961,6 +3961,20 @@ def make_handler(world, sprites, page, minimap, ctl):
                 return self.js({'msg': r} if ok else {'error': r or 'The game did not answer.'})
             if u.path == '/api/questorder':
                 return self.js({'msg': world.quests_order_save(body.get('order') or {}, body.get('rewards'), ctl, body.get('alias'), body.get('only') == 'alias', body.get('corder'), body.get('crank'))})
+            if u.path == '/api/minimap':          # redraw the minimap picture from the map as the editor has it now (Nov 17, Cody)
+                tool = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(minimap or '.'))), 'tools', 'world', 'worldmap.py')
+                if not minimap or not os.path.exists(tool):
+                    return self.js({'error': 'The minimap tool (tools/world/worldmap.py) was not found.'})
+                import tempfile
+                with world.lock, tempfile.TemporaryDirectory() as td:
+                    os.makedirs(os.path.join(td, '.dat'))
+                    open(os.path.join(td, '.dat', 'map.dat'), 'wb').write(bytes(world.map))
+                    open(os.path.join(td, '.dat', 'item.dat'), 'wb').write(bytes(world.item))
+                    r = subprocess.run([sys.executable, tool, world.client if hasattr(world, 'client') else sprites.client, td, minimap + '.tmp'], capture_output=True, text=True, timeout=120)
+                    if r.returncode or not os.path.exists(minimap + '.tmp'):
+                        return self.js({'error': 'The minimap could not be drawn: ' + (r.stderr or r.stdout)[-300:]})
+                    os.replace(minimap + '.tmp', minimap)
+                return self.js({'msg': 'Minimap redrawn.'})
             if u.path == '/api/zones':
                 err = world.zones_save(body.get('zones') or [], ctl)
                 if err and err != 'later':
@@ -4270,6 +4284,7 @@ nav .grow { flex: 1; }
 #bar .rgt { margin-left: auto; }
 #coords { position: absolute; left: 10px; bottom: 10px; background: rgba(23,24,28,.92); border: 1px solid var(--line); border-radius: 7px; padding: 4px 10px; color: var(--dim); font: 12px ui-monospace, Consolas, monospace; pointer-events: none; z-index: 3; }
 #mini { position: absolute; right: 10px; bottom: 10px; width: 220px; height: 220px; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: #000; z-index: 3; box-shadow: 0 6px 20px rgba(0,0,0,.5); display: none; }
+#mini #mrf { position: absolute; right: 5px; top: 4px; z-index: 2; font-size: 12px; line-height: 1; padding: 2px 5px; border-radius: 5px; border: 1px solid var(--line); background: rgba(0,0,0,.55); color: #ddd; cursor: pointer; }
 #mini .t { position: absolute; left: 8px; top: 5px; font-size: 10px; letter-spacing: .08em; color: rgba(255,255,255,.65); text-shadow: 0 1px 2px #000; pointer-events: none; }
 #mini canvas { width: 100%; height: 100%; cursor: crosshair; image-rendering: pixelated; }
 #world { position: absolute; inset: 0; background: rgba(5,5,6,.82); z-index: 10; display: none; place-items: center; }
@@ -4648,7 +4663,7 @@ table.pl button:hover { color: var(--text); border-color: var(--gold); }
   </div>
   <div id="banner">The game server is running: you can look around, but editing is off. Stop the server to edit.</div>
   <div id="coords">–</div>
-  <div id="mini"><span class="t">MAP</span><canvas id="mcv" width="1024" height="1024" title="Click to go there · M for the big map"></canvas></div>
+  <div id="mini"><span class="t">MAP</span><button id="mrf" title="Redraw the minimap from the map as it is now">&#8635;</button><canvas id="mcv" width="1024" height="1024" title="Click to go there · M for the big map"></canvas></div>
   <div id="tpl"><div class="mbox"><div class="mhd"><div class="ttl"></div><button class="btn sec" id="tgoto" style="display:none" title="Close this and show it on the map">Go to</button><button class="btn ghost" onclick="closeTemplate()">✕</button></div><div class="mtabs"></div><div class="mbody"></div><div class="mft"></div></div></div>
   <div id="ipop"><input type="text" placeholder="Search an item by name or number"><div class="lst"></div></div>
   <div id="world"><span class="t">World map — click to go there · M or Esc to close</span><canvas id="wcv" width="1024" height="1024"></canvas></div>
@@ -4998,6 +5013,13 @@ function loop() {
 
 // ---------------------------------------------------------------- minimap and world map
 const mini = new Image(); let miniOk = false;
+document.addEventListener('click', async e => {       // the minimap's redraw button
+  if (!e.target || e.target.id !== 'mrf') return;
+  e.stopPropagation(); toast('Redrawing the minimap…');
+  const r = await api('/api/minimap', {});
+  if (r.error) return toast(r.error, true);
+  mini.onload = () => { miniOk = true; redraw(); }; mini.src = '/minimap.png?v=' + Date.now(); toast(r.msg);
+}, true);
 function drawMap(c, v) {
   const g = c.getContext('2d');
   g.drawImage(mini, 0, 0, 1024, 1024);
