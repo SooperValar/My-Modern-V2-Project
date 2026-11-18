@@ -181,6 +181,9 @@ set further back (area widened to y 757); the Grotto entered from the north; bos
 Archmage: Grotto); eggs: one big egg a tile, fuller nests, a ragged hatched egg; **option 4**: using an egg gives a Lizard Egg
 (pseudo-bounty at Corwin: 2,600 exp + 13G; later Alchemy) or 1 in 5 hatches a Lizard Hatchling that attacks; regrow 5 min.
 Tested on the test server (spawns, all hand-ins, 20 egg uses: 13 eggs, 5 hatchlings). **For Cody to try in game**.
+Later Nov 17: Cody placed 11 more eggs in the editor (32 now; all checked: nest templates, driver 77, room beside each for a
+hatchling, each used on the test server); three Hatchery archmages became knights (`fewer_mages.py`; Hatchery: 11 knights,
+2 archmages). Eggs placed from templates 2056-2058 work by themselves; painted egg sprites don't.
 Lessons: the egg's two looks are the item's sprite pair (whole / hatched, `active` = regrowing); `usexy <player> <x> <y>`
 tests a map item; the device VM disk is small: delete scratch copies and `.dat/mapedit-backups` there as you go.
 

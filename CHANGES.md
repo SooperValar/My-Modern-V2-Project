@@ -1240,13 +1240,14 @@ which runs on through the area and leaves its far (south) edge open for the pass
   tunnel out to a path from the road; and the **Archmage's Grotto** (zone), a smaller cave at the far end, entered from the
   north by its own path.
 - **Lizard eggs** (new world sprites 38300-38307, `tools/sprites/world_eggs.py`): one big leathery egg a tile in a nest of
-  twigs, reeds and straw (cream, pale, greenish); 24 of them, 3-4 a chamber and 2-3 in each mud pit outside. **Using an egg**
+  twigs, reeds and straw (cream, pale, greenish); 24 of them (32 since Cody placed more in the editor, Nov 17 evening), 3-4 a chamber and 2-3 in each mud pit outside. **Using an egg**
   (server item driver 77, `use_lizard_egg` in `use_driver.c`): you lift a **Lizard Egg** out of the nest - or, 1 time in 5,
   it splits open and a **Lizard Hatchling** (Second Lieutenant, pale yellow-green look 54000) attacks you. Either way the
   nest shows a broken shell until the egg regrows (5 minutes). The nest eggs are item templates 2056-2058 (data: the egg
   item, the hatchling, the chance; duration = the regrow time).
-- **Monsters** (group 36; `tools/world/lizard_hatcheries/place_hatcheries.py`, `made.json`): 20 **Lizard Knights** (Captain;
-  12 out on the marsh, 8 in the Hatchery), 8 **Lizard Archmages** (Captain; 5 in the Hatchery, 3 in the Grotto),
+- **Monsters** (group 36; `tools/world/lizard_hatcheries/place_hatcheries.py`, `made.json`): 23 **Lizard Knights** (Captain;
+  12 out on the marsh, 11 in the Hatchery), 5 **Lizard Archmages** (Captain; 2 in the Hatchery, 3 in the Grotto; Cody, Nov 17
+  evening: three of the Hatchery's five became knights, `fewer_mages.py`),
   **the Broodmother** (Major, dark red look 53000) in her Nest with the **Broodmother's Crown**, the **Hatchery Archmage** (a
   strong Captain) in the Grotto with the **Archmage's Phial**. Every lizard carries a **Lizard Head**.
 - **Quests** (item quests, `#quest`): **Aldous**: the Broodmother's Crown -> **Scaled Belt** (+4 armor, +3 Strength, Captain),
