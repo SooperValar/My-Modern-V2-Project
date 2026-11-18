@@ -4,9 +4,10 @@
  * "merchreload"):
  *   merchant <template> sell <pct> buy <pct> gold <silver> kinds <mask>
  *   stock <template> <item template>...        (lines add up; the order is the shop's order)
- *   rotate <template> <count> <minutes> <tiers> <level from> <level to>
+ *   rotate <template> <count> <minutes> <tiers> <level from> <level to> [metals]
  *       (MyV2, Nov 17: a rotating stock of new tiered helmets / body armor, e.g. Stonehold's trader: every <minutes> he
- *        clears what he holds and rolls <count> new pieces with tier_chest_reward(); tiers: bit 1 Magic, 2 Rare, 3 Epic.
+ *        clears what he holds and rolls <count> new pieces with tier_chest_reward(); tiers: bit 1 Magic, 2 Rare, 3 Epic;
+ *        metals (optional, 0 = a metal that fits the level): bit 0 Bronze, 1 Steel, 2 Golden, 3 Emerald, 4 Crystal, 5 Titanium.
  *        Give such a merchant "kinds 0" so he buys nothing: his own items are then only the rotating pieces.)
  * sell / buy: % of the normal price (0 = normal), gold: the most he pays for one item (0 = his own gold),
  * kinds: what he buys (1 armor, 2 weapons, 4 magic, 8 other; -1 = as before). A merchant template that is not in
@@ -48,7 +49,7 @@ int barter(int cn,int opr,int flag);
 
 static struct mconf {
 	int temp,sell,buy,gold,kinds,hasstock,n;
-	int rot_n,rot_min,rot_tiers,rot_lo,rot_hi;		// "rotate" (0 = no rotating stock)
+	int rot_n,rot_min,rot_tiers,rot_lo,rot_hi,rot_metals;		// "rotate" (0 = no rotating stock)
 	int stock[MERCH_STOCK];
 } mconf[MERCH_MAX];
 static int nmconf=0,merch_loaded=0;
@@ -70,15 +71,15 @@ int merch_load(void)
 	while (fgets(line,sizeof(line),f)) {
 		if (line[0]=='#' || line[0]=='\n' || line[0]=='\r') continue;
 		if (!strncmp(line,"rotate ",7)) {
-			int a[6];
-			if (sscanf(line+7,"%d %d %d %d %d %d",&t,&a[0],&a[1],&a[2],&a[3],&a[4])!=6 || t<=0 || t>=MAXTCHARS) { bad++; continue; }
+			int a[6]={0,0,0,0,0,0};
+			if (sscanf(line+7,"%d %d %d %d %d %d %d",&t,&a[0],&a[1],&a[2],&a[3],&a[4],&a[5])<6 || t<=0 || t>=MAXTCHARS) { bad++; continue; }
 			for (i=0; i<nmconf && mconf[i].temp!=t; i++) ;
 			if (i==nmconf) {
 				if (nmconf>=MERCH_MAX) { bad++; continue; }
 				m=&mconf[nmconf++];
 				memset(m,0,sizeof(*m)); m->temp=t; m->kinds=-1;
 			} else m=&mconf[i];
-			m->rot_n=max(0,min(20,a[0])); m->rot_min=max(1,a[1]); m->rot_tiers=a[2]; m->rot_lo=a[3]; m->rot_hi=a[4];
+			m->rot_n=max(0,min(20,a[0])); m->rot_min=max(1,a[1]); m->rot_tiers=a[2]; m->rot_lo=a[3]; m->rot_hi=a[4]; m->rot_metals=a[5];
 			continue;
 		}
 		if (!strncmp(line,"merchant ",9) || !strncmp(line,"stock ",6)) {
@@ -328,7 +329,7 @@ static void rotate(int co)
 		ch[co].depot[n]=0;
 	}
 	for (n=0,d=0; n<m->rot_n; n++) {
-		if (!(in=tier_chest_reward(m->rot_tiers,0,0,m->rot_lo,m->rot_hi))) continue;
+		if (!(in=tier_chest_reward(m->rot_tiers,m->rot_metals,0,m->rot_lo,m->rot_hi))) continue;
 		while (d<62 && ch[co].depot[d]) d++;
 		if (d>=62) { it[in].used=USE_EMPTY; break; }
 		it[in].carried=co; it[in].x=it[in].y=0; PAID(in)=0; it[in].t_bought=it[in].t_sold=0;
