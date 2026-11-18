@@ -264,10 +264,10 @@ project's next session. What the second chat did Nov 15-17 (all live, CHANGES.md
   temple's); signs could get a readable west version (mirroring flips their text); the window walls face one way only;
   TODO: Alchemy skill, change many items at once, a bigger world only if the towns don't fit.
 
-**Later Nov 17:** Cody's 11 new hatchery eggs checked (all work); three Hatchery archmages -> knights (live). Stonehold's
+**Later Nov 17:** bounty items stack and are handed in a whole stack (live; CHANGES.md "Bounty items stack"). Cody's 11 new hatchery eggs checked (all work); three Hatchery archmages -> knights (live). Stonehold's
 people + the rotating trader are built and tested on the test server but **not live**: `tools/world/stonehold/place_stonehold.py`
-(made.json = the template numbers from the test run, 2274-2289, waypoint 7) and `merch.c` "rotate" (already in both server
-folders, not yet built live). Waiting for Cody's OK on the preview `fenwatch_preview\stonehold_people.png` and on a price
+(made.json = the template numbers from the test run, 2274-2289, waypoint 7) and `merch.c` "rotate" (in both server folders and in the
+live build since the stacking update, unused until the merchants.dat line goes in). Waiting for Cody's OK on the preview `fenwatch_preview\stonehold_people.png` and on a price
 markup for Selwyn. Going live: stop-send, run place_stonehold.py on Server\.dat, `get` (rebuild), update-world.
 
 **Where we left off (Nov 17, evening): Stonehold's ground is live** (the pass from the Hatcheries and the cliff town,

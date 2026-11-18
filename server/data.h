@@ -595,7 +595,8 @@ struct character
 #define IT_TSUFFIX(in)	(it[in].future3[5])	// skill giving the name's suffix: SK_* + 1, 0 none
 #define IT_TBASE(in)	(it[in].future3[6])	// the plain template it was made from
 #define IT_STACK(in)	(it[in].future3[7])	// MyV2: how many potions in this stack (0 / 1 = one; tier.c stack_*)
-#define STACK_MAX	20	// potions in one stack
+#define STACK_MAX	20	// potions (or bounty items) in one stack
+#define STACKS(k)	((k)==1 || (k)==3)	// stack_kind(): kinds counted in IT_STACK (potions, bounty items)
 #define STACK_CHARGES	254	// charges a combined spell scroll can hold (the number shown on it)
 
 #define TIER_MAGIC	1

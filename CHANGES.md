@@ -1284,3 +1284,16 @@ Item templates 2033-2050 ("..., wall W", "..., back, wall N" ...; `tools/world/w
 **Facing** row (S / W / N / E) in the side panel for a placed shrine, picture, mirror, shield, bookshelf or skeleton in
 chains: one click turns that one (shrines keep their own settings this way).
 
+## Bounty items stack (Nov 17, evening)
+
+Cody: bounty hand-ins stack, and handing them in takes the whole stack.
+- **Bounty items stack** like potions, up to 20 in one backpack slot: Wolf / Dire Wolf Heads, Drowned Sailor and Bog-man
+  Heads, Lizard Heads, Lizard Eggs - and every bounty made later, by itself. A bounty item is what an item quest wants that
+  can be done any number of times and pays gold (only bounties pay gold); the server works it out from the quests
+  (`bounty_item` in `npctalk.c`, stack kind 3 in `tier.c`). Ctrl+click takes one off a stack, as with potions.
+- **Handing in a stack** gives the reward once for each item in it (exp and gold added up); if a quest has a limit and
+  wants fewer, the rest comes back.
+- Console: `questgive <player> <NPC template> [count]` hands in a stack.
+Tested on the test server (12 Lizard Heads: 62,400 exp + 312G; 5 Wolf Heads; 4 Bog-man Heads; quest items that aren't
+bounties, like the Broodmother's Crown, still don't stack). Live Nov 17 (update-code; the new build also holds Stonehold's
+rotating-trader code, unused until its merchants.dat line goes in).

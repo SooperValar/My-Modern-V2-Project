@@ -953,17 +953,19 @@ void item_marks(int in,unsigned char *letter,unsigned char *number)
  * IT_STACK(in) = how many (0 = one). Spell scrolls (driver 48) of the same spell and power combine their charges.
  * Putting a stack or scroll on a matching one in the backpack (or getting one: shop, reward) merges them; Ctrl+click
  * on a stack takes one into the hand (or adds one to the matching stack in the hand). Selling sells the whole stack. */
-int stack_kind(int in)		// 1 potion stack, 2 spell scroll (charges), 0 neither
+int stack_kind(int in)		// 1 potion stack, 2 spell scroll (charges), 3 bounty items (Nov 17), 0 neither
 {
 	if (!IS_SANEITEM(in) || it[in].used==USE_EMPTY || IT_TIER(in)) return 0;
 	if (it[in].driver==48 && (it[in].flags&IF_USESPECIAL)) return 2;
 	if ((it[in].flags&IF_USEDESTROY) && !(it[in].flags&IF_USESPECIAL) && (it[in].flags&IF_TAKE) && !it[in].placement) return 1;
+	// MyV2 (Nov 17, Cody): bounty items (heads, eggs...) stack too, and a bounty officer takes the whole stack (npctalk.c)
+	if ((it[in].flags&IF_TAKE) && !it[in].placement && !(it[in].flags&(IF_USE|IF_USESPECIAL)) && bounty_item(it[in].temp)) return 3;
 	return 0;
 }
 
 int stack_count(int in)
 {
-	return stack_kind(in)==1 && IT_STACK(in)>1 ? IT_STACK(in) : 1;
+	return STACKS(stack_kind(in)) && IT_STACK(in)>1 ? IT_STACK(in) : 1;
 }
 
 int stack_same(int a,int b)
@@ -1000,7 +1002,7 @@ int stack_merge(int dst,int src)
 int stack_split(int in,int k)
 {
 	int nw;
-	if (stack_kind(in)!=1 || k<1 || k>=stack_count(in)) return 0;
+	if (!STACKS(stack_kind(in)) || k<1 || k>=stack_count(in)) return 0;
 	if (!(nw=get_free_item())) return 0;
 	it[nw]=it[in];
 	IT_STACK(nw)=k>1 ? k : 0;
@@ -1013,7 +1015,7 @@ int stack_split(int in,int k)
 /* using one from a stack: 1 if one was taken off (the item stays), 0 if it was the last one */
 int stack_use_one(int in)
 {
-	if (stack_kind(in)!=1 || stack_count(in)<2) return 0;
+	if (!STACKS(stack_kind(in)) || stack_count(in)<2) return 0;
 	IT_STACK(in)=stack_count(in)-1;
 	if (IT_STACK(in)<2) IT_STACK(in)=0;
 	it[in].flags|=IF_UPDATE;

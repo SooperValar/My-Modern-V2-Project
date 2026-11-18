@@ -1328,27 +1328,64 @@ int quest_gold_first(int t)		// a skill teacher's gold (given with the skill)
 
 /* the NPC cn got the item in it wants from player co, and teaches no skill: an item trade.
  * Returns 1 if it handled it (rewards given), 0 = nothing to give (as before: the NPC just keeps it). */
+/* MyV2 (Nov 17, Cody): bounty items stack (tier.c stack_kind 3) and are handed in a whole stack at once. A bounty item is
+ * what an item quest wants that can be done any number of times and pays gold (only bounties pay gold); worked out from
+ * the quests, so new bounties count by themselves; looked up again at most once a minute (the editor changes quests live). */
+int bounty_item(int itm)
+{
+	static unsigned char is[MAXTITEM];
+	static int when=-1;
+	int t,item,exp,gold,stp;
+
+	if (itm<=0 || itm>=MAXTITEM) return 0;
+	if (!talk_loaded) talk_load();
+	if (when<0 || globs->ticker<when || globs->ticker-when>TICKS*60) {
+		memset(is,0,sizeof(is)); when=globs->ticker;
+		for (t=1; t<MAXTCHARS; t++) {
+			if (ch_temp[t].used==USE_EMPTY || ch_temp[t].data[49]<=0 || ch_temp[t].data[49]>=MAXTITEM || ch_temp[t].data[50] || qrew[t].limit) continue;
+			quest_reward_at(t,0,&item,&exp,&gold,&stp);
+			if (gold>0) is[ch_temp[t].data[49]]=1;
+		}
+	}
+	return is[itm];
+}
+
 int talk_quest_trade(int cn,int co,int in,int t)	// t: the quest's template (the NPC's own, or one of its extra quests)
 {
-	int item,exp,gold,left,later,ni;
+	int item,exp,gold,left,later,ni,cnt,done,texp=0,tgold=0,said=0,last=0;
 
 	if (!IS_PLAYER(co) || !quest_reward_now(t,co,&item,&exp,&gold,&left,&later)) return 0;
 	if (left==0) return 0;
-	if (qrew[t].limit || qrew[t].first) quest_count_add(co,t);
-	god_take_from_char(in,cn);
-	it[in].used=USE_EMPTY;
-	if (item) {
-		int k,nn=quest_item_count(t,later);
-		if (nn>1) do_sayx(cn,"Here are %d of my %s in exchange.",nn,it_temp[item].name);
-		else do_sayx(cn,"Here is your %s in exchange.",it_temp[item].reference);
-		for (k=0; k<nn; k++) {
-			ni=god_create_item(item);
-			if (ni && !god_give_char(ni,co)) { god_drop_item_fuzzy(ni,ch[co].x,ch[co].y); }
+	cnt=stack_kind(in)==3 ? stack_count(in) : 1;		// a stack of bounty items: all of it (as far as the quest still wants them)
+	for (done=0; done<cnt; done++) {
+		if (done && (!quest_reward_now(t,co,&item,&exp,&gold,&left,&later) || left==0)) break;
+		if (qrew[t].limit || qrew[t].first) quest_count_add(co,t);
+		if (item) {
+			int k,nn=quest_item_count(t,later);
+			if (!said) {
+				if (nn>1) do_sayx(cn,"Here are %d of my %s in exchange.",nn,it_temp[item].name);
+				else do_sayx(cn,"Here is your %s in exchange.",it_temp[item].reference);
+				said=1;
+			}
+			for (k=0; k<nn; k++) {
+				ni=god_create_item(item);
+				if (ni && !god_give_char(ni,co)) { god_drop_item_fuzzy(ni,ch[co].x,ch[co].y); }
+			}
 		}
+		if (exp>0) texp+=exp;
+		if (gold>0) tgold+=gold;
+		if (left==1) { last=1; done++; break; }
 	}
-	if (exp>0) do_give_exp(co,exp,0,-1);
-	if (gold>0) { ch[co].gold+=gold; do_update_char(co); do_char_log(co,1,"%s gives you %dG %dS.\n",ch[cn].reference,gold/100,gold%100); }
-	if (left==1) do_sayx(cn,"That was the last one I needed, %s. Thank you!",ch[co].name);
+	god_take_from_char(in,cn);
+	if (done<cnt) {		// he wanted no more: the rest goes back
+		IT_STACK(in)=cnt-done>1 ? cnt-done : 0; it[in].flags|=IF_UPDATE;
+		if (!god_give_char(in,co)) god_drop_item_fuzzy(in,ch[co].x,ch[co].y);
+		do_char_log(co,1,"%s gives you back %d %s.\n",ch[cn].reference,cnt-done,it[in].name);
+	} else it[in].used=USE_EMPTY;
+	if (done>1) do_sayx(cn,"%d of them! Well done, %s.",done,ch[co].name);
+	if (texp>0) do_give_exp(co,texp,0,-1);
+	if (tgold>0) { ch[co].gold+=tgold; do_update_char(co); do_char_log(co,1,"%s gives you %dG %dS.\n",ch[cn].reference,tgold/100,tgold%100); }
+	if (last) do_sayx(cn,"That was the last one I needed, %s. Thank you!",ch[co].name);
 	return 1;
 }
 

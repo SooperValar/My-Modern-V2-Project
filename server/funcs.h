@@ -497,6 +497,7 @@ int stack_merge(int dst,int src);
 int stack_split(int in,int k);
 int stack_use_one(int in);
 int stack_into_backpack(int cn,int in);
+int bounty_item(int itm);
 int get_free_item(void);
 int is_nolab_item(int in);
 

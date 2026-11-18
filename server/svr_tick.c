@@ -388,7 +388,7 @@ void plr_cmd_inv(int nr)
                 } else if (ch[cn].citem && tmp && !IS_BUILDING(cn) && stack_same(tmp,ch[cn].citem)) {
                         // MyV2: the stack / scroll in the hand goes onto the matching one (what doesn't fit stays in the hand)
                         if (stack_merge(tmp,ch[cn].citem)) ch[cn].citem=0;
-                        else if (stack_kind(tmp)==1 && stack_count(tmp)>=STACK_MAX) do_char_log(cn,0,"That stack is full (%d).\n",STACK_MAX);
+                        else if (STACKS(stack_kind(tmp)) && stack_count(tmp)>=STACK_MAX) do_char_log(cn,0,"That stack is full (%d).\n",STACK_MAX);
                         do_update_char(cn);
                         return;
                 } else {
@@ -406,7 +406,7 @@ void plr_cmd_inv(int nr)
                 int hand=ch[cn].citem,one;
                 if (n<0 || n>39 || ch[cn].stunned) return;
                 if (!(in=ch[cn].item[n])) return;
-                if (stack_kind(in)!=1) return;
+                if (!STACKS(stack_kind(in))) return;
                 if (!hand) {
                         if (stack_count(in)<2) { ch[cn].citem=in; ch[cn].item[n]=0; }
                         else if ((one=stack_split(in,1))) { ch[cn].citem=one; it[one].carried=cn; }
@@ -872,7 +872,7 @@ void plr_cmd_iteminfo(int nr)
 		tip_div=0;
 		tip_line(nr,where,slot,&line,tier_font(in),"%s",tier_name(in));
 		if (stack_count(in)>1) tip_line(nr,where,slot,&line,1,"A stack of %d (Ctrl+click: take one)",stack_count(in));
-		else if (stack_kind(in)==1) tip_line(nr,where,slot,&line,1,"Stacks up to %d",STACK_MAX);
+		else if (STACKS(stack_kind(in))) tip_line(nr,where,slot,&line,1,"Stacks up to %d",STACK_MAX);
 		if (IT_TIER(in)) { char t1[80],t2[80]; tier_tip_lines(in,t1,t2); tip_line(nr,where,slot,&line,1,"%s",t1); }
 		tip_sep();
 

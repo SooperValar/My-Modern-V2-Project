@@ -300,13 +300,14 @@ static void con_cmd(char *line)
 		else out("  done (see the player's log; #areas)\n");
 		return;
 	}
-	if (!strcmp(w[0],"questgive")) {	// questgive <player> <NPC template>: the player hands that NPC the item it wants
+	if (!strcmp(w[0],"questgive")) {	// questgive <player> <NPC template> [count]: the player hands that NPC the item it wants (count: a stack of them, if it stacks)
 		int t=atoi(w[2]),cn=0,in,e0,g0;
 		extern int npc_give(int cn,int co,int in,int money);
 		if (!(co=con_player(w[1]))) return;
 		for (n=1; n<MAXCHARS; n++) if (ch[n].used==USE_ACTIVE && !(ch[n].flags&(CF_PLAYER|CF_BODY)) && ch[n].temp==quest_npc(t)) { cn=n; break; }	// (an extra quest: its NPC)
 		if (!cn) { out("  No NPC of template %d in the world.\n",quest_npc(t)); return; }
 		if (ch_temp[t].data[49]<=0 || !(in=god_create_item(ch_temp[t].data[49]))) { out("  %s wants nothing.\n",ch[cn].name); return; }
+		if (atoi(w[3])>1 && STACKS(stack_kind(in))) { IT_STACK(in)=min(STACK_MAX,atoi(w[3])); out("  a stack of %d %s\n",stack_count(in),it[in].name); }
 		if (!god_give_char(in,cn)) { it[in].used=USE_EMPTY; out("  %s can't take it.\n",ch[cn].name); return; }
 		e0=ch[co].points_tot; g0=ch[co].gold;
 		talk_set_echo(con_echo);
