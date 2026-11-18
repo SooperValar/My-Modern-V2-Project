@@ -1351,3 +1351,12 @@ and one great hall, the Brass Colossus in its own casting pit; anvils, molten ir
 Scatter brushes (Objects tab): Reeds, Marsh trees (willows, dead trees), Snowy pines, Boulders, Slag heaps (the lava
 stones), Golem wrecks, Crates, Lizard egg nests (the working nest items). Area brushes (floor mix + pieces): Marsh,
 Lizard Marsh (with egg nests), Mountain Meadow (snowy grass, snow, snowy pines, boulders), Foundry Yard, Foundry Floor.
+
+## Exploration points: a standard value by rank (Nov 18)
+
+A table of pole values by the area's average monster rank (QUEST_BUILD.md 9c: 250 at Private ... 5,000 Sergeant ...
+40,000 Major ... 200,000 Warlord), fitted to the game's own Labyrinth poles. One pole per large area off a town (Cody
+places them). 34 existing poles that sat below the table were raised to it (none lowered): e.g. Strange Forest 500 ->
+12,000, Gargoyle's Nest up to 100,000, Tower VIII 40,000, Bandit Cave 5,000, Dire Wolves Den 12,000, Deep Quarry 15,000.
+The pentagram poles keep their own climbing values. A pole still pays its value x 0.5-1.5, never over 10% of the
+player's exp.

@@ -228,7 +228,7 @@ Stonehold's west gate (681,766) and runs west (-y) into it. Monster group 37 (no
   38416 / 38418 (each N+1 its hide-walls copy); molten iron ground 36300-36303 (edges into the hall floor to make). 3D props
   from Cody's `3d Models\Fantasy Props` (Anvil, Anvil_Log, Cauldron, Bucket_Metal, Whetstone) and RPG Pack 2 (Gold_Ingots).
 
-## 9c. Exploration points ("poles"): the standard values (Cody, Nov 18 - draft, Cody places them himself)
+## 9c. Exploration points ("poles"): the standard values (Cody, Nov 18 - FINAL; Cody places them himself)
 
 One pole per large area off a town. Value by the area's **average monster rank** (the editor's area-clear average),
 fitted to the game's own poles (the Labyrinth gorges sit on it: Grolm 5k Sergeant, Undead 20k Sergeant Major, Light&Dark
@@ -246,8 +246,12 @@ value x 0.5-1.5 (+ up to 10%), never more than 10% of the player's total exp (us
 | Master Sergeant | 12,000 | Colonel | 50,000 | Earl | 175,000 |
 | First Sergeant | 15,000 | Brigadier General | 60,000 | Warlord | 200,000 |
 
-The game's own poles stay as they are (Cody). Off the table by far: Strange Forest 500 (Master Sergeant), Haunted
-Castle 8,000 (Corporal), Tower VIII 10,000 (Major), Water Gorge 30,000 (Colonel).
+**Nov 18 (Cody): poles below the table were raised to it, none lowered** - 34 poles, each by the average rank of the
+monsters within 12 tiles (or its zone's): Bandit Cave 2.5k -> 5k, Dire Wolves Den 7k -> 12k, Deep Quarry 6k -> 15k,
+Strange Forest 500 -> 12k (x3), Tower VIII 10k -> 40k, Lizard Temple 25k -> 40k, Gargoyle's Nest (7) 8-50k -> 45-100k,
+Labyrinth Grolm (2) / Lizard (3) / Light&Dark (1) / Forest (3) / Water (2) gorges, Underground I (3) and II (4), Thieves
+Basement. Left alone: the Pentagram Quest's poles (they climb with the pentagram levels, 1k-40k), the Riddle Gorge, the
+Ice / Underwater pentagrams, and any above the table (e.g. the Haunted Castle 8k at Corporal).
 
 ## 10. After band D
 
