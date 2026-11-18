@@ -1233,9 +1233,9 @@ The band D hub (zone "Stonehold", x 650-715, y 775-845; Major to Brigadier Gener
   Heron; the rest of the inn is a tavern: log out there); **Selwyn** in the Trader's House: a **rotating stock** - every hour
   4 new Rare or Epic helmets / body armor (22:8), level 12-16, only Steel, Emerald, Crystal or Titanium (the new metals field of
   `rotate`), **priced by level and tier more than by metal** (Cody: high-level steel must not be cheap; `rot_value` in
-  merch.c: 2G x 1.25^level x tier (Rare 2, Epic 3) x metal (Steel 1, Emerald 1.25, Crystal 1.5, Titanium 2), then his
-  `sell 200` (2x) and the buyer's Barter: e.g. level 12 Steel Rare 116G, level 16 Titanium Epic 852G at Barter 150, 4x that
-  with no Barter). Only his own rotating pieces are priced so; other loot keeps its value. He buys nothing (new `rotate` line in
+  merch.c: 2G x 1.25^level x tier (Rare 2, Epic 3) x metal, only a nudge (Steel 1, Emerald 1.1, Crystal 1.2, Titanium 1.3; Cody:
+  steel must not be half the price of titanium), then his `sell 200` (2x) and the buyer's Barter: e.g. level 12 Steel Rare
+  116G, level 16 Titanium Epic 554G at Barter 150, 4x that with no Barter). Only his own rotating pieces are priced so; other loot keeps its value. He buys nothing (new `rotate` line in
   merchants.dat, `merch.c`; a click while his wares change shows the new ones and buys nothing). Ten gate guards, a
   Warrior and an Arch-Templar at each way out, facing away from town. **Waypoint 7** on the square.
 

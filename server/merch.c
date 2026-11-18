@@ -197,11 +197,12 @@ static int remorse_for(int cn,int in)	// may cn buy item in back for what he got
 
 /* a rotating stock's price before barter and markup (Nov 17, Cody: the level and the tier count for more than the
  * metal; high-level steel must not be cheap): 2G at level 0, a quarter more each level (level 12 ~29G, 16 ~71G),
- * times the tier (Magic 1, Rare 2, Epic 3, Legendary 5), times the metal (Bronze 0.8 ... Titanium 2) */
+ * times the tier (Magic 1, Rare 2, Epic 3, Legendary 5), times the metal - only a nudge (Cody: steel must not be half
+ * the price of titanium): Bronze 0.9, Steel 1, Golden 1.05, Emerald 1.1, Crystal 1.2, Titanium 1.3 */
 static int rot_value(int in)
 {
 	static const int tmul[5]={1,1,2,3,5};
-	static const int mt[][3]={{57,59,80},{63,65,100},{69,71,110},{981,982,125},{75,76,150},{94,95,200}};
+	static const int mt[][3]={{57,59,90},{63,65,100},{69,71,105},{981,982,110},{75,76,120},{94,95,130}};
 	int v=200,k,lv=IT_TLEVEL(in),t=IT_TIER(in),mp=100;
 
 	for (k=0; k<lv && k<30; k++) v=v*5/4;
