@@ -1,0 +1,161 @@
+#!/usr/bin/env python3
+"""Foundry pieces for the Golem Foundry (Nov 17; Cody: anvils and molten iron, nothing modern). DRAFT for Cody's look.
+
+World objects (32x64, drawn into the tile like the eggs; each N+1 its hide-walls form, the same picture):
+  38400 anvil on a log       38402 anvil on a granite block   38404 crucible of molten iron (glowing)
+  38406 quench bucket        38408 grindstone                 38410 stack of iron ingots
+  38412 casting mould (molten iron poured in)
+Ground: molten iron 36300-36303 (glowing, crusted; to block walking like water).
+3D props from Cody's "3d Models/Fantasy Props" and "RPG Pack 2" (glrender / objmodel), molten parts painted on.
+
+    world_foundry.py <client folder> [--out <folder>] [--sheet <png>]"""
+import math, os, random, sys
+import numpy as np
+from PIL import Image, ImageDraw
+HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, HERE)
+import glrender as G, world_ground as wg
+from objmodel import ObjModel
+M3 = os.path.expanduser('~/mnt/MyV2/3d Models')
+PPM = 25.0                          # pixels per metre (a man ~45 px, like the game's)
+MAG = np.array([1.0, 0.0, 1.0])     # marker colour for painted-on surfaces
+
+class Extra:
+    """a model plus marker discs (molten iron, water) at given heights"""
+    def __init__(self, m, discs=()):
+        self.m, self.discs = m, discs
+    def triangles(self, anim=None, t=0.0):
+        P, N, C = self.m.triangles(anim, t); self.rest = getattr(self.m, 'rest', None)
+        lo = P.reshape(-1, 3).min(0); hi = P.reshape(-1, 3).max(0); c = (lo + hi) / 2
+        add = []
+        for h, r in self.discs:
+            for k in range(24):
+                a0, a1 = 2 * math.pi * k / 24, 2 * math.pi * (k + 1) / 24
+                add.append([[c[0], lo[1] + h, c[2]], [c[0] + r * math.cos(a0), lo[1] + h, c[2] + r * math.sin(a0)], [c[0] + r * math.cos(a1), lo[1] + h, c[2] + r * math.sin(a1)]])
+        if add:
+            A = np.array(add, float); P = np.concatenate([P, A]); N = np.concatenate([N, np.tile([0, 1, 0], (len(A), 3, 1)).astype(float)])
+            C = np.concatenate([C, np.tile(MAG, (len(A), 3, 1))])
+        return P, N, C
+
+def prop(model, yaw=45, shift=(0, 0), scale=1.0):
+    P, _, _ = model.triangles(None, 0.0); lo, hi = P.reshape(-1, 3).min(0), P.reshape(-1, 3).max(0)
+    c = (lo + hi) / 2
+    fix = lambda P: P - np.array([c[0], lo[1], c[2]])
+    im = G.render(model, yaw=yaw, scale=PPM * scale, size=64, ox=32 + shift[0], oy=57 + shift[1], fix=fix, shadow=0.45)
+    return im.crop((16, 0, 48, 64))
+
+def molten_px(r, x, y, base=0.0):
+    n = 0.5 + 0.3 * math.sin(x * 0.9 + r[0]) * math.sin(y * 1.3 + r[1]) + 0.2 * math.sin((x + y) * 0.55 + r[2]) + base
+    if n > 0.78: return (255, 236, 160)
+    if n > 0.55: return (255, 168, 48)
+    if n > 0.32: return (226, 92, 18)
+    return (92, 30, 14)
+
+def paint(im, fill):
+    """replace the marker colour (lit magenta) with fill(x, y)"""
+    px = im.load()
+    for y in range(im.height):
+        for x in range(im.width):
+            p = px[x, y]
+            if p[3] and p[0] > 60 and p[2] > 60 and p[1] < 0.45 * min(p[0], p[2]):
+                px[x, y] = fill(x, y) + (255,)
+    return im
+
+def glow(im, cx, cy, rad, col=(255, 120, 30), a=70):
+    """a soft warm glow on the ground round a hot thing (only where the sprite is empty)"""
+    px = im.load()
+    for y in range(im.height):
+        for x in range(im.width):
+            d = math.hypot((x - cx) / rad, (y - cy) / (rad * 0.5))
+            if d < 1 and px[x, y][3] == 0:
+                px[x, y] = col + (int(a * (1 - d) ** 1.5),)
+    return im
+
+def recol(m, rgb):
+    for k in set(m.mat): m.recol[k] = np.array(rgb)
+    return m
+
+def mould(seed):
+    """a sand casting bed with three ingot moulds of fresh molten iron"""
+    S = 4; im = Image.new('RGBA', (32 * S, 64 * S), (0, 0, 0, 0)); d = ImageDraw.Draw(im); r = random.Random(seed)
+    def sc(xl, yl, z=0.0): return ((16 + 16 * (xl + yl)) * S, (56.5 + 7.5 * (xl - yl) - z) * S)
+    def quad(a, b, c, e, col): d.polygon([a, b, c, e], fill=col)
+    u0, u1, v0, v1, H = -0.42, 0.42, -0.36, 0.36, 3.0
+    # sides (front faces), then the top
+    quad(sc(u1, v0), sc(u1, v1), sc(u1, v1, H), sc(u1, v0, H), (112, 86, 52, 255))
+    quad(sc(u0, v0), sc(u1, v0), sc(u1, v0, H), sc(u0, v0, H), (138, 108, 66, 255))
+    quad(sc(u0, v0, H), sc(u1, v0, H), sc(u1, v1, H), sc(u0, v1, H), (170, 138, 90, 255))
+    for k in range(3):
+        a = -0.26 + 0.24 * k
+        quad(sc(-0.3, a - 0.07, H), sc(0.3, a - 0.07, H), sc(0.3, a + 0.07, H), sc(-0.3, a + 0.07, H), (70, 26, 12, 255))
+    im = im.resize((32, 64), Image.LANCZOS); px = im.load()
+    rr = [r.random() * 6 for _ in range(3)]
+    for y in range(64):                   # the slots (dark) become molten iron
+        for x in range(32):
+            p = px[x, y]
+            if p[3] < 128: px[x, y] = (0, 0, 0, 0)
+            elif p[0] < 100 and p[1] < 45: px[x, y] = molten_px(rr, x, y, 0.15) + (255,)
+            elif p[3]: px[x, y] = p[:3] + (255,)
+            else: px[x, y] = (0, 0, 0, 0)
+    for _ in range(18):                   # sand grain
+        x, y = r.randrange(32), r.randrange(40, 64)
+        if px[x, y][3] and px[x, y][1] > 80: c = px[x, y]; px[x, y] = tuple(max(0, v - 18) for v in c[:3]) + (255,)
+    return glow(im, 16, 57, 15, a=60)
+
+def molten_tile(seed):
+    r = random.Random(seed); rr = [r.random() * 6.28 for _ in range(3)]
+    t = Image.new('RGBA', (32, 32), (0, 0, 0, 0)); px = t.load()
+    crusts = [(r.uniform(-0.5, 0.5), r.uniform(-0.5, 0.5), r.uniform(0.06, 0.13)) for _ in range(r.randrange(3, 6))]
+    for y in range(32):
+        for x in range(32):
+            if not wg.IN(x, y): continue
+            xl, yl = wg.local(x, y)
+            base = -sum(max(0, 0.7 * (1 - math.hypot(xl - a, yl - b) / c)) for a, b, c in crusts)
+            n = 0.55 + 0.22 * math.sin(xl * 9 + rr[0]) * math.sin(yl * 8 + rr[1]) + 0.16 * math.sin((xl - yl) * 13 + rr[2]) + base + r.uniform(-0.05, 0.05)
+            px[x, y] = ((255, 236, 160) if n > 0.8 else (255, 168, 48) if n > 0.56 else (226, 92, 18) if n > 0.34 else (92, 30, 14)) + (255,)
+    return t
+
+def build():
+    D = M3 + '/Fantasy Props/'; out = {}
+    out[38400] = prop(G.Model(D + 'Anvil_Log.gltf'))
+    # anvil on a granite block: the anvil raised on a drawn block
+    blk = Image.new('RGBA', (32, 64), (0, 0, 0, 0)); d = ImageDraw.Draw(blk)
+    d.polygon([(8, 52), (16, 48), (24, 52), (24, 60), (16, 64), (8, 60)], fill=(96, 96, 100, 255))
+    d.polygon([(8, 52), (16, 56), (16, 64), (8, 60)], fill=(120, 120, 126, 255)); d.polygon([(16, 56), (24, 52), (24, 60), (16, 64)], fill=(78, 78, 84, 255))
+    d.polygon([(8, 52), (16, 48), (24, 52), (16, 56)], fill=(146, 146, 150, 255))
+    a = prop(G.Model(D + 'Anvil.gltf'), shift=(0, -6)); blk.alpha_composite(a); out[38402] = blk
+    cr = prop(Extra(G.Model(D + 'Cauldron.gltf'), [(0.66, 0.40)])); rr = [1.3, 2.1, 0.4]
+    out[38404] = glow(paint(cr, lambda x, y: molten_px(rr, x, y, 0.1)), 16, 57, 15, a=80)
+    out[38406] = paint(prop(Extra(G.Model(D + 'Bucket_Metal.gltf'), [(0.30, 0.20)]), scale=1.5), lambda x, y: (40, 58, 70) if (x + y) % 5 else (70, 96, 110))
+    out[38408] = prop(G.Model(D + 'Whetstone.gltf'))
+    ing = recol(ObjModel(M3 + '/RPG Pack 2/OBJ/Gold_Ingots.obj'), (0.30, 0.31, 0.34)); out[38410] = prop(ing)
+    out[38412] = mould(5)
+    for k in range(4): out[36300 + k] = molten_tile(36300 + k)
+    return out
+
+def sheet(sp, path):
+    objs = [n for n in sorted(sp) if n >= 38000]
+    img = Image.new('RGBA', (len(objs) * 72 + 300, 170), (58, 58, 52, 255)); d = ImageDraw.Draw(img)
+    for k, n in enumerate(objs):
+        img.alpha_composite(sp[n].resize((64, 128), Image.NEAREST), (k * 72 + 4, 6)); d.text((k * 72 + 6, 150), str(n), fill=(255, 255, 255, 255))
+    # a little scene: dark flagstone with a molten channel
+    S2 = wg.Sprites(sys.argv[1]); flag = [S2.get(n) for n in (37020, 37021, 37022, 37023)]
+    N = 7; sc = Image.new('RGBA', (32 * N + 32, 16 * N + 40), (0, 0, 0, 0)); r = random.Random(3)
+    lava = lambda x, y: y == 3 or (x == 1 and y >= 3)
+    for x, y in sorted([(x, y) for x in range(N) for y in range(N)], key=lambda c: (c[0] - c[1], c[0] + c[1])):
+        if lava(x, y): t = sp[36300 + r.randrange(4)]
+        else:
+            m = wg.mask_of(lambda dx, dy: 0 <= x + dx < N and 0 <= y + dy < N and lava(x + dx, y + dy))
+            t = wg.blend(r.choice(flag), sp[36300 + r.randrange(4)], m, seed=x * 31 + y) if m else r.choice(flag)
+        sx = 16 * (x + y); sy = 8 * (x - y) + 8 * N
+        sc.alpha_composite(t, (sx, sy))
+    img.alpha_composite(sc.resize((sc.width * 1, sc.height * 1)), (len(objs) * 72 + 20, 10))
+    img = img.resize((img.width * 2, img.height * 2), Image.NEAREST); img.save(path)
+
+if __name__ == '__main__':
+    sp = build()
+    if '--out' in sys.argv:
+        o = sys.argv[sys.argv.index('--out') + 1]; os.makedirs(o, exist_ok=True)
+        for n, im in sp.items():
+            im.save(os.path.join(o, '%05d.png' % n))
+            if n >= 38000: im.save(os.path.join(o, '%05d.png' % (n + 1)))
+    if '--sheet' in sys.argv: sheet(sp, sys.argv[sys.argv.index('--sheet') + 1])
