@@ -22,7 +22,7 @@ world, quests, the editor, the client and Discord. Merged Nov 10 from the old TO
   the willows, Nov 17). Stopgap: 38112 / 38124 / 38134 / 38144 / 38158 are copies of the stumps (client-dist). Fix in the
   next client build: the new trees -> a stump, 38164 + (sprite & 3).
 
-0. ★ **Quest plan, area by area**: bands A-B done, Fenwatch + Drowned Village (Nov 16) + Barrow Hills + Lizard Hatcheries (Nov 17) live: band C done; Stonehold + its people, the Golem Foundry (Nov 17) and the Ashen Fields (Nov 18) live; next the Gargoyle Spires, the Monastery last: **follow `docs/QUEST_BUILD.md`** - [Quests](#6-quests)
+0. ★ **Quest plan, area by area**: bands A-B done, Fenwatch + Drowned Village (Nov 16) + Barrow Hills + Lizard Hatcheries (Nov 17) live: band C done; Stonehold + its people, the Golem Foundry (Nov 17), the Ashen Fields (Nov 18) and the Gargoyle Spires with Bastion Road (Nov 19) live; next the Monastery (last of band D): **follow `docs/QUEST_BUILD.md`** - [Quests](#6-quests)
 1. ★ **Soulstone levels too low** (MAJOR) - [Fixes](#1-fixes-and-balance)
 2. ★ **Discord**: built Nov 14 (CHANGES.md "Discord"); waiting on Cody's webhooks / bot (HOSTING.md "Discord links")
 3. ★ **Walking speed, speed modes and attack speed** (look at it together first) - [Systems](#2-gameplay-systems)

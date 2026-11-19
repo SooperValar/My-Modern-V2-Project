@@ -1,0 +1,42 @@
+"""Incremental client-dist publish: the last client-dist tree + the client files that are new or changed in size since
+(new sprites), with manifest.txt updated the same way publish_client.py writes it. The player zip is not rebuilt."""
+import os, sys, subprocess, hashlib, tempfile
+client, repo, version = sys.argv[1], sys.argv[2], sys.argv[3]
+def git(*a, env=None, inp=None):
+    return subprocess.run(['git', '-C', repo] + list(a), check=True, capture_output=True, text=True, env=env, input=inp).stdout.strip()
+man = git('show', 'client-dist:manifest.txt').split('\n')
+old = {}
+for l in man:
+    if l.startswith('file '):
+        _, h, sz, rel = l.split(' ', 3); old[rel] = (h, int(sz))
+NEVER = {'merc.dat', 'merc2.dat', 'client.ini', 'client.log', 'launcher.log'}
+changed = []
+for top in ['merc.exe', 'Launcher.exe', 'pnglib.dat', 'pnglib.idx']:
+    p = os.path.join(client, top)
+    if top not in old or os.path.getsize(p) != old[top][1]: changed.append((top, p))
+for d in ('GFX', 'sfx'):
+    for root, _, names in os.walk(os.path.join(client, d)):
+        for n in names:
+            if n in NEVER or n.lower().endswith(('.moa', '.part', '.tmp')): continue
+            p = os.path.join(root, n); rel = os.path.relpath(p, client).replace(os.sep, '/')
+            if rel not in old or os.path.getsize(p) != old[rel][1]: changed.append((rel, p))
+print('new or changed:', len(changed))
+idx = tempfile.mktemp(prefix='cd-index-'); env = dict(os.environ, GIT_INDEX_FILE=idx)
+git('read-tree', 'client-dist', env=env)
+info = []
+for rel, p in changed:
+    data = open(p, 'rb').read(); h = hashlib.sha256(data).hexdigest()
+    blob = subprocess.run(['git', '-C', repo, 'hash-object', '-w', '--stdin'], input=data, capture_output=True, check=True).stdout.decode().strip()
+    info.append('100644 %s\t%s' % (blob, rel)); old[rel] = (h, len(data))
+lines = [l for l in man if l and not l.startswith(('file ', 'base ', 'version '))]
+lines.append('version ' + version)
+for rel in sorted(old, key=lambda r: r.lower()): lines.append('file %s %d %s' % (old[rel][0], old[rel][1], rel))
+lines += [l for l in man if l.startswith('base ')]
+mblob = git('hash-object', '-w', '--stdin', inp='\n'.join(lines) + '\n')
+info.append('100644 %s\tmanifest.txt' % mblob)
+git('update-index', '--add', '--index-info', env=env, inp='\n'.join(info) + '\n')
+tree = git('write-tree', env=env); parent = git('rev-parse', 'refs/heads/client-dist')
+commit = git('commit-tree', tree, '-p', parent, '-m', 'Client files ' + version)
+git('update-ref', 'refs/heads/client-dist', commit, parent)
+os.remove(idx)
+print('client-dist is now %s (+%d files), version %s' % (commit[:7], len(changed), version))

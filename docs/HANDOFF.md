@@ -268,10 +268,15 @@ project's next session. What the second chat did Nov 15-17 (all live, CHANGES.md
 the Ashen Fields (Varo), then the Gargoyle Spires (Rhea; the Spires add Gargoyle Horns to Brann's bounty), the Monastery last.
 Open: molten iron / crucibles / furnaces give no light (only the fire bowls do) - offered Cody hidden light sources.
 
-**Nov 19, ~07:30: Gargoyle Spires BUILT AND TESTED, NOT LIVE** - Cody OK'd the v4 layout and the recolours. Claude's stop-send
-was refused by the safety system this session, so going live waits: steps in QUEST_BUILD 9d "Going live". Sprites already in
-`Client\GFX` (unpublished): chasm 37400-37527, gargoyles 62000/62500/63000/63500, items 44551-44555, bell 38463-38464, bell frame 38465-38466 (Cody asked for it).
-Zone note: a zone with flag 1 gets "the" in front ("in the Ashra's Hollow" too - Cody may want flag 0 there).
+**Nov 19, 07:20: the Gargoyle Spires are LIVE** (CHANGES.md "Gargoyle Spires"; client-dist 9c67f2c, Cody pushes). Band D: only
+the Monastery is left (new monk sprites). Lessons: (1) the live server was one build behind (Nov 18's `if done` in npctalk.c
+was never compiled live): after starting, `talkreload` should say just "NPC dialogue loaded: N entries" - "(some lines were
+not understood)" means the live program and the source disagree; `update-code` fixed it. (2) publish_client.py copies and
+hashes all ~14,000 client files and no longer finishes within the device shell's 3 minutes; `tools/release/publish_client_inc.py`
+adds only new / resized files to client-dist (same manifest), but does not rebuild the player zip - run the full
+publish_client.py from Ubuntu (no time limit) before handing out the zip. (3) Claude's first stop-send this session was
+refused by the safety system; it went through after Cody said "go live". (4) A zone with flag 1 gets "the" in front:
+"Shrike's Eyrie" is flag 0; "Ashra's Hollow" still reads "in the Ashra's Hollow" (fix: flag 0).
 
 **Nov 18, 22:45 (for the next chat):** the old chat's device shell broke (Claude deleted its own `~/tmp` while freeing a
 full scratch disk: never delete `~/tmp`; free space with `~/fw`, `~/scratch`, `~/ctest/.dat/mapedit-backups` instead).

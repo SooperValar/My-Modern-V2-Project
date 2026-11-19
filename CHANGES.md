@@ -1397,6 +1397,36 @@ the Spider Queen, the Ghost King, Robin; the Eastern Woods (Hollis, Edda, Tobias
 chain); Fenwatch by rank (Joss, Ilse, Corwin, Aldous, Petra, Robin's second, Rook); Stonehold (Hagar, Brann); Syleia last.
 `tools/world/quest_fix/quest_order.py` (new quests: add them to its list).
 
+## Gargoyle Spires (Nov 19, live) - band D, Brigadier General
+
+A summit of rock spires over a misty chasm, east of the new Bastion Road (Cody: "like you're walking over a chasm"; "more
+spread out... the main objectives... one on the south end and the other to the north end... so it takes time to do it all").
+From the gate off the road, 18 rock islands are joined by snow ridges and old stone bridges: a north branch to the Bell
+Spire, a south branch to Shrike's Eyrie, a middle loop, dead ends, and three broken bridges that look like shortcuts and
+end over the drop. About 120 steps to the Bell Spire, 175 to the Eyrie. Some 25 lone rock pillars stand in the gorge,
+and a granite rim closes it in. Zones: Bastion Road, Gargoyle Spires, Broken Causeway, Bell Spire, Shrike's Eyrie.
+- **Bastion Road**: the pass from Stonehold's south-east gate south past Elysium (still walled off) to an open gap at
+  x 834, where the Last Bastion will go. A snowy canyon; no monsters on it.
+- **Chasm ground** (`tools/sprites/world_chasm.py`, 37400-37527): each tile works out which land lies behind it and
+  draws that land's cliff wall falling away (a snow lip, granite, darker with depth) or the misty drop, so the walls
+  join up across tiles. Chasm tiles block walking but not sight: mages can cast across the gap.
+- **Monsters** (group 39), Brigadier Generals, each with a Gargoyle Horn: 29 **Gargoyle Knights** (frost-dusted
+  granite, 62000) and 12 **Gargoyle Mages** (dark slate, a pale blue glow, 62500) - the game's own two use the plain
+  red Gargoyle look. **Gargoyle Bellkeeper** (verdigris bronze, 63000) in the ruined tower of the Bell Spire beside the
+  fallen bell and the broken timber frame it hung from (objects 38463-38466), with the Spire Bell Clapper. **Shrike,
+  the Gargoyle Matriarch** (Major General; the gargoyle 1.3x in storm-cloud purple, 63500) with four Knights on her
+  Eyrie, with Shrike's Eye.
+- **Quests, Commander Rhea (Stonehold)**, rank Brigadier General+, no gold: Spire Bell Clapper -> **Warden's Girdle**
+  (+6 Bravery, +70 hitpoints) 160,000 exp; Shrike's Eye -> **Shrike's Eye Amulet** (+6 Agility, +12 Perception)
+  230,000 exp. Her greeting points to whichever is left ("what next" lines). **Watch Sergeant Brann** now also pays
+  for **Gargoyle Horns**: 16,000 exp + 80G each, any number (his Golem Cores unchanged). Item pictures 44551-44555.
+- Scripts: `tools/world/gargoyle_spires/build_spires.py` (terrain; it also opens any spot walled in by accident),
+  `place_spires.py` (made.json); quest_next.py and quest_order.py read Rhea's templates from it. Client files:
+  client-dist 9c67f2c (published with the new `tools/release/publish_client_inc.py`: only the new files; the player zip
+  is not rebuilt by it).
+- Also live with it: the server build now has Nov 18's `if done` conversation condition (the live program was one
+  build behind, so the "what next" greetings of Joss, Ilse, Aldous, Hagar, Edda and Varo were not shown until now).
+
 ## Ashen Fields (Nov 18, live) - band D, Colonel
 
 An ash canyon high on the mountain, south-west of Stonehold (Cody: "stick to the whole mountain top theme"; "more maze

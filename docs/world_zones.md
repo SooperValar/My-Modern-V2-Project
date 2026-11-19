@@ -195,3 +195,42 @@ Shown by `/who`, by NPCs when asked where you are, and in server logs. A spot in
 | 185 | Drowned Village | 416,853 | 504,950 | "in the Drowned Village" |
 | 186 | Flooded Chapel | 454,896 | 468,912 | "in the Flooded Chapel" |
 | 187 | Flooded Chapel | 460,884 | 461,895 | "in the Flooded Chapel" |
+| 188 | King's Barrow | 327,794 | 347,818 | "in the King's Barrow" |
+| 189 | Scribe's Barrow | 346,775 | 358,789 | "in the Scribe's Barrow" |
+| 190 | Barrow Hills | 320,768 | 403,852 | "in the Barrow Hills" |
+| 191 | Hatchery | 511,761 | 567,789 | "in the Hatchery" |
+| 192 | Hatchery | 539,790 | 542,791 | "in the Hatchery" |
+| 193 | Broodmother's Nest | 512,762 | 527,774 | "in the Broodmother's Nest" |
+| 194 | Archmage's Grotto | 565,832 | 592,853 | "in the Archmage's Grotto" |
+| 195 | Lizard Hatcheries | 495,757 | 595,860 | "in the Lizard Hatcheries" |
+| 196 | Watch Barracks | 657,786 | 666,798 | "in the Watch Barracks" |
+| 197 | Granite Hearth | 656,816 | 667,828 | "in the Granite Hearth" |
+| 198 | Hagar's Forge | 671,779 | 679,788 | "in Hagar's Forge" |
+| 199 | Varo's Temple | 662,832 | 677,840 | "in Varo's Temple" |
+| 200 | Trader's House | 692,779 | 699,787 | "in Trader's House" |
+| 201 | Stonehold | 650,775 | 715,845 | "in Stonehold" |
+| 202 | Stonehold Pass | 596,797 | 649,818 | "in the Stonehold Pass" |
+| 203 | Golem Foundry | 659,670 | 715,765 | "in the Golem Foundry" |
+| 204 | Foundry Hall | 663,695 | 707,731 | "in the Foundry Hall" |
+| 205 | Casting Pit | 676,673 | 693,694 | "in the Casting Pit" |
+| 206 | Forgemaster's Forge | 708,719 | 718,730 | "in Forgemaster's Forge" |
+| 207 | Heron Inn | 429,774 | 441,787 | "in Heron Inn" |
+| 208 | Heron Inn | 427,775 | 428,780 | "in Heron Inn" |
+| 209 | Bounty Office | 432,790 | 440,797 | "in the Bounty Office" |
+| 210 | General Store of Fenwatch | 454,775 | 462,783 | "in the General Store of Fenwatch" |
+| 211 | Smithy of Fenwatch | 454,787 | 462,793 | "in the Smithy of Fenwatch" |
+| 212 | Smithy of Fenwatch | 456,794 | 462,795 | "in the Smithy of Fenwatch" |
+| 213 | Rook's House | 466,774 | 473,781 | "in Rook's House" |
+| 214 | Joss's Cottage | 459,805 | 466,812 | "in Joss's Cottage" |
+| 215 | Fenwatch Chapel | 428,806 | 440,818 | "in Fenwatch Chapel" |
+| 216 | Reeves Hall | 428,821 | 439,831 | "in the Reeves Hall" |
+| 217 | Courtyard | 665,732 | 714,764 | "in the Courtyard" |
+| 218 | Ashen Fields | 725,690 | 815,787 | "in the Ashen Fields" |
+| 219 | Ashra's Hollow | 741,689 | 756,704 | "in the Ashra's Hollow" |
+| 220 | Ember Cavern | 793,691 | 815,713 | "in the Ember Cavern" |
+| 221 | Smoking Steps | 788,720 | 800,732 | "in the Smoking Steps" |
+| 222 | Bastion Road | 726,828 | 834,844 | "in the Bastion Road" |
+| 223 | Gargoyle Spires | 742,845 | 830,940 | "in the Gargoyle Spires" |
+| 224 | Broken Causeway | 771,880 | 793,937 | "in the Broken Causeway" |
+| 225 | Bell Spire | 748,920 | 762,934 | "in the Bell Spire" |
+| 226 | Shrike's Eyrie | 807,921 | 823,937 | "in Shrike's Eyrie" |
