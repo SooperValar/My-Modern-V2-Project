@@ -20,6 +20,8 @@
    if rank <op> <v>
    if skill <nr> <op> <v>         the player's skill (0 = doesn't know it; Bartering is 12)
    if gold <op> <silver>          money the player carries
+   if done <t> <op> <v>           how often the player has done item quest <t> (the NPC template, or an extra quest's
+                                  own template; counted for quests with a limit). Nov 18, Cody: "now bring me ..." lines
    if area <text>                 where it happens (the player; for kills: the victim) is in an
                                   area whose name contains this
    answer <text>                  the NPC says it aloud (%s = the player's name, {q2} = quest 2's value)
@@ -110,7 +112,7 @@
 #define MAXEFF 16
 #define POOL (768*1024)
 
-enum { C_QUEST=1, C_HAS, C_HASNOT, C_RANK, C_AREA, C_SKILL, C_GOLD, C_CLASS };
+enum { C_QUEST=1, C_HAS, C_HASNOT, C_RANK, C_AREA, C_SKILL, C_GOLD, C_CLASS, C_DONE };
 
 /* classes, for "if class ..." lines and class rewards of item quests: the character's kindred bits */
 static struct { char *name; unsigned int kin; } classname[]={
@@ -302,6 +304,7 @@ static int parse_cond(struct tcond *c,char *q)
 	if (!strncmp(q,"area ",5)) { c->type=C_AREA; lower(q+5); c->n=pool_add(q+5); return 1; }
 	if (sscanf(q,"skill %d %7s %d",&n,op,&v)==3 && n>=0 && n<50 && parse_op(op)>=0) { c->type=C_SKILL; c->n=n; c->op=parse_op(op); c->v=v; return 1; }
 	if (sscanf(q,"gold %7s %d",op,&v)==2 && parse_op(op)>=0) { c->type=C_GOLD; c->op=parse_op(op); c->v=v; return 1; }
+	if (sscanf(q,"done %d %7s %d",&n,op,&v)==3 && n>0 && n<MAXTCHARS && parse_op(op)>=0) { c->type=C_DONE; c->n=n; c->op=parse_op(op); c->v=v; return 1; }
 	if (!strncmp(q,"class ",6) && class_mask(q+6)) { c->type=C_CLASS; c->op=0; c->n=(int)class_mask(q+6); return 1; }
 	if (!strncmp(q,"!class ",7) && class_mask(q+7)) { c->type=C_CLASS; c->op=1; c->n=(int)class_mask(q+7); return 1; }
 	return 0;
@@ -716,6 +719,7 @@ static int conds_check(struct tcond *cs,int nc,int co,int x,int y)
 			case C_RANK:   if (!cmp_op(points2rank(ch[co].points_tot),c->op,c->v)) return 0; break;
 			case C_SKILL:  if (!cmp_op(ch[co].skill[c->n][0],c->op,c->v)) return 0; break;
 			case C_GOLD:   if (!cmp_op(ch[co].gold,c->op,c->v)) return 0; break;
+			case C_DONE:   if (!cmp_op(quest_count(co,c->n),c->op,c->v)) return 0; break;
 			case C_CLASS:  if (((ch[co].kindred&(unsigned int)c->n)!=0)==(c->op!=0)) return 0; break;	// op 1: "is not"
 
 			case C_AREA:

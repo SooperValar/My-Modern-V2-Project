@@ -1,0 +1,34 @@
+#!/usr/bin/env python3
+""""What next" greetings (Cody, Nov 18: players need to know what to find next). An NPC with two item quests greets a
+player by what he has done: one done -> "now bring me the other, from there"; both done -> thanks. npctalk.dat "when near"
+lines with the new condition "if done <quest template> <op> <n>" (npctalk.c C_DONE). Game stopped:
+    quest_next.py <.dat folder>"""
+import sys, os
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
+from arealib import *
+A = Area(sys.argv[1]); W = A.W
+d = lambda t, op, v: {'type': 'done', 't': t, 'op': op, 'v': v}
+def near(conds, text): return {'when': 'near', 'words': '', 'item': 0, 'conds': conds, 'answers': [text], 'acts': []}
+PAIRS = {   # npc: (first quest, second quest, after first, after second, both)
+ 2142: (2142, 2203, "Thank you for the compass, %s. One more thing: the Sea Golem in the drowned village's flooded chapel has my silver net. Bring it back!",
+        "My net - thank you, %s! Captain Morrow's compass is still out there, on his sunk ship in the drowned village.",
+        "The sea is quieter thanks to you, %s. Mind the nets on your way out."),
+ 2143: (2143, 2204, "The hex-doll burned well, %s. Now Maud's herb pouch - it is on her island in the drowned village too.",
+        "Thank you for the herbs, %s. Maud's hex-doll still curses us - it is on her island in the drowned village.",
+        "The Light keep you, %s. Fenwatch sleeps easier now that Maud is gone."),
+ 2144: (2144, 2271, "Ulfgar's torc - well done, %s. Now the Broodmother: bring me her crown from the hatcheries south of town.",
+        "The Broodmother's crown - well done, %s. Now old Ulfgar: bring me his torc from the Barrow Hills north of town.",
+        "Fenwatch owes you a great deal, %s. Beyond the hatcheries a pass climbs to Stonehold - they could use you there."),
+ 2277: (2277, 2317, "That Heart still burns, %s. Now the big one: the Brass Colossus in the Foundry's casting pit. Bring me its core.",
+        "The Colossus Core - you mad fool, %s. Its Forgemaster still has the Foundry Heart, in his forge. Bring it to me.",
+        "The Foundry is quiet at last, %s. Stonehold is in your debt."),
+}
+qs, npcs = W.talk_load()
+for npc, (a, b, ta, tb, both) in PAIRS.items():
+    keep = [e for e in npcs.get(npc, []) if not (e.get('when') == 'near' and any(c.get('type') == 'done' for c in e.get('conds', [])))]
+    npcs[npc] = [near([d(a, '>=', 1), d(b, '>=', 1)], both), near([d(a, '>=', 1), d(b, '=', 0)], ta), near([d(b, '>=', 1), d(a, '=', 0)], tb)] + keep
+    for s in (ta, tb, both): assert len(s) <= 150, (npc, len(s), s)
+# Huntmaster Edda: after Greyfang's fang (once), she still buys heads
+npcs[2098] = [near([d(2100, '>=', 1)], "Greyfang is gone - well done, %s. I still pay for every wolf and dire wolf head from the Wolfwood.")] + \
+             [e for e in npcs.get(2098, []) if not (e.get('when') == 'near' and any(c.get('type') == 'done' for c in e.get('conds', [])))]
+W.talk_save(qs, npcs); print('what-next lines for', sorted(list(PAIRS) + [2098]))

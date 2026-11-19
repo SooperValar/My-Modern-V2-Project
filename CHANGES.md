@@ -1377,3 +1377,11 @@ five tower-floor NPCs.
 **Fix (Nov 18):** eight greetings in Fenwatch and Stonehold were longer than an NPC text line holds (159 letters) and were
 cut off in game ("...and I will tea"); rewritten shorter, and each extra quest got its own line for `#quest` and the
 Quests page (`quest_intros_new_areas.py`). `arealib` now refuses a greeting over 150 letters.
+
+## "What next" greetings: a new conversation condition (Nov 18)
+
+Cody: players need to know what to find next. New condition for conversation lines: **if done <quest template> <op> <n>**
+(how often the player has done that item quest; npctalk.c `C_DONE`; in the editor's conversation lines as "times the
+player did an item quest"). Used by `tools/world/quest_fix/quest_next.py`: Joss, Ilse, Aldous and Hagar greet a player who
+has done one of their two quests with "now bring me the other, from there", and thank him when both are done (Aldous
+then points to Stonehold); Huntmaster Edda after Greyfang. Tested on the test server (Hagar and Joss in every order).

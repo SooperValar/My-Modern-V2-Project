@@ -374,6 +374,7 @@ def talk_parse(text):
                 elif a[0] == 'area': e['conds'].append({'type': 'area', 's': rest.split(None, 1)[1] if len(a) > 1 else ''})
                 elif a[0] == 'skill': e['conds'].append({'type': 'skill', 'n': int(a[1]), 'op': a[2], 'v': int(a[3])})
                 elif a[0] == 'gold': e['conds'].append({'type': 'gold', 'op': a[1], 'v': int(a[2])})
+                elif a[0] == 'done': e['conds'].append({'type': 'done', 't': int(a[1]), 'op': a[2], 'v': int(a[3])})
                 elif a[0] in ('class', '!class') and len(a) > 1:   # the player's class: names joined by |
                     e['conds'].append({'type': 'class', 'not': a[0] == '!class', 'c': a[1].lower()})
             elif k == 'answer':
@@ -421,6 +422,7 @@ def cond_parse(a, rest):
     if a[0] == 'area': return {'type': 'area', 's': rest.split(None, 1)[1] if len(a) > 1 else ''}
     if a[0] == 'skill': return {'type': 'skill', 'n': int(a[1]), 'op': a[2], 'v': int(a[3])}
     if a[0] == 'gold': return {'type': 'gold', 'op': a[1], 'v': int(a[2])}
+    if a[0] == 'done': return {'type': 'done', 't': int(a[1]), 'op': a[2], 'v': int(a[3])}
     if a[0] in ('class', '!class') and len(a) > 1: return {'type': 'class', 'not': a[0] == '!class', 'c': a[1].lower()}
     return None
 
@@ -435,6 +437,7 @@ def cond_line(c):
     if ty == 'area' and clean(c.get('s', '')): return 'area ' + clean(c['s']).lower()
     if ty == 'skill' and c.get('op') in OPS: return 'skill %d %s %d' % (int(c['n']), c['op'], int(c['v']))
     if ty == 'gold' and c.get('op') in OPS: return 'gold %s %d' % (c['op'], int(c['v']))
+    if ty == 'done' and c.get('op') in OPS and int(c.get('t', 0)) > 0: return 'done %d %s %d' % (int(c['t']), c['op'], int(c['v']))
     if ty == 'class' and re.fullmatch(r'[a-z|]+', str(c.get('c', ''))): return '%sclass %s' % ('!' if c.get('not') else '', c['c'])
     return ''
 
@@ -618,6 +621,7 @@ def talk_text(quests, npcs, names):
                 elif ty == 'area' and clean(c.get('s', '')): out.append('if area ' + clean(c['s']).lower())
                 elif ty == 'skill' and c.get('op') in OPS: out.append('if skill %d %s %d' % (int(c['n']), c['op'], int(c['v'])))
                 elif ty == 'gold' and c.get('op') in OPS: out.append('if gold %s %d' % (c['op'], int(c['v'])))
+                elif ty == 'done' and c.get('op') in OPS and int(c.get('t', 0)) > 0: out.append('if done %d %s %d' % (int(c['t']), c['op'], int(c['v'])))
                 elif ty == 'class' and re.fullmatch(r'[a-z|]+', str(c.get('c', ''))): out.append('if %sclass %s' % ('!' if c.get('not') else '', c['c']))
             for a in e.get('answers', []):
                 if clean(a):
@@ -7629,14 +7633,15 @@ const NPC_TABS = {
       const h = (t) => { const d = document.createElement('div'); d.className = 'lb'; d.style.cssText = 'margin-top:10px;color:var(--dim)'; d.textContent = t; card.append(d); };
       h('Only if');
       e.conds.forEach((cd, i) => {
-        const ty = selS([['quest', 'quest step'], ['has', 'the player carries'], ['hasnot', 'the player does not carry'], ['rank', 'the player\'s rank'], ['skill', 'the player\'s skill'], ['gold', 'the player\'s money (silver)'], ['class', 'the player\'s class'], ['area', e.when === 'kill' ? 'it dies in the area' : 'the player is in the area']], () => cd.type,
-          v => { e.conds[i] = v === 'quest' ? { type: v, n: 1, op: '=', v: 0 } : v === 'rank' ? { type: v, op: '<=', v: 1 } : v === 'skill' ? { type: v, n: 12, op: '>', v: 0 } : v === 'gold' ? { type: v, op: '>=', v: 100 } : v === 'class' ? { type: v, not: false, c: CLASS_OPTS[0][0] } : v === 'area' ? { type: v, s: '' } : { type: v, t: 0 }; tplRender(); });
+        const ty = selS([['quest', 'quest step'], ['has', 'the player carries'], ['hasnot', 'the player does not carry'], ['rank', 'the player\'s rank'], ['skill', 'the player\'s skill'], ['gold', 'the player\'s money (silver)'], ['done', 'times the player did an item quest'], ['class', 'the player\'s class'], ['area', e.when === 'kill' ? 'it dies in the area' : 'the player is in the area']], () => cd.type,
+          v => { e.conds[i] = v === 'quest' ? { type: v, n: 1, op: '=', v: 0 } : v === 'rank' ? { type: v, op: '<=', v: 1 } : v === 'skill' ? { type: v, n: 12, op: '>', v: 0 } : v === 'gold' ? { type: v, op: '>=', v: 100 } : v === 'done' ? { type: v, t: (TP && TP.kind === 'npc' ? +TP.t : 1), op: '>=', v: 1 } : v === 'class' ? { type: v, not: false, c: CLASS_OPTS[0][0] } : v === 'area' ? { type: v, s: '' } : { type: v, t: 0 }; tplRender(); });
         const parts = [ty];
         if (cd.type === 'quest') parts.push(sel(qopts(), () => cd.n, v => cd.n = v), selS(OPN, () => cd.op, v => cd.op = v), num(() => cd.v, v => cd.v = v, 0, 65535));
         else if (cd.type === 'rank') { parts.push(selS(OPN, () => cd.op, v => cd.op = v), sel(RANK_NAMES.map((n2, i2) => [i2, `${i2} · ${n2}`]), () => cd.v, v => cd.v = v)); }
         else if (cd.type === 'skill') parts.push(sel(SKILLS.map((s2, i2) => [i2, s2]), () => cd.n, v => cd.n = v), selS(OPN, () => cd.op, v => cd.op = v), num(() => cd.v, v => cd.v = v, 0, 255), '(0 = doesn\'t know it)');
         else if (cd.type === 'gold') parts.push(selS(OPN, () => cd.op, v => cd.op = v), num(() => cd.v, v => cd.v = v, 0));
         else if (cd.type === 'area') parts.push(areaIn(() => cd.s, v => cd.s = v));
+        else if (cd.type === 'done') parts.push('item quest of template', num(() => cd.t, v => cd.t = v, 1, 65535), selS(OPN, () => cd.op, v => cd.op = v), num(() => cd.v, v => cd.v = v, 0, 255), 'times');
         else if (cd.type === 'class') parts.push(selS([['is', 'is'], ['not', 'is not']], () => cd.not ? 'not' : 'is', v => cd.not = v === 'not'), classChips(() => cd.c, v => { cd.c = v; tplRender(); }));
         else parts.push(ipick(() => cd.t, v => cd.t = v));
         parts.push(xb(() => e.conds.splice(i, 1)));
@@ -9187,7 +9192,7 @@ function killsBox(el) {
     k.req.forEach((cd, j) => {
       const r = document.createElement('div');
       const ty = selS2([['quest', 'quest step'], ['skill', 'skill'], ['has', 'carries the item'], ['hasnot', 'does not carry the item'], ['gold', 'money (silver)'], ['area', 'is in the area']], () => cd.type,
-        v => { k.req[j] = v === 'quest' ? { type: v, n: (QC && QC[0] ? QC[0].n : 1), op: '>=', v: 1 } : v === 'skill' ? { type: v, n: 12, op: '>', v: 0 } : v === 'gold' ? { type: v, op: '>=', v: 100 } : v === 'area' ? { type: v, s: '' } : { type: v, t: 0 }; re(); });
+        v => { k.req[j] = v === 'quest' ? { type: v, n: (QC && QC[0] ? QC[0].n : 1), op: '>=', v: 1 } : v === 'skill' ? { type: v, n: 12, op: '>', v: 0 } : v === 'gold' ? { type: v, op: '>=', v: 100 } : v === 'done' ? { type: v, t: (TP && TP.kind === 'npc' ? +TP.t : 1), op: '>=', v: 1 } : v === 'area' ? { type: v, s: '' } : { type: v, t: 0 }; re(); });
       r.append(ty);
       if (cd.type === 'quest') r.append(sel(qOpts(cd.n), () => cd.n, v => { cd.n = v; re(); }), selS2(OPN2, () => cd.op, v => { cd.op = v; re(); }), num(() => cd.v, v => { cd.v = v; re(); }, 0, 65535));
       else if (cd.type === 'skill') r.append(sel(SKILLS.map((s2, n) => [n, s2]), () => cd.n, v => { cd.n = v; re(); }), selS2(OPN2, () => cd.op, v => { cd.op = v; re(); }), num(() => cd.v, v => { cd.v = v; re(); }, 0, 255), sp('(0 = doesn\'t know it)'));
