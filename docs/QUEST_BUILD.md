@@ -251,8 +251,18 @@ off its east side (about 765,843). Monster group 39 (not undead). Draft shown to
   +Agility, +Perception) 230,000 exp. Brann: Gargoyle Horns 13,000 exp + 65G each (like the cores); his greeting updated.
 - New pictures: item pictures 44551-44555 (horn, clapper, eye, girdle, amulet); objects (cracked bell, gargoyle perch
   statues, wind-carved pinnacles) 38463+. Pole: Brigadier General 60,000 (Cody places it).
-- Questions for Cody: chasms between the spires (black drop) or cliff-walled ridges like the Ashen Fields? Build the whole
-  pass to the Last Bastion now? Recolour the ordinary Knights / Mages too (they are the game's own look)?
+- **Cody's answers (Nov 19, 06:44):** chasms ("like you're walking over a chasm"); build the whole pass now; recolours: Claude's
+  recommendation (Knights frost-dusted granite, Mages dark slate with a pale blue glow, Bellkeeper verdigris bronze, Shrike
+  storm-grey 1.3x red eyes; blocks 62000 / 62500 / 63000 / 63500, a gargoyle recolour fills base+0..447) - shown, his OK pending.
+- **Chasm ground** `tools/sprites/world_chasm.py` -> 37400-37527 (in `Client\GFX`, not published): 37400 + 4*mask + variant,
+  mask = solid ground at x-1 (1), y+1 (2), x-1,y+1 (4), x-2,y+1 (8), x-1,y+2 (16): each pixel looks "up the screen" for
+  the nearest land and draws its cliff wall (snow lip, granite, dark with depth) or the misty drop. Chasm tiles get flag bit 0.
+- **Terrain** `tools/world/gargoyle_spires/build_spires.py` (preview v2 `fenwatch_preview\spires_v2.png`, `spires_v2_bell.png`,
+  run on a scratch copy only, NOT live): Bastion Road (726-834, 828-844, no-monster flag, road ends open at x 834, gate
+  to the Spires at 764-767 / 843-848); nine rock islands (ledges, north spire, junction, south pocket, west spire, bell,
+  south spire, far west, eyrie), snow ridges and flagstone bridges (north spire - west spire bridge broken: a false turn;
+  the Eyrie only by the bridge from the Bell Spire), ~25 lone pillars in the gorge, a granite rim round the box. Zones:
+  Bastion Road, Gargoyle Spires, Broken Causeway, Bell Spire, Shrike's Eyrie. Still to draw: the cracked bell, perch statues.
 
 ## 9c. Exploration points ("poles"): the standard values (Cody, Nov 18 - FINAL; Cody places them himself)
 
