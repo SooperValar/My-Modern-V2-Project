@@ -8,7 +8,8 @@ world_snowgrass.py.
   ash 37100-37103, cinders 37104-37107 (4 variants each)
 Edges on an ASH base (46 each, in the order of world_ground.all_masks()):
   cinders 37108-37153, soft snow (35400) 37154-37199, snowy grass (36100) 37200-37245.
-Edges on a CINDERS base: molten rock (the Foundry's molten iron 36300-36303) 37246-37291.   Next free: 37292
+Edges on a CINDERS base: molten rock (the Foundry's molten iron 36300-36303) 37246-37291 (not used: Cody wants lava),
+  lava (the game's own Fire Cave lava 725-728) 37292-37337.   Next free: 37338
 (36350-36399 is free too; 36400-36409 are the arches).
 Writes tools/sprites/world_ash.json beside this script."""
 import colorsys, json, math, os, random, sys
@@ -18,6 +19,7 @@ import world_ground as wg
 
 ASH, CINDERS = 37100, 37104
 CIN_MOLTEN = 37246
+CIN_LAVA = 37292
 ON_ASH = {'cinders': 37108, 'soft snow': 37154, 'snowy grass': 37200}
 
 
@@ -80,7 +82,10 @@ def build(client):
     molten = [S.get(n) for n in (36300, 36301, 36302, 36303)]; e = {}
     for i, m in enumerate(masks):
         out[CIN_MOLTEN + i] = wg.blend(plain_cin[i % 4], molten[(i // 4) % 4], m, seed=CIN_MOLTEN + m, width=0.36); e[str(m)] = CIN_MOLTEN + i
-    table['cinders_base'] = {'molten': e}
+    lava = [S.get(n) for n in (725, 726, 727, 728)]; e2 = {}
+    for i, m in enumerate(masks):
+        out[CIN_LAVA + i] = wg.blend(plain_cin[i % 4], lava[(i // 4) % 4], m, seed=CIN_LAVA + m, width=0.36); e2[str(m)] = CIN_LAVA + i
+    table['cinders_base'] = {'molten': e, 'lava': e2}; table['plain']['lava'] = [725, 726, 727, 728]
     return out, table
 
 

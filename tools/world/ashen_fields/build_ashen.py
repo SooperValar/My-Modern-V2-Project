@@ -21,8 +21,7 @@ A = Area(sys.argv[1], seed=1180); R = random.Random(1180)
 X0, X1, Y0, Y1 = 725, 815, 690, 787
 CLIFF, BOULDER = [1204, 1206], 1208
 SNOW = [35400, 35401, 35402, 35403]; SNOWY = [36100, 36101, 36102, 36103]
-ASH, CIND = AJ['plain']['ash'], AJ['plain']['cinders']; MOLTEN = FJ['molten']['plain']
-LAVA_STONES = [517, 518, 519]
+ASH, CIND = AJ['plain']['ash'], AJ['plain']['cinders']; LAVA = AJ['plain']['lava']                     # the game's own Fire Cave lava (Cody: lava, not the Foundry's molten iron)
 
 # ---------------------------------------------------------------- the shape: a maze of ravines
 # chambers: name -> (centre, radius, depth 0..1). Cody (Nov 18): "a little more maze like... more than 3 little end rooms,
@@ -115,7 +114,7 @@ for x in range(X0, X1 + 1):
         A.op(op='floor', x=x, y=y, s=R.choice(SNOW if cold else ASH), set=False); A.op(op='object', x=x, y=y, s=R.choice(CLIFF), block=3)
 A.run('ashen fields: ground and cliffs')
 for x, y in lava:
-    A.op(op='floor', x=x, y=y, s=R.choice(MOLTEN), set=False); A.op(op='flag', x=x, y=y, bit=0, mode=1)
+    A.op(op='floor', x=x, y=y, s=R.choice(LAVA), set=False); A.op(op='flag', x=x, y=y, bit=0, mode=1)
 A.run('lava pools')
 # soft edges on the ash: cinders, snow or snowy grass creeping in (as the editor's _autoedge)
 import world_ground as wg
@@ -127,17 +126,19 @@ for x in range(X0, X1 + 1):
             m = wg.mask_of(lambda dx, dy: KIND.get(A.floor(x + dx, y + dy)) == name)
             if m: A.op(op='floor', x=x, y=y, s=AJ['ash_base'][name][str(m)], set=False); break
 A.run('ash edges')
-# molten rock creeping into the cinders round the pools
+# lava creeping into the cinders round the pools
 for x, y in [p for p in canyon if p not in lava]:
     if A.floor(x, y) not in CIND: continue
     m = wg.mask_of(lambda dx, dy: (x + dx, y + dy) in lava)
-    if m: A.op(op='floor', x=x, y=y, s=AJ['cinders_base']['molten'][str(m)], set=False)
+    if m: A.op(op='floor', x=x, y=y, s=AJ['cinders_base']['lava'][str(m)], set=False)
 A.run('lava edges')
 
 # ---------------------------------------------------------------- rocks, charred trees, slag and smoking vents
 CHARRED, STUMPS = OJ['charred tree'], OJ['charred stump']
 VENT_T = [A.item(741, 'Smoking Vent', 'A crack in the rock, breathing hot smoke. Something burns far below.', sprite=[s, 0], light=[110, 0])
           for s in OJ['vent'][0:4:2]]          # two looks, from the fire bowl (it gives light)
+ROCK_T = [A.item(src, 'Cinder Rock', 'A lump of cooled lava, grey with ash. It is still warm.', sprite=[s, 0], value=0)
+          for src, s in zip((517, 518, 519), OJ['cinder rock'])]          # the lava stones in the ash's greys (Cody)
 free = [p for p in canyon if p not in lava and canyon[p][1] > 0.04 and not any((p[0] + dx, p[1] + dy) not in canyon for dx in (-1, 0, 1) for dy in (-1, 0, 1))]
 R.shuffle(free); used = set()
 def far(p, k=3): return all(abs(p[0] - a) + abs(p[1] - b) >= k for a, b in used)
@@ -159,7 +160,7 @@ for kind, n in counts.items():
         elif kind == 'dead': A.op(op='object', x=p[0], y=p[1], s=R.choice(CHARRED), block=1)
         elif kind == 'stump': A.op(op='object', x=p[0], y=p[1], s=R.choice(STUMPS), block=1)
         elif kind == 'vent': A.op(op='place', x=p[0], y=p[1], t=R.choice(VENT_T), fresh=1)
-        else: A.op(op='place', x=p[0], y=p[1], t=R.choice(LAVA_STONES), fresh=1)
+        else: A.op(op='place', x=p[0], y=p[1], t=R.choice(ROCK_T), fresh=1)
 A.run('rocks, charred trees, slag, vents')
 rim = [p for p in canyon if p not in lava and p not in used and canyon[p][0] == 'cavern' and any((p[0] + dx, p[1] + dy) in lava for dx in (-1, 0, 1) for dy in (-1, 0, 1))]
 R.shuffle(rim); k = 0
@@ -173,7 +174,7 @@ A.zone(X0, Y0, X1, Y1, 'Ashen Fields', flag=1)
 A.zone(int(HOLLOW_C[0] - HOLLOW_R - 1), int(HOLLOW_C[1] - HOLLOW_R - 1), int(HOLLOW_C[0] + HOLLOW_R + 1), int(HOLLOW_C[1] + HOLLOW_R + 1), "Ashra's Hollow", flag=1)
 A.zone(int(CAVERN_C[0] - CAVERN_R - 1), int(CAVERN_C[1] - CAVERN_R - 1), min(X1, int(CAVERN_C[0] + CAVERN_R + 1)), int(CAVERN_C[1] + CAVERN_R + 1), 'the Ember Cavern', flag=1)
 c = CH['smoking steps'][0]; A.zone(c[0] - 6, c[1] - 6, c[0] + 6, c[1] + 6, 'the Smoking Steps', flag=1)
-json.dump({'vent_templates': VENT_T, 'canyon': sorted([list(p) + [v[0], round(v[1], 3)] for p, v in canyon.items()]), 'lava': sorted(lava), 'used': sorted(used),
+json.dump({'vent_templates': VENT_T, 'rock_templates': ROCK_T, 'canyon': sorted([list(p) + [v[0], round(v[1], 3)] for p, v in canyon.items()]), 'lava': sorted(lava), 'used': sorted(used),
            'chambers': {k: [v[0], v[1], v[2]] for k, v in CH.items()}}, open(os.path.join(HERE, 'made_terrain.json'), 'w'))
 A.save()
 print('canyon tiles', len(canyon), 'lava', len(lava))

@@ -5,14 +5,16 @@
 
   charred trees 38448, 38450, 38452, 38454 (the MyV2 dead trees 38160-38163, burnt black with a few embers),
   each followed by its charred stump (38449 ...: what hide mode shows, sprite + 1)
-  smoking vents 38456-38459 (a low mound of dark rock, glowing cracks, a wisp of smoke)      Next free: 38460
+  smoking vents 38456-38459 (a low mound of dark rock, glowing cracks, a wisp of smoke)
+  cinder rocks 38460-38462 (the game's lava stones 678 / 682 / 674 in the ash's greys, faint embers: Cody, the black and
+  red ones stood out on the grey ash)      Next free: 38463
 Writes tools/sprites/world_ashen.json beside this script."""
 import colorsys, json, math, os, random, sys
 from PIL import Image, ImageDraw, ImageFilter
 HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, HERE)
 import world_ground as wg
 
-TREES, VENTS = 38448, 38456
+TREES, VENTS, ROCKS = 38448, 38456, 38460
 
 
 def char(im, seed, embers=6):
@@ -33,6 +35,25 @@ def char(im, seed, embers=6):
     for x, y in solid:
         if y > 0 and px[x, y - 1][3] == 0 and r.random() < 0.35:
             c = px[x, y]; px[x, y] = (min(255, c[0] + 60), min(255, c[1] + 58), min(255, c[2] + 56), c[3])
+    return out
+
+
+def ashrock(im, seed):
+    """a lava stone in the ash's greys: charcoal shading, ash on top, its red veins dimmed to a faint ember glow"""
+    r = random.Random(seed); out = im.copy(); px = out.load(); w, h = out.size
+    for y in range(h):
+        for x in range(w):
+            c = px[x, y]
+            if c[3] == 0 or (c[0] > 235 and c[1] < 25 and c[2] > 235): continue
+            hh, ss, v = colorsys.rgb_to_hsv(*[k / 255 for k in c[:3]])
+            if ss > 0.45 and v > 0.35 and (hh < 0.08 or hh > 0.92):          # a red vein
+                px[x, y] = (150, 62, 30, c[3]) if r.random() < 0.7 else (200, 96, 36, c[3]); continue
+            g = 52 + int(v * 110)
+            px[x, y] = (g + 6, g + 3, g, c[3])
+    for y in range(1, h):
+        for x in range(w):
+            if px[x, y][3] and not px[x, y - 1][3] and r.random() < 0.6:
+                c = px[x, y]; px[x, y] = (min(255, c[0] + 40), min(255, c[1] + 39), min(255, c[2] + 37), c[3])
     return out
 
 
@@ -77,8 +98,9 @@ def build(client):
         out[TREES + 2 * k] = char(S.get(38160 + k), TREES + k)
         out[TREES + 2 * k + 1] = char(S.get(38164 + k), TREES + 10 + k, embers=3)
     for k in range(4): out[VENTS + k] = vent(VENTS + k)
+    for k, n in enumerate((678, 682, 674)): out[ROCKS + k] = ashrock(S.get(n), ROCKS + k)
     table = {'charred tree': [TREES + 2 * k for k in range(4)], 'charred stump': [TREES + 2 * k + 1 for k in range(4)],
-             'vent': [VENTS + k for k in range(4)]}
+             'vent': [VENTS + k for k in range(4)], 'cinder rock': [ROCKS + k for k in range(3)]}
     return out, table
 
 
