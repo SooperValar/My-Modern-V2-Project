@@ -287,7 +287,7 @@ off its east side (about 765,843). Monster group 39 (not undead). Draft shown to
 zig-zag Pilgrims' Stair, 1-2 statues per leg; the Cloister; north route Training Yard -> Hall of the Silent Hand (far
 north-east); south route Burial Terrace -> Still Pond (walkable ice) -> Abbot's Sanctum (far south-east); the outer
 terrace loop; dead ends Library, collapsed cells, Hermit's Ledge; ~195 steps to each goal), `place_monastery.py`
-(24 Fallen Monks, 12 Fallen Mystics, Master Kesh Colonel, the Fallen Abbot, Brother Anselm on the gate landing; quests
+(24 Fallen Monks, 12 Fallen Mystics, Master Kesh Colonel, the Fallen Abbot, Brother Anselm at the foot of the stair (Cody, 15:27); quests
 2444 / 2445 in the test run), quest_next / quest_order read monastery/made.json. Looks: no full-figure recolours (Cody) -
 `tools/sprites/unarmed_robes.py`: the Mercenary (5072) with his sword taken out, the clothes recoloured, the skin kept,
 edges cleaned: 64000 Fallen Monk (saffron), 64500 Fallen Mystic (grey), 65000 Kesh (black/red), 45000 the Abbot

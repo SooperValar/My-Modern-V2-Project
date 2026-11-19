@@ -10,7 +10,7 @@ the terrace and the Library; none on Pilgrims' Stair.
   **Master Kesh** (Colonel; the fighter, black and red, 65000) in the Hall of the Silent Hand, with the Silent Hand Sash;
   four monks train with him.  **the Fallen Abbot** (Lieutenant Colonel; the caster, pale and gold, 45000) in the
   Abbot's Sanctum, with the Abbot's Prayer Beads; three mystics keep vigil.
-**Brother Anselm** (friendly; plain undyed robes, 45500) on the gate landing. Quests, Lieutenant Colonel (13)+, no gold:
+**Brother Anselm** (friendly; plain undyed robes, 45500) at the foot of Pilgrims' Stair (Cody: closer to town). Quests, Lieutenant Colonel (13)+, no gold:
 Abbot's Prayer Beads -> **Monk's Wrap** (+5 Agility, +40 endurance; Cody Nov 17, instead of Karate) 96,000 exp;
 Silent Hand Sash -> **Amulet of the Still Mind** (+5 Willpower, +10 Meditate) 96,000 exp.
 Item pictures 44556-44559 (tools/sprites/quest_items/monastery.py)."""
@@ -77,13 +77,13 @@ for x, y in A.spots(3, S, ok=lambda x, y: ok(x, y, ('sanctum',)) and abs(x - ax)
 for n, t in (('monk', monks[0]), ('mystic', mystics[0]), ('kesh', KESH), ('abbot', ABBOT)): print('  %-7s %d %s' % (n, t, A.rank_of(t)))
 print('  monks', len(monks), 'mystics', len(mystics), 'steps -> kesh', steps.get((kx, ky)), '-> abbot', steps.get((ax, ay)))
 # ---------------------------------------------------------------- Brother Anselm (the gate landing) and his quests
-lx, ly = 699, 884
-ANSELM = A.person('Brother Anselm', 25, lx, ly, 2,
-                  "The brothers have fallen, %s. Bring me the Fallen Abbot's prayer beads, from the Sanctum at the south end.",
-                  'A gentle old monk in plain undyed wool, his hands folded. His eyes keep straying to the gate behind him.', shout='Help! Help!')
+lx, ly = 682, 858                                     # Cody: at the foot of Pilgrims' Stair, closer to town (a corner off the way up)
+ANSELM = A.person('Brother Anselm', 25, lx, ly, 1,
+                  "My brothers up this stair have fallen, %s. Bring me the Fallen Abbot's prayer beads, from the Sanctum at the far south end.",
+                  'A gentle old monk in plain undyed wool, his hands folded. His eyes keep straying up the stair behind him.', shout='Help! Help!')
 A.W.apply([{'op': 'ctempset', 't': ANSELM, 'fields': {'sprite': 45500}, 'text': [], 'respawn': True}], 'anselm look')
 A.quest(ANSELM, BEADS, 96000, give=WRAP, lim=1, rmin=13,
-        greet="The brothers have fallen, %s. Bring me the Fallen Abbot's prayer beads, from the Sanctum at the south end.")
+        greet="My brothers up this stair have fallen, %s. Bring me the Fallen Abbot's prayer beads, from the Sanctum at the far south end.")
 ANSELM_SASH = A.extra_quest(ANSELM, SASH, 96000, give=AMULET, lim=1, rmin=13)
 M = {'items': {'beads': BEADS, 'sash': SASH, 'wrap': WRAP, 'amulet': AMULET}, 'monks': monks, 'mystics': mystics, 'kesh': KESH, 'abbot': ABBOT,
      'anselm': ANSELM, 'quests': {'anselm_beads': ANSELM, 'anselm_sash': ANSELM_SASH}}

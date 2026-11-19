@@ -22,6 +22,11 @@ world, quests, the editor, the client and Discord. Merged Nov 10 from the old TO
   the willows, Nov 17). Stopgap: 38112 / 38124 / 38134 / 38144 / 38158 are copies of the stumps (client-dist). Fix in the
   next client build: the new trees -> a stump, 38164 + (sprite & 3).
 
+0. ★ **Recall to each town's temple / chapel** (Cody, Nov 19): a player can change where Recall takes him to the
+   temple or chapel of the town he is in, by using that town's shrine with nothing in his hand (Aston, Fenwatch, Stonehold,
+   the Last Bastion later). Needs server code: the shrine's use driver sets the character's recall point (the temple's
+   spot) and says so; Recall reads it instead of Aston. To work out: which object is each town's shrine, where the recall
+   spot is, whether to charge for it, and what new characters start with (Aston).
 0. ★ **Quest plan, area by area**: bands A-B done, Fenwatch + Drowned Village (Nov 16) + Barrow Hills + Lizard Hatcheries (Nov 17) live: band C done; Stonehold + its people, the Golem Foundry (Nov 17), the Ashen Fields (Nov 18) and the Gargoyle Spires with Bastion Road (Nov 19) live; next the Monastery (last of band D): **follow `docs/QUEST_BUILD.md`** - [Quests](#6-quests)
 1. ★ **Soulstone levels too low** (MAJOR) - [Fixes](#1-fixes-and-balance)
 2. ★ **Discord**: built Nov 14 (CHANGES.md "Discord"); waiting on Cody's webhooks / bot (HOSTING.md "Discord links")
