@@ -1391,3 +1391,8 @@ her hex-doll; her herb pouch went to a new monster, **the Sea Hag** (Sergeant Ma
 sprites 58000+), on the drowned village's shore at 427,927 facing west - `tools/world/drowned_village/wenna.py` then
 `sea_hag.py`. Ilse's greeting, her pouch quest's line and her "what next" lines now send players to the Sea Hag. Checked:
 no other monster carries items for two quests.
+
+**Quest list order (Nov 18):** the Quests page and #quest now run by the journey: Aston's skill teachers (by exp), Mirela,
+the Spider Queen, the Ghost King, Robin; the Eastern Woods (Hollis, Edda, Tobias, Wynn, Edda's later hunts, the Quarry
+chain); Fenwatch by rank (Joss, Ilse, Corwin, Aldous, Petra, Robin's second, Rook); Stonehold (Hagar, Brann); Syleia last.
+`tools/world/quest_fix/quest_order.py` (new quests: add them to its list).
