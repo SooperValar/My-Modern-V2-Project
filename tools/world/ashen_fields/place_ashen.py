@@ -62,7 +62,7 @@ for x, y in A.spots(3, (hc[0] - 7, hc[1] - 7, hc[0] + 7, hc[1] + 7), ok=lambda x
 cc = tuple(CH['cavern'][0]); cav = [p for p in canyon if canyon[p][0] == 'cavern']
 lx, ly = min((p for p in cav if ok(*p, parts=('cavern',), tmin=0) and A.free(*p) and not any((p[0] + dx, p[1] + dy) in lava for dx in (-1, 0, 1) for dy in (-1, 0, 1))),
              key=lambda p: abs(p[0] - cc[0]) + abs(p[1] - cc[1]))
-LORD = A.monster(FLAME, 'the Flame Lord', 'Brigadier General', lx, ly, d=2, items=[EMBER], group=GROUP, sprite=60000, nudge=30,
+LORD = A.monster(FLAME, 'Flame Lord', 'Brigadier General', lx, ly, d=2, items=[EMBER], group=GROUP, sprite=60000, nudge=30,
                  text=['Kneel to the fire.', 'I WAS BURNING BEFORE YOUR KIND HAD NAMES, %s!'],
                  desc='A towering pillar of fire, white-gold at the edges, with a heart of blue flame that hurts to look at. Something glows brighter still inside it.')
 for x, y in A.spots(4, (cc[0] - 10, cc[1] - 10, cc[0] + 10, cc[1] + 10), ok=lambda x, y: ok(x, y, parts=('cavern',), tmin=0) and abs(x - lx) + abs(y - ly) >= 4, apart=4):

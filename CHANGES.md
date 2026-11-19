@@ -1431,3 +1431,7 @@ in the Foundry Hall), 314 arena, 141 bank, 81 no magic, 58 no expire, 82 no mons
 round Fenwatch and the pass. (The Hatcheries' 45 death-trap tiles were already gone when the world came back.) Flags set
 since (the towns' "no monsters", the inns' tavern tiles) are kept. **New areas from now on: clear these flags in the
 build script** (`A.op(op='flag', ..., mode=0)` for bits 5-14, not only 2 and 5).
+
+**No leading "the" (Nov 18, Cody):** zones the Ember Cavern / the Smoking Steps / The Heron Inn -> Ember Cavern, Smoking
+Steps, Heron Inn; monsters the Broodmother / the Brass Colossus / the Flame Lord -> Broodmother, Brass Colossus, Flame
+Lord (their message reference still reads "the Flame Lord" etc., like the game's own monsters). Scripts updated to match.

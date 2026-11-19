@@ -37,10 +37,10 @@ for x, y in A.spots(10, (652, HALL[3] + 2, 738, 762), ok=yard_ok, apart=5):
     golems.append(A.monster(GOLEM, 'Iron Golem', 'Major', x, y, items=[CORE], text=GT, desc=GD, sprite=55000, group=GROUP, pct=(A.last_pct if golems else None)))
 for x, y in A.spots(12, (HALL[0] + 1, HALL[1] + 1, HALL[2] - 1, HALL[3] - 1), ok=hall_ok, apart=5):
     golems.append(A.monster(GOLEM, 'Iron Golem', 'Major', x, y, items=[CORE], text=GT, desc=GD, sprite=55000, group=GROUP, pct=A.last_pct))
-FM = A.monster(GOLEM, 'the Iron Golem Forgemaster', 'Major', 702, 701, d=2, items=[HEART, CORE], group=GROUP, sprite=56000, nudge=40,
+FM = A.monster(GOLEM, 'Iron Golem Forgemaster', 'Major', 702, 701, d=2, items=[HEART, CORE], group=GROUP, sprite=56000, nudge=40,
                text=['The work goes on.', 'You are not on the roster, %s. You will be melted down.'],
                desc='The master of the foundry: an iron golem glowing red-hot at every seam, a hammer for a hand. Something burns in its chest.')
-COL = A.monster(GOLEM, 'the Brass Colossus', 'Lieutenant Colonel', PIT[0], PIT[1], d=2, items=[CCORE, CORE], group=GROUP, sprite=57000, nudge=30,
+COL = A.monster(GOLEM, 'Brass Colossus', 'Lieutenant Colonel', PIT[0], PIT[1], d=2, items=[CCORE, CORE], group=GROUP, sprite=57000, nudge=30,
                 text=['Cast. Cooled. Complete.', 'YOU WILL BE CAST INTO THE MOULD, %s.'],
                 desc='The greatest work of the foundry, cast whole in brass in the pit where it still stands. A great core hums behind its chest-plate.')
 for n, t in (('golem', golems[0]), ('forgemaster', FM), ('colossus', COL)): print('  %-11s %d %s' % (n, t, A.rank_of(t)))

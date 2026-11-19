@@ -172,8 +172,8 @@ A.run('vents by the lava')
 
 A.zone(X0, Y0, X1, Y1, 'Ashen Fields', flag=1)
 A.zone(int(HOLLOW_C[0] - HOLLOW_R - 1), int(HOLLOW_C[1] - HOLLOW_R - 1), int(HOLLOW_C[0] + HOLLOW_R + 1), int(HOLLOW_C[1] + HOLLOW_R + 1), "Ashra's Hollow", flag=1)
-A.zone(int(CAVERN_C[0] - CAVERN_R - 1), int(CAVERN_C[1] - CAVERN_R - 1), min(X1, int(CAVERN_C[0] + CAVERN_R + 1)), int(CAVERN_C[1] + CAVERN_R + 1), 'the Ember Cavern', flag=1)
-c = CH['smoking steps'][0]; A.zone(c[0] - 6, c[1] - 6, c[0] + 6, c[1] + 6, 'the Smoking Steps', flag=1)
+A.zone(int(CAVERN_C[0] - CAVERN_R - 1), int(CAVERN_C[1] - CAVERN_R - 1), min(X1, int(CAVERN_C[0] + CAVERN_R + 1)), int(CAVERN_C[1] + CAVERN_R + 1), 'Ember Cavern', flag=1)
+c = CH['smoking steps'][0]; A.zone(c[0] - 6, c[1] - 6, c[0] + 6, c[1] + 6, 'Smoking Steps', flag=1)
 json.dump({'vent_templates': VENT_T, 'rock_templates': ROCK_T, 'canyon': sorted([list(p) + [v[0], round(v[1], 3)] for p, v in canyon.items()]), 'lava': sorted(lava), 'used': sorted(used),
            'chambers': {k: [v[0], v[1], v[2]] for k, v in CH.items()}}, open(os.path.join(HERE, 'made_terrain.json'), 'w'))
 A.save()

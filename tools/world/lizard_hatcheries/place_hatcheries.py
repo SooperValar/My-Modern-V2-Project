@@ -45,7 +45,7 @@ for x, y in A.spots(12, (X0, Y0, X1, Y1), ok=OUT, apart=6): knights.append(mon('
 for x, y in A.spots(8, (505, 757, 572, 800), ok=lambda x, y: HATCH_CAVE(x, y) and not_nest(x, y), apart=4): knights.append(mon('knight', 406, 'Lizard Knight', 'Captain', x, y, KT, KD))
 for x, y in A.spots(5, (505, 757, 572, 800), ok=lambda x, y: HATCH_CAVE(x, y) and not_nest(x, y), apart=4): mages.append(mon('mage', 413, 'Lizard Archmage', 'Captain', x, y, MT, MD))
 for x, y in A.spots(3, (565, 830, 595, 860), ok=lambda x, y: GROTTO_CAVE(x, y) and abs(x - 579) + abs(y - 840) > 3, apart=3): mages.append(mon('mage', 413, 'Lizard Archmage', 'Captain', x, y, MT, MD))
-BROOD = A.monster(1154, 'the Broodmother', 'Major', NEST_ROOM[0], NEST_ROOM[1], d=4, items=[CROWN, HEAD], sprite=BROOD_LOOK, group=GROUP,
+BROOD = A.monster(1154, 'Broodmother', 'Major', NEST_ROOM[0], NEST_ROOM[1], d=4, items=[CROWN, HEAD], sprite=BROOD_LOOK, group=GROUP,
                   text=['My children will feast.', 'You dare come into my nest, %s? Hsssss!'],
                   desc='The mother of the hatcheries, huge and dark red, a crown of bronze and garnets on her scaled brow.')
 ARCHMAGE = A.monster(413, 'Hatchery Archmage', 'Captain', 579, 840, d=4, items=[PHIAL, HEAD], group=GROUP, nudge=40,

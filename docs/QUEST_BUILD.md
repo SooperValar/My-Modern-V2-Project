@@ -43,6 +43,8 @@ with exp per quest, Reward Guide, New Areas). Their Status column is not kept up
   `tools/world/deploy.sh` does this.
 - **Leave a route to the next hub** in every hub area (a through road ending in an open gap, no tree wall across it),
   and keep to the space plan (section 3).
+- **No leading "the"** in zone names or monster names (Cody, Nov 18: the zone toggle adds it; "the" in the middle is
+  fine). Ask first if a name seems to need it.
 - **Clear the old map flags** in every new area's box (Nov 18: the empty space still had the original map's death traps,
   "no fight", arena, bank... tiles): flag bits 5-14 off, then set only what the area needs.
 - Swimming: full reduction of the under-water loss at Swimming 125 (live).

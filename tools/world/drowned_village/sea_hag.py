@@ -8,7 +8,7 @@ from arealib import *
 HERE = os.path.dirname(os.path.abspath(__file__))
 A = Area(sys.argv[1]); M = json.load(open(os.path.join(HERE, 'made.json'))); T = M['wenna']
 f = A.tc(T)
-A.W.apply([{'op': 'ctempset', 't': T, 'respawn': True, 'fields': {'name': 'the Sea Hag', 'reference': 'the Sea Hag', 'sprite': 58000,
+A.W.apply([{'op': 'ctempset', 't': T, 'respawn': True, 'fields': {'name': 'Sea Hag', 'reference': 'the Sea Hag', 'sprite': 58000,
             'description': "A hag of the drowned shore, grey as the deep and hung with weed. She stole the Bog Witch's herb pouch, and keeps it close."},
             'text': ['Back to the deep with you.', 'The sea takes all, %s - and so do I!']}], 'the Sea Hag')
 for msg in A.W.apply([{'op': 'npcmove', 'x': f['x'], 'y': f['y'], 'tx': 427, 'ty': 927}], 'move')[1]: print('  !', msg)
