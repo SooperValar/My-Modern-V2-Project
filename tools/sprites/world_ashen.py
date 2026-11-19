@@ -46,9 +46,9 @@ def ashrock(im, seed):
             c = px[x, y]
             if c[3] == 0 or (c[0] > 235 and c[1] < 25 and c[2] > 235): continue
             hh, ss, v = colorsys.rgb_to_hsv(*[k / 255 for k in c[:3]])
-            if ss > 0.45 and v > 0.35 and (hh < 0.08 or hh > 0.92):          # a red vein
-                px[x, y] = (150, 62, 30, c[3]) if r.random() < 0.7 else (200, 96, 36, c[3]); continue
-            g = 52 + int(v * 110)
+            if ss > 0.6 and v > 0.55 and (hh < 0.08 or hh > 0.92) and r.random() < 0.35:   # a few of the red veins, dim
+                px[x, y] = (128, 64, 40, c[3]) if r.random() < 0.75 else (190, 92, 40, c[3]); continue
+            g = 78 + int(v * 90)
             px[x, y] = (g + 6, g + 3, g, c[3])
     for y in range(1, h):
         for x in range(w):
