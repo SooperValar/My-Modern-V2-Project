@@ -32,6 +32,8 @@ RAMPS = {
     'iron': ((14, 16, 20), (72, 76, 86), (170, 176, 188)),            # Iron Golem (Golem Foundry): the Golem, dark forged iron
     'forgemaster': ((24, 10, 6), (96, 60, 46), (255, 168, 72)),      # the Iron Golem Forgemaster: iron glowing hot at the edges
     'brass': ((44, 26, 6), (164, 116, 40), (252, 222, 128)),         # the Brass Colossus: polished brass
+    'seahag': ((6, 26, 30), (46, 112, 104), (186, 226, 204)),        # the Sea Hag (Drowned Village): the Mage (6096), sea-green and pale
+    'seahag2': ((14, 22, 34), (70, 96, 112), (196, 210, 200)),       # the Sea Hag, the greyer, drowned choice
 }
 
 
