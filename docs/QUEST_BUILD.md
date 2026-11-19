@@ -43,6 +43,8 @@ with exp per quest, Reward Guide, New Areas). Their Status column is not kept up
   `tools/world/deploy.sh` does this.
 - **Leave a route to the next hub** in every hub area (a through road ending in an open gap, no tree wall across it),
   and keep to the space plan (section 3).
+- **Clear the old map flags** in every new area's box (Nov 18: the empty space still had the original map's death traps,
+  "no fight", arena, bank... tiles): flag bits 5-14 off, then set only what the area needs.
 - Swimming: full reduction of the under-water loss at Swimming 125 (live).
 - Server code: edit in BOTH `Server\` (Windows) and the project's `server/`, keep them identical (cmp), test on the
   test server first. Commit every change (Cody pushes). After each commit move `.git/HEAD.lock`, `.git/index.lock`,
