@@ -257,11 +257,16 @@ off its east side (about 765,843). Monster group 39 (not undead). Draft shown to
 - **Chasm ground** `tools/sprites/world_chasm.py` -> 37400-37527 (in `Client\GFX`, not published): 37400 + 4*mask + variant,
   mask = solid ground at x-1 (1), y+1 (2), x-1,y+1 (4), x-2,y+1 (8), x-1,y+2 (16): each pixel looks "up the screen" for
   the nearest land and draws its cliff wall (snow lip, granite, dark with depth) or the misty drop. Chasm tiles get flag bit 0.
-- **Terrain** `tools/world/gargoyle_spires/build_spires.py` (preview v2 `fenwatch_preview\spires_v2.png`, `spires_v2_bell.png`,
+- **Cody (Nov 19, 06:56): more spread out, more to the north, the two goals far apart** -> v4: box widened north to x 742
+  (the Monastery box ends at 740), a thinner rim, 18 islands: the **Bell Spire at the north end** (755,927), reached by the north
+  branch (ledges - n1 - n2 - n3 - n4 - bell), **Shrike's Eyrie at the south end** (815,929) by the south branch (ledges - s1 - s3 -
+  s4 - s5 - s6 - s7 - eyrie, the only way in); a middle loop (s3 - m1 - n3) and dead ends (s2, m3, n hook); three broken
+  bridges (m2 - bell, s6 - m2, n hook - m2) as false turns. Checked: every walkable tile reachable from the gate with straight
+  steps (the script opens closed pockets itself); about 110 steps to the Bell Spire, 170 to the Eyrie.
+- **Terrain** `tools/world/gargoyle_spires/build_spires.py` (preview v4 `fenwatch_preview\spires_v4.png`, `_bell`, `_eyrie`; earlier v2,
   run on a scratch copy only, NOT live): Bastion Road (726-834, 828-844, no-monster flag, road ends open at x 834, gate
   to the Spires at 764-767 / 843-848); nine rock islands (ledges, north spire, junction, south pocket, west spire, bell,
-  south spire, far west, eyrie), snow ridges and flagstone bridges (north spire - west spire bridge broken: a false turn;
-  the Eyrie only by the bridge from the Bell Spire), ~25 lone pillars in the gorge, a granite rim round the box. Zones:
+  ...: replaced by the v4 layout above), snow ridges and flagstone bridges, ~25 lone pillars in the gorge, a granite rim round the box. Zones:
   Bastion Road, Gargoyle Spires, Broken Causeway, Bell Spire, Shrike's Eyrie. Still to draw: the cracked bell, perch statues.
 
 ## 9c. Exploration points ("poles"): the standard values (Cody, Nov 18 - FINAL; Cody places them himself)

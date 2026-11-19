@@ -268,7 +268,7 @@ project's next session. What the second chat did Nov 15-17 (all live, CHANGES.md
 the Ashen Fields (Varo), then the Gargoyle Spires (Rhea; the Spires add Gargoyle Horns to Brann's bounty), the Monastery last.
 Open: molten iron / crucibles / furnaces give no light (only the fire bowls do) - offered Cody hidden light sources.
 
-**Nov 19, morning: Gargoyle Spires terrain preview v2 shown** (chasm ground 37400-37527 in GFX, unpublished; QUEST_BUILD 9d).
+**Nov 19, morning: Gargoyle Spires terrain preview v4 shown** (Bell Spire north end, Eyrie south end) (chasm ground 37400-37527 in GFX, unpublished; QUEST_BUILD 9d).
 Waiting for Cody's OK on the layout and the recolours; then monsters / items / quests (place_spires.py), test, live.
 
 **Nov 18, 22:45 (for the next chat):** the old chat's device shell broke (Claude deleted its own `~/tmp` while freeing a

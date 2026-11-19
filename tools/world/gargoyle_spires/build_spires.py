@@ -17,7 +17,7 @@ from arealib import *
 HERE = os.path.dirname(os.path.abspath(__file__)); SP = os.path.join(HERE, '..', '..', 'sprites')
 CJ = json.load(open(os.path.join(SP, 'world_chasm.json')))
 A = Area(sys.argv[1], seed=1190); R = random.Random(1190)
-X0, X1, Y0, Y1 = 745, 830, 845, 940                        # the Spires (space plan)
+X0, X1, Y0, Y1 = 742, 830, 845, 940                        # the Spires (space plan 745-830; Cody: more to the north -> 742, the Monastery box ends at 740)
 PX0, PX1, PY0, PY1 = 716, 834, 828, 842                    # the pass to the Last Bastion
 CLIFF, BOULDER = [1204, 1206], 1208
 SNOW = [35400, 35401, 35402, 35403]; SNOWY = [36100, 36101, 36102, 36103]
@@ -31,14 +31,25 @@ road = {(x, pass_y(x) + d) for x in range(PX0, PX1 + 1) for d in (-1, 0, 1)}
 
 # ---------------------------------------------------------------- the Spires: islands and the ways between them
 # name -> (centre, radius, pinnacle radius: cliff blocks in the middle, a spire of rock)
-IS = {'ledges': ((766, 853), 7.0, 0), 'north spire': ((752, 877), 4.2, 1.6), 'junction': ((777, 875), 4.6, 0),
-      'south pocket': ((804, 864), 4.0, 1.5), 'west spire': ((760, 904), 4.3, 1.6), 'bell': ((789, 906), 7.0, 0),
-      'south spire': ((815, 889), 3.6, 1.3), 'far west': ((753, 929), 3.6, 1.4), 'eyrie': ((815, 927), 7.6, 0)}
+# Cody (Nov 19): more spread out, more to the north; the two goals far apart (the Bell Spire at the north end, Shrike's
+# Eyrie at the south end) - make the most of the space so it takes time to do it all. Two long branches from the gate,
+# a middle loop, false turns (broken bridges) and dead ends.
+IS = {'ledges': ((764, 852), 5.5, 0),
+      # north branch -> the Bell Spire
+      'n1': ((751, 866), 3.5, 0), 'n2': ((747, 883), 3.0, 1.1), 'n3': ((759, 896), 3.6, 1.4), 'n4': ((748, 909), 3.0, 0),
+      'n hook': ((767, 916), 2.8, 1.0), 'bell': ((755, 927), 6.5, 0),
+      # the middle: a loop and dead ends
+      'm1': ((779, 889), 4.0, 0), 'm2': ((786, 911), 3.5, 1.2), 'm3': ((775, 932), 3.0, 1.0),
+      # south branch -> Shrike's Eyrie
+      's1': ((782, 858), 3.5, 0), 's2': ((797, 851), 2.8, 1.0), 's3': ((796, 872), 4.0, 0), 's4': ((812, 864), 3.2, 1.2),
+      's5': ((822, 882), 3.2, 1.2), 's6': ((808, 897), 3.5, 0), 's7': ((822, 911), 3.0, 1.0), 'eyrie': ((815, 929), 6.6, 0)}
 # (a, b, width 0 = one tile / 1 = two, kind: ridge (snow) | bridge (stone) | broken (a bridge with a gap in the middle))
-WAYS = [('ledges', 'north spire', 1, 'ridge'), ('ledges', 'junction', 1, 'ridge'), ('junction', 'west spire', 0, 'ridge'),
-        ('junction', 'south pocket', 1, 'bridge'), ('south pocket', 'south spire', 0, 'ridge'), ('south spire', 'bell', 1, 'bridge'),
-        ('west spire', 'bell', 1, 'ridge'), ('west spire', 'far west', 0, 'ridge'), ('north spire', 'west spire', 1, 'broken'),
-        ('bell', 'eyrie', 1, 'bridge')]
+WAYS = [('ledges', 'n1', 1, 'ridge'), ('n1', 'n2', 0, 'ridge'), ('n2', 'n3', 1, 'bridge'), ('n3', 'n4', 0, 'ridge'),
+        ('n4', 'bell', 1, 'bridge'), ('n3', 'n hook', 0, 'ridge'),
+        ('ledges', 's1', 1, 'ridge'), ('s1', 's2', 0, 'ridge'), ('s1', 's3', 1, 'bridge'), ('s3', 's4', 0, 'ridge'),
+        ('s4', 's5', 1, 'ridge'), ('s5', 's6', 0, 'bridge'), ('s6', 's7', 0, 'ridge'), ('s7', 'eyrie', 1, 'bridge'),
+        ('s3', 'm1', 1, 'ridge'), ('m1', 'n3', 0, 'ridge'), ('m1', 'm2', 1, 'bridge'), ('m2', 'm3', 0, 'ridge'),
+        ('m2', 'bell', 1, 'broken'), ('s6', 'm2', 1, 'broken'), ('n hook', 'm2', 0, 'broken')]
 
 def blob(c, r, x, y, k=0.16):
     a = math.atan2(y - c[1], x - c[0]); f = 1 + k * math.sin(3 * a + PH[0]) + 0.6 * k * math.sin(5 * a + PH[1])
@@ -85,7 +96,7 @@ while len([1 for _ in pillars]) < 95 and tries < 4000:
 # the far rim: granite on snow round the box, 2-4 tiles deep, ragged
 def rim(x, y):
     d = min(x - X0, X1 - x, y - Y0, Y1 - y)
-    return d < 2.5 + 1.2 * (math.sin(x * 0.41 + PH[2]) * math.sin(y * 0.37 + PH[3]))
+    return d < 1.7 + 0.9 * (math.sin(x * 0.41 + PH[2]) * math.sin(y * 0.37 + PH[3]))
 inbox = lambda x, y: X0 <= x <= X1 and Y0 <= y <= Y1
 
 # ---------------------------------------------------------------- write it
@@ -133,7 +144,8 @@ for (x, y) in [p for p in land if part.get(p) == 'bell']:
     if d <= 4.6: A.op(op='floor', x=x, y=y, s=R.choice(FLAGSTONE), set=False)
     if 3.9 <= d <= 4.6:
         a = math.degrees(math.atan2(y - bc[1], x - bc[0])) % 360
-        door = min(abs(a - 270), abs(a - 180), abs(a - 45)) < 18      # gaps toward the ways in (west, north) and the Eyrie bridge
+        dirs = [math.degrees(math.atan2(IS[o][0][1] - bc[1], IS[o][0][0] - bc[0])) % 360 for w in WAYS for o in w[:2] if 'bell' in w[:2] and o != 'bell']
+        door = min(min(abs(a - t), 360 - abs(a - t)) for t in dirs) < 34      # gaps toward every way in (wide enough to walk straight in)
         if not door and R.random() < 0.72: A.op(op='object', x=x, y=y, s=R.choice(W_CRACKED), block=3); tower.add((x, y))
 used |= tower
 ec = IS['eyrie'][0]
@@ -143,19 +155,43 @@ for (x, y) in [p for p in land if part.get(p) == 'eyrie']:
         A.op(op='object', x=x, y=y, s=R.choice(CLIFF + [BOULDER]), block=3); used.add((x, y))
 A.run('spires, tower, crags')
 # a few boulders and snowy pines on the bigger islands, kept off the ways and their ends
-open_ = [p for p in land if part.get(p) in ('ledges', 'junction', 'west spire', 'north spire', 'far west') and p not in used
+open_ = [p for p in land if part.get(p) not in ('bell', 'eyrie', 'way', None) and p not in used
          and all((p[0] + dx, p[1] + dy) in land and part.get((p[0] + dx, p[1] + dy)) != 'way' for dx in (-1, 0, 1) for dy in (-1, 0, 1))
          and p not in GATE]
 R.shuffle(open_); n = 0
 for p in open_:
-    if n >= 14: break
+    if n >= 20: break
     if any(abs(p[0] - a) + abs(p[1] - b) < 4 for a, b in used): continue
     s = R.choice([BOULDER] + SNOWPINE); A.op(op='object', x=p[0], y=p[1], s=s, block=3 if s == BOULDER else 1); used.add(p); n += 1
 A.run('boulders and pines')
+# no closed pockets: walk the islands from the gate (straight steps only); while a walkable tile can't be reached, take away
+# a tower wall / crag / boulder between it and the reached ground
+from collections import deque
+GATE0 = (765, 846)
+def reach():
+    walk = {p for p in land if p not in used}; D = {GATE0}; q = deque([GATE0])
+    while q:
+        p = q.popleft()
+        for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+            n = (p[0] + dx, p[1] + dy)
+            if n in walk and n not in D: D.add(n); q.append(n)
+    return walk, D
+opened = 0
+while True:
+    walk, D = reach(); lost = walk - D
+    if not lost: break
+    cut = None
+    for p in sorted(used & set(land)):
+        nb = [(p[0] + dx, p[1] + dy) for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1))]
+        if any(n in D for n in nb) and any(n in lost for n in nb) and part.get(p) in ('bell', 'eyrie') or (any(n in D for n in nb) and any(n in lost for n in nb) and p not in pillars):
+            cut = p; break
+    if not cut: print('  ! closed pockets left:', len(lost)); break
+    A.op(op='erase', x=cut[0], y=cut[1]); A.run('open a pocket'); used.discard(cut); tower.discard(cut); opened += 1
+print('pockets opened', opened)
 
 A.zone(726, PY0, PX1, Y0 - 1, 'Bastion Road', flag=1)
 A.zone(X0, Y0, X1, Y1, 'Gargoyle Spires', flag=1)
-A.zone(770, 862, 812, 898, 'Broken Causeway', flag=1)
+A.zone(771, 880, 793, 937, 'Broken Causeway', flag=1)
 A.zone(bc[0] - 7, bc[1] - 7, bc[0] + 7, bc[1] + 7, 'Bell Spire', flag=1)
 A.zone(ec[0] - 8, ec[1] - 8, min(X1, ec[0] + 8), min(Y1, ec[1] + 8), "Shrike's Eyrie", flag=1)
 json.dump({'land': sorted([list(p) + [part[p]] for p in land]), 'bridge': sorted(bridge), 'used': sorted(used), 'tower': sorted(tower),
