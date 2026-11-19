@@ -271,7 +271,9 @@ Open: molten iron / crucibles / furnaces give no light (only the fire bowls do) 
 **Nov 18: Golem Foundry LIVE; quest text pass done.** Foundry (CHANGES.md "Golem Foundry"); exploration-pole table final
 (QUEST_BUILD 9c, 34 vanilla poles raised); every quest greeting says what and where (159-char limit, arealib asserts);
 "what next" lines via the new `if done` condition; the Sea Hag (template 2318, sprites 58000+, 427,927 facing west) now
-holds Maud's herb pouch (live; client-dist 2882854, Cody pushes). Next: the Ashen Fields when Cody says go.
+holds Maud's herb pouch (live; client-dist 2882854, Cody pushes).
+Lessons: the editor lists GFX sprites only when it starts, so after new sprites send `reload-editor`. A monster that is dead
+in Server\.dat (waiting on a respawn) has no character for the editor to show; a gated stop-send brings the live one back. Next: the Ashen Fields when Cody says go.
 
 **Nov 17, 19:55: Stonehold is LIVE** - snowy grass (sprites 36100-36287, client-dist b73a33d, Cody pushes), the townspeople,
 Selwyn's rotating shop, ten gate guards, waypoint 7; the editor knows snowy grass. Snowy pines live too (20:11). Selwyn: priced by level + tier more than metal
