@@ -144,8 +144,8 @@ put(BOOKSTAND, 710, 914, block=1)
 for x, y in ((737, 928), (737, 945), (729, 945), (733, 937)): put(CANDLES, x, y, block=1)          # sanctum
 A.run('furniture')
 # statues (Cody): set into the stair's east wall, facing the path (west); two by the raked garden, a pair at each goal's door
-for (ya, xa, xb) in ((858, 675, 679), (863, 676, 694), (868, 676, 694), (873, 676, 694)):
-    for x in range(xa, xb + 1, 4):
+for ya, xs in ((858, (677,)), (863, (680, 690)), (868, (684,)), (873, (679, 691))):          # Cody: just 1 or 2 per leg
+    for x in xs:
         if (x, ya + 2) not in outdoor and inbox(x, ya + 2): put(STATUE['W'], x, ya + 2)
 for x, y, d in ((693, 900, 'S'), (693, 907, 'S'), (703, 900, 'N'), (703, 907, 'N'),
                 (656, 916, 'W'), (660, 916, 'W'), (729, 923, 'W'), (733, 923, 'W')):
