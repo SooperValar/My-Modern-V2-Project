@@ -181,7 +181,7 @@ stopped via `stop-send`, then `update-world` and `reload-editor`):
 - Tested from outside (laptop on a phone hotspot) and the launcher's update path (version 1 -> 2).
 
 ## Sprite numbers (Nov 12)
-Taken since (Nov 15-19): 37400-37527 chasm ground (Spires); 62000 / 62500 / 63000 / 63500 Spires gargoyles (next 64000); item pictures 44551-44555 (next 44556); bell 38463-38464 (next object 38465); 43000-44001 wolves (3D, own shadow); 44500-44541 heads and quest items (next 44542); 38300-38307 lizard eggs (world objects); 48000-48025 wall
+Taken since (Nov 15-19): 37400-37527 chasm ground (Spires); 62000 / 62500 / 63000 / 63500 Spires gargoyles (next 64000); item pictures 44551-44555 (next 44556); bell 38463-38464, bell frame 38465-38466 (next object 38467); 43000-44001 wolves (3D, own shadow); 44500-44541 heads and quest items (next 44542); 38300-38307 lizard eggs (world objects); 48000-48025 wall
 decorations; 50000+ recoloured monsters (Drowned Sailor 50000, Bog-man 50500, Sea Golem 51000, Barrow Wight 52000, Broodmother 53000, Lizard Hatchling 54000; next 55000). Check
 `Client\GFX` before taking a number.
 
@@ -270,7 +270,7 @@ Open: molten iron / crucibles / furnaces give no light (only the fire bowls do) 
 
 **Nov 19, ~07:30: Gargoyle Spires BUILT AND TESTED, NOT LIVE** - Cody OK'd the v4 layout and the recolours. Claude's stop-send
 was refused by the safety system this session, so going live waits: steps in QUEST_BUILD 9d "Going live". Sprites already in
-`Client\GFX` (unpublished): chasm 37400-37527, gargoyles 62000/62500/63000/63500, items 44551-44555, bell 38463-38464.
+`Client\GFX` (unpublished): chasm 37400-37527, gargoyles 62000/62500/63000/63500, items 44551-44555, bell 38463-38464, bell frame 38465-38466 (Cody asked for it).
 Zone note: a zone with flag 1 gets "the" in front ("in the Ashra's Hollow" too - Cody may want flag 0 there).
 
 **Nov 18, 22:45 (for the next chat):** the old chat's device shell broke (Claude deleted its own `~/tmp` while freeing a

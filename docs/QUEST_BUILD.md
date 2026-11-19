@@ -238,7 +238,7 @@ Stonehold's west gate (681,766) and runs west (-y) into it. Monster group 37 (no
 on `Server\.dat` in this order: `gargoyle_spires/build_spires.py`, `place_spires.py`, `quest_fix/quest_next.py`,
 `quest_fix/quest_order.py` -> relight (copy the .dat to `~/ctest/.dat`, `./server light > light.txt`, map.dat back) ->
 update-world -> reload-editor -> `log` for "Could not drop" -> `tools/release/publish_client.py` (chasm 37400-37527,
-gargoyles 62000-63999, items 44551-44555, bell 38463-38464; Cody pushes client-dist) -> CHANGES.md "Gargoyle Spires".
+gargoyles 62000-63999, items 44551-44555, bell 38463-38464 and its broken frame 38465-38466; Cody pushes client-dist) -> CHANGES.md "Gargoyle Spires".
 Tested on the test server (Nov 19): no spawn failures; zones; questgive Rhea 2279 (+160,000), her second quest (+230,000),
 Brann's horns (+16,000 +80G, repeatable) and his cores (unchanged). Template numbers from the test run: items 2078-2082
 (horn, clapper, eye, girdle, amulet), NPCs 2361-2405 (29 Knights, 12 Mages, Bellkeeper 2395, Shrike 2399, Rhea's second

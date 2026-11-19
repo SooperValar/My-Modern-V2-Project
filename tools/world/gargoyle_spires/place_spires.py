@@ -7,7 +7,7 @@ Monsters (group 39), Brigadier Generals, every one with a Gargoyle Horn (Watch S
 (the game's Gargoyle Knight, 965, in frost-dusted granite: 62000) and Gargoyle Mages (967, dark slate with a pale blue glow:
 62500) on the islands and some of the ridges and bridges, fewer near the gate, more deeper in.
   the Gargoyle Bellkeeper (a Brigadier General Gargoyle Mage in verdigris bronze, 63000) in the ruined tower of the Bell
-  Spire (north end) beside the fallen bell, with the Spire Bell Clapper; two Knights and a Mage guard the island.
+  Spire (north end) beside the fallen bell and the broken frame it hung from, with the Spire Bell Clapper; two Knights and a Mage guard the island.
   Shrike, the Gargoyle Matriarch (Major General; the Knight 1.3x in storm-cloud purple-grey, 63500) on Shrike's Eyrie
   (south end), with Shrike's Eye; four Knights guard her.
 Quests (Commander Rhea, Stonehold), Brigadier General (15)+, no gold: Spire Bell Clapper -> Warden's Girdle (+6 Bravery,
@@ -23,7 +23,7 @@ A = Area(sys.argv[1], seed=1191); random.seed(1191); R = random.Random(1191)
 T = json.load(open(os.path.join(HERE, 'made_terrain.json')))
 KNIGHT, MAGE, BELT_SRC, AMULET_SRC = 965, 967, 2004, 191
 GROUP, SK_PERC = 39, 9
-BELL_OBJ = 38463
+BELL_OBJ, BELL_FRAME = 38463, 38465
 land = {(a, b): c for a, b, c in T['land']}; used = {tuple(p) for p in T['used']}; IS = T['islands']
 GATE0 = (765, 846)
 walk = {p for p in land if p not in used}
@@ -73,6 +73,18 @@ bc = tuple(IS['bell'][0]); bell_t = [p for p in walk if land[p] == 'bell']
 bx, by = min((p for p in bell_t if ok(*p, parts=('bell',), edge=False)), key=lambda p: abs(p[0] - bc[0]) + abs(p[1] - bc[1]))
 obj = min((p for p in bell_t if ok(*p, parts=('bell',)) and 2 <= abs(p[0] - bx) + abs(p[1] - by) <= 3), key=lambda p: abs(p[0] - bc[0] - 1) + abs(p[1] - bc[1] - 1))
 A.op(op='object', x=obj[0], y=obj[1], s=BELL_OBJ, block=3); A.run('the fallen bell'); A.used.add(obj)
+# the frame it hung from (Cody, Nov 19): on the tile behind the bell (screen up: x-1,y+1, else x-1 or y+1), never closing a way
+def still_all(block):
+    w = walk - set(block); S = {GATE0}; qq = deque([GATE0])
+    while qq:
+        p = qq.popleft()
+        for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+            n = (p[0] + dx, p[1] + dy)
+            if n in w and n not in S: S.add(n); qq.append(n)
+    return len(S) == len(w)
+FR = next(p for p in ((obj[0] - 1, obj[1] + 1), (obj[0] - 1, obj[1]), (obj[0], obj[1] + 1))
+          if p in walk and land.get(p) == 'bell' and A.free(*p) and p != (bx, by) and still_all([obj, p]))
+A.op(op='object', x=FR[0], y=FR[1], s=BELL_FRAME, block=3); A.run('the bell frame'); A.used.add(FR)
 KEEPER = A.monster(MAGE, 'Gargoyle Bellkeeper', 'Brigadier General', bx, by, d=3, items=[CLAPPER, HORN], group=GROUP, sprite=63000, nudge=40,
                    text=['The bell will ring again.', 'I TOLL FOR YOU, %s!'],
                    desc='An old gargoyle gone green as bronze, its wings folded like a bell\'s lip. It hums one low note, over and over. An iron clapper hangs from its belt.')
@@ -98,6 +110,6 @@ greet = 'The Watch pays for what it does not have to fight, %s: Golem Cores from
 assert len(greet) <= 150, len(greet)
 A.W.apply([{'op': 'ctempset', 't': BRANN, 'fields': {}, 'text': [None, None, greet], 'respawn': True}], 'brann greeting')
 M = {'items': {'horn': HORN, 'clapper': CLAPPER, 'eye': EYE, 'girdle': GIRDLE, 'amulet': AMULET}, 'knights': knights, 'mages': mages,
-     'bellkeeper': KEEPER, 'shrike': SHRIKE, 'bell': list(obj),
+     'bellkeeper': KEEPER, 'shrike': SHRIKE, 'bell': list(obj), 'bell_frame': list(FR),
      'quests': {'rhea_clapper': RHEA, 'rhea_eye': RHEA_EYE, 'brann_horns': BRANN_HORNS}}
 A.save(M, HERE); print(M)
