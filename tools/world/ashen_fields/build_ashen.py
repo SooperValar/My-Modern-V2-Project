@@ -21,7 +21,7 @@ A = Area(sys.argv[1], seed=1180); R = random.Random(1180)
 X0, X1, Y0, Y1 = 725, 815, 690, 787
 CLIFF, BOULDER = [1204, 1206], 1208
 SNOW = [35400, 35401, 35402, 35403]; SNOWY = [36100, 36101, 36102, 36103]
-ASH, CIND = AJ['plain']['ash'], AJ['plain']['cinders']; LAVA = AJ['plain']['lava']                     # the game's own Fire Cave lava (Cody: lava, not the Foundry's molten iron)
+ASH, CIND = AJ['plain']['ash'], AJ['plain']['cinders']; LAVA = FJ['molten']['plain']                   # the Foundry's molten iron (Cody tried the game's lava: the molten iron looks better)
 
 # ---------------------------------------------------------------- the shape: a maze of ravines
 # chambers: name -> (centre, radius, depth 0..1). Cody (Nov 18): "a little more maze like... more than 3 little end rooms,
@@ -130,7 +130,7 @@ A.run('ash edges')
 for x, y in [p for p in canyon if p not in lava]:
     if A.floor(x, y) not in CIND: continue
     m = wg.mask_of(lambda dx, dy: (x + dx, y + dy) in lava)
-    if m: A.op(op='floor', x=x, y=y, s=AJ['cinders_base']['lava'][str(m)], set=False)
+    if m: A.op(op='floor', x=x, y=y, s=AJ['cinders_base']['molten'][str(m)], set=False)
 A.run('lava edges')
 
 # ---------------------------------------------------------------- rocks, charred trees, slag and smoking vents
@@ -144,7 +144,7 @@ R.shuffle(free); used = set()
 def far(p, k=3): return all(abs(p[0] - a) + abs(p[1] - b) >= k for a, b in used)
 def path_clear(p):  # keep the middle of every ravine walkable
     return centre_d(p) > 1.3
-counts = {'boulder': 20, 'rock': 22, 'dead': 30, 'stump': 12, 'vent': 22, 'slag': 22}
+counts = {'boulder': 20, 'rock': 22, 'dead': 30, 'stump': 12, 'vent': 10, 'slag': 22}
 for kind, n in counts.items():
     c = 0
     for p in free:
@@ -165,7 +165,7 @@ A.run('rocks, charred trees, slag, vents')
 rim = [p for p in canyon if p not in lava and p not in used and canyon[p][0] == 'cavern' and any((p[0] + dx, p[1] + dy) in lava for dx in (-1, 0, 1) for dy in (-1, 0, 1))]
 R.shuffle(rim); k = 0
 for p in rim:
-    if k >= 7: break
+    if k >= 4: break
     if not far(p, 4): continue
     used.add(p); k += 1; A.op(op='place', x=p[0], y=p[1], t=R.choice(VENT_T), fresh=1)
 A.run('vents by the lava')
