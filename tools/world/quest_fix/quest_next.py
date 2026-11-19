@@ -32,6 +32,14 @@ if os.path.exists(_AF):
         "The Ember burns in my temple now, %s. Last, Ashra the Cinder Witch: her hollow lies at the end of the canyon's long north-west ravine.",
         "Ashra's veil - well done, %s. Now the Flame Lord: his cavern lies at the canyon's far south end, past the Smoking Steps.",
         "The ash lies still at last, %s. Go with my blessing.")
+# Rhea (the Gargoyle Spires, Nov 19): her templates from the area's made.json
+_GS = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'gargoyle_spires', 'made.json')
+if os.path.exists(_GS):
+    _q = json.load(open(_GS))['quests']
+    PAIRS[_q['rhea_clapper']] = (_q['rhea_clapper'], _q['rhea_eye'],
+        "The bell stays silent now, %s. Last, Shrike their matriarch: her eyrie is at the Spires' far south end. Bring me her eye.",
+        "Shrike is dead - well done, %s! The Bellkeeper still has the bell's clapper, in the ruined tower at the Spires' north end.",
+        "The Spires are quiet at last, %s. The road to the Last Bastion lies open - go well.")
 qs, npcs = W.talk_load()
 for npc, (a, b, ta, tb, both) in PAIRS.items():
     keep = [e for e in npcs.get(npc, []) if not (e.get('when') == 'near' and any(c.get('type') == 'done' for c in e.get('conds', [])))]

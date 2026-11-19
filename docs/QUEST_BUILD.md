@@ -232,7 +232,19 @@ Stonehold's west gate (681,766) and runs west (-y) into it. Monster group 37 (no
   38416 / 38418 (each N+1 its hide-walls copy); molten iron ground 36300-36303 (edges into the hall floor to make). 3D props
   from Cody's `3d Models\Fantasy Props` (Anvil, Anvil_Log, Cauldron, Bucket_Metal, Whetstone) and RPG Pack 2 (Gold_Ingots).
 
-## 9d. The Gargoyle Spires (Brigadier General) - **PLAN, waiting for Cody's OK (Nov 18, 23:30)**
+## 9d. The Gargoyle Spires (Brigadier General) - **BUILT AND TESTED, NOT LIVE YET (Nov 19, ~07:30)**
+
+**Going live** (the safety system refused Claude's stop-send this session: Cody says go, or does it): gated stop-send ->
+on `Server\.dat` in this order: `gargoyle_spires/build_spires.py`, `place_spires.py`, `quest_fix/quest_next.py`,
+`quest_fix/quest_order.py` -> relight (copy the .dat to `~/ctest/.dat`, `./server light > light.txt`, map.dat back) ->
+update-world -> reload-editor -> `log` for "Could not drop" -> `tools/release/publish_client.py` (chasm 37400-37527,
+gargoyles 62000-63999, items 44551-44555, bell 38463-38464; Cody pushes client-dist) -> CHANGES.md "Gargoyle Spires".
+Tested on the test server (Nov 19): no spawn failures; zones; questgive Rhea 2279 (+160,000), her second quest (+230,000),
+Brann's horns (+16,000 +80G, repeatable) and his cores (unchanged). Template numbers from the test run: items 2078-2082
+(horn, clapper, eye, girdle, amulet), NPCs 2361-2405 (29 Knights, 12 Mages, Bellkeeper 2395, Shrike 2399, Rhea's second
+quest 2404, Brann's horns 2405); the live run takes the next free numbers again (made.json). Previews `spires_v5_bell.png`,
+`spires_v5_eyrie.png`, `spires_gargoyles_v2.png`, `spires_items_v1.png` (fenwatch_preview).
+
 
 Quest Planner rows 28-29 + 27 (Gargoyle Horns for Brann). Area x 745-830 / y 845-940 (empty void now, checked with a
 render); Elysium (776-822 / 795-825) stays walled off. The pass to the Last Bastion (716-834 / 828-842) is not built yet:

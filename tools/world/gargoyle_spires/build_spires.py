@@ -193,7 +193,7 @@ A.zone(726, PY0, PX1, Y0 - 1, 'Bastion Road', flag=1)
 A.zone(X0, Y0, X1, Y1, 'Gargoyle Spires', flag=1)
 A.zone(771, 880, 793, 937, 'Broken Causeway', flag=1)
 A.zone(bc[0] - 7, bc[1] - 7, bc[0] + 7, bc[1] + 7, 'Bell Spire', flag=1)
-A.zone(ec[0] - 8, ec[1] - 8, min(X1, ec[0] + 8), min(Y1, ec[1] + 8), "Shrike's Eyrie", flag=1)
+A.zone(ec[0] - 8, ec[1] - 8, min(X1, ec[0] + 8), min(Y1, ec[1] + 8), "Shrike's Eyrie", flag=0)     # no "the" before a name with 's
 json.dump({'land': sorted([list(p) + [part[p]] for p in land]), 'bridge': sorted(bridge), 'used': sorted(used), 'tower': sorted(tower),
            'islands': {k: [v[0], v[1], v[2]] for k, v in IS.items()}, 'road': sorted(road)}, open(os.path.join(HERE, 'made_terrain.json'), 'w'))
 A.save()

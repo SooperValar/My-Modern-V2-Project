@@ -18,6 +18,8 @@ Ramps (dark, mid, light): sandstone, slate, ... (RAMPS below). Made so far (CHAN
     58000 the Sea Hag (the Mage look 6096, seahag2)
     55000 Iron Golem (the Golem, 17360, iron); 56000 the Forgemaster (17360, forgemaster); 57000 the Brass Colossus (17360, brass, --scale 1.4: 96x96 frames)
     59000 Ash Gargoyle (the Gargoyle, 18384, ashgargoyle); 60000 the Flame Lord (the Flame, 22480, fireL2, --scale 1.4); 61000 Ashra (the Mage, 4048, ashra)
+    62000 Gargoyle Knight (18384, granite); 62500 Gargoyle Mage (18384, slatemage); 63000 the Bellkeeper (18384, verdigris);
+    63500 Shrike (18384, storm, --scale 1.3)   (Gargoyle Spires, Nov 19)
     fireL1 / fireL3 (MULTI): two more fire looks Cody liked, kept for later
 """
 import os, sys
@@ -39,11 +41,15 @@ RAMPS = {
     'seahag2': ((14, 22, 34), (70, 96, 112), (196, 210, 200)),       # the Sea Hag, the greyer, drowned choice
     'ashgargoyle': ((14, 12, 12), (74, 70, 68), (184, 178, 170)),    # Ash Gargoyle (Ashen Fields): the Gargoyle, charcoal and ash
     'ashra': ((22, 10, 8), (150, 142, 136), (255, 128, 44)),         # Ashra the Cinder Witch: the Mage, ash-pale robes, ember-lit
+    'granite': ((58, 58, 62), (158, 160, 166), (250, 252, 255)),    # Gargoyle Knight (Gargoyle Spires): the Gargoyle, frost-dusted granite
+    'storm': ((14, 8, 24), (72, 60, 104), (216, 204, 242)),          # Shrike, the Gargoyle Matriarch: storm-cloud purple-grey (--scale 1.3)
 }
 
 # many-stop ramps, laid over the frames' brightness *ranks* (histogram-equalised), so a sprite that is nearly all bright
 # (the Flame) still gets every colour (Nov 18, the Flame Lord: Cody liked all three, L2 used, L1 / L3 kept for later)
 MULTI = {
+    'slatemage': [(0, (10, 13, 22)), (0.5, (54, 64, 84)), (0.8, (104, 136, 178)), (1, (196, 232, 255))],      # Gargoyle Mage (Spires): dark slate, a pale blue glow
+    'verdigris': [(0, (26, 18, 8)), (0.35, (98, 72, 32)), (0.62, (62, 128, 104)), (1, (176, 228, 200))],       # the Gargoyle Bellkeeper: old bell bronze gone green
     'fireL1': [(0, (110, 14, 6)), (0.3, (214, 52, 12)), (0.6, (250, 150, 30)), (0.85, (255, 226, 90)), (1, (255, 252, 230))],    # full fire
     'fireL2': [(0, (120, 20, 10)), (0.3, (232, 96, 20)), (0.55, (255, 210, 80)), (0.78, (250, 250, 235)), (0.9, (140, 190, 255)), (1, (70, 110, 255))],   # blue-hearted: the Flame Lord
     'fireL3': [(0, (60, 6, 40)), (0.3, (150, 14, 40)), (0.6, (230, 40, 30)), (0.85, (255, 160, 40)), (1, (255, 236, 150))],      # hellfire
