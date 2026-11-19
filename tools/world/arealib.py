@@ -187,6 +187,7 @@ class Area:
         self.used.add((x, y)); return t
     def person(self, name, like, x, y, d, greet, desc, shout='Guards! Guards!'):
         """a friendly quest giver (a copy of Jamil, 25) with the look (sprite + kindred) of template `like`"""
+        assert len(greet) <= 150, 'greeting too long (%d letters; the game keeps 159): %s' % (len(greet), greet)
         t = self.made({'op': 'ctempnew', 'from': 25, 'name': name}); dd = list(self.tc(t)['data'])
         for i in list(range(10, 24)) + list(range(32, 36)) + [29, 41]: dd[i] = 0
         dd[49], dd[50], dd[51], dd[66], dd[37], dd[72] = 0, 0, 0, 0, 1, 0
@@ -218,6 +219,7 @@ class Area:
     def quest(self, npc, want, exp, give=0, skill=0, greet=None, lim=1, gold=0, rmin=-1, n=1):
         """npc wants item `want`: gives exp, item `give` (n of it), teaches `skill`; lim = how often (0 = any number); gold in
         silver (100 = 1G; only bounties pay gold); rmin = lowest rank index"""
+        assert not greet or len(greet) <= 150, 'greeting too long (%d letters; the game keeps 159, and %%s grows): %s' % (len(greet), greet)
         dd = list(self.tc(npc)['data']); dd[49], dd[50], dd[51], dd[66], dd[37], dd[72] = want, skill, exp, give, 1, 0
         self.W.apply([{'op': 'ctempset', 't': npc, 'fields': {'data': dd}, 'text': [None, None, greet] if greet else [], 'respawn': True}], 'quest')
         self._rew(npc, lim, gold, rmin, n)

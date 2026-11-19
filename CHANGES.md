@@ -1373,3 +1373,7 @@ gorge's shelves), Ingrid (Skeleton Lord's crypt), the Spider Queen and the Ghost
 Edda (the Wolfwood), Brann at the quarry (the Foreman's Seal, the Prime Golem). The new areas' givers already said so.
 Still to check with Cody: the Gorge III merchants for the Lizard's Teeth Necklace and the Superior Agility potion, and the
 five tower-floor NPCs.
+
+**Fix (Nov 18):** eight greetings in Fenwatch and Stonehold were longer than an NPC text line holds (159 letters) and were
+cut off in game ("...and I will tea"); rewritten shorter, and each extra quest got its own line for `#quest` and the
+Quests page (`quest_intros_new_areas.py`). `arealib` now refuses a greeting over 150 letters.
