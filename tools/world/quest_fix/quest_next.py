@@ -40,6 +40,14 @@ if os.path.exists(_GS):
         "The bell stays silent now, %s. Last, Shrike their matriarch: her eyrie is at the Spires' far south end. Bring me her eye.",
         "Shrike is dead - well done, %s! The Bellkeeper still has the bell's clapper, in the ruined tower at the Spires' north end.",
         "The Spires are quiet at last, %s. The road to the Last Bastion lies open - go well.")
+# Brother Anselm (the Monastery, Nov 19)
+_MO = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'monastery', 'made.json')
+if os.path.exists(_MO):
+    _q = json.load(open(_MO))['quests']
+    PAIRS[_q['anselm_beads']] = (_q['anselm_beads'], _q['anselm_sash'],
+        "The Abbot rests at last, %s. Now Master Kesh: his Hall of the Silent Hand is at the north end. Bring me his sash.",
+        "Kesh's sash - the Hand is broken, %s. The Fallen Abbot still holds his prayer beads, in the Sanctum at the south end.",
+        "The monastery is still again, %s - the right kind of still. The Light keep you.")
 qs, npcs = W.talk_load()
 for npc, (a, b, ta, tb, both) in PAIRS.items():
     keep = [e for e in npcs.get(npc, []) if not (e.get('when') == 'near' and any(c.get('type') == 'done' for c in e.get('conds', [])))]

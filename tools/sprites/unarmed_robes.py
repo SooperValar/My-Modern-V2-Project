@@ -13,7 +13,8 @@
     unarmed_robes.py <client folder> <source base> <new base> <look> [--out <folder>] [--preview <png>]
 
 Looks (LOOKS below). Made (Monastery of the Still Hand): from the Mercenary (5072):
-    64000 Fallen Monk (saffron), 64500 Fallen Mystic (grey), 65000 Master Kesh (kesh), 45000 the Fallen Abbot (abbot)
+    64000 Fallen Monk (saffron), 64500 Fallen Mystic (grey), 65000 Master Kesh (kesh), 45000 the Fallen Abbot (abbot),
+    45500 Brother Anselm (anselm)
 (sprite numbers must stay below 65,536: 65500 + 447 would not, so the Abbot is at 45000)."""
 import os, sys
 from PIL import Image
@@ -23,6 +24,7 @@ LOOKS = {
     'saffron': ([(0, (40, 16, 4)), (0.5, (176, 84, 18)), (1, (250, 176, 60))], 0.1, (86, 56, 44)),
     'grey':    ([(0, (20, 20, 22)), (0.5, (96, 94, 90)), (1, (196, 192, 184))], 0.15, (96, 66, 54)),
     'kesh':    ([(0, (8, 8, 10)), (0.6, (34, 32, 38)), (0.85, (150, 24, 20)), (1, (220, 60, 40))], 0.0, (86, 56, 44)),
+    'anselm':  ([(0, (34, 24, 14)), (0.5, (120, 92, 60)), (1, (210, 186, 146))], 0.12, (86, 56, 44)),     # Brother Anselm: plain undyed wool, not fallen
     'abbot':   ([(0, (70, 62, 48)), (0.5, (200, 192, 172)), (0.9, (244, 240, 228)), (1, (255, 210, 110))], 0.4, (176, 124, 104)),
 }
 N4 = ((1, 0), (-1, 0), (0, 1), (0, -1))

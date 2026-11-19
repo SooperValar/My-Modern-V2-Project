@@ -281,7 +281,22 @@ off its east side (about 765,843). Monster group 39 (not undead). Draft shown to
   ...: replaced by the v4 layout above), snow ridges and flagstone bridges, ~25 lone pillars in the gorge, a granite rim round the box. Zones:
   Bastion Road, Gargoyle Spires, Broken Causeway, Bell Spire, Shrike's Eyrie. Still to draw: the cracked bell, perch statues.
 
-## 9e. The Monastery of the Still Hand (Lieutenant Colonel) - **PLAN, waiting for Cody's OK (Nov 19, 12:40)**
+## 9e. The Monastery of the Still Hand (Lieutenant Colonel) - **BUILT AND TESTED, NOT LIVE (Nov 19, 14:15)**
+
+**As built** (supersedes the plan below where they differ): `tools/world/monastery/build_monastery.py` (terrain v5: the
+zig-zag Pilgrims' Stair, 1-2 statues per leg; the Cloister; north route Training Yard -> Hall of the Silent Hand (far
+north-east); south route Burial Terrace -> Still Pond (walkable ice) -> Abbot's Sanctum (far south-east); the outer
+terrace loop; dead ends Library, collapsed cells, Hermit's Ledge; ~195 steps to each goal), `place_monastery.py`
+(24 Fallen Monks, 12 Fallen Mystics, Master Kesh Colonel, the Fallen Abbot, Brother Anselm on the gate landing; quests
+2444 / 2445 in the test run), quest_next / quest_order read monastery/made.json. Looks: no full-figure recolours (Cody) -
+`tools/sprites/unarmed_robes.py`: the Mercenary (5072) with his sword taken out, the clothes recoloured, the skin kept,
+edges cleaned: 64000 Fallen Monk (saffron), 64500 Fallen Mystic (grey), 65000 Kesh (black/red), 45000 the Abbot
+(pale/gold), 45500 Anselm (undyed). `statues.py`: stone statues on a plinth from any character set, 8 directions
+(38479-38494 monk statues; Cody wants all the classes later). Props 38467-38478 (world_monastery.py), ice 37528-37531,
+items 44556-44559 (quest_items/monastery.py). Tested on the test server: no spawn failures, zones, both quests
+(+96,000 each), dialogue clean. **Going live**: as the Spires (9d): stop-send, build_monastery -> place_monastery ->
+quest_next -> quest_order on Server\.dat, relight, update-world, reload-editor, log, client publish (publish_client_inc.py).
+
 
 Quest Planner rows 23-24. Box x 650-740 / y 855-950 (the Spires' box starts at x 742); in from Stonehold's east gate
 road (681,854). Built "spread out" from the start (Cody's Spires rule: the two goals at opposite ends, loops, dead ends):
