@@ -13,7 +13,7 @@ PAIRS = {   # npc: (first quest, second quest, after first, after second, both)
  2142: (2142, 2203, "Thank you for the compass, %s. One more thing: the Sea Golem in the drowned village's flooded chapel has my silver net. Bring it back!",
         "My net - thank you, %s! Captain Morrow's compass is still out there, on his sunk ship in the drowned village.",
         "The sea is quieter thanks to you, %s. Mind the nets on your way out."),
- 2143: (2143, 2204, "The hex-doll burned well, %s. Now Maud's herb pouch: her apprentice Wenna keeps it, in a house in the drowned village.",
+ 2143: (2143, 2204, "The hex-doll burned well, %s. Now Maud's herb pouch: a sea hag stole it, and lurks on the drowned village's shore.",
         "Thank you for the herbs, %s. Maud's hex-doll still curses us - she has it on her island in the drowned village.",
         "The Light keep you, %s. Fenwatch sleeps easier now that Maud is gone."),
  2144: (2144, 2271, "Ulfgar's torc - well done, %s. Now the Broodmother: bring me her crown from the hatcheries south of town.",

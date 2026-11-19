@@ -268,6 +268,11 @@ project's next session. What the second chat did Nov 15-17 (all live, CHANGES.md
 the Ashen Fields (Varo), then the Gargoyle Spires (Rhea; the Spires add Gargoyle Horns to Brann's bounty), the Monastery last.
 Open: molten iron / crucibles / furnaces give no light (only the fire bowls do) - offered Cody hidden light sources.
 
+**Nov 18: Golem Foundry LIVE; quest text pass done.** Foundry (CHANGES.md "Golem Foundry"); exploration-pole table final
+(QUEST_BUILD 9c, 34 vanilla poles raised); every quest greeting says what and where (159-char limit, arealib asserts);
+"what next" lines via the new `if done` condition; the Sea Hag (template 2318, sprites 58000+, 427,927 facing west) now
+holds Maud's herb pouch (live; client-dist 2882854, Cody pushes). Next: the Ashen Fields when Cody says go.
+
 **Nov 17, 19:55: Stonehold is LIVE** - snowy grass (sprites 36100-36287, client-dist b73a33d, Cody pushes), the townspeople,
 Selwyn's rotating shop, ten gate guards, waypoint 7; the editor knows snowy grass. Snowy pines live too (20:11). Selwyn: priced by level + tier more than metal
 (merch.c rot_value, sell 200), Steel / Emerald / Crystal / Titanium only (live 20:35). Selwyn's prices final for now (Cody, 20:41: Rare x4, Epic x9 in rot_value). Next: the Golem Foundry - plan in QUEST_BUILD 9b, waiting for Cody's answers.

@@ -71,12 +71,12 @@ past Elysium -> Last Bastion.** The Barrow Hills are a dead end off Fenwatch's n
 ## 4. Numbers in use (check again before making new ones)
 
 - Item templates up to **2068** (2064-2068 Golem Foundry) (2024-2032 Drowned Village; 2033-2050 wall decorations; 2051-2054 Barrow Hills;
-  2055-2063 Lizard Hatcheries). NPC templates up to **2317** (2206-2239 Barrow Hills; 2240-2276 Lizard Hatcheries incl. Cody's 3 knight copies; 2277-2292 Stonehold; 2293-2317 Golem Foundry). `itempnew` / `ctempnew` take the next free number by themselves.
+  2055-2063 Lizard Hatcheries). NPC templates up to **2318** (2206-2239 Barrow Hills; 2240-2276 Lizard Hatcheries incl. Cody's 3 knight copies; 2277-2292 Stonehold; 2293-2317 Golem Foundry; 2318 the Sea Hag). `itempnew` / `ctempnew` take the next free number by themselves.
 - Monster groups (NPC data 42/44): 30 bandits, 31 quarry golems, 32 deep grolms, 33 wolves, 34 Drowned Village, 35 Barrow Hills, 36 Lizard Hatcheries.
   37 Golem Foundry. **Next: 38.** Undead in a group listed in `SLOW_UNDEAD_GROUP` (`data.h`: 34, 35) regenerate like Lab 11's (~4 hp/s, not ~12):
   add each new undead area's group there (Cody, Nov 17).
 - Sprites: monster recolours 41000+ (Quarry Golem), 42100+ (Deep Grolm), 50000+ Drowned Sailor, 50500+ Bog-man,
-  51000-51981 Sea Golem, 52000+ Barrow Wight, 53000+ the Broodmother, 54000+ Lizard Hatchling, 55000 Iron Golem, 56000 Forgemaster, 57000 Brass Colossus (96x96): **next free block 58000** (a recolour fills base+0..1023, so step by 1000 to be safe; 500 worked
+  51000-51981 Sea Golem, 52000+ Barrow Wight, 53000+ the Broodmother, 54000+ Lizard Hatchling, 55000 Iron Golem, 56000 Forgemaster, 57000 Brass Colossus (96x96), 58000 Sea Hag: **next free block 59000** (a recolour fills base+0..1023, so step by 1000 to be safe; 500 worked
   for the Undead and Grolm). 3D creatures 43000-44447 (wolves). Item pictures 44500-44546: **next 44547**. World objects: lizard eggs 38300-38307. Ground: snowy grass 36100-36287, molten iron 36300-36349 (next free ground block 36350). Foundry / workshop objects 38400-38447 (next 38448).
   Server item drivers: 77 = lizard egg in a nest (`use_lizard_egg`); next free 78.
   World: marsh grounds and edges 35650-35995, reeds 38200-38207. Waypoints: 1-6 used (`next 7` in waypoints.dat).
