@@ -1435,3 +1435,8 @@ build script** (`A.op(op='flag', ..., mode=0)` for bits 5-14, not only 2 and 5).
 **No leading "the" (Nov 18, Cody):** zones the Ember Cavern / the Smoking Steps / The Heron Inn -> Ember Cavern, Smoking
 Steps, Heron Inn; monsters the Broodmother / the Brass Colossus / the Flame Lord -> Broodmother, Brass Colossus, Flame
 Lord (their message reference still reads "the Flame Lord" etc., like the game's own monsters). Scripts updated to match.
+
+**Minimap redraw without Pillow (Nov 18):** the editor's "redraw minimap" button failed ("No module named 'PIL'": the
+editor's Linux python has no Pillow). `tools/world/worldmap.py` now reads PNG / BMP and writes the PNG itself when Pillow
+is missing (checked pixel for pixel against Pillow); Cody confirmed the button works. (It also failed with Pillow before:
+the output file ends in .tmp, so the format is now given.)
