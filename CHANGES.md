@@ -1421,3 +1421,13 @@ nobody sees). Zones: Ashen Fields, Ashra's Hollow, the Ember Cavern, the Smoking
   Item pictures 44547-44550 (`tools/sprites/quest_items/ashen_fields.py`).
 - Scripts: `tools/world/ashen_fields/build_ashen.py`, `place_ashen.py` (made.json); quest_next.py and quest_order.py read
   Varo's templates from made.json. Client files: client-dist e9281d8.
+
+**Leftover map flags cleared (Nov 18, live):** Cody died to a death trap in the Lizard Hatcheries. The space the new areas
+were built on still carried the original map's tile flags (they are in the Nov 14 backup, before anything was built
+there); painting ground and objects over them kept them. Every gameplay flag that was already set in the Nov 14 map
+was cleared in all the new areas (Barrow Hills, Fenwatch, Lizard Hatcheries, the pass, Stonehold, Golem Foundry, Ashen
+Fields, Drowned Village): 2,723 "no fight" tiles (players could not attack there - 1,691 of them in the Hatcheries, 302
+in the Foundry Hall), 314 arena, 141 bank, 81 no magic, 58 no expire, 82 no monsters and 16 tavern tiles in the marsh
+round Fenwatch and the pass. (The Hatcheries' 45 death-trap tiles were already gone when the world came back.) Flags set
+since (the towns' "no monsters", the inns' tavern tiles) are kept. **New areas from now on: clear these flags in the
+build script** (`A.op(op='flag', ..., mode=0)` for bits 5-14, not only 2 and 5).
