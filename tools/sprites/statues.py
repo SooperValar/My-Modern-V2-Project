@@ -47,13 +47,21 @@ def plinth(stops, h=9, w=13):
     return im, w // 2
 
 
+FIG_SCALE = 1.15          # Cody (Nov 19): "looks like it's floating... is it just smaller than the square?" - a little bigger,
+                          # feet set into the top (not on its back edge), a contact shadow under them, a smaller plinth
+
 def statue(fig, stops, hide=False):
-    pl, ty = plinth(stops); out = Image.new('RGBA', (64, 96), (0, 0, 0, 0))
+    pl, ty = plinth(stops, h=8, w=11); out = Image.new('RGBA', (64, 96), (0, 0, 0, 0))
     px0, py0 = 32 - pl.width // 2, 96 - pl.height - 4                     # the plinth on the tile's diamond
     fig = fig.crop(fig.getbbox())
-    if hide: fig = fig.crop((0, max(0, fig.height - 6), fig.width, fig.height))
-    fx, fy = 32 - fig.width // 2, py0 + ty + 3 - fig.height                 # the feet on the plinth's top, centred
-    out.alpha_composite(pl, (px0, py0)); out.alpha_composite(fig, (fx, max(0, fy)))
+    fig = fig.resize((max(1, round(fig.width * FIG_SCALE)), max(1, round(fig.height * FIG_SCALE))), Image.NEAREST)
+    if hide: fig = fig.crop((0, max(0, fig.height - 7), fig.width, fig.height))
+    out.alpha_composite(pl, (px0, py0))
+    foot = py0 + ty + 4                                                     # just in front of the top's middle
+    sh = Image.new('RGBA', (64, 96), (0, 0, 0, 0)); ImageDraw.Draw(sh).ellipse([32 - 7, foot - 2, 32 + 7, foot + 2], fill=(20, 20, 24, 110))
+    out.alpha_composite(sh)                                                 # the contact shadow
+    fx, fy = 32 - fig.width // 2, foot + 1 - fig.height
+    out.alpha_composite(fig, (fx, max(0, fy)))
     return out
 
 
