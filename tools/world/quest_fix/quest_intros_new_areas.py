@@ -9,8 +9,8 @@ A = Area(sys.argv[1])
 G = {
  2142: "Mind the nets, %s. Captain Morrow walks his sunk ship in the drowned village, east of here. Bring me his compass and I'll teach you to swim.",
  2203: "The Sea Golem in the drowned village's flooded chapel has my silver net, %s. Bring it back and you'll have a fine belt.",
- 2143: "The Light keep you, %s. Maud the Bog Witch curses us from her island in the drowned village. Bring me her hex-doll to burn - and her herb pouch.",
- 2204: "Maud keeps an herb pouch on her island in the drowned village, %s. Bring it and I'll brew you three Draughts of Clear Water.",
+ 2143: "The Light keep you, %s. Maud the Bog Witch curses us from her island in the drowned village. Bring me her hex-doll, that I may burn it.",
+ 2204: "Maud's apprentice Wenna hides in a house in the drowned village with her herb pouch, %s. Bring it for three Draughts of Clear Water.",
  2144: "Well met, %s. Bring me Ulfgar's torc from the Barrow Hills north of town, or the Broodmother's crown from the hatcheries to the south.",
  2271: "The Broodmother rules the lizard hatcheries south of town, %s. Bring me her crown and you'll have a belt fit for it.",
  2145: "Ah, %s - do you read runes? A rune-carved tablet lies in the Scribe's Barrow, in the hills north of town. Bring it to me.",

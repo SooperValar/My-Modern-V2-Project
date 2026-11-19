@@ -1385,3 +1385,8 @@ Cody: players need to know what to find next. New condition for conversation lin
 player did an item quest"). Used by `tools/world/quest_fix/quest_next.py`: Joss, Ilse, Aldous and Hagar greet a player who
 has done one of their two quests with "now bring me the other, from there", and thank him when both are done (Aldous
 then points to Stonehold); Huntmaster Edda after Greyfang. Tested on the test server (Hagar and Joss in every order).
+
+**Maud and Wenna (Nov 18, Cody: no single monster may hold the answer to two quests):** Maud the Bog Witch keeps only her
+hex-doll; her herb pouch went to a new monster, **Wenna, Maud's Apprentice** (Sergeant Major, template 2318), in the house
+at the village's east end (482,891) - `tools/world/drowned_village/wenna.py`. Ilse's greeting, her pouch quest's line and her
+"what next" lines now send players to Wenna. Checked: no other monster carries items for two quests.
