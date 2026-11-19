@@ -133,7 +133,9 @@ for p in yard:
     if any(abs(p[0] - a) + abs(p[1] - b) < 4 for a, b in used): continue
     put(DUMMY, *p, block=1); k += 1
 for x, y in ((653, 925), (653, 940), (662, 925), (662, 940)): put(DUMMY, x, y, block=1)              # Kesh's hall
-for y in range(934, 946, 2): put(BOOKCASE, 701, y); put(BOOKCASE, 711, y)                          # the library
+for y in range(934, 946, 2):                                                                    # the library (not in front of its door, 700,938)
+    if abs(y - 938) > 1: put(BOOKCASE, 701, y)
+    put(BOOKCASE, 711, y)
 put(BOOKSTAND, 706, 940, block=1)
 for c in CELLS: put(POT, c[0] + 1, c[1] + 1, block=1)
 for y in range(891, 899, 3): put(BENCH, 710, y, block=1)                                           # refectory
