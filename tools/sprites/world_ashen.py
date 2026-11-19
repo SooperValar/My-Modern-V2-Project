@@ -39,21 +39,24 @@ def char(im, seed, embers=6):
 
 
 def ashrock(im, seed):
-    """a lava stone in the ash's greys: charcoal shading, ash on top, its red veins dimmed to a faint ember glow"""
-    r = random.Random(seed); out = im.copy(); px = out.load(); w, h = out.size
+    """a lava stone in the canyon walls' granite greys (Cody's pick G, Nov 18): pale tops, the body by the source's
+    shading, a darker edge, its red veins as glowing embers, smoke-stained toward the foot"""
+    r = random.Random(seed); src = im.load(); w, h = im.size; out = Image.new('RGBA', im.size, (0, 0, 0, 0)); px = out.load()
+    solid = lambda c: c[3] and not (c[0] > 235 and c[1] < 25 and c[2] > 235)
+    TOP, MID, DARK, EDGE = 178, 156, 88, 60
     for y in range(h):
+        soot = 1 - 0.35 * max(0, (y - h * 0.45) / (h * 0.55))
         for x in range(w):
-            c = px[x, y]
-            if c[3] == 0 or (c[0] > 235 and c[1] < 25 and c[2] > 235): continue
+            c = src[x, y]
+            if not solid(c): continue
             hh, ss, v = colorsys.rgb_to_hsv(*[k / 255 for k in c[:3]])
-            if ss > 0.5 and v > 0.45 and (hh < 0.08 or hh > 0.92) and r.random() < 0.6:    # the red veins as embers
-                px[x, y] = (170, 70, 28, c[3]) if r.random() < 0.6 else (225, 110, 40, c[3]); continue
-            g = 46 + int(v * 95)
-            px[x, y] = (g + 6, g + 3, g, c[3])
-    for y in range(1, h):
-        for x in range(w):
-            if px[x, y][3] and not px[x, y - 1][3] and r.random() < 0.6:
-                c = px[x, y]; px[x, y] = (min(255, c[0] + 40), min(255, c[1] + 39), min(255, c[2] + 37), c[3])
+            vein = ss > 0.5 and v > 0.45 and (hh < 0.08 or hh > 0.92)
+            edge = any(not (0 <= x + dx < w and 0 <= y + dy < h) or not solid(src[x + dx, y + dy]) for dx, dy in ((1, 0), (-1, 0), (0, 1)))
+            up = any(y - k < 0 or not solid(src[x, y - k]) for k in (1, 2))
+            g = TOP if up else EDGE if edge else int(DARK + (MID - DARK) * min(1, v * 2.2))
+            col = [g, g, g]
+            if vein and not up and r.random() < 0.6: px[x, y] = ((210, 92, 30) if r.random() < 0.6 else (250, 150, 60)) + (255,); continue
+            px[x, y] = tuple(int(k * soot) for k in col) + (255,)
     return out
 
 
