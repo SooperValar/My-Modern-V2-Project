@@ -245,6 +245,16 @@ WORLD_SNOWY = {n: {int(m): s for m, s in e.items()} for n, e in _WS['snowy_base'
 WS_ORDER = ['soft snow', 'path', 'dusty path']
 WS_BASE = set(WORLD_GROUND['sets']['snowy grass']['plain'])
 WS_EDGE = {s for e in WORLD_SNOWY.values() for s in e.values()}
+# ash (tools/sprites/world_ash.py, Nov 18; the Ashen Fields): ash and cinders, no grass edges; soft edges on an ASH base
+# (cinders, soft snow or snowy grass creeping into ash), handled like the snowy grass above
+_WA = json.loads('''{"plain":{"ash":[37100,37101,37102,37103],"cinders":[37104,37105,37106,37107]},"ash_base":{"cinders":{"1":37108,"2":37109,"3":37110,"4":37111,"5":37112,"6":37113,"7":37114,"8":37115,"9":37116,"10":37117,"11":37118,"12":37119,"13":37120,"14":37121,"15":37122,"16":37123,"20":37124,"24":37125,"28":37126,"32":37127,"33":37128,"40":37129,"41":37130,"48":37131,"56":37132,"64":37133,"65":37134,"66":37135,"67":37136,"80":37137,"96":37138,"97":37139,"112":37140,"128":37141,"130":37142,"132":37143,"134":37144,"144":37145,"148":37146,"160":37147,"176":37148,"192":37149,"194":37150,"208":37151,"224":37152,"240":37153},"soft snow":{"1":37154,"2":37155,"3":37156,"4":37157,"5":37158,"6":37159,"7":37160,"8":37161,"9":37162,"10":37163,"11":37164,"12":37165,"13":37166,"14":37167,"15":37168,"16":37169,"20":37170,"24":37171,"28":37172,"32":37173,"33":37174,"40":37175,"41":37176,"48":37177,"56":37178,"64":37179,"65":37180,"66":37181,"67":37182,"80":37183,"96":37184,"97":37185,"112":37186,"128":37187,"130":37188,"132":37189,"134":37190,"144":37191,"148":37192,"160":37193,"176":37194,"192":37195,"194":37196,"208":37197,"224":37198,"240":37199},"snowy grass":{"1":37200,"2":37201,"3":37202,"4":37203,"5":37204,"6":37205,"7":37206,"8":37207,"9":37208,"10":37209,"11":37210,"12":37211,"13":37212,"14":37213,"15":37214,"16":37215,"20":37216,"24":37217,"28":37218,"32":37219,"33":37220,"40":37221,"41":37222,"48":37223,"56":37224,"64":37225,"65":37226,"66":37227,"67":37228,"80":37229,"96":37230,"97":37231,"112":37232,"128":37233,"130":37234,"132":37235,"134":37236,"144":37237,"148":37238,"160":37239,"176":37240,"192":37241,"194":37242,"208":37243,"224":37244,"240":37245}}}''')
+for _n, _p in _WA['plain'].items():
+    WORLD_GROUND['sets'][_n] = {'plain': _p, 'edges': {}}
+WG_ORDER += ['ash', 'cinders']
+WORLD_ASH = {n: {int(m): s for m, s in e.items()} for n, e in _WA['ash_base'].items()}
+WA_ORDER = ['cinders', 'soft snow', 'snowy grass']
+WA_BASE = set(WORLD_GROUND['sets']['ash']['plain'])
+WA_EDGE = {s for e in WORLD_ASH.values() for s in e.values()}
 WG_PLAIN = {s: n for n, g in WORLD_GROUND['sets'].items() for s in g['plain']}
 WG_EDGE = {s for g in WORLD_GROUND['sets'].values() for s in g['edges'].values()}
 WG_GRASS = set(WORLD_GROUND['grass'])
@@ -1298,6 +1308,21 @@ class World:
             if not (0 < x < MAPX - 1 and 0 < y < MAPY - 1):
                 continue
             cur = floor(x, y)
+            if cur in WA_BASE or cur in WA_EDGE:          # ash: cinders, snow or snowy grass creeping in
+                new = None
+                for name in WA_ORDER:
+                    m = wg_mask(lambda dx, dy: WG_PLAIN.get(floor(x + dx, y + dy)) == name)
+                    if m:
+                        new = WORLD_ASH[name][m]
+                        break
+                if new is None:
+                    if cur in WA_BASE:
+                        continue
+                    new = random.choice(WORLD_GROUND['sets']['ash']['plain'])
+                if new != cur:
+                    self._save_map(rec, x, y)
+                    t = self.tile(x, y); t[0] = new; self.set_tile(x, y, t)
+                continue
             if cur in WS_BASE or cur in WS_EDGE:          # snowy grass: snow or a path creeping in (as marsh grass below)
                 new = None
                 for name in WS_ORDER:
@@ -1333,7 +1358,7 @@ class World:
             new = None
             for name in WG_ORDER:
                 m = wg_mask(lambda dx, dy: WG_PLAIN.get(floor(x + dx, y + dy)) == name)
-                if m:
+                if m and m in WORLD_GROUND['sets'][name]['edges']:     # ash and cinders have no grass edges
                     new = WORLD_GROUND['sets'][name]['edges'][m]
                     break
             if new is None:

@@ -77,7 +77,7 @@ past Elysium -> Last Bastion.** The Barrow Hills are a dead end off Fenwatch's n
   add each new undead area's group there (Cody, Nov 17).
 - Sprites: monster recolours 41000+ (Quarry Golem), 42100+ (Deep Grolm), 50000+ Drowned Sailor, 50500+ Bog-man,
   51000-51981 Sea Golem, 52000+ Barrow Wight, 53000+ the Broodmother, 54000+ Lizard Hatchling, 55000 Iron Golem, 56000 Forgemaster, 57000 Brass Colossus (96x96), 58000 Sea Hag: **next free block 59000** (a recolour fills base+0..1023, so step by 1000 to be safe; 500 worked
-  for the Undead and Grolm). 3D creatures 43000-44447 (wolves). Item pictures 44500-44546: **next 44547**. World objects: lizard eggs 38300-38307. Ground: snowy grass 36100-36287, molten iron 36300-36349, ash set 37100-37245 (Ashen Fields, in progress; next free 37246; 36350-36399 free, 36400-36409 are the arches). Foundry / workshop objects 38400-38447 (next 38448).
+  for the Undead and Grolm). 3D creatures 43000-44447 (wolves). Item pictures 44500-44546: **next 44547**. World objects: lizard eggs 38300-38307. Ground: snowy grass 36100-36287, molten iron 36300-36349, ash set 37100-37291 (Ashen Fields; next free 37292; 36350-36399 free, 36400-36409 are the arches). Foundry / workshop objects 38400-38447 (next 38448).
   Server item drivers: 77 = lizard egg in a nest (`use_lizard_egg`); next free 78.
   World: marsh grounds and edges 35650-35995, reeds 38200-38207. Waypoints: 1-6 used (`next 7` in waypoints.dat).
 - Fenwatch NPCs (`tools/world/fenwatch/made.json`): Joss 2142, Ilse 2143, Aldous 2144, Petra 2145, Rook 2146, Bounty
