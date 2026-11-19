@@ -1396,3 +1396,28 @@ no other monster carries items for two quests.
 the Spider Queen, the Ghost King, Robin; the Eastern Woods (Hollis, Edda, Tobias, Wynn, Edda's later hunts, the Quarry
 chain); Fenwatch by rank (Joss, Ilse, Corwin, Aldous, Petra, Robin's second, Rook); Stonehold (Hagar, Brann); Syleia last.
 `tools/world/quest_fix/quest_order.py` (new quests: add them to its list).
+
+## Ashen Fields (Nov 18, live) - band D, Colonel
+
+An ash canyon high on the mountain, south-west of Stonehold (Cody: "stick to the whole mountain top theme"; "more maze
+like... don't want it to be so easy to find the bosses"). From Stonehold's south-west gate road a maze of narrow ravines
+winds between 16 small chambers - one loop, false turns and six dead-end pockets - to the bosses at the far ends.
+Snow lingers near the mouth; the ground grows darker and hotter deeper in. Cliffs only round the ravines (no blocks
+nobody sees). Zones: Ashen Fields, Ashra's Hollow, the Ember Cavern, the Smoking Steps.
+- **New ground** (`tools/sprites/world_ash.py`, 37100-37337): ash and cinders, soft edges on ash (cinders, snow, snowy
+  grass), molten iron (and the game's lava, unused) creeping into cinders. The editor knows **Ash** and **Cinders** as
+  grounds with automatic edges (mapedit.py `_WA`).
+- **New objects** (`tools/sprites/world_ashen.py`, 38448-38462): charred dead trees each followed by its charred stump
+  (hide mode), smoking vents (items 2069-2070, give light), Cinder Rocks in the canyon's granite greys with a sooty foot
+  and ember veins (items 2071-2073; Cody's pick "G").
+- **Monsters** (group 38): Flames (the game's Flame) and Ash Gargoyles (charcoal gargoyle, 59000), Colonels.
+  **Ashra the Cinder Witch** (the Mage in ash and ember, 61000) in Ashra's Hollow at the end of the long north-west
+  branch, with 3 Flames; **the Flame Lord** (Brigadier General; the Flame 1.4x in blue-hearted fire, 60000) in the
+  Ember Cavern among pools of molten iron, reached only through the Smoking Steps, with 4 Flames.
+  Two more fire looks Cody liked are kept for later: `recolor_creature.py` MULTI ramps fireL1 (full fire), fireL3 (hellfire).
+- **Quests, Varo the priest (Stonehold)**, rank Colonel+: Ember of the First Flame -> 3 **Fireward Draughts** (+15
+  Resistance for 10 minutes) 130,000 exp; Ashra's Ash-Veil -> **Ring of Embers** (+5 Intuition, +10 Blast) 130,000 exp.
+  No gold. "What next" lines point to the other boss; both quests sit after Stonehold's in the quest order.
+  Item pictures 44547-44550 (`tools/sprites/quest_items/ashen_fields.py`).
+- Scripts: `tools/world/ashen_fields/build_ashen.py`, `place_ashen.py` (made.json); quest_next.py and quest_order.py read
+  Varo's templates from made.json. Client files: client-dist e9281d8.

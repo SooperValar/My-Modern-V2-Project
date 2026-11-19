@@ -268,6 +268,10 @@ project's next session. What the second chat did Nov 15-17 (all live, CHANGES.md
 the Ashen Fields (Varo), then the Gargoyle Spires (Rhea; the Spires add Gargoyle Horns to Brann's bounty), the Monastery last.
 Open: molten iron / crucibles / furnaces give no light (only the fire bowls do) - offered Cody hidden light sources.
 
+**Nov 18, 22:07: the Ashen Fields are LIVE** (CHANGES.md "Ashen Fields"): an ash-canyon maze SW of Stonehold, Ashra and
+the Flame Lord, Varo's two quests; client-dist e9281d8 (Cody pushes). Next: the Gargoyle Spires (Rhea) when Cody says go,
+the Monastery last. Cody places the Ashen Fields' exploration pole himself (Colonel area: 50,000 by the pole table).
+
 **Nov 18: Golem Foundry LIVE; quest text pass done.** Foundry (CHANGES.md "Golem Foundry"); exploration-pole table final
 (QUEST_BUILD 9c, 34 vanilla poles raised); every quest greeting says what and where (159-char limit, arealib asserts);
 "what next" lines via the new `if done` condition; the Sea Hag (template 2318, sprites 58000+, 427,927 facing west) now
