@@ -1360,3 +1360,16 @@ places them). 34 existing poles that sat below the table were raised to it (none
 12,000, Gargoyle's Nest up to 100,000, Tower VIII 40,000, Bandit Cave 5,000, Dire Wolves Den 12,000, Deep Quarry 15,000.
 The pentagram poles keep their own climbing values. A pole still pays its value x 0.5-1.5, never over 10% of the
 player's exp.
+
+## Quest givers say what they want and where (Nov 18)
+
+Cody: every quest needs an intro that tells the player what to bring and where to find it. 22 greetings rewritten
+(`tools/world/quest_fix/quest_intros.py`; sources checked in the world): Damor and the Cityguard (black candle, the Black
+Stronghold north-west of town), the Gorn ghost (bone sword, Cursed Tomb skeletons), Gordon (Potion of Life, pentagram
+grolms and gargoyles), Serena (the sword in the stone in her house), Jefferson (Joe, just east), Manfred (silver small-ruby
+ring), Leopold (Ratling Fighters, Underground), the Purple One's priest (red flower), Robin (Ratling and Greenling eyes),
+the Gorge III coconut merchant, Syleia (ice egg, Gargoyle's Nest chest), the five riddlers (Books of Wisdom on the
+gorge's shelves), Ingrid (Skeleton Lord's crypt), the Spider Queen and the Ghost King (where each other lives), Huntmaster
+Edda (the Wolfwood), Brann at the quarry (the Foreman's Seal, the Prime Golem). The new areas' givers already said so.
+Still to check with Cody: the Gorge III merchants for the Lizard's Teeth Necklace and the Superior Agility potion, and the
+five tower-floor NPCs.
