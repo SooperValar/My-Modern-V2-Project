@@ -281,6 +281,23 @@ off its east side (about 765,843). Monster group 39 (not undead). Draft shown to
   ...: replaced by the v4 layout above), snow ridges and flagstone bridges, ~25 lone pillars in the gorge, a granite rim round the box. Zones:
   Bastion Road, Gargoyle Spires, Broken Causeway, Bell Spire, Shrike's Eyrie. Still to draw: the cracked bell, perch statues.
 
+## 9e. The Monastery of the Still Hand (Lieutenant Colonel) - **PLAN, waiting for Cody's OK (Nov 19, 12:40)**
+
+Quest Planner rows 23-24. Box x 650-740 / y 855-950 (the Spires' box starts at x 742); in from Stonehold's east gate
+road (681,854). Built "spread out" from the start (Cody's Spires rule: the two goals at opposite ends, loops, dead ends):
+- **Pilgrims' Stair**: a switchback path up the mountainside from the gate road; **Brother Anselm** (new, friendly) at the
+  monastery gatehouse, a no-monster spot.
+- **The cloister** in the middle: a walled compound - courtyard with a raked-stone garden, monks' cells, refectory,
+  chapel - with paths round its outside on terraces, a collapsed cell block and meditation caves as dead ends.
+- **North end: Hall of the Silent Hand** up a cliff stair - Master Kesh's training hall (practice dummies).
+- **South end: the Abbot's Sanctum** past terraced gardens and a frozen pond - the Fallen Abbot.
+- Monsters (group 40), Lieutenant Colonels: **Fallen Monks** (melee) and **Fallen Mystics** (casters). Look: the Ninja
+  model in `3d Models/Animal Pack/Ninja.glb` through `make_creature.py` (the 3D pipeline), tinted to grey-and-saffron
+  robes; Kesh black with a red sash (Colonel); the Abbot pale robes, gold trim (Lieutenant Colonel). Sprites 64000+.
+- Quests (Brother Anselm), rank Lieutenant Colonel (13)+, no gold: Abbot's Prayer Beads -> **Monk's Wrap** belt
+  (+Agility, +endurance; Cody Nov 17, instead of Karate) 96,000 exp; Kesh's sash -> **Amulet of the Still Mind**
+  (+Willpower, +Meditate) 96,000 exp. Item pictures 44556+, objects 38467+. Pole: Lieutenant Colonel by the table (Cody).
+
 ## 9c. Exploration points ("poles"): the standard values (Cody, Nov 18 - FINAL; Cody places them himself)
 
 One pole per large area off a town. Value by the area's **average monster rank** (the editor's area-clear average),

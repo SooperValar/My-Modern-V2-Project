@@ -268,6 +268,11 @@ project's next session. What the second chat did Nov 15-17 (all live, CHANGES.md
 the Ashen Fields (Varo), then the Gargoyle Spires (Rhea; the Spires add Gargoyle Horns to Brann's bounty), the Monastery last.
 Open: molten iron / crucibles / furnaces give no light (only the fire bowls do) - offered Cody hidden light sources.
 
+**REMIND CODY (asked Nov 19, 12:37): place the Gargoyle Spires' exploration pole when he is home** (Brigadier General: 60,000
+by the pole table; QUEST_BUILD 9c). Say it at the start of every reply until he says it's done.
+
+**Nov 19, 12:40: the Monastery planned (QUEST_BUILD 9e), waiting for Cody's OK.**
+
 **Nov 19, 07:20: the Gargoyle Spires are LIVE** (CHANGES.md "Gargoyle Spires"; client-dist 9c67f2c, Cody pushes). Band D: only
 the Monastery is left (new monk sprites). Lessons: (1) the live server was one build behind (Nov 18's `if done` in npctalk.c
 was never compiled live): after starting, `talkreload` should say just "NPC dialogue loaded: N entries" - "(some lines were
