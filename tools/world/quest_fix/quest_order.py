@@ -11,7 +11,11 @@ ORDER = [25, 50, 28, 64, 90, 91, 109, 108, 342, 343, 107, 111, 363,     # Aston'
          2142, 2143, 2204, 2147, 2205, 2203, 2144, 2145, 2004,          # Fenwatch (rank 8-10), Robin's second
          2271, 2146, 2272, 2273,                                        # Fenwatch (rank 11)
          2277, 2317, 2280,                                              # Stonehold (rank 12)
+         'varo_ember', 'varo_veil',                                     # Varo, the Ashen Fields (rank 14; ashen_fields/made.json)
          615]                                                           # Syleia (rank 18)
+import json
+_AF = json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'ashen_fields', 'made.json')))['quests']
+ORDER = [_AF[e] if e in _AF else e for e in ORDER]
 A = Area(sys.argv[1]); qs, _ = A.W.talk_load()
 old = {int(t): int(v) for t, v in qs.get('order', {}).items()}
 order = {t: -1 for t, v in old.items() if v == -1}

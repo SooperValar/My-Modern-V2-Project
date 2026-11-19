@@ -23,6 +23,15 @@ PAIRS = {   # npc: (first quest, second quest, after first, after second, both)
         "The Colossus Core - you mad fool, %s. Its Forgemaster still has the Foundry Heart, in his forge. Bring it to me.",
         "The Foundry is quiet at last, %s. Stonehold is in your debt."),
 }
+# Varo (the Ashen Fields, Nov 18): his templates from the area's made.json
+import json
+_AF = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'ashen_fields', 'made.json')
+if os.path.exists(_AF):
+    _q = json.load(open(_AF))['quests']
+    PAIRS[_q['varo_ember']] = (_q['varo_ember'], _q['varo_veil'],
+        "The Ember burns in my temple now, %s. Last, Ashra the Cinder Witch: her hollow lies at the end of the canyon's long north-west ravine.",
+        "Ashra's veil - well done, %s. Now the Flame Lord: his cavern lies at the canyon's far south end, past the Smoking Steps.",
+        "The ash lies still at last, %s. Go with my blessing.")
 qs, npcs = W.talk_load()
 for npc, (a, b, ta, tb, both) in PAIRS.items():
     keep = [e for e in npcs.get(npc, []) if not (e.get('when') == 'near' and any(c.get('type') == 'done' for c in e.get('conds', [])))]

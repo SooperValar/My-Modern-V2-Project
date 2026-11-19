@@ -17,6 +17,8 @@ Ramps (dark, mid, light): sandstone, slate, ... (RAMPS below). Made so far (CHAN
     53000 the Broodmother (the Lizard, 13264, brood); 54000 Lizard Hatchling (the Lizard, 13264, hatchling)
     58000 the Sea Hag (the Mage look 6096, seahag2)
     55000 Iron Golem (the Golem, 17360, iron); 56000 the Forgemaster (17360, forgemaster); 57000 the Brass Colossus (17360, brass, --scale 1.4: 96x96 frames)
+    59000 Ash Gargoyle (the Gargoyle, 18384, ashgargoyle); 60000 the Flame Lord (the Flame, 22480, fireL2, --scale 1.4); 61000 Ashra (the Mage, 4048, ashra)
+    fireL1 / fireL3 (MULTI): two more fire looks Cody liked, kept for later
 """
 import os, sys
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -36,9 +38,22 @@ RAMPS = {
     'seahag': ((6, 26, 30), (46, 112, 104), (186, 226, 204)),        # the Sea Hag (Drowned Village): the Mage (6096), sea-green and pale
     'seahag2': ((14, 22, 34), (70, 96, 112), (196, 210, 200)),       # the Sea Hag, the greyer, drowned choice
     'ashgargoyle': ((14, 12, 12), (74, 70, 68), (184, 178, 170)),    # Ash Gargoyle (Ashen Fields): the Gargoyle, charcoal and ash
-    'flamelord': ((140, 46, 6), (236, 132, 28), (255, 222, 120)),    # the Flame Lord: the Flame, deep gold
     'ashra': ((22, 10, 8), (150, 142, 136), (255, 128, 44)),         # Ashra the Cinder Witch: the Mage, ash-pale robes, ember-lit
 }
+
+# many-stop ramps, laid over the frames' brightness *ranks* (histogram-equalised), so a sprite that is nearly all bright
+# (the Flame) still gets every colour (Nov 18, the Flame Lord: Cody liked all three, L2 used, L1 / L3 kept for later)
+MULTI = {
+    'fireL1': [(0, (110, 14, 6)), (0.3, (214, 52, 12)), (0.6, (250, 150, 30)), (0.85, (255, 226, 90)), (1, (255, 252, 230))],    # full fire
+    'fireL2': [(0, (120, 20, 10)), (0.3, (232, 96, 20)), (0.55, (255, 210, 80)), (0.78, (250, 250, 235)), (0.9, (140, 190, 255)), (1, (70, 110, 255))],   # blue-hearted: the Flame Lord
+    'fireL3': [(0, (60, 6, 40)), (0.3, (150, 14, 40)), (0.6, (230, 40, 30)), (0.85, (255, 160, 40)), (1, (255, 236, 150))],      # hellfire
+}
+
+def multi(stops, t):
+    for (t0, c0), (t1, c1) in zip(stops, stops[1:]):
+        if t <= t1:
+            k = (t - t0) / max(1e-6, t1 - t0); return tuple(int(c0[i] + (c1[i] - c0[i]) * k) for i in range(3))
+    return stops[-1][1]
 
 
 def ramp(r, t):
@@ -68,13 +83,16 @@ def main():
     out = sys.argv[sys.argv.index('--out') + 1] if '--out' in sys.argv else os.path.join(client, 'GFX')
     sys.argv = [sys.argv[0], client, '/tmp']
     exec(open(os.path.join(HERE, '..', 'world', 'spritesheets.py')).read().split('ids=sorted')[0], globals())
-    R = RAMPS[name]; os.makedirs(out, exist_ok=True)
+    R = RAMPS.get(name); M = MULTI.get(name); os.makedirs(out, exist_ok=True)
     frames = {k: load(src + k) for k in range(1024)}
     frames = {k: im.convert('RGBA') for k, im in frames.items() if im}
     lums = []
     for im in list(frames.values())[:60]:
         lums += [max(p[:3]) for p in (im.get_flattened_data() if hasattr(im, "get_flattened_data") else im.getdata()) if p[3] and not (p[0] > 240 and p[1] < 16 and p[2] > 240)]
     lums.sort(); lo, hi = lums[len(lums) // 50], lums[-len(lums) // 50]
+    if M:
+        import bisect
+        sums = sorted(sum(p[:3]) for im in list(frames.values())[:60] for p in (im.get_flattened_data() if hasattr(im, "get_flattened_data") else im.getdata()) if p[3] and not (p[0] > 240 and p[1] < 16 and p[2] > 240))
     n = 0
     for k, im in frames.items():
         px = im.load()
@@ -83,6 +101,7 @@ def main():
                 c = px[x, y]
                 if not c[3]: continue
                 if c[0] > 240 and c[1] < 16 and c[2] > 240: px[x, y] = (0, 0, 0, 0); continue
+                if M: px[x, y] = multi(M, bisect.bisect_left(sums, sum(c[:3])) / len(sums)) + (255,); continue
                 t = (max(c[:3]) - lo) / max(1, hi - lo)
                 px[x, y] = ramp(R, max(0, min(1, t))) + (255,)
         if SCALE != 1.0: im = enlarge(im, SCALE)
