@@ -108,8 +108,9 @@ for x in range(X0, X1 + 1):
         if A.floor(x, y) != VOID and (x, y) not in canyon: continue                # never touch what is already built
         A.clear(x, y); A.op(op='flag', x=x, y=y, bit=2, mode=0); A.op(op='flag', x=x, y=y, bit=5, mode=0)
         if (x, y) in canyon: A.op(op='floor', x=x, y=y, s=ground(x, y), set=False); continue
-        near = [(abs(dx) + abs(dy), canyon[(x + dx, y + dy)][1]) for dx in range(-4, 5) for dy in range(-4, 5) if (x + dx, y + dy) in canyon]
-        cold = not near or min(near)[1] < 0.42                                      # the whole box is mountain (no black holes between ravines)
+        near = [(abs(dx) + abs(dy), canyon[(x + dx, y + dy)][1]) for dx in range(-3, 4) for dy in range(-3, 4) if (x + dx, y + dy) in canyon]
+        if not near: continue                                                       # deep inside the mountain: left empty (Cody: no blocks nobody sees)
+        cold = min(near)[1] < 0.42                                                  # snow at the cliff foot near the mouth, ash deeper in
                                                         # snow at the cliff foot near the mouth, ash deeper in
         A.op(op='floor', x=x, y=y, s=R.choice(SNOW if cold else ASH), set=False); A.op(op='object', x=x, y=y, s=R.choice(CLIFF), block=3)
 A.run('ashen fields: ground and cliffs')
