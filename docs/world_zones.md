@@ -226,7 +226,7 @@ Shown by `/who`, by NPCs when asked where you are, and in server logs. A spot in
 | 216 | Reeves Hall | 428,821 | 439,831 | "in the Reeves Hall" |
 | 217 | Courtyard | 665,732 | 714,764 | "in the Courtyard" |
 | 218 | Ashen Fields | 725,690 | 815,787 | "in the Ashen Fields" |
-| 219 | Ashra's Hollow | 741,689 | 756,704 | "in the Ashra's Hollow" |
+| 219 | Ashra's Hollow | 741,689 | 756,704 | "in Ashra's Hollow" |
 | 220 | Ember Cavern | 793,691 | 815,713 | "in the Ember Cavern" |
 | 221 | Smoking Steps | 788,720 | 800,732 | "in the Smoking Steps" |
 | 222 | Bastion Road | 726,828 | 834,844 | "in the Bastion Road" |
@@ -234,3 +234,12 @@ Shown by `/who`, by NPCs when asked where you are, and in server logs. A spot in
 | 224 | Broken Causeway | 771,880 | 793,937 | "in the Broken Causeway" |
 | 225 | Bell Spire | 748,920 | 762,934 | "in the Bell Spire" |
 | 226 | Shrike's Eyrie | 807,921 | 823,937 | "in Shrike's Eyrie" |
+| 227 | Monastery of the Still Hand | 650,855 | 740,950 | "in the Monastery of the Still Hand" |
+| 228 | Pilgrims' Stair | 676,855 | 703,887 | "in Pilgrims' Stair" |
+| 229 | Cloister | 684,888 | 714,920 | "in the Cloister" |
+| 230 | Training Yard | 652,860 | 670,884 | "in the Training Yard" |
+| 231 | Hall of the Silent Hand | 651,918 | 664,946 | "in the Hall of the Silent Hand" |
+| 232 | Burial Terrace | 722,861 | 738,885 | "in the Burial Terrace" |
+| 233 | Still Pond | 721,895 | 737,915 | "in the Still Pond" |
+| 234 | Abbot's Sanctum | 726,925 | 739,948 | "in the Abbot's Sanctum" |
+| 235 | Library | 700,932 | 712,946 | "in the Library" |

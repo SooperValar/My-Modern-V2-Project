@@ -24,10 +24,13 @@ print('new or changed:', len(changed))
 idx = tempfile.mktemp(prefix='cd-index-'); env = dict(os.environ, GIT_INDEX_FILE=idx)
 git('read-tree', 'client-dist', env=env)
 info = []
-for rel, p in changed:
-    data = open(p, 'rb').read(); h = hashlib.sha256(data).hexdigest()
-    blob = subprocess.run(['git', '-C', repo, 'hash-object', '-w', '--stdin'], input=data, capture_output=True, check=True).stdout.decode().strip()
-    info.append('100644 %s\t%s' % (blob, rel)); old[rel] = (h, len(data))
+for rel, p in changed:                                    # sha256 for the manifest
+    data = open(p, 'rb').read(); old[rel] = (hashlib.sha256(data).hexdigest(), len(data))
+# all the files stored in ONE git call (one call per file ran past the device shell's 3 minutes, Nov 19)
+blobs = subprocess.run(['git', '-C', repo, 'hash-object', '-w', '--stdin-paths'], input='\n'.join(os.path.abspath(p) for _, p in changed) + '\n',
+                       capture_output=True, check=True, text=True).stdout.split()
+assert len(blobs) == len(changed)
+for (rel, _), blob in zip(changed, blobs): info.append('100644 %s\t%s' % (blob, rel))
 lines = [l for l in man if l and not l.startswith(('file ', 'base ', 'version '))]
 lines.append('version ' + version)
 for rel in sorted(old, key=lambda r: r.lower()): lines.append('file %s %d %s' % (old[rel][0], old[rel][1], rel))

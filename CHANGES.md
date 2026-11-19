@@ -1397,6 +1397,32 @@ the Spider Queen, the Ghost King, Robin; the Eastern Woods (Hollis, Edda, Tobias
 chain); Fenwatch by rank (Joss, Ilse, Corwin, Aldous, Petra, Robin's second, Rook); Stonehold (Hagar, Brann); Syleia last.
 `tools/world/quest_fix/quest_order.py` (new quests: add them to its list).
 
+## Monastery of the Still Hand (Nov 19, live) - band D, Lieutenant Colonel (band D complete)
+
+A mountain monastery gone bad, east of Stonehold, spread over its whole box (Cody's Spires rule: the goals at opposite
+ends, loops, dead ends). **Pilgrims' Stair**: long switchbacks up from Stonehold's east gate road, a stone monk statue
+or two set into the rock along each leg, no monsters. **Brother Anselm** waits at its foot (Cody: closer to town).
+The **Cloister**: a raked-stone garden ringed by four statues, four monks' cells, the refectory, the chapel; doors on all
+four sides. North: the **Training Yard** (practice dummies) and, in the far north-east, the **Hall of the Silent Hand**
+(Master Kesh). South: the **Burial Terrace**, the gardens and the frozen **Still Pond** (walk on the ice) and, in the far
+south-east, the **Abbot's Sanctum** (the Fallen Abbot). An outer terrace joins both ends the other way round; dead ends:
+the **Library**, the collapsed cells, the Hermit's Ledge. About 195 steps to each goal.
+- **Monsters** (group 40), Lieutenant Colonels, bare-handed: 24 **Fallen Monks** (saffron) and 12 **Fallen Mystics**
+  (grey casters); **Master Kesh** (Colonel, black and red) with four monks in his hall; **the Fallen Abbot** (pale and
+  gold) with three mystics. Looks: no whole-figure recolours (Cody) - the new `tools/sprites/unarmed_robes.py` takes the
+  Mercenary's sword out of every frame (its steel is cool grey, the figure warm), recolours only the clothes, keeps the
+  skin, cleans the edges: 64000 / 64500 / 65000 / 45000, Anselm 45500 (plain undyed wool).
+- **Quests, Brother Anselm**, Lieutenant Colonel+, no gold: Abbot's Prayer Beads -> **Monk's Wrap** (+5 Agility, +40
+  endurance) 96,000 exp; Silent Hand Sash -> **Amulet of the Still Mind** (+5 Willpower, +10 Meditate) 96,000 exp; his
+  greeting points to whichever is left. Item pictures 44556-44559.
+- **Statues** (`tools/sprites/statues.py`): any character's standing frames turned to stone (granite, marble or
+  sandstone; weapon kept or taken out) on a square plinth seated on the tile, all 8 directions: 38479-38494 monk statues.
+  Cody wants a set for every class later.
+- Pieces from Cody's 3D props (`world_monastery.py`): practice dummy, bookcase, book stand, candlestick, bench, pot
+  (38467-38478); ice 37528-37531.
+- Also: "Ashra's Hollow" no longer reads "in the Ashra's Hollow" (zone flag 0). Client files: client-dist 8fa9b5b
+  (publish_client_inc.py now stores all new files in one git call: the per-file calls ran out of time).
+
 ## Gargoyle Spires (Nov 19, live) - band D, Brigadier General
 
 A summit of rock spires over a misty chasm, east of the new Bastion Road (Cody: "like you're walking over a chasm"; "more

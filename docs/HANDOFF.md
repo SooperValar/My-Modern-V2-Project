@@ -271,7 +271,11 @@ Open: molten iron / crucibles / furnaces give no light (only the fire bowls do) 
 **REMIND CODY (asked Nov 19, 12:37): place the Gargoyle Spires' exploration pole when he is home** (Brigadier General: 60,000
 by the pole table; QUEST_BUILD 9c). Say it at the start of every reply until he says it's done.
 
-**Nov 19, 12:40: the Monastery planned (QUEST_BUILD 9e), waiting for Cody's OK.**
+**Nov 19, 18:05: the Monastery of the Still Hand is LIVE - band D is complete** (CHANGES.md; client-dist 8fa9b5b, Cody pushes).
+Next band E (Last Bastion and its areas, QUEST_BUILD) - and the TODO's new first item (recall to each town's temple).
+Lessons: (1) `device_commit_files` does not reliably replace a file that already exists on Cody's PC - check its md5
+there before running; edit existing files in place with the device shell. (2) Cody wants no whole-figure recolours of
+humans: `unarmed_robes.py` (weapon out, clothes only) and `statues.py` are the tools.
 
 **Nov 19, 07:20: the Gargoyle Spires are LIVE** (CHANGES.md "Gargoyle Spires"; client-dist 9c67f2c, Cody pushes). Band D: only
 the Monastery is left (new monk sprites). Lessons: (1) the live server was one build behind (Nov 18's `if done` in npctalk.c
