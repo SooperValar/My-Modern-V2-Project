@@ -35,6 +35,9 @@ RAMPS = {
     'brass': ((44, 26, 6), (164, 116, 40), (252, 222, 128)),         # the Brass Colossus: polished brass
     'seahag': ((6, 26, 30), (46, 112, 104), (186, 226, 204)),        # the Sea Hag (Drowned Village): the Mage (6096), sea-green and pale
     'seahag2': ((14, 22, 34), (70, 96, 112), (196, 210, 200)),       # the Sea Hag, the greyer, drowned choice
+    'ashgargoyle': ((14, 12, 12), (74, 70, 68), (184, 178, 170)),    # Ash Gargoyle (Ashen Fields): the Gargoyle, charcoal and ash
+    'flamelord': ((140, 46, 6), (236, 132, 28), (255, 222, 120)),    # the Flame Lord: the Flame, deep gold
+    'ashra': ((22, 10, 8), (150, 142, 136), (255, 128, 44)),         # Ashra the Cinder Witch: the Mage, ash-pale robes, ember-lit
 }
 
 
