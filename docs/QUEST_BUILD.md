@@ -232,6 +232,28 @@ Stonehold's west gate (681,766) and runs west (-y) into it. Monster group 37 (no
   38416 / 38418 (each N+1 its hide-walls copy); molten iron ground 36300-36303 (edges into the hall floor to make). 3D props
   from Cody's `3d Models\Fantasy Props` (Anvil, Anvil_Log, Cauldron, Bucket_Metal, Whetstone) and RPG Pack 2 (Gold_Ingots).
 
+## 9d. The Gargoyle Spires (Brigadier General) - **PLAN, waiting for Cody's OK (Nov 18, 23:30)**
+
+Quest Planner rows 28-29 + 27 (Gargoyle Horns for Brann). Area x 745-830 / y 845-940 (empty void now, checked with a
+render); Elysium (776-822 / 795-825) stays walled off. The pass to the Last Bastion (716-834 / 828-842) is not built yet:
+the plan builds it now, from Stonehold's south-east gate (724,835) south to an open gap at x 834, with the Spires' gate
+off its east side (about 765,843). Monster group 39 (not undead). Draft shown to Cody:
+- Look: a wind-scoured summit above Stonehold - snow and granite (Stonehold's / the Ashen Fields' cliffs), five ruined
+  stone spires (gargoyle roosts) on rock islands, joined by narrow ridges / causeways with false turns. Zones: Gargoyle
+  Spires, Broken Causeway, Bell Spire, Shrike's Eyrie.
+- Route: gate -> the Lower Ledges -> Broken Causeway -> **Bell Spire** (centre-east, the Gargoyle Bellkeeper, a cracked
+  bronze bell) -> the only bridge on to **Shrike's Eyrie** (far south-east corner, the highest spire). Bellkeeper before Shrike.
+- Monsters: the game's Gargoyle Knights and Gargoyle Mages, Brigadier General; every Spires gargoyle carries a Gargoyle
+  Horn. **Gargoyle Bellkeeper** (Brigadier General; verdigris-bronze recolour, 62000) with the Spire Bell Clapper;
+  **Shrike, the Gargoyle Matriarch** (Major General; the Gargoyle 1.3x, storm-grey with red eyes, 63000) with Shrike's Eye.
+- Quests (Commander Rhea, 2279, greeting only so far), rank Brigadier General (15)+, no gold: Spire Bell Clapper ->
+  **Warden's Girdle** (Epic belt: +Bravery, +hitpoints) 160,000 exp; Shrike's Eye -> **Shrike's Eye** amulet (Epic:
+  +Agility, +Perception) 230,000 exp. Brann: Gargoyle Horns 13,000 exp + 65G each (like the cores); his greeting updated.
+- New pictures: item pictures 44551-44555 (horn, clapper, eye, girdle, amulet); objects (cracked bell, gargoyle perch
+  statues, wind-carved pinnacles) 38463+. Pole: Brigadier General 60,000 (Cody places it).
+- Questions for Cody: chasms between the spires (black drop) or cliff-walled ridges like the Ashen Fields? Build the whole
+  pass to the Last Bastion now? Recolour the ordinary Knights / Mages too (they are the game's own look)?
+
 ## 9c. Exploration points ("poles"): the standard values (Cody, Nov 18 - FINAL; Cody places them himself)
 
 One pole per large area off a town. Value by the area's **average monster rank** (the editor's area-clear average),

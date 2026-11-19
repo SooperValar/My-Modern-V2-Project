@@ -268,6 +268,8 @@ project's next session. What the second chat did Nov 15-17 (all live, CHANGES.md
 the Ashen Fields (Varo), then the Gargoyle Spires (Rhea; the Spires add Gargoyle Horns to Brann's bounty), the Monastery last.
 Open: molten iron / crucibles / furnaces give no light (only the fire bowls do) - offered Cody hidden light sources.
 
+**Nov 18, 23:30: Gargoyle Spires planned, waiting for Cody's OK** (QUEST_BUILD 9d; the worldmap.py commit is done). Then preview -> build.
+
 **Nov 18, 22:45 (for the next chat):** the old chat's device shell broke (Claude deleted its own `~/tmp` while freeing a
 full scratch disk: never delete `~/tmp`; free space with `~/fw`, `~/scratch`, `~/ctest/.dat/mapedit-backups` instead).
 Still to do once a shell works: commit `tools/world/worldmap.py` (the minimap fix, CHANGES.md "Minimap redraw without
