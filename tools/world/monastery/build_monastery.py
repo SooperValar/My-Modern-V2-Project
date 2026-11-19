@@ -2,7 +2,7 @@
 """The Monastery of the Still Hand (Nov 19; band D, Lieutenant Colonel), east of Stonehold. A mountain monastery gone
 bad, spread over the whole box from the start (Cody, the Spires: the two goals at opposite ends, loops, dead ends):
 
-  Pilgrims' Stair: switchbacks up from Stonehold's east gate road (681,855) to the gate landing (Brother Anselm; no
+  Pilgrims' Stair: long switchbacks, monk statues set into the rock along them, up from Stonehold's east gate road (681,855) to the gate landing (Brother Anselm; no
   monsters on the stair). The Cloister in the middle: a walled compound - courtyard and raked-stone garden, four monks'
   cells, the refectory, the chapel - doors west (the gate), north, south and east.
   NORTH route: north door -> the Training Yard (practice dummies, north-west) -> along the north cliffs -> the Hall of
@@ -26,6 +26,8 @@ CLIFF, BOULDER = [1204, 1206], 1208
 SNOW = [35400, 35401, 35402, 35403]; SNOWY = [36100, 36101, 36102, 36103]; SNOWPINE = [38154, 38155, 38156, 38157]
 ICE = [37528, 37529, 37530, 37531]
 DUMMY, BOOKCASE, BOOKSTAND, CANDLES, BENCH, POT = 38467, 38469, 38471, 38473, 38475, 38477
+STATUE = {d: 38479 + 2 * k for k, d in enumerate(('W', 'E', 'N', 'S', 'NW', 'SW', 'NE', 'SE'))}   # stone monks (statues.py), the way each faces
+# (the game's sprite order up, down, left, right... = DX_UP (y-1, west), DX_DOWN (y+1, east), DX_LEFT (x-1, north), DX_RIGHT (x+1, south))
 PH = [R.random() * 6.28 for _ in range(6)]
 inbox = lambda x, y: X0 <= x <= X1 and Y0 <= y <= Y1
 
@@ -55,7 +57,9 @@ SANCTUM = (726, 925, 739, 948)                  # far south-east
 LIBRARY = (700, 932, 712, 946)
 RUIN = (686, 930, 694, 938)
 P = {}
-P['stair'] = line([(681, 855), (681, 861), (689, 864), (693, 870), (687, 875), (694, 880), (699, 884)], 1)
+# the stair (Cody: 'more back and forth'): long legs north and south, each a step further east, two tiles of rock between
+STAIR_PTS = [(681, 855), (681, 858), (673, 858), (673, 863), (697, 863), (697, 868), (673, 868), (673, 873), (697, 873), (697, 880)]
+P['stair'] = line(STAIR_PTS, 1)
 P['landing'] = box(696, 880, 702, 887)
 P['north path'] = line([(683, 904), (677, 900), (672, 890), (669, 884)], 1) | line([(656, 883), (654, 895), (656, 905), (657, 917)], 1)
 P['training yard'] = blob((661, 872), 8, 11)
@@ -129,9 +133,7 @@ for p in yard:
     if any(abs(p[0] - a) + abs(p[1] - b) < 4 for a, b in used): continue
     put(DUMMY, *p, block=1); k += 1
 for x, y in ((653, 925), (653, 940), (662, 925), (662, 940)): put(DUMMY, x, y, block=1)              # Kesh's hall
-for y in range(934, 946, 2):                                                                    # the library (not in front of its door, 700,938)
-    if abs(y - 938) > 1: put(BOOKCASE, 701, y)
-    put(BOOKCASE, 711, y)
+for y in range(934, 946, 2): put(BOOKCASE, 701, y); put(BOOKCASE, 711, y)                          # the library
 put(BOOKSTAND, 706, 940, block=1)
 for c in CELLS: put(POT, c[0] + 1, c[1] + 1, block=1)
 for y in range(891, 899, 3): put(BENCH, 710, y, block=1)                                           # refectory
@@ -139,6 +141,14 @@ for x, y in ((711, 912), (711, 917)): put(CANDLES, x, y, block=1)               
 put(BOOKSTAND, 710, 914, block=1)
 for x, y in ((737, 928), (737, 945), (729, 945), (733, 937)): put(CANDLES, x, y, block=1)          # sanctum
 A.run('furniture')
+# statues (Cody): set into the stair's east wall, facing the path (west); two by the raked garden, a pair at each goal's door
+for (ya, xa, xb) in ((858, 675, 679), (863, 676, 694), (868, 676, 694), (873, 676, 694)):
+    for x in range(xa, xb + 1, 4):
+        if (x, ya + 2) not in outdoor and inbox(x, ya + 2): put(STATUE['W'], x, ya + 2)
+for x, y, d in ((693, 900, 'S'), (693, 907, 'S'), (703, 900, 'N'), (703, 907, 'N'),
+                (656, 916, 'W'), (660, 916, 'W'), (729, 923, 'W'), (733, 923, 'W')):
+    put(STATUE[d], x, y)
+A.run('statues')
 graves = sorted(p for p in P['burial terrace'] if p in outdoor and all((p[0] + dx, p[1] + dy) in outdoor for dx in (-1, 0, 1) for dy in (-1, 0, 1)))
 R.shuffle(graves); k = 0
 bur = {p for p in P['burial terrace'] | P['south path'] if p in outdoor}
