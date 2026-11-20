@@ -22,6 +22,8 @@ PX0, PX1, PY0, PY1 = 716, 834, 828, 842                    # the pass to the Las
 YE = 965                                                   # Cody (Nov 19, live): 'you still easily see the square sides' - the gorge
 AX0, AX1 = 741, 834                                        # runs on east to YE (a player sees 22 tiles); rock fills the strips
                                                            # to the Monastery (741) and toward the Last Bastion (831-834)
+SH = int(sys.argv[sys.argv.index('--shift') + 1]) if '--shift' in sys.argv else 0   # Nov 19: the Spires moved 18 north (relocate_band_d.py): --shift -18
+X0, X1 = X0 + SH, X1 + SH
 EDGES = '--edges' in sys.argv                              # only the rock and the drop round the islands (the live world: islands,
                                                            # objects and monsters untouched)
 CLIFF, BOULDER = [1204, 1206], 1208
@@ -39,15 +41,15 @@ road = {(x, pass_y(x) + d) for x in range(PX0, PX1 + 1) for d in (-1, 0, 1)}
 # Cody (Nov 19): more spread out, more to the north; the two goals far apart (the Bell Spire at the north end, Shrike's
 # Eyrie at the south end) - make the most of the space so it takes time to do it all. Two long branches from the gate,
 # a middle loop, false turns (broken bridges) and dead ends.
-IS = {'ledges': ((764, 852), 5.5, 0),
+IS = {'ledges': ((764 + SH, 852), 5.5, 0),
       # north branch -> the Bell Spire
-      'n1': ((751, 866), 3.5, 0), 'n2': ((747, 883), 3.0, 1.1), 'n3': ((759, 896), 3.6, 1.4), 'n4': ((748, 909), 3.0, 0),
-      'n hook': ((767, 916), 2.8, 1.0), 'bell': ((755, 927), 6.5, 0),
+      'n1': ((751 + SH, 866), 3.5, 0), 'n2': ((747 + SH, 883), 3.0, 1.1), 'n3': ((759 + SH, 896), 3.6, 1.4), 'n4': ((748 + SH, 909), 3.0, 0),
+      'n hook': ((767 + SH, 916), 2.8, 1.0), 'bell': ((755 + SH, 927), 6.5, 0),
       # the middle: a loop and dead ends
-      'm1': ((779, 889), 4.0, 0), 'm2': ((786, 911), 3.5, 1.2), 'm3': ((775, 932), 3.0, 1.0),
+      'm1': ((779 + SH, 889), 4.0, 0), 'm2': ((786 + SH, 911), 3.5, 1.2), 'm3': ((775 + SH, 932), 3.0, 1.0),
       # south branch -> Shrike's Eyrie
-      's1': ((782, 858), 3.5, 0), 's2': ((797, 851), 2.8, 1.0), 's3': ((796, 872), 4.0, 0), 's4': ((812, 864), 3.2, 1.2),
-      's5': ((822, 882), 3.2, 1.2), 's6': ((808, 897), 3.5, 0), 's7': ((822, 911), 3.0, 1.0), 'eyrie': ((815, 929), 6.6, 0)}
+      's1': ((782 + SH, 858), 3.5, 0), 's2': ((797 + SH, 851), 2.8, 1.0), 's3': ((796 + SH, 872), 4.0, 0), 's4': ((812 + SH, 864), 3.2, 1.2),
+      's5': ((822 + SH, 882), 3.2, 1.2), 's6': ((808 + SH, 897), 3.5, 0), 's7': ((822 + SH, 911), 3.0, 1.0), 'eyrie': ((815 + SH, 929), 6.6, 0)}
 # (a, b, width 0 = one tile / 1 = two, kind: ridge (snow) | bridge (stone) | broken (a bridge with a gap in the middle))
 WAYS = [('ledges', 'n1', 1, 'ridge'), ('n1', 'n2', 0, 'ridge'), ('n2', 'n3', 1, 'bridge'), ('n3', 'n4', 0, 'ridge'),
         ('n4', 'bell', 1, 'bridge'), ('n3', 'n hook', 0, 'ridge'),
@@ -88,7 +90,7 @@ for i, (a, b, w, kind) in enumerate(WAYS):
         land.add(p); part[p] = 'way'
         if kind in ('bridge', 'broken'): bridge.add(p)
 # the gate: the ledges reach west to the pass's east wall
-GATE = [(x, y) for x in range(764, 768) for y in range(843, 849)]
+GATE = [(x, y) for x in range(764 + SH, 768 + SH) for y in range(843, 849)]
 for p in GATE: land.add(p); part.setdefault(p, 'ledges')
 # lone rock pillars standing up out of the gorge, out of reach (scenery: the drop needs something to measure it by)
 pillars = set(); tries = 0
@@ -105,14 +107,24 @@ while len(pillars) < n0 + 45 and tries < 4000:
     if any(p in land or p in gap or p in pillars for p in near if math.hypot(p[0] - c[0], p[1] - c[1]) <= r + 3.2): continue
     for x, y in near:
         if math.hypot(x - c[0], y - c[1]) <= r: pillars.add((x, y))
-# the far rim: granite on snow round the box, 2-4 tiles deep, ragged
+# Cody (Nov 19): no walls within 25 tiles of anywhere a player can reach, except Bastion Road's on the west. The drop
+# runs from x CX0 to CX1 (26+ tiles past the islands north and south; the Monastery, moved north, ends at 698; the Last
+# Bastion's space starts at 835) and on east to YE; the far rim is a thin line of rock beyond that, out of sight.
+LX0, LX1 = min(p[0] for p in land), max(p[0] for p in land)
+CX0, CX1 = max(699, LX0 - 27), min(834, LX1 + 27)
+AX0, AX1 = CX0, CX1
+R3 = random.Random(1195); tries = 0; n0 = len(pillars)
+while len(pillars) < n0 + 70 and tries < 6000:          # lone pillars in the wider drop north and south too
+    tries += 1; c = (R3.uniform(CX0 + 4, CX1 - 4), R3.uniform(Y0 + 6, YE - 5)); r = R3.uniform(0.7, 2.0)
+    if X0 + 3 < c[0] < X1 - 3: continue
+    near = [(x, y) for x in range(int(c[0]) - 5, int(c[0]) + 6) for y in range(int(c[1]) - 5, int(c[1]) + 6)]
+    if any(p in land or p in gap or p in pillars for p in near if math.hypot(p[0] - c[0], p[1] - c[1]) <= r + 3.2): continue
+    for x, y in near:
+        if math.hypot(x - c[0], y - c[1]) <= r: pillars.add((x, y))
 def rim(x, y):
-    """the far side of the gorge: on the north, west and south a ragged mountainside, headlands and inlets several tiles
-    deep (not a straight cliff line); on the east the gorge runs on to YE, past what a player can see"""
-    if x < X0 or x > X1: return True
-    n = 0.5 + 0.5 * math.sin(x * 0.09 + PH[2]) * math.sin(y * 0.08 + PH[3]) + 0.35 * math.sin((x - y) * 0.06 + PH[4])
-    if min(x - X0, X1 - x, y - Y0) < 1.5 + 8.0 * max(0.0, n): return True
-    return YE - y < 1.5 + 2.0 * max(0.0, n)
+    n = 0.5 + 0.5 * math.sin(x * 0.09 + PH[2]) * math.sin(y * 0.08 + PH[3])
+    if x <= CX0 + 1 or x >= CX1 - 1 or YE - y < 2: return True                 # the far side, out of sight
+    return y - Y0 < 1.5 + 2.5 * max(0.0, n) and (x, y) not in land               # along Bastion Road (the west): a ragged foot
 inbox = lambda x, y: AX0 <= x <= AX1 and Y0 <= y <= YE
 
 # ---------------------------------------------------------------- write it
@@ -124,7 +136,7 @@ for x in range(726, PX1 + 1):                                 # the pass (Stoneh
         if (x, y) in GATE: A.op(op='floor', x=x, y=y, s=R.choice(SNOW), set=False); continue
         if (x, y) in road: A.op(op='floor', x=x, y=y, s=R.choice(PATH), set=False); continue
         d = abs(y - pass_y(x)); wall = 3 + int(round(1.2 * math.sin(x / 4.0 + (0 if y < pass_y(x) else 2)) + R.uniform(-0.5, 0.5)))
-        if (x, y) in GATE or (y > pass_y(x) and 763 <= x <= 768 and y <= 842): wall = 99                  # the opening to the Spires
+        if (x, y) in GATE or (y > pass_y(x) and 763 + SH <= x <= 768 + SH and y <= 842): wall = 99                  # the opening to the Spires
         if d >= wall:
             A.op(op='floor', x=x, y=y, s=R.choice(SNOW), set=False); A.op(op='object', x=x, y=y, s=R.choice(CLIFF), block=3); continue
         A.op(op='floor', x=x, y=y, s=R.choice(SNOWY if d < wall - 1 or R.random() < 0.5 else SNOW), set=False)
@@ -165,7 +177,7 @@ for (x, y) in far:
     A.op(op='floor', x=x, y=y, s=R2.choice(SNOW), set=False); A.op(op='object', x=x, y=y, s=R2.choice(CLIFF), block=3); filled += 1
 A.run('mountain round the Spires'); print('  mountain filled', filled)
 if EDGES:
-    A.zone(X0, Y1 + 1, X1, YE, 'Gargoyle Spires', flag=1); A.save()
+    A.zone(CX0, Y0, CX1, YE, 'Gargoyle Spires', flag=1); A.save()
     print('edges only: chasm', len(chasm), 'pillar tiles', len(pillars)); sys.exit(0)
 
 # ---------------------------------------------------------------- spires, the Bell Spire's tower, the Eyrie's crags
@@ -203,7 +215,7 @@ A.run('boulders and pines')
 # no closed pockets: walk the islands from the gate (straight steps only); while a walkable tile can't be reached, take away
 # a tower wall / crag / boulder between it and the reached ground
 from collections import deque
-GATE0 = (765, 846)
+GATE0 = (765 + SH, 846)
 def reach():
     walk = {p for p in land if p not in used}; D = {GATE0}; q = deque([GATE0])
     while q:
@@ -226,8 +238,8 @@ while True:
 print('pockets opened', opened)
 
 A.zone(726, PY0, PX1, Y0 - 1, 'Bastion Road', flag=1)
-A.zone(X0, Y0, X1, YE, 'Gargoyle Spires', flag=1)
-A.zone(771, 880, 793, 937, 'Broken Causeway', flag=1)
+A.zone(CX0, Y0, CX1, YE, 'Gargoyle Spires', flag=1)
+A.zone(771 + SH, 880, 793 + SH, 937, 'Broken Causeway', flag=1)
 A.zone(bc[0] - 7, bc[1] - 7, bc[0] + 7, bc[1] + 7, 'Bell Spire', flag=1)
 A.zone(ec[0] - 8, ec[1] - 8, min(X1, ec[0] + 8), min(Y1, ec[1] + 8), "Shrike's Eyrie", flag=0)     # no "the" before a name with 's
 json.dump({'land': sorted([list(p) + [part[p]] for p in land]), 'bridge': sorted(bridge), 'used': sorted(used), 'tower': sorted(tower),
