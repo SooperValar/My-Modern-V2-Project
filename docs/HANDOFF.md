@@ -268,8 +268,8 @@ project's next session. What the second chat did Nov 15-17 (all live, CHANGES.md
 the Ashen Fields (Varo), then the Gargoyle Spires (Rhea; the Spires add Gargoyle Horns to Brann's bounty), the Monastery last.
 Open: molten iron / crucibles / furnaces give no light (only the fire bowls do) - offered Cody hidden light sources.
 
-**REMIND CODY (asked Nov 19, 12:37): place the Gargoyle Spires' exploration pole when he is home** (Brigadier General: 60,000
-by the pole table; QUEST_BUILD 9c). Say it at the start of every reply until he says it's done.
+**Exploration poles:** the Gargoyle Spires' is placed (Cody, Nov 19 19:14). **Still to place (Cody): the Monastery's**
+(Lieutenant Colonel, by the pole table; QUEST_BUILD 9c) - remind him.
 
 **Nov 19, 18:05: the Monastery of the Still Hand is LIVE - band D is complete** (CHANGES.md; client-dist 8fa9b5b, Cody pushes).
 Next band E (Last Bastion and its areas, QUEST_BUILD) - and the TODO's new first item (recall to each town's temple).
