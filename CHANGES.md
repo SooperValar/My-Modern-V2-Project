@@ -1604,3 +1604,12 @@ the output file ends in .tmp, so the format is now given.)
   (Captain) 73,000. (14-17 are Cody's: Monastery, Spires, Ashen Fields, Golem Foundry.)
 - Sea Golems 1094-1096 (pentagram golems) and Thief 1061 only have their template spot in the Foundry's box (700,700);
   they never spawn there.
+
+## Nov 20 (00:31) - A zone can have more than one area clear (live)
+- Cody: "add an area twice in case there's 2 sets of enemies in an area". The server already kept clears by number;
+  the editor refused a zone twice. Editor: a second clear for a zone starts with the enemies the others don't tick.
+  Server (npctalk.c `clear_name`): "You cleared Drowned Village (Bog-men)!" and the label in `#areas` when a zone has
+  more than one clear; one clear: as before.
+- `tools/world/band_c/split_drowned_clear.py`: clear 18 Drowned Village (Drowned Sailors: 22 + Sea Hag, Sergeant Major)
+  16,000; new clear 21 Drowned Village (Bog-men: 14 + Captain Morrow + Maud, Second Lieutenant) 25,000. Clear 18's
+  progress started again (its NPC list changed). talkreload: 38 entries, no complaints.

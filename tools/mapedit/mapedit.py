@@ -9525,15 +9525,19 @@ function clearsBox(el) {
     const z = cb.querySelector('.anew').value.trim();
     const zone = zones.find(x => x.toLowerCase() === z.toLowerCase());
     if (!zone) return toast('Pick a zone from the list (type part of its name).', true);
-    if (QA.some(c => c.zone.toLowerCase() === zone.toLowerCase())) return toast(zone + ' is in the list already.', true);
+    // Cody (Nov 20): a zone can have more than one clear (two sets of enemies, e.g. the Drowned Village's sailors and
+    // Bog-men): a second one starts with the enemies the others don't tick yet; the game then says "Zone (label)"
+    const others = QA.filter(c => c.zone.toLowerCase() === zone.toLowerCase());
     let id = 1; while (QA.some(c => c.id === id)) id++;
     if (id > 64) return toast('At most 64 area clears.', true);
     const list = await zoneNpcs(zone);
-    const en = list.filter(n => n.kind === 'enemy');
+    const taken = new Set(others.flatMap(c => c.npcs));
+    const en = list.filter(n => n.kind === 'enemy' && !taken.has(n.t));
+    if (others.length && !en.length) return toast(zone + ': its other area clear already ticks every enemy there. Untick some there first.', true);
     const common = Object.entries(en.reduce((m, n) => (m[n.name] = (m[n.name] || 0) + 1, m), {})).sort((a, b) => b[1] - a[1])[0];
     QA.push({ id, zone, exp: 1000, seyan: 1, label: common ? common[0] + 's' : 'enemies', npcs: en.map(n => n.t) });
     questsRender();
-    toast(`${zone}: ${en.length} enemies ticked of ${list.length} NPCs there. Set the experience, then Save.`);
+    toast(`${zone}${others.length ? ' (another clear for it)' : ''}: ${en.length} enemies ticked of ${list.length} NPCs there${others.length ? ' (the ones the other clear does not have)' : ''}. Set the label and experience, then Save.`);
   };
   cb.querySelector('.aadd').onclick = add;
   cb.querySelector('.arck').onclick = () => { zoneNpcCache = {}; questsRender(); toast('Zones checked again: each area shows what changed. Tick, then Save.'); };

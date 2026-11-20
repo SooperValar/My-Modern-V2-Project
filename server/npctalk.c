@@ -1469,6 +1469,19 @@ static int clear_ready(int co,int a,struct clrow *r)
 	return 1;
 }
 
+/* the area's name for messages: "Drowned Village", or "Drowned Village (Bog-men)" when the zone has more than one
+ * area clear (Cody, Nov 20: two sets of enemies in one area, each its own clear) */
+static const char *clear_name(int a)
+{
+	static char buf[96];
+	int b;
+	for (b=1; b<=MAXCLEAR; b++)
+		if (b!=a && clears[b].used && !strcasecmp(clears[b].zone,clears[a].zone)) break;
+	if (b>MAXCLEAR || !clears[a].label[0]) return clears[a].zone;
+	snprintf(buf,sizeof(buf),"%s (%s)",clears[a].zone,clears[a].label);
+	return buf;
+}
+
 static void clear_credit(int p,int a,int k)
 {
 	struct clrow r;
@@ -1482,7 +1495,7 @@ static void clear_credit(int p,int a,int k)
 	do_char_log(p,2,"%d of %d %s in this area.\n",cnt,clears[a].n,clears[a].label[0] ? clears[a].label : "enemies");
 	if (cnt>=clears[a].n) {
 		r.fl[a]|=(r.fl[a]&CLR_RUN2) ? CLR_DONE2 : CLR_DONE;
-		do_char_log(p,2,"You cleared %s!\n",clears[a].zone);
+		do_char_log(p,2,"You cleared %s!\n",clear_name(a));
 		if (clears[a].exp>0) do_give_exp(p,clears[a].exp,0,-1);
 		chlog(p,"Cleared area %d (%s)%s, %d exp",a,clears[a].zone,(r.fl[a]&CLR_RUN2) ? " as Seyan'Du" : "",clears[a].exp);
 	}
@@ -1522,7 +1535,7 @@ void do_areas(int cn)
 		shown++;
 		can=clear_ready(cn,a,&r);
 		cnt=popcount64(r.mask[a]);
-		if (!can) do_char_log(cn,3,"  %-24.24s cleared\n",clears[a].zone);
+		if (!can) do_char_log(cn,3,"  %-24.24s cleared%s%s%s\n",clears[a].zone,clear_name(a)!=clears[a].zone ? " (" : "",clear_name(a)!=clears[a].zone ? clears[a].label : "",clear_name(a)!=clears[a].zone ? ")" : "");
 		else if (r.fl[a]&CLR_RUN2) do_char_log(cn,1,"  %-24.24s %d of %d %s (again as Seyan'Du)\n",clears[a].zone,cnt,clears[a].n,clears[a].label[0] ? clears[a].label : "enemies");
 		else do_char_log(cn,1,"  %-24.24s %d of %d %s\n",clears[a].zone,cnt,clears[a].n,clears[a].label[0] ? clears[a].label : "enemies");
 	}
