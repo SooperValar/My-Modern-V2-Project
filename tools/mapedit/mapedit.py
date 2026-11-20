@@ -260,8 +260,9 @@ WA_EDGE = {s for e in WORLD_ASH.values() for s in e.values()}
 # not the black void): (x-1,y)=1 (x,y+1)=2 (x-1,y+1)=4 (x-2,y+1)=8 (x-1,y+2)=16 (x-2,y+2)=32 - as build_spires.py does it
 # Water below the ground works the same way (tools/sprites/world_water.py, Nov 19): sea cliffs 46000 + 16*mask +
 # 4*(x%4) + (y%4) - its water is one picture 4 x 4 tiles big, so the sprite follows the map position.
-# DROPS: name, first sprite, sprites per mask, by position (else: keep the tile's own variant)
-DROPS = [('chasm', 37400, 2, False), ('sea', 46000, 16, True)]
+# Low banks 48026 and the stone canal 47024 the same way, their water 3 x 3 tiles big: + 9*mask + 3*(x%3) + (y%3).
+# DROPS: name, first sprite, sprites per mask, the water picture's size in tiles (0: no picture - keep the tile's own variant)
+DROPS = [('chasm', 37400, 2, 0), ('sea', 46000, 16, 4), ('banks', 48026, 9, 3), ('canal', 47024, 9, 3)]
 CHASM_NB = ((-1, 0, 1), (0, 1, 2), (-1, 1, 4), (-2, 1, 8), (-1, 2, 16), (-2, 2, 32))
 def drop_of(s):
     for d in DROPS:
@@ -1415,7 +1416,8 @@ class World:
                 if not is_chasm(s_) and s_ != 1008:
                     m |= b
             dr = drop_of(cur)
-            new = dr[1] + dr[2] * m + ((x % 4) * 4 + (y % 4) if dr[3] else (cur - dr[1]) % dr[2])
+            P = dr[3]
+            new = dr[1] + dr[2] * m + ((x % P) * P + (y % P) if P else (cur - dr[1]) % dr[2])
             t = self.tile(x, y)
             if new != cur or not t[7] & MF_MOVEBLOCK:
                 self._save_map(rec, x, y)
@@ -4856,7 +4858,7 @@ const TOOLS = [     // the editor's own icon set: diamond tiles, quill, pickaxe,
   ['fill', 'F', 'Fill: a room (up to its walls, indoors or outdoors like the tile you click) or, with a floor, a patch of the same floor', '<rect x="7.6" y="7.6" width="4" height="4" fill="currentColor" fill-opacity=".35"/><rect x="12.4" y="7.6" width="4" height="4" fill="currentColor" fill-opacity=".35"/><rect x="7.6" y="12.4" width="4" height="4" fill="currentColor" fill-opacity=".35"/><rect x="12.4" y="12.4" width="4" height="4" fill="currentColor" fill-opacity=".35"/><path d="M12 5.6V1.2M10.2 3 12 1.2 13.8 3M12 18.4v4.4M10.2 21 12 22.8 13.8 21M5.6 12H1.2M3 10.2 1.2 12 3 13.8M18.4 12h4.4M21 10.2 22.8 12 21 13.8"/>'],
   ['erase', 'E', 'Erase: remove walls, objects and items (floor stays)', '<g transform="rotate(-38 12 12)"><rect x="3" y="8" width="18" height="8" rx="1.6"/><path d="M10 8v8"/><path d="M4.6 8h5.4v8H4.6A1.6 1.6 0 0 1 3 14.4V9.6A1.6 1.6 0 0 1 4.6 8z" fill="currentColor" fill-opacity=".35"/></g><path d="M13 21.5h8" opacity=".55"/>'],
   ['erasebox', 'R', 'Erase a rectangle: drag over an area to clear its walls, objects and items (floor stays). Shift+drag does it with the eraser too', '<rect x="3" y="5" width="18" height="14" stroke-dasharray="3 2.2"/><g transform="rotate(-38 12 12) translate(3.5 3.2) scale(.7)"><rect x="3" y="8" width="18" height="8" rx="1.6"/><path d="M10 8v8"/><path d="M4.6 8h5.4v8H4.6A1.6 1.6 0 0 1 3 14.4V9.6A1.6 1.6 0 0 1 4.6 8z" fill="currentColor" fill-opacity=".35"/></g>'],
-  ['chasmbox', 'K', 'Chasm and water edges: drag a box; every chasm or sea tile in it gets the right cliff walls (paint it with the chasm or sea ground first)', '<path d="M2 9h7l3 3 3-3h7"/><path d="M9 9v4M15 9v4" opacity=".6"/><path d="M5 17.5c2-1 4 1 7 0s5-1 7 0" stroke-dasharray="2 1.6" opacity=".7"/><rect x="2.5" y="4" width="19" height="16" rx="1" stroke-dasharray="3 2.2" opacity=".55"/>'],
+  ['chasmbox', 'K', 'Chasm and water edges: drag a box; every chasm, sea, banks or canal tile in it gets the right walls (paint it with that ground first)', '<path d="M2 9h7l3 3 3-3h7"/><path d="M9 9v4M15 9v4" opacity=".6"/><path d="M5 17.5c2-1 4 1 7 0s5-1 7 0" stroke-dasharray="2 1.6" opacity=".7"/><rect x="2.5" y="4" width="19" height="16" rx="1" stroke-dasharray="3 2.2" opacity=".55"/>'],
   ['pick', 'I', 'Pick: take what is on a tile as the brush', '<g transform="rotate(45 12 12)"><rect x="9.6" y="0.6" width="4.8" height="5.4" rx="2.4" fill="currentColor" fill-opacity=".35"/><rect x="8.4" y="6" width="7.2" height="2" rx=".6"/><path d="M10.6 8h2.8v9.4L12 20.4l-1.4-3z"/><path d="M10.6 13h2.8" opacity=".55"/></g><path d="M4.2 18.2c-.8 1.1-1.3 1.9-1.3 2.5a1.3 1.3 0 0 0 2.6 0c0-.6-.5-1.4-1.3-2.5z" fill="currentColor" stroke="none"/>'],
   ['copy', 'C', 'Copy and paste: drag to copy an area (floors, walls, objects, flags, items; not NPCs), then click to paste it, as often as you like. Shift+drag copies a new area, Esc forgets the copy', '<rect x="3" y="3" width="12" height="12" rx="1.2" stroke-dasharray="2.6 1.8"/><rect x="9" y="9" width="12" height="12" rx="1.2" fill="currentColor" fill-opacity=".35"/>'],
   ['pan', 'H', 'Move the view', '<g transform="translate(12 12.4) scale(.56) translate(-12 -12)" stroke-width="2.7"><path d="M8 13V6a1.5 1.5 0 0 1 3 0v6M11 11V4a1.5 1.5 0 0 1 3 0v7M14 11V5.5a1.5 1.5 0 0 1 3 0V13M17 9.5a1.5 1.5 0 0 1 3 0V15a6 6 0 0 1-6 6h-1a7 7 0 0 1-5.5-2.7L4.3 14a1.6 1.6 0 0 1 2.4-2l1.3 1.3"/></g><path d="M12 4.2V.9M10.5 2.4 12 .9l1.5 1.5M12 20.2v3M10.5 21.7 12 23.2l1.5-1.5M4.2 12H.9M2.4 10.5.9 12l1.5 1.5M19.8 12h3.3M21.6 10.5 23.1 12l-1.5 1.5"/>'],
@@ -5644,12 +5646,12 @@ function leftUI() {
       sect('Grounds · outside: grass, paths, sand, snow, water');
       if (!q && pal.ground && pal.ground.length) {
         sub('New ground · soft edges into grass');
-        const g = grid(); pal.ground.forEach(([nm, s2]) => { const c = cellFloor(s2, 0); c.querySelector('.lab').textContent = nm; c.title = nm === 'chasm' ? 'chasm · a drop into dark mist: the cliff walls under the ground beside it come by themselves, and it blocks walking (Chasm edges tool, K: fix a whole box)' : nm === 'sea' ? 'sea · sea cliffs: the game\'s water below rock walls that come by themselves; blocks walking (Chasm edges tool, K: fix a whole box)' : nm + ' · 4 random variants; the grass tiles around it get soft edges by themselves'; g.appendChild(c); });
+        const g = grid(); pal.ground.forEach(([nm, s2]) => { const c = cellFloor(s2, 0); c.querySelector('.lab').textContent = nm; c.title = nm === 'chasm' ? 'chasm · a drop into dark mist: the cliff walls under the ground beside it come by themselves, and it blocks walking (Chasm edges tool, K: fix a whole box)' : nm === 'sea' ? 'sea · sea cliffs: the game\'s water below rock walls that come by themselves; blocks walking (Chasm edges tool, K: fix a whole box)' : nm === 'banks' ? 'banks · low earth banks down to the water (rivers, ponds): the banks come by themselves; blocks walking (K: fix a whole box)' : nm === 'canal' ? 'canal · fitted stone walls down to still water (canals, moats): the walls come by themselves; blocks walking (K: fix a whole box)' : nm + ' · 4 random variants; the grass tiles around it get soft edges by themselves'; g.appendChild(c); });
       }
       if ((pal.drops || []).length) {     // Cody (Nov 19): the chasm and sea pieces in a box of their own, folded away
         const det = document.createElement('details'); det.style.margin = '2px 2px 8px';
         const n = pal.drops.reduce((a, [, , c]) => a + c, 0);
-        det.innerHTML = `<summary class="subhead" style="cursor:pointer">Chasm and water pieces · ${n} (the chasm and sea brushes pick these by themselves)</summary>`;
+        det.innerHTML = `<summary class="subhead" style="cursor:pointer">Chasm and water pieces · ${n} (the chasm and water brushes pick these by themselves)</summary>`;
         w.appendChild(det);
         det.open = !!window._dropsOpen;     // stays open while the palette redraws
         det.ontoggle = () => { window._dropsOpen = det.open; if (!det.open || det.dataset.done) return; det.dataset.done = 1;

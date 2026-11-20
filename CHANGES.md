@@ -1564,3 +1564,10 @@ the output file ends in .tmp, so the format is now given.)
   walking; the K tool fixes chasm and sea. Checked on a copy (6x6 sea: every tile right; Spires unchanged).
 - (22:40) Floors tab: the chasm and sea pieces (37400-37527, 46000-47023) no longer show among the game's grounds and
   tiles; they sit in one folded box "Chasm and water pieces" under the new grounds (palette field `drops`).
+
+## Nov 19 (22:55) - Low banks and stone canal (editor brushes, client 9003756)
+- `world_water.py banks` (48026-48601) and `canal` (47024-47599): an earth bank 8 px high (dark sod edge, soil, wet foot)
+  and fitted stone 14 px (pale coping, 4 px courses, two blocks a tile, every other course shifted, green-black at the
+  water); calmer water, the water picture 3 x 3 tiles (sprite = base + 9*mask + 3*(x%3) + (y%3); only 576-sprite blocks
+  were free). The sea is unchanged (4 x 4). Editor DROPS now carry the picture size; brushes "banks" and "canal" in
+  Floors > Grounds, K fixes all four. Checked on a copy: a 6x6 patch of each is right on every tile.

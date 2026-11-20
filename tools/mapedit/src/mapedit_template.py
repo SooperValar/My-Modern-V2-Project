@@ -260,8 +260,9 @@ WA_EDGE = {s for e in WORLD_ASH.values() for s in e.values()}
 # not the black void): (x-1,y)=1 (x,y+1)=2 (x-1,y+1)=4 (x-2,y+1)=8 (x-1,y+2)=16 (x-2,y+2)=32 - as build_spires.py does it
 # Water below the ground works the same way (tools/sprites/world_water.py, Nov 19): sea cliffs 46000 + 16*mask +
 # 4*(x%4) + (y%4) - its water is one picture 4 x 4 tiles big, so the sprite follows the map position.
-# DROPS: name, first sprite, sprites per mask, by position (else: keep the tile's own variant)
-DROPS = [('chasm', 37400, 2, False), ('sea', 46000, 16, True)]
+# Low banks 48026 and the stone canal 47024 the same way, their water 3 x 3 tiles big: + 9*mask + 3*(x%3) + (y%3).
+# DROPS: name, first sprite, sprites per mask, the water picture's size in tiles (0: no picture - keep the tile's own variant)
+DROPS = [('chasm', 37400, 2, 0), ('sea', 46000, 16, 4), ('banks', 48026, 9, 3), ('canal', 47024, 9, 3)]
 CHASM_NB = ((-1, 0, 1), (0, 1, 2), (-1, 1, 4), (-2, 1, 8), (-1, 2, 16), (-2, 2, 32))
 def drop_of(s):
     for d in DROPS:
@@ -1415,7 +1416,8 @@ class World:
                 if not is_chasm(s_) and s_ != 1008:
                     m |= b
             dr = drop_of(cur)
-            new = dr[1] + dr[2] * m + ((x % 4) * 4 + (y % 4) if dr[3] else (cur - dr[1]) % dr[2])
+            P = dr[3]
+            new = dr[1] + dr[2] * m + ((x % P) * P + (y % P) if P else (cur - dr[1]) % dr[2])
             t = self.tile(x, y)
             if new != cur or not t[7] & MF_MOVEBLOCK:
                 self._save_map(rec, x, y)
