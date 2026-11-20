@@ -2015,6 +2015,57 @@ int use_pentagram(int cn,int in)
         return 1;
 }
 
+/* Town shrines (Cody, Nov 19): praying at a town's shrine with nothing in your hand makes that town's temple your
+ * recall point (Recall, death, the gods' rescue). who: 0 anyone, 1 not purple players (Skua's temple: they can only
+ * go back to the Purple One's), 2 only purple players (the Purple One's temple; for others the shrine is as before).
+ * dir: which way you face when you arrive there (0 = as you were). New characters still start with Aston. */
+static struct town_shrine {
+        short sx,sy,rx,ry;
+        char dir,who;
+        char *place;
+} town_shrine[]={
+        {492,512, 512,512, 0,       1, "the Temple of Skua in Aston"},
+        {560,549, 558,542, 0,       2, "the Temple of the Purple One in Aston"},
+        {434,817, 434,812, DX_DOWN, 0, "Fenwatch's temple"},
+        {664,836, 669,836, 0,       0, "Stonehold's temple"},
+};
+
+/* the way to face on arriving at a town recall point (0: none set) */
+int town_recall_dir(int x,int y)
+{
+        int n;
+
+        for (n=0; n<(int)(sizeof(town_shrine)/sizeof(town_shrine[0])); n++)
+                if (town_shrine[n].rx==x && town_shrine[n].ry==y) return town_shrine[n].dir;
+        return 0;
+}
+
+/* 1 if this shrine is a town shrine that answered (recall point set, or refused); 0: carry on as before */
+static int town_shrine_pray(int cn,int in)
+{
+        int n,purple=(ch[cn].kindred&KIN_PURPLE)!=0;
+        struct town_shrine *t=NULL;
+
+        if (!IS_SANEPLAYER(cn)) return 0;
+        for (n=0; n<(int)(sizeof(town_shrine)/sizeof(town_shrine[0])); n++)
+                if (town_shrine[n].sx==it[in].x && town_shrine[n].sy==it[in].y) { t=&town_shrine[n]; break; }
+        if (!t) return 0;
+        if (t->who==2 && !purple) return 0;
+        if (t->who==1 && purple) {
+                do_char_log(cn,1,"Skua does not answer one who follows the Purple One. Only the Purple One's temple will take you back.\n");
+                return 1;
+        }
+        if (ch[cn].temple_x==t->rx && ch[cn].temple_y==t->ry) {
+                do_char_log(cn,1,"You pray at the shrine. Your recall point is already %s.\n",t->place);
+                return 1;
+        }
+        ch[cn].temple_x=t->rx; ch[cn].temple_y=t->ry;
+        do_char_log(cn,1,"You kneel and pray at the shrine. From now on, Recall brings you to %s.\n",t->place);
+        fx_add_effect(6,0,ch[cn].x,ch[cn].y,0);
+        chlog(cn,"Set recall point to %d,%d (%s)",t->rx,t->ry,t->place);
+        return 1;
+}
+
 int use_shrine(int cn,int in)
 {
         int in2,val,rank,m;
@@ -2022,6 +2073,7 @@ int use_shrine(int cn,int in)
         if (!cn) return 0;
 
         if ((in2=ch[cn].citem)==0) {
+                if (town_shrine_pray(cn,in)) return 0;
                 do_char_log(cn,1,"You get the feeling that it would be apropriate to give the gods a present.\n");
                 return 0;
         }

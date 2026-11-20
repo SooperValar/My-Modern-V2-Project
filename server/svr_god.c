@@ -516,6 +516,10 @@ int god_transfer_char(int cn,int x,int y)
             god_drop_char_fuzzy_large(cn,x-3,y,x,y) || god_drop_char_fuzzy_large(cn,x,y+3,x,y) ||
             god_drop_char_fuzzy_large(cn,x,y-3,x,y)) {
                 companion_follow(cn,ox,oy);
+                if ((ch[cn].flags&(CF_PLAYER)) && x==ch[cn].temple_x && y==ch[cn].temple_y) {   // arriving at a town recall point: face its way (Cody, Nov 19)
+                        int d=town_recall_dir(x,y);
+                        if (d) ch[cn].dir=d;
+                }
                 return 1;
         }
 

@@ -155,6 +155,7 @@ int god_drop_char(int cn,int x,int y);
 int god_drop_char_fuzzy(int nr,int x,int y);
 int god_drop_char_fuzzy_large(int nr,int x,int y,int xs,int ys);
 int god_transfer_char(int cn,int x,int y);
+int town_recall_dir(int x,int y);               // use_driver.c: the way to face at a town recall point (0: none)
 void god_goto(int cn,int co,char *cx,char *cy);
 void god_info(int cn,int co);
 void god_who(int cn);
