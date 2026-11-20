@@ -1469,6 +1469,17 @@ void plr_newlogin(int nr)
 }
 
 
+/* put a logging-in character down on or near x,y (that spot, then 3 tiles east, then 3 south, as before); never on bare
+ * map (floor 1008, the empty void outside every area) */
+static int login_drop(int cn,int x,int y)
+{
+        if (!SANEXY(x,y) || map[x+y*MAPX].sprite==1008) return 0;
+        if (god_drop_char_fuzzy_large(cn,x,y,x,y)) return 1;
+        if (god_drop_char_fuzzy_large(cn,x+3,y,x,y)) return 1;
+        if (god_drop_char_fuzzy_large(cn,x,y+3,x,y)) return 1;
+        return 0;
+}
+
 void plr_login(int nr)
 {
         int cn,tmp,in,n;
@@ -1563,13 +1574,18 @@ void plr_login(int nr)
         player[nr].cpl.mode = -1; // "impossible" client default will force change
 
         if (!(ch[cn].flags&CF_CCP)) {
-                if (!god_drop_char_fuzzy_large(cn,ch[cn].tavern_x,ch[cn].tavern_y,ch[cn].tavern_x,ch[cn].tavern_y))
-                        if (!god_drop_char_fuzzy_large(cn,ch[cn].tavern_x+3,ch[cn].tavern_y,ch[cn].tavern_x,ch[cn].tavern_y))
-                                if (!god_drop_char_fuzzy_large(cn,ch[cn].tavern_x,ch[cn].tavern_y+3,ch[cn].tavern_x,ch[cn].tavern_y)) {
-                                        plog(nr,"plr_login(): could not drop new character");
-                                        plr_logout(cn,nr,LO_NOROOM);
-                                        return;
-                                }
+                /* Cody (Nov 19): if the place he logged out in is gone (built over, blocked, or bare map since an area
+                 * moved), he wakes up at his temple instead of not getting in at all */
+                if (!login_drop(cn,ch[cn].tavern_x,ch[cn].tavern_y)) {
+                        if ((ch[cn].temple_x!=ch[cn].tavern_x || ch[cn].temple_y!=ch[cn].tavern_y) && login_drop(cn,ch[cn].temple_x,ch[cn].temple_y)) {
+                                chlog(cn,"Login: %d,%d is gone, put at the temple %d,%d",ch[cn].tavern_x,ch[cn].tavern_y,ch[cn].temple_x,ch[cn].temple_y);
+                                do_char_log(cn,1,"The place where you left the world is no longer there. You wake up in your temple.\n");
+                        } else {
+                                plog(nr,"plr_login(): could not drop new character");
+                                plr_logout(cn,nr,LO_NOROOM);
+                                return;
+                        }
+                }
         }
 
 	for (n=0; n<20; n++) {
