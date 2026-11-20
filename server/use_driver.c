@@ -2025,7 +2025,7 @@ static struct town_shrine {
         char *place;
 } town_shrine[]={
         {492,512, 512,512, 0,       1, "the Temple of Skua in Aston"},
-        {560,549, 558,542, 0,       2, "the Temple of the Purple One in Aston"},
+        {560,549, PURPLE_RECALL_X,PURPLE_RECALL_Y, 0, 2, "the Temple of the Purple One in Aston"},
         {434,817, 434,812, DX_DOWN, 0, "Fenwatch's temple"},
         {664,836, 669,836, 0,       0, "Stonehold's temple"},
 };
@@ -2283,8 +2283,8 @@ int teleport3(int cn,int in)    // out of labyrinth
 	if (lab_restore_temple(cn)) {
 		;	// back to the temple from before the labyrinth
 	} else if (ch[cn].kindred&KIN_PURPLE) {
-		ch[cn].temple_x=ch[cn].tavern_x=558;
-        	ch[cn].temple_y=ch[cn].tavern_y=542;
+		ch[cn].temple_x=ch[cn].tavern_x=PURPLE_RECALL_X;
+        	ch[cn].temple_y=ch[cn].tavern_y=PURPLE_RECALL_Y;
 	} else if (ch[cn].flags&CF_STAFF) {
 		ch[cn].temple_x=ch[cn].tavern_x=813;
         	ch[cn].temple_y=ch[cn].tavern_y=165;

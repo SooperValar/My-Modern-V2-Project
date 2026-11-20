@@ -1980,8 +1980,8 @@ void god_set_flag(int cn,int co,unsigned long long flag)
 
 	if (flag==CF_STAFF) {
 		if (ch[co].kindred&KIN_PURPLE) {
-			ch[co].temple_x=ch[co].tavern_x=558;
-			ch[co].temple_y=ch[co].tavern_y=542;
+			ch[co].temple_x=ch[co].tavern_x=PURPLE_RECALL_X;
+			ch[co].temple_y=ch[co].tavern_y=PURPLE_RECALL_Y;
 		} else if (ch[co].flags&CF_STAFF) {
 			ch[co].temple_x=ch[co].tavern_x=813;
 			ch[co].temple_y=ch[co].tavern_y=165;
@@ -2031,8 +2031,8 @@ void god_set_purple(int cn,int co)
                 ch[co].temple_x=512;
         	ch[co].temple_y=512;
         } else {
-        	ch[co].temple_x=558;
-                ch[co].temple_y=542;
+        	ch[co].temple_x=PURPLE_RECALL_X;
+                ch[co].temple_y=PURPLE_RECALL_Y;
         }
 }
 
@@ -2103,8 +2103,8 @@ void god_racechange(int co,int temp)
         ch[co].flags=old.flags;
         if (old.kindred&KIN_PURPLE) {
         	ch[co].kindred|=KIN_PURPLE;
-        	ch[co].temple_x=558;
-        	ch[co].temple_y=542;
+        	ch[co].temple_x=PURPLE_RECALL_X;
+        	ch[co].temple_y=PURPLE_RECALL_Y;
         }
         ch[co].total_online_time=old.total_online_time;
         ch[co].current_online_time=old.current_online_time;
@@ -2922,7 +2922,7 @@ void god_recall_default(int cn)
 {
 	if (!IS_SANECHAR(cn) || !(ch[cn].flags&(CF_GOD|CF_IMP))) return;
 	if (ch[cn].data[CHD_LABTEMPLE]) return;		// inside a lab: the lab's temple stays
-	if (ch[cn].temple_x!=512 && ch[cn].temple_x!=558 && ch[cn].temple_x!=813) return;	// has its own point
+	if (ch[cn].temple_x!=512 && ch[cn].temple_x!=558 && ch[cn].temple_x!=PURPLE_RECALL_X && ch[cn].temple_x!=813) return;	// has its own point (558: the old purple spot)
 	ch[cn].temple_x=ELYSIUM_RECALL_X;
 	ch[cn].temple_y=ELYSIUM_RECALL_Y;
 }
@@ -2949,7 +2949,7 @@ void god_setrecall(int cn,char *who,char *cx,char *cy)
 	if (!strcasecmp(cx,"here")) { x=ch[cn].x; y=ch[cn].y; }
 	else if (!strcasecmp(cx,"default")) {
 		if (ch[co].flags&(CF_GOD|CF_IMP)) { x=ELYSIUM_RECALL_X; y=ELYSIUM_RECALL_Y; }
-		else if (ch[co].kindred&KIN_PURPLE) { x=558; y=542; }
+		else if (ch[co].kindred&KIN_PURPLE) { x=PURPLE_RECALL_X; y=PURPLE_RECALL_Y; }
 		else if (ch[co].flags&CF_STAFF) { x=813; y=165; }
 		else { x=512; y=512; }
 	} else {

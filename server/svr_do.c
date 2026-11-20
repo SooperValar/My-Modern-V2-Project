@@ -1406,8 +1406,8 @@ void do_become_purple(int cn)
                 do_char_log(cn,2,"Player killing flag set. May you enjoy the killing.\n");
                 do_char_log(cn,0," \n");
                 ch[cn].kindred|=KIN_PURPLE;
-                ch[cn].temple_x=558;
-                ch[cn].temple_y=542;
+                ch[cn].temple_x=PURPLE_RECALL_X;
+                ch[cn].temple_y=PURPLE_RECALL_Y;
 
 		do_update_char(cn);
 

@@ -39,6 +39,8 @@ All rights reserved.
 #define LENDESC                    200
 
 #define HOME_MERCENARY_X        512
+#define PURPLE_RECALL_X         560     // the Temple of the Purple One, Aston: purple players' recall point (Cody, Nov 19: was 558,542, off in a corner)
+#define PURPLE_RECALL_Y         544
 #define HOME_MERCENARY_Y        512
 
 #define CNTSAY			(TICKS)
