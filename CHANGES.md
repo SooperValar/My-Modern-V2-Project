@@ -1587,3 +1587,10 @@ the output file ends in .tmp, so the format is now given.)
   Ledge, steps and water pieces all in the folded box. Checked on a copy (a 10x10 lower area round a 3x3 block: every
   tile and block right; steps 2 wide; erase restores the block).
 - `publish_client_inc.py --max=N` publishes a big batch in parts (the zip update takes ~2.5 min a run).
+
+## Nov 19 (23:55) - Sprite numbers: docs/SPRITE_MAP.md (tools/world/sprite_scan.py)
+- Cody: will the game handle all the new sprites? 16-bit everywhere: 65,535 is the ceiling. Taken 33,674 (original art
+  13,953, ours 19,721). Free and safe: about 13,000; biggest free block 768 (a 1,024 set must now be split or made
+  smaller). About 18,800 numbers have no picture but must stay unused: mostly the prestige-recolour room of the original
+  looks (+448 / +896, LOOKTIER_STEP). Original art nothing refers to: 680 (384 of them 33808-34191) - candidates only.
+- A character look's frames run base + 0..447 (engine.c: up to 216 + 7*32); our looks (41000 on) have no prestige room.
