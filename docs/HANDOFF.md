@@ -285,8 +285,8 @@ the Monastery is left (new monk sprites). Lessons: (1) the live server was one b
 was never compiled live): after starting, `talkreload` should say just "NPC dialogue loaded: N entries" - "(some lines were
 not understood)" means the live program and the source disagree; `update-code` fixed it. (2) publish_client.py copies and
 hashes all ~14,000 client files and no longer finishes within the device shell's 3 minutes; `tools/release/publish_client_inc.py`
-adds only new / resized files to client-dist (same manifest), but does not rebuild the player zip - run the full
-publish_client.py from Ubuntu (no time limit) before handing out the zip. (3) Claude's first stop-send this session was
+adds only new / changed files to client-dist (same manifest) and (Nov 19, 21:00) updates the player zip the same way - no
+Ubuntu step needed any more. (3) Claude's first stop-send this session was
 refused by the safety system; it went through after Cody said "go live". (4) A zone with flag 1 gets "the" in front:
 "Shrike's Eyrie" is flag 0; "Ashra's Hollow" still reads "in the Ashra's Hollow" (fix: flag 0).
 
