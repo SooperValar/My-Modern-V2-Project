@@ -1594,3 +1594,13 @@ the output file ends in .tmp, so the format is now given.)
   smaller). About 18,800 numbers have no picture but must stay unused: mostly the prestige-recolour room of the original
   looks (+448 / +896, LOOKTIER_STEP). Original art nothing refers to: 680 (384 of them 33808-34191) - candidates only.
 - A character look's frames run base + 0..447 (engine.c: up to 216 + 7*32); our looks (41000 on) have no prestige room.
+
+## Nov 20 (00:16) - Band C: one area per rank (live)
+- Cody: "make sure the progression is smooth through that portion of the ranks". `tools/world/band_c/retune_band_c.py`:
+  Drowned Sailors 2161 / 2177-2180 take 2160's strength (Second Lieutenant -> Sergeant Major); Barrow Skeletons 2224 /
+  2226 / 2228 / 2230 / 2232 / 2234 take 2208's (Sergeant Major -> Second Lieutenant); they respawned with it.
+- Area clears (suggested exp): 18 Drowned Village (Sergeant Major, 39 monsters, the chapel's not ticked) 23,000; 19 Flooded
+  Chapel (Second Lieutenant) 15,000; 13 Barrow Hills now First Lieutenant 35,000 -> 51,000; 20 Lizard Hatcheries
+  (Captain) 73,000. (14-17 are Cody's: Monastery, Spires, Ashen Fields, Golem Foundry.)
+- Sea Golems 1094-1096 (pentagram golems) and Thief 1061 only have their template spot in the Foundry's box (700,700);
+  they never spawn there.
