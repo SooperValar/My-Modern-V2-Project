@@ -1551,3 +1551,14 @@ the output file ends in .tmp, so the format is now given.)
 - Tool **Chasm edges (K)**: drag a box; op `chasmfix` reworks every chasm tile in it. Checked on a copy: on the whole
   Spires box it changes nothing (matches the build), painting ground over a chasm tile and chasm back restores it exactly.
 - `tools/mapedit/src/` was behind the deployed `mapedit.py` (Nov 17 vs 19): split again from the deployed file first.
+
+## Nov 19 (22:35) - Sea cliffs: water below the ground (editor brush, client c899ddc)
+- Cody: the chasm idea "with a water look" - sea cliffs first, then low banks and a stone canal; the water should come
+  from the game's own water and not look tiled. `tools/sprites/world_water.py sea`: rock walls down to the water (light
+  rim, grain, wet rock and weed at the foot, broken foam, the cliff's shadow), the chasm's six-tile mask. The water is one
+  seamless picture 4 x 4 tiles big in the colours of the game's four water tiles (16933, 16957-16959): noise at a few
+  sizes, grain, scattered ripples - so the sprite is 46000 + 16*mask + 4*(x%4) + (y%4) (1024 sprites, 46000-47023;
+  37532-37659 was an early try and is unused). Banks go to 48026-49049; the canal needs a free block (see the free list
+  in this entry's session: 45948-47999 rest, 48026-49999, 60224-60999...).
+- Editor: the chasm code is now DROPS (chasm, sea): a **sea** ground in Floors > Grounds, edges by themselves, blocks
+  walking; the K tool fixes chasm and sea. Checked on a copy (6x6 sea: every tile right; Spires unchanged).

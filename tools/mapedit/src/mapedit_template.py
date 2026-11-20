@@ -258,10 +258,19 @@ WA_EDGE = {s for e in WORLD_ASH.values() for s in e.values()}
 # the chasm (tools/sprites/world_chasm.py, Nov 19; Cody: "both" - a brush and a box button): a drop into dark mist with
 # cliff walls under the ground beside it. 37400 + 2*mask + variant; the mask is which of six tiles are ground (not chasm,
 # not the black void): (x-1,y)=1 (x,y+1)=2 (x-1,y+1)=4 (x-2,y+1)=8 (x-1,y+2)=16 (x-2,y+2)=32 - as build_spires.py does it
-CHASM_BASE, CHASM_N = 37400, 128
+# Water below the ground works the same way (tools/sprites/world_water.py, Nov 19): sea cliffs 46000 + 16*mask +
+# 4*(x%4) + (y%4) - its water is one picture 4 x 4 tiles big, so the sprite follows the map position.
+# DROPS: name, first sprite, sprites per mask, by position (else: keep the tile's own variant)
+DROPS = [('chasm', 37400, 2, False), ('sea', 46000, 16, True)]
 CHASM_NB = ((-1, 0, 1), (0, 1, 2), (-1, 1, 4), (-2, 1, 8), (-1, 2, 16), (-2, 2, 32))
-is_chasm = lambda s: CHASM_BASE <= s < CHASM_BASE + CHASM_N
-WORLD_GROUND['sets']['chasm'] = {'plain': [CHASM_BASE, CHASM_BASE + 1], 'edges': {}}     # the brush: walls come by themselves
+def drop_of(s):
+    for d in DROPS:
+        if d[1] <= s < d[1] + 64 * d[2]:
+            return d
+    return None
+is_chasm = lambda s: drop_of(s) is not None          # any drop: chasm or water
+for _d in DROPS:     # the brushes: walls come by themselves
+    WORLD_GROUND['sets'][_d[0]] = {'plain': [_d[1] + k for k in range(_d[2])], 'edges': {}}
 WG_PLAIN = {s: n for n, g in WORLD_GROUND['sets'].items() for s in g['plain']}
 WG_EDGE = {s for g in WORLD_GROUND['sets'].values() for s in g['edges'].values()}
 WG_GRASS = set(WORLD_GROUND['grass'])
@@ -1404,7 +1413,8 @@ class World:
                 s_ = floor(x + dx, y + dy)
                 if not is_chasm(s_) and s_ != 1008:
                     m |= b
-            new = CHASM_BASE + 2 * m + ((cur - CHASM_BASE) & 1)
+            dr = drop_of(cur)
+            new = dr[1] + dr[2] * m + ((x % 4) * 4 + (y % 4) if dr[3] else (cur - dr[1]) % dr[2])
             t = self.tile(x, y)
             if new != cur or not t[7] & MF_MOVEBLOCK:
                 self._save_map(rec, x, y)
