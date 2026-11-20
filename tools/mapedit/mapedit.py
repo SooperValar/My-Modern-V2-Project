@@ -255,6 +255,13 @@ WORLD_ASH = {n: {int(m): s for m, s in e.items()} for n, e in _WA['ash_base'].it
 WA_ORDER = ['cinders', 'soft snow', 'snowy grass']
 WA_BASE = set(WORLD_GROUND['sets']['ash']['plain'])
 WA_EDGE = {s for e in WORLD_ASH.values() for s in e.values()}
+# the chasm (tools/sprites/world_chasm.py, Nov 19; Cody: "both" - a brush and a box button): a drop into dark mist with
+# cliff walls under the ground beside it. 37400 + 2*mask + variant; the mask is which of six tiles are ground (not chasm,
+# not the black void): (x-1,y)=1 (x,y+1)=2 (x-1,y+1)=4 (x-2,y+1)=8 (x-1,y+2)=16 (x-2,y+2)=32 - as build_spires.py does it
+CHASM_BASE, CHASM_N = 37400, 128
+CHASM_NB = ((-1, 0, 1), (0, 1, 2), (-1, 1, 4), (-2, 1, 8), (-1, 2, 16), (-2, 2, 32))
+is_chasm = lambda s: CHASM_BASE <= s < CHASM_BASE + CHASM_N
+WORLD_GROUND['sets']['chasm'] = {'plain': [CHASM_BASE, CHASM_BASE + 1], 'edges': {}}     # the brush: walls come by themselves
 WG_PLAIN = {s: n for n, g in WORLD_GROUND['sets'].items() for s in g['plain']}
 WG_EDGE = {s for g in WORLD_GROUND['sets'].values() for s in g['edges'].values()}
 WG_GRASS = set(WORLD_GROUND['grass'])
@@ -1368,6 +1375,40 @@ class World:
             if new != cur:
                 self._save_map(rec, x, y)
                 t = self.tile(x, y); t[0] = new; self.set_tile(x, y, t)
+        self._chasmedge(rec)
+
+    def _chasmedge(self, rec):
+        """the chasm: every chasm tile that looks at a changed tile (or lies in a 'chasmfix' box) gets the walls of the ground
+        beside it; chasm blocks walking, ground painted over chasm can be walked again (unless a wall or object stands there)"""
+        floor = lambda x, y: struct.unpack_from('<H', self.map, (x + y * MAPX) * MAP_SIZE)[0]
+        changed = [(k[1], k[2], struct.unpack_from('<H', old, 0)[0]) for k, old in list(rec.items())
+                   if k[0] == 'm' and struct.unpack_from('<H', old, 0)[0] != floor(k[1], k[2])]
+        todo = set(getattr(self, '_chasm_box', None) or ()); self._chasm_box = None
+        for x, y, old in changed:
+            cur = floor(x, y)
+            if is_chasm(old) and not is_chasm(cur):
+                t = self.tile(x, y)
+                if t[7] & MF_MOVEBLOCK and not t[1]:
+                    t[7] &= ~MF_MOVEBLOCK; self.set_tile(x, y, t)
+            todo.add((x, y))
+            for dx, dy, _ in CHASM_NB:
+                todo.add((x - dx, y - dy))
+        for x, y in todo:
+            if not (2 <= x < MAPX - 2 and 2 <= y < MAPY - 2):
+                continue
+            cur = floor(x, y)
+            if not is_chasm(cur):
+                continue
+            m = 0
+            for dx, dy, b in CHASM_NB:
+                s_ = floor(x + dx, y + dy)
+                if not is_chasm(s_) and s_ != 1008:
+                    m |= b
+            new = CHASM_BASE + 2 * m + ((cur - CHASM_BASE) & 1)
+            t = self.tile(x, y)
+            if new != cur or not t[7] & MF_MOVEBLOCK:
+                self._save_map(rec, x, y)
+                t[0] = new; t[7] |= MF_MOVEBLOCK; self.set_tile(x, y, t)
 
     def _save_map(self, rec, x, y):
         k = ('m', x, y)
@@ -2610,6 +2651,11 @@ class World:
                 if not (0 <= x < MAPX and 0 <= y < MAPY):
                     continue
                 k = op['op']
+                if k == 'chasmfix':           # a box (x, y) - (x1, y1): its chasm tiles get the right walls (_chasmedge)
+                    x1, y1 = min(MAPX - 1, int(op.get('x1', x))), min(MAPY - 1, int(op.get('y1', y)))
+                    self._chasm_box = (getattr(self, '_chasm_box', None) or set()) | {(a, b) for a in range(x, x1 + 1) for b in range(y, y1 + 1)}
+                    n += 1
+                    continue
                 if k == 'paste':              # the copied selection, its top corner on x, y
                     n += self._paste(rec, x, y, msgs, op.get('poles', 'new'))
                     continue
@@ -4799,6 +4845,7 @@ const TOOLS = [     // the editor's own icon set: diamond tiles, quill, pickaxe,
   ['fill', 'F', 'Fill: a room (up to its walls, indoors or outdoors like the tile you click) or, with a floor, a patch of the same floor', '<rect x="7.6" y="7.6" width="4" height="4" fill="currentColor" fill-opacity=".35"/><rect x="12.4" y="7.6" width="4" height="4" fill="currentColor" fill-opacity=".35"/><rect x="7.6" y="12.4" width="4" height="4" fill="currentColor" fill-opacity=".35"/><rect x="12.4" y="12.4" width="4" height="4" fill="currentColor" fill-opacity=".35"/><path d="M12 5.6V1.2M10.2 3 12 1.2 13.8 3M12 18.4v4.4M10.2 21 12 22.8 13.8 21M5.6 12H1.2M3 10.2 1.2 12 3 13.8M18.4 12h4.4M21 10.2 22.8 12 21 13.8"/>'],
   ['erase', 'E', 'Erase: remove walls, objects and items (floor stays)', '<g transform="rotate(-38 12 12)"><rect x="3" y="8" width="18" height="8" rx="1.6"/><path d="M10 8v8"/><path d="M4.6 8h5.4v8H4.6A1.6 1.6 0 0 1 3 14.4V9.6A1.6 1.6 0 0 1 4.6 8z" fill="currentColor" fill-opacity=".35"/></g><path d="M13 21.5h8" opacity=".55"/>'],
   ['erasebox', 'R', 'Erase a rectangle: drag over an area to clear its walls, objects and items (floor stays). Shift+drag does it with the eraser too', '<rect x="3" y="5" width="18" height="14" stroke-dasharray="3 2.2"/><g transform="rotate(-38 12 12) translate(3.5 3.2) scale(.7)"><rect x="3" y="8" width="18" height="8" rx="1.6"/><path d="M10 8v8"/><path d="M4.6 8h5.4v8H4.6A1.6 1.6 0 0 1 3 14.4V9.6A1.6 1.6 0 0 1 4.6 8z" fill="currentColor" fill-opacity=".35"/></g>'],
+  ['chasmbox', 'K', 'Chasm edges: drag a box over a chasm; every chasm tile in it gets the right cliff walls (paint the drop with the chasm ground first)', '<path d="M2 9h7l3 3 3-3h7"/><path d="M9 9v4M15 9v4" opacity=".6"/><path d="M5 17.5c2-1 4 1 7 0s5-1 7 0" stroke-dasharray="2 1.6" opacity=".7"/><rect x="2.5" y="4" width="19" height="16" rx="1" stroke-dasharray="3 2.2" opacity=".55"/>'],
   ['pick', 'I', 'Pick: take what is on a tile as the brush', '<g transform="rotate(45 12 12)"><rect x="9.6" y="0.6" width="4.8" height="5.4" rx="2.4" fill="currentColor" fill-opacity=".35"/><rect x="8.4" y="6" width="7.2" height="2" rx=".6"/><path d="M10.6 8h2.8v9.4L12 20.4l-1.4-3z"/><path d="M10.6 13h2.8" opacity=".55"/></g><path d="M4.2 18.2c-.8 1.1-1.3 1.9-1.3 2.5a1.3 1.3 0 0 0 2.6 0c0-.6-.5-1.4-1.3-2.5z" fill="currentColor" stroke="none"/>'],
   ['copy', 'C', 'Copy and paste: drag to copy an area (floors, walls, objects, flags, items; not NPCs), then click to paste it, as often as you like. Shift+drag copies a new area, Esc forgets the copy', '<rect x="3" y="3" width="12" height="12" rx="1.2" stroke-dasharray="2.6 1.8"/><rect x="9" y="9" width="12" height="12" rx="1.2" fill="currentColor" fill-opacity=".35"/>'],
   ['pan', 'H', 'Move the view', '<g transform="translate(12 12.4) scale(.56) translate(-12 -12)" stroke-width="2.7"><path d="M8 13V6a1.5 1.5 0 0 1 3 0v6M11 11V4a1.5 1.5 0 0 1 3 0v7M14 11V5.5a1.5 1.5 0 0 1 3 0V13M17 9.5a1.5 1.5 0 0 1 3 0V15a6 6 0 0 1-6 6h-1a7 7 0 0 1-5.5-2.7L4.3 14a1.6 1.6 0 0 1 2.4-2l1.3 1.3"/></g><path d="M12 4.2V.9M10.5 2.4 12 .9l1.5 1.5M12 20.2v3M10.5 21.7 12 23.2l1.5-1.5M4.2 12H.9M2.4 10.5.9 12l1.5 1.5M19.8 12h3.3M21.6 10.5 23.1 12l-1.5 1.5"/>'],
@@ -5286,7 +5333,7 @@ function setBrush(b, keepTool) {
   const k = brushKey(b);
   recent = [b, ...recent.filter(r => brushKey(r) !== k)].slice(0, 120);
   try { localStorage.setItem('myv2.recent', JSON.stringify(recent)); } catch (e) {}
-  if (!keepTool && (tool === 'select' || tool === 'pick' || tool === 'pan' || tool === 'erase' || tool === 'erasebox' || tool === 'copy')) setTool('brush');
+  if (!keepTool && (tool === 'select' || tool === 'pick' || tool === 'pan' || tool === 'erase' || tool === 'erasebox' || tool === 'chasmbox' || tool === 'copy')) setTool('brush');
   card(); document.querySelectorAll('#palwrap [data-k]').forEach(el => el.classList.toggle('sel', el.dataset.k === k));
 }
 function card() {
@@ -5585,7 +5632,7 @@ function leftUI() {
       sect('Grounds · outside: grass, paths, sand, snow, water');
       if (!q && pal.ground && pal.ground.length) {
         sub('New ground · soft edges into grass');
-        const g = grid(); pal.ground.forEach(([nm, s2]) => { const c = cellFloor(s2, 0); c.querySelector('.lab').textContent = nm; c.title = nm + ' · 4 random variants; the grass tiles around it get soft edges by themselves'; g.appendChild(c); });
+        const g = grid(); pal.ground.forEach(([nm, s2]) => { const c = cellFloor(s2, 0); c.querySelector('.lab').textContent = nm; c.title = nm === 'chasm' ? 'chasm · a drop into dark mist: the cliff walls under the ground beside it come by themselves, and it blocks walking (Chasm edges tool, K: fix a whole box)' : nm + ' · 4 random variants; the grass tiles around it get soft edges by themselves'; g.appendChild(c); });
       }
       sub('The game\'s ground used mostly outdoors · Ctrl+click to mix'); lazy(grid(), list.filter(f => kind(f) === 'g' && !ground.has(f[0])), f => cellFloor(f[0], f[1]));
       sect('Tiles · everything else (used both inside and out, or rarely)');
@@ -8437,6 +8484,7 @@ cv.addEventListener('mousedown', e => {
     rect = { a: t, b: t, copy: true }; redrawTop(); return;
   }
   if (RO()) { toast('The game server is running: editing is off.', true); return; }
+  if (tool === 'chasmbox') { rect = { a: t, b: t, chasm: true }; redrawTop(); return; }
   if (brush.kind === 'npc' && !isErase()) {     // NPCs go one at a time
     if (e.altKey) edit([{ op: 'npcremove', x: t.x, y: t.y }], 'removed an NPC');
     else edit([{ op: 'npcplace', x: t.x, y: t.y, t: brush.t[0], dir: brush.dir || 4 }], `placed ${brush.t[1]} (facing ${FACEN[brush.dir || 4]})`);
@@ -8492,6 +8540,14 @@ window.addEventListener('mouseup', () => {
     }
     if (rect.zone) { rect = null; redrawTop(); zoneMouseUp(x0, y0, x1, y1); return; }
     if (rect.copy) { rect = null; redrawTop(); copyArea(x0, y0, x1, y1); return; }
+    if (rect.chasm) {     // the chasm's walls worked out again for the whole box (the server does it: op chasmfix)
+      rect = null; redrawTop();
+      if ((x1 - x0 + 1) * (y1 - y0 + 1) > 40000) return toast('That area is too big (at most 200×200 at once).', true);
+      edit([{ op: 'chasmfix', x: x0, y: y0, x1, y1 }], `chasm edges (${x1 - x0 + 1}×${y1 - y0 + 1})`).then(() => {
+        const ts = []; for (let x = x0 - 2; x <= x1 + CH; x += CH) for (let y = y0 - 2; y <= y1 + CH; y += CH) ts.push([Math.min(x, x1), Math.min(y, y1)]);
+        refetch(ts); });
+      return;
+    }
     rect = null;
     if ((x1 - x0 + 1) * (y1 - y0 + 1) > 40000) { toast('That area is too big (at most 200×200 at once).', true); redrawTop(); return; }
     const ops = [];
@@ -8531,7 +8587,7 @@ window.addEventListener('keydown', e => {
     if (rugLearn) { rugLearn = false; rect = null; setTool(tool); redrawTop(); toast('Cancelled.'); return; }
     if (areaLearn) { areaLearn = false; rect = null; setTool(tool); redrawTop(); toast('Cancelled.'); return; }
     if (destPick || npcPick) { destPick = npcPick = null; setTool(tool); toast('Cancelled.'); return; } toggleWorld(false); rect = null; selTile = null; redrawTop(); return; }
-  const map = { v: 'select', b: 'brush', u: 'rect', f: 'fill', e: 'erase', r: 'erasebox', i: 'pick', h: 'pan', c: 'copy' };
+  const map = { v: 'select', b: 'brush', u: 'rect', f: 'fill', e: 'erase', r: 'erasebox', k: 'chasmbox', i: 'pick', h: 'pan', c: 'copy' };
   if (map[k]) return setTool(map[k]);
   if (k === '[') return stepSize(-1);
   if (k === ']') return stepSize(1);

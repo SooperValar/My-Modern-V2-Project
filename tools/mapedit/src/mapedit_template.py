@@ -180,6 +180,8 @@ for _f in WORLD_FLOORS:
     FLOOR_SETS[_f[0]] = list(_f[2])
 # new walls (tools/sprites/world_walls.py, world_walls.json): [first sprite, name, [4 variants]], drawn into the tile, block walking and sight
 WORLD_WALLS = json.loads('''[[36000, "Sandstone Wall", [36000, 36001, 36002, 36003]], [36004, "Sandstone Wall (grain)", [36004, 36005, 36006, 36007]], [36010, "White Temple Wall", [36010, 36011, 36012, 36013]], [36014, "White Temple Wall (grain)", [36014, 36015, 36016, 36017]], [36020, "Red Brick Wall", [36020, 36021, 36022, 36023]], [36024, "Red Brick Wall (grain)", [36024, 36025, 36026, 36027]], [36030, "Mossy Stone Wall", [36030, 36031, 36032, 36033]], [36034, "Mossy Stone Wall (grain)", [36034, 36035, 36036, 36037]], [36040, "Cracked Stone Wall", [36040, 36041, 36042, 36043]], [36044, "Cracked Stone Wall (grain)", [36044, 36045, 36046, 36047]], [36050, "Dark Slate Wall", [36050, 36051, 36052, 36053]], [36054, "Dark Slate Wall (grain)", [36054, 36055, 36056, 36057]], [36060, "Timber-Framed Wall", [36060, 36061, 36062, 36063]], [36064, "Timber-Framed Wall (grain)", [36064, 36065, 36066, 36067]], [36070, "Fieldstone Wall", [36070, 36071, 36072, 36073]], [36074, "Fieldstone Wall (grain)", [36074, 36075, 36076, 36077]]]''')
+WORLD_WALLS += [[1204, 'Granite Cliff (Stonehold: the game\'s pale granite, 1204 / 1206 at random)', [1204, 1206]],
+                [1208, 'Granite Boulder (a lone rounded block)', [1208]]]      # Nov 17, Cody: Stonehold's rocks by name
 # window walls (the game's own 4, then tools/sprites/game_wall_windows.py for the game's other walls, then world_windows.py for the new walls): [sprite, name, blocks 1 = walking only, you see through]; sprite+1 = its cut-down hidden form
 WORLD_WINDOWS = json.loads('''[[1218, "Grey Brick Wall, window (the game's)", 1], [1232, "Red Stone Wall, window (the game's)", 1], [1168, "Marble Wall, window left (the game's)", 1], [1170, "Marble Wall, window right (the game's)", 1], [36700, "Greek Wall, window", 1], [36702, "Greek Wall II, window", 1], [36704, "Greek Wall III, window", 1], [36706, "Mine Wall (gold), window", 1], [36708, "Mine Wall (coal), window", 1], [36710, "Mine Wall (lava), window", 1], [36712, "Stone Wall, window", 1], [36714, "Stone Wall II, window", 1], [36716, "Stone Wall III, window", 1], [36718, "Stone Wall IV, window", 1], [36720, "Dark Stone Wall (pebbles), window", 1], [36722, "Stone Wall V, window", 1], [36724, "Black Stone Wall, window", 1], [36726, "Brown Stone Wall, window", 1], [36728, "Lava Wall, window", 1], [36730, "Black Stronghold Wall, window", 1], [36732, "Black Stronghold Wall II, window", 1], [36734, "Dark Stone Wall, window", 1], [36736, "Earth Wall, window", 1], [36738, "Earth Wall II, window", 1], [36740, "Black Stronghold Wall (hole), window", 1], [36742, "Black Stronghold Wall (hole II), window", 1], [36744, "Black Stronghold Wall (ember), window", 1], [36746, "Black Stronghold Wall (ember II), window", 1], [36748, "Black Stronghold Wall (ember III), window", 1], [36750, "Black Stronghold Wall (ember IV), window", 1], [36752, "Black Stronghold Wall (ember V), window", 1], [36754, "Lava Wall II, window", 1], [36756, "Green Glowing Stone Wall, window", 1], [36600, "Sandstone Wall, window", 1], [36604, "Sandstone Wall (grain), window", 1], [36608, "White Temple Wall, window", 1], [36612, "White Temple Wall (grain), window", 1], [36616, "Red Brick Wall, window", 1], [36620, "Red Brick Wall (grain), window", 1], [36624, "Mossy Stone Wall, window", 1], [36628, "Mossy Stone Wall (grain), window", 1], [36632, "Cracked Stone Wall, window", 1], [36636, "Cracked Stone Wall (grain), window", 1], [36640, "Dark Slate Wall, window", 1], [36644, "Dark Slate Wall (grain), window", 1], [36648, "Timber-Framed Wall, window", 1], [36652, "Timber-Framed Wall (grain), window", 1], [36656, "Fieldstone Wall, window", 1], [36660, "Fieldstone Wall (grain), window", 1]]''')
 # new fences (tools/sprites/world_fences.py): [sprite, name, blocks]; six pieces a type like the game's Wooden Fence, sprite+1 = hidden copy
@@ -196,6 +198,17 @@ WORLD_ARCHES = [[942, 'Arch ↘ first half', 1], [36401, 'Arch ↘ bridge', 0], 
                 # the 'light' look: specks out, grain softer
                 [36404, 'Smooth arch ↘ first half', 1], [36406, 'Smooth arch ↘ bridge', 0], [36405, 'Smooth arch ↘ second half (4 tiles ↘)', 1],
                 [36407, 'Smooth arch ↗ first half', 1], [36408, 'Smooth arch ↗ bridge', 0], [36409, 'Smooth arch ↗ second half (4 tiles ↗)', 1]]
+# foundry, workshop and shop pieces (tools/sprites/world_foundry.py, Nov 17; Cody: for the Golem Foundry, armor shops, the
+# market and the traders): [sprite, name, blocks]; each N+1 is its hide-walls copy
+WORLD_PROPS = [[38400, 'Anvil on a log', 1], [38402, 'Anvil on a granite block', 1], [38404, 'Crucible of molten iron', 1],
+               [38406, 'Quench bucket', 1], [38408, 'Grindstone', 1], [38410, 'Stack of iron ingots', 1], [38412, 'Casting mould', 1],
+               [38414, 'Stone furnace', 3], [38416, 'Toppled iron golem', 1], [38418, 'Wrecked golem limbs', 1],
+               [38424, 'Tool rack', 1], [38426, 'Stack of crates', 1],
+               [38428, 'Crates, a barrel and a sack', 1], [38430, 'Stack of iron-bound crates', 1],
+               # workbench pieces like the game's tables: each fills its tile, side by side they make one long bench
+               [38432, 'Workbench piece, legs ↗', 1], [38434, 'Workbench piece', 1], [38436, 'Workbench piece, hammer and tongs', 1],
+               [38438, 'Workbench piece, blade and chain', 1], [38440, 'Workbench piece, drawer shelf', 1], [38442, 'Workbench piece, legs and hammer ↗', 1],
+               [38444, 'Workbench piece, legs ↘', 1], [38446, 'Workbench piece, legs and hammer ↘', 1]]
 # new trees (tools/sprites/world_trees.py): one cell a kind paints one of its 4 at random; blocks like the game's trees
 WORLD_TREES = [
     [38100, 'Autumn tree (orange)', 3, [38100, 38101, 38102, 38103]],
@@ -222,6 +235,33 @@ WM_ORDER = ['murky water', 'path', 'marsh mud', 'forest floor']
 WM_KIND = {1118: 'forest floor'}      # the game's forest ground (the Wolfwood) creeping into marsh grass
 WM_BASE = set(WORLD_GROUND['sets']['marsh grass']['plain'])
 WM_EDGE = {s for e in WORLD_MARSH.values() for s in e.values()}
+# snowy grass (tools/sprites/world_snowgrass.py, Nov 17; Stonehold): a ground with grass edges, and soft edges on a SNOWY
+# GRASS base (soft snow, path or dusty path creeping into snowy grass), handled like the marsh grass above
+_WS = json.loads('''{"grass_base":{"snowy grass":{"plain":[36100,36101,36102,36103],"edges":{"1":36104,"2":36105,"3":36106,"4":36107,"5":36108,"6":36109,"7":36110,"8":36111,"9":36112,"10":36113,"11":36114,"12":36115,"13":36116,"14":36117,"15":36118,"16":36119,"20":36120,"24":36121,"28":36122,"32":36123,"33":36124,"40":36125,"41":36126,"48":36127,"56":36128,"64":36129,"65":36130,"66":36131,"67":36132,"80":36133,"96":36134,"97":36135,"112":36136,"128":36137,"130":36138,"132":36139,"134":36140,"144":36141,"148":36142,"160":36143,"176":36144,"192":36145,"194":36146,"208":36147,"224":36148,"240":36149}}},"snowy_base":{"soft snow":{"1":36150,"2":36151,"3":36152,"4":36153,"5":36154,"6":36155,"7":36156,"8":36157,"9":36158,"10":36159,"11":36160,"12":36161,"13":36162,"14":36163,"15":36164,"16":36165,"20":36166,"24":36167,"28":36168,"32":36169,"33":36170,"40":36171,"41":36172,"48":36173,"56":36174,"64":36175,"65":36176,"66":36177,"67":36178,"80":36179,"96":36180,"97":36181,"112":36182,"128":36183,"130":36184,"132":36185,"134":36186,"144":36187,"148":36188,"160":36189,"176":36190,"192":36191,"194":36192,"208":36193,"224":36194,"240":36195},"path":{"1":36196,"2":36197,"3":36198,"4":36199,"5":36200,"6":36201,"7":36202,"8":36203,"9":36204,"10":36205,"11":36206,"12":36207,"13":36208,"14":36209,"15":36210,"16":36211,"20":36212,"24":36213,"28":36214,"32":36215,"33":36216,"40":36217,"41":36218,"48":36219,"56":36220,"64":36221,"65":36222,"66":36223,"67":36224,"80":36225,"96":36226,"97":36227,"112":36228,"128":36229,"130":36230,"132":36231,"134":36232,"144":36233,"148":36234,"160":36235,"176":36236,"192":36237,"194":36238,"208":36239,"224":36240,"240":36241},"dusty path":{"1":36242,"2":36243,"3":36244,"4":36245,"5":36246,"6":36247,"7":36248,"8":36249,"9":36250,"10":36251,"11":36252,"12":36253,"13":36254,"14":36255,"15":36256,"16":36257,"20":36258,"24":36259,"28":36260,"32":36261,"33":36262,"40":36263,"41":36264,"48":36265,"56":36266,"64":36267,"65":36268,"66":36269,"67":36270,"80":36271,"96":36272,"97":36273,"112":36274,"128":36275,"130":36276,"132":36277,"134":36278,"144":36279,"148":36280,"160":36281,"176":36282,"192":36283,"194":36284,"208":36285,"224":36286,"240":36287}}}''')
+for _n, _g in _WS['grass_base'].items():
+    WORLD_GROUND['sets'][_n] = {'plain': _g['plain'], 'edges': {int(m): s for m, s in _g['edges'].items()}}
+WG_ORDER += ['snowy grass']
+WORLD_SNOWY = {n: {int(m): s for m, s in e.items()} for n, e in _WS['snowy_base'].items()}
+WS_ORDER = ['soft snow', 'path', 'dusty path']
+WS_BASE = set(WORLD_GROUND['sets']['snowy grass']['plain'])
+WS_EDGE = {s for e in WORLD_SNOWY.values() for s in e.values()}
+# ash (tools/sprites/world_ash.py, Nov 18; the Ashen Fields): ash and cinders, no grass edges; soft edges on an ASH base
+# (cinders, soft snow or snowy grass creeping into ash), handled like the snowy grass above
+_WA = json.loads('''{"plain":{"ash":[37100,37101,37102,37103],"cinders":[37104,37105,37106,37107]},"ash_base":{"cinders":{"1":37108,"2":37109,"3":37110,"4":37111,"5":37112,"6":37113,"7":37114,"8":37115,"9":37116,"10":37117,"11":37118,"12":37119,"13":37120,"14":37121,"15":37122,"16":37123,"20":37124,"24":37125,"28":37126,"32":37127,"33":37128,"40":37129,"41":37130,"48":37131,"56":37132,"64":37133,"65":37134,"66":37135,"67":37136,"80":37137,"96":37138,"97":37139,"112":37140,"128":37141,"130":37142,"132":37143,"134":37144,"144":37145,"148":37146,"160":37147,"176":37148,"192":37149,"194":37150,"208":37151,"224":37152,"240":37153},"soft snow":{"1":37154,"2":37155,"3":37156,"4":37157,"5":37158,"6":37159,"7":37160,"8":37161,"9":37162,"10":37163,"11":37164,"12":37165,"13":37166,"14":37167,"15":37168,"16":37169,"20":37170,"24":37171,"28":37172,"32":37173,"33":37174,"40":37175,"41":37176,"48":37177,"56":37178,"64":37179,"65":37180,"66":37181,"67":37182,"80":37183,"96":37184,"97":37185,"112":37186,"128":37187,"130":37188,"132":37189,"134":37190,"144":37191,"148":37192,"160":37193,"176":37194,"192":37195,"194":37196,"208":37197,"224":37198,"240":37199},"snowy grass":{"1":37200,"2":37201,"3":37202,"4":37203,"5":37204,"6":37205,"7":37206,"8":37207,"9":37208,"10":37209,"11":37210,"12":37211,"13":37212,"14":37213,"15":37214,"16":37215,"20":37216,"24":37217,"28":37218,"32":37219,"33":37220,"40":37221,"41":37222,"48":37223,"56":37224,"64":37225,"65":37226,"66":37227,"67":37228,"80":37229,"96":37230,"97":37231,"112":37232,"128":37233,"130":37234,"132":37235,"134":37236,"144":37237,"148":37238,"160":37239,"176":37240,"192":37241,"194":37242,"208":37243,"224":37244,"240":37245}}}''')
+for _n, _p in _WA['plain'].items():
+    WORLD_GROUND['sets'][_n] = {'plain': _p, 'edges': {}}
+WG_ORDER += ['ash', 'cinders']
+WORLD_ASH = {n: {int(m): s for m, s in e.items()} for n, e in _WA['ash_base'].items()}
+WA_ORDER = ['cinders', 'soft snow', 'snowy grass']
+WA_BASE = set(WORLD_GROUND['sets']['ash']['plain'])
+WA_EDGE = {s for e in WORLD_ASH.values() for s in e.values()}
+# the chasm (tools/sprites/world_chasm.py, Nov 19; Cody: "both" - a brush and a box button): a drop into dark mist with
+# cliff walls under the ground beside it. 37400 + 2*mask + variant; the mask is which of six tiles are ground (not chasm,
+# not the black void): (x-1,y)=1 (x,y+1)=2 (x-1,y+1)=4 (x-2,y+1)=8 (x-1,y+2)=16 (x-2,y+2)=32 - as build_spires.py does it
+CHASM_BASE, CHASM_N = 37400, 128
+CHASM_NB = ((-1, 0, 1), (0, 1, 2), (-1, 1, 4), (-2, 1, 8), (-1, 2, 16), (-2, 2, 32))
+is_chasm = lambda s: CHASM_BASE <= s < CHASM_BASE + CHASM_N
+WORLD_GROUND['sets']['chasm'] = {'plain': [CHASM_BASE, CHASM_BASE + 1], 'edges': {}}     # the brush: walls come by themselves
 WG_PLAIN = {s: n for n, g in WORLD_GROUND['sets'].items() for s in g['plain']}
 WG_EDGE = {s for g in WORLD_GROUND['sets'].values() for s in g['edges'].values()}
 WG_GRASS = set(WORLD_GROUND['grass'])
@@ -351,6 +391,7 @@ def talk_parse(text):
                 elif a[0] == 'area': e['conds'].append({'type': 'area', 's': rest.split(None, 1)[1] if len(a) > 1 else ''})
                 elif a[0] == 'skill': e['conds'].append({'type': 'skill', 'n': int(a[1]), 'op': a[2], 'v': int(a[3])})
                 elif a[0] == 'gold': e['conds'].append({'type': 'gold', 'op': a[1], 'v': int(a[2])})
+                elif a[0] == 'done': e['conds'].append({'type': 'done', 't': int(a[1]), 'op': a[2], 'v': int(a[3])})
                 elif a[0] in ('class', '!class') and len(a) > 1:   # the player's class: names joined by |
                     e['conds'].append({'type': 'class', 'not': a[0] == '!class', 'c': a[1].lower()})
             elif k == 'answer':
@@ -398,6 +439,7 @@ def cond_parse(a, rest):
     if a[0] == 'area': return {'type': 'area', 's': rest.split(None, 1)[1] if len(a) > 1 else ''}
     if a[0] == 'skill': return {'type': 'skill', 'n': int(a[1]), 'op': a[2], 'v': int(a[3])}
     if a[0] == 'gold': return {'type': 'gold', 'op': a[1], 'v': int(a[2])}
+    if a[0] == 'done': return {'type': 'done', 't': int(a[1]), 'op': a[2], 'v': int(a[3])}
     if a[0] in ('class', '!class') and len(a) > 1: return {'type': 'class', 'not': a[0] == '!class', 'c': a[1].lower()}
     return None
 
@@ -412,6 +454,7 @@ def cond_line(c):
     if ty == 'area' and clean(c.get('s', '')): return 'area ' + clean(c['s']).lower()
     if ty == 'skill' and c.get('op') in OPS: return 'skill %d %s %d' % (int(c['n']), c['op'], int(c['v']))
     if ty == 'gold' and c.get('op') in OPS: return 'gold %s %d' % (c['op'], int(c['v']))
+    if ty == 'done' and c.get('op') in OPS and int(c.get('t', 0)) > 0: return 'done %d %s %d' % (int(c['t']), c['op'], int(c['v']))
     if ty == 'class' and re.fullmatch(r'[a-z|]+', str(c.get('c', ''))): return '%sclass %s' % ('!' if c.get('not') else '', c['c'])
     return ''
 
@@ -595,6 +638,7 @@ def talk_text(quests, npcs, names):
                 elif ty == 'area' and clean(c.get('s', '')): out.append('if area ' + clean(c['s']).lower())
                 elif ty == 'skill' and c.get('op') in OPS: out.append('if skill %d %s %d' % (int(c['n']), c['op'], int(c['v'])))
                 elif ty == 'gold' and c.get('op') in OPS: out.append('if gold %s %d' % (c['op'], int(c['v'])))
+                elif ty == 'done' and c.get('op') in OPS and int(c.get('t', 0)) > 0: out.append('if done %d %s %d' % (int(c['t']), c['op'], int(c['v'])))
                 elif ty == 'class' and re.fullmatch(r'[a-z|]+', str(c.get('c', ''))): out.append('if %sclass %s' % ('!' if c.get('not') else '', c['c']))
             for a in e.get('answers', []):
                 if clean(a):
@@ -624,6 +668,13 @@ BUILTIN_RUGS = [
 RUG_KEYS = ('nw', 'n', 'ne', 'w', 'e', 'sw', 's', 'se')
 
 BUILTIN_AREAS = [
+    # the new areas (Nov 17, Cody): Fenwatch's marsh, the Lizard Hatcheries, Stonehold's mountain, the Golem Foundry
+    {"name": "Marsh", "floors": [[35700, 22.0], [35701, 22.0], [35702, 22.0], [35703, 22.0], [35750, 4.0], [35751, 4.0]], "scatter": [{"k": "o", "s": 38200, "b": 0, "p": 0.012}, {"k": "o", "s": 38202, "b": 0, "p": 0.012}, {"k": "o", "s": 38204, "b": 0, "p": 0.012}, {"k": "o", "s": 38206, "b": 0, "p": 0.012}, {"k": "o", "s": 38140, "b": 3, "p": 0.004}, {"k": "o", "s": 38141, "b": 3, "p": 0.004}, {"k": "o", "s": 38142, "b": 3, "p": 0.004}, {"k": "o", "s": 38143, "b": 3, "p": 0.004}, {"k": "o", "s": 38160, "b": 1, "p": 0.002}, {"k": "o", "s": 38161, "b": 1, "p": 0.002}, {"k": "o", "s": 38162, "b": 1, "p": 0.002}, {"k": "o", "s": 38163, "b": 1, "p": 0.002}], "apart": True, "from": [0, 0, 0, 0]},
+    {"name": "Lizard Marsh", "floors": [[35700, 20.0], [35701, 20.0], [35702, 20.0], [35703, 20.0], [35750, 10.0], [35751, 10.0]], "scatter": [{"k": "o", "s": 38200, "b": 0, "p": 0.01}, {"k": "o", "s": 38202, "b": 0, "p": 0.01}, {"k": "o", "s": 38204, "b": 0, "p": 0.01}, {"k": "o", "s": 38206, "b": 0, "p": 0.01}, {"k": "o", "s": 38140, "b": 3, "p": 0.003}, {"k": "o", "s": 38142, "b": 3, "p": 0.003}, {"k": "o", "s": 38160, "b": 1, "p": 0.003}, {"k": "o", "s": 38162, "b": 1, "p": 0.003}, {"k": "t", "t": 2056, "p": 0.002}, {"k": "t", "t": 2057, "p": 0.002}, {"k": "t", "t": 2058, "p": 0.002}], "apart": True, "from": [0, 0, 0, 0]},
+    {"name": "Mountain Meadow", "floors": [[36100, 22.0], [36101, 22.0], [36102, 22.0], [36103, 22.0], [35400, 3.0], [35401, 3.0], [35402, 3.0], [35403, 3.0]], "scatter": [{"k": "o", "s": 38154, "b": 3, "p": 0.004}, {"k": "o", "s": 38155, "b": 3, "p": 0.004}, {"k": "o", "s": 38156, "b": 3, "p": 0.004}, {"k": "o", "s": 38157, "b": 3, "p": 0.004}, {"k": "o", "s": 1208, "b": 3, "p": 0.006}, {"k": "o", "s": 16352, "b": 3, "p": 0.002}, {"k": "o", "s": 38160, "b": 1, "p": 0.001}, {"k": "o", "s": 38161, "b": 1, "p": 0.001}], "apart": True, "from": [0, 0, 0, 0]},
+    {"name": "Foundry Yard", "floors": [[36100, 21.0], [36101, 21.0], [36102, 21.0], [36103, 21.0], [35400, 4.0], [35401, 4.0], [35402, 4.0], [35403, 4.0]], "scatter": [{"k": "t", "t": 517, "p": 0.006}, {"k": "t", "t": 518, "p": 0.006}, {"k": "t", "t": 519, "p": 0.006}, {"k": "o", "s": 38416, "b": 1, "p": 0.003}, {"k": "o", "s": 38418, "b": 1, "p": 0.004}, {"k": "o", "s": 38426, "b": 1, "p": 0.002}, {"k": "o", "s": 38428, "b": 1, "p": 0.002}, {"k": "o", "s": 1208, "b": 3, "p": 0.003}, {"k": "o", "s": 38154, "b": 3, "p": 0.002}, {"k": "o", "s": 38156, "b": 3, "p": 0.002}], "apart": True, "from": [0, 0, 0, 0]},
+    {"name": "Foundry Floor", "floors": [[37020, 25.0], [37021, 25.0], [37022, 25.0], [37023, 25.0]], "scatter": [{"k": "o", "s": 38410, "b": 1, "p": 0.006}, {"k": "o", "s": 38426, "b": 1, "p": 0.004}, {"k": "o", "s": 38430, "b": 1, "p": 0.003}, {"k": "o", "s": 38406, "b": 1, "p": 0.004}, {"k": "o", "s": 38418, "b": 1, "p": 0.003}, {"k": "t", "t": 517, "p": 0.003}, {"k": "t", "t": 518, "p": 0.003}], "apart": True, "from": [0, 0, 0, 0]},
+
     {"name": "Desert", "floors": [[35250, 25.0], [35251, 25.0], [35252, 25.0], [35253, 25.0]], "scatter": [{"k": "o", "s": 38000, "b": 1, "p": 0.004}, {"k": "o", "s": 38001, "b": 1, "p": 0.003}, {"k": "o", "s": 38002, "b": 1, "p": 0.003}, {"k": "o", "s": 38003, "b": 1, "p": 0.002}, {"k": "o", "s": 38004, "b": 1, "p": 0.004}, {"k": "o", "s": 38005, "b": 1, "p": 0.005}, {"k": "o", "s": 38006, "b": 1, "p": 0.004}], "apart": True},
     {"name": "Pale Desert", "floors": [[35200, 25.0], [35201, 25.0], [35202, 25.0], [35203, 25.0]], "scatter": [{"k": "o", "s": 38000, "b": 1, "p": 0.0032}, {"k": "o", "s": 38001, "b": 1, "p": 0.0024}, {"k": "o", "s": 38002, "b": 1, "p": 0.0024}, {"k": "o", "s": 38003, "b": 1, "p": 0.0016}, {"k": "o", "s": 38004, "b": 1, "p": 0.0032}, {"k": "o", "s": 38005, "b": 1, "p": 0.004}, {"k": "o", "s": 38006, "b": 1, "p": 0.0032}], "apart": True},
     {"name": "Desert Dunes", "floors": [[35300, 25.0], [35301, 25.0], [35302, 25.0], [35303, 25.0]], "scatter": [{"k": "o", "s": 38000, "b": 1, "p": 0.0016}, {"k": "o", "s": 38001, "b": 1, "p": 0.0012}, {"k": "o", "s": 38002, "b": 1, "p": 0.0012}, {"k": "o", "s": 38003, "b": 1, "p": 0.0008}, {"k": "o", "s": 38004, "b": 1, "p": 0.0016}, {"k": "o", "s": 38005, "b": 1, "p": 0.002}, {"k": "o", "s": 38006, "b": 1, "p": 0.0016}], "apart": True},
@@ -683,6 +734,16 @@ BUILTIN_AREAS = [
     {"k":"o","s":16692,"b":1,"p":0.00322},
     {"k":"o","s":16694,"b":1,"p":0.00269},
     {"k":"t","t":812,"p":0.00725}],"apart":True,"from":[330,246,408,299]}]     # learned from the game's own areas (area_learn), walls and stray pieces left out
+
+
+# names for the floor sets in the Floors tab (Nov 17, Cody): the game's own sets by look, the new floors and grounds by name
+GAME_SET_NAMES = {1003: 'Jungle Floor', 542: 'Grey Cobbles', 551: 'Grass', 133: 'Red Brick Floor', 142: 'Pale Stone Floor',
+                  170: 'Light Stone Floor', 704: 'Fire Cave Floor', 950: 'Dark Stone Floor', 16670: 'Ice', 16933: 'Deep Water'}
+def set_names():
+    n = dict(GAME_SET_NAMES)
+    for f in WORLD_FLOORS: n[f[0]] = f[1]
+    for k, g in WORLD_GROUND['sets'].items(): n[g['plain'][0]] = k[0].upper() + k[1:]
+    return n
 
 
 class World:
@@ -1199,10 +1260,10 @@ class World:
                               (8 if t in wanted else 0) | (16 if fl & IF_ARMOR else 0)])
         fl_sorted = sorted([(k, v, inside.get(k, 0)) for k, v in floors.items()], key=lambda a: -a[1])
         ob_sorted = sorted(objs.items(), key=lambda a: -a[1])
-        return {'floors': fl_sorted, 'objects': ob_sorted, 'templates': temps, 'flags': MF, 'sets': FLOOR_SETS,
+        return {'floors': fl_sorted, 'objects': ob_sorted, 'templates': temps, 'flags': MF, 'sets': FLOOR_SETS, 'setnames': set_names(),
                 'ground': [[n, g['plain'][0]] for n, g in WORLD_GROUND['sets'].items()],
                 'wg': {'grass': WORLD_GROUND['grass'], 'order': WG_ORDER, 'sets': WORLD_GROUND['sets']},
-                'plants': WORLD_PLANTS, 'fences': WORLD_FENCES, 'windows': WORLD_WINDOWS, 'arches': WORLD_ARCHES, 'trees': WORLD_TREES, 'cobwebs': WORLD_COBWEBS,
+                'plants': WORLD_PLANTS, 'fences': WORLD_FENCES, 'windows': WORLD_WINDOWS, 'arches': WORLD_ARCHES, 'trees': WORLD_TREES, 'cobwebs': WORLD_COBWEBS, 'props': WORLD_PROPS,
                 'newwalls': WORLD_WALLS,
                 'newfloors': WORLD_FLOORS,
                 'npcs': self.npc_templates()}
@@ -1254,6 +1315,36 @@ class World:
             if not (0 < x < MAPX - 1 and 0 < y < MAPY - 1):
                 continue
             cur = floor(x, y)
+            if cur in WA_BASE or cur in WA_EDGE:          # ash: cinders, snow or snowy grass creeping in
+                new = None
+                for name in WA_ORDER:
+                    m = wg_mask(lambda dx, dy: WG_PLAIN.get(floor(x + dx, y + dy)) == name)
+                    if m:
+                        new = WORLD_ASH[name][m]
+                        break
+                if new is None:
+                    if cur in WA_BASE:
+                        continue
+                    new = random.choice(WORLD_GROUND['sets']['ash']['plain'])
+                if new != cur:
+                    self._save_map(rec, x, y)
+                    t = self.tile(x, y); t[0] = new; self.set_tile(x, y, t)
+                continue
+            if cur in WS_BASE or cur in WS_EDGE:          # snowy grass: snow or a path creeping in (as marsh grass below)
+                new = None
+                for name in WS_ORDER:
+                    m = wg_mask(lambda dx, dy: WG_PLAIN.get(floor(x + dx, y + dy)) == name)
+                    if m:
+                        new = WORLD_SNOWY[name][m]
+                        break
+                if new is None:
+                    if cur in WS_BASE:
+                        continue
+                    new = random.choice(WORLD_GROUND['sets']['snowy grass']['plain'])
+                if new != cur:
+                    self._save_map(rec, x, y)
+                    t = self.tile(x, y); t[0] = new; self.set_tile(x, y, t)
+                continue
             if cur in WM_BASE or cur in WM_EDGE:          # marsh grass: water, path or mud creeping in
                 new = None
                 for name in WM_ORDER:
@@ -1274,7 +1365,7 @@ class World:
             new = None
             for name in WG_ORDER:
                 m = wg_mask(lambda dx, dy: WG_PLAIN.get(floor(x + dx, y + dy)) == name)
-                if m:
+                if m and m in WORLD_GROUND['sets'][name]['edges']:     # ash and cinders have no grass edges
                     new = WORLD_GROUND['sets'][name]['edges'][m]
                     break
             if new is None:
@@ -1284,6 +1375,40 @@ class World:
             if new != cur:
                 self._save_map(rec, x, y)
                 t = self.tile(x, y); t[0] = new; self.set_tile(x, y, t)
+        self._chasmedge(rec)
+
+    def _chasmedge(self, rec):
+        """the chasm: every chasm tile that looks at a changed tile (or lies in a 'chasmfix' box) gets the walls of the ground
+        beside it; chasm blocks walking, ground painted over chasm can be walked again (unless a wall or object stands there)"""
+        floor = lambda x, y: struct.unpack_from('<H', self.map, (x + y * MAPX) * MAP_SIZE)[0]
+        changed = [(k[1], k[2], struct.unpack_from('<H', old, 0)[0]) for k, old in list(rec.items())
+                   if k[0] == 'm' and struct.unpack_from('<H', old, 0)[0] != floor(k[1], k[2])]
+        todo = set(getattr(self, '_chasm_box', None) or ()); self._chasm_box = None
+        for x, y, old in changed:
+            cur = floor(x, y)
+            if is_chasm(old) and not is_chasm(cur):
+                t = self.tile(x, y)
+                if t[7] & MF_MOVEBLOCK and not t[1]:
+                    t[7] &= ~MF_MOVEBLOCK; self.set_tile(x, y, t)
+            todo.add((x, y))
+            for dx, dy, _ in CHASM_NB:
+                todo.add((x - dx, y - dy))
+        for x, y in todo:
+            if not (2 <= x < MAPX - 2 and 2 <= y < MAPY - 2):
+                continue
+            cur = floor(x, y)
+            if not is_chasm(cur):
+                continue
+            m = 0
+            for dx, dy, b in CHASM_NB:
+                s_ = floor(x + dx, y + dy)
+                if not is_chasm(s_) and s_ != 1008:
+                    m |= b
+            new = CHASM_BASE + 2 * m + ((cur - CHASM_BASE) & 1)
+            t = self.tile(x, y)
+            if new != cur or not t[7] & MF_MOVEBLOCK:
+                self._save_map(rec, x, y)
+                t[0] = new; t[7] |= MF_MOVEBLOCK; self.set_tile(x, y, t)
 
     def _save_map(self, rec, x, y):
         k = ('m', x, y)
@@ -2323,6 +2448,12 @@ class World:
     AREA_STOP = ('candle', 'shield', 'sign', 'torch', 'lamp', 'street', 'shrine', 'inscription', 'hole', 'door',
                  'chest', 'portal', 'book', 'table', 'chair', 'bed', 'lever', 'statue', 'pentagram', 'grave')
 
+    # trees, plants, stumps and rocks are never walls, however close they grow (Nov 17: a grove of willows or dead trees
+    # has blocking neighbours on two sides like a wall, so "Learn from the map" left the marsh's trees out)
+    NOT_WALLS = ({s for tr in WORLD_TREES for s in tr[3]} | {p[0] for p in WORLD_PLANTS} | {p[0] + 1 for p in WORLD_PLANTS} |
+                 {m[0] for m in WORLD_COBWEBS['more'] if any(w in m[1].lower() for w in ('tree', 'stump', 'log'))} |
+                 {1112, 1113, 1114, 1115, 1238, 1239, 1240, 1241, 880, 881, 882, 883, 16352, 16360, 16368, 16376})
+
     def area_learn(self, x0, y0, x1, y1, name=''):
         """measure an area: its floors (weights), and how often each loose piece stands on a free tile"""
         x0, x1 = sorted((max(1, int(x0)), min(MAPX - 2, int(x1))))
@@ -2339,7 +2470,7 @@ class World:
                         seen[s] += 1
                         if sum(1 for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)) if blk(x + dx, y + dy)) >= 2:
                             walled[s] += 1
-            walls = {s for s in seen if walled[s] >= 0.5 * seen[s]}
+            walls = {s for s in seen if s not in self.NOT_WALLS and walled[s] >= 0.5 * seen[s]}
             floors, objs, items, blockers = Counter(), Counter(), Counter(), []
             open_tiles = 0
             for y in range(y0, y1 + 1):
@@ -2520,6 +2651,11 @@ class World:
                 if not (0 <= x < MAPX and 0 <= y < MAPY):
                     continue
                 k = op['op']
+                if k == 'chasmfix':           # a box (x, y) - (x1, y1): its chasm tiles get the right walls (_chasmedge)
+                    x1, y1 = min(MAPX - 1, int(op.get('x1', x))), min(MAPY - 1, int(op.get('y1', y)))
+                    self._chasm_box = (getattr(self, '_chasm_box', None) or set()) | {(a, b) for a in range(x, x1 + 1) for b in range(y, y1 + 1)}
+                    n += 1
+                    continue
                 if k == 'paste':              # the copied selection, its top corner on x, y
                     n += self._paste(rec, x, y, msgs, op.get('poles', 'new'))
                     continue
@@ -3900,6 +4036,20 @@ def make_handler(world, sprites, page, minimap, ctl):
                 return self.js({'msg': r} if ok else {'error': r or 'The game did not answer.'})
             if u.path == '/api/questorder':
                 return self.js({'msg': world.quests_order_save(body.get('order') or {}, body.get('rewards'), ctl, body.get('alias'), body.get('only') == 'alias', body.get('corder'), body.get('crank'))})
+            if u.path == '/api/minimap':          # redraw the minimap picture from the map as the editor has it now (Nov 17, Cody)
+                tool = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(minimap or '.'))), 'tools', 'world', 'worldmap.py')
+                if not minimap or not os.path.exists(tool):
+                    return self.js({'error': 'The minimap tool (tools/world/worldmap.py) was not found.'})
+                import tempfile
+                with world.lock, tempfile.TemporaryDirectory() as td:
+                    os.makedirs(os.path.join(td, '.dat'))
+                    open(os.path.join(td, '.dat', 'map.dat'), 'wb').write(bytes(world.map))
+                    open(os.path.join(td, '.dat', 'item.dat'), 'wb').write(bytes(world.item))
+                    r = subprocess.run([sys.executable, tool, world.client if hasattr(world, 'client') else sprites.client, td, minimap + '.tmp'], capture_output=True, text=True, timeout=120)
+                    if r.returncode or not os.path.exists(minimap + '.tmp'):
+                        return self.js({'error': 'The minimap could not be drawn: ' + (r.stderr or r.stdout)[-300:]})
+                    os.replace(minimap + '.tmp', minimap)
+                return self.js({'msg': 'Minimap redrawn.'})
             if u.path == '/api/zones':
                 err = world.zones_save(body.get('zones') or [], ctl)
                 if err and err != 'later':

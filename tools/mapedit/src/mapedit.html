@@ -183,6 +183,7 @@ nav .grow { flex: 1; }
 #bar .rgt { margin-left: auto; }
 #coords { position: absolute; left: 10px; bottom: 10px; background: rgba(23,24,28,.92); border: 1px solid var(--line); border-radius: 7px; padding: 4px 10px; color: var(--dim); font: 12px ui-monospace, Consolas, monospace; pointer-events: none; z-index: 3; }
 #mini { position: absolute; right: 10px; bottom: 10px; width: 220px; height: 220px; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: #000; z-index: 3; box-shadow: 0 6px 20px rgba(0,0,0,.5); display: none; }
+#mini #mrf { position: absolute; right: 5px; top: 4px; z-index: 2; font-size: 12px; line-height: 1; padding: 2px 5px; border-radius: 5px; border: 1px solid var(--line); background: rgba(0,0,0,.55); color: #ddd; cursor: pointer; }
 #mini .t { position: absolute; left: 8px; top: 5px; font-size: 10px; letter-spacing: .08em; color: rgba(255,255,255,.65); text-shadow: 0 1px 2px #000; pointer-events: none; }
 #mini canvas { width: 100%; height: 100%; cursor: crosshair; image-rendering: pixelated; }
 #world { position: absolute; inset: 0; background: rgba(5,5,6,.82); z-index: 10; display: none; place-items: center; }
@@ -561,7 +562,7 @@ table.pl button:hover { color: var(--text); border-color: var(--gold); }
   </div>
   <div id="banner">The game server is running: you can look around, but editing is off. Stop the server to edit.</div>
   <div id="coords">–</div>
-  <div id="mini"><span class="t">MAP</span><canvas id="mcv" width="1024" height="1024" title="Click to go there · M for the big map"></canvas></div>
+  <div id="mini"><span class="t">MAP</span><button id="mrf" title="Redraw the minimap from the map as it is now">&#8635;</button><canvas id="mcv" width="1024" height="1024" title="Click to go there · M for the big map"></canvas></div>
   <div id="tpl"><div class="mbox"><div class="mhd"><div class="ttl"></div><button class="btn sec" id="tgoto" style="display:none" title="Close this and show it on the map">Go to</button><button class="btn ghost" onclick="closeTemplate()">✕</button></div><div class="mtabs"></div><div class="mbody"></div><div class="mft"></div></div></div>
   <div id="ipop"><input type="text" placeholder="Search an item by name or number"><div class="lst"></div></div>
   <div id="world"><span class="t">World map — click to go there · M or Esc to close</span><canvas id="wcv" width="1024" height="1024"></canvas></div>
@@ -668,6 +669,7 @@ const TOOLS = [     // the editor's own icon set: diamond tiles, quill, pickaxe,
   ['fill', 'F', 'Fill: a room (up to its walls, indoors or outdoors like the tile you click) or, with a floor, a patch of the same floor', '<rect x="7.6" y="7.6" width="4" height="4" fill="currentColor" fill-opacity=".35"/><rect x="12.4" y="7.6" width="4" height="4" fill="currentColor" fill-opacity=".35"/><rect x="7.6" y="12.4" width="4" height="4" fill="currentColor" fill-opacity=".35"/><rect x="12.4" y="12.4" width="4" height="4" fill="currentColor" fill-opacity=".35"/><path d="M12 5.6V1.2M10.2 3 12 1.2 13.8 3M12 18.4v4.4M10.2 21 12 22.8 13.8 21M5.6 12H1.2M3 10.2 1.2 12 3 13.8M18.4 12h4.4M21 10.2 22.8 12 21 13.8"/>'],
   ['erase', 'E', 'Erase: remove walls, objects and items (floor stays)', '<g transform="rotate(-38 12 12)"><rect x="3" y="8" width="18" height="8" rx="1.6"/><path d="M10 8v8"/><path d="M4.6 8h5.4v8H4.6A1.6 1.6 0 0 1 3 14.4V9.6A1.6 1.6 0 0 1 4.6 8z" fill="currentColor" fill-opacity=".35"/></g><path d="M13 21.5h8" opacity=".55"/>'],
   ['erasebox', 'R', 'Erase a rectangle: drag over an area to clear its walls, objects and items (floor stays). Shift+drag does it with the eraser too', '<rect x="3" y="5" width="18" height="14" stroke-dasharray="3 2.2"/><g transform="rotate(-38 12 12) translate(3.5 3.2) scale(.7)"><rect x="3" y="8" width="18" height="8" rx="1.6"/><path d="M10 8v8"/><path d="M4.6 8h5.4v8H4.6A1.6 1.6 0 0 1 3 14.4V9.6A1.6 1.6 0 0 1 4.6 8z" fill="currentColor" fill-opacity=".35"/></g>'],
+  ['chasmbox', 'K', 'Chasm edges: drag a box over a chasm; every chasm tile in it gets the right cliff walls (paint the drop with the chasm ground first)', '<path d="M2 9h7l3 3 3-3h7"/><path d="M9 9v4M15 9v4" opacity=".6"/><path d="M5 17.5c2-1 4 1 7 0s5-1 7 0" stroke-dasharray="2 1.6" opacity=".7"/><rect x="2.5" y="4" width="19" height="16" rx="1" stroke-dasharray="3 2.2" opacity=".55"/>'],
   ['pick', 'I', 'Pick: take what is on a tile as the brush', '<g transform="rotate(45 12 12)"><rect x="9.6" y="0.6" width="4.8" height="5.4" rx="2.4" fill="currentColor" fill-opacity=".35"/><rect x="8.4" y="6" width="7.2" height="2" rx=".6"/><path d="M10.6 8h2.8v9.4L12 20.4l-1.4-3z"/><path d="M10.6 13h2.8" opacity=".55"/></g><path d="M4.2 18.2c-.8 1.1-1.3 1.9-1.3 2.5a1.3 1.3 0 0 0 2.6 0c0-.6-.5-1.4-1.3-2.5z" fill="currentColor" stroke="none"/>'],
   ['copy', 'C', 'Copy and paste: drag to copy an area (floors, walls, objects, flags, items; not NPCs), then click to paste it, as often as you like. Shift+drag copies a new area, Esc forgets the copy', '<rect x="3" y="3" width="12" height="12" rx="1.2" stroke-dasharray="2.6 1.8"/><rect x="9" y="9" width="12" height="12" rx="1.2" fill="currentColor" fill-opacity=".35"/>'],
   ['pan', 'H', 'Move the view', '<g transform="translate(12 12.4) scale(.56) translate(-12 -12)" stroke-width="2.7"><path d="M8 13V6a1.5 1.5 0 0 1 3 0v6M11 11V4a1.5 1.5 0 0 1 3 0v7M14 11V5.5a1.5 1.5 0 0 1 3 0V13M17 9.5a1.5 1.5 0 0 1 3 0V15a6 6 0 0 1-6 6h-1a7 7 0 0 1-5.5-2.7L4.3 14a1.6 1.6 0 0 1 2.4-2l1.3 1.3"/></g><path d="M12 4.2V.9M10.5 2.4 12 .9l1.5 1.5M12 20.2v3M10.5 21.7 12 23.2l1.5-1.5M4.2 12H.9M2.4 10.5.9 12l1.5 1.5M19.8 12h3.3M21.6 10.5 23.1 12l-1.5 1.5"/>'],
@@ -911,6 +913,13 @@ function loop() {
 
 // ---------------------------------------------------------------- minimap and world map
 const mini = new Image(); let miniOk = false;
+document.addEventListener('click', async e => {       // the minimap's redraw button
+  if (!e.target || e.target.id !== 'mrf') return;
+  e.stopPropagation(); toast('Redrawing the minimap…');
+  const r = await api('/api/minimap', {});
+  if (r.error) return toast(r.error, true);
+  mini.onload = () => { miniOk = true; redraw(); }; mini.src = '/minimap.png?v=' + Date.now(); toast(r.msg);
+}, true);
 function drawMap(c, v) {
   const g = c.getContext('2d');
   g.drawImage(mini, 0, 0, 1024, 1024);
@@ -1025,6 +1034,16 @@ const SCATTER_PRESETS = [
   { name: 'Birches & blossom', dens: 0.08, apart: true, items: [SC_NEW(38130, 'Birch'), SC_NEW(38120, 'Blossom tree')] },
   { name: 'Wildflowers', dens: 0.12, apart: false, items: [SC_T(16, 'Red Flower'), SC_T(45, 'Purple Flower'), SC_T(137, 'Yellow Flower'), SC_T(138, 'Blue Flower'), SC_T(139, 'Green Flower'), SC_T(17, 'Small green plant', 3)] },
   { name: 'Undergrowth', dens: 0.15, apart: false, items: [SC_T(17, 'Small green plant'), SC_T(47, 'Small dark-green plant'), SC_T(1133, 'Growing Mushroom', 1)] },
+  // the new areas' pieces (Nov 17, Cody): reeds and marsh trees (Fenwatch, Hatcheries), mountain (Stonehold), foundry
+  { name: 'Reeds', dens: 0.18, apart: false, items: [{ k: 'o', s: 38200, b: 0, w: 5, name: 'Reeds I' }, { k: 'o', s: 38202, b: 0, w: 5, name: 'Reeds II' }, { k: 'o', s: 38204, b: 0, w: 5, name: 'Reeds III' }, { k: 'o', s: 38206, b: 0, w: 5, name: 'Reeds IV' }] },
+  { name: 'Marsh trees', dens: 0.07, apart: true, items: [SC_NEW(38140, 'Willow'), { k: 'o', s: 38160, b: 1, w: 3, vars: [38160, 38161, 38162, 38163], name: 'Dead tree' }] },
+  { name: 'Snowy pines', dens: 0.10, apart: true, items: [SC_NEW(38154, 'Snowy pine'), { k: 'o', s: 38160, b: 1, w: 1, vars: [38160, 38161, 38162, 38163], name: 'Dead tree' }] },
+  { name: 'Boulders', dens: 0.03, apart: true, items: [SC_TREE(1208, 'Granite boulder'), SC_TREE(16352, 'Rock'), SC_TREE(16376, 'Grey rock')] },
+  { name: 'Granite outcrops', dens: 0.10, apart: false, items: [{ k: 'o', s: 1204, b: 3, w: 5, vars: [1204, 1206], name: 'Granite cliff' }, SC_TREE(1208, 'Granite boulder')] },
+  { name: 'Slag heaps', dens: 0.05, apart: true, items: [SC_T(517, 'Lava Stone'), SC_T(518, 'Lava Stone II'), SC_T(519, 'Lava Stone III')] },
+  { name: 'Golem wrecks', dens: 0.03, apart: true, items: [{ k: 'o', s: 38416, b: 1, w: 2, name: 'Toppled iron golem' }, { k: 'o', s: 38418, b: 1, w: 3, name: 'Wrecked golem limbs' }] },
+  { name: 'Crates', dens: 0.04, apart: true, items: [{ k: 'o', s: 38426, b: 1, w: 3, name: 'Stack of crates' }, { k: 'o', s: 38428, b: 1, w: 2, name: 'Crates, a barrel and a sack' }, { k: 'o', s: 38430, b: 1, w: 2, name: 'Iron-bound crates' }] },
+  { name: 'Lizard egg nests', dens: 0.04, apart: true, items: [SC_T(2056, 'Lizard Egg nest'), SC_T(2057, 'Lizard Egg nest II'), SC_T(2058, 'Lizard Egg nest III')] },
   { name: 'Rocks', dens: 0.04, apart: true, items: [SC_TREE(16352, 'Rock'), SC_TREE(16360, 'Rock II'), SC_TREE(16368, 'Rock III'), SC_TREE(16376, 'Grey rock')] },
 ];
 const scatterKey = e => e.k === 't' ? 't' + e.t : 'o' + e.s;
@@ -1138,7 +1157,7 @@ function setBrush(b, keepTool) {
   const k = brushKey(b);
   recent = [b, ...recent.filter(r => brushKey(r) !== k)].slice(0, 120);
   try { localStorage.setItem('myv2.recent', JSON.stringify(recent)); } catch (e) {}
-  if (!keepTool && (tool === 'select' || tool === 'pick' || tool === 'pan' || tool === 'erase' || tool === 'erasebox' || tool === 'copy')) setTool('brush');
+  if (!keepTool && (tool === 'select' || tool === 'pick' || tool === 'pan' || tool === 'erase' || tool === 'erasebox' || tool === 'chasmbox' || tool === 'copy')) setTool('brush');
   card(); document.querySelectorAll('#palwrap [data-k]').forEach(el => el.classList.toggle('sel', el.dataset.k === k));
 }
 function card() {
@@ -1398,7 +1417,7 @@ function leftUI() {
   const match = (name, num) => !q || name.toLowerCase().includes(q) || String(num) === q || String(num).startsWith(q);
   function mixSection(withSets) {
     const saved = mixes.filter(m => match(m.name, ''));
-    const sets = withSets ? Object.entries(pal.sets).map(([k, v]) => ({ name: 'set ' + k, items: v.map(s => ({ s, w: 5 })) })) : [];
+    const sets = withSets ? Object.entries(pal.sets).map(([k, v]) => ({ name: (pal.setnames || {})[k] || 'set ' + k, items: v.map(s => ({ s, w: 5 })) })) : [];
     if (!saved.length && !sets.length) return;
     sect(saved.length ? 'Floor mixes' + (sets.length ? ' · and the game\'s own sets' : '') : 'The game\'s own floor sets');
     const g = grid();
@@ -1422,7 +1441,7 @@ function leftUI() {
       sect('Areas · rugs and floor sets');
       rugSection(w, sub, grid, match);
       const saved = mixes.filter(m => match(m.name, ''));
-      const sets = Object.entries(pal.sets).filter(([k]) => match('', k)).map(([k, v]) => ({ name: 'set ' + k, items: v.map(s2 => ({ s: s2, w: 5 })) }));
+      const sets = Object.entries(pal.sets).filter(([k]) => match((pal.setnames || {})[k] || '', k)).map(([k, v]) => ({ name: (pal.setnames || {})[k] || 'set ' + k, items: v.map(s2 => ({ s: s2, w: 5 })) }));
       if (saved.length || sets.length) { sub('Floor sets · your mixes and the game\'s own sets (Ctrl+click floors to mix)'); const g = grid(); saved.forEach(m => g.appendChild(cellMix(m, true))); sets.forEach(m => g.appendChild(cellMix(m, false))); }
       // the game's floors by where they lie: inside (indoors) or outside, the rest as tiles
       const ground = new Set([...(pal.wg ? pal.wg.grass : []), ...Object.values(pal.wg ? pal.wg.sets : {}).flatMap(g => [...g.plain, ...Object.values(g.edges)])]);
@@ -1437,7 +1456,7 @@ function leftUI() {
       sect('Grounds · outside: grass, paths, sand, snow, water');
       if (!q && pal.ground && pal.ground.length) {
         sub('New ground · soft edges into grass');
-        const g = grid(); pal.ground.forEach(([nm, s2]) => { const c = cellFloor(s2, 0); c.querySelector('.lab').textContent = nm; c.title = nm + ' · 4 random variants; the grass tiles around it get soft edges by themselves'; g.appendChild(c); });
+        const g = grid(); pal.ground.forEach(([nm, s2]) => { const c = cellFloor(s2, 0); c.querySelector('.lab').textContent = nm; c.title = nm === 'chasm' ? 'chasm · a drop into dark mist: the cliff walls under the ground beside it come by themselves, and it blocks walking (Chasm edges tool, K: fix a whole box)' : nm + ' · 4 random variants; the grass tiles around it get soft edges by themselves'; g.appendChild(c); });
       }
       sub('The game\'s ground used mostly outdoors · Ctrl+click to mix'); lazy(grid(), list.filter(f => kind(f) === 'g' && !ground.has(f[0])), f => cellFloor(f[0], f[1]));
       sect('Tiles · everything else (used both inside and out, or rarely)');
@@ -1537,7 +1556,7 @@ function leftUI() {
         walls: [['Walls', 'building and cave walls'], ['Webbed Walls', 'cobwebbed copies, each paints one of its 3 at random'], ['Windows', 'open slits like the game\'s brick windows: block walking, you see through'],
                 ['Trees', 'block walking and sight; the new ones paint one of their 4 at random'], ['Columns', 'pillars and columns'], ['Misc.', 'arches, gates, rubble…']],
         objects: [['Chests', 'put one in and choose what it gives'], ['Scatter Brushes', 'paint trees, plants, flowers or rocks at random · Ctrl+click pieces (or Add item) to make your own'],
-                  ['Torches', 'candles, braziers, lamps, torches, fires'], ['Fences', ''], ['Plants', 'flowers, bushes, cacti'], ['Webs', 'webs on their own and webbed objects'],
+                  ['Torches', 'candles, braziers, lamps, torches, fires'], ['Workshop', 'anvils, furnaces, molten iron, benches, tool racks, crates'], ['Fences', ''], ['Plants', 'flowers, bushes, cacti'], ['Webs', 'webs on their own and webbed objects'],
                   ['Transport', 'portals, holes, ladders'], ['Doors', 'doors and gates'], ['Signs', ''], ['Mines', 'mine walls and stone piles players can mine'], ['Misc.', 'everything else']],
         items: [['Weapons', ''], ['Armor', 'helmets, body armor, sleeves, leggings, boots, cloaks, belts'], ['Rings', ''], ['Jewelry', 'amulets and other jewelry'],
                 ['Quest', 'items NPCs ask for, and labyrinth items'], ['Potions', 'potions, flowers, drinks'], ['Scrolls', 'spell and attribute scrolls'], ['Keys', ''], ['Misc.', 'everything else']],
@@ -1558,6 +1577,7 @@ function leftUI() {
         for (const t of list) if (!/window/i.test(t[1])) put(objectKind(t), temp(t));     // (the windows are in Walls)
         for (const p of (pal.fences || []).filter(x => match(x[1], x[0]))) put('Fences', plant(p));
         for (const p of (pal.plants || []).filter(x => match(x[1], x[0]))) put('Plants', plant(p));
+        for (const p of (pal.props || []).filter(x => match(x[1], x[0]))) put('Workshop', plant(p));
         if (pal.cobwebs) for (const p of [...pal.cobwebs.webs, ...(pal.cobwebs.more || []), ...pal.cobwebs.furniture].filter(x => match(x[1], x[0]))) put('Webs', plant(p));
       } else {
         for (const t of list) put(itemKind(t), temp(t));
@@ -3509,14 +3529,15 @@ const NPC_TABS = {
       const h = (t) => { const d = document.createElement('div'); d.className = 'lb'; d.style.cssText = 'margin-top:10px;color:var(--dim)'; d.textContent = t; card.append(d); };
       h('Only if');
       e.conds.forEach((cd, i) => {
-        const ty = selS([['quest', 'quest step'], ['has', 'the player carries'], ['hasnot', 'the player does not carry'], ['rank', 'the player\'s rank'], ['skill', 'the player\'s skill'], ['gold', 'the player\'s money (silver)'], ['class', 'the player\'s class'], ['area', e.when === 'kill' ? 'it dies in the area' : 'the player is in the area']], () => cd.type,
-          v => { e.conds[i] = v === 'quest' ? { type: v, n: 1, op: '=', v: 0 } : v === 'rank' ? { type: v, op: '<=', v: 1 } : v === 'skill' ? { type: v, n: 12, op: '>', v: 0 } : v === 'gold' ? { type: v, op: '>=', v: 100 } : v === 'class' ? { type: v, not: false, c: CLASS_OPTS[0][0] } : v === 'area' ? { type: v, s: '' } : { type: v, t: 0 }; tplRender(); });
+        const ty = selS([['quest', 'quest step'], ['has', 'the player carries'], ['hasnot', 'the player does not carry'], ['rank', 'the player\'s rank'], ['skill', 'the player\'s skill'], ['gold', 'the player\'s money (silver)'], ['done', 'times the player did an item quest'], ['class', 'the player\'s class'], ['area', e.when === 'kill' ? 'it dies in the area' : 'the player is in the area']], () => cd.type,
+          v => { e.conds[i] = v === 'quest' ? { type: v, n: 1, op: '=', v: 0 } : v === 'rank' ? { type: v, op: '<=', v: 1 } : v === 'skill' ? { type: v, n: 12, op: '>', v: 0 } : v === 'gold' ? { type: v, op: '>=', v: 100 } : v === 'done' ? { type: v, t: (TP && TP.kind === 'npc' ? +TP.t : 1), op: '>=', v: 1 } : v === 'class' ? { type: v, not: false, c: CLASS_OPTS[0][0] } : v === 'area' ? { type: v, s: '' } : { type: v, t: 0 }; tplRender(); });
         const parts = [ty];
         if (cd.type === 'quest') parts.push(sel(qopts(), () => cd.n, v => cd.n = v), selS(OPN, () => cd.op, v => cd.op = v), num(() => cd.v, v => cd.v = v, 0, 65535));
         else if (cd.type === 'rank') { parts.push(selS(OPN, () => cd.op, v => cd.op = v), sel(RANK_NAMES.map((n2, i2) => [i2, `${i2} · ${n2}`]), () => cd.v, v => cd.v = v)); }
         else if (cd.type === 'skill') parts.push(sel(SKILLS.map((s2, i2) => [i2, s2]), () => cd.n, v => cd.n = v), selS(OPN, () => cd.op, v => cd.op = v), num(() => cd.v, v => cd.v = v, 0, 255), '(0 = doesn\'t know it)');
         else if (cd.type === 'gold') parts.push(selS(OPN, () => cd.op, v => cd.op = v), num(() => cd.v, v => cd.v = v, 0));
         else if (cd.type === 'area') parts.push(areaIn(() => cd.s, v => cd.s = v));
+        else if (cd.type === 'done') parts.push('item quest of template', num(() => cd.t, v => cd.t = v, 1, 65535), selS(OPN, () => cd.op, v => cd.op = v), num(() => cd.v, v => cd.v = v, 0, 255), 'times');
         else if (cd.type === 'class') parts.push(selS([['is', 'is'], ['not', 'is not']], () => cd.not ? 'not' : 'is', v => cd.not = v === 'not'), classChips(() => cd.c, v => { cd.c = v; tplRender(); }));
         else parts.push(ipick(() => cd.t, v => cd.t = v));
         parts.push(xb(() => e.conds.splice(i, 1)));
@@ -4287,6 +4308,7 @@ cv.addEventListener('mousedown', e => {
     rect = { a: t, b: t, copy: true }; redrawTop(); return;
   }
   if (RO()) { toast('The game server is running: editing is off.', true); return; }
+  if (tool === 'chasmbox') { rect = { a: t, b: t, chasm: true }; redrawTop(); return; }
   if (brush.kind === 'npc' && !isErase()) {     // NPCs go one at a time
     if (e.altKey) edit([{ op: 'npcremove', x: t.x, y: t.y }], 'removed an NPC');
     else edit([{ op: 'npcplace', x: t.x, y: t.y, t: brush.t[0], dir: brush.dir || 4 }], `placed ${brush.t[1]} (facing ${FACEN[brush.dir || 4]})`);
@@ -4342,6 +4364,14 @@ window.addEventListener('mouseup', () => {
     }
     if (rect.zone) { rect = null; redrawTop(); zoneMouseUp(x0, y0, x1, y1); return; }
     if (rect.copy) { rect = null; redrawTop(); copyArea(x0, y0, x1, y1); return; }
+    if (rect.chasm) {     // the chasm's walls worked out again for the whole box (the server does it: op chasmfix)
+      rect = null; redrawTop();
+      if ((x1 - x0 + 1) * (y1 - y0 + 1) > 40000) return toast('That area is too big (at most 200×200 at once).', true);
+      edit([{ op: 'chasmfix', x: x0, y: y0, x1, y1 }], `chasm edges (${x1 - x0 + 1}×${y1 - y0 + 1})`).then(() => {
+        const ts = []; for (let x = x0 - 2; x <= x1 + CH; x += CH) for (let y = y0 - 2; y <= y1 + CH; y += CH) ts.push([Math.min(x, x1), Math.min(y, y1)]);
+        refetch(ts); });
+      return;
+    }
     rect = null;
     if ((x1 - x0 + 1) * (y1 - y0 + 1) > 40000) { toast('That area is too big (at most 200×200 at once).', true); redrawTop(); return; }
     const ops = [];
@@ -4381,7 +4411,7 @@ window.addEventListener('keydown', e => {
     if (rugLearn) { rugLearn = false; rect = null; setTool(tool); redrawTop(); toast('Cancelled.'); return; }
     if (areaLearn) { areaLearn = false; rect = null; setTool(tool); redrawTop(); toast('Cancelled.'); return; }
     if (destPick || npcPick) { destPick = npcPick = null; setTool(tool); toast('Cancelled.'); return; } toggleWorld(false); rect = null; selTile = null; redrawTop(); return; }
-  const map = { v: 'select', b: 'brush', u: 'rect', f: 'fill', e: 'erase', r: 'erasebox', i: 'pick', h: 'pan', c: 'copy' };
+  const map = { v: 'select', b: 'brush', u: 'rect', f: 'fill', e: 'erase', r: 'erasebox', k: 'chasmbox', i: 'pick', h: 'pan', c: 'copy' };
   if (map[k]) return setTool(map[k]);
   if (k === '[') return stepSize(-1);
   if (k === ']') return stepSize(1);
@@ -5067,7 +5097,7 @@ function killsBox(el) {
     k.req.forEach((cd, j) => {
       const r = document.createElement('div');
       const ty = selS2([['quest', 'quest step'], ['skill', 'skill'], ['has', 'carries the item'], ['hasnot', 'does not carry the item'], ['gold', 'money (silver)'], ['area', 'is in the area']], () => cd.type,
-        v => { k.req[j] = v === 'quest' ? { type: v, n: (QC && QC[0] ? QC[0].n : 1), op: '>=', v: 1 } : v === 'skill' ? { type: v, n: 12, op: '>', v: 0 } : v === 'gold' ? { type: v, op: '>=', v: 100 } : v === 'area' ? { type: v, s: '' } : { type: v, t: 0 }; re(); });
+        v => { k.req[j] = v === 'quest' ? { type: v, n: (QC && QC[0] ? QC[0].n : 1), op: '>=', v: 1 } : v === 'skill' ? { type: v, n: 12, op: '>', v: 0 } : v === 'gold' ? { type: v, op: '>=', v: 100 } : v === 'done' ? { type: v, t: (TP && TP.kind === 'npc' ? +TP.t : 1), op: '>=', v: 1 } : v === 'area' ? { type: v, s: '' } : { type: v, t: 0 }; re(); });
       r.append(ty);
       if (cd.type === 'quest') r.append(sel(qOpts(cd.n), () => cd.n, v => { cd.n = v; re(); }), selS2(OPN2, () => cd.op, v => { cd.op = v; re(); }), num(() => cd.v, v => { cd.v = v; re(); }, 0, 65535));
       else if (cd.type === 'skill') r.append(sel(SKILLS.map((s2, n) => [n, s2]), () => cd.n, v => { cd.n = v; re(); }), selS2(OPN2, () => cd.op, v => { cd.op = v; re(); }), num(() => cd.v, v => { cd.v = v; re(); }, 0, 255), sp('(0 = doesn\'t know it)'));

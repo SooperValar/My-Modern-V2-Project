@@ -1543,3 +1543,11 @@ the output file ends in .tmp, so the format is now given.)
   37400-37527. `build_spires.py` mask updated; rerun live as `--edges --shift -18` (sprite field only - light unchanged,
   checked, so no relight). client-dist b01c0bf + player zip.
 - `publish_client_inc.py` takes `--force=<glob>` for redrawn files of the same size (it only compares sizes).
+
+## Nov 19 (22:10) - Editor: chasm brush and Chasm edges tool (live)
+- Cody wants to build chasms himself. Floors tab > Grounds: a **chasm** ground (paints 37400/37401); the editor works out
+  the cliff walls of every chasm tile that looks at a changed tile (`_chasmedge`, after `_autoedge`: same six-tile mask
+  as `build_spires.py`), sets "blocks walking" on chasm and takes it off ground painted over chasm (if no object there).
+- Tool **Chasm edges (K)**: drag a box; op `chasmfix` reworks every chasm tile in it. Checked on a copy: on the whole
+  Spires box it changes nothing (matches the build), painting ground over a chasm tile and chasm back restores it exactly.
+- `tools/mapedit/src/` was behind the deployed `mapedit.py` (Nov 17 vs 19): split again from the deployed file first.
