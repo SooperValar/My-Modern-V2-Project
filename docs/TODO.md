@@ -12,6 +12,17 @@ world, quests, the editor, the client and Discord. Merged Nov 10 from the old TO
 
 ## Up next (in order)
 
+- ● **HIGH - 32-bit sprite numbers (Cody, Nov 19: "high on the to-do list... but we have to wait for the right time").**
+  Sprite numbers are 16-bit everywhere, so 65,535 is the ceiling; about 13,000 are free and safe, the biggest free block
+  is 768 (`docs/SPRITE_MAP.md`, `tools/world/sprite_scan.py`). The move touches: `map.dat` (sprite / fsprite per tile:
+  the 28-byte tile grows), items and templates (`sprite[2]`), characters and templates (`sprite`, `sprite_override`),
+  effects, the server's map/char/item messages to the client (`unsigned short` in svr_tick.c's smap / cmap and the
+  packets), the client (`map[].ba_sprite` etc., `MAXSPRITE`, its sprite cache and loaders), the editor (`MAP_FMT`, every
+  struct offset, the patch format) and every tool that reads the .dat files (arealib, mapedit, render_region, scans).
+  Needs a one-time convert of all .dat files and a client everyone must update at once. **The right time:** a planned
+  downtime with no players, before the sprite room actually runs out (rerun the scan now and then). Until then: keep
+  new sets small (2 variants, 3x3 water) and record every range in SPRITE_MAP.md.
+
 **For Nov 18 (Cody, Nov 17 night):**
 - ★ **Clean up the Golem Foundry's object distribution**: the pieces in the yard and the Hall (anvils, benches, crates,
   furnaces, wrecks, slag) placed by `build_foundry.py`; Cody rearranges in the editor (Objects -> Workshop, the
