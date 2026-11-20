@@ -1499,7 +1499,7 @@ void plr_login(int nr)
                 return;
         }
 
-        if (ch[cn].pass1!=player[nr].pass1 || ch[cn].pass2!=ch[cn].pass2) {
+        if (ch[cn].pass1!=player[nr].pass1 || ch[cn].pass2!=player[nr].pass2) {     // Nov 19: pass2 was compared with itself (never checked)
                 plog(nr,"Login as %s denied (pass1/pass2)",ch[cn].name);
                 plr_logout(0,nr,LO_PASSWORD);
                 return;

@@ -22,7 +22,7 @@ world, quests, the editor, the client and Discord. Merged Nov 10 from the old TO
   the willows, Nov 17). Stopgap: 38112 / 38124 / 38134 / 38144 / 38158 are copies of the stumps (client-dist). Fix in the
   next client build: the new trees -> a stump, 38164 + (sprite & 3).
 
-0. ★ **Login check bug (found Nov 19)**: `svr_tick.c` plr_login compares `ch[cn].pass2!=ch[cn].pass2` (itself), so the
+0. ★ **Login check bug (found Nov 19) - FIXED, LIVE 21:17** (Cody's saved key for Iluvatar matched on both halves first; if a login ever fails with "wrong password" after this, the old line is in git history): `svr_tick.c` plr_login compares `ch[cn].pass2!=ch[cn].pass2` (itself), so the
    second half of the password is never checked against what the player sent (`player[nr].pass2`). Original game code.
    Fix only with Cody's OK: test a login with the test client first.
 0. ★ **Recall to each town's temple / chapel** (Cody, Nov 19) - **LIVE Nov 19, 19:42** (CHANGES.md "Town shrines set your recall"): `use_driver.c` town_shrine[] - Skua 492,512 -> 512,512 (not purple players), the Purple One 560,549 -> 560,544 (only purple players; PURPLE_RECALL_X/Y in gendefs.h, was 558,542 everywhere - Cody), Fenwatch 434,817 -> 434,812 facing east, Stonehold 664,836 -> 669,836; `svr_god.c` god_transfer_char turns you that way on arrival. Original note: a player can change where Recall takes him to the

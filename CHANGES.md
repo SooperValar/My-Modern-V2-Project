@@ -1397,6 +1397,15 @@ the Spider Queen, the Ghost King, Robin; the Eastern Woods (Hollis, Edda, Tobias
 chain); Fenwatch by rank (Joss, Ilse, Corwin, Aldous, Petra, Robin's second, Rook); Stonehold (Hagar, Brann); Syleia last.
 `tools/world/quest_fix/quest_order.py` (new quests: add them to its list).
 
+## Login: a lost spot sends you to your temple; the full key is checked (Nov 19, live)
+
+- If the place a character logged out in is gone (blocked, built over, or bare map since an area moved), he wakes up at
+  his temple instead of not getting in ("The place where you left the world is no longer there..."). `svr_tick.c`
+  login_drop() (Cody).
+- The original login check compared the second half of the character key with itself (`ch[cn].pass2!=ch[cn].pass2`),
+  so it was never checked; now it is (`!=player[nr].pass2`). The client stores and sends both halves as the server
+  made them; Cody's saved key matched on both before the change. The typed password was always checked properly.
+
 ## The Spires' drop and the Monastery moved north (Nov 19, live)
 
 Cody, walking the Spires: "the black area has weird jagged edges", "you still easily see the square sides" - "there
