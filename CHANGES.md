@@ -1397,6 +1397,19 @@ the Spider Queen, the Ghost King, Robin; the Eastern Woods (Hollis, Edda, Tobias
 chain); Fenwatch by rank (Joss, Ilse, Corwin, Aldous, Petra, Robin's second, Rook); Stonehold (Hagar, Brann); Syleia last.
 `tools/world/quest_fix/quest_order.py` (new quests: add them to its list).
 
+## Town shrines set your recall (Nov 19, live)
+
+Praying at a town's shrine with nothing in your hand makes that town's temple your recall point (Recall, dying, the
+gods' rescue); the game says so ("From now on, Recall brings you to Stonehold's temple."), or that it already is.
+Holding an item still makes an offering, as before. `use_driver.c` town_shrine[]:
+- Skua, Aston (shrine 492,512) -> 512,512; not for purple players ("Skua does not answer one who follows the Purple One").
+- the Purple One, Aston (560,549) -> 560,544; only purple players (for others the shrine is as before).
+- Fenwatch (434,817) -> 434,812, facing east on arrival (`svr_god.c` god_transfer_char turns you).
+- Stonehold (664,836) -> 669,836.
+Purple players' recall point is now 560,544 everywhere (`PURPLE_RECALL_X/Y` in gendefs.h; it was 558,542, off in a
+corner - Cody); purple players with the old spot keep it until they pray at the Purple shrine. New characters still
+start with Aston. Tested on the test server (`usexy`); purple refusal and the facing are for Cody to try in game.
+
 ## Monastery of the Still Hand (Nov 19, live) - band D, Lieutenant Colonel (band D complete)
 
 A mountain monastery gone bad, east of Stonehold, spread over its whole box (Cody's Spires rule: the goals at opposite
