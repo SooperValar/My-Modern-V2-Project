@@ -58,16 +58,17 @@ def tile(mask, var):
                 tx, ty, _, _ = screen_tile(x, y - d)
                 if (tx, ty) == (0, 0): continue
                 if land.get((tx, ty)):
-                    f = d / H                                           # 0 at the rim, 1 where it goes dark
-                    if f > 1.25: break
+                    f = d / H                                           # 0 at the rim, 1 where it is gone in the mist
+                    if f >= 1: break
+                    # Cody (Nov 19): the walls' bottoms showed as jagged teeth (they follow the rim's tile corners): the
+                    # rock now melts into the drop below - the mist itself, not black - so there is no line where it ends
                     strata = 0.10 * math.sin(d * 1.3 + ph[4]) + 0.06 * math.sin(d * 3.1 + ph[5])
                     crack = min(abs(x - c) for c in cracks)
-                    shade = (1.0 - 0.9 * min(1, f) ** 1.7) * (1 + strata) * (0.8 if crack < 0.8 else 1.0)
-                    shade *= 1 + 0.08 * (r.random() - 0.5)
-                    rock = tuple(ROCK[i] * shade + DEEP[i] * (1 - shade) for i in range(3))
+                    lit = (1.0 - 0.35 * f) * (1 + strata) * (0.8 if crack < 0.8 else 1.0) * (1 + 0.08 * (r.random() - 0.5))
+                    k = (1 - f) ** 1.2                                        # how much rock shows (a long, even fade)
+                    rock = tuple(ROCK[i] * lit * k + col[i] * (1 - k) for i in range(3))
                     if d <= 1.5: rock = SNOW                                # snow lip on the rim
                     elif d <= 2.5: rock = tuple(0.5 * SNOW[i] + 0.5 * rock[i] for i in range(3))
-                    if f > 1: rock = tuple(rock[i] * (1.25 - f) / 0.25 + col[i] * (f - 1) / 0.25 for i in range(3))
                     col = rock
                     break
                 if (tx, ty) not in land: break          # beyond the neighbours we know: treat as drop

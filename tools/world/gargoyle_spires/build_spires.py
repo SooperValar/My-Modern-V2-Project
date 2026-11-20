@@ -19,6 +19,11 @@ CJ = json.load(open(os.path.join(SP, 'world_chasm.json')))
 A = Area(sys.argv[1], seed=1190); R = random.Random(1190)
 X0, X1, Y0, Y1 = 742, 830, 845, 940                        # the Spires (space plan 745-830; Cody: more to the north -> 742, the Monastery box ends at 740)
 PX0, PX1, PY0, PY1 = 716, 834, 828, 842                    # the pass to the Last Bastion
+YE = 965                                                   # Cody (Nov 19, live): 'you still easily see the square sides' - the gorge
+AX0, AX1 = 741, 834                                        # runs on east to YE (a player sees 22 tiles); rock fills the strips
+                                                           # to the Monastery (741) and toward the Last Bastion (831-834)
+EDGES = '--edges' in sys.argv                              # only the rock and the drop round the islands (the live world: islands,
+                                                           # objects and monsters untouched)
 CLIFF, BOULDER = [1204, 1206], 1208
 SNOW = [35400, 35401, 35402, 35403]; SNOWY = [36100, 36101, 36102, 36103]
 SNOWPINE = [38154, 38155, 38156, 38157]
@@ -93,11 +98,22 @@ while len([1 for _ in pillars]) < 95 and tries < 4000:
     if any(p in land or p in gap or p in pillars for p in near if math.hypot(p[0] - c[0], p[1] - c[1]) <= r + 3.2): continue
     for x, y in near:
         if math.hypot(x - c[0], y - c[1]) <= r: pillars.add((x, y))
+R2 = random.Random(1194); tries = 0; n0 = len(pillars)
+while len(pillars) < n0 + 45 and tries < 4000:
+    tries += 1; c = (R2.uniform(X0 + 6, X1 - 6), R2.uniform(Y1 - 2, YE - 5)); r = R2.uniform(0.7, 2.0)
+    near = [(x, y) for x in range(int(c[0]) - 5, int(c[0]) + 6) for y in range(int(c[1]) - 5, int(c[1]) + 6)]
+    if any(p in land or p in gap or p in pillars for p in near if math.hypot(p[0] - c[0], p[1] - c[1]) <= r + 3.2): continue
+    for x, y in near:
+        if math.hypot(x - c[0], y - c[1]) <= r: pillars.add((x, y))
 # the far rim: granite on snow round the box, 2-4 tiles deep, ragged
 def rim(x, y):
-    d = min(x - X0, X1 - x, y - Y0, Y1 - y)
-    return d < 1.7 + 0.9 * (math.sin(x * 0.41 + PH[2]) * math.sin(y * 0.37 + PH[3]))
-inbox = lambda x, y: X0 <= x <= X1 and Y0 <= y <= Y1
+    """the far side of the gorge: on the north, west and south a ragged mountainside, headlands and inlets several tiles
+    deep (not a straight cliff line); on the east the gorge runs on to YE, past what a player can see"""
+    if x < X0 or x > X1: return True
+    n = 0.5 + 0.5 * math.sin(x * 0.09 + PH[2]) * math.sin(y * 0.08 + PH[3]) + 0.35 * math.sin((x - y) * 0.06 + PH[4])
+    if min(x - X0, X1 - x, y - Y0) < 1.5 + 8.0 * max(0.0, n): return True
+    return YE - y < 1.5 + 2.0 * max(0.0, n)
+inbox = lambda x, y: AX0 <= x <= AX1 and Y0 <= y <= YE
 
 # ---------------------------------------------------------------- write it
 for x in range(726, PX1 + 1):                                 # the pass (Stonehold's own ground and gate road end at 725)
@@ -114,8 +130,9 @@ for x in range(726, PX1 + 1):                                 # the pass (Stoneh
         A.op(op='floor', x=x, y=y, s=R.choice(SNOWY if d < wall - 1 or R.random() < 0.5 else SNOW), set=False)
         if d >= 2 and R.random() < 0.05: A.op(op='object', x=x, y=y, s=R.choice(SNOWPINE), block=1)
 A.run('the pass')
-for x in range(X0, X1 + 1):
-    for y in range(Y0, Y1 + 1):
+for x in range(AX0, AX1 + 1):
+    for y in range(Y0, YE + 1):
+        if EDGES and (x, y) in land: continue
         A.clear(x, y)
         for b in range(2, 15): A.op(op='flag', x=x, y=y, bit=b, mode=0)
         if (x, y) in land:
@@ -126,11 +143,30 @@ for x in range(X0, X1 + 1):
             A.op(op='floor', x=x, y=y, s=R.choice(SNOW), set=False); A.op(op='object', x=x, y=y, s=R.choice(CLIFF), block=3)
 A.run('spires: islands, ways, rim, pillars')
 solid = lambda x, y: (x, y) in land or (x, y) in pillars or rim(x, y) if inbox(x, y) else A.floor(x, y) != VOID
-chasm = [(x, y) for x in range(X0, X1 + 1) for y in range(Y0, Y1 + 1) if (x, y) not in land and (x, y) not in pillars and not rim(x, y)]
+chasm = [(x, y) for x in range(AX0, AX1 + 1) for y in range(Y0, YE + 1) if (x, y) not in land and (x, y) not in pillars and not rim(x, y)]
 for x, y in chasm:
     m = solid(x - 1, y) * 1 + solid(x, y + 1) * 2 + solid(x - 1, y + 1) * 4 + solid(x - 2, y + 1) * 8 + solid(x - 1, y + 2) * 16
     A.op(op='floor', x=x, y=y, s=CHASM(m), set=False); A.op(op='flag', x=x, y=y, bit=0, mode=1)
 A.run('the chasm')
+# Cody (Nov 19): no empty map in sight. Every empty tile within a player's view (22) of the Spires' islands becomes
+# mountain (snow under granite) - the Monastery's empty margin and the strip by Bastion Road included; never the space
+# reserved for the Last Bastion / Barbarian Highlands (x 835 on), never anything already built (only VOID tiles)
+from collections import deque
+far = {p: 0 for p in land}; q = deque(land)
+while q:
+    p = q.popleft()
+    if far[p] >= 22: continue
+    for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+        n = (p[0] + dx, p[1] + dy)
+        if n not in far and 640 <= n[0] <= 834 and 820 <= n[1] <= YE + 6: far[n] = far[p] + 1; q.append(n)
+filled = 0
+for (x, y) in far:
+    if inbox(x, y) or A.floor(x, y) != VOID: continue
+    A.op(op='floor', x=x, y=y, s=R2.choice(SNOW), set=False); A.op(op='object', x=x, y=y, s=R2.choice(CLIFF), block=3); filled += 1
+A.run('mountain round the Spires'); print('  mountain filled', filled)
+if EDGES:
+    A.zone(X0, Y1 + 1, X1, YE, 'Gargoyle Spires', flag=1); A.save()
+    print('edges only: chasm', len(chasm), 'pillar tiles', len(pillars)); sys.exit(0)
 
 # ---------------------------------------------------------------- spires, the Bell Spire's tower, the Eyrie's crags
 used = set()
@@ -190,7 +226,7 @@ while True:
 print('pockets opened', opened)
 
 A.zone(726, PY0, PX1, Y0 - 1, 'Bastion Road', flag=1)
-A.zone(X0, Y0, X1, Y1, 'Gargoyle Spires', flag=1)
+A.zone(X0, Y0, X1, YE, 'Gargoyle Spires', flag=1)
 A.zone(771, 880, 793, 937, 'Broken Causeway', flag=1)
 A.zone(bc[0] - 7, bc[1] - 7, bc[0] + 7, bc[1] + 7, 'Bell Spire', flag=1)
 A.zone(ec[0] - 8, ec[1] - 8, min(X1, ec[0] + 8), min(Y1, ec[1] + 8), "Shrike's Eyrie", flag=0)     # no "the" before a name with 's
