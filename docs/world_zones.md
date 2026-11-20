@@ -94,7 +94,7 @@ Shown by `/who`, by NPCs when asked where you are, and in server logs. A spot in
 | 84 | Labyrinth, Sunken Dark | 180,900 | 299,999 | "in the Labyrinth, Sunken Dark" |
 | 85 | Entry Hall | 181,936 | 202,962 | "in the Entry Hall" |
 | 86 | Atrium | 203,924 | 238,969 | "in the Atrium" |
-| 87 | Library | 239,924 | 274,969 | "in the Library" |
+| 87 | Library | 197,924 | 232,969 | "in the Library" |
 | 88 | Crypt | 275,901 | 298,998 | "in the Crypt" |
 | 89 | Cistern | 203,970 | 274,998 | "in the Cistern" |
 | 90 | Vault | 181,963 | 202,998 | "in the Vault" |
@@ -230,16 +230,17 @@ Shown by `/who`, by NPCs when asked where you are, and in server logs. A spot in
 | 220 | Ember Cavern | 793,691 | 815,713 | "in the Ember Cavern" |
 | 221 | Smoking Steps | 788,720 | 800,732 | "in the Smoking Steps" |
 | 222 | Bastion Road | 726,828 | 834,844 | "in the Bastion Road" |
-| 223 | Gargoyle Spires | 742,845 | 830,940 | "in the Gargoyle Spires" |
-| 224 | Broken Causeway | 771,880 | 793,937 | "in the Broken Causeway" |
-| 225 | Bell Spire | 748,920 | 762,934 | "in the Bell Spire" |
-| 226 | Shrike's Eyrie | 807,921 | 823,937 | "in Shrike's Eyrie" |
-| 227 | Monastery of the Still Hand | 650,855 | 740,950 | "in the Monastery of the Still Hand" |
-| 228 | Pilgrims' Stair | 676,855 | 703,887 | "in Pilgrims' Stair" |
-| 229 | Cloister | 684,888 | 714,920 | "in the Cloister" |
-| 230 | Training Yard | 652,860 | 670,884 | "in the Training Yard" |
-| 231 | Hall of the Silent Hand | 651,918 | 664,946 | "in the Hall of the Silent Hand" |
-| 232 | Burial Terrace | 722,861 | 738,885 | "in the Burial Terrace" |
-| 233 | Still Pond | 721,895 | 737,915 | "in the Still Pond" |
-| 234 | Abbot's Sanctum | 726,925 | 739,948 | "in the Abbot's Sanctum" |
-| 235 | Library | 700,932 | 712,946 | "in the Library" |
+| 223 | Gargoyle Spires | 724,845 | 812,940 | "in the Gargoyle Spires" |
+| 224 | Broken Causeway | 753,880 | 775,937 | "in the Broken Causeway" |
+| 225 | Bell Spire | 730,920 | 744,934 | "in the Bell Spire" |
+| 226 | Shrike's Eyrie | 789,921 | 805,937 | "in Shrike's Eyrie" |
+| 227 | Monastery of the Still Hand | 608,855 | 698,950 | "in the Monastery of the Still Hand" |
+| 228 | Pilgrims' Stair | 634,855 | 661,887 | "in Pilgrims' Stair" |
+| 229 | Cloister | 642,888 | 672,920 | "in the Cloister" |
+| 230 | Training Yard | 610,860 | 628,884 | "in the Training Yard" |
+| 231 | Hall of the Silent Hand | 609,918 | 622,946 | "in the Hall of the Silent Hand" |
+| 232 | Burial Terrace | 680,861 | 696,885 | "in the Burial Terrace" |
+| 233 | Still Pond | 679,895 | 695,915 | "in the Still Pond" |
+| 234 | Abbot's Sanctum | 684,925 | 697,948 | "in the Abbot's Sanctum" |
+| 235 | Library | 658,932 | 670,946 | "in the Library" |
+| 236 | Gargoyle Spires | 699,845 | 834,965 | "in the Gargoyle Spires" |

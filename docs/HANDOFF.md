@@ -268,6 +268,10 @@ project's next session. What the second chat did Nov 15-17 (all live, CHANGES.md
 the Ashen Fields (Varo), then the Gargoyle Spires (Rhea; the Spires add Gargoyle Horns to Brann's bounty), the Monastery last.
 Open: molten iron / crucibles / furnaces give no light (only the fire bowls do) - offered Cody hidden light sources.
 
+**Nov 19, 20:54: the Monastery (42 north) and the Spires (18 north) were MOVED live** (relocate_band_d.py; CHANGES.md):
+the Spires now have 26+ tiles of drop round every reachable tile except Bastion Road (Cody's rule). Their build_ /
+place_ scripts still describe the old places - don't re-run them without adding the shift. Poles moved with them.
+
 **Exploration poles:** the Gargoyle Spires' and the Monastery's are placed (Cody, Nov 19 19:14 / 19:16). Band D's poles are all in.
 
 **Nov 19, 18:05: the Monastery of the Still Hand is LIVE - band D is complete** (CHANGES.md; client-dist 8fa9b5b, Cody pushes).

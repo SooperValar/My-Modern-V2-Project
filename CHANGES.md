@@ -1397,6 +1397,23 @@ the Spider Queen, the Ghost King, Robin; the Eastern Woods (Hollis, Edda, Tobias
 chain); Fenwatch by rank (Joss, Ilse, Corwin, Aldous, Petra, Robin's second, Rook); Stonehold (Hagar, Brann); Syleia last.
 `tools/world/quest_fix/quest_order.py` (new quests: add them to its list).
 
+## The Spires' drop and the Monastery moved north (Nov 19, live)
+
+Cody, walking the Spires: "the black area has weird jagged edges", "you still easily see the square sides" - "there
+should be no walls within 25 tiles of a place a player can reach" (Bastion Road on the west is fine); "can the
+monastery move north?", "can you not move the poles as well?".
+- **Chasm walls** (`world_chasm.py`, 37400-37527 redrawn): the rock now melts into the mist below instead of ending in
+  teeth along the tile corners.
+- **Moved** (`tools/world/relocate_band_d.py`, with the map editor's own copy / paste and NPC move): the **Monastery 42
+  tiles north** (now x 608-698) and the **Spires 18 tiles north** (islands x 724-812; the gate on Bastion Road 18 tiles
+  up) - every monster, Brother Anselm, statues, doors, furniture as they were, templates and quests unchanged. Both
+  **exploration poles moved as the same poles** (Monastery 692,894; Spires 757,933): who found them keeps them found.
+  Stonehold's east gate road runs on along the gap below the town to the new foot of Pilgrims' Stair (639,855).
+- **The drop**: 26+ tiles of it north, south and east of every reachable tile (x 699-834, on east to y 965), more lone
+  pillars in it, the far rim out of sight; `build_spires.py --edges --shift -18` makes it (islands untouched).
+- Client files: client-dist 4a80e6d. (build_monastery.py / place_*.py still describe the old places - relocate_band_d.py
+  is the record of the move.)
+
 ## Town shrines set your recall (Nov 19, live)
 
 Praying at a town's shrine with nothing in your hand makes that town's temple your recall point (Recall, dying, the

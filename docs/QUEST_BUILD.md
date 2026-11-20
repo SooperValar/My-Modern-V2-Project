@@ -65,7 +65,7 @@ past Elysium -> Last Bastion.** The Barrow Hills are a dead end off Fenwatch's n
 | Lizard Hatcheries (C, Captain) | 505,765 - 595,860 | Fenwatch south gate (476, 800-802); **through road south, y 800-815, open at x 595** |
 | pass | 596,800 - 649,815 | |
 | Stonehold (D hub) | 650,775 - 715,845 | |
-| Golem Foundry / Monastery / Ashen Fields / Gargoyle Spires | 650,670-740,765 / 650,855-740,950 / 725,690-815,785 / 745,845-830,940 | Stonehold |
+| Golem Foundry / Monastery / Ashen Fields / Gargoyle Spires | 650,670-740,765 / 608,855-698,950 (moved Nov 19) / 725,690-815,785 / 699,845-834,965 (moved Nov 19) | Stonehold |
 | pass (east of Elysium 776-822, 795-825, which stays walled off) | 716,828 - 834,842 | |
 | Last Bastion (E-F hub) | 835,800 - 895,865 | |
 | Frostfang / Barbarian Highlands / Citadel of Kael / Abyssal Rift | 835,690-925,790 / 835,880-925,975 / 900,795-1010,870 / 930,880-1020,975 | Last Bastion |
@@ -232,7 +232,7 @@ Stonehold's west gate (681,766) and runs west (-y) into it. Monster group 37 (no
   38416 / 38418 (each N+1 its hide-walls copy); molten iron ground 36300-36303 (edges into the hall floor to make). 3D props
   from Cody's `3d Models\Fantasy Props` (Anvil, Anvil_Log, Cauldron, Bucket_Metal, Whetstone) and RPG Pack 2 (Gold_Ingots).
 
-## 9d. The Gargoyle Spires (Brigadier General) - **LIVE Nov 19, 07:20** (CHANGES.md "Gargoyle Spires")
+## 9d. The Gargoyle Spires (Brigadier General) - **LIVE Nov 19, 07:20** (CHANGES.md "Gargoyle Spires") - **moved 18 north Nov 19, 20:54: islands x 724-812, the drop x 699-834 / y 845-965** (Cody: no walls within 25 of anywhere reachable but the west; the coordinates below are the old ones)
 
 **How it went live** (Claude's first stop-send was refused by the safety system; it went through after Cody's "go live"): gated stop-send ->
 on `Server\.dat` in this order: `gargoyle_spires/build_spires.py`, `place_spires.py`, `quest_fix/quest_next.py`,
@@ -281,7 +281,7 @@ off its east side (about 765,843). Monster group 39 (not undead). Draft shown to
   ...: replaced by the v4 layout above), snow ridges and flagstone bridges, ~25 lone pillars in the gorge, a granite rim round the box. Zones:
   Bastion Road, Gargoyle Spires, Broken Causeway, Bell Spire, Shrike's Eyrie. Still to draw: the cracked bell, perch statues.
 
-## 9e. The Monastery of the Still Hand (Lieutenant Colonel) - **LIVE Nov 19, 18:05** (CHANGES.md; band D complete)
+## 9e. The Monastery of the Still Hand (Lieutenant Colonel) - **LIVE Nov 19, 18:05** (CHANGES.md; band D complete) - **moved 42 north Nov 19, 20:54: now x 608-698** (relocate_band_d.py; the coordinates below are the old ones)
 
 **As built** (supersedes the plan below where they differ): `tools/world/monastery/build_monastery.py` (terrain v5: the
 zig-zag Pilgrims' Stair, 1-2 statues per leg; the Cloister; north route Training Yard -> Hall of the Silent Hand (far
