@@ -11,6 +11,8 @@ for l in man:
         _, h, sz, rel = l.split(' ', 3); old[rel] = (h, int(sz))
 NEVER = {'merc.dat', 'merc2.dat', 'client.ini', 'client.log', 'launcher.log'}
 changed = []
+import fnmatch
+FORCE = [x[8:] for x in sys.argv[4:] if x.startswith('--force=')]   # e.g. --force=GFX/374??.png: same-size redraws
 for top in ['merc.exe', 'Launcher.exe', 'pnglib.dat', 'pnglib.idx']:
     p = os.path.join(client, top)
     if top not in old or os.path.getsize(p) != old[top][1]: changed.append((top, p))
@@ -19,7 +21,7 @@ for d in ('GFX', 'sfx'):
         for n in names:
             if n in NEVER or n.lower().endswith(('.moa', '.part', '.tmp')): continue
             p = os.path.join(root, n); rel = os.path.relpath(p, client).replace(os.sep, '/')
-            if rel not in old or os.path.getsize(p) != old[rel][1]: changed.append((rel, p))
+            if rel not in old or os.path.getsize(p) != old[rel][1] or any(fnmatch.fnmatch(rel, f) for f in FORCE): changed.append((rel, p))
 print('new or changed:', len(changed))
 idx = tempfile.mktemp(prefix='cd-index-'); env = dict(os.environ, GIT_INDEX_FILE=idx)
 git('read-tree', 'client-dist', env=env)

@@ -29,7 +29,7 @@ EDGES = '--edges' in sys.argv                              # only the rock and t
 CLIFF, BOULDER = [1204, 1206], 1208
 SNOW = [35400, 35401, 35402, 35403]; SNOWY = [36100, 36101, 36102, 36103]
 SNOWPINE = [38154, 38155, 38156, 38157]
-CHASM = lambda m: CJ['base'] + 4 * m + R.randrange(4)
+CHASM = lambda m: CJ['base'] + 2 * m + R.randrange(2)                     # world_chasm.py: 64 masks x 2 variants
 PH = [R.random() * 6.28 for _ in range(8)]
 
 # ---------------------------------------------------------------- the pass
@@ -157,7 +157,7 @@ A.run('spires: islands, ways, rim, pillars')
 solid = lambda x, y: (x, y) in land or (x, y) in pillars or rim(x, y) if inbox(x, y) else A.floor(x, y) != VOID
 chasm = [(x, y) for x in range(AX0, AX1 + 1) for y in range(Y0, YE + 1) if (x, y) not in land and (x, y) not in pillars and not rim(x, y)]
 for x, y in chasm:
-    m = solid(x - 1, y) * 1 + solid(x, y + 1) * 2 + solid(x - 1, y + 1) * 4 + solid(x - 2, y + 1) * 8 + solid(x - 1, y + 2) * 16
+    m = solid(x - 1, y) * 1 + solid(x, y + 1) * 2 + solid(x - 1, y + 1) * 4 + solid(x - 2, y + 1) * 8 + solid(x - 1, y + 2) * 16 + solid(x - 2, y + 2) * 32
     A.op(op='floor', x=x, y=y, s=CHASM(m), set=False); A.op(op='flag', x=x, y=y, bit=0, mode=1)
 A.run('the chasm')
 # Cody (Nov 19): no empty map in sight. Every empty tile within a player's view (22) of the Spires' islands becomes

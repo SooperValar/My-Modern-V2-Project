@@ -1535,3 +1535,11 @@ Lord (their message reference still reads "the Flame Lord" etc., like the game's
 editor's Linux python has no Pillow). `tools/world/worldmap.py` now reads PNG / BMP and writes the PNG itself when Pillow
 is missing (checked pixel for pixel against Pillow); Cody confirmed the button works. (It also failed with Pillow before:
 the output file ends in .tmp, so the format is now given.)
+
+## Nov 19 (21:30) - Gargoyle Spires: seamless chasm (live)
+- Cody: "the black squares are still an issue". `tools/sprites/world_chasm.py`: the mist uses one fixed phase on every
+  tile (it was random per sprite, which showed the tile grid), and a 6th mask bit (x-2,y+2 = 32) lets every pixel see
+  30 px up, past the walls' 26 px fade, so walls no longer stop in steps. 64 masks x 2 variants = 128 sprites, still
+  37400-37527. `build_spires.py` mask updated; rerun live as `--edges --shift -18` (sprite field only - light unchanged,
+  checked, so no relight). client-dist b01c0bf + player zip.
+- `publish_client_inc.py` takes `--force=<glob>` for redrawn files of the same size (it only compares sizes).

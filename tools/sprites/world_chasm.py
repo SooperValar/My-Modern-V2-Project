@@ -7,8 +7,9 @@ within reach = the misty dark below. So the walls join up across tiles by themse
 
     world_chasm.py <client folder> [--out <folder>] [--preview <png>]
 
-  37400 + 4*mask + variant, mask = land at N (1) / E (2) / NE (4) / x-2,y+1 (8) / x-1,y+2 (16): 128 sprites, 37400-37527
-  (mask 0 = only the drop: 37400-37403; bits 8 and 16 let a wall run a second tile deep).   Next free: 37528
+  37400 + 2*mask + variant, mask = land at N (1) / E (2) / NE (4) / x-2,y+1 (8) / x-1,y+2 (16) / x-2,y+2 (32): 128 sprites,
+  37400-37527 (Nov 19: with bit 32 every pixel can see 30 px up, past the walls' 26 px fade, so no wall is cut off in steps;
+  2 variants each). The mist is one seamless pattern on every tile (Cody: 'the black squares are still an issue').   Next free: 37532 (37528-37531 ice)
 The tiles block walking (map flag bit 0, set by the build script). Writes world_chasm.json beside this script."""
 import json, math, os, random, sys
 from PIL import Image
@@ -20,8 +21,9 @@ H = 26.0                       # how far down (screen pixels) the walls can be s
 ROCK = (150, 150, 152)         # the game's granite cliffs (1204 / 1206 average ~140 grey)
 SNOW = (226, 231, 238)         # soft snow 35400
 DEEP = (10, 13, 19)
+MPH = (0.7, 2.1, 4.0, 5.3)                                       # the mist's phases: one for all tiles
 MIST = (70, 82, 100)
-NB = {'N': (-1, 0), 'E': (0, 1), 'NE': (-1, 1), 'NNE': (-2, 1), 'NEE': (-1, 2)}      # map tiles that can show a wall in this tile
+NB = {'N': (-1, 0), 'E': (0, 1), 'NE': (-1, 1), 'NNE': (-2, 1), 'NEE': (-1, 2), 'NNEE': (-2, 2)}      # map tiles that can show a wall in this tile
 
 
 def screen_tile(px, py):
@@ -38,9 +40,9 @@ def periodic(u, v, ph, k=1):
 
 def tile(mask, var):
     land = {(0, 0): False}
-    for bit, k in ((1, 'N'), (2, 'E'), (4, 'NE'), (8, 'NNE'), (16, 'NEE')):
+    for bit, k in ((1, 'N'), (2, 'E'), (4, 'NE'), (8, 'NNE'), (16, 'NEE'), (32, 'NNEE')):
         land[NB[k]] = bool(mask & bit)
-    r = random.Random(BASE + mask * 4 + var); ph = [r.random() * 6.28 for _ in range(8)]
+    r = random.Random(BASE + mask * 2 + var); ph = [r.random() * 6.28 for _ in range(8)]
     cracks = [r.uniform(0, 32) for _ in range(5)]
     im = Image.new('RGBA', (32, 32), (0, 0, 0, 0)); px = im.load()
     for y in range(17, 32):
@@ -48,8 +50,8 @@ def tile(mask, var):
             if not wg.IN(x, y): continue
             u, v = wg.local(x, y)
             # the drop: near-black with faint mist drifting (periodic in u, v: seamless)
-            m = 0.5 + 0.5 * periodic(u, v, ph[:4]) / 2.0                  # soft wisps, no grain
-            m = max(0.0, m - 0.45) * 0.45 + 0.012 * r.random()
+            m = 0.5 + 0.5 * periodic(u, v, MPH) / 2.0                     # soft wisps, the SAME on every tile (seamless)
+            m = max(0.0, m - 0.5) * 0.25 + 0.006 * r.random()
             col = tuple(DEEP[i] + (MIST[i] - DEEP[i]) * m for i in range(3))
             # a wall? go up the screen
             d = 0.0
@@ -80,17 +82,17 @@ def main():
     a = sys.argv[1:]; client = a[0]
     out = a[a.index('--out') + 1] if '--out' in a else wg.gfx_dir(client)
     os.makedirs(out, exist_ok=True); table = {}
-    for mask in range(32):
-        for var in range(4):
-            n = BASE + mask * 4 + var; tile(mask, var).save(os.path.join(out, '%d.png' % n))
-        table[str(mask)] = BASE + mask * 4
-    json.dump({'base': BASE, 'mask': 'N=1 E=2 NE=4 (x-2,y+1)=8 (x-1,y+2)=16', 'by_mask': table, 'next_free': BASE + 128},
+    for mask in range(64):
+        for var in range(2):
+            n = BASE + mask * 2 + var; tile(mask, var).save(os.path.join(out, '%d.png' % n))
+        table[str(mask)] = BASE + mask * 2
+    json.dump({'base': BASE, 'mask': 'N=1 E=2 NE=4 (x-2,y+1)=8 (x-1,y+2)=16 (x-2,y+2)=32', 'stride': 2, 'by_mask': table, 'next_free': BASE + 132},
               open(os.path.join(HERE, 'world_chasm.json'), 'w'), indent=1)
     if '--preview' in a:
-        sh = Image.new('RGBA', (32 * 40, 4 * 40), (40, 40, 40, 255))
-        for mask in range(32):
-            for var in range(4):
-                sh.paste(Image.open(os.path.join(out, '%d.png' % (BASE + mask * 4 + var))), (mask * 40 + 4, var * 40 + 4))
+        sh = Image.new('RGBA', (64 * 40, 2 * 40), (40, 40, 40, 255))
+        for mask in range(64):
+            for var in range(2):
+                sh.paste(Image.open(os.path.join(out, '%d.png' % (BASE + mask * 2 + var))), (mask * 40 + 4, var * 40 + 4))
         sh.resize((sh.width * 3, sh.height * 3), Image.NEAREST).save(a[a.index('--preview') + 1])
     print('chasm sprites', BASE, '-', BASE + 127, '->', out)
 
