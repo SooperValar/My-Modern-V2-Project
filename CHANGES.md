@@ -1562,3 +1562,5 @@ the output file ends in .tmp, so the format is now given.)
   in this entry's session: 45948-47999 rest, 48026-49999, 60224-60999...).
 - Editor: the chasm code is now DROPS (chasm, sea): a **sea** ground in Floors > Grounds, edges by themselves, blocks
   walking; the K tool fixes chasm and sea. Checked on a copy (6x6 sea: every tile right; Spires unchanged).
+- (22:40) Floors tab: the chasm and sea pieces (37400-37527, 46000-47023) no longer show among the game's grounds and
+  tiles; they sit in one folded box "Chasm and water pieces" under the new grounds (palette field `drops`).

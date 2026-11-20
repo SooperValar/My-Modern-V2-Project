@@ -1275,6 +1275,7 @@ class World:
                 'plants': WORLD_PLANTS, 'fences': WORLD_FENCES, 'windows': WORLD_WINDOWS, 'arches': WORLD_ARCHES, 'trees': WORLD_TREES, 'cobwebs': WORLD_COBWEBS, 'props': WORLD_PROPS,
                 'newwalls': WORLD_WALLS,
                 'newfloors': WORLD_FLOORS,
+                'drops': [[d[0], d[1], 64 * d[2]] for d in DROPS],     # chasm / sea pieces: kept in their own folded box
                 'npcs': self.npc_templates()}
 
     # --- editing: every change remembers the old bytes so a batch can be undone

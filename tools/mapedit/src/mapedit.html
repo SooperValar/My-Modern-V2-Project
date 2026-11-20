@@ -1447,7 +1447,8 @@ function leftUI() {
       const ground = new Set([...(pal.wg ? pal.wg.grass : []), ...Object.values(pal.wg ? pal.wg.sets : {}).flatMap(g => [...g.plain, ...Object.values(g.edges)])]);
       const newfl = new Set((pal.newfloors || []).flatMap(f => f[2] || [f[0]]));
       const kind = ([s2, n, nin]) => ground.has(s2) ? 'g' : newfl.has(s2) ? 'f' : !n ? 't' : nin / n >= 0.6 ? 'f' : nin / n <= 0.15 ? 'g' : 't';
-      const list = pal.floors.filter(([s2]) => s2 && match('', s2));
+      const isDrop = s2 => (pal.drops || []).some(([, b, c]) => s2 >= b && s2 < b + c);     // chasm / sea pieces: the brushes pick them
+      const list = pal.floors.filter(([s2]) => s2 && match('', s2) && !isDrop(s2));
       if (/^\d+$/.test(q) && !list.some(([s2]) => String(s2) === q)) list.unshift([+q, 0, 0]);
       sect('Floors · inside: rooms, halls, houses');
       const nf = (pal.newfloors || []).filter(f => match(f[1], f[0]));
@@ -1457,6 +1458,17 @@ function leftUI() {
       if (!q && pal.ground && pal.ground.length) {
         sub('New ground · soft edges into grass');
         const g = grid(); pal.ground.forEach(([nm, s2]) => { const c = cellFloor(s2, 0); c.querySelector('.lab').textContent = nm; c.title = nm === 'chasm' ? 'chasm · a drop into dark mist: the cliff walls under the ground beside it come by themselves, and it blocks walking (Chasm edges tool, K: fix a whole box)' : nm === 'sea' ? 'sea · sea cliffs: the game\'s water below rock walls that come by themselves; blocks walking (Chasm edges tool, K: fix a whole box)' : nm + ' · 4 random variants; the grass tiles around it get soft edges by themselves'; g.appendChild(c); });
+      }
+      if ((pal.drops || []).length) {     // Cody (Nov 19): the chasm and sea pieces in a box of their own, folded away
+        const det = document.createElement('details'); det.style.margin = '2px 2px 8px';
+        const n = pal.drops.reduce((a, [, , c]) => a + c, 0);
+        det.innerHTML = `<summary class="subhead" style="cursor:pointer">Chasm and water pieces · ${n} (the chasm and sea brushes pick these by themselves)</summary>`;
+        w.appendChild(det);
+        det.open = !!window._dropsOpen;     // stays open while the palette redraws
+        det.ontoggle = () => { window._dropsOpen = det.open; if (!det.open || det.dataset.done) return; det.dataset.done = 1;
+          pal.drops.forEach(([nm, b, c]) => { const h = document.createElement('div'); h.className = 'subhead'; h.textContent = nm; det.appendChild(h);
+            const g = document.createElement('div'); g.className = 'grid'; det.appendChild(g);
+            lazy(g, Array.from({ length: c }, (_, i) => b + i), s3 => cellFloor(s3, 0)); }); };
       }
       sub('The game\'s ground used mostly outdoors · Ctrl+click to mix'); lazy(grid(), list.filter(f => kind(f) === 'g' && !ground.has(f[0])), f => cellFloor(f[0], f[1]));
       sect('Tiles · everything else (used both inside and out, or rarely)');
