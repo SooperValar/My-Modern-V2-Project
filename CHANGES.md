@@ -1571,3 +1571,19 @@ the output file ends in .tmp, so the format is now given.)
   water); calmer water, the water picture 3 x 3 tiles (sprite = base + 9*mask + 3*(x%3) + (y%3); only 576-sprite blocks
   were free). The sea is unchanged (4 x 4). Editor DROPS now carry the picture size; brushes "banks" and "canal" in
   Floors > Grounds, K fixes all four. Checked on a copy: a 6x6 patch of each is right on every tile.
+
+## Nov 19 (23:30) - Ledges, tall cliffs and steps (editor brushes, client 37432ad)
+- Cody: "make walls work so it looks like a ledge is higher than one below it"; "a 2 square one"; option 3 (blocking by
+  itself, a way up that never blocks); the plain ramp "leaves a little to be desired" -> steps.
+- `tools/sprites/world_ledge.py`: **lower grass** (one step down, 13 px earth face, 48602 + 4*mask + k, 48602-49625) and
+  **deep grass** (two steps, 26 px earth over rock: mask 0 = 49626 + k, else 49629 + mask, 49626-49884). The lower
+  ground is the game's own grass (551-554); mask = higher ground at the chasm's six tiles + (x+1,y)=64 + (x,y-1)=128 (a
+  dark line where higher ground lies in front). 26 px is as tall as a tile can see up the screen (about 30 px).
+- `tools/sprites/world_steps.py`: **steps** as object PIECES (the face behind a tile hangs over the tiles in front of it
+  too), every mix of flights side by side: 37532-37567, offsets/combos in world_steps.json. A flight's own tile is the
+  one whose piece holds offset (0,0), so the map itself remembers the flights (undo works).
+- Editor: LEDGES with levels (ground 0, lower -1, deep -2); lower tiles block walking next to higher ground (4
+  neighbours), never on steps, never touching another object's own blocking; a Steps brush (Alt / erase: take away).
+  Ledge, steps and water pieces all in the folded box. Checked on a copy (a 10x10 lower area round a 3x3 block: every
+  tile and block right; steps 2 wide; erase restores the block).
+- `publish_client_inc.py --max=N` publishes a big batch in parts (the zip update takes ~2.5 min a run).

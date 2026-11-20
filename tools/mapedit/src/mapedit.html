@@ -1181,6 +1181,7 @@ function card() {
   if (brush.kind === 'floor') { spr = brush.s; t = 'Floor ' + brush.s; s = brush.set && pal && pal.sets[brush.s] ? 'Floor sprite ' + brush.s + ' (random variants ' + pal.sets[brush.s].join(', ') + ')' : 'Floor sprite ' + brush.s; }
   else if (brush.kind === 'place') { spr = brush.t[2]; t = brush.t[1]; s = `Template ${brush.t[0]} · ${brush.t[6] ? 'item' : 'drawn into the tile'}${brush.t[5] & 1 ? ' · blocks walking' : ''}`; }
   else if (brush.kind === 'object') { spr = brush.s; t = 'Object ' + brush.s; s = 'Picked from the map' + (brush.block & 1 ? ' · blocks walking' : '') + (brush.block & 2 ? ' · blocks sight' : ''); }
+  else if (brush.kind === 'steps') { spr = brush.s + 1; t = 'Steps'; s = 'Click a lower or deep grass tile at the foot of its ledge: steps up to the higher ground behind it · Alt+click takes them away'; }
   else if (brush.kind === 'flag') { t = 'Flag: ' + FLAGS[brush.bit]; s = (flagRemove ? 'Remove mode: painting clears it · Alt sets it' : 'Add mode: painting sets it · Alt clears it') + ' · Shift+drag or the Rectangle tool: a whole rectangle'; }
   else if (brush.kind === 'npc') { spr = brush.t[2]; t = brush.t[1]; s = `NPC template ${brush.t[0]} · ${brush.t[3]} · click a free tile to place one (it respawns there) · Alt+click removes an NPC`; }
   if (brush.kind === 'flag') { const d = document.createElement('div'); d.style.cssText = `width:40px;height:40px;border-radius:8px;background:${FCOL[brush.bit]};flex:none`; c.appendChild(d); }
@@ -1457,12 +1458,20 @@ function leftUI() {
       sect('Grounds · outside: grass, paths, sand, snow, water');
       if (!q && pal.ground && pal.ground.length) {
         sub('New ground · soft edges into grass');
-        const g = grid(); pal.ground.forEach(([nm, s2]) => { const c = cellFloor(s2, 0); c.querySelector('.lab').textContent = nm; c.title = nm === 'chasm' ? 'chasm · a drop into dark mist: the cliff walls under the ground beside it come by themselves, and it blocks walking (Chasm edges tool, K: fix a whole box)' : nm === 'sea' ? 'sea · sea cliffs: the game\'s water below rock walls that come by themselves; blocks walking (Chasm edges tool, K: fix a whole box)' : nm === 'banks' ? 'banks · low earth banks down to the water (rivers, ponds): the banks come by themselves; blocks walking (K: fix a whole box)' : nm === 'canal' ? 'canal · fitted stone walls down to still water (canals, moats): the walls come by themselves; blocks walking (K: fix a whole box)' : nm + ' · 4 random variants; the grass tiles around it get soft edges by themselves'; g.appendChild(c); });
+        const g = grid(); pal.ground.forEach(([nm, s2]) => { const c = cellFloor(s2, 0); c.querySelector('.lab').textContent = nm; c.title = nm === 'chasm' ? 'chasm · a drop into dark mist: the cliff walls under the ground beside it come by themselves, and it blocks walking (Chasm edges tool, K: fix a whole box)' : nm === 'sea' ? 'sea · sea cliffs: the game\'s water below rock walls that come by themselves; blocks walking (Chasm edges tool, K: fix a whole box)' : nm === 'lower grass' ? 'lower grass · one step down: a low earth ledge where it meets higher ground; blocks walking along the ledge (put Steps where the way up goes)' : nm === 'deep grass' ? 'deep grass · two steps down: a tall cliff (earth over rock) where it meets higher ground; blocks walking along it (Steps for the way up)' : nm === 'banks' ? 'banks · low earth banks down to the water (rivers, ponds): the banks come by themselves; blocks walking (K: fix a whole box)' : nm === 'canal' ? 'canal · fitted stone walls down to still water (canals, moats): the walls come by themselves; blocks walking (K: fix a whole box)' : nm + ' · 4 random variants; the grass tiles around it get soft edges by themselves'; g.appendChild(c); });
+      }
+      if (!q && (pal.drops || []).some(d => d[0] === 'steps')) {     // the way up a ledge or cliff: a flight of steps on a lower tile
+        const sd = pal.drops.find(d => d[0] === 'steps');
+        const c = cellFloor(sd[1] + 1, 0); c.querySelector('.lab').textContent = 'steps';
+        c.dataset.k = 'steps:' + sd[1]; c.classList.toggle('sel', brushKey(brush) === c.dataset.k);
+        c.title = 'steps · click a lower or deep grass tile at the foot of its ledge: a flight of steps goes up to the higher ground behind it (several side by side make a wide flight). Alt+click or erase: take it away';
+        c.onclick = () => setBrush({ kind: 'steps', s: sd[1], name: 'steps' });
+        const g = grid(); g.appendChild(c);
       }
       if ((pal.drops || []).length) {     // Cody (Nov 19): the chasm and sea pieces in a box of their own, folded away
         const det = document.createElement('details'); det.style.margin = '2px 2px 8px';
         const n = pal.drops.reduce((a, [, , c]) => a + c, 0);
-        det.innerHTML = `<summary class="subhead" style="cursor:pointer">Chasm and water pieces · ${n} (the chasm and water brushes pick these by themselves)</summary>`;
+        det.innerHTML = `<summary class="subhead" style="cursor:pointer">Chasm and water pieces · ${n} (the chasm, water, ledge and steps brushes pick these by themselves)</summary>`;
         w.appendChild(det);
         det.open = !!window._dropsOpen;     // stays open while the palette redraws
         det.ontoggle = () => { window._dropsOpen = det.open; if (!det.open || det.dataset.done) return; det.dataset.done = 1;
@@ -4070,6 +4079,7 @@ function opFor(x, y, alt) {
   const b = brush;
   if (isErase() || (alt && (b.kind === 'place' || b.kind === 'object' || b.kind === 'area' || b.kind === 'scatter'))) return { op: 'erase', x, y };
   if (b.kind === 'flag') return { op: 'flag', x, y, bit: b.bit, mode: alt !== flagRemove ? 0 : 1 };
+  if (b.kind === 'steps') return { op: 'steps', x, y, mode: alt ? 0 : 1 };     // Alt: take the flight away
   if (alt) return null;
   if (b.kind === 'floor') {     // a floor with variants: pick the variant here, so the map shows it at once (not after the save)
     const vs = b.set && pal && pal.sets && pal.sets[b.s];
@@ -4088,6 +4098,7 @@ function label(alt) {
   if (b.kind === 'flag') return (alt !== flagRemove ? 'cleared ' : 'set ') + FLAGS[b.bit];
   if (alt) return 'erase';
   if (b.kind === 'area') return 'area ' + b.name + (areaFloor ? '' : ' (pieces only)');
+  if (b.kind === 'steps') return alt ? 'took steps away' : 'steps';
   if (b.kind === 'scatter') return 'scatter ' + (b.name || b.items.map(i => i.name || scatterKey(i)).slice(0, 3).join('/'));
   return b.kind === 'floor' ? 'floor ' + b.s : b.kind === 'mix' ? (b.name ? 'mix ' + b.name : 'floor mix ' + b.items.map(i => i.s).join('/')) : b.kind === 'place' ? b.t[1] : 'object ' + b.s;
 }

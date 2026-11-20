@@ -22,6 +22,8 @@ for d in ('GFX', 'sfx'):
             if n in NEVER or n.lower().endswith(('.moa', '.part', '.tmp')): continue
             p = os.path.join(root, n); rel = os.path.relpath(p, client).replace(os.sep, '/')
             if rel not in old or os.path.getsize(p) != old[rel][1] or any(fnmatch.fnmatch(rel, f) for f in FORCE): changed.append((rel, p))
+MAXN = [int(x[6:]) for x in sys.argv[4:] if x.startswith('--max=')]   # a big batch: publish it in parts (the 3-minute shell)
+if MAXN and len(changed) > MAXN[0]: print('publishing the first', MAXN[0], 'of', len(changed)); changed = sorted(changed)[:MAXN[0]]
 print('new or changed:', len(changed))
 idx = tempfile.mktemp(prefix='cd-index-'); env = dict(os.environ, GIT_INDEX_FILE=idx)
 git('read-tree', 'client-dist', env=env)

@@ -1,0 +1,13 @@
+{
+ "base": 37532,
+ "style": "grass_cliff_steps",
+ "layout": "steps",
+ "count": 64,
+ "ground": [
+  551,
+  552,
+  553,
+  554
+ ],
+ "mask": "higher at (x-1,y)=1 (x,y+1)=2 (x-1,y+1)=4 (x-2,y+1)=8 (x-1,y+2)=16 (x-2,y+2)=32 (x+1,y)=64 (x,y-1)=128; + k"
+}

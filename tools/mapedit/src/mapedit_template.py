@@ -270,6 +270,33 @@ def drop_of(s):
             return d
     return None
 is_chasm = lambda s: drop_of(s) is not None          # any drop: chasm or water
+# Ledges (tools/sprites/world_ledge.py, Nov 19; Cody: "a ledge higher than the one below"): LOWER ground one step
+# (13 px earth face) or two (26 px, earth over rock) below the ground beside it. Mask: higher ground at the chasm's six
+# tiles plus (x+1,y)=64 and (x,y-1)=128 (a dark line where the higher ground lies in front). Levels: ground 0, lower -1,
+# deep -2; a tile is higher if its level is above this one's (the void and the drops never are).
+# LEDGES: name, first sprite, layout, level. ledge: base + 4*mask + k; cliff: mask 0 -> base + k, else base + 3 + mask
+LEDGES = [('lower grass', 48602, 'ledge', -1), ('deep grass', 49626, 'cliff', -2)]
+LEDGE_NB = CHASM_NB + ((1, 0, 64), (0, -1, 128))
+def ledge_of(s):
+    for L in LEDGES:
+        if L[1] <= s < L[1] + (1024 if L[2] == 'ledge' else 259):
+            return L
+    return None
+def level_of(s):
+    L = ledge_of(s)
+    return L[3] if L else -99 if s == 1008 or drop_of(s) else 0
+def ledge_sprite(L, m, k):
+    return L[1] + 4 * m + k if L[2] == 'ledge' else (L[1] + k if m == 0 else L[1] + 3 + m)
+def ledge_k(L, s):
+    o = s - L[1]
+    return o % 4 if L[2] == 'ledge' else (o if o < 4 else (o - 3) % 4)
+# Steps up a ledge (tools/sprites/world_steps.py): pieces (objects) on the tiles a flight covers, every mix of flights side
+# by side; a tile is a flight's own tile (where it was put) when its piece holds offset (0, 0). STEP_KINDS: direction
+# (N: up toward x-1, E: toward y+1), wall height, offsets from the flight's tile, {bits: sprite}
+STEP_KINDS = [['N', 13, [(0, -1), (0, 0)], {1: 37532, 2: 37533, 3: 37534}], ['E', 13, [(0, 0), (1, 0)], {1: 37535, 2: 37536, 3: 37537}], ['N', 26, [(0, -1), (0, 0), (1, -2), (1, -1)], {1: 37538, 2: 37539, 3: 37540, 4: 37541, 5: 37542, 6: 37543, 7: 37544, 8: 37545, 9: 37546, 10: 37547, 11: 37548, 12: 37549, 13: 37550, 14: 37551, 15: 37552}], ['E', 26, [(0, 0), (1, -1), (1, 0), (2, -1)], {1: 37553, 2: 37554, 3: 37555, 4: 37556, 5: 37557, 6: 37558, 7: 37559, 8: 37560, 9: 37561, 10: 37562, 11: 37563, 12: 37564, 13: 37565, 14: 37566, 15: 37567}]]
+STEP_OF = {sp: (i, b) for i, k in enumerate(STEP_KINDS) for b, sp in k[3].items()}
+for _L in LEDGES:
+    WORLD_GROUND['sets'][_L[0]] = {'plain': [ledge_sprite(_L, 0, k) for k in range(4)], 'edges': {}}
 for _d in DROPS:     # the brushes: walls come by themselves
     WORLD_GROUND['sets'][_d[0]] = {'plain': [_d[1] + k for k in range(_d[2])], 'edges': {}}
 WG_PLAIN = {s: n for n, g in WORLD_GROUND['sets'].items() for s in g['plain']}
@@ -1276,7 +1303,8 @@ class World:
                 'plants': WORLD_PLANTS, 'fences': WORLD_FENCES, 'windows': WORLD_WINDOWS, 'arches': WORLD_ARCHES, 'trees': WORLD_TREES, 'cobwebs': WORLD_COBWEBS, 'props': WORLD_PROPS,
                 'newwalls': WORLD_WALLS,
                 'newfloors': WORLD_FLOORS,
-                'drops': [[d[0], d[1], 64 * d[2]] for d in DROPS],     # chasm / sea pieces: kept in their own folded box
+                'drops': [[d[0], d[1], 64 * d[2]] for d in DROPS] + [[L[0], L[1], 1024 if L[2] == 'ledge' else 259] for L in LEDGES]
+                         + [['steps', min(STEP_OF), len(STEP_OF)]],     # chasm / water / ledge pieces: in their own folded box
                 'npcs': self.npc_templates()}
 
     # --- editing: every change remembers the old bytes so a batch can be undone
@@ -1389,25 +1417,40 @@ class World:
         self._chasmedge(rec)
 
     def _chasmedge(self, rec):
-        """the chasm: every chasm tile that looks at a changed tile (or lies in a 'chasmfix' box) gets the walls of the ground
-        beside it; chasm blocks walking, ground painted over chasm can be walked again (unless a wall or object stands there)"""
+        """the chasm, the water and the ledges: every such tile that looks at a changed tile (or lies in a 'chasmfix' box)
+        gets the walls of the ground beside it. Chasm and water block walking; a lower tile blocks walking where higher
+        ground is next to it (not where steps go up); ground painted over them can be walked again (unless a wall or
+        object stands there). Then the steps (_steps)."""
         floor = lambda x, y: struct.unpack_from('<H', self.map, (x + y * MAPX) * MAP_SIZE)[0]
         changed = [(k[1], k[2], struct.unpack_from('<H', old, 0)[0]) for k, old in list(rec.items())
                    if k[0] == 'm' and struct.unpack_from('<H', old, 0)[0] != floor(k[1], k[2])]
         todo = set(getattr(self, '_chasm_box', None) or ()); self._chasm_box = None
+        stepped = set(getattr(self, '_steps_todo', None) or ())
         for x, y, old in changed:
             cur = floor(x, y)
-            if is_chasm(old) and not is_chasm(cur):
+            if (is_chasm(old) or ledge_of(old)) and not is_chasm(cur) and not ledge_of(cur):
                 t = self.tile(x, y)
                 if t[7] & MF_MOVEBLOCK and not t[1]:
                     t[7] &= ~MF_MOVEBLOCK; self.set_tile(x, y, t)
             todo.add((x, y))
-            for dx, dy, _ in CHASM_NB:
+            for dx, dy, _ in LEDGE_NB:
                 todo.add((x - dx, y - dy))
+            if level_of(old) != level_of(cur):
+                stepped.add((x, y))
         for x, y in todo:
             if not (2 <= x < MAPX - 2 and 2 <= y < MAPY - 2):
                 continue
             cur = floor(x, y)
+            L = ledge_of(cur)
+            if L:
+                m = 0
+                for dx, dy, b in LEDGE_NB:
+                    if level_of(floor(x + dx, y + dy)) > L[3]:
+                        m |= b
+                new = ledge_sprite(L, m, ledge_k(L, cur))
+                if new != cur:
+                    self._save_map(rec, x, y); t = self.tile(x, y); t[0] = new; self.set_tile(x, y, t)
+                continue
             if not is_chasm(cur):
                 continue
             m = 0
@@ -1422,6 +1465,68 @@ class World:
             if new != cur or not t[7] & MF_MOVEBLOCK:
                 self._save_map(rec, x, y)
                 t[0] = new; t[7] |= MF_MOVEBLOCK; self.set_tile(x, y, t)
+        self._steps_todo = None
+        sadd = getattr(self, '_steps_add', None) or {}; self._steps_add = None
+        self._steps(rec, stepped, sadd); stepped = stepped | set(sadd)
+        # walking on lower ground: blocked next to higher ground, except on steps and under other objects (theirs stays)
+        for x, y in todo | {(a + dx, b + dy) for a, b in stepped for dx in range(-3, 4) for dy in range(-3, 4)}:
+            if not (2 <= x < MAPX - 2 and 2 <= y < MAPY - 2):
+                continue
+            t = self.tile(x, y); L = ledge_of(t[0])
+            if not L:
+                continue
+            if t[1] in STEP_OF:
+                want = 0
+            elif t[1]:
+                continue
+            else:
+                want = MF_MOVEBLOCK if any(level_of(floor(x + dx, y + dy)) > L[3] for dx, dy in ((-1, 0), (1, 0), (0, -1), (0, 1))) else 0
+            if (t[7] & MF_MOVEBLOCK) != want:
+                self._save_map(rec, x, y); t[7] = (t[7] & ~MF_MOVEBLOCK) | want; self.set_tile(x, y, t)
+
+    def _steps(self, rec, around, add):
+        """the step pieces near the tiles in 'around' (and the flights in 'add': {(x, y): True to put a flight there,
+        False to take it away}): each flight's kind follows the ledge it stands at (up toward the higher side, earth or
+        stone by its height); a flight with no higher ground behind it goes"""
+        if not around and not add:
+            return
+        floor = lambda x, y: struct.unpack_from('<H', self.map, (x + y * MAPX) * MAP_SIZE)[0]
+        area = {(a + dx, b + dy) for a, b in list(around) + list(add) for dx in range(-3, 4) for dy in range(-3, 4)
+                if 2 <= a + dx < MAPX - 2 and 2 <= b + dy < MAPY - 2}
+        far = {(a + dx, b + dy) for a, b in area for dx in range(-3, 4) for dy in range(-3, 4)
+               if 2 <= a + dx < MAPX - 2 and 2 <= b + dy < MAPY - 2}
+        flights = set()
+        for x, y in far:          # the flights already there: their own tile's piece holds offset (0, 0)
+            sp = self.tile(x, y)[1]
+            if sp in STEP_OF:
+                i, b = STEP_OF[sp]; offs = STEP_KINDS[i][2]
+                if (0, 0) in offs and b >> offs.index((0, 0)) & 1:
+                    flights.add((x, y))
+        for p, on in add.items():
+            (flights.add if on else flights.discard)(p)
+        kind = {}
+        for x, y in flights:
+            L = ledge_of(floor(x, y))
+            if not L:
+                continue
+            me = L[3]; h = 13 if L[2] == 'ledge' else 26
+            dr = 'N' if level_of(floor(x - 1, y)) > me else 'E' if level_of(floor(x, y + 1)) > me else None
+            if dr:
+                kind[(x, y)] = [i for i, k in enumerate(STEP_KINDS) if k[0] == dr and k[1] == h][0]
+        for x, y in area:
+            best = 0
+            for i, k in enumerate(STEP_KINDS):
+                bits = sum(1 << j for j, (dx, dy) in enumerate(k[2]) if kind.get((x - dx, y - dy)) == i)
+                if bits and (not best or bin(bits).count('1') > bin(best[1]).count('1')):
+                    best = (i, bits)
+            new = STEP_KINDS[best[0]][3][best[1]] if best else 0
+            t = self.tile(x, y)
+            if t[1] == new or (t[1] and t[1] not in STEP_OF):        # never over another object
+                continue
+            self._save_map(rec, x, y); t[1] = new
+            if new:
+                t[7] &= ~(MF_MOVEBLOCK | MF_SIGHTBLOCK)
+            self.set_tile(x, y, t)
 
     def _save_map(self, rec, x, y):
         k = ('m', x, y)
@@ -2664,9 +2769,14 @@ class World:
                 if not (0 <= x < MAPX and 0 <= y < MAPY):
                     continue
                 k = op['op']
+                if k == 'steps':              # put a flight of steps up the ledge here (or take it away: mode 0)
+                    self._steps_add = (getattr(self, '_steps_add', None) or {}); self._steps_add[(x, y)] = bool(op.get('mode', 1))
+                    n += 1
+                    continue
                 if k == 'chasmfix':           # a box (x, y) - (x1, y1): its chasm tiles get the right walls (_chasmedge)
                     x1, y1 = min(MAPX - 1, int(op.get('x1', x))), min(MAPY - 1, int(op.get('y1', y)))
                     self._chasm_box = (getattr(self, '_chasm_box', None) or set()) | {(a, b) for a in range(x, x1 + 1) for b in range(y, y1 + 1)}
+                    self._steps_todo = (getattr(self, '_steps_todo', None) or set()) | {(a, b) for a in range(x, x1 + 1) for b in range(y, y1 + 1)}
                     n += 1
                     continue
                 if k == 'paste':              # the copied selection, its top corner on x, y
@@ -2757,6 +2867,11 @@ class World:
                         t[7] = (t[7] & ~3) | (MF_MOVEBLOCK if fl & IF_MOVEBLOCK else 0) | (MF_SIGHTBLOCK if fl & IF_SIGHTBLOCK else 0)
                     self.set_tile(x, y, t)
                 elif k == 'erase':            # like left-click in build mode: object and item go, floor stays
+                    if t[1] in STEP_OF:       # a step piece: the whole flight (or flights) it belongs to goes
+                        i_, b_ = STEP_OF[t[1]]
+                        self._steps_add = (getattr(self, '_steps_add', None) or {})
+                        for j_, (dx_, dy_) in enumerate(STEP_KINDS[i_][2]):
+                            if b_ >> j_ & 1: self._steps_add[(x - dx_, y - dy_)] = False
                     self._remove_item(rec, x, y)
                     t = self.tile(x, y)
                     t[1] = 0
