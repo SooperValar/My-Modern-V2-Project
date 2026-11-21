@@ -32,6 +32,10 @@ world, quests, the editor, the client and Discord. Merged Nov 10 from the old TO
   trees (38100-38163, four variants each) is the next variant or a missing number (Cody saw "Sprite 38144 is missing" by
   the willows, Nov 17). Stopgap: 38112 / 38124 / 38134 / 38144 / 38158 are copies of the stumps (client-dist). Fix in the
   next client build: the new trees -> a stump, 38164 + (sprite & 3).
+  **Also the new walls (Nov 20, Cody: "Sprite 36038 is missing" by the Broodmother in hide mode):** sprite+1 of a new
+  wall is the next variant (no hiding) or, after the last one, a missing number. Low blocks now exist at first+8 (plain)
+  and first+9 (grain) of each material (36008/9 ... 36078/9; `world_walls.py --low`), so nothing is missing any more;
+  the next client build: 36000-36079 with (sprite % 10) < 8 -> sprite - sprite % 10 + 8 + ((sprite % 10) >= 4).
 
 0. ★ **Login check bug (found Nov 19) - FIXED, LIVE 21:17** (Cody's saved key for Iluvatar matched on both halves first; if a login ever fails with "wrong password" after this, the old line is in git history): `svr_tick.c` plr_login compares `ch[cn].pass2!=ch[cn].pass2` (itself), so the
    second half of the password is never checked against what the player sent (`player[nr].pass2`). Original game code.

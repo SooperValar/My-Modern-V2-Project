@@ -229,6 +229,31 @@ def build(client):
     return out, names
 
 
+LOW = 1201            # the game's low block of 1200: what hide mode (F6) shows instead of the wall
+
+
+def low_blocks(client, walls):
+    """Hide mode (F6) draws sprite+1 for an object (the game's walls keep their low block there). Ours (Nov 20; Cody saw
+    "Sprite 36038 is missing" by the Broodmother): each material's low block, plain at first+8, grain at first+9, cut
+    like the game's 1201 - its cap is our wall's cap moved down, its faces are our wall's own lower faces."""
+    S = WG.Sprites(client); hi, lo = S.get(SHAPE).load(), S.get(LOW).convert('RGBA')
+    lp = lo.load(); top_hi = min(y for y in range(64) if hi[16, y][3]); top_lo = min(y for y in range(64) if lp[16, y][3])
+    D = top_lo - top_hi; capc = lp[16, top_lo + 4][:3]
+    out = {}
+    for m in range(len(MATERIALS)):
+        first = FIRST + m * 10
+        for k, src in ((8, first), (9, first + 4)):
+            w = walls[src].load(); im = Image.new('RGBA', (32, 64), (0, 0, 0, 0)); px = im.load()
+            for y in range(64):
+                for x in range(32):
+                    if not lp[x, y][3]: continue
+                    is_cap = y <= top_lo + 17 and all(abs(a - b) < 12 for a, b in zip(lp[x, y][:3], capc))
+                    c = w[x, y - D] if is_cap and 0 <= y - D < 64 and w[x, y - D][3] else w[x, y]
+                    if c[3]: px[x, y] = c
+            out[first + k] = im
+    return out
+
+
 def scene(walls, names, client, path):
     """a few little buildings, one per material, on grass"""
     S = WG.Sprites(client); grass = [S.get(n) for n in WG.GRASS]; floor = S.get(133)
@@ -254,6 +279,12 @@ def scene(walls, names, client, path):
     img.save(path)
 
 
+if __name__ == '__main__' and '--low' in sys.argv:      # only the low blocks, from the walls already in GFX
+    client = sys.argv[1]; g = WG.gfx_dir(client)
+    out = sys.argv[sys.argv.index('--out') + 1] if '--out' in sys.argv else g
+    walls = {FIRST + m * 10 + k: Image.open(os.path.join(g, '%05d.png' % (FIRST + m * 10 + k))).convert('RGBA') for m in range(len(MATERIALS)) for k in (0, 4)}
+    for nr, im in low_blocks(client, walls).items(): im.save(os.path.join(out, '%05d.png' % nr))
+    print('low blocks', ', '.join(str(FIRST + m * 10 + 8) + '/9' for m in range(len(MATERIALS)))); sys.exit()
 if __name__ == '__main__':
     client = sys.argv[1]
     walls, names = build(client)

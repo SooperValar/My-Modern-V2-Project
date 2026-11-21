@@ -1613,3 +1613,9 @@ the output file ends in .tmp, so the format is now given.)
 - `tools/world/band_c/split_drowned_clear.py`: clear 18 Drowned Village (Drowned Sailors: 22 + Sea Hag, Sergeant Major)
   16,000; new clear 21 Drowned Village (Bog-men: 14 + Captain Morrow + Maud, Second Lieutenant) 25,000. Clear 18's
   progress started again (its NPC list changed). talkreload: 38 entries, no complaints.
+
+## Nov 20 (21:50) - Low blocks for the new walls (client e09d22d)
+- Cody: "Sprite 36038 is missing" (hide mode, F6, by the Broodmother). Hide mode draws sprite+1; the new walls' +1 is the
+  next variant, and after a material's last one a number with no picture. `world_walls.py --low` makes each material's
+  low block cut like the game's 1201: plain at first+8, grain at first+9 (36008/36009 ... 36078/36079). Nothing is
+  missing now; the next client build maps every new wall to its low block (TODO, with the trees' stumps).
