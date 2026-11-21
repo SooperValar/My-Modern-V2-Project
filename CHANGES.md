@@ -1653,3 +1653,12 @@ the output file ends in .tmp, so the format is now given.)
   [the]`, 96 of them; first_kills.py writes them, the editor keeps them). CLIENT_LATEST 2.15.09.
 - Note: the first copy of merc_new.exe for 2.15.09 came out as the 2.15.08 file (a stale commit); checked by md5 and
   replaced from `Client\merc_2.15.09.exe` before publishing.
+
+## Nov 21 (00:30) - Quest rewards at Rare strength (live)
+- Cody: the quest rewards felt weak (they were about Magic tier); Rare strength with bonuses he picked (his table):
+  `tools/world/quest_rewards_rare.py` sets 16 reward templates (and the 3 copies in the world) - budget 2 x max(rank, 8),
+  attribute = 2 points, skill = 1, one of HP / End / Mana at rank x 3; the Still Mind (28 of 26) and the Rat-Catcher's
+  Ring kept as he set them; the Scaled Belt and the Belt of the Colossus keep their armor. Four descriptions reworded
+  to fit (Greyfang, Scholar's Ring, Forgefire, Shrike's Eye).
+- svr_do.c: the Greyfang Amulet (2019: hit points), the Amulet of the Still Mind (2086) and Shrike's Eye (2082: all
+  three) regenerate like the Amulet of Ankh at half its rate (skill x moon / 120 a tick).

@@ -4295,6 +4295,12 @@ void do_regenerate(int cn)
                 if (ch[cn].skill[SK_REST][0]) ch[cn].a_end+=ch[cn].skill[SK_REST][5]*moonmult/60;
                 if (ch[cn].skill[SK_MEDIT][0]) ch[cn].a_mana+=ch[cn].skill[SK_MEDIT][5]*moonmult/60;
         }
+        else if ((in=ch[cn].worn[WN_NECK])) {	// MyV2 (Nov 21, Cody): quest amulets that work like the Ankh at half its rate
+                int m=(it[in].temp==2019) ? 1 : (it[in].temp==2086 || it[in].temp==2082) ? 7 : 0;	// Greyfang: hit points; the Still Mind, Shrike's Eye: all three
+                if ((m&1) && ch[cn].skill[SK_REGEN][0]) ch[cn].a_hp+=ch[cn].skill[SK_REGEN][5]*moonmult/120;
+                if ((m&2) && ch[cn].skill[SK_REST][0]) ch[cn].a_end+=ch[cn].skill[SK_REST][5]*moonmult/120;
+                if ((m&4) && ch[cn].skill[SK_MEDIT][0]) ch[cn].a_mana+=ch[cn].skill[SK_MEDIT][5]*moonmult/120;
+        }
 
         // force to sane values
         if (ch[cn].a_hp>ch[cn].hp[5]*1000) ch[cn].a_hp=ch[cn].hp[5]*1000;
