@@ -15,7 +15,7 @@ import fnmatch
 FORCE = [x[8:] for x in sys.argv[4:] if x.startswith('--force=')]   # e.g. --force=GFX/374??.png: same-size redraws
 for top in ['merc.exe', 'Launcher.exe', 'pnglib.dat', 'pnglib.idx']:
     p = os.path.join(client, top)
-    if top not in old or os.path.getsize(p) != old[top][1]: changed.append((top, p))
+    if top not in old or os.path.getsize(p) != old[top][1] or any(fnmatch.fnmatch(top, f) for f in FORCE): changed.append((top, p))
 for d in ('GFX', 'sfx'):
     for root, _, names in os.walk(os.path.join(client, d)):
         for n in names:

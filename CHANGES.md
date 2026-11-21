@@ -1634,3 +1634,8 @@ the output file ends in .tmp, so the format is now given.)
 - (22:24) The classes themselves only went live now: first_kills.py wrote them into the editor's buffers, which
   World.save() skips unless the file is marked touched - the 22:13 run saved npctalk.dat only (Cody killed James: no
   first kill). Fixed (`W.touched |= {tchar.dat, char.dat}`), rerun live: 410 templates, 567 NPCs.
+
+## Nov 20 (22:28) - Client 2.15.08 published (client-dist 389ad14)
+- Hide mode (F6): new walls 36000-36079 -> their low block (+8 plain / +9 grain), arches and bridges 36400-36409 stay
+  (Cody's gate showed an extra hump: 36401+1 is a mirrored arch half), new trees 38100-38163 -> a stump 38164 + (s & 3).
+  Old client kept as `Client\merc_2.15.07.exe`. `publish_client_inc.py --force=` now also covers merc.exe etc.
