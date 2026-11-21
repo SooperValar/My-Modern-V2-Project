@@ -1639,3 +1639,17 @@ the output file ends in .tmp, so the format is now given.)
 - Hide mode (F6): new walls 36000-36079 -> their low block (+8 plain / +9 grain), arches and bridges 36400-36409 stay
   (Cody's gate showed an extra hump: 36401+1 is a mirrored arch half), new trees 38100-38163 -> a stump 38164 + (s & 3).
   Old client kept as `Client\merc_2.15.07.exe`. `publish_client_inc.py --force=` now also covers merc.exe etc.
+
+## Nov 20 (22:51) - The trash window, and "You killed X for the first time" (live; client 2.15.09, client-dist 9918bd4)
+- Cody: a trash can used with an empty hand opens a window like the depot; Shift+click backpack items into it; a
+  Trash button that warns once ("can't be undone"), then destroys; `#trash` / `/trash` for imps and gods; no gold.
+  Server (svr_do.c `trash_*`, `do_trash_char`): the window is the depot's look window with nr |0x4000; 1000+slot puts a
+  backpack item in, a slot takes it back, 2000 destroys all (chlog "Trashed"), 3000 (window closed) gives them back;
+  waiting items stay the player's (carried, it[].x = TRASH_MARK 65000): the item collector skips them, logout returns
+  them, login sweeps any left by a crash; walking >2 from the can or opening a shop / the depot returns them.
+  Client 2.15.09 (inter.c / engine.c / main.c / socket.c): Shift+click, the Trash button (asks twice, 10 s), closing.
+- First kills of one-of-a-kind enemies (one placed template, at most one in the world; strength tiers excluded): "You
+  killed Red Harlan for the first time" / "You killed the Broodmother for the first time" (npctalk.dat `fkone <class>
+  [the]`, 96 of them; first_kills.py writes them, the editor keeps them). CLIENT_LATEST 2.15.09.
+- Note: the first copy of merc_new.exe for 2.15.09 came out as the 2.15.08 file (a stale commit); checked by md5 and
+  replaced from `Client\merc_2.15.09.exe` before publishing.

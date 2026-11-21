@@ -227,6 +227,7 @@ static short qorder[MAXTCHARS];		// #quest: place in the list ("order <template>
 #define MAXFK		1024
 #define FK_FILE		DATDIR"/firstkill.dat"
 static int fkname[MAXFK];
+static unsigned char fkone[MAXFK];	// "fkone <class>": a one-of-a-kind enemy ("You killed Red Harlan for the first time")
 struct clear { int used, exp, seyan, n, t[CLEARNPC]; char zone[48], label[40]; unsigned short hash; };
 static struct clear clears[MAXCLEAR+1];
 static void clear_hashes(void);
@@ -332,6 +333,7 @@ int talk_load(void)
 	memset(qalias,0,sizeof(qalias));
 	memset(clears,0,sizeof(clears));
 	memset(fkname,0,sizeof(fkname));
+	memset(fkone,0,sizeof(fkone));
 	memset(kq,0,sizeof(kq));
 	memset(qname,0,sizeof(qname));
 	f=fopen(TALK_FILE,"r");
@@ -359,6 +361,11 @@ int talk_load(void)
 				qrew[n].limit=a[1]; qrew[n].first=a[2]; qrew[n].gold1=a[3];
 				if (k==7 && (a[4] || a[5] || a[6])) { qrew[n].st[0].item=a[4]>0 && a[4]<MAXTITEM ? a[4] : 0; qrew[n].st[0].exp=a[5]>0 ? a[5] : 0; qrew[n].st[0].gold=a[6]>0 ? a[6] : 0; qrew[n].nst=1; }
 			} else bad++;
+			continue;
+		}
+		if (!strcmp(w1,"fkone")) {	// fkone <class>: a named one-of-a-kind enemy
+			int id=atoi(q);
+			if (id>=1 && id<MAXFK) fkone[id]=strstr(q," the") ? 2 : 1; else bad++;	// "fkone 140 the": "You killed the Broodmother...
 			continue;
 		}
 		if (!strcmp(w1,"fk")) {		// fk <class> <name>: a first kill's name
@@ -1480,6 +1487,12 @@ static int clear_ready(int co,int a,struct clrow *r)
 		if (!(r->fl[a]&CLR_RUN2)) { r->fl[a]|=CLR_RUN2; r->mask[a]=0; }
 	}
 	return 1;
+}
+
+int fk_one(int nr)
+{
+	if (!talk_loaded) talk_load();
+	return (nr>=1 && nr<MAXFK) ? fkone[nr] : 0;
 }
 
 /* a first kill's name from npctalk.dat, or NULL */

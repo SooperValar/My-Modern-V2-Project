@@ -594,6 +594,7 @@ int sv_waypoint(unsigned char *buf)
 		wp_pos=(k<n) ? k-HW_ROWS/2 : 0;
 		if (wp_pos>n-HW_ROWS) wp_pos=n-HW_ROWS;
 		if (wp_pos<0) wp_pos=0;
+		{ extern void trash_close(void); trash_close(); }
 		show_wp=1; wp_new=1; show_shop=0;
 	}
 	return 80;
@@ -894,6 +895,8 @@ void sv_look6(unsigned char *buf)
 		tmplook.price[n]=*(unsigned int *)(buf+4+(n-s)*6);
 	}
 	if (n==62) {
+		extern int trash_open(void); extern void trash_close(void);
+		if (trash_open() && tmplook.nr!=shop.nr) trash_close();	// another window replaces the trash: its items go back
 		show_shop=1;
 		shop=tmplook;
 	}

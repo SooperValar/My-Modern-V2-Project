@@ -1008,8 +1008,9 @@ void plr_cmd_shop(int nr)
 
         cn=player[nr].usnr;
 
-        if (co&0x8000) do_depot_char(cn,co&0x7fff,n);
-        else do_shop_char(cn,co,n);
+        if (co&0x8000) { trash_return(cn); do_depot_char(cn,co&0x7fff,n); }
+        else if (co&0x4000) do_trash_char(cn,n);		// MyV2: the trash window (svr_do.c)
+        else { trash_return(cn); do_shop_char(cn,co,n); }
 }
 
 void plr_cmd_look_item(int nr)
@@ -1622,6 +1623,7 @@ void plr_login(int nr)
         if (!(ch[cn].flags&CF_CCP) && (ch[cn].flags&CF_GOD)) do_char_log(cn,0,"Remember, you are invisible!\n");
 
         do_announce(cn, 0, "%s entered the game.\n", ch[cn].name);
+        trash_sweep(cn);		// items left in the trash window (a crash): back to the backpack
 }
 
 void plr_logout(int cn,int nr,int reason)
@@ -1637,6 +1639,7 @@ void plr_logout(int cn,int nr,int reason)
                 plr_logout(co,0,LO_SHUTDOWN);
         }
 
+        if (cn>0 && cn<MAXCHARS && (ch[cn].player==nr || nr==0) && (ch[cn].flags&(CF_PLAYER))) trash_return(cn);	// MyV2: the trash window's items go back
         if (cn>0 && cn<MAXCHARS && (ch[cn].player==nr || nr==0) && (ch[cn].flags&(CF_PLAYER)) && !(ch[cn].flags&CF_CCP)) {
 
                 if (reason==LO_EXIT) {

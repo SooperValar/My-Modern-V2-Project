@@ -1037,6 +1037,13 @@ void mouse_mapbox(int x,int y,int state)
 	}
 }
 
+/* MyV2 (2.15.08, Nov 20): the trash window - the server's depot-like window with shop.nr |0x4000. Shift+click in the
+ * backpack puts an item in (1000+slot), the Trash button (asked twice: trash_armed) destroys them (2000), closing gives
+ * them back (3000) */
+unsigned int trash_armed=0;
+int trash_open(void) { return show_shop && (shop.nr&0x4000) && !(shop.nr&0x8000); }
+void trash_close(void) { if (trash_open()) cmd(CL_CMD_SHOP,shop.nr,3000); trash_armed=0; }
+
 int mouse_shop(int x,int y,int mode)
 {
 	int nr;
@@ -1045,7 +1052,19 @@ int mouse_shop(int x,int y,int mode)
 	if (!show_shop) return 0;
 
 	if (x>499 && x<516 && y>260 && y<274) {
-		if (mode==MS_LB_UP) { show_shop=0; noshop=QSIZE*36; }
+		if (mode==MS_LB_UP) { trash_close(); show_shop=0; noshop=QSIZE*36; }
+		return 1;
+	}
+
+	if (trash_open() && x>=420 && x<512 && y>=546 && y<572) {		// the Trash button
+		if (mode==MS_LB_UP) {
+			int k,cnt=0;
+			for (k=0; k<62; k++) if (shop.item[k]) cnt++;
+			if (!cnt) trash_armed=0;
+			else if (trash_armed && GetTickCount()-trash_armed<10000) { cmd(CL_CMD_SHOP,shop.nr,2000); trash_armed=0; }
+			else trash_armed=GetTickCount()|1;
+		}
+		cursor_type=CT_USE;
 		return 1;
 	}
 
@@ -1092,7 +1111,11 @@ static void hud_backpack(int nr,int mode)
 	if (GetAsyncKeyState(VK_CONTROL)&0x8000) keys|=2;
 
 	nr+=inv_pos;
-	if (keys==1) {
+	if (keys==1 && trash_open()) {		// MyV2: Shift+click with the trash window open: into the trash
+		if (mode==MS_LB_UP) { cmd(CL_CMD_SHOP,shop.nr,1000+nr); trash_armed=0; }
+		else if (mode==MS_RB_UP) cmd3(CL_CMD_INV_LOOK,nr,0,selected_char);
+		cursor_type=pl.item[nr] ? CT_DROP : CT_NONE;
+	} else if (keys==1) {
 		if (mode==MS_LB_UP) cmd3(CL_CMD_INV,0,nr,selected_char);
 		else if (mode==MS_RB_UP) cmd3(CL_CMD_INV_LOOK,nr,0,selected_char);
 		if (pl.item[nr]) cursor_type=pl.citem ? CT_SWAP : CT_TAKE;

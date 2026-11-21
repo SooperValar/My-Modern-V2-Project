@@ -2880,7 +2880,8 @@ int use_garbage(int cn,int in)
         if (!cn) return 0;
 	/* if no character, do nothing */
 
-        if ((in2=ch[cn].citem)==0) {
+        if ((in2=ch[cn].citem)==0) {	// MyV2 (Nov 20, Cody): an empty hand opens the trash window
+                if (ch[cn].flags&CF_PLAYER) { do_trash(cn); return 0; }
                 do_char_log(cn,1,"You feel that you could dispose of unwanted items in this digusting garbage can.\n");
                 return 0;
         }
@@ -3814,6 +3815,7 @@ void item_tick_gc(void)
                                 }
                                 if (z<20) continue;
                                 if (ch[cn].citem==n) continue;
+                                if ((ch[cn].flags&CF_PLAYER) && it[n].x==TRASH_MARK) continue;	// in its owner's trash window (svr_do.c)
                                 if (ch[cn].flags&(CF_PLAYER|CF_MERCHANT)) {	// merchants: what players sold them (merch.c)
                                         for (z=0; z<62; z++)
                                                 if (ch[cn].depot[z]==n) break;

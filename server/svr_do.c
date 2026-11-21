@@ -2484,6 +2484,7 @@ void do_command(int cn, char *ptr)
         case 'd':
                 if (prefix(cmd,"deposit") && !f_m)      { do_deposit(cn,atoi(arg[1]),atoi(arg[2])); return; };
                 if (prefix(cmd,"depot") && !f_m)        { do_depot(cn); return; };
+                if (prefix(cmd,"trash") && f_gi)        { do_trash(cn); return; };	// MyV2: the trash window anywhere
                 if (prefix(cmd,"delban") && f_giu)      { god_del_ban(cn,atoi(arg[1])); return; };
                 if (prefix(cmd,"diffi") && f_g)		{ extern int diffi; diffi=atoi(arg[1]); return; }
                 if (prefix(cmd,"dagger"))               { do_info_dagger(cn); return; };
@@ -2940,7 +2941,8 @@ void do_char_killed(int cn,int co)
                 if (ch[co].flags&(CF_PLAYER)) ch[cn].data[29]++;
                 else {
                         if (ch[co].class && !killed_class(cn,ch[co].class)) {
-                                do_char_log(cn,0,"You just killed your first %s. Good job.\n",
+                                if (fk_one(ch[co].class)) do_char_log(cn,0,"You killed %s%s for the first time. Good job.\n",fk_one(ch[co].class)==2 ? "the " : "",get_class_name(ch[co].class));	// MyV2: a one-of-a-kind enemy
+                                else do_char_log(cn,0,"You just killed your first %s. Good job.\n",
                                         get_class_name(ch[co].class));
                                 do_give_exp(cn,do_char_score(co)*25,0,-1);
                         }
@@ -4930,6 +4932,146 @@ void do_depot_char(int cn,int co,int nr)
                         }
                 }
         }
+}
+
+/* ---- the trash window (Nov 20, Cody): a trash can used with an empty hand (or #trash for gods and imps) opens a window
+ * like the depot. Shift+click puts backpack items in it (the client sends 1000+slot), a click on one takes it back,
+ * the Trash button (2000, the client asks twice) destroys them all, closing the window (3000) gives them back. While
+ * waiting there an item stays the player's (carried, it[].x = TRASH_MARK): the item collector leaves it alone, and a
+ * login after a crash returns it (trash_sweep). Gold can't go in. */
+static int trash[MAXCHARS][62];
+static int trash_x[MAXCHARS],trash_y[MAXCHARS];
+
+static void trash_send(int cn)
+{
+	int n,m,in,spr,nr=ch[cn].player;
+	char buf[16];
+
+	buf[0]=SV_LOOK1;
+	for (n=0; n<7; n++) *(unsigned short*)(buf+1+n*2)=35;
+	*(unsigned char*)(buf+15)=0;
+	xsend(nr,buf,16);
+
+	buf[0]=SV_LOOK2;
+	*(unsigned short*)(buf+1)=35;
+	*(unsigned short*)(buf+13)=35;
+	*(unsigned short*)(buf+3)=ch[cn].sprite;
+	*(unsigned int*)(buf+5)=ch[cn].points_tot;
+	*(unsigned int*)(buf+9)=ch[cn].hp[5];
+	xsend(nr,buf,16);
+
+	buf[0]=SV_LOOK3;
+	*(unsigned short*)(buf+1)=ch[cn].end[5];
+	*(unsigned short*)(buf+3)=(ch[cn].a_hp+500)/1000;
+	*(unsigned short*)(buf+5)=(ch[cn].a_end+500)/1000;
+	*(unsigned short*)(buf+7)=cn|0x4000;			// the trash window (the depot is |0x8000)
+	*(unsigned short*)(buf+9)=(unsigned short)char_id(cn);
+	*(unsigned short*)(buf+11)=ch[cn].mana[5];
+	*(unsigned short*)(buf+13)=(ch[cn].a_mana+500)/1000;
+	xsend(nr,buf,16);
+
+	buf[0]=SV_LOOK4;
+	*(unsigned short*)(buf+1)=35;
+	*(unsigned short*)(buf+3)=35;
+	*(unsigned short*)(buf+10)=35;
+	*(unsigned short*)(buf+12)=35;
+	*(unsigned short*)(buf+14)=35;
+	*(unsigned char*)(buf+5)=1;
+	*(unsigned int*)(buf+6)=0;
+	xsend(nr,buf,16);
+
+	buf[0]=SV_LOOK5;
+	memset(buf+1,0,15); memcpy(buf+1,"Trash",5);
+	xsend(nr,buf,16);
+
+	for (n=0; n<62; n+=2) {
+		buf[0]=SV_LOOK6;
+		buf[1]=n;
+		for (m=n; m<min(62,n+2); m++) {
+			in=trash[cn][m];
+			spr=(IS_SANEITEM(in) && it[in].used) ? it[in].sprite[0] : 0;
+			*(unsigned short*)(buf+2+(m-n)*6)=spr;
+			*(unsigned int*)(buf+4+(m-n)*6)=0;
+		}
+		xsend(nr,buf,16);
+	}
+}
+
+/* everything in the trash window back to the backpack (what doesn't fit waits there) */
+void trash_return(int cn)
+{
+	int n,in,left=0,back=0;
+	if (!IS_SANECHAR(cn)) return;
+	for (n=0; n<62; n++) {
+		if (!(in=trash[cn][n])) continue;
+		if (!IS_SANEITEM(in) || !it[in].used || it[in].carried!=cn || it[in].x!=TRASH_MARK) { trash[cn][n]=0; continue; }
+		it[in].x=0;
+		if (god_give_char(in,cn)) { trash[cn][n]=0; back++; }
+		else { it[in].x=TRASH_MARK; left++; }
+	}
+	if (left) do_char_log(cn,0,"Your backpack is full: %d item%s still wait%s in the trash window.\n",left,left==1 ? "" : "s",left==1 ? "s" : "");
+}
+
+/* login: items marked for the trash but not in the window (the server stopped meanwhile) go back */
+void trash_sweep(int cn)
+{
+	int in;
+	if (!IS_SANECHAR(cn)) return;
+	memset(trash[cn],0,sizeof(trash[cn]));
+	for (in=1; in<MAXITEM; in++)
+		if (it[in].used && it[in].carried==cn && it[in].x==TRASH_MARK) {
+			it[in].x=0;
+			if (!god_give_char(in,cn)) { it[in].x=TRASH_MARK; do_char_log(cn,0,"Your backpack is full: the %s waits in the trash window.\n",it[in].reference); }
+		}
+}
+
+void do_trash(int cn)
+{
+	if (!IS_SANECHAR(cn) || !(ch[cn].flags&CF_PLAYER)) return;
+	trash_x[cn]=ch[cn].x; trash_y[cn]=ch[cn].y;
+	trash_send(cn);
+	do_char_log(cn,1,"Shift+click items in your backpack to put them in the trash, click one in the window to take it back. The Trash button destroys them.\n");
+}
+
+void do_trash_char(int cn,int n)
+{
+	int in,k,s,cnt=0;
+	if (!IS_SANECHAR(cn) || !(ch[cn].flags&CF_PLAYER)) return;
+	if (n==3000) { trash_return(cn); return; }		// the window was closed
+	if (!(ch[cn].flags&(CF_GOD|CF_IMP)) && abs(ch[cn].x-trash_x[cn])+abs(ch[cn].y-trash_y[cn])>2) {
+		do_char_log(cn,0,"You are too far from the trash can.\n");
+		trash_return(cn); return;
+	}
+	if (n>=0 && n<62) {					// take one back
+		if ((in=trash[cn][n])!=0) {
+			it[in].x=0;
+			if (god_give_char(in,cn)) trash[cn][n]=0;
+			else { it[in].x=TRASH_MARK; do_char_log(cn,0,"Your backpack is full.\n"); }
+		}
+	} else if (n>=62 && n<124) {				// look at one
+		if (IS_SANEITEM(in=trash[cn][n-62]) && it[in].used) { do_char_log(cn,1,"%s:\n",it[in].name); do_char_log(cn,1,"%s\n",it[in].description); }
+		return;
+	} else if (n>=1000 && n<1040) {				// Shift+click in the backpack: into the trash
+		s=n-1000;
+		if (!(in=ch[cn].item[s])) return;
+		for (k=0; k<62; k++) if (!trash[cn][k]) break;
+		if (k==62) { do_char_log(cn,0,"The trash window is full.\n"); return; }
+		ch[cn].item[s]=0;
+		it[in].x=TRASH_MARK; it[in].y=0;
+		trash[cn][k]=in;
+		do_update_char(cn);
+	} else if (n==2000) {					// the Trash button (asked twice by the client)
+		for (k=0; k<62; k++) {
+			if (!(in=trash[cn][k])) continue;
+			trash[cn][k]=0;
+			if (!IS_SANEITEM(in) || !it[in].used || it[in].carried!=cn || it[in].x!=TRASH_MARK) continue;
+			chlog(cn,"Trashed %s (%d)",it[in].name,in);
+			it[in].used=USE_EMPTY;
+			cnt++;
+		}
+		if (cnt) do_char_log(cn,1,"You disposed of %d item%s.\n",cnt,cnt==1 ? "" : "s");
+	} else return;
+	trash_send(cn);
 }
 
 void do_look_char(int cn,int co,int godflag,int autoflag,int lootflag)

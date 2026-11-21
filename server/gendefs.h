@@ -13,7 +13,7 @@ All rights reserved.
 
 #define VERSION         0x020E07
 #define MINVERSION      0x020F06	// 2.15.06: the new world sprites (numbers above 34,767) need it
-#define CLIENT_LATEST   0x020F08	// 2.15.08 (Nov 20): hide mode for the new walls, arches, trees. 2.15.07 (Nov 15): the 3D monsters draw their own shadow. the newest published client (Launcher.exe gets it): older ones are told on login to
+#define CLIENT_LATEST   0x020F09	// 2.15.09 (Nov 20): the trash window. 2.15.08 (Nov 20): hide mode for the new walls, arches, trees. 2.15.07 (Nov 15): the 3D monsters draw their own shadow. the newest published client (Launcher.exe gets it): older ones are told on login to
 					// start the game with Launcher.exe. Raise it when a new client is published (publish_client.py).
 
 // line-of-sight grid (was 40x40, center 20)
@@ -27,6 +27,7 @@ All rights reserved.
 #define MAPX                      1024
 #define MAPY                      1024
 #define MAXCHARS                  8192
+#define TRASH_MARK	65000	// MyV2 (Nov 20): it[].x of an item waiting in its owner's trash window (svr_do.c trash_*)
 #define MAXITEM                  (96*1024)
 #define MAXEFFECT                 4096
 #define MAXMISSION                1024

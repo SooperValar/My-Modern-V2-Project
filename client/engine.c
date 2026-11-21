@@ -670,6 +670,31 @@ static void hud_equippanel(void)
 /* shop / grave window, clean theme: 8 x 8 grid of 35 (62 slots), a close
  * box, and the sell / buy price lines; same places as the old window, so the
  * mouse code still works */
+/* MyV2 (2.15.08): the trash window's bottom strip: a hint or the warning, and the Trash button (inter.c mouse_shop) */
+static void trash_draw(void)
+{
+	extern unsigned int trash_armed; extern int trash_open(void);
+	int ox=HSH_X-HSH_LX,oy=HSH_Y-HSH_LY,x=219+ox,y=260+oy+8*35+2,k,cnt=0,armed;
+	unsigned short col;
+
+	if (!trash_open()) return;
+	for (k=0; k<62; k++) if (shop.item[k]) cnt++;
+	armed=cnt && trash_armed && GetTickCount()-trash_armed<10000;
+	if (!armed) trash_armed=0;
+	dd_hud_vclip(x,y,300,32);
+	col=armed ? (unsigned short)((150>>3)<<11 | (30>>2)<<5 | (30>>3)) : (unsigned short)((90>>3)<<11 | (40>>2)<<5 | (34>>3));
+	dd_hud_fill(x+202,y+4,92,24,col);
+	dd_hud_panel(x+202,y+4,92,24);
+	ctext(x+202,92,y+12,1,armed ? "Click again" : "Trash");
+	if (armed) {
+		dd_xputtext(x+6,y+6,0,"This can't be undone!");
+		dd_xputtext(x+6,y+18,0,"Click again: destroy %d item%s",cnt,cnt==1 ? "" : "s");
+	} else {
+		dd_xputtext(x+6,y+6,1,"Shift+click backpack items to");
+		dd_xputtext(x+6,y+18,1,"put them here (%d)",cnt);
+	}
+}
+
 static void hud_shopwindow(void)
 {
 	int ox=HSH_X-HSH_LX,oy=HSH_Y-HSH_LY,n,k,x,y,w=300,h=314;
@@ -954,7 +979,7 @@ void hud_draw_v2(int init,unsigned short *mapmem,int map_x,int map_y)
 		}
 
 		// --- shop window (centered)
-		if (show_shop) { if (hud_theme==2) hud_shopwindow(); else dd_hud_from_legacy(HSH_LX,HSH_LY,HSH_LW,HSH_LH,HSH_X,HSH_Y); }
+		if (show_shop) { if (hud_theme==2) hud_shopwindow(); else dd_hud_from_legacy(HSH_LX,HSH_LY,HSH_LW,HSH_LH,HSH_X,HSH_Y); trash_draw(); }
 
 		// --- waypoint travel window (in the same place); it closes when the player walks away
 		if (show_wp) {

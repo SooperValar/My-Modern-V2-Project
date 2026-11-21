@@ -90,7 +90,25 @@ cname = lambda c: fks.get(c) or next((n for n, v in builtin.items() if v == c), 
 for nm in names: print('  %-30s %s   %s' % (nm, ', '.join('%d %s' % (c, cname(c)) for c in sorted(final[nm])), '/'.join(sorted(why.get(nm, ())))))
 print('split in tiers:', {k: sorted(v) for k, v in sorted(tiered.items())})
 print('%d enemy names; new first kills %d (classes %d-%d); changed: %s' % (len(names), sum(1 for c in fks if c >= FIRST_NEW), FIRST_NEW, nxt - 1, dict(changed)))
+# Cody (Nov 20): a named one-of-a-kind enemy says "You killed Red Harlan for the first time": a class with exactly one
+# placed template (a spawn spot) and at most one NPC of it in the world -> "fkone <class>"
+placed = collections.Counter(); inworld = collections.Counter()
+for k, o, nm in tpl:
+    x, y = struct.unpack_from('<hh', W.tchar, o + me.C_X)
+    if x or y: placed[struct.unpack_from('<i', W.tchar, o + CLS)[0]] += 1
+for k, o, nm in chs: inworld[struct.unpack_from('<i', W.char, o + CLS)[0]] += 1
+one = sorted(c for c in set(placed) | set(inworld) if c > 0 and placed[c] <= 1 and inworld[c] <= 1 and (placed[c] or inworld[c]))
+# a proper name ("Red Harlan", "Barrow King Ulfgar", "James") as it is; a title ("Broodmother", "Tower Guard") with "the"
+GENERIC = set('''Bandit Quartermaster Poisoner Prime Golem Deep Grolm Chieftain Sea Sentinel Hag Wight Scribe Barrow Hatchery
+Archmage Forgemaster Brass Colossus Flame Lord Gargoyle Bellkeeper Broodmother Fallen Abbot Ratling Duke Prince King Greenling
+Tower Guard Warrior Sorceress Arch-Templar Seyan'Du Priest Mad Hermit Amazon Swordsman Swindler Mage Weak Strong Very Old
+Master Captain Red the of Bog Witch Cinder'''.split())
+proper = lambda n: any(w not in GENERIC for w in n.split())
+fkn = set(fks.values())        # a strength tier of a repeated type ("Strong Amazon", and "Amazon" itself) is not one of a kind
+tiers_all = {n for n in fkn if n.split()[0] in ('Weak', 'Strong', 'Very')} | {n for n in fkn if 'Strong ' + n in fkn or 'Weak ' + n in fkn}
+one = [(c, '' if proper(cname(c)) else 'the') for c in one if cname(c) not in tiers_all]
+print('one of a kind (%d):' % len(one), ', '.join(('the ' if a else '') + cname(c) for c, a in one))
 if not dry:
-    qs['fks'] = fks; W.talk_save(qs, npcs)
+    qs['fks'] = fks; qs['fkone'] = one; W.talk_save(qs, npcs)
     W.touched |= {'tchar.dat', 'char.dat'}       # the class is written straight into the buffers: save() must write them (Nov 20: it didn't)
     print(W.save())

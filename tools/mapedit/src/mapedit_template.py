@@ -331,6 +331,7 @@ def talk_parse(text):
     corder, crank = {}, {}
     kills = {}
     fks = {}
+    fkone = set()
     for line in text.splitlines():
         line = line.strip()
         if not line or line.startswith('#'):
@@ -362,6 +363,9 @@ def talk_parse(text):
                 chest = {'refill': 0, 'once': 0, 'rewards': []}
                 chests['%d,%d' % (int(a[0]), int(a[1]))] = chest
                 cur, e = None, None
+                continue
+            if k == 'fkone' and a:                   # a named one-of-a-kind enemy's first kill ("You killed X for the first time")
+                fkone.add((int(a[0]), 'the' if len(a) > 1 and a[1] == 'the' else ''))
                 continue
             if k == 'fk' and len(a) >= 2:             # first kills: fk <monster class> <name> (npctalk.c; Nov 20)
                 fks[int(a[0])] = rest.split(None, 1)[1].strip()
@@ -458,7 +462,7 @@ def talk_parse(text):
         except (IndexError, ValueError):
             continue
     return {'names': quests, 'steps': steps, 'chests': chests, 'order': order, 'qrew': qrew, 'clears': clears, 'alias': alias, 'corder': corder, 'crank': crank,
-            'kills': {i: k for i, k in kills.items() if k['giver'] > 0}, 'fks': fks}, npcs
+            'kills': {i: k for i, k in kills.items() if k['giver'] > 0}, 'fks': fks, 'fkone': sorted(fkone)}, npcs
 
 
 # kill quests (npctalk.c "kq" lines; the Quests page; the top of npctalk.c lists them all)
@@ -612,6 +616,8 @@ def talk_text(quests, npcs, names):
         for i in sorted(fk, key=int):
             if str(fk[i]).strip():
                 out.append('fk %d %s' % (int(i), ' '.join(str(fk[i]).split())))
+        for i, art in sorted((int(c[0]), c[1]) if isinstance(c, (list, tuple)) else (int(c), '') for c in (quests.get('fkone') or [])):
+            out.append(('fkone %d %s' % (i, art)).strip())
         out.append('')
     cl = quests.get('clears') or {}
     if cl:
