@@ -1366,6 +1366,10 @@ static int hide_sprite(int spr)
 
 	for (n=0; n<(int)(sizeof(tree)/sizeof(tree[0])); n++)
 		if (spr==tree[n] || spr==tree[n]+1) return 18190+n;
+	// MyV2 (2.15.08, Nov 20): new pieces whose sprite+1 is not their low version
+	if (spr>=36000 && spr<36080 && spr%10<8) return spr-spr%10+8+(spr%10>=4);	// new walls: the material's low block (plain +8, grain +9)
+	if (spr>=36400 && spr<36410) return spr;					// arches and arch bridges stay (as the game's own: 943 = 942)
+	if (spr>=38100 && spr<38164) return 38164+(spr&3);				// new trees: a stump
 	return spr+1;
 }
 
