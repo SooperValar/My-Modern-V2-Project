@@ -91,4 +91,6 @@ for nm in names: print('  %-30s %s   %s' % (nm, ', '.join('%d %s' % (c, cname(c)
 print('split in tiers:', {k: sorted(v) for k, v in sorted(tiered.items())})
 print('%d enemy names; new first kills %d (classes %d-%d); changed: %s' % (len(names), sum(1 for c in fks if c >= FIRST_NEW), FIRST_NEW, nxt - 1, dict(changed)))
 if not dry:
-    qs['fks'] = fks; W.talk_save(qs, npcs); print(W.save())
+    qs['fks'] = fks; W.talk_save(qs, npcs)
+    W.touched |= {'tchar.dat', 'char.dat'}       # the class is written straight into the buffers: save() must write them (Nov 20: it didn't)
+    print(W.save())

@@ -1631,3 +1631,6 @@ the output file ends in .tmp, so the format is now given.)
   normal / Strong / Very Strong by rank (Mage, Archmage, Barbaric Fighter, Amazon, Swindler, Swordsman, Ratling Mage,
   pentagram Sea Golems, Greenling Veteran, Ratling). 139 new first kills, classes 128-266; 410 templates, 568 NPCs.
 - Editor keeps the `fk` lines; arealib's `monster()` gives a new monster name its own first kill (`fk_class`).
+- (22:24) The classes themselves only went live now: first_kills.py wrote them into the editor's buffers, which
+  World.save() skips unless the file is marked touched - the 22:13 run saved npctalk.dat only (Cody killed James: no
+  first kill). Fixed (`W.touched |= {tchar.dat, char.dat}`), rerun live: 410 templates, 567 NPCs.
