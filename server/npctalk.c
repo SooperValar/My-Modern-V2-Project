@@ -221,6 +221,12 @@ static short qorder[MAXTCHARS];		// #quest: place in the list ("order <template>
 #define MAXCLEAR	64
 #define CLEARNPC	64
 #define CLEAR_FILE	DATDIR"/clears.dat"
+/* first kills (Nov 20, Cody: "every enemy type should have an FK"): the names of the monster classes come from
+ * npctalk.dat ("fk <class> <name>"; helper.c's built-in list is the fallback), and a player's first kills of class
+ * 128 and up are kept in firstkill.dat (0-127: ch.data[60..63], as before) */
+#define MAXFK		1024
+#define FK_FILE		DATDIR"/firstkill.dat"
+static int fkname[MAXFK];
 struct clear { int used, exp, seyan, n, t[CLEARNPC]; char zone[48], label[40]; unsigned short hash; };
 static struct clear clears[MAXCLEAR+1];
 static void clear_hashes(void);
@@ -325,6 +331,7 @@ int talk_load(void)
 	nqcls=0;
 	memset(qalias,0,sizeof(qalias));
 	memset(clears,0,sizeof(clears));
+	memset(fkname,0,sizeof(fkname));
 	memset(kq,0,sizeof(kq));
 	memset(qname,0,sizeof(qname));
 	f=fopen(TALK_FILE,"r");
@@ -352,6 +359,12 @@ int talk_load(void)
 				qrew[n].limit=a[1]; qrew[n].first=a[2]; qrew[n].gold1=a[3];
 				if (k==7 && (a[4] || a[5] || a[6])) { qrew[n].st[0].item=a[4]>0 && a[4]<MAXTITEM ? a[4] : 0; qrew[n].st[0].exp=a[5]>0 ? a[5] : 0; qrew[n].st[0].gold=a[6]>0 ? a[6] : 0; qrew[n].nst=1; }
 			} else bad++;
+			continue;
+		}
+		if (!strcmp(w1,"fk")) {		// fk <class> <name>: a first kill's name
+			int id=0,k2=0;
+			if (sscanf(q,"%d %n",&id,&k2)>=1 && id>=1 && id<MAXFK && q[k2]) fkname[id]=pool_add(q+k2);
+			else bad++;
 			continue;
 		}
 		if (!strcmp(w1,"clear") || !strcmp(w1,"clearlabel") || !strcmp(w1,"clearnpc")) {	// area clears
@@ -1467,6 +1480,42 @@ static int clear_ready(int co,int a,struct clrow *r)
 		if (!(r->fl[a]&CLR_RUN2)) { r->fl[a]|=CLR_RUN2; r->mask[a]=0; }
 	}
 	return 1;
+}
+
+/* a first kill's name from npctalk.dat, or NULL */
+const char *fk_name(int nr)
+{
+	if (!talk_loaded) talk_load();
+	if (nr<1 || nr>=MAXFK || !fkname[nr]) return NULL;
+	return pool+fkname[nr];
+}
+
+/* first kills of class 128 and up: one row of bits per character (reset when the character slot gets a new one) */
+struct fkrow { int stamp; unsigned int bits[MAXFK/32]; };
+static int fkfd=-2;
+
+int fk_killed(int cn,int val)
+{
+	struct fkrow r;
+	char hdr[QHDR];
+	int tmp;
+	if (val<0 || val>=MAXFK) return 1;
+	if (fkfd==-2) {
+		fkfd=open(FK_FILE,O_RDWR|O_CREAT,0600);
+		if (fkfd<0) xlog("cannot open %s",FK_FILE);
+		else if (pread(fkfd,hdr,QHDR,0)!=QHDR || memcmp(hdr,"MYV2FK01",8)) {
+			memset(hdr,0,QHDR); memcpy(hdr,"MYV2FK01",8); *(int*)(hdr+8)=MAXFK;
+			if (pwrite(fkfd,hdr,QHDR,0)!=QHDR) xlog("cannot write %s",FK_FILE);
+		}
+	}
+	if (fkfd<0) return 1;
+	memset(&r,0,sizeof(r));
+	if (pread(fkfd,&r,sizeof(r),QHDR+(off_t)cn*sizeof(r))!=sizeof(r)) memset(&r,0,sizeof(r));
+	if (r.stamp!=(int)ch[cn].creation_date) { memset(&r,0,sizeof(r)); r.stamp=ch[cn].creation_date; }
+	tmp=r.bits[val/32]&(1u<<(val%32));
+	r.bits[val/32]|=1u<<(val%32);
+	if (!tmp && pwrite(fkfd,&r,sizeof(r),QHDR+(off_t)cn*sizeof(r))!=sizeof(r)) xlog("cannot write %s",FK_FILE);
+	return tmp;
 }
 
 /* the area's name for messages: "Drowned Village", or "Drowned Village (Bog-men)" when the zone has more than one

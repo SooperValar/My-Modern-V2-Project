@@ -330,6 +330,7 @@ def talk_parse(text):
     steps, chests, chest, order, qrew, clears, alias = {}, {}, None, {}, {}, {}, {}
     corder, crank = {}, {}
     kills = {}
+    fks = {}
     for line in text.splitlines():
         line = line.strip()
         if not line or line.startswith('#'):
@@ -361,6 +362,9 @@ def talk_parse(text):
                 chest = {'refill': 0, 'once': 0, 'rewards': []}
                 chests['%d,%d' % (int(a[0]), int(a[1]))] = chest
                 cur, e = None, None
+                continue
+            if k == 'fk' and len(a) >= 2:             # first kills: fk <monster class> <name> (npctalk.c; Nov 20)
+                fks[int(a[0])] = rest.split(None, 1)[1].strip()
                 continue
             if k == 'clear' and len(a) >= 4:          # area clears (Quests page): id, exp, again as Seyan'Du, zone name
                 c = clears.setdefault(int(a[0]), {'id': int(a[0]), 'label': '', 'npcs': []})
@@ -454,7 +458,7 @@ def talk_parse(text):
         except (IndexError, ValueError):
             continue
     return {'names': quests, 'steps': steps, 'chests': chests, 'order': order, 'qrew': qrew, 'clears': clears, 'alias': alias, 'corder': corder, 'crank': crank,
-            'kills': {i: k for i, k in kills.items() if k['giver'] > 0}}, npcs
+            'kills': {i: k for i, k in kills.items() if k['giver'] > 0}, 'fks': fks}, npcs
 
 
 # kill quests (npctalk.c "kq" lines; the Quests page; the top of npctalk.c lists them all)
@@ -601,6 +605,13 @@ def talk_text(quests, npcs, names):
             for c in (r.get('cls') or []):
                 sk = c['s'] if isinstance(c['s'], list) else [c['s']]
                 out.append('qclass %d %s %s %d' % (t, c['c'], ','.join(str(int(v)) for v in sk[:4]) or '-1', int(c['i'])))
+        out.append('')
+    fk = quests.get('fks') or {}
+    if fk:
+        out.append('# first kills: fk <monster class> <name> ("You just killed your first <name>"; the class is each NPC template\'s class)')
+        for i in sorted(fk, key=int):
+            if str(fk[i]).strip():
+                out.append('fk %d %s' % (int(i), ' '.join(str(fk[i]).split())))
         out.append('')
     cl = quests.get('clears') or {}
     if cl:

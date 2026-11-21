@@ -1619,3 +1619,15 @@ the output file ends in .tmp, so the format is now given.)
   next variant, and after a material's last one a number with no picture. `world_walls.py --low` makes each material's
   low block cut like the game's 1201: plain at first+8, grain at first+9 (36008/36009 ... 36078/36079). Nothing is
   missing now; the next client build maps every new wall to its low block (TODO, with the trees' stumps).
+
+## Nov 20 (22:13) - First kills for every enemy type (live)
+- Cody: "every enemy type should have an FK" (copies of old monsters kept their source's class: Drowned Sailors and
+  Bog-men were "Undead", wolves "Strong Spider", bandits "Strong Outlaw"; Fallen Monks etc. none), the original game's
+  enemies without one too, and names spanning many ranks split in strength tiers.
+- Server: first-kill names from npctalk.dat (`fk <class> <name>`, npctalk.c `fk_name`; helper.c's list is the
+  fallback); classes 128+ kept per character in `.dat/firstkill.dat` (`fk_killed`; 0-127 still in data[60..63]).
+- `tools/world/first_kills.py`: originals with a class keep it; ours and classless ones get the class of their name
+  (the game's own class names reused: Lizard Knight, Flame...); names spanning 3+ ranks in one class split Weak /
+  normal / Strong / Very Strong by rank (Mage, Archmage, Barbaric Fighter, Amazon, Swindler, Swordsman, Ratling Mage,
+  pentagram Sea Golems, Greenling Veteran, Ratling). 139 new first kills, classes 128-266; 410 templates, 568 NPCs.
+- Editor keeps the `fk` lines; arealib's `monster()` gives a new monster name its own first kill (`fk_class`).

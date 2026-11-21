@@ -167,7 +167,7 @@ class Area:
         dd = list(self.tc(t)['data'])
         for i in list(range(10, 24)) + list(range(32, 36)) + [29, 41]: dd[i] = 0
         if group: dd[42] = dd[44] = group
-        f = {'data': dd, 'item': list(items) + [0] * (40 - len(items))}
+        f = {'data': dd, 'item': list(items) + [0] * (40 - len(items)), 'class': self.fk_class(name)}
         if desc is not None: f['description'] = desc
         if sprite: f['sprite'] = sprite
         def setp(p):
@@ -185,6 +185,13 @@ class Area:
         n, msgs = self.W.apply([{'op': 'npcplace', 't': t, 'x': x, 'y': y, 'dir': d or random.choice([1, 2, 3, 4])}], 'place')
         for m in msgs: print('  !', name, m)
         self.used.add((x, y)); return t
+    def fk_class(self, name):
+        """the first-kill class for a monster called name (Nov 20, Cody: every enemy type its own first kill): the one
+        already named so in npctalk.dat ("fk <class> <name>"), else a new one (128 on; first_kills.py has the rules)"""
+        qs, npcs = self.W.talk_load(); fks = {int(k): v for k, v in (qs.get('fks') or {}).items()}
+        for c, v in fks.items():
+            if v == name: return c
+        c = max([127] + list(fks)) + 1; fks[c] = name; qs['fks'] = fks; self.W.talk_save(qs, npcs); return c
     def person(self, name, like, x, y, d, greet, desc, shout='Guards! Guards!'):
         """a friendly quest giver (a copy of Jamil, 25) with the look (sprite + kindred) of template `like`"""
         assert len(greet) <= 150, 'greeting too long (%d letters; the game keeps 159): %s' % (len(greet), greet)

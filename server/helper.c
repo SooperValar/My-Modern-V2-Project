@@ -638,6 +638,7 @@ int killed_class(int cn,int val)
 {
         int bit,tmp;
 
+        if (val>=128) return fk_killed(cn,val);		// MyV2: classes 128 and up live in firstkill.dat (npctalk.c)
         if (val<32) {
                 bit=1<<(val);
                 tmp=ch[cn].data[60]&bit;
@@ -667,6 +668,8 @@ char *get_class_name(int nr)
         if (nr < 0) {
                 xlog("error: get_class_name(%d)", nr);
                 return "err... nothing";
+        } else if (fk_name(nr)) {			// MyV2: names from npctalk.dat ("fk <class> <name>") win
+                return (char*)fk_name(nr);
         } else if (nr >= ARRAYSIZE(npc_class)) {
                 xlog("error: get_class_name(%d)", nr);
                 return "umm... whatzit";

@@ -380,6 +380,8 @@ int scale_exps(int cn,int co,int exps);
 int scale_exps2(int cn,int co_rank,int exps);
 int create_special_item(int temp);
 int killed_class(int cn,int val);
+const char *fk_name(int nr);
+int fk_killed(int cn,int val);
 char *get_class_name(int nr);
 void titlecase_str(char *str);
 int prefix(char *name, char *abbr);
