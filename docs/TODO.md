@@ -400,6 +400,7 @@ lighting, the 8 directions and frames per animation, sizes, the palette / recolo
 
 Details in `CHANGES.md`.
 
+- Nov 20-21: chasm/water/ledge/steps pieces and editor tools; band C smoothing and multiple area clears per zone; first kills for every enemy type; trash window + `#trash`; quest rewards at Rare strength (half-Ankh regen on three amulets); Lab 9 questions re-checked; god command `#spellup`.
 - Lab 11 arena deaths and the two warning signs (was #1).
 - God item shop `#godshop`, merchants in Elysium, Elysium layout (was #2).
 - Item tiers parts 1-4: Common to Legendary colours, random drops, soulstone upgrade / reroll (was #3).

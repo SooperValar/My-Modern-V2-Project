@@ -149,6 +149,7 @@ A new HUD drawn on its own canvas (window size ÷ 1.5) and composited over the w
 - Looking at a door as a god or while building shows its lock: locked or not, which key (template, whether it's used up) and the Lock Picking needed (picking works at skill + lock pick bonus ≥ value + 0..19, so it's certain at value + 19).
 
 **Player management**
+- **`#spellup <name> <power>`** (gods; `/spellup` works too): Bless, Protect and Enhance on an online player at that power (1-999). The target's own cap still applies (lower-level players get the usual reduced power and the caster sees "not powerful enough"); race and moon don't change it. `do_spellup` in `svr_do.c`, `spell_godcast` in `skill_driver.c`.
 - **`#shrines <player>`** (imp and above, listed in the imp `#help`): marks all shrines of Kwai as visited and sets the player's Seyan'Du sword to its maximum weapon value. If they don't have the sword yet, they get a new one.
 - **`#prestige <player> [n]`** (gods): shows or sets the prestige level and updates the look.
 - **`#recall`** (gods) also gives back the temple a player had before entering the labyrinth, and takes away lab items. It now takes you to your own recall point instead of always Aston.
@@ -1662,3 +1663,14 @@ the output file ends in .tmp, so the format is now given.)
   to fit (Greyfang, Scholar's Ring, Forgefire, Shrike's Eye).
 - svr_do.c: the Greyfang Amulet (2019: hit points), the Amulet of the Still Mind (2086) and Shrike's Eye (2082: all
   three) regenerate like the Amulet of Ankh at half its rate (skill x moon / 120 a tick).
+
+## Nov 21 (19:45) - Lab 9 questions checked; `#spellup` (live)
+- **Lab 9's true / false statements** were checked against today's world (40 statements). Changed: "In Stevens house is a
+  hole..." is now FALSE (Steven's House moved to 620-629 / 449-457; the old hole at 528,465 is Mirela's cellar);
+  "Hagen is running the Golden Armor Shop" became "Hagen sells golden armor." (TRUE; Hagen stands in the Market);
+  "Gunthar lives in Rose Street" became "Gunther lives on Rose Street." (FALSE). "Malte is a Corporal" stays TRUE
+  (Malte, template 510, is the prisoner freed in the Black Stronghold).
+- **Lab 9 riddles**: "What ist it?" -> "What is it?"; the MATCH riddle shows "What am I?" again (a stray comma had made
+  it an answer); STAIRS is accepted again (a missing comma had glued it onto the question; STAIR / STEPS still work).
+- **`#spellup <name> <power>`** for gods (see "God / imp / builder commands").
+

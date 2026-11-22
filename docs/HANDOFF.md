@@ -45,12 +45,16 @@ Note: the real client source is the project's `client/` folder (the old copies i
 - `CHANGES.md` describes the game as it is now, in the section where a thing belongs (player features, Editor,
   Server console, Data changes, Tools), not as a diary: when something changes, update the old lines too. Use today's
   names everywhere (Greataxe, Intuition, Ice Gargoyle Cape); an original game item that was renamed gets "(Previously: Ice Cloak)".
-- Keep `CHANGES.md` up to date with every change; commit every change (in the project folder);
-  remind Cody to `git push` (Claude doesn't push).
+- Keep `CHANGES.md` up to date with every change; commit every change (in the project folder).
+  **Claude pushes itself (Nov 20, push access granted)**: commit on the PC, `git bundle create <MyV2\Client\push.bundle> origin/main..HEAD`,
+  stage the bundle, in the cloud clone `git fetch <bundle> HEAD:refs/tmp/push` and `git push origin refs/tmp/push:main`,
+  then delete the bundle. Commits end with the Co-Authored-By / Claude-Session lines. (The PC's shell can't reach GitHub.)
 - **Server source is changed in BOTH places and kept identical**: the Windows Server folder and
   the project's `server/`. Never copy a whole file over the other blindly; edit, then copy the
   edited file across and check they match (md5).
-- **Restarts and code updates are pre-approved (Cody, Nov 14):** the server has no regular players and is almost
+- **NOW (Nov 19 on): nothing goes live without Cody's explicit "go live"**, and stop-send / update-code only when
+  `"online": 0` (ask him to log out). Plan first, show previews, wait for his OK before building. The older rule below is replaced.
+- (Old) **Restarts and code updates are pre-approved (Cody, Nov 14):** the server has no regular players and is almost
   always empty, so stop / restart / update-code / update-world whenever the work needs it, without asking first.
   Still check `who` first and use `"warn":30` if anyone is online. (Was: ask before every stop and wait for "go".)
 - New sprites get **new numbers**; never replace the game's own sprites (fixing one of Claude's
@@ -209,6 +213,23 @@ New sprites above 34,767 need client 2.15.06 or later: raise `MINVERSION` when t
   check its size is 44 + the data.
 
 ## Open items (details in docs/TODO.md and docs/HOSTING.md)
+
+**Where we left off (Nov 21, 22:30) - read this first.** Everything below is live and pushed (GitHub main 4c5e4b0):
+- Nov 20-21 work (CHANGES.md from "Sprite numbers" on): chasm fixes; sea cliffs / low banks / stone canal water and
+  low + 2-square grass ledges with automatic blocking (editor `drops` palette, chasm brush + box tool K, "Chasm and water
+  pieces" box); steps brush (sprites 37532-37567); low blocks for hide mode (client 2.15.08); band C retune and several
+  area clears per zone (Drowned Sailors / Bog-men); first kills for every enemy type (classes 128+ in `.dat/firstkill.dat`,
+  tiers, "You killed X for the first time"); trash window + `#trash` (gods / imps only - Tulkas is neither; client
+  2.15.09); 16 quest rewards at Rare strength (Cody's bonus table; Still Mind and Rat-Catcher's Ring kept; three amulets
+  regen at half the Ankh's rate); Lab 9 statements re-checked and fixed; `#spellup <name> <power>` (gods).
+- Waiting on Cody: in-game feedback on the trash window, named first kills, the quest rewards and `#spellup`.
+- Next (Cody decides): band E (Last Bastion, QUEST_BUILD), 32-bit sprites (TODO top, "wait for the right time"),
+  statues for all classes, ledge styles beyond grass, the thin seam on wide steps.
+- Lessons this week: `World.save()` only writes files in `W.touched` (mark direct buffer edits); `.dat/zones.dat` is
+  the live zone table (area.c's built-in table is only the fallback, and differs - e.g. Steven's House); run
+  `device_commit_files` deliveries under a new name and check md5; the BuildKit stays private and is deleted from the
+  cloud after each build.
+
 
 **Nov 13, evening:** new doors live (templates 1440-1456, Seyan'Du Door other facing 1456); the server with unsigned
 item sprites is live too. World sprites so far (all in `Client\GFX`, NOT published yet): grounds + desert 35000-35549,
