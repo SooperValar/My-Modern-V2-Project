@@ -102,9 +102,13 @@ int has_good_moon(int cn)
 	return 0;
 }
 
+int spell_godcast=0;	// MyV2: set by /spellup - no race or moon change
+
 int spell_race_mod(int power,int kindred,int cn)	// cn: the caster (0 = nobody: only tonight's moon counts)
 {
         double mod;
+
+	if (spell_godcast) return power;
 
 	if (kindred&KIN_ARCHHARAKIM) mod=1.05;
 	else if (kindred&KIN_ARCHTEMPLAR) mod=0.95;

@@ -39,7 +39,7 @@ struct riddle {
         "Though it sounds absurd\n"
         "Contains all our letters\n"
         "But is only a word\n"
-        "What ist it?\n",
+        "What is it?\n",
         "ALPHABET"},
 
         {"Like dogs shouting at the moon\n"
@@ -53,12 +53,12 @@ struct riddle {
         "With his Lady he dances\n"
         "Yet he always works\n"
         "And never romances\n"
-        "What ist it?\n",
+        "What is it?\n",
         "BROOM"},
 
         {"This engulfing thing is strange indeed\n"
         "The greater it grows the less you see\n"
-        "What ist it?\n",
+        "What is it?\n",
         "DARKNESS", "DARK"},
 
         {"I can not be seen only heard\n"
@@ -129,7 +129,7 @@ struct riddle {
         "HOLE"},
 
         {"Tear one off and scratch my head,\n"
-        "what once was red is black instead.\n",
+        "what once was red is black instead.\n"
         "What am I?\n",
         "MATCH"},
 
@@ -331,7 +331,7 @@ struct riddle {
         "SECRET"},
 
         {"Up and down they go but never move\n"
-        "What are they?\n"
+        "What are they?\n",
         "STAIRS", "STAIR", "STEPS"},
 
         {"You must keep this thing \n"
@@ -380,7 +380,7 @@ struct switch_question {
         { //bank 1
         { TRUE, "Jefferson gives the quest for repair." },
         { FALSE, "Steven asks you to bring him a greater healing potion." },
-        { FALSE, "Gunthar lives in Rose Street." },
+        { FALSE, "Gunther lives on Rose Street." },
         { FALSE, "The golems in the Pentagram Quest say \"Dusdra gur, Hu-Har!\" when attacking." },
         { TRUE,  "Argha is a Master Sergeant." },
         { FALSE, "There are exactly 17 rooms in the Dungeon of Doors." },
@@ -394,7 +394,7 @@ struct switch_question {
         { TRUE,  "Serena lives in Temple Street." },
         { TRUE,  "If asked, Robin tells you about Lord Azrael of Aston." },
         { TRUE,  "The barkeeper in the Tavern of the Blue is a First Lieutenant." },
-        { TRUE,  "In Stevens house is a hole, that leads into the Underground." },
+        { FALSE, "In Stevens house is a hole, that leads into the Underground." },
         { FALSE, "Kira is a Staff Sergeant." },
         { FALSE, "Leopold is an old man of about 70 years." }
         }, // end bank 2
@@ -417,7 +417,7 @@ struct switch_question {
         { FALSE, "The ghosts in the Haunted Castle praise Damor when they die." },
         { TRUE,  "Malte is a Corporal." },
         { FALSE, "Clara is wielding a golden dagger." },
-        { TRUE,  "Hagen is running the Golden Armor Shop." },
+        { TRUE,  "Hagen sells golden armor." },
         { TRUE,  "Nasir's left eye looks as if it was made of glass." }
         }, // end bank 4
 

@@ -152,6 +152,7 @@ int god_drop_item_destroy_target(int nr,int x,int y);
 int god_give_char(int in,int cn);
 void do_trash(int cn);
 void do_trash_char(int cn,int n);
+void do_spellup(int cn,char *name,char *pw);
 void trash_return(int cn);
 void trash_sweep(int cn);
 int god_take_from_char(int in,int cn);

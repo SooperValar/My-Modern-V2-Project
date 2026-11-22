@@ -2634,6 +2634,7 @@ void do_command(int cn, char *ptr)
                 if (prefix(cmd,"sort"))                 { do_sort(cn,arg[1]); return; };
 		if (!strcmp(cmd,"soullevel") && f_g) 	{ god_soul_level(cn,arg[1],0); return; }
 		if (prefix(cmd,"soulstone") && f_g) 	{ do_make_soulstone(cn,atoi(arg[1])); return; }
+		if (prefix(cmd,"spellup") && f_g)	{ do_spellup(cn,arg[1],arg[2]); return; };	// MyV2
 		if (prefix(cmd,"speedy") && f_g)        { god_set_gflag(cn,GF_SPEEDY); return; };
                 if (prefix(cmd,"spellignore") && !f_m)  { do_spellignore(cn); return; };
                 if (prefix(cmd,"sprite") && f_giu)      { god_spritechange(cn,dbatoi(arg[1]),atoi(arg[2])); return; };
@@ -5037,6 +5038,33 @@ void do_trash(int cn)
 	trash_x[cn]=ch[cn].x; trash_y[cn]=ch[cn].y;
 	trash_send(cn);
 	do_char_log(cn,1,"Shift+click items in your backpack to put them in the trash, click one in the window to take it back. The Trash button destroys them.\n");
+}
+
+// MyV2: /spellup <name> <power> - a god puts Bless, Protect and Enhance on an online player.
+// The target's own cap still applies (the spell functions lower it); race and moon do not.
+void do_spellup(int cn,char *name,char *pw)
+{
+	extern int spell_godcast;
+	int co,power,ok=0;
+
+	if (!name || !*name || !pw || !*pw) { do_char_log(cn,0,"Usage: /spellup <name> <power>\n"); return; }
+	co=dbatoi(name);
+	if (!IS_SANECHAR(co) || ch[co].used!=USE_ACTIVE || !(ch[co].flags&CF_PLAYER) || (ch[co].flags&CF_BODY)) {
+		do_char_log(cn,0,"No player called %s is online.\n",name); return;
+	}
+	power=atoi(pw);
+	if (power<1) power=1;
+	if (power>999) power=999;
+
+	spell_godcast=1;
+	ok+=spell_bless(cn,co,power);
+	ok+=spell_protect(cn,co,power);
+	ok+=spell_enhance(cn,co,power);
+	spell_godcast=0;
+
+	if (co!=cn) do_char_log(co,1,"A god has blessed you.\n");
+	do_char_log(cn,1,"Spellup on %s at power %d: %d of 3 spells took hold.\n",ch[co].name,power,ok);
+	chlog(cn,"Spellup %s power %d",ch[co].name,power);
 }
 
 void do_trash_char(int cn,int n)
