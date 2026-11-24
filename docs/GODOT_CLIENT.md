@@ -120,7 +120,24 @@ server; don't log in). Tell Claude whether each step worked or paste the error.
 
 ---
 
-## Step 2: talk to our server (Claude)
+## Step 2: talk to our server (Claude) - DONE in code Nov 24 (Godot-Client `myv2` f05a4e86), Cody tries it in Godot
+What changed (see the commit message for the list): server messages renumbered / resized to ours, TLG-only messages
+removed, our 74-79 messages read into new state (`BuffTimers`, `ItemTiers`, `ItemInfoReply`, `WaypointList`,
+`MapTile.Glow`; no windows yet), **animation timing = our 20x20 `speedtab` on a 20-tick cycle** (`StatusSpeed`; TLG had
+0-299 speeds over 200 ticks), 44x44 view, version 0x020F09, unsigned sprite numbers, server
+myv2astonia.duckdns.org with 127.0.0.1 as fallback (`ServerAddress.Live`; a hand-added `[server]` section in
+`%APPDATA%\Godot\app_userdata\TheLastGateGodot\settings.cfg` overrides it). Background item looks and `#buffs` are
+unhooked in `GameScreen` (our server would print them in chat). `ClientCommand.Smith` (34) is our CL_CMD_ITEMINFO.
+Tests: 823 pass (the 26 failing are sprite / SkiaSharp tests, no art or libSkiaSharp in the device shell); the GodotTests
+compile (they need Godot to run). **Not run yet: the JetBrains cleanup check** (`dotnet tool restore` needs more disk than
+the device shell has; committed with `--no-verify`).
+Headless test (`/tmp/hl`, a console app on Core; the test server built in `/tmp/ts` from `Server\` + `.dat` without
+mapedit-backups): new-player login, 512 ticks without a desync, walk, chat, worn items, ITEMINFO tooltip lines.
+`.moa`: ours = key (56) + pdata (480) = 536 bytes; the Godot launcher keeps the key from any size but writes 640-byte
+files, which merc.exe refuses: use a COPY. Git in the device shell: `git status` over the whole repo times out (19k art
+files): limit it to `src game tests`; the LFS hooks complain (no git-lfs there) but commits go through.
+
+Earlier plan text:
 Rewrite `ServerCommand`, `ServerCommandLength`, `ClientCommand` and the handlers to match the table above; send our
 version (0x020F09 or later); 44 x 44 view; our player-state sizes; add an `ServerAddress` entry for
 myv2astonia.duckdns.org / 127.0.0.1. Prove it with a headless test first (log in to the **test server** `~/ctest`,
