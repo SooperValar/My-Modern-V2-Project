@@ -214,6 +214,8 @@ New sprites above 34,767 need client 2.15.06 or later: raise `MINVERSION` when t
 
 ## Open items (details in docs/TODO.md and docs/HOSTING.md)
 
+**New (Nov 21, 23:45): a Godot client for MyV2** - Cody wants a new client built from James Black's Godot client for The Last Gate (James gave permission). **Planning only so far; read `docs/GODOT_CLIENT.md`** (findings, the protocol differences, and Step 1, the setup Cody does with Claude walking him through it). Step 1 is DONE (Nov 22, `MyV2\Godot-Client`, branch `myv2`); Cody chose building option (b). Next: install .NET in the device shell, build, then Step 2.
+
 **Where we left off (Nov 21, 22:30) - read this first.** Everything below is live and pushed (GitHub main 4c5e4b0):
 - Nov 20-21 work (CHANGES.md from "Sprite numbers" on): chasm fixes; sea cliffs / low banks / stone canal water and
   low + 2-square grass ledges with automatic blocking (editor `drops` palette, chasm brush + box tool K, "Chasm and water

@@ -23,6 +23,8 @@ world, quests, the editor, the client and Discord. Merged Nov 10 from the old TO
   downtime with no players, before the sprite room actually runs out (rerun the scan now and then). Until then: keep
   new sets small (2 variants, 3x3 water) and record every range in SPRITE_MAP.md.
 
+- ● **Godot client for MyV2** (Cody, Nov 21): built from github.com/jamesblack/thelastgate-godot (James OK'd it). Plan and step-by-step setup: `docs/GODOT_CLIENT.md`. Next: Step 1 (tools, fork, `MyV2\Godot-Client`), Cody with Claude.
+
 **For Nov 18 (Cody, Nov 17 night):**
 - ★ **Clean up the Golem Foundry's object distribution**: the pieces in the yard and the Hall (anvils, benches, crates,
   furnaces, wrecks, slag) placed by `build_foundry.py`; Cody rearranges in the editor (Objects -> Workshop, the
