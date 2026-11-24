@@ -120,6 +120,15 @@ server; don't log in). Tell Claude whether each step worked or paste the error.
 
 ---
 
+## Pushing (Claude does it, Cody's rule)
+Same bundle method as the project (HANDOFF): commit in `MyV2\Godot-Client` on `myv2`, `git bundle create
+..\Client\push-godot.bundle origin/myv2..myv2`, stage it, in the cloud clone (`add_repo` SooperValar/myv2-godot-client,
+push access; clone with `GIT_LFS_SKIP_SMUDGE=1 --depth 1`) `git fetch <bundle> myv2:refs/tmp/myv2` and
+`GIT_LFS_SKIP_PUSH=1 git push origin refs/tmp/myv2:refs/heads/myv2`, delete the bundle, `git update-ref
+refs/remotes/origin/myv2 <sha>` on the PC. New art (LFS files) can't go up this way: LFS objects need a real push
+(Step 3 will settle how). The repo's own CLAUDE.md is James's (TLG paths): our server is the contract, not TLG's.
+First push Nov 24: myv2 f05a4e86.
+
 ## Step 2: talk to our server (Claude) - DONE in code Nov 24 (Godot-Client `myv2` f05a4e86), Cody tries it in Godot
 What changed (see the commit message for the list): server messages renumbered / resized to ours, TLG-only messages
 removed, our 74-79 messages read into new state (`BuffTimers`, `ItemTiers`, `ItemInfoReply`, `WaypointList`,
