@@ -153,7 +153,25 @@ myv2astonia.duckdns.org / 127.0.0.1. Prove it with a headless test first (log in
 walk, read the map, inventory, chat), then in Godot against the test server. **No server changes**; merc.exe keeps
 working beside it. Commits on the `myv2` branch, pushed to Cody's fork.
 
-## Step 3: our art and sounds (Claude)
+## Step 3: our art and sounds (Claude) - DONE in code Nov 24 (myv2 78ae8129 + 315f2d95), Cody checks it in game
+Not copied into the repo (that would put ~300 MB into GitHub's 1 GB free LFS quota and grow with every rebuild): the
+client **reads our art and sounds straight from the MyV2 client folder** (`game/Assets/MyV2Art.cs`), in merc.exe's order:
+`GFX\NNNNN.png`, `pnglib`, `GFX\NNNNN.bmp`, `gx00` (gx00 is byte-for-byte TLG's bmplib format; our pnglib.idx is
+shorter, 34,768 entries, so `PngLibrary` now accepts a short index). Then TLG's archives as a fallback; a player's own
+`user://overrides` still win over everything. Sounds: our `sfx\N.wav` first, then TLG's `data/sounds` (click).
+Folder: env `MYV2_CLIENT`, else in the editor `MyV2\Client` beside the repo, else the exported exe's folder (Step 6).
+**TLG's interface art moved to sprite 100,000 + its number** (`SpriteNumbers.ClientArtBase`): its HUD font is at 18100
+and frames / windows at 18000-18129, which clashed with our Ice set (18100-18104) and other GFX sprites there - that was
+the "gibberish" on screen. Moved: the 18000-18139 block and the restyled 42/43/44/92/99, in 5 constants
+(ClassicFonts, OptionsWindowView, SessionStatsWindowView, WorldMapWindowView, PlannerLook, TutorialPages), the scenes and
+OptionsTheme.tres. Numbers below 100,000 are always the server's (ours). Comparison (Nov 24): ours 33,713 sprites,
+TLG 18,820, 12,197 v2 originals identical, 54 differ (ours win). Check sheet: `Claude outputs\godot_art_check.png`.
+.moa fix: a 536-byte MyV2 file now keeps its name and description (same first 321 bytes as TLG's settings block), so
+the client no longer sends an empty description at login.
+Device-shell git: a commit takes ~90 s (scans the 19k art files; use `commit -uno`, add only the needed paths); the art
+files show as "modified" there only because git-lfs isn't installed in the shell - not real changes.
+
+Earlier plan text:
 Use its SpriteCompiler to build `data/archives` from our `gx00`, `pnglib` and `GFX\` (or point the overrides at
 `GFX\`), and our `sfx\`. Check a few areas (Aston, Fenwatch, Stonehold, the Spires) against merc.exe screenshots.
 

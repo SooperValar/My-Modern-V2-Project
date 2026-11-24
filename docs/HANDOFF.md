@@ -214,7 +214,7 @@ New sprites above 34,767 need client 2.15.06 or later: raise `MINVERSION` when t
 
 ## Open items (details in docs/TODO.md and docs/HOSTING.md)
 
-**New (Nov 21, 23:45): a Godot client for MyV2** - Cody wants a new client built from James Black's Godot client for The Last Gate (James gave permission). **Planning only so far; read `docs/GODOT_CLIENT.md`** (findings, the protocol differences, and Step 1, the setup Cody does with Claude walking him through it). Step 1 is DONE (Nov 22, `MyV2\Godot-Client`, branch `myv2`); Cody chose building option (b). Nov 24: .NET builds in the device shell (/tmp), **Step 2 done in code** (branch `myv2` f05a4e86, tested headless on a test server); Cody tries it in Godot with a copy of his .moa. Next: Step 3 (our art).
+**New (Nov 21, 23:45): a Godot client for MyV2** - Cody wants a new client built from James Black's Godot client for The Last Gate (James gave permission). **Planning only so far; read `docs/GODOT_CLIENT.md`** (findings, the protocol differences, and Step 1, the setup Cody does with Claude walking him through it). Step 1 is DONE (Nov 22, `MyV2\Godot-Client`, branch `myv2`); Cody chose building option (b). Nov 24: .NET builds in the device shell (/tmp), **Step 2 done in code** (branch `myv2` f05a4e86, tested headless on a test server); Cody tries it in Godot with a copy of his .moa. Step 3 (our art + sounds, read from MyV2\\Client) done in code Nov 24 (myv2 315f2d95). Next: Step 4 (hide the TLG-only parts).
 
 **Where we left off (Nov 21, 22:30) - read this first.** Everything below is live and pushed (GitHub main 4c5e4b0):
 - Nov 20-21 work (CHANGES.md from "Sprite numbers" on): chasm fixes; sea cliffs / low banks / stone canal water and
