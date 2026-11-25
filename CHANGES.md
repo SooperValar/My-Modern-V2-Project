@@ -78,6 +78,11 @@ of 3.0.0 and up, so merc.exe never sees a message it doesn't know.
   every tick. Measured on the test server: a Godot tooltip request answered in 164 ms instead of 1336 ms. Walking and
   attacking also respond sooner. Players get about 18 small packets a second instead of about 2 big ones; same data. Live since
   Nov 24, 22:46.
+- **Tooltip stat table** (`svr_tick.c` `plr_cmd_iteminfo`, `tip_table`): for Godot clients only, the item's stats come
+  as a table, one ITEMINFO line per row in font 15 (cells split by tabs, each starting with a colour letter: r y g b t w,
+  d grey; the first row is the header). Columns: Stat, Bonus, Active (items you switch on), vs worn (vs L / vs R for
+  rings), Needs (yellow met, red not). Font 16 is a grey line ("vs worn: your Boots of Ice"). The description moves under
+  the name. merc.exe gets the old lines, unchanged. Live since Nov 24, 23:29.
 
 ## HUD changes
 

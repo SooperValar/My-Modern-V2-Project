@@ -230,6 +230,9 @@ worn, shop slots), keeps the lines per slot, refreshes after 5 s; `Hud/ItemToolt
 the right; `ItemTooltipView.FitPopup` resizes Godot's tooltip popup when its content changes (Godot sizes it only when it
 opens, so it stayed big and blank after Shift) and keeps it on screen. **Latency:** tooltips took ~1.3 s because the
 server read and sent only every 8th tick; fixed in `server.c` (CHANGES.md), LIVE Nov 24, 22:46. Next: rest of group B.
+**Tooltip stat table (Cody OK'd Nov 24):** client myv2 52bbc290 (`ItemTooltipRequest` turns font 15 rows into a
+`TooltipTable`, font 16 grey); server `tip_table` (CHANGES.md "Tooltip stat table"), tested on the test server (boots,
+ring, two-hander, torch, worn boots), LIVE Nov 24, 23:29. Next: rest of group B.
 Skill trees, contracts, tokens, smith, depot, meta stats, MOTD, TLG planner formulas: off, so the client plays our game cleanly.
 
 ## Step 5: our features, one at a time, a preview for Cody after each (Claude)

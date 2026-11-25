@@ -844,13 +844,189 @@ static void tip_compare(int nr,int where,int slot,int *line,int cn,int in)
 	if (ch[cn].worn[w]) tip_line(nr,where,slot,line,8,"W %d",w);
 }
 
+/* ---- the Godot client's tooltip (client version 3.0.0 and up): the item's stats as a table -------
+ * one font 15 line per row, cells split by tabs, each cell starting with its colour letter
+ * (r red, y yellow, g green, b blue, t teal, w white, d grey); the first row is the header.
+ * Font 16 is a grey line. merc.exe never gets either. Rows use the compare vector's order:
+ * WV, AV, 5 attributes, hp/end/mana, 50 skills (k), and Light (k=-1) after AV */
+#define TIP_TABLE	15
+#define TIP_DIM		16
+
+static int tip_val(int in,int k,int a)
+{
+	if (k==-1) return a<2 ? it[in].light[a] : 0;
+	if (k==0) return a<2 ? it[in].weapon[a] : 0;
+	if (k==1) return a<2 ? it[in].armor[a] : 0;
+	if (k<7) return it[in].attrib[k-2][a];
+	if (k==7) return it[in].hp[a];
+	if (k==8) return it[in].end[a];
+	if (k==9) return it[in].mana[a];
+	return it[in].skill[k-10][a];
+}
+
+static int tip_need(int in,int k)
+{
+	int v;
+	if (k<2) return 0;
+	v=tip_val(in,k,2);
+	if (k<7 && v<=1) return 0;	// attributes of 1 are no requirement
+	return v;
+}
+
+static int tip_has(int cn,int k)
+{
+	if (k<7) return ch[cn].attrib[k-2][0];
+	if (k==7) return ch[cn].hp[0];
+	if (k==8) return ch[cn].end[0];
+	if (k==9) return ch[cn].mana[0];
+	return ch[cn].skill[k-10][0];
+}
+
+static char *tip_stat(int k)
+{
+	static char *vn[10]={"Weapon Value","Armor Value",0,0,0,0,0,"Hitpoints","Endurance","Mana"};
+	if (k==-1) return "Light";
+	if (k>=2 && k<7) return at_name[k-2];
+	if (k>=10) return skilltab[k-10].name;
+	return vn[k];
+}
+
+static void tip_cell(char *row,char colour,char *text)
+{
+	int l=strlen(row);
+	if (l>=60) return;
+	if (l) row[l++]='\t';
+	if (*text) row[l++]=colour;
+	snprintf(row+l,64-l,"%s",text);
+}
+
+static void tip_num(char *row,int v,char plus)
+{
+	char b[16];
+	if (!v) { tip_cell(row,0,""); return; }
+	sprintf(b,"%+d",v);
+	tip_cell(row,v>0 ? plus : 'r',b);
+}
+
+/* the worn slots each compare column stands for (-1: none); returns the number of columns,
+ * -1 when a two-handed weapon blocks the item (a shield) */
+static int tip_cmp_columns(int cn,int in,int cols[2][2])
+{
+	int pl=it[in].placement,w=-1,rh=ch[cn].worn[WN_RHAND];
+	cols[0][0]=cols[0][1]=cols[1][0]=cols[1][1]=-1;
+	if (!pl) return 0;
+	if (pl&PL_RING) { cols[0][0]=WN_LRING; cols[1][0]=WN_RRING; return 2; }
+	if (pl&PL_TWOHAND) { cols[0][0]=WN_RHAND; cols[0][1]=WN_LHAND; return 1; }
+	if (pl&PL_SHIELD && rh && (it[rh].placement&PL_TWOHAND)) return -1;
+	if (pl&PL_HEAD) w=WN_HEAD; else if (pl&PL_NECK) w=WN_NECK; else if (pl&PL_BODY) w=WN_BODY;
+	else if (pl&PL_ARMS) w=WN_ARMS; else if (pl&PL_BELT) w=WN_BELT; else if (pl&PL_LEGS) w=WN_LEGS;
+	else if (pl&PL_FEET) w=WN_FEET; else if (pl&PL_WEAPON) w=WN_RHAND; else if (pl&PL_SHIELD) w=WN_LHAND;
+	else if (pl&PL_CLOAK) w=WN_CLOAK;
+	if (w<0) return 0;
+	cols[0][0]=w;
+	return 1;
+}
+
+static void tip_table(int nr,int where,int slot,int *line,int cn,int in,int act)
+{
+	int cols[2][2],ncmp=0,c,k,j,a,ok,need=0,useact,v[2][CMP_N],worn,shown;
+	char row[80],cap[80],n1[40],n2[40];
+
+	useact=(it[in].flags&IF_USEACTIVATE) ? 1 : 0;
+	a=useact ? 0 : act;
+	if (where!=1) ncmp=tip_cmp_columns(cn,in,cols);
+	memset(v,0,sizeof(v));
+	for (c=0; c<ncmp; c++) {
+		cmp_vec(in,v[c],1);
+		for (j=0; j<2; j++) if (cols[c][j]>=0) cmp_vec(ch[cn].worn[cols[c][j]],v[c],-1);
+	}
+	for (k=2; k<CMP_N; k++) if (tip_need(in,k)) need=1;
+
+	row[0]=0;
+	tip_cell(row,'d',"Stat"); tip_cell(row,'d',"Bonus");
+	if (useact) tip_cell(row,'d',"Active");
+	if (ncmp==2) { tip_cell(row,'d',"vs L"); tip_cell(row,'d',"vs R"); }
+	else if (ncmp==1) tip_cell(row,'d',"vs worn");
+	if (need) tip_cell(row,'d',"Needs");
+	tip_line(nr,where,slot,line,TIP_TABLE,"%s",row);
+
+	for (j=0; j<=CMP_N; j++) {
+		k=j<2 ? j : (j==2 ? -1 : j-1);	// Light after AV
+		shown=tip_val(in,k,a) || (useact && tip_val(in,k,1)) || tip_need(in,k);
+		for (c=0; c<ncmp && k>=0; c++) if (v[c][k]) shown=1;
+		if (!shown) continue;
+		row[0]=0;
+		tip_cell(row,'w',tip_stat(k));
+		tip_num(row,tip_val(in,k,a),'g');
+		if (useact) tip_num(row,tip_val(in,k,1),'t');
+		for (c=0; c<ncmp; c++) tip_num(row,k>=0 ? v[c][k] : 0,'g');
+		if (need) {
+			if (tip_need(in,k)) {
+				ok=tip_has(cn,k)>=tip_need(in,k) && (k<10 || tip_has(cn,k));
+				sprintf(n1,"%d",tip_need(in,k));
+				tip_cell(row,ok ? 'y' : 'r',n1);
+			} else tip_cell(row,0,"");
+		}
+		tip_line(nr,where,slot,line,TIP_TABLE,"%s",row);
+	}
+
+	if (ncmp<0) {
+		cmp_name(ch[cn].worn[WN_RHAND],n1);
+		tip_line(nr,where,slot,line,0,"Can't be used with your %s.",n1);
+	} else if (ncmp==2) {
+		cmp_name(ch[cn].worn[WN_LRING],n1); cmp_name(ch[cn].worn[WN_RRING],n2);
+		if (ch[cn].worn[WN_LRING]) tip_line(nr,where,slot,line,TIP_DIM,"vs L: your %s",n1);
+		else tip_line(nr,where,slot,line,TIP_DIM,"vs L: no ring worn");
+		if (ch[cn].worn[WN_RRING]) tip_line(nr,where,slot,line,TIP_DIM,"vs R: your %s",n2);
+		else tip_line(nr,where,slot,line,TIP_DIM,"vs R: no ring worn");
+	} else if (ncmp==1) {
+		worn=0; cap[0]=0;
+		for (j=0; j<2; j++) if (cols[0][j]>=0 && ch[cn].worn[cols[0][j]]) {
+			cmp_name(ch[cn].worn[cols[0][j]],n1);
+			if (worn++) strcat(cap," and ");
+			strcat(cap,n1);
+		}
+		if (worn) tip_line(nr,where,slot,line,TIP_DIM,"vs worn: your %s",cap);
+		else tip_line(nr,where,slot,line,TIP_DIM,"vs worn: nothing worn there");
+	}
+	// which worn slots the client shows beside it (Shift)
+	if (ncmp==2) tip_line(nr,where,slot,line,8,"W %d %d",WN_LRING,WN_RRING);
+	else if (ncmp==1) {
+		row[0]=0;
+		for (j=0; j<2; j++) if (cols[0][j]>=0 && ch[cn].worn[cols[0][j]]) sprintf(row+strlen(row)," %d",cols[0][j]);
+		if (row[0]) tip_line(nr,where,slot,line,8,"W%s",row);
+	}
+}
+
+/* the description, wrapped at about 36 characters, at most 6 lines (notes can be long) */
+static void tip_desc(int nr,int where,int slot,int *line,int in)
+{
+	char buf[80],*s,*d;
+	int n;
+
+	s=it[in].description;
+	for (n=0; n<6 && *s; n++) {
+		while (*s==' ') s++;
+		d=buf;
+		while (*s && d-buf<36) *d++=*s++;
+		if (*s && *s!=' ') {	// back up to the last space
+			char *sp=d; while (sp>buf && sp[-1]!=' ') sp--;
+			if (sp>buf+10) { s-=d-sp; d=sp; }
+		}
+		*d=0;
+		if (n==5 && *s) strcpy(d>buf+33 ? buf+33 : d,"...");
+		if (buf[0]) tip_line(nr,where,slot,line,1,"%s",buf);
+	}
+}
+
 void plr_cmd_iteminfo(int nr)
 {
-	int cn,co,where,slot,in=0,line=0,n,act,ok,first,flag,shown;
+	int cn,co,where,slot,in=0,line=0,n,act,ok,first,flag,shown,gd;
 	unsigned char end[64];
-	char buf[80],b2[40],*s,*d;
+	char b2[40];
 
 	cn=player[nr].usnr;
+	gd=(unsigned int)player[nr].version>=GODOT_CLIENT;
 	where=player[nr].inbuf[1];
 	slot=*(unsigned short*)(player[nr].inbuf+2);
 	co=*(unsigned int*)(player[nr].inbuf+4);
@@ -874,26 +1050,28 @@ void plr_cmd_iteminfo(int nr)
 		if (stack_count(in)>1) tip_line(nr,where,slot,&line,1,"A stack of %d (Ctrl+click: take one)",stack_count(in));
 		else if (STACKS(stack_kind(in))) tip_line(nr,where,slot,&line,1,"Stacks up to %d",STACK_MAX);
 		if (IT_TIER(in)) { char t1[80],t2[80]; tier_tip_lines(in,t1,t2); tip_line(nr,where,slot,&line,1,"%s",t1); }
+		if (gd) { tip_sep(); tip_desc(nr,where,slot,&line,in); }
 		tip_sep();
 
 		if ((it[in].flags&IF_NEEDIDENT) && !(it[in].flags&IF_IDENTIFIED)) {
 			tip_line(nr,where,slot,&line,0,"Unidentified. Cast Identify on it");
 			tip_line(nr,where,slot,&line,0,"to learn its powers.");
 		} else {
-			if (it[in].weapon[act]) tip_line(nr,where,slot,&line,2,"%+5d WV",it[in].weapon[act]);
+			if (gd) tip_table(nr,where,slot,&line,cn,in,act);
+			if (!gd && it[in].weapon[act]) tip_line(nr,where,slot,&line,2,"%+5d WV",it[in].weapon[act]);
 			if ((it[in].flags&(IF_WP_TWOHAND|IF_WP_AXE))==(IF_WP_TWOHAND|IF_WP_AXE)) { int c=wp2h_chance(player[nr].usnr,1); tip_line(nr,where,slot,&line,3,"Critical hits: %d.%d%% of your",c/10,c%10); tip_line(nr,where,slot,&line,3,"hits (more with Strength)"); }
 			else if (it[in].flags&IF_WP_TWOHAND) { int c=wp2h_chance(player[nr].usnr,0); tip_line(nr,where,slot,&line,3,"Deflects %d.%d%% of melee hits",c/10,c%10); tip_line(nr,where,slot,&line,3,"(more with Agility)"); }
 			if ((it[in].flags&IF_WP_STAFF) && (it[in].placement&(PL_WEAPON|PL_TWOHAND))) { tip_line(nr,where,slot,&line,3,"Harakim: Ghost Companion +%d%%",GC_STAFF_HARAKIM-100); tip_line(nr,where,slot,&line,3,"(Arch-Harakim +%d%%)",GC_STAFF_ARCH-100); }
-			if (it[in].armor[act]) tip_line(nr,where,slot,&line,2,"%+5d AV",it[in].armor[act]);
-			if (it[in].light[act]>0) tip_line(nr,where,slot,&line,2,"%+5d Light",it[in].light[act]);
+			if (!gd && it[in].armor[act]) tip_line(nr,where,slot,&line,2,"%+5d AV",it[in].armor[act]);
+			if (!gd && it[in].light[act]>0) tip_line(nr,where,slot,&line,2,"%+5d Light",it[in].light[act]);
 			if (it[in].gethit_dam[act]) tip_line(nr,where,slot,&line,2," 1-%d Damage to attackers",it[in].gethit_dam[act]);	// do_hurt: RANDOM(d)+1
 			tip_sep();
-			for (n=0; n<5; n++) if (it[in].attrib[n][act]) tip_line(nr,where,slot,&line,it[in].attrib[n][act]<0 ? 0 : 2,"%+5d %s",it[in].attrib[n][act],at_name[n]);
-			if (it[in].hp[act]) tip_line(nr,where,slot,&line,it[in].hp[act]<0 ? 0 : 2,"%+5d Hitpoints",it[in].hp[act]);
-			if (it[in].end[act]) tip_line(nr,where,slot,&line,it[in].end[act]<0 ? 0 : 2,"%+5d Endurance",it[in].end[act]);
-			if (it[in].mana[act]) tip_line(nr,where,slot,&line,it[in].mana[act]<0 ? 0 : 2,"%+5d Mana",it[in].mana[act]);
+			for (n=0; n<5 && !gd; n++) if (it[in].attrib[n][act]) tip_line(nr,where,slot,&line,it[in].attrib[n][act]<0 ? 0 : 2,"%+5d %s",it[in].attrib[n][act],at_name[n]);
+			if (!gd && it[in].hp[act]) tip_line(nr,where,slot,&line,it[in].hp[act]<0 ? 0 : 2,"%+5d Hitpoints",it[in].hp[act]);
+			if (!gd && it[in].end[act]) tip_line(nr,where,slot,&line,it[in].end[act]<0 ? 0 : 2,"%+5d Endurance",it[in].end[act]);
+			if (!gd && it[in].mana[act]) tip_line(nr,where,slot,&line,it[in].mana[act]<0 ? 0 : 2,"%+5d Mana",it[in].mana[act]);
 			tip_sep();
-			for (n=0; n<50; n++) if (it[in].skill[n][act]) tip_line(nr,where,slot,&line,it[in].skill[n][act]<0 ? 0 : 2,"%+5d %s",it[in].skill[n][act],skilltab[n].name);
+			for (n=0; n<50 && !gd; n++) if (it[in].skill[n][act]) tip_line(nr,where,slot,&line,it[in].skill[n][act]<0 ? 0 : 2,"%+5d %s",it[in].skill[n][act],skilltab[n].name);
 			{	// Fire / Ice set bonus: how many the player wears, and the bonuses (green when they apply)
 				int t=it[in].temp,set=0,w;
 				if ((t>=623 && t<=628)) set=SET_FIRE;
@@ -917,7 +1095,7 @@ void plr_cmd_iteminfo(int nr)
 				for (k=0; k<cnt; k++) tip_line(nr,where,slot,&line,k ? 2 : 13,"%s",el[k]);
 			}
 			tip_sep();
-			if ((it[in].flags&IF_USEACTIVATE) && !act) {	// what it does when turned on
+			if (!gd && (it[in].flags&IF_USEACTIVATE) && !act) {	// what it does when turned on
 				for (n=0,shown=0; n<5; n++) if (it[in].attrib[n][1]) { if (!shown++) tip_line(nr,where,slot,&line,1,"When active:"); tip_line(nr,where,slot,&line,it[in].attrib[n][1]<0 ? 0 : 2,"%+5d %s",it[in].attrib[n][1],at_name[n]); }
 				if (it[in].armor[1]>it[in].armor[0]) { if (!shown++) tip_line(nr,where,slot,&line,1,"When active:"); tip_line(nr,where,slot,&line,2,"%+5d AV",it[in].armor[1]); }
 				if (it[in].light[1]>0) { if (!shown++) tip_line(nr,where,slot,&line,1,"When active:"); tip_line(nr,where,slot,&line,2,"%+5d Light",it[in].light[1]); }
@@ -925,27 +1103,27 @@ void plr_cmd_iteminfo(int nr)
 		}
 
 		// what wearing it would change (not for what you already wear)
-		if (where!=1 && !(it[in].flags&IF_NEEDIDENT && !(it[in].flags&IF_IDENTIFIED))) tip_compare(nr,where,slot,&line,cn,in);
+		if (!gd && where!=1 && !(it[in].flags&IF_NEEDIDENT && !(it[in].flags&IF_IDENTIFIED))) tip_compare(nr,where,slot,&line,cn,in);
 
 		// requirements, red when not met (base values, like wearing it checks)
 		tip_sep();
 		first=1;
-		for (n=0; n<5; n++) {
+		for (n=0; n<5 && !gd; n++) {
 			if (it[in].attrib[n][2]<=1) continue;
 			if (first) { tip_line(nr,where,slot,&line,1,"Needs:"); first=0; }
 			ok=ch[cn].attrib[n][0]>=it[in].attrib[n][2];
 			tip_line(nr,where,slot,&line,ok ? 1 : 0," %-14s %4d%s",at_name[n],it[in].attrib[n][2],ok ? "" : " (too low)");
 		}
-		for (n=0; n<50; n++) {
+		for (n=0; n<50 && !gd; n++) {
 			if (!it[in].skill[n][2]) continue;
 			if (first) { tip_line(nr,where,slot,&line,1,"Needs:"); first=0; }
 			ok=ch[cn].skill[n][0] && ch[cn].skill[n][0]>=it[in].skill[n][2];
 			tip_line(nr,where,slot,&line,ok ? 1 : 0," %-14s %4d%s",skilltab[n].name,it[in].skill[n][2],
 				!ch[cn].skill[n][0] ? " (not known)" : (ok ? "" : " (too low)"));
 		}
-		if (it[in].hp[2]) { if (first) { tip_line(nr,where,slot,&line,1,"Needs:"); first=0; } ok=ch[cn].hp[0]>=it[in].hp[2]; tip_line(nr,where,slot,&line,ok ? 1 : 0," %-14s %4d%s","Hitpoints",it[in].hp[2],ok ? "" : " (too low)"); }
-		if (it[in].end[2]) { if (first) { tip_line(nr,where,slot,&line,1,"Needs:"); first=0; } ok=ch[cn].end[0]>=it[in].end[2]; tip_line(nr,where,slot,&line,ok ? 1 : 0," %-14s %4d%s","Endurance",it[in].end[2],ok ? "" : " (too low)"); }
-		if (it[in].mana[2]) { if (first) { tip_line(nr,where,slot,&line,1,"Needs:"); first=0; } ok=ch[cn].mana[0]>=it[in].mana[2]; tip_line(nr,where,slot,&line,ok ? 1 : 0," %-14s %4d%s","Mana",it[in].mana[2],ok ? "" : " (too low)"); }
+		if (!gd && it[in].hp[2]) { if (first) { tip_line(nr,where,slot,&line,1,"Needs:"); first=0; } ok=ch[cn].hp[0]>=it[in].hp[2]; tip_line(nr,where,slot,&line,ok ? 1 : 0," %-14s %4d%s","Hitpoints",it[in].hp[2],ok ? "" : " (too low)"); }
+		if (!gd && it[in].end[2]) { if (first) { tip_line(nr,where,slot,&line,1,"Needs:"); first=0; } ok=ch[cn].end[0]>=it[in].end[2]; tip_line(nr,where,slot,&line,ok ? 1 : 0," %-14s %4d%s","Endurance",it[in].end[2],ok ? "" : " (too low)"); }
+		if (!gd && it[in].mana[2]) { if (first) { tip_line(nr,where,slot,&line,1,"Needs:"); first=0; } ok=ch[cn].mana[0]>=it[in].mana[2]; tip_line(nr,where,slot,&line,ok ? 1 : 0," %-14s %4d%s","Mana",it[in].mana[2],ok ? "" : " (too low)"); }
 		if (it[in].min_rank>0) {
 			if (first) { tip_line(nr,where,slot,&line,1,"Needs:"); first=0; }
 			ok=points2rank(ch[cn].points_tot)>=it[in].min_rank;
@@ -976,21 +1154,7 @@ void plr_cmd_iteminfo(int nr)
 			}
 		}
 
-		// description, wrapped at about 36 characters, at most 6 lines (notes can be long)
-		tip_sep();
-		s=it[in].description;
-		for (n=0; n<6 && *s; n++) {
-			while (*s==' ') s++;
-			d=buf;
-			while (*s && d-buf<36) *d++=*s++;
-			if (*s && *s!=' ') {	// back up to the last space
-				char *sp=d; while (sp>buf && sp[-1]!=' ') sp--;
-				if (sp>buf+10) { s-=d-sp; d=sp; }
-			}
-			*d=0;
-			if (n==5 && *s) strcpy(d>buf+33 ? buf+33 : d,"...");
-			if (buf[0]) tip_line(nr,where,slot,&line,1,"%s",buf);
-		}
+		if (!gd) { tip_sep(); tip_desc(nr,where,slot,&line,in); }
 	}
 
 	memset(end,0,64);
