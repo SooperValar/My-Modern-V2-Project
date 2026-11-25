@@ -202,6 +202,24 @@ feature, `#trash`).
 - Not worth it: spectating, lycanthrope / kindred skills, tarot.
 
 ## Step 4: (was "hide the TLG-only parts") - now: groups A + B, then C items one at a time as Cody picks them
+**Group A DONE Nov 24 (myv2 d1cf8f91, Cody checked it in game):** our 37 skill names / groups / attributes
+(`Core/State/MyV2Skills.cs`), merc.exe's skill order and "unused / fixed (red) / raisable" display, totals = value[5]
+(TLG packed two bytes), Endurance row + its raise cost (v*d/2), at most 99 raises per CL_CMD_STAT (our server ignores
+more), world / explored map / notes at 1024x1024 (`WorldMap.WorldTiles`), currency rows hidden until they have points,
+skill-tree button hidden, launcher: our race numbers (2/3/4, 76/77/78; anything else became a male Mercenary), Game
+Mode / Season hidden, Discord https://discord.gg/hVpuUPp3jp, updates checked on SooperValar/myv2-godot-client, game name
+"Mercenaries of Asgard v2" (user folder `MercenariesOfAsgardV2`), no description upload under 10 letters (our server
+REPLACES a short description with "...looks somewhat nondescript"; Iluvatar's was overwritten that way Nov 24).
+HUD art: every HUD scene sprite asks at 100,000+ (TLG's light HUD used sprites 1-10, which are our v2 interface);
+the HUD frames (`data/overrides/00001.png` light, `18001.png` dark) and overlays (`00099`, `18099` skill area,
+`18097`/`18098` meta panel) are edited by `tools/myv2-hud/build.sh` (always from TLG's originals): 8th attribute row,
+skill panel / Update row / HP box one row (14 px) lower, wider value columns (HP box dividers 97/129, overlay 159->165,
+172->175), Planner and Update tabs (Update divider on the x=136 line). Scene offsets moved to match.
+**Lessons:** pushing LFS objects from Claude's cloud copy is refused (GitHub storage authorization error), so commits
+with art: commit in the cloud, bundle to the PC, put the LFS objects in `.git/lfs/objects/xx/yy/<sha256>`, `git reset`
+to the commit, and CODY runs `git push` (Windows has git-lfs). `device_commit_files` adds a C2PA `caBX` chunk to PNGs
+(and stamps the sent copy in /mnt/user-data/outputs too): strip it on both sides before committing (same pixels).
+**Next (Cody, Nov 24):** the zone name in the bar above the minimap - needs a server message (plan shown to Cody).
 Skill trees, contracts, tokens, smith, depot, meta stats, MOTD, TLG planner formulas: off, so the client plays our game cleanly.
 
 ## Step 5: our features, one at a time, a preview for Cody after each (Claude)
