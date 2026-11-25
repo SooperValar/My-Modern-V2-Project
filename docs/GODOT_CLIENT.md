@@ -233,6 +233,10 @@ server read and sent only every 8th tick; fixed in `server.c` (CHANGES.md), LIVE
 **Tooltip stat table (Cody OK'd Nov 24):** client myv2 52bbc290 (`ItemTooltipRequest` turns font 15 rows into a
 `TooltipTable`, font 16 grey); server `tip_table` (CHANGES.md "Tooltip stat table"), tested on the test server (boots,
 ring, two-hander, torch, worn boots), LIVE Nov 24, 23:29. Next: rest of group B.
+**Buff timers (Cody OK'd Nov 24):** client myv2 e4eda983, no server change (SV_SPELLTIME 74 was already sent).
+`Core/State/BuffTimers` counts down between the server's updates (18 ticks a second); `Hud/BuffCellView` shows the time
+beside each icon (right of buffs, left of debuffs; red under 10 s) and the name and exact time on hover; buffs and
+debuffs are split by the server's harmful flag. Next: waypoint window, tier glow / marks, trash window.
 Skill trees, contracts, tokens, smith, depot, meta stats, MOTD, TLG planner formulas: off, so the client plays our game cleanly.
 
 ## Step 5: our features, one at a time, a preview for Cody after each (Claude)
