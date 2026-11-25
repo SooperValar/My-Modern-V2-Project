@@ -2077,6 +2077,15 @@ void plr_change(int nr)
 			for (k=0; k<120; k++) if (mb[2+k]!=cpl->marks[k]) { diff=1; cpl->marks[k]=mb[2+k]; }
 			if (diff) xsend(nr,mb,126);
 		}
+		if ((unsigned int)player[nr].version>=GODOT_CLIENT) {	// the zone's name, for the bar above the Godot client's minimap
+			unsigned char zb[41];
+			char *z=get_area_m(ch[cn].x,ch[cn].y,0);
+			if (strncmp(z,cpl->zone,40)) {
+				memset(zb,0,sizeof(zb)); zb[0]=SV_ZONE; strncpy((char*)zb+1,z,40);
+				strncpy(cpl->zone,z,40); cpl->zone[40]=0;
+				xsend(nr,zb,41);
+			}
+		}
 
 		for (n=0; n<20; n++) {
 			if (cpl->spell[n]!=(in=ch[cn].spell[n]) ||

@@ -219,7 +219,11 @@ skill panel / Update row / HP box one row (14 px) lower, wider value columns (HP
 with art: commit in the cloud, bundle to the PC, put the LFS objects in `.git/lfs/objects/xx/yy/<sha256>`, `git reset`
 to the commit, and CODY runs `git push` (Windows has git-lfs). `device_commit_files` adds a C2PA `caBX` chunk to PNGs
 (and stamps the sent copy in /mnt/user-data/outputs too): strip it on both sides before committing (same pixels).
-**Next (Cody, Nov 24):** the zone name in the bar above the minimap - needs a server message (plan shown to Cody).
+**Zone name (Cody OK'd Nov 24):** client myv2 07e3f271 (version 3.0.0, `ServerCommand.Zone` 80 -> `Player.Location`,
+`Hud/ZoneText` shows the innermost zone when the chain is over 20 letters); server `SV_ZONE` in both server folders
+(CHANGES.md "Godot client support"), tested on the test server (old-version client gets nothing; new one gets
+"Aston, Temple of Skua" / "Aston" / "Aston, Temple Street"). **Server part NOT LIVE** - needs Cody's "go live" and an
+update-code with nobody online. Until then the bar stays empty on the live server.
 Skill trees, contracts, tokens, smith, depot, meta stats, MOTD, TLG planner formulas: off, so the client plays our game cleanly.
 
 ## Step 5: our features, one at a time, a preview for Cody after each (Claude)
