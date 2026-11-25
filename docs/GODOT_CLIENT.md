@@ -222,8 +222,8 @@ to the commit, and CODY runs `git push` (Windows has git-lfs). `device_commit_fi
 **Zone name (Cody OK'd Nov 24):** client myv2 07e3f271 (version 3.0.0, `ServerCommand.Zone` 80 -> `Player.Location`,
 `Hud/ZoneText` shows the innermost zone when the chain is over 20 letters); server `SV_ZONE` in both server folders
 (CHANGES.md "Godot client support"), tested on the test server (old-version client gets nothing; new one gets
-"Aston, Temple of Skua" / "Aston" / "Aston, Temple Street"). **Server part NOT LIVE** - needs Cody's "go live" and an
-update-code with nobody online. Until then the bar stays empty on the live server.
+"Aston, Temple of Skua" / "Aston" / "Aston, Temple Street"). Server part LIVE Nov 24, 22:12 (Cody's "go live",
+update-code with nobody online; full rebuild since client.h changed). Next: group B.
 Skill trees, contracts, tokens, smith, depot, meta stats, MOTD, TLG planner formulas: off, so the client plays our game cleanly.
 
 ## Step 5: our features, one at a time, a preview for Cody after each (Claude)

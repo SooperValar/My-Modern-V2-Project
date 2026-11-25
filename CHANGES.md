@@ -72,8 +72,7 @@ The new Godot client (github.com/SooperValar/myv2-godot-client, `docs/GODOT_CLIE
 of 3.0.0 and up, so merc.exe never sees a message it doesn't know.
 - `SV_ZONE` (80, 41 bytes): the name of the zone the player stands in (`get_area_m`, outermost first: "Aston, Market"),
   sent at login and whenever it changes (`plr_change`, last one sent kept in `cpl.zone`). The client shows it above its
-  minimap (the innermost zone when the whole chain doesn't fit). **Not live yet** (built and tested on the test server
-  Nov 24; goes live with Cody's "go live").
+  minimap (the innermost zone when the whole chain doesn't fit). Live since Nov 24, 22:12.
 
 ## HUD changes
 
