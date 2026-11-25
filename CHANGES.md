@@ -86,6 +86,9 @@ of 3.0.0 and up, so merc.exe never sees a message it doesn't know.
 - **Trash window fixes** (`svr_do.c`): `#trash` (and `/trash`) never worked: it was filed under the commands starting
   with 'd'. Now under 't', and for every player (was gods and imps), so the Godot client's HUD trash can opens the
   trash window anywhere. The "You are too far from the trash can" check is gone with it. Live since Nov 25, 15:50.
+- **Trash the held item** (`svr_tick.c` `plr_cmd_inv`, what 10): the Godot client's HUD trash can, clicked with an
+  item in the hand, destroys that item ("You disposed of the ..."); gold is refused. merc.exe never sends it. Live
+  since Nov 25, 16:00.
 
 ## HUD changes
 

@@ -402,6 +402,19 @@ void plr_cmd_inv(int nr)
                 ch[cn].citem=tmp;
                 return;
         }
+        if (what==10) { // MyV2 (Godot client, Nov 25): the HUD trash can destroys the item in the hand
+                in=ch[cn].citem;
+                if (!in || ch[cn].stunned) return;
+                if (in&0x80000000) { do_char_log(cn,0,"Gold can't go in the trash.\n"); return; }
+                ch[cn].citem=0;
+                if (IS_SANEITEM(in) && it[in].used) {
+                        do_char_log(cn,1,"You disposed of the %s.\n",it[in].reference);
+                        chlog(cn,"Trashed %s (%d) from the hand",it[in].name,in);
+                        it[in].used=USE_EMPTY;
+                }
+                do_update_char(cn);
+                return;
+        }
         if (what==9) { // MyV2: Ctrl+click on the backpack: one from a stack into the hand (or onto the stack in the hand)
                 int hand=ch[cn].citem,one;
                 if (n<0 || n>39 || ch[cn].stunned) return;

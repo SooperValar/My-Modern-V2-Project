@@ -250,7 +250,9 @@ a one-pixel outline (`outline_color`; merc.exe's colours and strengths in `World
 enchant sprites) are off for inventory, worn, held and shop: MyV2 sends the placement in that field. Next: trash window.
 **Trash window (Nov 25):** client part in the Godot-Client working copy (not yet committed; Cody checks it); server
 fixes LIVE Nov 25, 15:50: `#trash` was filed under 'd' and never matched (moved to 't'), now for every player
-(Cody's choice, for the HUD trash can), and the "too far from the trash can" check is gone. Next: the switch below.
+(Cody's choice, for the HUD trash can), and the "too far from the trash can" check is gone. The HUD trash can: an
+empty hand opens the window (`#trash`), an item in the hand is destroyed at once (CL_CMD_INV what 10, LIVE Nov 25,
+16:00; `InventoryAction.TrashHeldItem`). Next: the switch below.
 Skill trees, contracts, tokens, smith, depot, meta stats, MOTD, TLG planner formulas: off, so the client plays our game cleanly.
 
 ## Step 5: our features, one at a time, a preview for Cody after each (Claude)
