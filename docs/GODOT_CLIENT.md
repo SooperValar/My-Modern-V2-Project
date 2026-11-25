@@ -237,6 +237,12 @@ ring, two-hander, torch, worn boots), LIVE Nov 24, 23:29. Next: rest of group B.
 `Core/State/BuffTimers` counts down between the server's updates (18 ticks a second); `Hud/BuffCellView` shows the time
 beside each icon (right of buffs, left of debuffs; red under 10 s) and the name and exact time on hover; buffs and
 debuffs are split by the server's harmful flag. Next: waypoint window, tier glow / marks, trash window.
+**Waypoint window (Cody OK'd Nov 24):** client myv2 e6d03eb5, no server change. TLG's window (`Windows/WaypointWindow`,
+`Hud/WaypointWindowView`) now lists `GameState.WaypointList` (SV_WAYPOINT 79 rows): opens when the list arrives, scrolled
+to the "you are here" row (green); pictures are the row's sprite, else 18341 (stock), unfound 18340; a click on a found
+one sends CL_CMD_WAYPOINT 35 and closes it; TLG's right-click "describe" (number+32) was removed, it would travel to the
+wrong waypoint. The hint ("Travel to ...") is the search field's placeholder, two spaces in so the caret doesn't cover it.
+Next: tier glow / marks, trash window.
 Skill trees, contracts, tokens, smith, depot, meta stats, MOTD, TLG planner formulas: off, so the client plays our game cleanly.
 
 ## Step 5: our features, one at a time, a preview for Cody after each (Claude)
