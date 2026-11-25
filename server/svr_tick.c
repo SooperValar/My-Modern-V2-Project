@@ -1047,6 +1047,8 @@ void plr_cmd_iteminfo(int nr)
 
 	if (where==0 && slot<40) in=ch[cn].item[slot];
 	else if (where==1 && slot<20) in=ch[cn].worn[slot];
+	else if (where==2 && (co&0x8000) && (co&0x7fff)==cn && slot<62) in=ch[cn].depot[slot];	// your own depot window
+	else if (where==2 && (co&0x4000) && !(co&0x8000) && (co&0x3fff)==cn && slot<62) in=trash_item(cn,slot);	// the trash window
 	else if (where==2 && co>0 && co<MAXCHARS && (ch[co].flags&(CF_MERCHANT|CF_BODY))) {
 		if ((ch[co].flags&CF_BODY) && abs(ch[cn].x-ch[co].x)+abs(ch[cn].y-ch[co].y)>1) in=0;
 		else if (!(ch[co].flags&CF_BODY) && !do_char_can_see(cn,co) && !(godshop_cat(co) && (ch[cn].flags&CF_GOD))) in=0;	// #godshop: from afar
@@ -1155,7 +1157,7 @@ void plr_cmd_iteminfo(int nr)
 		}
 
 		// value: the price here depends on Bartering
-		if (where==2 && (ch[co].flags&CF_MERCHANT)) {
+		if (where==2 && co>0 && co<MAXCHARS && (ch[co].flags&CF_MERCHANT)) {
 			tip_line(nr,where,slot,&line,3,"Price: %s",tip_money(merch_sell_price(cn,co,in),b2));
 			if (merch_remorse(cn,in)) tip_line(nr,where,slot,&line,2,"You sold it: buy it back for that");
 		} else {

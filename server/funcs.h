@@ -155,6 +155,7 @@ void do_trash_char(int cn,int n);
 void do_spellup(int cn,char *name,char *pw);
 void trash_return(int cn);
 void trash_sweep(int cn);
+int trash_item(int cn,int n);
 int god_take_from_char(int in,int cn);
 int god_drop_char(int cn,int x,int y);
 int god_drop_char_fuzzy(int nr,int x,int y);

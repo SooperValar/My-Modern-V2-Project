@@ -5004,6 +5004,12 @@ static void trash_send(int cn)
 	}
 }
 
+int trash_item(int cn,int n)
+{
+	if (!IS_SANECHAR(cn) || n<0 || n>=62) return 0;
+	return trash[cn][n];
+}
+
 /* everything in the trash window back to the backpack (what doesn't fit waits there) */
 void trash_return(int cn)
 {

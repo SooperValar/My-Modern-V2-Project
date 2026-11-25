@@ -269,12 +269,13 @@ raising, skills, sounds, MyV2 art, zone name, item tooltips (stat table), buff t
 outlines / marks / ground glow, trash window (button, Shift+click, close gives back).
 
 **Gaps to check or fix before the switch (each: Claude checks, Cody tries it):**
-1. **Backpack and worn clicks:** the client sends TLG's CL_CMD_INV actions; MyV2 reads `what` differently
+1. DONE Nov 25 (myv2 2b340959): Ctrl+click = take one (9); TLG's Ctrl/Alt sell, all-keys trash and the gear-set
+   button (9 with slot 0/1) no longer sent; the ↻ stays (Cody may add an alternate armor set). Was: **Backpack and worn clicks:** the client sends TLG's CL_CMD_INV actions; MyV2 reads `what` differently
    (0 backpack, 1 big inventory, 2, 5-8, 9 = Ctrl+click take one from a stack). Known wrong: Ctrl+Shift+Alt+click
    sends TLG's "trash held item" (9 with slot 0 = take one from slot 1's stack); Ctrl+click sends TLG's MoveStack
    (3, ignored), so MyV2's "Ctrl+click: take one" doesn't work. Audit every key combination against `plr_cmd_inv`.
-2. **Depot** (`#depot`, a shop window numbered |0x8000): opens as a merchant today. Check take out, put in (click
-   with an item in the hand), the rent lines, and turn tooltips off there like the trash.
+2. ~~**Depot**~~ DONE Nov 25: `ShopKind.Bank` (|0x8000; clicks were already right), rent text ("Rent a day",
+   "Store for", "Depot: n of 62 items"), Ctrl+click does nothing; server tooltips for depot and trash slots LIVE 16:19.
 3. **Grave / body loot window:** shop kind 1, items 0-39 + worn 40-59. Check taking items.
 4. **Map edges:** merc.exe walks on when the view's edge arrows are clicked (xmove 1-4). Check the Godot client.
 5. **Exit:** merc.exe's F12 exit (costs health and gold) vs the client's TLG exit sequence (`#tavern`?).

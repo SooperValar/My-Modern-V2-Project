@@ -89,6 +89,10 @@ of 3.0.0 and up, so merc.exe never sees a message it doesn't know.
 - **Trash the held item** (`svr_tick.c` `plr_cmd_inv`, what 10): the Godot client's HUD trash can, clicked with an
   item in the hand, destroys that item ("You disposed of the ..."); gold is refused. merc.exe never sends it. Live
   since Nov 25, 16:00.
+- **Tooltips in the depot and trash windows** (`svr_tick.c` `plr_cmd_iteminfo`, `svr_do.c` `trash_item`): a tooltip
+  asked for a slot of your own depot (shop number |0x8000) or trash window (|0x4000) now shows that item. The price
+  lines check the shop number is a real character first (a depot number read past the end of `ch[]`). Live since
+  Nov 25, 16:19.
 
 ## HUD changes
 
