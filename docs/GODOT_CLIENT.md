@@ -175,7 +175,33 @@ Earlier plan text:
 Use its SpriteCompiler to build `data/archives` from our `gx00`, `pnglib` and `GFX\` (or point the overrides at
 `GFX\`), and our `sfx\`. Check a few areas (Aston, Fenwatch, Stonehold, the Spires) against merc.exe screenshots.
 
-## Step 4: hide the TLG-only parts (Claude)
+## Feature inventory (Nov 24): Cody wants to KEEP the client's features and make them fit our server where possible
+(Cody: "I'd like to keep the planner and implement it into my server as well. If the features exist in the client and
+I can make them fit my server I'd like to explore that option.") So Step 4 no longer hides things by default.
+
+**A. Client-only, work once fed our data (no server change):** Planner raise costs (same v2 formulas as merc.exe
+`attrib_needed` / `skill_needed` / `hp_needed` / `mana_needed`; Endurance = v*end[3]/2 is missing in `Rules/RaiseCost`),
+skill names (TLG gets them from the server's terminology messages; we put our 50 names from merc.exe `_skilltab` into
+the client), hotbar, area use, use queue, give more, auto walk, explored map / notes / world map (sized for TLG's
+2048x1024 world: `WorldMapView.TilesAcross`, `NoteLimits.Tiles` -> our 1024x1024), session stats (gold), options,
+accessibility. HP / End / Mana box layout. Window title / app name.
+**B. Client adapters to messages our server ALREADY sends:** item tooltips <- SV_ITEMINFO (CL_CMD_ITEMINFO 34),
+buff timers <- SV_SPELLTIME, waypoint window <- SV_WAYPOINT rows / CL_CMD_WAYPOINT (35, [1] = destination), item tier
+colours / marks / tile glow <- SV_TIERS / SV_ITEMMARKS / SV_TILEGLOW, merchants (already work), trash window (merc.exe
+feature, `#trash`).
+**C. Need new server work (features new to our game):**
+- Hit Score / Parry Score + List Offenses / List Defenses: TLG's "meta stats" (terminology text + values); our server
+  has the values (to_hit / to_parry etc. in svr_do.c) and would send them. Small-moderate.
+- Currency rows (3x "???"): TLG's Black Stronghold points, Osiris points, tokens. We have Black Stronghold points
+  (data[26..28], [41], [43]); the other two rows could show something of ours (exploration points?). Small.
+- MOTD / tutorial / new-player welcome windows: server sends a window number + text. Small (text to write).
+- Planner's combat and buff previews (`Rules/CombatModel`, `BuffModel`, `ItemEffects`, `TarotMath`, `TreeEffects`): TLG
+  formulas; port ours from svr_do.c / skill code. Moderate, client-side.
+- Depot (account storage), Smith (weapon / armor smithing with catalysts), Skill tree + contract tree + tokens,
+  casino / contract / experience shops: whole TLG game systems; large, game-design decisions first.
+- Not worth it: spectating, lycanthrope / kindred skills, tarot.
+
+## Step 4: (was "hide the TLG-only parts") - now: groups A + B, then C items one at a time as Cody picks them
 Skill trees, contracts, tokens, smith, depot, meta stats, MOTD, TLG planner formulas: off, so the client plays our game cleanly.
 
 ## Step 5: our features, one at a time, a preview for Cody after each (Claude)
