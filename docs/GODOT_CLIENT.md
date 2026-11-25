@@ -243,6 +243,11 @@ to the "you are here" row (green); pictures are the row's sprite, else 18341 (st
 one sends CL_CMD_WAYPOINT 35 and closes it; TLG's right-click "describe" (number+32) was removed, it would travel to the
 wrong waypoint. The hint ("Travel to ...") is the search field's placeholder, two spaces in so the caret doesn't cover it.
 Next: tier glow / marks, trash window.
+**Tier outlines and marks (Cody OK'd Nov 25):** client myv2 ea17ae3b, no server change. `World/sprite_tint.gdshader` draws
+a one-pixel outline (`outline_color`; merc.exe's colours and strengths in `World/TierOutline`) on item slots
+(SV_TIERS 77 via `Items/ItemMark`) and on the map (SV_TILEGLOW 76: low 3 bits the object, +8 a body holding items).
+`ItemSlotView` shows SV_ITEMMARKS 78: the letter top left, the number top right. TLG's item overlays (stack, soulstone,
+enchant sprites) are off for inventory, worn, held and shop: MyV2 sends the placement in that field. Next: trash window.
 Skill trees, contracts, tokens, smith, depot, meta stats, MOTD, TLG planner formulas: off, so the client plays our game cleanly.
 
 ## Step 5: our features, one at a time, a preview for Cody after each (Claude)
