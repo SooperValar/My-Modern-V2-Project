@@ -429,7 +429,7 @@ void game_loop(int sock)
         tdiff=ltime-ttime;
         if (tdiff<1) tdiff=1;
 
-	if (globs->ticker%8==0) {
+	{	// sockets every tick: every 8th tick made commands and their replies wait up to 0.9 s
 		while (panic<500) {
 	
 			prof=prof_start();

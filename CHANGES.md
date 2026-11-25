@@ -73,6 +73,11 @@ of 3.0.0 and up, so merc.exe never sees a message it doesn't know.
 - `SV_ZONE` (80, 41 bytes): the name of the zone the player stands in (`get_area_m`, outermost first: "Aston, Market"),
   sent at login and whenever it changes (`plr_change`, last one sent kept in `cpl.zone`). The client shows it above its
   minimap (the innermost zone when the whole chain doesn't fit). Live since Nov 24, 22:12.
+- **Network every tick** (`server.c` `game_loop`, affects every client): the server used to read commands and send ticks
+  only every 8th tick (`ticker%8==0`, about 0.44 s), so a command and its reply waited up to about 0.9 s. It now does it
+  every tick. Measured on the test server: a Godot tooltip request answered in 164 ms instead of 1336 ms. Walking and
+  attacking also respond sooner. Players get about 18 small packets a second instead of about 2 big ones; same data. Live since
+  Nov 24, 22:46.
 
 ## HUD changes
 

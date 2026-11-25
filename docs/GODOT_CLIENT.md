@@ -224,6 +224,12 @@ to the commit, and CODY runs `git push` (Windows has git-lfs). `device_commit_fi
 (CHANGES.md "Godot client support"), tested on the test server (old-version client gets nothing; new one gets
 "Aston, Temple of Skua" / "Aston" / "Aston, Temple Street"). Server part LIVE Nov 24, 22:12 (Cody's "go live",
 update-code with nobody online; full rebuild since client.h changed). Next: group B.
+**B1 item tooltips (Nov 24):** client myv2 4b8c03bb. `Core/State/ItemInfoCache` asks with CL_CMD_ITEMINFO 34 (backpack,
+worn, shop slots), keeps the lines per slot, refreshes after 5 s; `Hud/ItemTooltipRequest` turns fonts into colours
+(10-14 tier colours, 9 divider, 8 the hidden "W a b" compare line). Shift puts the worn item(s) in a second column to
+the right; `ItemTooltipView.FitPopup` resizes Godot's tooltip popup when its content changes (Godot sizes it only when it
+opens, so it stayed big and blank after Shift) and keeps it on screen. **Latency:** tooltips took ~1.3 s because the
+server read and sent only every 8th tick; fixed in `server.c` (CHANGES.md), LIVE Nov 24, 22:46. Next: rest of group B.
 Skill trees, contracts, tokens, smith, depot, meta stats, MOTD, TLG planner formulas: off, so the client plays our game cleanly.
 
 ## Step 5: our features, one at a time, a preview for Cody after each (Claude)
