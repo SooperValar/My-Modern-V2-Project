@@ -2484,7 +2484,6 @@ void do_command(int cn, char *ptr)
         case 'd':
                 if (prefix(cmd,"deposit") && !f_m)      { do_deposit(cn,atoi(arg[1]),atoi(arg[2])); return; };
                 if (prefix(cmd,"depot") && !f_m)        { do_depot(cn); return; };
-                if (prefix(cmd,"trash") && f_gi)        { do_trash(cn); return; };	// MyV2: the trash window anywhere
                 if (prefix(cmd,"delban") && f_giu)      { god_del_ban(cn,atoi(arg[1])); return; };
                 if (prefix(cmd,"diffi") && f_g)		{ extern int diffi; diffi=atoi(arg[1]); return; }
                 if (prefix(cmd,"dagger"))               { do_info_dagger(cn); return; };
@@ -2652,6 +2651,7 @@ void do_command(int cn, char *ptr)
                 if (prefix(cmd,"tavern") && f_g && !f_m){ god_tavern(cn); return; };
                 if (prefix(cmd,"temple") && f_giu)      { god_goto(cn,cn,"512","512"); return; };	// the Temple of Skua (was 800,800, Elysium - #recall goes there now)
                 if (prefix(cmd,"thrall") && f_giu)      { god_thrall(cn,arg[1],arg[2]); return; };
+                if (prefix(cmd,"trash") && !f_m)        { do_trash(cn); return; };	// MyV2: the trash window anywhere
 		if (prefix(cmd,"time"))      		{ show_time(cn); return; };
                 if (!strcmp(cmd,"tile") && (f_g || f_c))         { do_tile(cn,arg[1],arg[2]); return; };
                 if (!strcmp(cmd,"tier") && f_g)         { god_tier_item(cn,arg[1],arg[2],arg[3],arg[4]); return; };
@@ -4941,13 +4941,13 @@ void do_depot_char(int cn,int co,int nr)
         }
 }
 
-/* ---- the trash window (Nov 20, Cody): a trash can used with an empty hand (or #trash for gods and imps) opens a window
+/* ---- the trash window (Nov 20, Cody): a trash can used with an empty hand, or #trash anywhere (Nov 25: every player,
+ * for the Godot client's HUD trash can), opens a window
  * like the depot. Shift+click puts backpack items in it (the client sends 1000+slot), a click on one takes it back,
  * the Trash button (2000, the client asks twice) destroys them all, closing the window (3000) gives them back. While
  * waiting there an item stays the player's (carried, it[].x = TRASH_MARK): the item collector leaves it alone, and a
  * login after a crash returns it (trash_sweep). Gold can't go in. */
 static int trash[MAXCHARS][62];
-static int trash_x[MAXCHARS],trash_y[MAXCHARS];
 
 static void trash_send(int cn)
 {
@@ -5035,7 +5035,6 @@ void trash_sweep(int cn)
 void do_trash(int cn)
 {
 	if (!IS_SANECHAR(cn) || !(ch[cn].flags&CF_PLAYER)) return;
-	trash_x[cn]=ch[cn].x; trash_y[cn]=ch[cn].y;
 	trash_send(cn);
 	do_char_log(cn,1,"Shift+click items in your backpack to put them in the trash, click one in the window to take it back. The Trash button destroys them.\n");
 }
@@ -5072,10 +5071,6 @@ void do_trash_char(int cn,int n)
 	int in,k,s,cnt=0;
 	if (!IS_SANECHAR(cn) || !(ch[cn].flags&CF_PLAYER)) return;
 	if (n==3000) { trash_return(cn); return; }		// the window was closed
-	if (!(ch[cn].flags&(CF_GOD|CF_IMP)) && abs(ch[cn].x-trash_x[cn])+abs(ch[cn].y-trash_y[cn])>2) {
-		do_char_log(cn,0,"You are too far from the trash can.\n");
-		trash_return(cn); return;
-	}
 	if (n>=0 && n<62) {					// take one back
 		if ((in=trash[cn][n])!=0) {
 			it[in].x=0;

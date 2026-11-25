@@ -83,6 +83,9 @@ of 3.0.0 and up, so merc.exe never sees a message it doesn't know.
   d grey; the first row is the header). Columns: Stat, Bonus, Active (items you switch on), vs worn (vs L / vs R for
   rings), Needs (yellow met, red not). Font 16 is a grey line ("vs worn: your Boots of Ice"). The description moves under
   the name. merc.exe gets the old lines, unchanged. Live since Nov 24, 23:29.
+- **Trash window fixes** (`svr_do.c`): `#trash` (and `/trash`) never worked: it was filed under the commands starting
+  with 'd'. Now under 't', and for every player (was gods and imps), so the Godot client's HUD trash can opens the
+  trash window anywhere. The "You are too far from the trash can" check is gone with it. Live since Nov 25, 15:50.
 
 ## HUD changes
 

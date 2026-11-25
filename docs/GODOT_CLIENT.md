@@ -248,10 +248,51 @@ a one-pixel outline (`outline_color`; merc.exe's colours and strengths in `World
 (SV_TIERS 77 via `Items/ItemMark`) and on the map (SV_TILEGLOW 76: low 3 bits the object, +8 a body holding items).
 `ItemSlotView` shows SV_ITEMMARKS 78: the letter top left, the number top right. TLG's item overlays (stack, soulstone,
 enchant sprites) are off for inventory, worn, held and shop: MyV2 sends the placement in that field. Next: trash window.
+**Trash window (Nov 25):** client part in the Godot-Client working copy (not yet committed; Cody checks it); server
+fixes LIVE Nov 25, 15:50: `#trash` was filed under 'd' and never matched (moved to 't'), now for every player
+(Cody's choice, for the HUD trash can), and the "too far from the trash can" check is gone. Next: the switch below.
 Skill trees, contracts, tokens, smith, depot, meta stats, MOTD, TLG planner formulas: off, so the client plays our game cleanly.
 
 ## Step 5: our features, one at a time, a preview for Cody after each (Claude)
 Tier glow / marks, tooltips, buff timers, waypoint window, trash window, hide mode, `#gca`, stacks, compare.
+
+## The switch: Godot client only (Cody, Nov 25)
+
+Cody's call: MyV2 drops merc.exe and keeps only the Godot client. Nobody but Cody plays yet, so no player is
+locked out. Order: (1) the gaps below, tested in game; (2) the server refuses old clients; (3) server clean-up;
+(4) the 60-slot backpack; (5) Step 6 packaging, before any new player joins.
+
+**Done in the Godot client (tested by Cody):** login, walking, fighting, chat, backpack and worn items, stats and
+raising, skills, sounds, MyV2 art, zone name, item tooltips (stat table), buff timers, waypoint window, tier
+outlines / marks / ground glow, trash window (button, Shift+click, close gives back).
+
+**Gaps to check or fix before the switch (each: Claude checks, Cody tries it):**
+1. **Backpack and worn clicks:** the client sends TLG's CL_CMD_INV actions; MyV2 reads `what` differently
+   (0 backpack, 1 big inventory, 2, 5-8, 9 = Ctrl+click take one from a stack). Known wrong: Ctrl+Shift+Alt+click
+   sends TLG's "trash held item" (9 with slot 0 = take one from slot 1's stack); Ctrl+click sends TLG's MoveStack
+   (3, ignored), so MyV2's "Ctrl+click: take one" doesn't work. Audit every key combination against `plr_cmd_inv`.
+2. **Depot** (`#depot`, a shop window numbered |0x8000): opens as a merchant today. Check take out, put in (click
+   with an item in the hand), the rent lines, and turn tooltips off there like the trash.
+3. **Grave / body loot window:** shop kind 1, items 0-39 + worn 40-59. Check taking items.
+4. **Map edges:** merc.exe walks on when the view's edge arrows are clicked (xmove 1-4). Check the Godot client.
+5. **Exit:** merc.exe's F12 exit (costs health and gold) vs the client's TLG exit sequence (`#tavern`?).
+6. **Skill buttons / hotkeys:** right click a skill = description / assign to a button; F-keys. Check against the
+   client's hotbar.
+7. **Build mode** (gods: the held item 46, backpack shows build pieces with tip_build tooltips).
+8. **Group C:** List Skills / Offenses / Defenses and Hit / Parry Score (server sends the meta stats), the MOTD
+   (Cody writes it), planner previews with MyV2's formulas.
+
+**Then on the server (needs "go live"):**
+- Login refuses a client older than GODOT_CLIENT (0x030000) with a line saying to use the new client.
+- Clean-up: messages sent only to the Godot client (SV_ZONE, the tooltip table, ...) lose their version checks;
+  merc.exe-only paths (the old tooltip lines, WP_CLIENT) can go.
+
+**The 60-slot backpack (after the switch; Cody wants it):** the client is already built for 60 (TLG). Server:
+`item[40]` -> `item[60]` in `struct character` (char.dat and tchar.dat need a one-time converter, with a backup;
+the Python tools in tools/world read fixed offsets and need updating; check the Editor), ~120 places that assume
+40 (give/take, shops, stacks, recipes, quest checks, trash 1000+slot, depot, Ctrl+click, SV_TIERS / SV_ITEMMARKS
+layout, tooltips), and a bigger grave loot window (the shop window has 62 slots: 40 + 20 worn today). Tested on
+the test server with copies of the real .dat files before going live.
 
 ## Step 6: getting it to players (later; only with Cody's "go live")
 Its own Velopack auto-updater (GitHub releases on the fork) or our `client-dist` launcher. Decide when it plays well.
