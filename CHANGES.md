@@ -117,7 +117,7 @@ of 3.0.0 and up, so merc.exe never sees a message it doesn't know.
   health / endurance / mana regen a second standing (moon, tier effects, amulets, permanent spells), Effective
   Immunity (half the skill), Effective Resistance, 2H-sword Deflect Chance, Thorns. Hidden rows close up in the client.
   The names live in the client (`MyV2MetaStats.cs`); the slots must match. First version live Nov 25, 21:07; the
-  TLG-style lists not live yet.
+  TLG-style lists live since 22:08.
 
 ## HUD changes
 
