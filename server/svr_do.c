@@ -5014,6 +5014,24 @@ void do_depot_char(int cn,int co,int nr)
  * the Trash button (2000, the client asks twice) destroys them all, closing the window (3000) gives them back. While
  * waiting there an item stays the player's (carried, it[].x = TRASH_MARK): the item collector leaves it alone, and a
  * login after a crash returns it (trash_sweep). Gold can't go in. */
+/* tier glow and item marks (stack counts, scroll charges) for a depot or trash window's 62 slots */
+static void send_window_marks(int nr,unsigned int *items,int count)
+{
+	unsigned char tb[2+LOOK_SLOTS],mb[2+2*LOOK_SLOTS];
+	int m;
+
+	memset(tb,0,sizeof(tb)); tb[0]=SV_TIERS; tb[1]=1;
+	memset(mb,0,sizeof(mb)); mb[0]=SV_ITEMMARKS; mb[1]=1;
+	for (m=0; m<LOOK_SLOTS; m++) mb[3+m*2]=255;
+	for (m=0; m<count && m<LOOK_SLOTS; m++) {
+		if (!IS_SANEITEM(items[m]) || !it[items[m]].used) continue;
+		tb[2+m]=tier_item_glow(items[m]);
+		item_marks(items[m],mb+2+m*2,mb+3+m*2);
+	}
+	xsend(nr,tb,sizeof(tb));
+	xsend(nr,mb,sizeof(mb));
+}
+
 static int trash[MAXCHARS][62];
 
 static void trash_send(int cn)
@@ -5068,6 +5086,11 @@ static void trash_send(int cn)
 			*(unsigned int*)(buf+4+(m-n)*6)=0;
 		}
 		xsend(nr,buf,16);
+	}
+	{
+		unsigned int items[62];
+		for (m=0; m<62; m++) items[m]=trash[cn][m];
+		send_window_marks(nr,items,62);
 	}
 }
 
@@ -5524,6 +5547,11 @@ void do_look_depot(int cn,int co)
                         *(unsigned int*)(buf+4+(m-n)*6)=pr;
                 }
                 xsend(nr,buf,16);
+        }
+        {
+                unsigned int items[62];
+                for (m=0; m<62; m++) items[m]=ch[co].depot[m];
+                send_window_marks(nr,items,62);
         }
 }
 
