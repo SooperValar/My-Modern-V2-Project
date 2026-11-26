@@ -139,7 +139,7 @@ of 3.0.0 and up, so merc.exe never sees a message it doesn't know.
   Python tools in tools/world still read only the first 40 slots. Tested on the test server with copies. Live since Nov 26, 13:36.
 - **Stack counts in the depot and trash windows** (`svr_do.c` send_window_marks): both windows now send their item glow
   and marks (SV_TIERS / SV_ITEMMARKS), so a stack shows its count and a single item shows none; before, the Godot
-  client showed a 0 on every item there (Cody, Nov 26).
+  client showed a 0 on every item there (Cody, Nov 26). Live since Nov 26, 15:21.
 
 ## HUD changes
 
