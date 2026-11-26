@@ -1118,6 +1118,19 @@ int ch_act_speed(int cn)
         return s;
 }
 
+/* how many of every 20 ticks move an attack on one frame (speedtab), for the Godot client's attack speed */
+int attack_steps(int cn)
+{
+        int s=ch[cn].speed,in,n,cnt=0;
+
+        if ((in=ch[cn].worn[WN_RHAND])!=0 && IS_SANEITEM(in) &&
+            (it[in].flags&(IF_WP_AXE|IF_WP_TWOHAND))==(IF_WP_AXE|IF_WP_TWOHAND)) s+=AXE2H_SLOW;
+        if (s<0) s=0;
+        if (s>19) s=19;
+        for (n=0; n<20; n++) cnt+=speedtab[s][n];
+        return cnt;
+}
+
 static inline int speedo(int n)
 {
         return speedtab[ch_act_speed(n)][ctick];

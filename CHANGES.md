@@ -106,6 +106,14 @@ of 3.0.0 and up, so merc.exe never sees a message it doesn't know.
   when its master fights or is attacked; **passive** and it only attacks what its master names (attack <name>, #gca)
   and leaves the fight it is in. **buffs** works like geronimo. The mode is kept outside ch[].data (every slot there is
   read by some driver) and isn't saved: a restart brings back Defense. Live since Nov 25, 20:27.
+- **Meta stats for the Godot client** (`svr_do.c` meta_stats, `svr_act.c` attack_steps, `svr_tick.c`, `client.h`):
+  SV_META (81, 7 bytes: slot, int value, show) sends the numbers behind the client's Offenses / Defenses lists and the
+  Hit / Parry Score panel, only when one changes. Top rows: Weapon Value, Armor Value, Attack Speed (blows a second, from
+  speedtab), Min / Max Damage, Hit Score, Parry Score (the fight skill, less the luck penalty). Offenses: Average Damage
+  (lucky hits and 2H-axe crits included), Damage/Second, Strength Bonus, both lucky hits, Critical Hit (2H axe).
+  Defenses: Deflect (2H sword), Thorns, Hit Point / Endurance / Mana regen a second standing (as do_regenerate, with the
+  moon, tier effects, amulets and permanent spells), Resistance, Immunity. The names live in the client
+  (`MyV2MetaStats.cs`); the slots must match. Not live yet.
 
 ## HUD changes
 

@@ -297,8 +297,10 @@ the player walked); MyV2 sends 12 bits. Run the core tests after any change to t
    would show 1x); fullscreen on 2560x1440 is exactly 2x already. Was: **Skill buttons / hotkeys:** right click a skill = description / assign to a button; F-keys. Check against the
    client's hotbar.
 7. SET ASIDE Nov 25 (Cody: building works much better in the MyV2 Editor; not needed for the switch). Was: **Build mode** (gods: the held item 46, backpack shows build pieces with tip_build tooltips).
-8. **Group C:** List Skills / Offenses / Defenses and Hit / Parry Score (server sends the meta stats), the MOTD
-   (Cody writes it), planner previews with MyV2's formulas.
+8. **Group C:** Offenses / Defenses lists and Hit / Parry Score: DONE in code Nov 25 (server SV_META 81 from
+   `meta_stats()`, client `State/MyV2MetaStats.cs` holds names, descriptions and slots; TLG's text request (CL 40)
+   removed; lists don't scroll while they fit in the 10 rows; tested headless on the test server; waits for "go live").
+   Still to do: the MOTD (Cody writes it), planner previews with MyV2's formulas.
 
 **Then on the server (needs "go live"):**
 - Login refuses a client older than GODOT_CLIENT (0x030000) with a line saying to use the new client.

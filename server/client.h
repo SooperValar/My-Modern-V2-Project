@@ -58,6 +58,8 @@ struct cmap
 	unsigned char glow;		// item tiers: 1-4 the item's tier, 5 a grave holding items; +8: the character is a body holding items (SV_TILEGLOW)
 } __attribute__ ((packed));
 
+#define META_COUNT		89	// meta stats of the Godot client (SV_META)
+
 struct cplayer
 {
 	// informative stuff
@@ -102,6 +104,8 @@ struct cplayer
 	unsigned char tiers[60];	// item tiers of item[] and worn[] sent last (SV_TIERS)
 	unsigned char marks[120];	// item marks of item[] and worn[] sent last (SV_ITEMMARKS)
 	char zone[41];			// zone name sent last (SV_ZONE, Godot client only)
+	int meta[META_COUNT];		// meta stats sent last (SV_META, Godot client only)
+	unsigned char meta_show[META_COUNT];
 	int worn_p[20];
 
 	int spell[20];
@@ -245,6 +249,7 @@ struct cplayer
 #define SV_ITEMMARKS		78	// kind (as SV_TIERS), 62 x (letter, number; 255 = no number): 126 bytes
 #define SV_WAYPOINT		79	// a row of the waypoint travel window (waypoint.c): 80 bytes
 #define SV_ZONE			80	// the name of the zone the player is in (get_area_m), 40 bytes NUL-padded: 41 bytes. Only to GODOT_CLIENT and up
+#define SV_META			81	// meta stat n (byte), value (int), show (byte): 7 bytes. The numbers of the Godot client's Offenses / Defenses lists; the client holds the names
 #define GODOT_CLIENT		0x030000	// the Godot client logs in as 3.0.0; merc.exe (2.15.x) never gets its messages
 
 #define SV_SETMAP		128	// 128-255 are used !!!

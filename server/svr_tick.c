@@ -2265,6 +2265,16 @@ void plr_change(int nr)
 				xsend(nr,zb,41);
 			}
 		}
+		if ((unsigned int)player[nr].version>=GODOT_CLIENT) {	// the numbers of the Godot client's Offenses / Defenses lists
+			int mv[META_COUNT]; unsigned char ms[META_COUNT],mb[7]; int k;
+			meta_stats(cn,mv,ms);
+			for (k=0; k<META_COUNT; k++) {
+				if (mv[k]==cpl->meta[k] && ms[k]==cpl->meta_show[k]) continue;
+				cpl->meta[k]=mv[k]; cpl->meta_show[k]=ms[k];
+				mb[0]=SV_META; mb[1]=k; *(int*)(mb+2)=mv[k]; mb[6]=ms[k];
+				xsend(nr,mb,7);
+			}
+		}
 
 		for (n=0; n<20; n++) {
 			if (cpl->spell[n]!=(in=ch[cn].spell[n]) ||

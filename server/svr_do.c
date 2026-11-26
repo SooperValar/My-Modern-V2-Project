@@ -6040,3 +6040,105 @@ void remember_pvp(int cn, int co)
         ch[cn].data[CHD_ATTACKVICT] = co;
 }
 
+
+/* MyV2 (Nov 25, Cody): the numbers of the Godot client's Offenses / Defenses lists (SV_META).
+ * The client holds the names and where each one goes; these indexes must match MyV2MetaStats.cs.
+ * Hundredths where the client shows decimals. */
+#define META_WEAPON	0
+#define META_ARMOR	1
+#define META_SPEED	2	// attacks per second, hundredths
+#define META_DAMMIN	3
+#define META_DAMMAX	4
+#define META_HIT	5
+#define META_PARRY	6
+#define META_DAMAVG	7	// hundredths
+#define META_DPS	8	// hundredths
+#define META_STRBONUS	9
+#define META_LUCKY1	10	// percent, hundredths
+#define META_LUCKY2	11
+#define META_CRIT	12	// percent, hundredths
+#define META_DEFLECT	48	// percent, hundredths
+#define META_THORNS	49
+#define META_HPREG	50	// per second standing, hundredths
+#define META_ENDREG	51
+#define META_MANAREG	52
+#define META_RESIST	53
+#define META_IMMUN	54
+
+void meta_stats(int cn,int *val,unsigned char *show)
+{
+        int n,in,str,extra,avg,steps,hit,moonmult=20,ahp,aend,amana,hp=0,end=0,mana=0;
+
+        memset(val,0,META_COUNT*sizeof(int));
+        memset(show,0,META_COUNT);
+        if (!IS_SANECHAR(cn)) return;
+
+        hit=get_fight_skill(cn);
+        if ((ch[cn].flags&CF_PLAYER) && ch[cn].luck<0) hit+=ch[cn].luck/250-1;
+
+        str=ch[cn].attrib[AT_STREN][5];
+        extra=str>3 ? str/2-1 : 0;                              // RANDOM(str/2) in do_attack
+        steps=attack_steps(cn);
+
+        val[META_WEAPON]=ch[cn].weapon;
+        val[META_ARMOR]=ch[cn].armor;
+        val[META_SPEED]=steps*TICKS*100/(20*8);                 // 8 frames to an attack
+        val[META_DAMMIN]=ch[cn].weapon+1;
+        val[META_DAMMAX]=ch[cn].weapon+6+extra;
+        val[META_HIT]=hit;
+        val[META_PARRY]=hit;
+        avg=ch[cn].weapon*100+350+extra*50+(35+70)*5/10;        // lucky hits: 5 % +1d6, 5 % +2d6
+        if (wields_2h(cn,1)) {
+                val[META_CRIT]=wp2h_chance(cn,1)*10;
+                avg=avg*(1000+wp2h_chance(cn,1))/1000;
+        }
+        val[META_DAMAVG]=avg;
+        val[META_DPS]=avg*val[META_SPEED]/100;
+        val[META_STRBONUS]=extra;
+        val[META_LUCKY1]=500;
+        val[META_LUCKY2]=500;
+        if (wields_2h(cn,0)) val[META_DEFLECT]=wp2h_chance(cn,0)*10;
+        val[META_THORNS]=ch[cn].gethit_dam;
+
+        // standing still, as do_regenerate()
+        if (((globs->flags&GF_MAYHEM) || globs->newmoon) && (ch[cn].flags&CF_PLAYER)) moonmult=10;
+        if (globs->fullmoon && (ch[cn].flags&CF_PLAYER)) moonmult=40;
+        if (!(ch[cn].flags&CF_NOHPREG)) hp=moonmult*2+(ch[cn].skill[SK_REGEN][0] ? ch[cn].skill[SK_REGEN][5]*moonmult/30 : 0);
+        if (!(ch[cn].flags&CF_NOENDREG)) end=moonmult*4+(ch[cn].skill[SK_REST][0] ? ch[cn].skill[SK_REST][5]*moonmult/30 : 0);
+        if (!(ch[cn].flags&CF_NOMANAREG) && ch[cn].skill[SK_MEDIT][0]) mana=moonmult+ch[cn].skill[SK_MEDIT][5]*moonmult/30;
+        ahp=ch[cn].a_hp; aend=ch[cn].a_end; amana=ch[cn].a_mana;
+        tier_regen(cn,1,moonmult,(ch[cn].flags&CF_NOHPREG)!=0,(ch[cn].flags&CF_NOENDREG)!=0,(ch[cn].flags&CF_NOMANAREG)!=0);
+        hp+=ch[cn].a_hp-ahp; end+=ch[cn].a_end-aend; mana+=ch[cn].a_mana-amana;
+        ch[cn].a_hp=ahp; ch[cn].a_end=aend; ch[cn].a_mana=amana;
+        if ((in=ch[cn].worn[WN_NECK]) && it[in].temp==768) {
+                if (ch[cn].skill[SK_REGEN][0]) hp+=ch[cn].skill[SK_REGEN][5]*moonmult/60;
+                if (ch[cn].skill[SK_REST][0]) end+=ch[cn].skill[SK_REST][5]*moonmult/60;
+                if (ch[cn].skill[SK_MEDIT][0]) mana+=ch[cn].skill[SK_MEDIT][5]*moonmult/60;
+        } else if (in) {
+                int m=(it[in].temp==2019) ? 1 : (it[in].temp==2086 || it[in].temp==2082) ? 7 : 0;
+                if ((m&1) && ch[cn].skill[SK_REGEN][0]) hp+=ch[cn].skill[SK_REGEN][5]*moonmult/120;
+                if ((m&2) && ch[cn].skill[SK_REST][0]) end+=ch[cn].skill[SK_REST][5]*moonmult/120;
+                if ((m&4) && ch[cn].skill[SK_MEDIT][0]) mana+=ch[cn].skill[SK_MEDIT][5]*moonmult/120;
+        }
+        for (n=0; n<20; n++) {
+                if ((in=ch[cn].spell[n])>0 && in<MAXITEM && (it[in].flags&IF_PERMSPELL)) {
+                        if (it[in].hp[0]!=-1) hp+=it[in].hp[0];
+                        if (it[in].end[0]!=-1) end+=it[in].end[0];
+                        if (it[in].mana[0]!=-1) mana+=it[in].mana[0];
+                }
+        }
+        val[META_HPREG]=hp*TICKS/10;                            // 1000 a point, per tick
+        val[META_ENDREG]=end*TICKS/10;
+        val[META_MANAREG]=mana*TICKS/10;
+        val[META_RESIST]=ch[cn].skill[SK_RESIST][0] ? ch[cn].skill[SK_RESIST][5] : 0;
+        val[META_IMMUN]=ch[cn].skill[SK_IMMUN][0] ? ch[cn].skill[SK_IMMUN][5] : 0;
+
+        for (n=0; n<=META_CRIT; n++) show[n]=1;
+        show[META_CRIT]=wields_2h(cn,1);
+        show[META_DEFLECT]=wields_2h(cn,0);
+        show[META_THORNS]=val[META_THORNS]>0;
+        show[META_HPREG]=show[META_ENDREG]=1;
+        show[META_MANAREG]=ch[cn].skill[SK_MEDIT][0]!=0 || mana!=0;
+        show[META_RESIST]=val[META_RESIST]>0;
+        show[META_IMMUN]=val[META_IMMUN]>0;
+}
