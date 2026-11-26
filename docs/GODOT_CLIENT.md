@@ -296,7 +296,7 @@ the player walked); MyV2 sends 12 bits. Run the core tests after any change to t
    scaling was considered for crisp pixel text and dropped: it falls to the lower step (a maximized 2560x1440 window
    would show 1x); fullscreen on 2560x1440 is exactly 2x already. Was: **Skill buttons / hotkeys:** right click a skill = description / assign to a button; F-keys. Check against the
    client's hotbar.
-7. **Build mode** (gods: the held item 46, backpack shows build pieces with tip_build tooltips).
+7. SET ASIDE Nov 25 (Cody: building works much better in the MyV2 Editor; not needed for the switch). Was: **Build mode** (gods: the held item 46, backpack shows build pieces with tip_build tooltips).
 8. **Group C:** List Skills / Offenses / Defenses and Hit / Parry Score (server sends the meta stats), the MOTD
    (Cody writes it), planner previews with MyV2's formulas.
 
