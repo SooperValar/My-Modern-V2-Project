@@ -139,6 +139,9 @@ the question will only get answered if the NPC has a knowledge of at least 50, h
 #define TRANSFER        17
 #define SPELLINFO       18
 #define QUIET           19
+#define GCOFFENSE       20
+#define GCDEFENSE       21
+#define GCPASSIVE       22
 
 #define AR_GENERAL      0
 #define AR_THIEF        1
@@ -412,6 +415,13 @@ struct know know[]={
 {{"!geronimo",NULL},                                    0,      AR_GENERAL, CT_COMPANION, NULL,SPELLINFO},
 {{"!time","!what","?",NULL},                            0,      AR_GENERAL, 	0, 	  NULL,TIME},
 {{"!quiet",NULL},                                       0,      AR_GENERAL, CT_COMPANION, NULL,QUIET},
+{{"!buffs",NULL},                                       0,      AR_GENERAL, CT_COMPANION, NULL,SPELLINFO},
+{{"!offense",NULL},                                     0,      AR_GENERAL, CT_COMPANION, NULL,GCOFFENSE},
+{{"!offensive",NULL},                                   0,      AR_GENERAL, CT_COMPANION, NULL,GCOFFENSE},
+{{"!aggressive",NULL},                                  0,      AR_GENERAL, CT_COMPANION, NULL,GCOFFENSE},
+{{"!defense",NULL},                                     0,      AR_GENERAL, CT_COMPANION, NULL,GCDEFENSE},
+{{"!defensive",NULL},                                   0,      AR_GENERAL, CT_COMPANION, NULL,GCDEFENSE},
+{{"!passive",NULL},                                     0,      AR_GENERAL, CT_COMPANION, NULL,GCPASSIVE},
 
 
 {{"!riddle",NULL},                                     10,      AR_RIDDLE1,     899,    RIDDLE_TEXT,0},
@@ -431,6 +441,22 @@ int obey(int cn,int co)
         if (ch[cn].data[63]==co) return 1;
         if ((ch[cn].data[26]&ch[co].kindred) && (ch[cn].data[28]&1)) return 2;
         return 0;
+}
+
+/* MyV2 (Nov 25): Offense / Defense / Passive (driver.c gc_mode) */
+void answer_gcmode(int cn,int co,int mode)
+{
+        int n;
+
+        if (obey(cn,co)!=1) return;
+        gc_set_mode(cn,mode);
+        if (mode==GC_PASSIVE) {         // it leaves the fight it is in, too
+                for (n=80; n<92; n++) ch[cn].data[n]=0;
+                ch[cn].attack_cn=0;
+        }
+        if (mode==GC_OFFENSE) do_sayx(cn,"Yes master %s! I will attack every monster I see.",ch[co].name);
+        else if (mode==GC_PASSIVE) do_sayx(cn,"Yes master %s! I will only attack when you tell me to.",ch[co].name);
+        else do_sayx(cn,"Yes master %s! I will fight when you fight, or when you are attacked.",ch[co].name);
 }
 
 void answer_spellinfo(int cn,int co)
@@ -812,6 +838,9 @@ void special_answer(int cn,int co,int spec,char *word,int nr)
                 case TRANSFER:  answer_transfer(cn,co); break;
                 case SPELLINFO: answer_spellinfo(cn,co); break;
                 case QUIET:     answer_quiet(cn,co); break;
+                case GCOFFENSE: answer_gcmode(cn,co,GC_OFFENSE); break;
+                case GCDEFENSE: answer_gcmode(cn,co,GC_DEFENSE); break;
+                case GCPASSIVE: answer_gcmode(cn,co,GC_PASSIVE); break;
                 default:        break;
 
         }

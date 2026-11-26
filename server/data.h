@@ -336,6 +336,11 @@ extern unsigned int mapmarker;
 #define CHD_ATTACKTIME  68
 #define CHD_ATTACKVICT  69
 #define CHD_TALKATIVE   71
+
+// a Ghost Companion's fighting mode (driver.c gc_mode, set by its master's words in talk.c)
+#define GC_DEFENSE      0       // fights when its master fights or is attacked (the old behaviour)
+#define GC_OFFENSE      1       // also attacks every monster it sees that would attack players
+#define GC_PASSIVE      2       // only attacks what its master names (attack <name>, #gca)
 #define CHD_ENEMY1ST    80
 #define CHD_ENEMYZZZ    91
 #define CHD_BUILDPAGE   74      // players: current build page (NPCs use 74 for their ghost timer)

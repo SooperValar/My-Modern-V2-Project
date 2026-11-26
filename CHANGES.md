@@ -100,6 +100,12 @@ of 3.0.0 and up, so merc.exe never sees a message it doesn't know.
 - **Buff power and `#buffs`** (`svr_tick.c`, `svr_do.c` `do_buffs`, `client.h`): SV_SPELLTIME grew from 20 to 24
   bytes; [20-21] is the spell's power (the Godot client shows it in the buff icon's tooltip). `#buffs` lists the spells
   on you with power and time left (harmful ones red). Live since Nov 25, 20:10.
+- **Ghost Companion modes** (`driver.c` gc_mode/gc_hostile, `talk.c` answer_gcmode, `data.h` GC_*): say **offense**
+  (or offensive / aggressive) and it also attacks every monster it sees that would attack players (a monster with
+  attack groups, data[43], that doesn't spare players, 65536); **defense** (or defensive) is the old behaviour, fighting
+  when its master fights or is attacked; **passive** and it only attacks what its master names (attack <name>, #gca)
+  and leaves the fight it is in. **buffs** works like geronimo. The mode is kept outside ch[].data (every slot there is
+  read by some driver) and isn't saved: a restart brings back Defense. Live since Nov 25, 20:27.
 
 ## HUD changes
 

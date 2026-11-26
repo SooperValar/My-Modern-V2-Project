@@ -157,6 +157,8 @@ void trash_return(int cn);
 void trash_sweep(int cn);
 int trash_item(int cn,int n);
 void do_buffs(int cn);
+int gc_mode(int cn);
+void gc_set_mode(int cn,int mode);
 int god_take_from_char(int in,int cn);
 int god_drop_char(int cn,int x,int y);
 int god_drop_char_fuzzy(int nr,int x,int y);

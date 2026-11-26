@@ -365,6 +365,26 @@ int npc_seekill(int cn,int cc,int co)
         return 0;
 }
 
+/* MyV2 (Nov 25): the Ghost Companions' fighting modes, kept here and not in ch[].data (every slot there is read by
+ * some driver); not saved, so a restart brings back GC_DEFENSE */
+static unsigned char gcmode[MAXCHARS];
+
+int gc_mode(int cn) { return IS_SANECHAR(cn) ? gcmode[cn] : GC_DEFENSE; }
+
+void gc_set_mode(int cn,int mode) { if (IS_SANECHAR(cn)) gcmode[cn]=(unsigned char)mode; }
+
+/* a monster that attacks players: it has groups it attacks (data[43]) and players aren't spared (65536) */
+static int gc_hostile(int co)
+{
+        int n;
+
+        if (!IS_SANECHAR(co) || ch[co].used!=USE_ACTIVE) return 0;
+        if (ch[co].flags&(CF_PLAYER|CF_USURP|CF_BODY|CF_MERCHANT|CF_IMMORTAL)) return 0;
+        if (ch[co].temp==CT_COMPANION || !ch[co].data[43]) return 0;
+        for (n=43; n<47; n++) if (ch[co].data[n]==65536) return 0;
+        return 1;
+}
+
 int npc_seeattack(int cn,int cc,int co)
 {
         int diff,ret,c2,c3;
@@ -409,7 +429,7 @@ int npc_seeattack(int cn,int cc,int co)
                 }
         }
 
-        if (ch[cn].data[63]) { // protect char (by nr)
+        if (ch[cn].data[63] && !(ch[cn].temp==CT_COMPANION && gc_mode(cn)==GC_PASSIVE)) { // protect char (by nr)
                 if (co==ch[cn].data[63]) {
                         ret=npc_add_enemy(cn,cc,1);
                         if (ret) {
@@ -750,6 +770,14 @@ int npc_see(int cn,int co)
                                 return 1;
                         }
                 }
+        }
+
+        // a Ghost Companion on Offense goes after every monster that would attack players
+        if (!ch[cn].attack_cn && ch[cn].temp==CT_COMPANION && gc_mode(cn)==GC_OFFENSE && gc_hostile(co) && npc_add_enemy(cn,co,0)) {
+                ch[cn].attack_cn=co;
+                ch[cn].goto_x=0;
+                ch[cn].data[58]=2;
+                return 1;
         }
 
         // check if we need to attack him (by group)

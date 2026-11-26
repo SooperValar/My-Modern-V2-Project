@@ -1590,6 +1590,7 @@ void skill_ghost(int cn)
                 ch[cc].data[80]=idx;            // add enemy to kill list
         }
         ch[cc].data[63]=cn;
+        gc_set_mode(cc,GC_DEFENSE);
         ch[cc].data[69]=cn;
         if (ch[cn].flags&CF_PLAYER) ch[cc].data[CHD_COMPANION]=0;  // player GCs stay forever
         else ch[cc].data[CHD_COMPANION]=globs->ticker+TICKS*60*5;  // NPC GCs stay only for 5 minutes
