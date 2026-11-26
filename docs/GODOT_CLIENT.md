@@ -311,8 +311,10 @@ the player walked); MyV2 sends 12 bits. Run the core tests after any change to t
    `Rules/MeleeModel` adds Est. Melee Hit Dmg and Action Speed rows; Endurance row; Off-hand, tarot, tree, enchants
    and gear hidden (their code is still there, at zero); active buffs read from SV_SPELLTIME's power, not TLG's
    #buffs reply. Only your own casts count: buffs already on you are taken out (myv2 68550b9b). Server sends hidden metas 86 / 87 (LIVE Nov 25, 23:12). GodotTests now run in the cloud (Godot 4.7.2 Linux, headless
-   needed for 81 of them): the planner's 137 pass; 174 older failures in other suites (TLG numbers, URLs) are left
-   from earlier steps. MOTD skipped for now (Cody).
+   needed for 81 of them). **All 2,098 GodotTests pass (Nov 26, myv2 b54dfb78)** after the test clean-up (MyV2's packet
+   sizes, 1024x1024 world, 37 listed skills, 99-point raises, SooperValar links, client art numbers). In the cloud
+   they need `git lfs pull --include "data/archives/*"` and `xvfb-run` (with XDG_RUNTIME_DIR set); the 26 Core art
+   tests still fail there only (no SkiaSharp native library on Linux, art not pulled). MOTD skipped for now (Cody).
 
 **Then on the server (needs "go live"):**
 - DONE Nov 25 (LIVE 23:53): login refuses a client older than GODOT_CLIENT (MINVERSION 0x030000, LO_VERSION;
