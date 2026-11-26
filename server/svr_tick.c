@@ -2288,14 +2288,15 @@ void plr_change(int nr)
 				// time left, for the client's buff timers
 				buf[0]=SV_SPELLTIME;
 				buf[1]=(unsigned char)n;
-				memset(buf+2,0,18);
+				memset(buf+2,0,22);
 				if (in) {
 					int left=it[in].active/TICKS, t=it[in].temp;
 					*(unsigned short*)(buf+2)=(unsigned short)min(65535,max(0,left));
 					buf[4]=(t==SK_CURSE || t==SK_STUN || t==SK_WARCRY || t==SK_WARCRY2) ? 1 : 0;
 					strncpy((char*)buf+5,it[in].name,15);
+					*(unsigned short*)(buf+20)=(unsigned short)min(65535,max(0,it[in].power));
 				}
-				xsend(nr,buf,20);
+				xsend(nr,buf,24);
 			}
 		}
 	

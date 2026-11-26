@@ -97,6 +97,9 @@ of 3.0.0 and up, so merc.exe never sees a message it doesn't know.
   as big as The Last Gate's, so the Godot client's view reaches the edges of a big window. **merc.exe can no longer
   play** (it is built for 44): MyV2 is Godot-client only from here. Tested: a full first tick near the temple is 14.6 KB
   (the tick buffer is 64 KB). Live since Nov 25, 19:01.
+- **Buff power and `#buffs`** (`svr_tick.c`, `svr_do.c` `do_buffs`, `client.h`): SV_SPELLTIME grew from 20 to 24
+  bytes; [20-21] is the spell's power (the Godot client shows it in the buff icon's tooltip). `#buffs` lists the spells
+  on you with power and time left (harmful ones red). Live since Nov 25, 20:10.
 
 ## HUD changes
 

@@ -238,7 +238,7 @@ struct cplayer
 #define SV_SETCHAR_DIR		71
 #define SV_UNIQUE		72
 #define SV_IGNORE		73
-#define SV_SPELLTIME		74	// slot, seconds left, flags, name: 20 bytes
+#define SV_SPELLTIME		74	// slot, seconds left, flags, name (15), power: 24 bytes (was 20 before the power, Nov 25)
 #define SV_ITEMINFO		75	// one line of an item tooltip: 64 bytes
 #define SV_TILEGLOW		76	// map tile n (short), glow: 4 bytes
 #define SV_TIERS		77	// kind (0 backpack 0-39 + worn 40-59, 1 shop/grave 0-61), 62 tiers: 64 bytes

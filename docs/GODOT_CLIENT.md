@@ -287,7 +287,11 @@ the player walked); MyV2 sends 12 bits. Run the core tests after any change to t
    Was: **Map edges:** merc.exe walks on when the view's edge arrows are clicked (xmove 1-4). Check the Godot client.
 5. DONE Nov 25 (myv2 d0eecba5, Cody checked): the first exit click sent `/tavern` (logs a god out on the spot); now it only warns,
    with merc.exe's words, and the second click sends CL_CMD_EXIT. Was: **Exit:** merc.exe's F12 exit (costs health and gold) vs the client's TLG exit sequence (`#tavern`?).
-6. **Skill buttons / hotkeys:** right click a skill = description / assign to a button; F-keys. Check against the
+6. DONE Nov 25: hotkeys audited. Client-only ones and the skill bar work; Fightback (#fightback), Who (#who) and Buffs
+   (#buffs, new on the server, LIVE 20:10, with SV_SPELLTIME's power in the buff tooltip) say commands MyV2 has; Swap
+   Position and TLG's 8 GC words were removed (MyV2 lacks them; add back when the server gets them); GC Attack added
+   (#gca + the Alt-selected character, like merc.exe; a typed bare #gca gets it too). NEXT: Cody wants more GC
+   commands on the server (to design with him). Was: **Skill buttons / hotkeys:** right click a skill = description / assign to a button; F-keys. Check against the
    client's hotbar.
 7. **Build mode** (gods: the held item 46, backpack shows build pieces with tip_build tooltips).
 8. **Group C:** List Skills / Offenses / Defenses and Hit / Parry Score (server sends the meta stats), the MOTD

@@ -2471,6 +2471,7 @@ void do_command(int cn, char *ptr)
                 if (prefix(cmd,"build") && f_c)         { god_build_cmd(cn,arg[1]); return; }
                 if (prefix(cmd,"belt"))                 { do_info_belt(cn); return; };
                 if (prefix(cmd,"burning"))              { do_burning(cn); return; };
+                if (prefix(cmd,"buffs"))                { do_buffs(cn); return; };
                 break;
         case 'c':
                 if (!strcmp(cmd,"clear") && f_c)        { build_clear_cmd(cn); return; };
@@ -5002,6 +5003,22 @@ static void trash_send(int cn)
 		}
 		xsend(nr,buf,16);
 	}
+}
+
+/* #buffs (Nov 25): the spells on the player, with their power and the time left; harmful ones in red */
+void do_buffs(int cn)
+{
+	int n,in,left,shown=0,t;
+
+	if (!IS_SANECHAR(cn)) return;
+	for (n=0; n<20; n++) {
+		if (!(in=ch[cn].spell[n]) || !IS_SANEITEM(in) || !it[in].used) continue;
+		if (!shown++) do_char_log(cn,1,"Your spells:\n");
+		left=it[in].active/TICKS; t=it[in].temp;
+		do_char_log(cn,(t==SK_CURSE || t==SK_STUN || t==SK_WARCRY || t==SK_WARCRY2) ? 0 : 2," %-16s power %3d, %d:%02d left\n",
+			it[in].name,it[in].power,left/60,left%60);
+	}
+	if (!shown) do_char_log(cn,1,"No spells are on you.\n");
 }
 
 int trash_item(int cn,int n)
