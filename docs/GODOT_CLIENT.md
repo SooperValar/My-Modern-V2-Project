@@ -330,5 +330,21 @@ the player walked); MyV2 sends 12 bits. Run the core tests after any change to t
 page 2 the 20 worn, held and gold; the `PageButton` reads "Worn (n) >" when page 2 has items). Describe in a
 grave is offset 100. Client and server go live together: the new client desyncs on the old server.
 
+## Upstream (James's client)
+
+We forked github.com/jamesblack/thelastgate-godot at 708fe018 (Nov 21). His later commits are reviewed and brought
+over one at a time (cherry-pick, adjusted to MyV2), never merged whole. A scheduled task checks every Tuesday 5:24 PM
+and reports new ones sorted into take / Cody's call / skip / later. Reviewed so far (Nov 26):
+- **Taken** (client myv2 ec1d1732..eaafed1f): c6acdfb8 buff numbers asked only on a cast (+ Magic Shield's messages,
+  which TLG lacks), 451cf019 chat line takes 119 letters, b06e6d3d Ctrl+Shift queues takes too, 2015313b planner focus
+  in the background, 62aa6ee3 (only "attacking clears queued uses"; stubborn use isn't in our fork).
+- **Replaced:** 8b0b8afd (hotkey menu used TLG skill numbers; ours now lists MyV2's 16 usable skills).
+- **Skipped:** 83b703a3 (tooltips read from chat; ours come from SV_ITEMINFO), e6b0ae8b tarot values, afbd6c3d and
+  0b7ddfca (his server-commit checker), 1106260c (his release), 82c5701f stubborn use (experimental), 594adc90 sprites
+  as Godot resources (clashes with loading our art from MyV2\Client).
+- **Cody's call (shown to him Nov 26):** the new window style: 68dbf135, b4db3cfa, 2fcc4b3c, d51dac11, 72fc2485,
+  437fc678, 6671004c; ff1464c4 softer infravision tint.
+- **Later (Step 6):** 72b2e7d2, c6c19315 (packaging speed-ups).
+
 ## Step 6: getting it to players (later; only with Cody's "go live")
 Its own Velopack auto-updater (GitHub releases on the fork) or our `client-dist` launcher. Decide when it plays well.
