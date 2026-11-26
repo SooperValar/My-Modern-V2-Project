@@ -19,7 +19,7 @@ All rights reserved.
 // line-of-sight grid (was 40x40, center 20)
 #define VIS_W           64
 #define VIS_C           32
-#define VIS_PLR_RADIUS  22      // display sight radius for players (was 16)
+#define VIS_PLR_RADIUS  27      // display sight radius for players (was 16, then 22 for the 44x44 view)
 
 #define TICKS                   18
 #define TICK                    (1000000/TICKS)

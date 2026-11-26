@@ -8,8 +8,8 @@ All rights reserved.
 
 #include <zlib.h>
 
-#define TILEX			44
-#define TILEY			44
+#define TILEX			54	// the Godot client's view (was 44 for merc.exe)
+#define TILEY			54
 
 #define INJURED		(1u<<0)
 #define INJURED1	(1u<<1)

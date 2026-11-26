@@ -93,6 +93,10 @@ of 3.0.0 and up, so merc.exe never sees a message it doesn't know.
   asked for a slot of your own depot (shop number |0x8000) or trash window (|0x4000) now shows that item. The price
   lines check the shop number is a real character first (a depot number read past the end of `ch[]`). Live since
   Nov 25, 16:19.
+- **54x54 view** (`client.h` TILEX/TILEY 44 -> 54, `gendefs.h` VIS_PLR_RADIUS 22 -> 27): the map sent to the client is
+  as big as The Last Gate's, so the Godot client's view reaches the edges of a big window. **merc.exe can no longer
+  play** (it is built for 44): MyV2 is Godot-client only from here. Tested: a full first tick near the temple is 14.6 KB
+  (the tick buffer is 64 KB). Live since Nov 25, 19:01.
 
 ## HUD changes
 
