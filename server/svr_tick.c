@@ -27,16 +27,6 @@ int ctick=0;
 
 static char intro_msg1[]={"Welcome to Mercenaries of Asgard v2, my friend!\n"};
 
-/* a player whose client is older than the newest published one: tell him to update with the launcher */
-static void outdated_note(int nr,int cn)
-{
-        unsigned int v=player[nr].version;
-        if (v>=CLIENT_LATEST) return;
-        do_char_log(cn,0,"Your game is out of date (version %u.%02u.%02u, the newest is %u.%02u.%02u).\n",
-                (v>>16)&255,(v>>8)&255,v&255,(CLIENT_LATEST>>16)&255,(CLIENT_LATEST>>8)&255,CLIENT_LATEST&255);
-        do_char_log(cn,0,"Please close it and start the game with Launcher.exe: it updates the game for you.\n");
-        do_char_log(cn,1," \n");
-}
 static char intro_msg2[]={"May your visit here be... interesting.\n"};
 
 static char intro_msg3[]={"\n"};
@@ -773,88 +763,10 @@ static void cmp_vec(int in,int *v,int add)
 	for (n=0; n<50; n++) v[10+n]+=add*it[in].skill[n][act];
 }
 
-static int cmp_effect(int in,char *name)	// the Epic effect's name, or 0
-{
-	char el[4][60];
-	if (!in || in>=MAXITEM || !IT_TIER(in) || !IT_TEFFECT(in)) return 0;
-	if (!tier_tip_effect(in,el)) return 0;
-	strcpy(name,el[0]);
-	return 1;
-}
-
-/* one section: "Compared to your ...:" and the differences, gains green, losses red.
- * w1/w2: the worn piece(s) it would replace (0 = none) */
-static void cmp_section(int nr,int where,int slot,int *line,int in,int w1,int w2,char *title)
-{
-	int v[CMP_N],n,cnt=0;
-	char a[60],b[60];
-	static char *vn[10]={"WV","AV",0,0,0,0,0,"Hitpoints","Endurance","Mana"};
-
-	memset(v,0,sizeof(v));
-	cmp_vec(in,v,1); cmp_vec(w1,v,-1); cmp_vec(w2,v,-1);
-	tip_sep();
-	tip_line(nr,where,slot,line,1,"%s",title);
-	for (n=0; n<CMP_N; n++) {
-		if (!v[n]) continue;
-		if (n>=2 && n<7) tip_line(nr,where,slot,line,v[n]>0 ? 2 : 0,"%+5d %s",v[n],at_name[n-2]);
-		else if (n>=10) tip_line(nr,where,slot,line,v[n]>0 ? 2 : 0,"%+5d %s",v[n],skilltab[n-10].name);
-		else tip_line(nr,where,slot,line,v[n]>0 ? 2 : 0,"%+5d %s",v[n],vn[n]);
-		cnt++;
-	}
-	if (cmp_effect(in,a)) {
-		if (!(cmp_effect(w1,b) && !strcmp(a,b))) { tip_line(nr,where,slot,line,2,"  + %s",a); cnt++; }
-	}
-	if (cmp_effect(w1,b) && !(cmp_effect(in,a) && !strcmp(a,b))) { tip_line(nr,where,slot,line,0,"  - %s",b); cnt++; }
-	if (!cnt) tip_line(nr,where,slot,line,1,"  No difference.");
-}
-
 static void cmp_name(int in,char *buf)
 {
 	if (in && in<MAXITEM && it[in].used!=USE_EMPTY) { strncpy(buf,it[in].name,30); buf[30]=0; }
 	else strcpy(buf,"nothing");
-}
-
-/* the item at in (backpack, shop, grave) against what cn wears in its slot(s);
- * also tells the client which worn slots to show beside it (font 8 line, "W n [n]") */
-static void tip_compare(int nr,int where,int slot,int *line,int cn,int in)
-{
-	int pl=it[in].placement,w=-1,rh,lh;
-	char t[80],n1[40],n2[40];
-
-	if (!pl) return;
-	rh=ch[cn].worn[WN_RHAND]; lh=ch[cn].worn[WN_LHAND];
-	if (pl&PL_RING) {
-		cmp_name(ch[cn].worn[WN_LRING],n1); cmp_name(ch[cn].worn[WN_RRING],n2);
-		sprintf(t,"Compared to your left ring (%s):",n1); cmp_section(nr,where,slot,line,in,ch[cn].worn[WN_LRING],0,t);
-		sprintf(t,"Compared to your right ring (%s):",n2); cmp_section(nr,where,slot,line,in,ch[cn].worn[WN_RRING],0,t);
-		tip_line(nr,where,slot,line,8,"W %d %d",WN_LRING,WN_RRING);
-		return;
-	}
-	if (pl&PL_TWOHAND) {	// replaces the weapon and the shield
-		cmp_name(rh,n1); cmp_name(lh,n2);
-		if (rh && lh) sprintf(t,"Compared to your %s and %s:",n1,n2);
-		else if (rh || lh) sprintf(t,"Compared to your %s:",rh ? n1 : n2);
-		else strcpy(t,"Your hands are empty:");
-		cmp_section(nr,where,slot,line,in,rh,lh,t);
-		if (rh && lh) tip_line(nr,where,slot,line,8,"W %d %d",WN_RHAND,WN_LHAND);
-		else if (rh || lh) tip_line(nr,where,slot,line,8,"W %d",rh ? WN_RHAND : WN_LHAND);
-		return;
-	}
-	if (pl&PL_SHIELD && rh && (it[rh].placement&PL_TWOHAND)) {
-		cmp_name(rh,n1);
-		tip_sep();
-		tip_line(nr,where,slot,line,0,"Can't be used with your %s.",n1);
-		return;
-	}
-	if (pl&PL_HEAD) w=WN_HEAD; else if (pl&PL_NECK) w=WN_NECK; else if (pl&PL_BODY) w=WN_BODY;
-	else if (pl&PL_ARMS) w=WN_ARMS; else if (pl&PL_BELT) w=WN_BELT; else if (pl&PL_LEGS) w=WN_LEGS;
-	else if (pl&PL_FEET) w=WN_FEET; else if (pl&PL_WEAPON) w=WN_RHAND; else if (pl&PL_SHIELD) w=WN_LHAND;
-	else if (pl&PL_CLOAK) w=WN_CLOAK;
-	if (w<0) return;
-	if (ch[cn].worn[w]) { cmp_name(ch[cn].worn[w],n1); sprintf(t,"Compared to your %s:",n1); }
-	else strcpy(t,"Nothing worn there:");
-	cmp_section(nr,where,slot,line,in,ch[cn].worn[w],0,t);
-	if (ch[cn].worn[w]) tip_line(nr,where,slot,line,8,"W %d",w);
 }
 
 /* ---- the Godot client's tooltip (client version 3.0.0 and up): the item's stats as a table -------
@@ -1034,12 +946,11 @@ static void tip_desc(int nr,int where,int slot,int *line,int in)
 
 void plr_cmd_iteminfo(int nr)
 {
-	int cn,co,where,slot,in=0,line=0,n,act,ok,first,flag,shown,gd;
+	int cn,co,where,slot,in=0,line=0,n,act,ok,first,flag;
 	unsigned char end[64];
 	char b2[40];
 
 	cn=player[nr].usnr;
-	gd=(unsigned int)player[nr].version>=GODOT_CLIENT;
 	where=player[nr].inbuf[1];
 	slot=*(unsigned short*)(player[nr].inbuf+2);
 	co=*(unsigned int*)(player[nr].inbuf+4);
@@ -1065,28 +976,20 @@ void plr_cmd_iteminfo(int nr)
 		if (stack_count(in)>1) tip_line(nr,where,slot,&line,1,"A stack of %d (Ctrl+click: take one)",stack_count(in));
 		else if (STACKS(stack_kind(in))) tip_line(nr,where,slot,&line,1,"Stacks up to %d",STACK_MAX);
 		if (IT_TIER(in)) { char t1[80],t2[80]; tier_tip_lines(in,t1,t2); tip_line(nr,where,slot,&line,1,"%s",t1); }
-		if (gd) { tip_sep(); tip_desc(nr,where,slot,&line,in); }
+		tip_sep(); tip_desc(nr,where,slot,&line,in);
 		tip_sep();
 
 		if ((it[in].flags&IF_NEEDIDENT) && !(it[in].flags&IF_IDENTIFIED)) {
 			tip_line(nr,where,slot,&line,0,"Unidentified. Cast Identify on it");
 			tip_line(nr,where,slot,&line,0,"to learn its powers.");
 		} else {
-			if (gd) tip_table(nr,where,slot,&line,cn,in,act);
-			if (!gd && it[in].weapon[act]) tip_line(nr,where,slot,&line,2,"%+5d WV",it[in].weapon[act]);
+			tip_table(nr,where,slot,&line,cn,in,act);
 			if ((it[in].flags&(IF_WP_TWOHAND|IF_WP_AXE))==(IF_WP_TWOHAND|IF_WP_AXE)) { int c=wp2h_chance(player[nr].usnr,1); tip_line(nr,where,slot,&line,3,"Critical hits: %d.%d%% of your",c/10,c%10); tip_line(nr,where,slot,&line,3,"hits (more with Strength)"); }
 			else if (it[in].flags&IF_WP_TWOHAND) { int c=wp2h_chance(player[nr].usnr,0); tip_line(nr,where,slot,&line,3,"Deflects %d.%d%% of melee hits",c/10,c%10); tip_line(nr,where,slot,&line,3,"(more with Agility)"); }
 			if ((it[in].flags&IF_WP_STAFF) && (it[in].placement&(PL_WEAPON|PL_TWOHAND))) { tip_line(nr,where,slot,&line,3,"Harakim: Ghost Companion +%d%%",GC_STAFF_HARAKIM-100); tip_line(nr,where,slot,&line,3,"(Arch-Harakim +%d%%)",GC_STAFF_ARCH-100); }
-			if (!gd && it[in].armor[act]) tip_line(nr,where,slot,&line,2,"%+5d AV",it[in].armor[act]);
-			if (!gd && it[in].light[act]>0) tip_line(nr,where,slot,&line,2,"%+5d Light",it[in].light[act]);
 			if (it[in].gethit_dam[act]) tip_line(nr,where,slot,&line,2," 1-%d Damage to attackers",it[in].gethit_dam[act]);	// do_hurt: RANDOM(d)+1
 			tip_sep();
-			for (n=0; n<5 && !gd; n++) if (it[in].attrib[n][act]) tip_line(nr,where,slot,&line,it[in].attrib[n][act]<0 ? 0 : 2,"%+5d %s",it[in].attrib[n][act],at_name[n]);
-			if (!gd && it[in].hp[act]) tip_line(nr,where,slot,&line,it[in].hp[act]<0 ? 0 : 2,"%+5d Hitpoints",it[in].hp[act]);
-			if (!gd && it[in].end[act]) tip_line(nr,where,slot,&line,it[in].end[act]<0 ? 0 : 2,"%+5d Endurance",it[in].end[act]);
-			if (!gd && it[in].mana[act]) tip_line(nr,where,slot,&line,it[in].mana[act]<0 ? 0 : 2,"%+5d Mana",it[in].mana[act]);
 			tip_sep();
-			for (n=0; n<50 && !gd; n++) if (it[in].skill[n][act]) tip_line(nr,where,slot,&line,it[in].skill[n][act]<0 ? 0 : 2,"%+5d %s",it[in].skill[n][act],skilltab[n].name);
 			{	// Fire / Ice set bonus: how many the player wears, and the bonuses (green when they apply)
 				int t=it[in].temp,set=0,w;
 				if ((t>=623 && t<=628)) set=SET_FIRE;
@@ -1110,35 +1013,11 @@ void plr_cmd_iteminfo(int nr)
 				for (k=0; k<cnt; k++) tip_line(nr,where,slot,&line,k ? 2 : 13,"%s",el[k]);
 			}
 			tip_sep();
-			if (!gd && (it[in].flags&IF_USEACTIVATE) && !act) {	// what it does when turned on
-				for (n=0,shown=0; n<5; n++) if (it[in].attrib[n][1]) { if (!shown++) tip_line(nr,where,slot,&line,1,"When active:"); tip_line(nr,where,slot,&line,it[in].attrib[n][1]<0 ? 0 : 2,"%+5d %s",it[in].attrib[n][1],at_name[n]); }
-				if (it[in].armor[1]>it[in].armor[0]) { if (!shown++) tip_line(nr,where,slot,&line,1,"When active:"); tip_line(nr,where,slot,&line,2,"%+5d AV",it[in].armor[1]); }
-				if (it[in].light[1]>0) { if (!shown++) tip_line(nr,where,slot,&line,1,"When active:"); tip_line(nr,where,slot,&line,2,"%+5d Light",it[in].light[1]); }
-			}
 		}
-
-		// what wearing it would change (not for what you already wear)
-		if (!gd && where!=1 && !(it[in].flags&IF_NEEDIDENT && !(it[in].flags&IF_IDENTIFIED))) tip_compare(nr,where,slot,&line,cn,in);
 
 		// requirements, red when not met (base values, like wearing it checks)
 		tip_sep();
 		first=1;
-		for (n=0; n<5 && !gd; n++) {
-			if (it[in].attrib[n][2]<=1) continue;
-			if (first) { tip_line(nr,where,slot,&line,1,"Needs:"); first=0; }
-			ok=ch[cn].attrib[n][0]>=it[in].attrib[n][2];
-			tip_line(nr,where,slot,&line,ok ? 1 : 0," %-14s %4d%s",at_name[n],it[in].attrib[n][2],ok ? "" : " (too low)");
-		}
-		for (n=0; n<50 && !gd; n++) {
-			if (!it[in].skill[n][2]) continue;
-			if (first) { tip_line(nr,where,slot,&line,1,"Needs:"); first=0; }
-			ok=ch[cn].skill[n][0] && ch[cn].skill[n][0]>=it[in].skill[n][2];
-			tip_line(nr,where,slot,&line,ok ? 1 : 0," %-14s %4d%s",skilltab[n].name,it[in].skill[n][2],
-				!ch[cn].skill[n][0] ? " (not known)" : (ok ? "" : " (too low)"));
-		}
-		if (!gd && it[in].hp[2]) { if (first) { tip_line(nr,where,slot,&line,1,"Needs:"); first=0; } ok=ch[cn].hp[0]>=it[in].hp[2]; tip_line(nr,where,slot,&line,ok ? 1 : 0," %-14s %4d%s","Hitpoints",it[in].hp[2],ok ? "" : " (too low)"); }
-		if (!gd && it[in].end[2]) { if (first) { tip_line(nr,where,slot,&line,1,"Needs:"); first=0; } ok=ch[cn].end[0]>=it[in].end[2]; tip_line(nr,where,slot,&line,ok ? 1 : 0," %-14s %4d%s","Endurance",it[in].end[2],ok ? "" : " (too low)"); }
-		if (!gd && it[in].mana[2]) { if (first) { tip_line(nr,where,slot,&line,1,"Needs:"); first=0; } ok=ch[cn].mana[0]>=it[in].mana[2]; tip_line(nr,where,slot,&line,ok ? 1 : 0," %-14s %4d%s","Mana",it[in].mana[2],ok ? "" : " (too low)"); }
 		if (it[in].min_rank>0) {
 			if (first) { tip_line(nr,where,slot,&line,1,"Needs:"); first=0; }
 			ok=points2rank(ch[cn].points_tot)>=it[in].min_rank;
@@ -1168,8 +1047,6 @@ void plr_cmd_iteminfo(int nr)
 				else tip_line(nr,where,slot,&line,3,"%s doesn't buy these.",ch[co].name);
 			}
 		}
-
-		if (!gd) { tip_sep(); tip_desc(nr,where,slot,&line,in); }
 	}
 
 	memset(end,0,64);
@@ -1638,7 +1515,6 @@ void plr_newlogin(int nr)
         do_char_log(cn,1," \n");
         do_char_log(cn,1,intro_msg4);
         do_char_log(cn,1," \n");
-        outdated_note(nr,cn);
 
 	if (player[nr].passwd[0] && !(ch[cn].flags&CF_PASSWD)) {
 		god_change_pass(cn,cn,player[nr].passwd);
@@ -1793,7 +1669,6 @@ void plr_login(int nr)
         do_char_log(cn,1," \n");
         do_char_log(cn,1,intro_msg4);
         do_char_log(cn,1," \n");
-        outdated_note(nr,cn);
 
 	if (player[nr].passwd[0] && !(ch[cn].flags&CF_PASSWD)) {
 		god_change_pass(cn,cn,player[nr].passwd);
@@ -2256,7 +2131,7 @@ void plr_change(int nr)
 			for (k=0; k<120; k++) if (mb[2+k]!=cpl->marks[k]) { diff=1; cpl->marks[k]=mb[2+k]; }
 			if (diff) xsend(nr,mb,126);
 		}
-		if ((unsigned int)player[nr].version>=GODOT_CLIENT) {	// the zone's name, for the bar above the Godot client's minimap
+		{	// the zone's name, for the bar above the Godot client's minimap
 			unsigned char zb[41];
 			char *z=get_area_m(ch[cn].x,ch[cn].y,0);
 			if (strncmp(z,cpl->zone,40)) {
@@ -2265,7 +2140,7 @@ void plr_change(int nr)
 				xsend(nr,zb,41);
 			}
 		}
-		if ((unsigned int)player[nr].version>=GODOT_CLIENT) {	// the numbers of the Godot client's Offenses / Defenses lists
+		{	// the numbers of the Godot client's Offenses / Defenses lists
 			int mv[META_COUNT]; unsigned char ms[META_COUNT],mb[7]; int k;
 			meta_stats(cn,mv,ms);
 			for (k=0; k<META_COUNT; k++) {

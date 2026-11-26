@@ -38,7 +38,6 @@ clears.dat.
 #define WP_DRIVER	76
 #define MAXWP		256		// numbers 1-255
 #define WP_SHOWN	200		// rows sent to a client at most
-#define WP_CLIENT	0x020F05	// the first client with the travel window
 #define WP_HDR		16
 #define WP_SOUND	19		// sfx/19.wav (new with client 2.15.05)
 
@@ -239,10 +238,6 @@ int use_waypoint(int cn,int in)
 	}
 	nr=ch[cn].player;
 	if (nr<1 || nr>=MAXPLAYER) return 1;
-	if (player[nr].version<WP_CLIENT) {
-		do_char_log(cn,0,"To travel between waypoints you need the newest version of the game. Start it with Launcher.exe.\n");
-		return 1;
-	}
 	wp_send(nr,cn,w);
 	return 1;
 }

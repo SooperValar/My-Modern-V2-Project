@@ -124,6 +124,11 @@ of 3.0.0 and up, so merc.exe never sees a message it doesn't know.
 - **Godot client only** (`gendefs.h` MINVERSION 2.15.06 -> 3.0.0): merc.exe is retired (Cody, Nov 25). A client
   older than the Godot client's 3.0.0 is logged out before it enters the game (LO_VERSION: "Client version too old.
   Update needed."); the server log says "Client too old". Live since Nov 25, 23:53.
+- **Clean-up after merc.exe** (`svr_tick.c`, `waypoint.c`, `client.h`, `gendefs.h`): what only merc.exe got is gone
+  (the line-by-line item tooltip, its "Compared to" and "Needs:" lines, tip_compare / cmp_section / cmp_effect, the
+  "out of date, use Launcher.exe" login note and CLIENT_LATEST, the waypoint window's WP_CLIENT check), and what only
+  the Godot client got (the table tooltip, SV_ZONE, SV_META) no longer checks the version (GODOT_CLIENT is gone;
+  MINVERSION 3.0.0 is the one gate). The old client's files and tools stay (Cody, Nov 26). Not live yet.
 
 ## HUD changes
 
