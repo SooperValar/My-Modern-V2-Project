@@ -3284,6 +3284,22 @@ int get_fight_skill(int cn)
 
 }
 
+/* the skill number get_fight_skill() reads (bare hands: Hand to Hand or Karate, whichever is higher) */
+int fight_skill_number(int cn)
+{
+        int in=ch[cn].worn[WN_RHAND];
+        int bare=ch[cn].skill[SK_KARATE][5]>ch[cn].skill[SK_HAND][5] ? SK_KARATE : SK_HAND;
+
+        if (!in) return bare;
+        if ((it[in].flags&(IF_WP_AXE|IF_WP_TWOHAND))==(IF_WP_AXE|IF_WP_TWOHAND)) return SK_AXE2H;
+        if (it[in].flags&IF_WP_SWORD) return SK_SWORD;
+        if (it[in].flags&IF_WP_DAGGER) return SK_DAGGER;
+        if (it[in].flags&IF_WP_AXE) return SK_AXE;
+        if (it[in].flags&IF_WP_STAFF) return SK_STAFF;
+        if (it[in].flags&IF_WP_TWOHAND) return SK_TWOHAND;
+        return bare;
+}
+
 void do_give_exp(int cn,int p,int gflag,int rank)
 {
         int n,c,co,s,master;
@@ -6059,6 +6075,8 @@ void meta_stats(int cn,int *val,unsigned char *show)
         extra=str>3 ? str/2-1 : 0;                              // RANDOM(str/2) in do_attack
 
         val[META_SPEED]=attack_steps(cn)*TICKS*100/(20*8);     // 8 frames to a step, blow or cast
+        val[META_SPEEDSTEP]=ch[cn].speed;
+        val[META_WEAPONSKILL]=fight_skill_number(cn);
         val[META_WEAPON]=ch[cn].weapon;
         val[META_HIT]=hit;
         val[META_PARRY]=hit;

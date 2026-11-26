@@ -118,6 +118,9 @@ of 3.0.0 and up, so merc.exe never sees a message it doesn't know.
   Immunity (half the skill), Effective Resistance, 2H-sword Deflect Chance, Thorns. Hidden rows close up in the client.
   The names live in the client (`MyV2MetaStats.cs`); the slots must match. First version live Nov 25, 21:07; the
   TLG-style lists live since 22:08.
+- **Planner helpers** (`svr_do.c` fight_skill_number, `client.h` META_SPEEDSTEP / META_WEAPONSKILL): two meta stats
+  the client never shows, for the Godot client's planner: slot 86 is ch[].speed (the speedtab row) and slot 87 the
+  skill number get_fight_skill() reads. Not live yet.
 
 ## HUD changes
 

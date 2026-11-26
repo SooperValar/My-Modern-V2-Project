@@ -301,7 +301,14 @@ the player walked); MyV2 sends 12 bits. Run the core tests after any change to t
    `meta_stats()`, client `State/MyV2MetaStats.cs` holds names, descriptions and slots; TLG's text request (CL 40)
    removed; lists don't scroll while they fit in the 10 rows; LIVE Nov 25, 21:07; redone in TLG's layout with spells, Cody's names Compatibility / Spell Bonus / Ghost Comp Strength,
    hidden rows close up: LIVE Nov 25, 22:08).
-   Still to do: the MOTD (Cody writes it), planner previews with MyV2's formulas.
+   Planner (Nov 25, myv2 b8d8ff3c): TLG's layout kept; `Rules/BuffModel` and `CombatModel` now follow MyV2
+   (Bless power/5+3 to every attribute, Protect / Enhance power/4+4, Magic Shield power/4+1 with no cap; power = skill
+   held to Compatibility x Spell Bonus; Compatibility = the base attribute sum; Hit = Parry = the weapon's skill),
+   `Rules/MeleeModel` adds Est. Melee Hit Dmg and Action Speed rows; Endurance row; Off-hand, tarot, tree, enchants
+   and gear hidden (their code is still there, at zero); active buffs read from SV_SPELLTIME's power, not TLG's
+   #buffs reply. Server sends hidden metas 86 / 87. GodotTests now run in the cloud (Godot 4.7.2 Linux, headless
+   needed for 81 of them): the planner's 137 pass; 174 older failures in other suites (TLG numbers, URLs) are left
+   from earlier steps. MOTD skipped for now (Cody).
 
 **Then on the server (needs "go live"):**
 - Login refuses a client older than GODOT_CLIENT (0x030000) with a line saying to use the new client.

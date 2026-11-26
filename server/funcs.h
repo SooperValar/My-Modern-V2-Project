@@ -311,6 +311,7 @@ void do_npc_shout(int cn,int type,int dat1,int dat2,int dat3,int dat4);
 void do_shop_char(int cn,int co,int nr);
 void do_give_exp(int cn,int p,int gflag,int rank);
 int get_fight_skill(int cn);
+int fight_skill_number(int cn);
 int do_hurt(int cn,int co,int dam,int type);
 void do_staff_log(int font,char *format,...) __attribute__ ((format(printf,2,3)));
 int do_remove_unique(int cn);
