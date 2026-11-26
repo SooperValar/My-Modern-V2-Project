@@ -313,7 +313,7 @@ the player walked); MyV2 sends 12 bits. Run the core tests after any change to t
 **Then on the server (needs "go live"):**
 - DONE Nov 25 (LIVE 23:53): login refuses a client older than GODOT_CLIENT (MINVERSION 0x030000, LO_VERSION;
   merc.exe shows its own "Client version too old. Update needed."). Tested on the test server both ways.
-- DONE Nov 26 (not live yet): clean-up. The Godot-only messages lost their version checks; merc.exe-only paths
+- DONE Nov 26 (LIVE 02:43): clean-up. The Godot-only messages lost their version checks; merc.exe-only paths
   (old tooltip lines, tip_compare, the Launcher.exe note, WP_CLIENT) are gone. The old client's files and
   tools (client/, tools/release/publish_client.py, client-dist) stay in case they're needed (Cody).
 

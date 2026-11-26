@@ -128,7 +128,7 @@ of 3.0.0 and up, so merc.exe never sees a message it doesn't know.
   (the line-by-line item tooltip, its "Compared to" and "Needs:" lines, tip_compare / cmp_section / cmp_effect, the
   "out of date, use Launcher.exe" login note and CLIENT_LATEST, the waypoint window's WP_CLIENT check), and what only
   the Godot client got (the table tooltip, SV_ZONE, SV_META) no longer checks the version (GODOT_CLIENT is gone;
-  MINVERSION 3.0.0 is the one gate). The old client's files and tools stay (Cody, Nov 26). Not live yet.
+  MINVERSION 3.0.0 is the one gate). The old client's files and tools stay (Cody, Nov 26). Live since Nov 26, 02:43.
 
 ## HUD changes
 
