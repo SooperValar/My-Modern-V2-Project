@@ -23,7 +23,7 @@ world, quests, the editor, the client and Discord. Merged Nov 10 from the old TO
   downtime with no players, before the sprite room actually runs out (rerun the scan now and then). Until then: keep
   new sets small (2 variants, 3x3 water) and record every range in SPRITE_MAP.md.
 
-- ● **Godot client for MyV2** (Cody, Nov 21): built from github.com/jamesblack/thelastgate-godot (James OK'd it). `docs/GODOT_CLIENT.md`. Groups A and B done (Nov 25). **Nov 25: MyV2 switches to the Godot client only** (merc.exe dropped): work through the gap list in "The switch", then the server refuses old clients (done), then the 60-slot backpack (built and tested Nov 26; waits for "go live"). Later: the Editor and tools/world read slots 40-59 (item2).
+- ● **Godot client for MyV2** (Cody, Nov 21): built from github.com/jamesblack/thelastgate-godot (James OK'd it). `docs/GODOT_CLIENT.md`. Groups A and B done (Nov 25). **Nov 25: MyV2 switches to the Godot client only** (merc.exe dropped): work through the gap list in "The switch", then the server refuses old clients (done), then the 60-slot backpack (live Nov 26, 13:36). Later: the Editor and tools/world read slots 40-59 (item2).
 
 **For Nov 18 (Cody, Nov 17 night):**
 - ★ **Clean up the Golem Foundry's object distribution**: the pieces in the yard and the Hall (anvils, benches, crates,

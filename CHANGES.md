@@ -136,7 +136,7 @@ of 3.0.0 and up, so merc.exe never sees a message it doesn't know.
   `.chr` backups write slots 40-59 after the spells (older backups restore with them empty). SV_TIERS is 84 bytes and
   SV_ITEMMARKS 166 (60 backpack + 20 worn). **Grave window:** looting a body opens a Grave (LOOK4 flag 8) with 82
   slots: 0-59 the backpack, 60-79 worn, 80 held, 81 gold; the Godot client shows it in two pages. The Editor and the
-  Python tools in tools/world still read only the first 40 slots. Tested on the test server with copies.
+  Python tools in tools/world still read only the first 40 slots. Tested on the test server with copies. Live since Nov 26, 13:36.
 
 ## HUD changes
 

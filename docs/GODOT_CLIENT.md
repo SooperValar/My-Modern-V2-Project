@@ -323,7 +323,7 @@ the player walked); MyV2 sends 12 bits. Run the core tests after any change to t
   (old tooltip lines, tip_compare, the Launcher.exe note, WP_CLIENT) are gone. The old client's files and
   tools (client/, tools/release/publish_client.py, client-dist) stay in case they're needed (Cody).
 
-**The 60-slot backpack (Nov 26, tested on copies; waits for "go live"):** server: `item2[20]` from the spare
+**The 60-slot backpack (LIVE Nov 26, 13:36):** server: `item2[20]` from the spare
 `future2` area (no file conversion), `INV(cn,n)` for every slot, INVSLOTS 60. Client: SV_TIERS 84 / SV_ITEMMARKS 166
 (`ItemTiers.Slots` 82, `WornStart` 60), `CharacterLook.ShopSlots` 82, `LookFlags.Grave` 8 and `ShopKind.Grave`;
 `game/Windows/GravePages.cs` lays the grave out in two pages in the shop window (page 1 the 60 backpack slots,
