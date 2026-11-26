@@ -565,12 +565,12 @@ int pop_create_char(int n,int drop)
 	ch[cn].temp=n;
 
 	for (m=0; m<40; m++) {
-		if ((tmp=ch[cn].item[m])!=0) {
+		if ((tmp=INV(cn,m))!=0) {
 			tmp=god_create_item(tmp);
-			if (!tmp) { flag=1; ch[cn].item[m]=0; }
+			if (!tmp) { flag=1; INV(cn,m)=0; }
 			else {
 				it[tmp].carried=cn;
-				ch[cn].item[m]=tmp;
+				INV(cn,m)=tmp;
 				hasitems=1;
 			}
 		}
@@ -622,7 +622,7 @@ int pop_create_char(int n,int drop)
 	{
 		for (m=0; m<40; m++)
 		{
-			if (ch[cn].item[m]==0 && hasitems)
+			if (INV(cn,m)==0 && hasitems)
 			{
 				// this check placed here for speed reasons
 				// they are the same as in pop_create_bonus_belt()
@@ -632,7 +632,7 @@ int pop_create_char(int n,int drop)
 				    if (tmp)
 				    {
 					it[tmp].carried=cn;
-					ch[cn].item[m]=tmp;
+					INV(cn,m)=tmp;
 				    }
 				}
 				break;
@@ -643,7 +643,7 @@ int pop_create_char(int n,int drop)
 		// creating rainbow belts
 		for (m=0; m<40; m++)
 		{
-			if (ch[cn].item[m]==0 && hasitems)
+			if (INV(cn,m)==0 && hasitems)
 			{
 			//	item will be created with chance 1 from 10000
 				// this check placed here for speed reasons
@@ -653,7 +653,7 @@ int pop_create_char(int n,int drop)
 				    if (tmp)
 				    {
 					it[tmp].carried=cn;
-					ch[cn].item[m]=tmp;
+					INV(cn,m)=tmp;
 				    }
 				}
 				break;
@@ -665,9 +665,9 @@ int pop_create_char(int n,int drop)
 		if (hasitems && ch[cn].points_tot>SET_DROP_EXP && RANDOM(SET_DROP_CHANCE)==0) {
 			static int setitem[]={623,624,625,626,627,628,1272,1273,1274,1275,1276,1407};
 			for (m=0; m<40; m++) {
-				if (ch[cn].item[m]==0) {
+				if (INV(cn,m)==0) {
 					tmp=god_create_item(setitem[RANDOM(sizeof(setitem)/sizeof(int))]);
-					if (tmp) { it[tmp].carried=cn; ch[cn].item[m]=tmp; }
+					if (tmp) { it[tmp].carried=cn; INV(cn,m)=tmp; }
 					break;
 				}
 			}
@@ -945,8 +945,8 @@ void pop_remove(void)
 		if (!(ch[n].flags&(CF_PLAYER))) continue;
 		if (ch[n].flags&CF_BODY) continue;
 
-		for (m=0; m<40; m++) {
-			if ((in=ch[n].item[m])!=0) {
+		for (m=0; m<INVSLOTS; m++) {
+			if ((in=INV(n,m))!=0) {
 				write(h2,&it[in],sizeof(struct item));
 				itc++;
 			}
@@ -1020,7 +1020,7 @@ void pop_load(void)
 
 		if (ch[n].used!=USE_EMPTY) {
 			xlog("Character slot %d to be loaded to not empty!",n);
-			for (m=0; m<40; m++) if ((in=ch[n].item[m])!=0) it[in].used=USE_EMPTY;
+			for (m=0; m<INVSLOTS; m++) if ((in=INV(n,m))!=0) it[in].used=USE_EMPTY;
 			for (m=0; m<20; m++) if ((in=ch[n].spell[m])!=0) it[in].used=USE_EMPTY;
 			for (m=0; m<20; m++) if ((in=ch[n].worn[m])!=0) it[in].used=USE_EMPTY;
 			if ((in=ch[n].citem)!=0) it[in].used=USE_EMPTY;
@@ -1028,8 +1028,8 @@ void pop_load(void)
 		ch[n]=ctmp;
 		chc++;
 
-		for (m=0; m<40; m++) {
-			if (ch[n].item[m]) {
+		for (m=0; m<INVSLOTS; m++) {
+			if (INV(n,m)) {
 				for (in=1; in<MAXITEM; in++)
 					if (it[in].used==USE_EMPTY) break;
 				if (in==MAXITEM) {
@@ -1040,7 +1040,7 @@ void pop_load(void)
 				read(h2,&it[in],sizeof(struct item));
 				itc++;
 
-				ch[n].item[m]=in;
+				INV(n,m)=in;
 			}
 		}
 
@@ -1176,8 +1176,8 @@ void pop_save_char(int nr)
 	chc++;
 
 	// save inventory
-	for (m=0; m<40; m++) {
-		if ((in=ch[nr].item[m])!=0) {
+	for (m=0; m<INVSLOTS; m++) {
+		if ((in=INV(nr,m))!=0) {
 			write(h1,&it[in],sizeof(struct item));
 			itc++;
 		}
@@ -1221,7 +1221,7 @@ void pop_load_char(int nr)
 
 	if (ch[nr].used!=USE_EMPTY) {
 		xlog("Character slot %d to be loaded to not empty!",nr);
-		for (m=0; m<40; m++) if ((in=ch[nr].item[m])!=0) it[in].used=USE_EMPTY;
+		for (m=0; m<INVSLOTS; m++) if ((in=INV(nr,m))!=0) it[in].used=USE_EMPTY;
 		for (m=0; m<20; m++) if ((in=ch[nr].spell[m])!=0) it[in].used=USE_EMPTY;
 		for (m=0; m<20; m++) if ((in=ch[nr].worn[m])!=0) it[in].used=USE_EMPTY;
 		for (m=0; m<62; m++) if ((in=ch[nr].depot[m])!=0) it[in].used=USE_EMPTY;
@@ -1230,8 +1230,8 @@ void pop_load_char(int nr)
 	ch[nr]=ctmp;
 	chc++;
 
-	for (m=0; m<40; m++) {
-		if (ch[nr].item[m]) {
+	for (m=0; m<INVSLOTS; m++) {
+		if (INV(nr,m)) {
 			for (in=1; in<MAXITEM; in++)
 				if (it[in].used==USE_EMPTY) break;
 			if (in==MAXITEM) {
@@ -1242,7 +1242,7 @@ void pop_load_char(int nr)
 			read(h1,&it[in],sizeof(struct item));
 			itc++;
 
-			ch[nr].item[m]=in;
+			INV(nr,m)=in;
 		}
 	}
 

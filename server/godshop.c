@@ -92,7 +92,7 @@ void godshop_fill(int cn,int co)
 	// if it is already this viewer's (data[7] boot, data[8] viewer, data[9] page+1)
 	if (gs_allowed(cn) && ch[co].data[7]==boot && ch[co].data[8]==cn && ch[co].data[9]==page+1) return;
 
-	for (n=0; n<40; n++) if ((in=ch[co].item[n])) { it[in].used=USE_EMPTY; ch[co].item[n]=0; }
+	for (n=0; n<INVSLOTS; n++) if ((in=INV(co,n))) { it[in].used=USE_EMPTY; INV(co,n)=0; }
 	ch[co].data[8]=ch[co].data[9]=0;
 	if (!gs_allowed(cn)) { do_sayx(co,"I only serve the gods and their helpers, %s.",ch[cn].name); return; }
 	ch[co].data[7]=boot; ch[co].data[8]=cn; ch[co].data[9]=page+1;
@@ -102,10 +102,10 @@ void godshop_fill(int cn,int co)
 	for (n=0; n<GODSHOP_PER_PAGE && page*GODSHOP_PER_PAGE+n<cnt; n++) {
 		if (!(in=god_create_item(list[page*GODSHOP_PER_PAGE+n]))) continue;
 		it[in].value=0; it[in].carried=co;
-		ch[co].item[n]=in;
+		INV(co,n)=in;
 	}
-	if (page>0 && (in=god_create_item(GODSHOP_ARROW_TEMP))) { it[in].carried=co; ch[co].item[38]=in; }
-	if ((page+1)*GODSHOP_PER_PAGE<cnt && (in=god_create_item(GODSHOP_ARROW_TEMP+1))) { it[in].carried=co; ch[co].item[39]=in; }
+	if (page>0 && (in=god_create_item(GODSHOP_ARROW_TEMP))) { it[in].carried=co; INV(co,38)=in; }
+	if ((page+1)*GODSHOP_PER_PAGE<cnt && (in=god_create_item(GODSHOP_ARROW_TEMP+1))) { it[in].carried=co; INV(co,39)=in; }
 }
 
 /* cn clicked slot nr of a gods' merchant: turn the page, or take the item */

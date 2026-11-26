@@ -715,8 +715,8 @@ int count_uniques(int cn)
         }
 
         if ((in=ch[cn].citem) && !(in&0x80000000) && is_unique(in)) cnt++;
-                for (n=0; n<40; n++) {
-                        if ((in=ch[cn].item[n]) && is_unique(in)) cnt++;
+                for (n=0; n<INVSLOTS; n++) {
+                        if ((in=INV(cn,n)) && is_unique(in)) cnt++;
                 }
                 for (n=0; n<20; n++) {
                         if ((in=ch[cn].worn[n]) && is_unique(in)) cnt++;
@@ -1050,7 +1050,7 @@ int npc_quaff_potion(int cn,int itemp,int stemp)
         for (n=0; n<20; n++)
                 if ((in=ch[cn].spell[n]) && it[in].temp==stemp) return 0;   // potion already active
 
-        for (n=0; n<40; n++) if ((in=ch[cn].item[n]) && it[in].temp==itemp) break;       // find potion
+        for (n=0; n<INVSLOTS; n++) if ((in=INV(cn,n)) && it[in].temp==itemp) break;       // find potion
         if (n==40) return 0;                                                            // no potion :(
 
         do_area_log(cn,0,ch[cn].x,ch[cn].y,1,"The %s uses a %s.\n",ch[cn].name,it[in].name);
@@ -1153,7 +1153,7 @@ int npc_driver_high(int cn)
                 }
         }
 
-        if ((in=ch[cn].item[39])!=0 && ch[cn].data[47]) {
+        if ((in=INV(cn,39))!=0 && ch[cn].data[47]) {
                 if (it[in].damage_state || (it[in].flags&IF_SHOPDESTROY) || !(it[in].flags&IF_DONATE)) {
                         it[in].used=USE_EMPTY;
                         ch[cn].citem=0;
@@ -1162,7 +1162,7 @@ int npc_driver_high(int cn)
                         it[in].current_age[1]=0;
                         it[in].current_damage=0;
                         god_donate_item(in,ch[cn].data[47]);
-                        ch[cn].item[39]=0;
+                        INV(cn,39)=0;
                 }
         }
 
@@ -1430,7 +1430,7 @@ int npc_item_value(int in)
 
 int npc_want_item(int cn,int in)
 {
-        if (ch[cn].item[38]) return 0;  // hack: dont take more stuff if inventory is almost full
+        if (INV(cn,38)) return 0;  // hack: dont take more stuff if inventory is almost full
 
         if (ch[cn].citem) {
                 chlog(cn,"have %s in citem",it[in].name);
@@ -1510,16 +1510,16 @@ int npc_loot_grave(int cn,int in)
                         }
                 }
         }
-        for (n=0; n<40; n++) {
-                if ((in=ch[co].item[n])) {
+        for (n=0; n<INVSLOTS; n++) {
+                if ((in=INV(co,n))) {
                         if (npc_equip_item(cn,in)) {
                                 chlog(cn,"got %s from %s's grave",it[in].name,ch[co].name);
-                                ch[co].item[n]=0;
+                                INV(co,n)=0;
                                 return 1;
                         }
                         if (npc_want_item(cn,in)) {
                                 chlog(cn,"got %s from %s's grave",it[in].name,ch[co].name);
-                                ch[co].item[n]=0;
+                                INV(co,n)=0;
                                 return 1;
                         }
                 }
@@ -1856,19 +1856,19 @@ void update_shop(int cn)
 
         // check if we have free space (at least 10)
         do_sort(cn,"v");
-        for (n=m=x=0; n<40; n++) if (!(in=ch[cn].item[n])) m++; else {
+        for (n=m=x=0; n<40; n++) if (!(in=INV(cn,n))) m++; else {
                 for (z=0; z<cnt; z++) if (it[in].temp==sale[z]) { sale[z]=0; break; }
                 if (z==cnt) x=n;
         }
-        if (m<2 && ch[cn].item[x]) {
-		in=ch[cn].item[x];
+        if (m<2 && INV(cn,x)) {
+		in=INV(cn,x);
 
                 if (RANDOM(2) && (it[in].flags&IF_DONATE)) {
                         god_donate_item(in,0);
                 } else {
                         it[in].used=USE_EMPTY;
                 }
-                ch[cn].item[x]=0;
+                INV(cn,x)=0;
         }
 
         // check if our store is complete
@@ -1883,11 +1883,11 @@ void update_shop(int cn)
 
         // small-repair all items (set current max_damage and age to zero)
         // junk all items needing serious repair
-        for (n=0; n<40; n++) {
-                if ((in=ch[cn].item[n])!=0) {
+        for (n=0; n<INVSLOTS; n++) {
+                if ((in=INV(cn,n))!=0) {
                         if (it[in].damage_state || (it[in].flags&IF_SHOPDESTROY)) {
                                 it[in].used=USE_EMPTY;
-                                ch[cn].item[n]=0;
+                                INV(cn,n)=0;
                         } else {
                                 it[in].current_damage=0;
                                 it[in].current_age[0]=0;

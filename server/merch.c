@@ -244,7 +244,7 @@ static int depot_slot(int co,int in)
 static void unslot(int co,int in)	// take a depot item out of the shop slots
 {
 	int n;
-	for (n=0; n<40; n++) if (ch[co].item[n]==in) ch[co].item[n]=0;
+	for (n=0; n<INVSLOTS; n++) if (INV(co,n)==in) INV(co,n)=0;
 }
 
 /* the remorse of a sold item ends: kept at the normal price, or destroyed */
@@ -277,17 +277,17 @@ static void tidy(int co,int *stock,int scnt)
 	tidied[co]=1;
 	// the slots as they were (an old shop, or the display of the last server start)
 	for (n=0; n<40; n++) {
-		if (!(in=ch[co].item[n])) continue;
-		if (in&0x80000000) { ch[co].item[n]=0; continue; }
-		if (it[in].used!=USE_ACTIVE || it[in].carried!=co) { ch[co].item[n]=0; continue; }
+		if (!(in=INV(co,n))) continue;
+		if (in&0x80000000) { INV(co,n)=0; continue; }
+		if (it[in].used!=USE_ACTIVE || it[in].carried!=co) { INV(co,n)=0; continue; }
 		if (SAMPLE(in) || depot_slot(co,in)>=0) continue;	// shown again below
 		for (z=0; z<scnt && stock[z]!=it[in].temp; z++) ;
-		if (z<scnt || it[in].temp==GODSHOP_ARROW_TEMP || it[in].temp==GODSHOP_ARROW_TEMP+1) { it[in].used=USE_EMPTY; ch[co].item[n]=0; continue; }
+		if (z<scnt || it[in].temp==GODSHOP_ARROW_TEMP || it[in].temp==GODSHOP_ARROW_TEMP+1) { it[in].used=USE_EMPTY; INV(co,n)=0; continue; }
 		// something a player sold him before: keep it, at his normal price
 		for (d=0; d<62 && ch[co].depot[d]; d++) ;
 		if (d<62) { ch[co].depot[d]=in; PAID(in)=0; it[in].t_bought=it[in].t_sold=0; }
 		else it[in].used=USE_EMPTY;
-		ch[co].item[n]=0;
+		INV(co,n)=0;
 	}
 }
 
@@ -307,17 +307,17 @@ static int *page_of(int cn,int co)
 /* put what should be in slot m: a display copy of item template t (t>0), or the depot item -t (t<0), or nothing */
 static void set_slot(int co,int m,int t)
 {
-	int in=ch[co].item[m];
+	int in=INV(co,m);
 
 	if (t>0 && in && it[in].used==USE_ACTIVE && SAMPLE(in) && it[in].temp==t) return;	// already there
 	if (t<0 && in==-t) return;
 	if (in && !(in&0x80000000) && it[in].used==USE_ACTIVE && SAMPLE(in) && it[in].carried==co) it[in].used=USE_EMPTY;
-	ch[co].item[m]=0;
+	INV(co,m)=0;
 	if (t>0) {
 		if (!(in=god_create_item(t))) return;		// (a unique one that exists already)
 		PAID(in)=-1; it[in].carried=co; it[in].x=it[in].y=0;
-		ch[co].item[m]=in;
-	} else if (t<0) ch[co].item[m]=-t;
+		INV(co,m)=in;
+	} else if (t<0) INV(co,m)=-t;
 }
 
 /* is a rotating stock ("rotate") due for its change? */
@@ -420,7 +420,7 @@ int merch_take(int cn,int co,int nr)
 		return 1;
 	}
 	merch_fill(cn,co);
-	if (!(in=ch[co].item[nr]) || (in&0x80000000)) return 0;
+	if (!(in=INV(co,nr)) || (in&0x80000000)) return 0;
 	if (SAMPLE(in) && (it[in].temp==GODSHOP_ARROW_TEMP || it[in].temp==GODSHOP_ARROW_TEMP+1)) {
 		cnt=entries(co,ent); pages=(cnt+MERCH_PER_PAGE-1)/MERCH_PER_PAGE;
 		pp=page_of(cn,co);
@@ -439,7 +439,7 @@ int merch_take(int cn,int co,int nr)
 	}
 	pr=merch_sell_price(cn,co,in);
 	if (ch[cn].gold<pr) { do_char_log(cn,0,"You cannot afford that.\n"); return 0; }
-	ch[co].item[nr]=0;
+	INV(co,nr)=0;
 	d=depot_slot(co,in);
 	if (SAMPLE(in)) PAID(in)=0;
 	else { PAID(in)=0; it[in].t_bought=it[in].t_sold=0; if (d>=0) ch[co].depot[d]=0; }

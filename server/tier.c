@@ -904,12 +904,12 @@ static int body_has_items(int co)
 	if (ch[co].data[99]) {	// a player's body
 		if (ch[co].gold) return 1;
 		if (ch[co].citem && !(ch[co].citem&0x80000000)) return 1;
-		for (n=0; n<40; n++) if (ch[co].item[n]) return 1;
+		for (n=0; n<INVSLOTS; n++) if (INV(co,n)) return 1;
 		for (n=0; n<20; n++) if (ch[co].worn[n]) return 1;
 		return 0;
 	}
 	if (special_item(ch[co].citem,1)) return 1;
-	for (n=0; n<40; n++) if (special_item(ch[co].item[n],1)) return 1;
+	for (n=0; n<INVSLOTS; n++) if (special_item(INV(co,n),1)) return 1;
 	for (n=0; n<20; n++) if (special_item(ch[co].worn[n],0)) return 1;
 	return 0;
 }
@@ -1027,8 +1027,8 @@ int stack_into_backpack(int cn,int in)
 {
 	int n,m;
 	if (!IS_SANEPLAYER(cn) || !stack_kind(in)) return 0;
-	for (n=0; n<40; n++) {
-		if (!(m=ch[cn].item[n]) || !stack_same(m,in)) continue;
+	for (n=0; n<INVSLOTS; n++) {
+		if (!(m=INV(cn,n)) || !stack_same(m,in)) continue;
 		if (stack_merge(m,in)) return 1;
 	}
 	return 0;

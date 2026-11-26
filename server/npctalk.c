@@ -673,7 +673,7 @@ void talk_journal(int cn)
 static int carried(int co,int temp)
 {
 	int n,in;
-	for (n=0; n<40; n++) if ((in=ch[co].item[n]) && !(in&0x80000000) && in<MAXITEM && it[in].temp==temp) return in;
+	for (n=0; n<INVSLOTS; n++) if ((in=INV(co,n)) && !(in&0x80000000) && in<MAXITEM && it[in].temp==temp) return in;
 	if ((in=ch[co].citem) && !(in&0x80000000) && in<MAXITEM && it[in].temp==temp) return in;
 	return 0;
 }

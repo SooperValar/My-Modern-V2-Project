@@ -187,14 +187,14 @@ int god_create_char(int temp,int withitems)
         ch[n].retry=0;
         ch[n].dir=DX_DOWN;
 
-        for (m=0; m<40; m++) {
-                if ((tmp=ch[n].item[m])!=0) {
+        for (m=0; m<INVSLOTS; m++) {
+                if ((tmp=INV(n,m))!=0) {
                         if (withitems) {
                                 tmp=god_create_item(tmp);
                                 if (!tmp) flag=1;
                                 it[tmp].carried=n;
                         } else tmp=0;
-                        ch[n].item[m]=tmp;
+                        INV(n,m)=tmp;
                 }
         }
 
@@ -439,11 +439,11 @@ int god_give_char(int in,int cn)
 
         if (!IS_SANEITEM(in) || !IS_LIVINGCHAR(cn)) return 0;
         if (stack_into_backpack(cn,in)) { do_update_char(cn); return 1; }	// MyV2: onto a matching stack
-        for (n=0; n<40; n++)
-                if (!ch[cn].item[n]) break;
-        if (n==40) return 0;
+        for (n=0; n<INVSLOTS; n++)
+                if (!INV(cn,n)) break;
+        if (n==INVSLOTS) return 0;
 
-        ch[cn].item[n]=in;
+        INV(cn,n)=in;
 
         it[in].x=0;
         it[in].y=0;
@@ -460,9 +460,9 @@ int god_take_from_char(int in,int cn)
 
         if (ch[cn].citem==in) ch[cn].citem=0;
         else {
-                for (n=0; n<40; n++)
-                        if (ch[cn].item[n]==in) break;
-                if (n<40) ch[cn].item[n]=0;
+                for (n=0; n<INVSLOTS; n++)
+                        if (INV(cn,n)==in) break;
+                if (n<INVSLOTS) INV(cn,n)=0;
                 else {
                         for (n=0; n<20; n++)
                                 if (ch[cn].worn[n]==in) break;
@@ -1224,10 +1224,10 @@ int god_thrall(int cn, char *spec1, char *spec2)
 		}
 	}
 
-	for (n=0; n<40; n++) {
-		if ((in=ch[ct].item[n]) && (it[in].flags&IF_LABYDESTROY)) {
+	for (n=0; n<INVSLOTS; n++) {
+		if ((in=INV(ct,n)) && (it[in].flags&IF_LABYDESTROY)) {
 			it[in].used=0;
-			ch[ct].item[n]=0;
+			INV(ct,n)=0;
 		}
 	}
 
@@ -1282,11 +1282,11 @@ int god_build_start(int cn)
         ch[cn].data[CHD_COMPANION] = co;
 
         /* Transfer inventory */
-        for (n=0; n<40; n++) {
-                in = ch[cn].item[n];
+        for (n=0; n<INVSLOTS; n++) {
+                in = INV(cn,n);
                 if (in) {
-                        ch[co].item[n] = in;
-                        ch[cn].item[n] = 0;
+                        INV(co,n) = in;
+                        INV(cn,n) = 0;
                         it[in].carried = co;
                 }
         }
@@ -1310,8 +1310,8 @@ void god_build_stop(int cn)
         build_clear_reset(cn);	// a #clear waiting for corners ends with build mode
 
         /* Empty builder's inventory */
-        for (n=0; n<40; n++)
-                ch[cn].item[n]=0;
+        for (n=0; n<INVSLOTS; n++)
+                INV(cn,n)=0;
         ch[cn].citem=0;
 
         /* Reset build mode */
@@ -1327,11 +1327,11 @@ void god_build_stop(int cn)
         }
 
         /* Transfer inventory */
-        for (n=0; n<40; n++) {
-                in = ch[co].item[n];
+        for (n=0; n<INVSLOTS; n++) {
+                in = INV(co,n);
                 if (in) {
-                        ch[cn].item[n] = in;
-                        ch[co].item[n] = 0;
+                        INV(cn,n) = in;
+                        INV(co,n) = 0;
                         it[in].carried = cn;
                 }
         }
@@ -1679,18 +1679,18 @@ void god_build_equip(int cn, int x)
 	if (x<0) x=0;
 	if (x>=pages) x=pages-1;
 
-	for (m=0; m<40; m++) ch[cn].item[m]=0;
+	for (m=0; m<40; m++) INV(cn,m)=0;
 	fp=bp_floorpages();
 	m=0;
 	if (x==0) {
-		for (k=0; k<bp_nflag && m<40; k++) ch[cn].item[m++]=bp_flag[k];
+		for (k=0; k<bp_nflag && m<40; k++) INV(cn,m++)=bp_flag[k];
 		do_char_log(cn,3,"Build page 0 of %d: zones and flags. Drop one on a tile to switch it on or off.\n",pages-1);
 	} else if (x<=fp) {
-		for (k=(x-1)*40; k<bp_nfloor && m<40; k++) ch[cn].item[m++]=bp_floor[k];
+		for (k=(x-1)*40; k<bp_nfloor && m<40; k++) INV(cn,m++)=bp_floor[k];
 		do_char_log(cn,3,"Build page %d of %d: floors (%d of %d).\n",x,pages-1,x,fp);
 	} else {
 		op=x-fp;
-		for (k=(op-1)*40; k<bp_nobj && m<40; k++) ch[cn].item[m++]=bp_obj[k];
+		for (k=(op-1)*40; k<bp_nobj && m<40; k++) INV(cn,m++)=bp_obj[k];
 		do_char_log(cn,3,"Build page %d of %d: objects (%d of %d).\n",x,pages-1,op,pages-1-fp);
 	}
 	ch[cn].data[CHD_BUILDPAGE]=x;
@@ -2040,9 +2040,9 @@ void god_destroy_items(int cn)
 {
         int n,in;
 
-        for (n=0; n<40; n++) {
-                if ((in=ch[cn].item[n])!=0) {
-                        ch[cn].item[n]=0;
+        for (n=0; n<INVSLOTS; n++) {
+                if ((in=INV(cn,n))!=0) {
+                        INV(cn,n)=0;
                         if (in>0 && in<MAXITEM) it[in].used=USE_EMPTY;
                 }
         }
@@ -2132,8 +2132,8 @@ void god_racechange(int co,int temp)
         ch[co].status=old.status;
         ch[co].status2=old.status2;
 
-        for (n=0; n<40; n++)
-                ch[co].item[n]=0;
+        for (n=0; n<INVSLOTS; n++)
+                INV(co,n)=0;
 
         for (n=0; n<20; n++)
                 ch[co].worn[n]=0;
@@ -2980,7 +2980,7 @@ static void char_free_items(int co)	// every item a character has (worn, backpac
 {
 	int n,in;
 	for (n=0; n<20; n++) { if ((in=ch[co].worn[n]) && IS_SANEITEM(in)) it[in].used=USE_EMPTY; ch[co].worn[n]=0; }
-	for (n=0; n<40; n++) { if ((in=ch[co].item[n]) && IS_SANEITEM(in)) it[in].used=USE_EMPTY; ch[co].item[n]=0; }
+	for (n=0; n<INVSLOTS; n++) { if ((in=INV(co,n)) && IS_SANEITEM(in)) it[in].used=USE_EMPTY; INV(co,n)=0; }
 	for (n=0; n<62; n++) { if ((in=ch[co].depot[n]) && IS_SANEITEM(in)) it[in].used=USE_EMPTY; ch[co].depot[n]=0; }
 	for (n=0; n<20; n++) { if ((in=ch[co].spell[n]) && IS_SANEITEM(in)) it[in].used=USE_EMPTY; ch[co].spell[n]=0; }
 	if ((in=ch[co].citem) && !(in&0x80000000) && IS_SANEITEM(in)) it[in].used=USE_EMPTY;
@@ -3014,7 +3014,7 @@ int god_reset_player(int co,char *why,int len)
 	char_free_items(co);
 	ch[co]=ch[nc];
 	ch[nc].used=USE_EMPTY;
-	for (n=0; n<40; n++) if ((in=ch[co].item[n]) && IS_SANEITEM(in)) it[in].carried=co;
+	for (n=0; n<INVSLOTS; n++) if ((in=INV(co,n)) && IS_SANEITEM(in)) it[in].carried=co;
 	for (n=0; n<20; n++) if ((in=ch[co].worn[n]) && IS_SANEITEM(in)) it[in].carried=co;
 
 	ch[co].used=USE_NONACTIVE;
@@ -3067,10 +3067,11 @@ int god_delete_player(int co,char *why,int len)
 	fwrite(CHARBACKUP_MAGIC,8,1,f);
 	fwrite(&ch[co],sizeof(struct character),1,f);
 	for (n=0; n<20; n++) wr_item(f,ch[co].worn[n]);
-	for (n=0; n<40; n++) wr_item(f,ch[co].item[n]);
+	for (n=0; n<40; n++) wr_item(f,INV(co,n));
 	wr_item(f,ch[co].citem);
 	for (n=0; n<62; n++) wr_item(f,ch[co].depot[n]);
 	for (n=0; n<20; n++) wr_item(f,ch[co].spell[n]);
+	for (n=40; n<INVSLOTS; n++) wr_item(f,INV(co,n));	// MyV2 (Nov 26): backpack slots 40-59, after the old layout
 	if (fclose(f)) { snprintf(why,len,"cannot write the backup %s",fn); return 0; }
 
 	char_free_items(co);
@@ -3124,10 +3125,11 @@ int god_restore_player(char *file,char *why,int len)
 	ch[co]=c;
 	ch[co].used=USE_NONACTIVE; ch[co].player=0;
 	for (n=0; n<20; n++) ch[co].worn[n]=rd_item(f,co);
-	for (n=0; n<40; n++) ch[co].item[n]=rd_item(f,co);
+	for (n=0; n<40; n++) INV(co,n)=rd_item(f,co);
 	ch[co].citem=rd_item(f,co);
 	for (n=0; n<62; n++) ch[co].depot[n]=rd_item(f,co);
 	for (n=0; n<20; n++) ch[co].spell[n]=rd_item(f,co);
+	for (n=40; n<INVSLOTS; n++) INV(co,n)=rd_item(f,co);	// empty in a backup from before Nov 26
 	fclose(f);
 	really_update_char(co);
 	xlog("CHARRESTORE: %s restored as character %d from %s",ch[co].name,co,file);

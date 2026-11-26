@@ -90,3 +90,12 @@ All rights reserved.
 // Sanity check on skill number
 #define SANESKILL(s)    ((s)>=0 && (s)<MAXSKILL)
 
+/* MyV2 (Nov 26): the backpack's 60 slots. 0-39 are item[], 40-59 item2[] (data.h); INV(cn,n) is either, and can be
+ * assigned to. Monsters and templates only fill the first 40. */
+#include <stddef.h>
+#define INV(cn,n)		(*inv_slot((cn),(n)))
+static inline unsigned int *inv_slot(int cn,int n)	// through char*: struct character is packed
+{
+        char *base=(char*)&ch[cn];
+        return (unsigned int*)(base+(n<40 ? offsetof(struct character,item)+n*sizeof(int) : offsetof(struct character,item2)+(n-40)*sizeof(int)));
+}

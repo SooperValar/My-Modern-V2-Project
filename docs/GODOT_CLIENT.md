@@ -323,12 +323,12 @@ the player walked); MyV2 sends 12 bits. Run the core tests after any change to t
   (old tooltip lines, tip_compare, the Launcher.exe note, WP_CLIENT) are gone. The old client's files and
   tools (client/, tools/release/publish_client.py, client-dist) stay in case they're needed (Cody).
 
-**The 60-slot backpack (after the switch; Cody wants it):** the client is already built for 60 (TLG). Server:
-`item[40]` -> `item[60]` in `struct character` (char.dat and tchar.dat need a one-time converter, with a backup;
-the Python tools in tools/world read fixed offsets and need updating; check the Editor), ~120 places that assume
-40 (give/take, shops, stacks, recipes, quest checks, trash 1000+slot, depot, Ctrl+click, SV_TIERS / SV_ITEMMARKS
-layout, tooltips), and a bigger grave loot window (the shop window has 62 slots: 40 + 20 worn today). Tested on
-the test server with copies of the real .dat files before going live.
+**The 60-slot backpack (Nov 26, tested on copies; waits for "go live"):** server: `item2[20]` from the spare
+`future2` area (no file conversion), `INV(cn,n)` for every slot, INVSLOTS 60. Client: SV_TIERS 84 / SV_ITEMMARKS 166
+(`ItemTiers.Slots` 82, `WornStart` 60), `CharacterLook.ShopSlots` 82, `LookFlags.Grave` 8 and `ShopKind.Grave`;
+`game/Windows/GravePages.cs` lays the grave out in two pages in the shop window (page 1 the 60 backpack slots,
+page 2 the 20 worn, held and gold; the `PageButton` reads "Worn (n) >" when page 2 has items). Describe in a
+grave is offset 100. Client and server go live together: the new client desyncs on the old server.
 
 ## Step 6: getting it to players (later; only with Cody's "go live")
 Its own Velopack auto-updater (GitHub releases on the fork) or our `client-dist` launcher. Decide when it plays well.

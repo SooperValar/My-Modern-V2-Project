@@ -58,6 +58,15 @@ struct cmap
 	unsigned char glow;		// item tiers: 1-4 the item's tier, 5 a grave holding items; +8: the character is a body holding items (SV_TILEGLOW)
 } __attribute__ ((packed));
 
+/* MyV2 (Nov 26): a look at a merchant or grave. A merchant's window: 40 stock, 60 the held item's price;
+ * a grave's (LOOK_GRAVE in SV_LOOK4's flags): the backpack, the worn items, GRAVE_HELD and GRAVE_GOLD. */
+#define LOOK_SLOTS		82
+#define LOOK_GRAVE		8
+#define GRAVE_HELD		(INVSLOTS+20)
+#define GRAVE_GOLD		(INVSLOTS+21)
+#define GRAVE_SLOTS		(INVSLOTS+22)
+#define GRAVE_DESCRIBE		100
+
 #define META_COUNT		89	// meta stats of the Godot client (SV_META)
 #define META_HEADING		65535	// a heading row's value: the client shows no number
 // top rows (always shown)
@@ -142,13 +151,13 @@ struct cplayer
 	int gold;
 
 	// items carried
-	int item[40];
-	int item_p[40];
+	int item[INVSLOTS];
+	int item_p[INVSLOTS];
 
 	// items worn
 	int worn[20];
-	unsigned char tiers[60];	// item tiers of item[] and worn[] sent last (SV_TIERS)
-	unsigned char marks[120];	// item marks of item[] and worn[] sent last (SV_ITEMMARKS)
+	unsigned char tiers[INVSLOTS+20];	// item tiers of the backpack and worn[] sent last (SV_TIERS)
+	unsigned char marks[2*(INVSLOTS+20)];	// item marks of the backpack and worn[] sent last (SV_ITEMMARKS)
 	char zone[41];			// zone name sent last (SV_ZONE, Godot client only)
 	int meta[META_COUNT];		// meta stats sent last (SV_META, Godot client only)
 	unsigned char meta_show[META_COUNT];
@@ -291,8 +300,8 @@ struct cplayer
 #define SV_SPELLTIME		74	// slot, seconds left, flags, name (15), power: 24 bytes (was 20 before the power, Nov 25)
 #define SV_ITEMINFO		75	// one line of an item tooltip: 64 bytes
 #define SV_TILEGLOW		76	// map tile n (short), glow: 4 bytes
-#define SV_TIERS		77	// kind (0 backpack 0-39 + worn 40-59, 1 shop/grave 0-61), 62 tiers: 64 bytes
-#define SV_ITEMMARKS		78	// kind (as SV_TIERS), 62 x (letter, number; 255 = no number): 126 bytes
+#define SV_TIERS		77	// kind (0 backpack 0-59 + worn 60-79, 1 shop/grave slots), LOOK_SLOTS tiers: 84 bytes
+#define SV_ITEMMARKS		78	// kind (as SV_TIERS), LOOK_SLOTS x (letter, number; 255 = no number): 166 bytes
 #define SV_WAYPOINT		79	// a row of the waypoint travel window (waypoint.c): 80 bytes
 #define SV_ZONE			80	// the name of the zone the player is in (get_area_m), 40 bytes NUL-padded: 41 bytes
 #define SV_META			81	// meta stat n (byte), value (int), show (byte): 7 bytes. The numbers of the Godot client's Offenses / Defenses lists; the client holds the names

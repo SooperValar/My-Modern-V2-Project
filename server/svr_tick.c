@@ -362,10 +362,10 @@ void plr_cmd_inv(int nr)
         if (co<1 || co>=MAXCHARS) co=0;
 
         if (what==0) { // normal inventory
-                if (n<0 || n>39) return;        // sanity check
+                if (n<0 || n>=INVSLOTS) return;        // sanity check
                 if (ch[cn].stunned) return;
 
-                tmp=ch[cn].item[n];
+                tmp=INV(cn,n);
 
 		if (IS_SANEITEM(tmp) && it[tmp].temp == IT_LAGSCROLL) return;
 
@@ -383,7 +383,7 @@ void plr_cmd_inv(int nr)
                         return;
                 } else {
                         if (!IS_BUILDING(cn))
-                                ch[cn].item[n]=ch[cn].citem;
+                                INV(cn,n)=ch[cn].citem;
                         else {
                                 ch[cn].misc_action=DR_SINGLEBUILD;
                                 do_char_log(cn,3,"Single mode\n");
@@ -407,16 +407,16 @@ void plr_cmd_inv(int nr)
         }
         if (what==9) { // MyV2: Ctrl+click on the backpack: one from a stack into the hand (or onto the stack in the hand)
                 int hand=ch[cn].citem,one;
-                if (n<0 || n>39 || ch[cn].stunned) return;
-                if (!(in=ch[cn].item[n])) return;
+                if (n<0 || n>=INVSLOTS || ch[cn].stunned) return;
+                if (!(in=INV(cn,n))) return;
                 if (!STACKS(stack_kind(in))) return;
                 if (!hand) {
-                        if (stack_count(in)<2) { ch[cn].citem=in; ch[cn].item[n]=0; }
+                        if (stack_count(in)<2) { ch[cn].citem=in; INV(cn,n)=0; }
                         else if ((one=stack_split(in,1))) { ch[cn].citem=one; it[one].carried=cn; }
                 } else if (!(hand&0x80000000) && stack_same(hand,in)) {
                         if (stack_count(hand)>=STACK_MAX) { do_char_log(cn,0,"The stack in your hand is full (%d).\n",STACK_MAX); return; }
                         IT_STACK(hand)=stack_count(hand)+1; it[hand].flags|=IF_UPDATE;
-                        if (!stack_use_one(in)) { it[in].used=USE_EMPTY; ch[cn].item[n]=0; }
+                        if (!stack_use_one(in)) { it[in].used=USE_EMPTY; INV(cn,n)=0; }
                 }
                 do_update_char(cn);
                 return;
@@ -446,7 +446,7 @@ void plr_cmd_inv(int nr)
                 return;
         }
         if (what==6) {
-                if (n<0 || n>39 || IS_BUILDING(cn)) return; // sanity check
+                if (n<0 || n>=INVSLOTS || IS_BUILDING(cn)) return; // sanity check
                 ch[cn].use_nr=n+20;
                 ch[cn].skill_target1=co;
                 return;
@@ -457,8 +457,8 @@ void plr_cmd_inv(int nr)
                 return;
         }
         if (what==8) {
-                if (n<0 || n>39 || IS_BUILDING(cn)) return; // sanity check
-                if ((in=ch[cn].item[n])!=0) do_look_item(cn,in);
+                if (n<0 || n>=INVSLOTS || IS_BUILDING(cn)) return; // sanity check
+                if ((in=INV(cn,n))!=0) do_look_item(cn,in);
                 return;
         }
         plog(nr,"Unknown CMD-INV-what %d",what);
@@ -472,14 +472,14 @@ void plr_cmd_inv_look(int nr)
 
         n=*(unsigned short*)(player[nr].inbuf+1);
 
-        if (n<0 || n>39) return;        // sanity check
+        if (n<0 || n>=INVSLOTS) return;        // sanity check
         if (IS_BUILDING(cn)) {
-                ch[cn].citem=ch[cn].item[n];
+                ch[cn].citem=INV(cn,n);
                 do_char_log(cn,3,"Area mode\n");
                 ch[cn].misc_action=DR_AREABUILD1;
                 return;
         }
-        if ((in=ch[cn].item[n])!=0) do_look_item(cn,in);
+        if ((in=INV(cn,n))!=0) do_look_item(cn,in);
 }
 
 void plr_cmd_mode(int nr)       // speed change, done at once
@@ -702,7 +702,7 @@ static void tip_build(int nr,int cn,int slot,int *line)
 		{MF_NOMAGIC,"No magic","Spells cannot be cast here."},{MF_DEATHTRAP,"Death trap","Stepping here kills."},
 		{MF_ARENA,"Arena","Deaths here are arena deaths."},{MF_NOEXPIRE,"No expire","Items lying here never decay."},
 		{MF_NOFIGHT,"No fight","Nobody can attack here."},{MF_LIT,"Lit","Always fully lit, day and night."},{MF_NOLIGHT,"No light","Own lights do not shine here."}};
-	unsigned int v=ch[cn].item[slot];
+	unsigned int v=INV(cn,slot);
 	int n,t;
 	char buf[80],*s,*d;
 
@@ -956,15 +956,15 @@ void plr_cmd_iteminfo(int nr)
 	co=*(unsigned int*)(player[nr].inbuf+4);
 	if (cn<1 || cn>=MAXCHARS) return;
 
-	if (where==0 && slot<40) in=ch[cn].item[slot];
+	if (where==0 && slot<INVSLOTS) in=INV(cn,slot);
 	else if (where==1 && slot<20) in=ch[cn].worn[slot];
 	else if (where==2 && (co&0x8000) && (co&0x7fff)==cn && slot<62) in=ch[cn].depot[slot];	// your own depot window
 	else if (where==2 && (co&0x4000) && !(co&0x8000) && (co&0x3fff)==cn && slot<62) in=trash_item(cn,slot);	// the trash window
 	else if (where==2 && co>0 && co<MAXCHARS && (ch[co].flags&(CF_MERCHANT|CF_BODY))) {
 		if ((ch[co].flags&CF_BODY) && abs(ch[cn].x-ch[co].x)+abs(ch[cn].y-ch[co].y)>1) in=0;
 		else if (!(ch[co].flags&CF_BODY) && !do_char_can_see(cn,co) && !(godshop_cat(co) && (ch[cn].flags&CF_GOD))) in=0;	// #godshop: from afar
-		else if (slot<40) { if (ch[co].flags&CF_MERCHANT) merch_fill(cn,co); in=ch[co].item[slot]; }
-		else if (slot<60 && (ch[co].flags&CF_BODY)) in=ch[co].worn[slot-40];
+		else if (ch[co].flags&CF_BODY) { if (slot<INVSLOTS) in=INV(co,slot); else if (slot<INVSLOTS+20) in=ch[co].worn[slot-INVSLOTS]; else if (slot==GRAVE_HELD) in=ch[co].citem; }
+		else if (slot<40) { merch_fill(cn,co); in=INV(co,slot); }
 	}
 	if (in&0x80000000) in=0;
 	if (where==0 && slot<40 && IS_BUILDING(cn)) { tip_build(nr,cn,slot,&line); in=0; }	// build pieces, not items
@@ -2046,8 +2046,8 @@ void plr_change(int nr)
 	
 		for (n=0; n<50; n++) plr_change_stat(nr,cpl->skill[n],ch[cn].skill[n],SV_SETCHAR_SKILL,n);
 
-		for (n=0; n<40; n++) {
-                if (cpl->item[n]!=(in=ch[cn].item[n]) || (!IS_BUILDING(cn) && it[in].flags&IF_UPDATE)) {
+		for (n=0; n<INVSLOTS; n++) {
+                if (cpl->item[n]!=(in=INV(cn,n)) || (!IS_BUILDING(cn) && it[in].flags&IF_UPDATE)) {
                         buf[0]=SV_SETCHAR_ITEM;
                         *(unsigned int*)(buf+1)=n;
                         if (in) {
@@ -2115,21 +2115,21 @@ void plr_change(int nr)
 		}
 	
 		{	// item tiers of the backpack and worn items, for the glow (tier.c)
-			unsigned char tb[64]; int k,diff=0;
-			memset(tb,0,64); tb[0]=SV_TIERS; tb[1]=0;
-			for (k=0; k<40; k++) tb[2+k]=tier_item_glow(ch[cn].item[k]);
-			for (k=0; k<20; k++) tb[42+k]=tier_item_glow(ch[cn].worn[k]);
-			for (k=0; k<60; k++) if (tb[2+k]!=cpl->tiers[k]) { diff=1; cpl->tiers[k]=tb[2+k]; }
-			if (diff) xsend(nr,tb,64);
+			unsigned char tb[2+LOOK_SLOTS]; int k,diff=0;
+			memset(tb,0,sizeof(tb)); tb[0]=SV_TIERS; tb[1]=0;
+			for (k=0; k<INVSLOTS; k++) tb[2+k]=tier_item_glow(INV(cn,k));
+			for (k=0; k<20; k++) tb[2+INVSLOTS+k]=tier_item_glow(ch[cn].worn[k]);
+			for (k=0; k<INVSLOTS+20; k++) if (tb[2+k]!=cpl->tiers[k]) { diff=1; cpl->tiers[k]=tb[2+k]; }
+			if (diff) xsend(nr,tb,sizeof(tb));
 		}
 		{	// item marks (spell scroll letter and charges) of the backpack and worn items (tier.c)
-			unsigned char mb[126]; int k,diff=0;
-			memset(mb,0,126); mb[0]=SV_ITEMMARKS; mb[1]=0;
-			for (k=0; k<62; k++) mb[3+k*2]=255;
-			for (k=0; k<40; k++) item_marks(ch[cn].item[k],mb+2+k*2,mb+3+k*2);
-			for (k=0; k<20; k++) item_marks(ch[cn].worn[k],mb+82+k*2,mb+83+k*2);
-			for (k=0; k<120; k++) if (mb[2+k]!=cpl->marks[k]) { diff=1; cpl->marks[k]=mb[2+k]; }
-			if (diff) xsend(nr,mb,126);
+			unsigned char mb[2+2*LOOK_SLOTS]; int k,diff=0;
+			memset(mb,0,sizeof(mb)); mb[0]=SV_ITEMMARKS; mb[1]=0;
+			for (k=0; k<LOOK_SLOTS; k++) mb[3+k*2]=255;
+			for (k=0; k<INVSLOTS; k++) item_marks(INV(cn,k),mb+2+k*2,mb+3+k*2);
+			for (k=0; k<20; k++) item_marks(ch[cn].worn[k],mb+2+(INVSLOTS+k)*2,mb+3+(INVSLOTS+k)*2);
+			for (k=0; k<2*(INVSLOTS+20); k++) if (mb[2+k]!=cpl->marks[k]) { diff=1; cpl->marks[k]=mb[2+k]; }
+			if (diff) xsend(nr,mb,sizeof(mb));
 		}
 		{	// the zone's name, for the bar above the Godot client's minimap
 			unsigned char zb[41];
@@ -3054,12 +3054,12 @@ int check_valid(int cn)
 
         if (IS_BUILDING(cn)) return 1;
 
-        for (n=0; n<40; n++) {
-                if ((in=ch[cn].item[n])!=0) {
+        for (n=0; n<INVSLOTS; n++) {
+                if ((in=INV(cn,n))!=0) {
                         if (it[in].carried!=cn || it[in].used!=USE_ACTIVE) {
                                 xlog("Reset item %d (%s,%d) from char %d (%s)",
                                         in,it[in].name,it[in].used,cn,ch[cn].name);
-                                ch[cn].item[n]=0;
+                                INV(cn,n)=0;
                         }
                 }
         }

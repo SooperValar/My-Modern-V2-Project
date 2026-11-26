@@ -261,9 +261,9 @@ void plr_cmd_waypoint(int nr)
 		ch[cn].citem=0; it[in2].used=USE_EMPTY;
 		do_char_log(cn,1,"Your %s vanished.\n",it[in2].reference);
 	}
-	for (in2=0,to=0; to<40; to++) {
-		if ((in2=ch[cn].item[to]) && is_nolab_item(in2)) {
-			ch[cn].item[to]=0; it[in2].used=USE_EMPTY;
+	for (in2=0,to=0; to<INVSLOTS; to++) {
+		if ((in2=INV(cn,to)) && is_nolab_item(in2)) {
+			INV(cn,to)=0; it[in2].used=USE_EMPTY;
 			do_char_log(cn,1,"Your %s vanished.\n",it[in2].reference);
 		}
 	}

@@ -252,14 +252,14 @@ static void con_cmd(char *line)
 	if (!strcmp(w[0],"items")) {	// items <player>: the backpack and the hand, with stack counts
 		int k,in;
 		if (!(co=con_player(w[1]))) return;
-		for (k=0; k<40; k++) if ((in=ch[co].item[k])) out("  %2d  %s%s%d\n",k,it[in].name,stack_count(in)>1 ? "  x" : (stack_kind(in)==2 ? "  charges " : "  "),stack_count(in)>1 ? stack_count(in) : (stack_kind(in)==2 ? (int)it[in].data[2] : 1));
+		for (k=0; k<INVSLOTS; k++) if ((in=INV(co,k))) out("  %2d  %s%s%d\n",k,it[in].name,stack_count(in)>1 ? "  x" : (stack_kind(in)==2 ? "  charges " : "  "),stack_count(in)>1 ? stack_count(in) : (stack_kind(in)==2 ? (int)it[in].data[2] : 1));
 		if ((in=ch[co].citem) && !(in&0x80000000)) out("  hand: %s x%d\n",it[in].name,stack_count(in));
 		return;
 	}
 	if (!strcmp(w[0],"useslot")) {	// useslot <player> <slot>: use the item in that backpack slot (as the player)
 		int k=atoi(w[2]),in;
 		if (!(co=con_player(w[1]))) return;
-		if (k<0 || k>39 || !(in=ch[co].item[k])) { out("  Nothing there.\n"); return; }
+		if (k<0 || k>=INVSLOTS || !(in=INV(co,k))) { out("  Nothing there.\n"); return; }
 		use_driver(co,in,1);
 		out("  used\n");
 		return;
@@ -434,20 +434,20 @@ static void con_cmd(char *line)
 	if (!strcmp(w[0],"usetest")) {	// usetest <player> <backpack slot>: he uses that item (a potion: drinks it) - for testing
 		int pl,a=atoi(w[2]),in;
 		if (!(pl=con_player(w[1]))) return;
-		if (a<0 || a>39 || !(in=ch[pl].item[a])) { out("  Nothing in that backpack slot.\n"); return; }
+		if (a<0 || a>=INVSLOTS || !(in=INV(pl,a))) { out("  Nothing in that backpack slot.\n"); return; }
 		use_driver(pl,in,1);
-		out("  Used. Slot %d now: %s\n",a,ch[pl].item[a] ? it[ch[pl].item[a]].name : "empty");
+		out("  Used. Slot %d now: %s\n",a,INV(pl,a) ? it[INV(pl,a)].name : "empty");
 		return;
 	}
 	if (!strcmp(w[0],"recipetest")) {	// recipetest <player> <backpack slot used> <backpack slot held>: try a recipe as if he did it
 		int pl,a=atoi(w[2]),b=atoi(w[3]),in,held,k;
 		if (!(pl=con_player(w[1]))) return;
-		if (a<0 || a>39 || b<0 || b>39 || a==b || !(in=ch[pl].item[a]) || !(held=ch[pl].item[b]) || ch[pl].citem) { out("  Two different filled backpack slots, and nothing on his cursor.\n"); return; }
-		ch[pl].item[b]=0; ch[pl].citem=held;
+		if (a<0 || a>=INVSLOTS || b<0 || b>=INVSLOTS || a==b || !(in=INV(pl,a)) || !(held=INV(pl,b)) || ch[pl].citem) { out("  Two different filled backpack slots, and nothing on his cursor.\n"); return; }
+		INV(pl,b)=0; ch[pl].citem=held;
 		n=recipe_try(pl,in);
-		if (ch[pl].citem==held) { ch[pl].citem=0; for (k=0; k<40; k++) if (!ch[pl].item[k]) { ch[pl].item[k]=held; break; } }
+		if (ch[pl].citem==held) { ch[pl].citem=0; for (k=0; k<INVSLOTS; k++) if (!INV(pl,k)) { INV(pl,k)=held; break; } }
 		out("  %s\n",n ? "A recipe was used (see his log)." : "No recipe for these two.");
-		for (k=0; k<40; k++) if ((in=ch[pl].item[k])) out("  slot %2d: %s (%d)%s\n",k,it[in].name,it[in].temp,stack_count(in)>1 ? " stack" : "");
+		for (k=0; k<INVSLOTS; k++) if ((in=INV(pl,k))) out("  slot %2d: %s (%d)%s\n",k,it[in].name,it[in].temp,stack_count(in)>1 ? " stack" : "");
 		if (ch[pl].citem) out("  cursor: %s\n",it[ch[pl].citem].name);
 		do_update_char(pl);
 		return;
@@ -463,11 +463,11 @@ static void con_cmd(char *line)
 		for (n=1; n<MAXCHARS; n++) if (ch[n].used==USE_ACTIVE && !(ch[n].flags&CF_BODY) && ch[n].temp==t && (ch[n].flags&CF_MERCHANT)) { co=n; break; }
 		if (!co) { out("  No merchant of template %d in the world.\n",t); return; }
 		if (!strcmp(w[3],"buy") || !strcmp(w[3],"page")) merch_take(pl,co,atoi(w[4]));
-		else if (!strcmp(w[3],"sell")) { k=atoi(w[4]); if (k<0 || k>39 || !(in=ch[pl].item[k])) { out("  Nothing in that backpack slot.\n"); return; } ch[pl].item[k]=0; ch[pl].citem=in; merch_sell(pl,co); if (ch[pl].citem==in) { ch[pl].citem=0; ch[pl].item[k]=in; } }
+		else if (!strcmp(w[3],"sell")) { k=atoi(w[4]); if (k<0 || k>=INVSLOTS || !(in=INV(pl,k))) { out("  Nothing in that backpack slot.\n"); return; } INV(pl,k)=0; ch[pl].citem=in; merch_sell(pl,co); if (ch[pl].citem==in) { ch[pl].citem=0; INV(pl,k)=in; } }
 		else if (!strcmp(w[3],"leave")) merch_leave(pl,co);
 		merch_fill(pl,co);
 		out("  %s (%d), buys %d, gold %dG; %s has %dG %dS:\n",ch[co].name,t,merch_kinds(co),ch[co].gold/100,ch[pl].name,ch[pl].gold/100,ch[pl].gold%100);
-		for (k=0; k<40; k++) if ((in=ch[co].item[k]) && !(in&0x80000000))
+		for (k=0; k<INVSLOTS; k++) if ((in=INV(co,k)) && !(in&0x80000000))
 			out("  %2d  %-34s %7dS%s\n",k,it[in].name,merch_sell_price(pl,co,in),merch_remorse(pl,in) ? "  (sold by you: buy back)" : "");
 		return;
 	}

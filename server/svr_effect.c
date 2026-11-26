@@ -113,8 +113,8 @@ void effect_tick(void)
 						co=fx[n].data[2];
 
 						flag=0;
-						for (z=0; z<40 && !flag; z++) {
-							if (ch[co].item[z]) { flag=1; break; }
+						for (z=0; z<INVSLOTS && !flag; z++) {
+							if (INV(co,z)) { flag=1; break; }
 						}
 						for (z=0; z<20 && !flag; z++) {
 							if (z==WN_RHAND && is_penta_enemy(co)) continue;	// a pentagram enemy's own weapon: no grave just for that

@@ -518,7 +518,10 @@ struct character
 
         unsigned short sprite_override; // MyV2: unsigned (sprites up to 65535)
 
-        short future2[49];
+        // MyV2 (Nov 26): backpack slots 40-59, in what was future2's spare space (zero in every saved character),
+        // so char.dat and tchar.dat keep their layout. Reach any of the 60 slots through INV() in macros.h.
+        unsigned int item2[20];
+        short future2[9];
 
         unsigned int depot[62];
 

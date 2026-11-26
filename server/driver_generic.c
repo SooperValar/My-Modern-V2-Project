@@ -159,7 +159,7 @@ void drv_use(int cn,int nr)
         if (nr<20) {
                 if (!(in=ch[cn].worn[nr])) { ch[cn].last_action=ERR_FAILED; ch[cn].use_nr=0; return; }
         } else {
-                if (!(in=ch[cn].item[nr-20])) { ch[cn].last_action=ERR_FAILED; ch[cn].use_nr=0; return; }
+                if (!(in=INV(cn,nr-20))) { ch[cn].last_action=ERR_FAILED; ch[cn].use_nr=0; return; }
         }
 
         use_driver(cn,in,1);    // HACK! This should go through plr_act as well!

@@ -1236,7 +1236,12 @@ void do_sort(int cn,char *arg)
 	
         order=arg;
 
-        qsort(ch[cn].item,40,sizeof(int),qsort_proc);
+        {
+                unsigned int all[INVSLOTS]; int n;
+                for (n=0; n<INVSLOTS; n++) all[n]=INV(cn,n);
+                qsort(all,INVSLOTS,sizeof(int),qsort_proc);
+                for (n=0; n<INVSLOTS; n++) INV(cn,n)=all[n];
+        }
 
 	do_update_char(cn);
 
@@ -1357,15 +1362,15 @@ void do_create_note(int cn, char *text)
 
         chlog(cn, "created note: %s.", text);
 
-        for (m=0; m<40; m++) { // looking for free space in inventory
-                if (ch[cn].item[m]==0) {
+        for (m=0; m<INVSLOTS; m++) { // looking for free space in inventory
+                if (INV(cn,m)==0) {
                         tmp = god_create_item(tmp); // creating from template 132
                         if (tmp) { // successful
                                 it[tmp].temp = 0;       // clear template
                                 strcpy(&it[tmp].description[0], text); // copy new description
                                 it[tmp].flags|=IF_NOEXPIRE;
                                 it[tmp].carried=cn; // carried by <cn>
-                                ch[cn].item[m]=tmp; // item is in inventory
+                                INV(cn,m)=tmp; // item is in inventory
                         }
 			
 			do_update_char(cn);
@@ -2342,7 +2347,7 @@ void do_repair_all(int cn,int inv)
 
 	cnt_n=inv ? 40 : 20;
 	for (n=0; n<cnt_n; n++) {
-		in=(int)(inv ? ch[cn].item[n] : ch[cn].worn[n]);
+		in=(int)(inv ? INV(cn,n) : ch[cn].worn[n]);
 		if (in>0 && in<MAXITEM && !(in&0x80000000) && it[in].damage_state) cnt++;
 	}
 	if (!cnt) { do_char_log(cn,1,"Nothing %s needs repairing.\n",inv ? "in your backpack" : "you wear"); return; }
@@ -2357,7 +2362,7 @@ void do_repair_all(int cn,int inv)
 	confirm_mode[cn]=0;
 
 	for (n=0; n<cnt_n; n++) {
-		in=(int)(inv ? ch[cn].item[n] : ch[cn].worn[n]);
+		in=(int)(inv ? INV(cn,n) : ch[cn].worn[n]);
 		if (in<=0 || in>=MAXITEM || (in&0x80000000) || !it[in].damage_state) continue;
 		strncpy(name,it[in].name,59); name[59]=0;
 
@@ -2365,7 +2370,7 @@ void do_repair_all(int cn,int inv)
 		ch[cn].citem=in;
 		res=repair_citem(cn);
 		now=ch[cn].citem;
-		if (inv) ch[cn].item[n]=now; else ch[cn].worn[n]=now;
+		if (inv) INV(cn,n)=now; else ch[cn].worn[n]=now;
 		ch[cn].citem=old;
 
 		if (res==1) { do_char_log(cn,2,"Repaired %s.\n",name); ok++; }
@@ -2824,8 +2829,8 @@ void do_ransack_corpse(int cn, int co, char *msg)
         }
         // Check for items in inventory
 		/* SH 30.06.00 */
-        for (n=0; n<40; n++) {
-                if (!(in=ch[co].item[n])) continue;
+        for (n=0; n<INVSLOTS; n++) {
+                if (!(in=INV(co,n))) continue;
                 t = it[in].temp;
 				if(!(it[in].flags&IF_MAGIC)) continue; // this item havent 'magic' flag
                 if (is_unique(in) && ch[cn].skill[SK_SENSE][5] > RANDOM(200)) {
@@ -3029,15 +3034,15 @@ void do_char_killed(int cn,int co)
                 if (ch[co].gold && wimp<RANDOM(100)) ch[co].gold=0;
                 else ch[cc].gold=0;
 
-                for (n=0; n<40; n++) {
-                        if (!(in=ch[co].item[n])) continue;
+                for (n=0; n<INVSLOTS; n++) {
+                        if (!(in=INV(co,n))) continue;
                         if (!do_maygive(cn,0,in)) {
                                 it[in].used=USE_EMPTY;
-                                ch[co].item[n]=0; ch[cc].item[n]=0;
+                                INV(co,n)=0; INV(cc,n)=0;
                                 continue;
                         }
-                        if (wimp<=RANDOM(100)) { ch[co].item[n]=0; it[in].carried=cc; chlog(co,"Dropped %s (t=%d) in Grave",it[in].name,it[in].temp); }
-                        else ch[cc].item[n]=0;
+                        if (wimp<=RANDOM(100)) { INV(co,n)=0; it[in].carried=cc; chlog(co,"Dropped %s (t=%d) in Grave",it[in].name,it[in].temp); }
+                        else INV(cc,n)=0;
                 }
 
                 if ((in=ch[co].citem)!=0) {
@@ -3199,7 +3204,7 @@ void do_char_killed(int cn,int co)
                 god_destroy_items(co);
                 ch[co].citem=0;
                 ch[co].gold=0;
-                for (z=0; z<40; z++) ch[co].item[z]=0;
+                for (z=0; z<INVSLOTS; z++) INV(co,z)=0;
                 for (z=0; z<20; z++) ch[co].worn[z]=0;
 
                 ch[co].used=USE_EMPTY;
@@ -4623,8 +4628,8 @@ void do_look_item(int cn,int in)
         if (it[in].active) act=1;
         else act=0;
 
-        for (n=0; n<40; n++)
-                if (ch[cn].item[n]==in) { flag=1; break; }
+        for (n=0; n<INVSLOTS; n++)
+                if (INV(cn,n)==in) { flag=1; break; }
         for (n=0; n<20 && !flag; n++)
                 if (ch[cn].worn[n]==in) { flag=1; break; }
         if (!flag && !do_char_can_see_item(cn,in)) return;
@@ -4710,11 +4715,56 @@ int barter(int cn,int opr,int flag) // flag=1 merchant is selling, flag=0 mercha
         return pr;
 }
 
+/* MyV2 (Nov 26): a grave's window, GRAVE_SLOTS wide: the backpack (0-59), the worn items (60-79), the held item (80)
+ * and the gold (81). nr below GRAVE_SLOTS takes one, GRAVE_DESCRIBE and up describes it. */
+static int grave_item(int co,int nr)
+{
+        if (nr<INVSLOTS) return INV(co,nr);
+        if (nr<INVSLOTS+20) return ch[co].worn[nr-INVSLOTS];
+        if (nr==GRAVE_HELD) return ch[co].citem;
+        return 0;
+}
+
+static void do_grave_char(int cn,int co,int nr)
+{
+        int in;
+
+        if (abs(ch[cn].x-ch[co].x)+abs(ch[cn].y-ch[co].y)>1) return;
+
+        if (nr>=GRAVE_DESCRIBE && nr<GRAVE_DESCRIBE+GRAVE_SLOTS) {
+                if ((in=grave_item(co,nr-GRAVE_DESCRIBE))!=0 && !(in&0x80000000)) {
+                        do_char_log(cn,1,"%s:\n",it[in].name);
+                        do_char_log(cn,1,"%s\n",it[in].description);
+                }
+        } else if (nr==GRAVE_GOLD) {
+                if (ch[co].gold) {
+                        ch[cn].gold+=ch[co].gold;
+                        chlog(cn,"Took %dG %dS",ch[co].gold/100,ch[co].gold%100);
+                        do_char_log(cn,1,"You took %dG %dS.\n",ch[co].gold/100,ch[co].gold%100);
+                        ch[co].gold=0;
+                }
+        } else if (nr>=0 && nr<GRAVE_SLOTS) {
+                if ((in=grave_item(co,nr))!=0 && !(in&0x80000000)) {
+                        god_take_from_char(in,co);
+                        if (god_give_char(in,cn)) {
+                                chlog(cn,"Took %s",it[in].name);
+                                do_char_log(cn,1,"You took a %s.\n",it[in].reference);
+                        } else {
+                                god_give_char(in,co);
+                                do_char_log(cn,0,"You cannot take the %s because your inventory is full.\n",it[in].reference);
+                        }
+                }
+        }
+        do_look_char(cn,co,0,0,1);
+}
+
 void do_shop_char(int cn,int co,int nr)
 {
         int in,pr,in2,flag=0,tmp;
 
-        if (co<=0 || co>=MAXCHARS || nr<0 || nr>=124) return;
+        if (co<=0 || co>=MAXCHARS) return;
+        if (ch[co].flags&CF_BODY) { do_grave_char(cn,co,nr); return; }
+        if (nr<0 || nr>=124) return;
         if (godshop_cat(co)) { godshop_take(cn,co,nr); return; }	// the gods' merchants (godshop.c)
         if (!(ch[co].flags&CF_MERCHANT) && !(ch[co].flags&CF_BODY)) return;
         if (!(ch[co].flags&CF_BODY) && !do_char_can_see(cn,co)) return;
@@ -4760,7 +4810,7 @@ void do_shop_char(int cn,int co,int nr)
         } else {
                 if (nr<62) {
                         if (nr<40) {
-                                if ((in=ch[co].item[nr])!=0) {
+                                if ((in=INV(co,nr))!=0) {
                                         if (ch[co].flags&CF_MERCHANT) {
                                                 pr=barter(cn,do_item_value(in),1);
                                                 if (ch[cn].gold<pr) {
@@ -4825,7 +4875,7 @@ void do_shop_char(int cn,int co,int nr)
                         nr-=62;
 
                         if (nr<40) {
-                                if ((in=ch[co].item[nr])!=0) {
+                                if ((in=INV(co,nr))!=0) {
                                         do_char_log(cn,1,"%s:\n",it[in].name);
                                         do_char_log(cn,1,"%s\n",it[in].description);
                                 }
@@ -5119,12 +5169,12 @@ void do_trash_char(int cn,int n)
 	} else if (n>=62 && n<124) {				// look at one
 		if (IS_SANEITEM(in=trash[cn][n-62]) && it[in].used) { do_char_log(cn,1,"%s:\n",it[in].name); do_char_log(cn,1,"%s\n",it[in].description); }
 		return;
-	} else if (n>=1000 && n<1040) {				// Shift+click in the backpack: into the trash
+	} else if (n>=1000 && n<1000+INVSLOTS) {		// Shift+click in the backpack: into the trash
 		s=n-1000;
-		if (!(in=ch[cn].item[s])) return;
+		if (!(in=INV(cn,s))) return;
 		for (k=0; k<62; k++) if (!trash[cn][k]) break;
 		if (k==62) { do_char_log(cn,0,"The trash window is full.\n"); return; }
-		ch[cn].item[s]=0;
+		INV(cn,s)=0;
 		it[in].x=TRASH_MARK; it[in].y=0;
 		trash[cn][k]=in;
 		do_update_char(cn);
@@ -5293,7 +5343,7 @@ void do_look_char(int cn,int co,int godflag,int autoflag,int lootflag)
                 *(unsigned short*)(buf+14)=35;
         }
         if ((ch[co].flags&(CF_MERCHANT|CF_BODY)) && !autoflag) {
-                *(unsigned char*)(buf+5)=1;
+                *(unsigned char*)(buf+5)=(ch[co].flags&CF_BODY) ? 1|LOOK_GRAVE : 1;
                 if ((in=ch[cn].citem)!=0) {
                         if (ch[co].flags&CF_MERCHANT) {
                                 pr=(in&0x80000000) ? 0 : merch_buy_price(cn,co,in);
@@ -5311,32 +5361,34 @@ void do_look_char(int cn,int co,int godflag,int autoflag,int lootflag)
         xsend(nr,buf,16);
 
         if ((ch[co].flags&(CF_MERCHANT|CF_BODY)) && !autoflag) {
+                int body=(ch[co].flags&CF_BODY)!=0, items=body ? INVSLOTS : 40, worn0=body ? INVSLOTS : 40;
+
                 {	// item tiers of the shop / grave slots, for the glow (tier.c)
-                        unsigned char tb[64];
-                        memset(tb,0,64); tb[0]=SV_TIERS; tb[1]=1;
-                        for (m=0; m<40; m++) tb[2+m]=tier_item_glow(ch[co].item[m]);
-                        if (ch[co].flags&CF_BODY) {
-                                for (m=0; m<20; m++) tb[42+m]=tier_item_glow(ch[co].worn[m]);
-                                tb[62]=tier_item_glow(ch[co].citem);
+                        unsigned char tb[2+LOOK_SLOTS];
+                        memset(tb,0,sizeof(tb)); tb[0]=SV_TIERS; tb[1]=1;
+                        for (m=0; m<items; m++) tb[2+m]=tier_item_glow(INV(co,m));
+                        if (body) {
+                                for (m=0; m<20; m++) tb[2+worn0+m]=tier_item_glow(ch[co].worn[m]);
+                                tb[2+GRAVE_HELD]=tier_item_glow(ch[co].citem);
                         }
-                        xsend(nr,tb,64);
+                        xsend(nr,tb,sizeof(tb));
                 }
                 {	// item marks (spell scroll letter and charges) of the shop / grave slots (tier.c)
-                        unsigned char mb[126];
-                        memset(mb,0,126); mb[0]=SV_ITEMMARKS; mb[1]=1;
-                        for (m=0; m<62; m++) mb[3+m*2]=255;
-                        for (m=0; m<40; m++) item_marks(ch[co].item[m],mb+2+m*2,mb+3+m*2);
-                        if (ch[co].flags&CF_BODY) {
-                                for (m=0; m<20; m++) item_marks(ch[co].worn[m],mb+82+m*2,mb+83+m*2);
-                                item_marks(ch[co].citem,mb+122,mb+123);
+                        unsigned char mb[2+2*LOOK_SLOTS];
+                        memset(mb,0,sizeof(mb)); mb[0]=SV_ITEMMARKS; mb[1]=1;
+                        for (m=0; m<LOOK_SLOTS; m++) mb[3+m*2]=255;
+                        for (m=0; m<items; m++) item_marks(INV(co,m),mb+2+m*2,mb+3+m*2);
+                        if (body) {
+                                for (m=0; m<20; m++) item_marks(ch[co].worn[m],mb+2+(worn0+m)*2,mb+3+(worn0+m)*2);
+                                item_marks(ch[co].citem,mb+2+GRAVE_HELD*2,mb+3+GRAVE_HELD*2);
                         }
-                        xsend(nr,mb,126);
+                        xsend(nr,mb,sizeof(mb));
                 }
-                for (n=0; n<40; n+=2) {
+                for (n=0; n<items; n+=2) {
                         buf[0]=SV_LOOK6;
                         buf[1]=n;
-                        for (m=n; m<min(40,n+2); m++) {
-                                if ((in=ch[co].item[m])!=0) {
+                        for (m=n; m<min(items,n+2); m++) {
+                                if ((in=INV(co,m))!=0) {
                                         spr=it[in].sprite[0];
                                         if (ch[co].flags&CF_MERCHANT) {
                                                 pr=merch_sell_price(cn,co,in);
@@ -5350,9 +5402,9 @@ void do_look_char(int cn,int co,int godflag,int autoflag,int lootflag)
 
                 for (n=0; n<20; n+=2) {
                         buf[0]=SV_LOOK6;
-                        buf[1]=n+40;
+                        buf[1]=n+worn0;
                         for (m=n; m<min(20,n+2); m++) {
-                                if ((in=ch[co].worn[m])!=0 && (ch[co].flags&CF_BODY)) {
+                                if ((in=ch[co].worn[m])!=0 && body) {
                                         spr=it[in].sprite[0];
                                         pr=0;
                                 } else { spr=pr=0; }
@@ -5363,15 +5415,15 @@ void do_look_char(int cn,int co,int godflag,int autoflag,int lootflag)
                 }
 
                 buf[0]=SV_LOOK6;
-                buf[1]=60;
-                if ((in=ch[co].citem)!=0 && (ch[co].flags&CF_BODY)) {
+                buf[1]=worn0+20;
+                if ((in=ch[co].citem)!=0 && body) {
                         spr=it[in].sprite[0];
                         pr=0;
                 } else { spr=pr=0; }
                 *(unsigned short*)(buf+2+0*6)=spr;
                 *(unsigned int*)(buf+4+0*6)=pr;
 
-                if (ch[co].gold && (ch[co].flags&CF_BODY)) {
+                if (ch[co].gold && body) {
                         if (ch[co].gold>999999) spr=121;
                         else if (ch[co].gold>99999) spr=120;
                         else if (ch[co].gold>9999) spr=41;
@@ -5513,8 +5565,8 @@ void do_look_player_inventory(int cn,char *cv)
         do_char_log(cn,1,"Inventory contents for : %s\n", ch[co].name);
         do_char_log(cn,1,"-----------------------------------\n");
 
-        for (n=0; n<40; n++) {
-               if ((in=ch[co].item[n])!=0) {
+        for (n=0; n<INVSLOTS; n++) {
+               if ((in=INV(co,n))!=0) {
                         do_char_log(cn,1,"%6d: %s\n",in,it[in].name);
                         count++;
 		}
@@ -5567,8 +5619,8 @@ void do_steal_player(int cn, char *cv, char *ci)
 		return;
 
 	//look through depot and inventory for this item
-	for (n=0; n<40; n++) {
-		if (in==ch[co].item[n]) {
+	for (n=0; n<INVSLOTS; n++) {
+		if (in==INV(co,n)) {
 			i_index = n;
 			found_i = !(0);
 			break;
@@ -5598,7 +5650,7 @@ void do_steal_player(int cn, char *cv, char *ci)
 	if (found_i | found_d | found_e) {
 		if (god_give_char(in,cn)) {
 			if (found_i)
-				ch[co].item[i_index]=0;
+				INV(co,i_index)=0;
 			else if (found_d)
 				ch[co].depot[i_index]=0;
 			else if (found_e)
@@ -5664,12 +5716,12 @@ int do_store_item(int cn)
 
         if (ch[cn].citem&0x80000000) return -1;
 
-        for (n=0; n<40; n++)
-                if (!ch[cn].item[n]) break;
+        for (n=0; n<INVSLOTS; n++)
+                if (!INV(cn,n)) break;
 
-        if (n==40) return -1;
+        if (n==INVSLOTS) return -1;
 
-        ch[cn].item[n]=ch[cn].citem;
+        INV(cn,n)=ch[cn].citem;
         ch[cn].citem=0;
 
 	do_update_char(cn);

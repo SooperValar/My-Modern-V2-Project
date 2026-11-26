@@ -429,10 +429,10 @@ void plr_pickup(int cn)
         map[m].it=0;
 
         if (ch[cn].flags&(CF_PLAYER)) {
-                for (n=0; n<40; n++) {
-                        if (!ch[cn].item[n]) break;
+                for (n=0; n<INVSLOTS; n++) {
+                        if (!INV(cn,n)) break;
                 }
-                if (n<40) ch[cn].item[n]=in;
+                if (n<INVSLOTS) INV(cn,n)=in;
                 else ch[cn].citem=in;
                 chlog(cn,"Took %s",it[in].name);
         } else ch[cn].citem=in;

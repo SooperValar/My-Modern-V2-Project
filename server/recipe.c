@@ -88,7 +88,7 @@ static int free_slot(int cn)
 {
 	int n;
 
-	for (n=0; n<40; n++) if (!ch[cn].item[n]) return 1;
+	for (n=0; n<INVSLOTS; n++) if (!INV(cn,n)) return 1;
 	return 0;
 }
 
@@ -126,7 +126,7 @@ int recipe_try(int cn,int in)
 	{
 		int other=(held==ia) ? ib : ia, kh=(held==ia) ? (r->flags&1) : (r->flags&2), ko=(held==ia) ? (r->flags&2) : (r->flags&1);
 		int room=free_slot(cn) || (!kh && stack_count(held)<2);
-		for (n=0; n<40 && !room; n++) if (ch[cn].item[n]==other && !ko && stack_count(other)<2) room=1;
+		for (n=0; n<INVSLOTS && !room; n++) if (INV(cn,n)==other && !ko && stack_count(other)<2) room=1;
 		if (!room) { do_char_log(cn,0,"You have no room for it.\n"); return 1; }
 	}
 	in3=god_create_item(r->res);

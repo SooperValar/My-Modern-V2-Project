@@ -59,13 +59,13 @@ int use_door(int cn,int in)
                                 do_char_log(cn,1,"The key vanished.\n");
                         }
                 } else {
-                        for (n=0; n<40; n++)
-                                if ((in2=ch[cn].item[n])!=0)
+                        for (n=0; n<INVSLOTS; n++)
+                                if ((in2=INV(cn,n))!=0)
                                         if (it[in2].temp==it[in].data[0]) break;
-                        if (n<40) {
+                        if (n<INVSLOTS) {
                                 lock=1;
                                 if (it[in].data[3]) {
-                                        ch[cn].item[n]=0;
+                                        INV(cn,n)=0;
                                         it[in2].used=USE_EMPTY;
                                         do_char_log(cn,1,"The key vanished.\n");
                                 }
@@ -517,9 +517,9 @@ void finish_laby_teleport(int cn,int nr,int exp)
                 ch[cn].citem=0; it[in2].used=USE_EMPTY;
                 do_char_log(cn,1,"Your %s vanished.\n",it[in2].reference);
         }
-        for (n=0; n<40; n++) {
-                if ((in2=ch[cn].item[n]) && (it[in2].flags&IF_LABYDESTROY)) {
-                        ch[cn].item[n]=0; it[in2].used=USE_EMPTY;
+        for (n=0; n<INVSLOTS; n++) {
+                if ((in2=INV(cn,n)) && (it[in2].flags&IF_LABYDESTROY)) {
+                        INV(cn,n)=0; it[in2].used=USE_EMPTY;
                         do_char_log(cn,1,"Your %s vanished.\n",it[in2].reference);
                 }
         }
@@ -564,9 +564,9 @@ void lab_strip_items(int cn)
                 ch[cn].citem=0; it[in2].used=USE_EMPTY;
                 do_char_log(cn,1,"Your %s vanished.\n",it[in2].reference);
         }
-        for (n=0; n<40; n++) {
-                if ((in2=ch[cn].item[n]) && (it[in2].flags&IF_LABYDESTROY)) {
-                        ch[cn].item[n]=0; it[in2].used=USE_EMPTY;
+        for (n=0; n<INVSLOTS; n++) {
+                if ((in2=INV(cn,n)) && (it[in2].flags&IF_LABYDESTROY)) {
+                        INV(cn,n)=0; it[in2].used=USE_EMPTY;
                         do_char_log(cn,1,"Your %s vanished.\n",it[in2].reference);
                 }
         }
@@ -640,9 +640,9 @@ int teleport(int cn,int in)
                 do_char_log(cn,1,"Your %s vanished.\n",it[in2].reference);
         }
 
-        for (n=0; n<40; n++) {
-                if ((in2=ch[cn].item[n]) && is_nolab_item(in2)) {
-                        ch[cn].item[n]=0; it[in2].used=USE_EMPTY;
+        for (n=0; n<INVSLOTS; n++) {
+                if ((in2=INV(cn,n)) && is_nolab_item(in2)) {
+                        INV(cn,n)=0; it[in2].used=USE_EMPTY;
                         do_char_log(cn,1,"Your %s vanished.\n",it[in2].reference);
                 }
         }
@@ -716,9 +716,9 @@ int use_labyrinth(int cn,int in)
                 do_char_log(cn,1,"Your %s vanished.\n",it[in2].reference);
         }
 
-        for (n=0; n<40; n++) {
-                if ((in2=ch[cn].item[n]) && is_nolab_item(in2)) {
-                        ch[cn].item[n]=0; it[in2].used=USE_EMPTY;
+        for (n=0; n<INVSLOTS; n++) {
+                if ((in2=INV(cn,n)) && is_nolab_item(in2)) {
+                        INV(cn,n)=0; it[in2].used=USE_EMPTY;
                         do_char_log(cn,1,"Your %s vanished.\n",it[in2].reference);
                 }
         }
@@ -2246,9 +2246,9 @@ int teleport3(int cn,int in)    // out of labyrinth
                 do_char_log(cn,1,"Your %s vanished.\n",it[in2].reference);
         }
 
-        for (n=0; n<40; n++) {
-                if ((in2=ch[cn].item[n]) && is_nolab_item(in2)) {
-                        ch[cn].item[n]=0; it[in2].used=USE_EMPTY;
+        for (n=0; n<INVSLOTS; n++) {
+                if ((in2=INV(cn,n)) && is_nolab_item(in2)) {
+                        INV(cn,n)=0; it[in2].used=USE_EMPTY;
                         do_char_log(cn,1,"Your %s vanished.\n",it[in2].reference);
                 }
         }
@@ -2267,9 +2267,9 @@ int teleport3(int cn,int in)    // out of labyrinth
                 ch[cn].citem=0; it[in2].used=USE_EMPTY;
                 do_char_log(cn,1,"Your %s vanished.\n",it[in2].reference);
         }
-        for (n=0; n<40; n++) {
-                if ((in2=ch[cn].item[n]) && (it[in2].flags&IF_LABYDESTROY)) {
-                        ch[cn].item[n]=0; it[in2].used=USE_EMPTY;
+        for (n=0; n<INVSLOTS; n++) {
+                if ((in2=INV(cn,n)) && (it[in2].flags&IF_LABYDESTROY)) {
+                        INV(cn,n)=0; it[in2].used=USE_EMPTY;
                         do_char_log(cn,1,"Your %s vanished.\n",it[in2].reference);
                 }
         }
@@ -2391,9 +2391,9 @@ int use_seyan_portal(int cn,int in)
                 ch[cn].citem=0; it[in2].used=USE_EMPTY;
                 do_char_log(cn,1,"Your %s vanished.\n",it[in2].reference);
         }
-        for (n=0; n<40; n++) {
-                if ((in2=ch[cn].item[n]) && (it[in2].flags&IF_LABYDESTROY)) {
-                        ch[cn].item[n]=0; it[in2].used=USE_EMPTY;
+        for (n=0; n<INVSLOTS; n++) {
+                if ((in2=INV(cn,n)) && (it[in2].flags&IF_LABYDESTROY)) {
+                        INV(cn,n)=0; it[in2].used=USE_EMPTY;
                         do_char_log(cn,1,"Your %s vanished.\n",it[in2].reference);
                 }
         }
@@ -2563,7 +2563,7 @@ int use_time_portal(int cn,int in)
 
         if (it[in].data[5]<globs->ticker) {	// closed: is there an hourglass?
                 if ((in2=ch[cn].citem) && !(in2&0x80000000) && it[in2].temp==1290) found=1;
-                for (n=0; n<40 && !found; n++) if ((in2=ch[cn].item[n]) && it[in2].temp==1290) found=1;
+                for (n=0; n<INVSLOTS && !found; n++) if ((in2=INV(cn,n)) && it[in2].temp==1290) found=1;
                 if (!found) {
                         do_char_log(cn,0,"The portal is dark and cold. Perhaps the Hourglass of Time could wake it.\n");
                         return 0;
@@ -3285,8 +3285,8 @@ void char_item_expire(int cn)
 
         clock4++;
         /* age items in backpack */
-        for (n=0; n<40; n++) {
-                in=ch[cn].item[n];
+        for (n=0; n<INVSLOTS; n++) {
+                in=INV(cn,n);
                 if (in) {
                         if (it[in].active) act=1;
                         else act=0;
@@ -3300,7 +3300,7 @@ void char_item_expire(int cn)
                                         must_update = 1;
                                         age_message(cn, in, "in your backpack");
                                         if (it[in].damage_state==5) {
-                                                ch[cn].item[n]=0;
+                                                INV(cn,n)=0;
                                                 it[in].used=USE_EMPTY;
                                         }
                                 }
@@ -3534,11 +3534,11 @@ static int lab11_pages(int cn,int in)
         if (mask==(int)it[in].data[2]) {
                 int t=it[in].data[3],in3;
 
-                for (n=0; n<40; n++) if (ch[cn].item[n]==in) break;
-                if (n<40 && t>0 && t<MAXTITEM && (in3=god_create_item(t))) {
+                for (n=0; n<INVSLOTS; n++) if (INV(cn,n)==in) break;
+                if (n<INVSLOTS && t>0 && t<MAXTITEM && (in3=god_create_item(t))) {
                         it[in].used=USE_EMPTY;
                         it[in3].carried=cn;
-                        ch[cn].item[n]=in3;
+                        INV(cn,n)=in3;
                         do_char_log(cn,0,"The last page slips into place. The tome is whole again, and its pages begin to glow.\n");
                         chlog(cn,"Lab 11: put the torn tome together");
                         do_update_char(cn);
@@ -3591,12 +3591,12 @@ int use_lab11(int cn,int in)
                         } else {
                                 int n;
 
-                                for (n=0; n<40; n++) if ((in2=ch[cn].item[n]) && it[in2].temp==it[in].data[1]) break;
-                                if (n==40) {
+                                for (n=0; n<INVSLOTS; n++) if ((in2=INV(cn,n)) && it[in2].temp==it[in].data[1]) break;
+                                if (n==INVSLOTS) {
                                         do_char_log(cn,1,"An empty lectern, its wood swollen with water. Something was read from it once.\n");
                                         return 0;
                                 }
-                                ch[cn].item[n]=0;
+                                INV(cn,n)=0;
                         }
                         it[in2].used=USE_EMPTY;
 
@@ -3806,9 +3806,9 @@ void item_tick_gc(void)
 
                 if ((cn=it[n].carried)!=0) {
                         if (IS_SANECHAR(cn) && ch[cn].used) {
-                                for (z=0; z<40; z++)
-                                        if (ch[cn].item[z]==n) break;
-                                if (z<40) continue;
+                                for (z=0; z<INVSLOTS; z++)
+                                        if (INV(cn,z)==n) break;
+                                if (z<INVSLOTS) continue;
                                 for (z=0; z<20; z++) {
                                         if (ch[cn].worn[z]==n) break;
                                         if (ch[cn].spell[z]==n) break;
@@ -3947,8 +3947,8 @@ int step_portal1_lab13(int cn,int in)
 
         if (ch[cn].citem) flag=1;
 
-        for (n=0; n<40 && !flag; n++)
-                if (ch[cn].item[n]) flag=1;
+        for (n=0; n<INVSLOTS && !flag; n++)
+                if (INV(cn,n)) flag=1;
 
         for (n=0; n<20 && !flag; n++)
                 if (ch[cn].worn[n]) flag=1;
@@ -4022,9 +4022,9 @@ int step_portal2_lab13(int cn,int in)
                 }
         }
 
-        for (n=0; n<40; n++) {
-                if ((in2=ch[cn].item[n])!=0 && it[in2].temp==664) {
-                        ch[cn].item[n]=0;
+        for (n=0; n<INVSLOTS; n++) {
+                if ((in2=INV(cn,n))!=0 && it[in2].temp==664) {
+                        INV(cn,n)=0;
                         it[in2].used=USE_EMPTY;
                 }
         }
@@ -4048,10 +4048,10 @@ int step_portal_arena(int cn,int in)
                 flag=1;
         }
 
-        for (n=0; n<40; n++) {
-                if ((in2=ch[cn].item[n])!=0 && it[in2].temp==687) {
+        for (n=0; n<INVSLOTS; n++) {
+                if ((in2=INV(cn,n))!=0 && it[in2].temp==687) {
                         flag=1;
-                        ch[cn].item[n]=0;
+                        INV(cn,n)=0;
                         it[in2].used=USE_EMPTY;
                 }
         }

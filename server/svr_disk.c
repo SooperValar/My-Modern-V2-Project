@@ -184,8 +184,8 @@ void flush_char(int cn)
 	
 	msync(&ch[cn],sizeof(struct character),MS_ASYNC);
 	
-	for (n=0; n<40; n++) {
-		if (IS_SANEITEM(in=ch[cn].item[n]))
+	for (n=0; n<INVSLOTS; n++) {
+		if (IS_SANEITEM(in=INV(cn,n)))
 			msync(&it[in],sizeof(struct item),MS_ASYNC);
 	}
 	

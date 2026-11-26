@@ -129,6 +129,14 @@ of 3.0.0 and up, so merc.exe never sees a message it doesn't know.
   "out of date, use Launcher.exe" login note and CLIENT_LATEST, the waypoint window's WP_CLIENT check), and what only
   the Godot client got (the table tooltip, SV_ZONE, SV_META) no longer checks the version (GODOT_CLIENT is gone;
   MINVERSION 3.0.0 is the one gate). The old client's files and tools stay (Cody, Nov 26). Live since Nov 26, 02:43.
+- **60-slot backpack** (`data.h`, `macros.h` INV(), `gendefs.h` INVSLOTS 60, every `.c` but acct/info): the
+  backpack holds 60 items instead of 40. Slots 40-59 live in `item2[20]`, cut from the spare `future2` area of
+  `struct character`, so char.dat / tchar.dat keep their size (3605) and need no conversion. Merchants, the god shop,
+  build pages and templates stay at 40. `#sort` sorts all 60; trash shift-click covers 1000+slot up to 1059;
+  `.chr` backups write slots 40-59 after the spells (older backups restore with them empty). SV_TIERS is 84 bytes and
+  SV_ITEMMARKS 166 (60 backpack + 20 worn). **Grave window:** looting a body opens a Grave (LOOK4 flag 8) with 82
+  slots: 0-59 the backpack, 60-79 worn, 80 held, 81 gold; the Godot client shows it in two pages. The Editor and the
+  Python tools in tools/world still read only the first 40 slots. Tested on the test server with copies.
 
 ## HUD changes
 

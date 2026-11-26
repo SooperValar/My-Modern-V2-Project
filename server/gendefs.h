@@ -12,6 +12,7 @@ All rights reserved.
 #define DATDIR          ".dat"
 
 #define VERSION         0x020E07
+#define INVSLOTS        60	// MyV2 (Nov 26): backpack slots; 40-59 live in item2[] (data.h, INV() in macros.h)
 #define MINVERSION      0x030000	// 3.0.0: the Godot client only (Nov 25); merc.exe (2.15.x) is turned away with LO_VERSION
 					// start the game with Launcher.exe. Raise it when a new client is published (publish_client.py).
 
