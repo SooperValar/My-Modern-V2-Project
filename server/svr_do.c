@@ -6041,33 +6041,12 @@ void remember_pvp(int cn, int co)
 }
 
 
-/* MyV2 (Nov 25, Cody): the numbers of the Godot client's Offenses / Defenses lists (SV_META).
- * The client holds the names and where each one goes; these indexes must match MyV2MetaStats.cs.
- * Hundredths where the client shows decimals. */
-#define META_WEAPON	0
-#define META_ARMOR	1
-#define META_SPEED	2	// attacks per second, hundredths
-#define META_DAMMIN	3
-#define META_DAMMAX	4
-#define META_HIT	5
-#define META_PARRY	6
-#define META_DAMAVG	7	// hundredths
-#define META_DPS	8	// hundredths
-#define META_STRBONUS	9
-#define META_LUCKY1	10	// percent, hundredths
-#define META_LUCKY2	11
-#define META_CRIT	12	// percent, hundredths
-#define META_DEFLECT	48	// percent, hundredths
-#define META_THORNS	49
-#define META_HPREG	50	// per second standing, hundredths
-#define META_ENDREG	51
-#define META_MANAREG	52
-#define META_RESIST	53
-#define META_IMMUN	54
-
+/* MyV2 (Nov 25, Cody): the numbers of the Godot client's top rows, Offenses and Defenses lists (SV_META; slots in
+ * client.h, which must match the client's MyV2MetaStats.cs). Hundredths where the client shows decimals.
+ * The spells' rows come from meta_spells() in skill_driver.c. */
 void meta_stats(int cn,int *val,unsigned char *show)
 {
-        int n,in,str,extra,avg,steps,hit,moonmult=20,ahp,aend,amana,hp=0,end=0,mana=0;
+        int n,in,str,extra,avg,hit,moonmult=20,ahp,aend,amana,hp=0,end=0,mana=0;
 
         memset(val,0,META_COUNT*sizeof(int));
         memset(show,0,META_COUNT);
@@ -6078,25 +6057,30 @@ void meta_stats(int cn,int *val,unsigned char *show)
 
         str=ch[cn].attrib[AT_STREN][5];
         extra=str>3 ? str/2-1 : 0;                              // RANDOM(str/2) in do_attack
-        steps=attack_steps(cn);
 
+        val[META_SPEED]=attack_steps(cn)*TICKS*100/(20*8);     // 8 frames to a step, blow or cast
         val[META_WEAPON]=ch[cn].weapon;
-        val[META_ARMOR]=ch[cn].armor;
-        val[META_SPEED]=steps*TICKS*100/(20*8);                 // 8 frames to an attack
-        val[META_DAMMIN]=ch[cn].weapon+1;
-        val[META_DAMMAX]=ch[cn].weapon+6+extra;
         val[META_HIT]=hit;
         val[META_PARRY]=hit;
+        val[META_MANACOST]=ch[cn].skill[SK_CONCEN][0] ? max(0,10000-ch[cn].skill[SK_CONCEN][5]*10000/300) : 10000;
+
+        val[META_PASSIVE]=val[META_ACTIVE]=val[META_DPASSIVE]=META_HEADING;
         avg=ch[cn].weapon*100+350+extra*50+(35+70)*5/10;        // lucky hits: 5 % +1d6, 5 % +2d6
         if (wields_2h(cn,1)) {
                 val[META_CRIT]=wp2h_chance(cn,1)*10;
+                val[META_CRITMULT]=200;
                 avg=avg*(1000+wp2h_chance(cn,1))/1000;
         }
         val[META_DAMAVG]=avg;
         val[META_DPS]=avg*val[META_SPEED]/100;
+        val[META_DAMMAX]=ch[cn].weapon+6+extra;
+        val[META_DAMMIN]=ch[cn].weapon+1;
         val[META_STRBONUS]=extra;
         val[META_LUCKY1]=500;
         val[META_LUCKY2]=500;
+        val[META_SURROUND]=ch[cn].skill[SK_SURROUND][0] ? ch[cn].skill[SK_SURROUND][5] : 0;
+
+        val[META_ARMOR]=ch[cn].armor;
         if (wields_2h(cn,0)) val[META_DEFLECT]=wp2h_chance(cn,0)*10;
         val[META_THORNS]=ch[cn].gethit_dam;
 
@@ -6130,15 +6114,19 @@ void meta_stats(int cn,int *val,unsigned char *show)
         val[META_HPREG]=hp*TICKS/10;                            // 1000 a point, per tick
         val[META_ENDREG]=end*TICKS/10;
         val[META_MANAREG]=mana*TICKS/10;
+        val[META_IMMUN]=ch[cn].skill[SK_IMMUN][0] ? ch[cn].skill[SK_IMMUN][5]/2 : 0;     // spell_immunity()
         val[META_RESIST]=ch[cn].skill[SK_RESIST][0] ? ch[cn].skill[SK_RESIST][5] : 0;
-        val[META_IMMUN]=ch[cn].skill[SK_IMMUN][0] ? ch[cn].skill[SK_IMMUN][5] : 0;
 
-        for (n=0; n<=META_CRIT; n++) show[n]=1;
-        show[META_CRIT]=wields_2h(cn,1);
+        for (n=0; n<=META_PARRY; n++) show[n]=1;
+        for (n=META_PASSIVE; n<=META_LUCKY2; n++) show[n]=1;
+        show[META_CRIT]=show[META_CRITMULT]=wields_2h(cn,1);
+        show[META_SURROUND]=val[META_SURROUND]>0;
+        show[META_DPASSIVE]=show[META_ARMOR]=show[META_HPREG]=show[META_ENDREG]=1;
+        show[META_MANAREG]=ch[cn].skill[SK_MEDIT][0]!=0 || mana!=0;
+        show[META_IMMUN]=val[META_IMMUN]>0;
+        show[META_RESIST]=val[META_RESIST]>0;
         show[META_DEFLECT]=wields_2h(cn,0);
         show[META_THORNS]=val[META_THORNS]>0;
-        show[META_HPREG]=show[META_ENDREG]=1;
-        show[META_MANAREG]=ch[cn].skill[SK_MEDIT][0]!=0 || mana!=0;
-        show[META_RESIST]=val[META_RESIST]>0;
-        show[META_IMMUN]=val[META_IMMUN]>0;
+
+        meta_spells(cn,val,show);
 }

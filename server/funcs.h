@@ -487,6 +487,7 @@ int quest_for_item(int npc,int itm);
 int quest_rank_check(int t,int co,int *lo,int *hi);
 int wp2h_chance(int cn,int axe);
 void meta_stats(int cn,int *val,unsigned char *show);
+void meta_spells(int cn,int *val,unsigned char *show);
 int set_pieces(int cn,int set);
 int set_of_temp(int t);
 int merch_load(void);

@@ -59,6 +59,49 @@ struct cmap
 } __attribute__ ((packed));
 
 #define META_COUNT		89	// meta stats of the Godot client (SV_META)
+#define META_HEADING		65535	// a heading row's value: the client shows no number
+// top rows (always shown)
+#define META_COMPAT		0	// spellpower(): caps Bless / Protect / Enhance cast on you
+#define META_SPELLBONUS		1	// spell_race_mod() of 1, hundredths
+#define META_MANACOST		2	// Concentrate, percent, hundredths
+#define META_SPEED		3	// steps, blows or casts a second, hundredths
+#define META_WEAPON		4
+#define META_HIT		5
+#define META_PARRY		6
+// Offenses (7-47)
+#define META_PASSIVE		7
+#define META_DAMAVG		8	// hundredths
+#define META_DPS		9	// hundredths
+#define META_DAMMAX		10
+#define META_DAMMIN		11
+#define META_STRBONUS		12
+#define META_LUCKY1		13	// percent, hundredths
+#define META_LUCKY2		14
+#define META_CRIT		15	// percent, hundredths
+#define META_CRITMULT		16	// percent
+#define META_SURROUND		17
+#define META_ACTIVE		18
+#define META_BLESS		19
+#define META_ENHANCE		20
+#define META_PROTECT		21
+#define META_MSHIELD		22
+#define META_MSHIELDTIME	23	// seconds, hundredths
+#define META_HEAL		24
+#define META_CURSE		25
+#define META_STUNTIME		26	// seconds, hundredths
+#define META_BLAST		27
+#define META_BLASTCOST		28
+#define META_GHOST		29
+// Defenses (48-88)
+#define META_DPASSIVE		48
+#define META_ARMOR		49
+#define META_HPREG		50	// per second standing, hundredths
+#define META_ENDREG		51
+#define META_MANAREG		52
+#define META_IMMUN		53
+#define META_RESIST		54
+#define META_DEFLECT		55	// percent, hundredths
+#define META_THORNS		56
 
 struct cplayer
 {

@@ -106,14 +106,18 @@ of 3.0.0 and up, so merc.exe never sees a message it doesn't know.
   when its master fights or is attacked; **passive** and it only attacks what its master names (attack <name>, #gca)
   and leaves the fight it is in. **buffs** works like geronimo. The mode is kept outside ch[].data (every slot there is
   read by some driver) and isn't saved: a restart brings back Defense. Live since Nov 25, 20:27.
-- **Meta stats for the Godot client** (`svr_do.c` meta_stats, `svr_act.c` attack_steps, `svr_tick.c`, `client.h`):
-  SV_META (81, 7 bytes: slot, int value, show) sends the numbers behind the client's Offenses / Defenses lists and the
-  Hit / Parry Score panel, only when one changes. Top rows: Weapon Value, Armor Value, Attack Speed (blows a second, from
-  speedtab), Min / Max Damage, Hit Score, Parry Score (the fight skill, less the luck penalty). Offenses: Average Damage
-  (lucky hits and 2H-axe crits included), Damage/Second, Strength Bonus, both lucky hits, Critical Hit (2H axe).
-  Defenses: Deflect (2H sword), Thorns, Hit Point / Endurance / Mana regen a second standing (as do_regenerate, with the
-  moon, tier effects, amulets and permanent spells), Resistance, Immunity. The names live in the client
-  (`MyV2MetaStats.cs`); the slots must match. Live since Nov 25, 21:07.
+- **Meta stats for the Godot client** (`svr_do.c` meta_stats, `skill_driver.c` meta_spells, `svr_act.c` attack_steps,
+  `svr_tick.c`, `client.h` META_*): SV_META (81, 7 bytes: slot, int value, show) sends the numbers behind the client's
+  left-panel lists, laid out like The Last Gate's, only when one changes. Top rows: Compatibility (spellpower), Spell
+  Bonus (race and moon), Mana Cost Multiplier (Concentrate), Action Speed (steps, blows and casts a second: MyV2 has one
+  speed for all three), Weapon Value, Hit Score, Parry Score. Offenses, Passive: Est. Melee Hit Dmg and DPS, ceiling and
+  floor damage, Strength Bonus, lucky hits, 2H-axe Critical Chance and Multiplier, Surround Hit; Active (each spell
+  only when known, cast on yourself, before the target's Immunity): Bless, Enhance, Protect, Magic Shield and its
+  duration, Heal, Curse, Stun duration, Blast damage and mana cost, Ghost Comp Strength. Defenses: Armor Value,
+  health / endurance / mana regen a second standing (moon, tier effects, amulets, permanent spells), Effective
+  Immunity (half the skill), Effective Resistance, 2H-sword Deflect Chance, Thorns. Hidden rows close up in the client.
+  The names live in the client (`MyV2MetaStats.cs`); the slots must match. First version live Nov 25, 21:07; the
+  TLG-style lists not live yet.
 
 ## HUD changes
 

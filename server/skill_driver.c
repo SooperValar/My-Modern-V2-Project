@@ -1842,3 +1842,51 @@ void skill_driver(int cn,int nr)
                 default:                do_char_log(cn,0,"You cannot use this skill/spell.\n"); break;
         }
 }
+
+/* MyV2 (Nov 25, Cody): the spells' rows of the Godot client's Offenses list (meta_stats in svr_do.c): what each
+ * spell does when cast on yourself now, as the spell_* functions work it out, before the target's Immunity */
+void meta_spells(int cn,int *val,unsigned char *show)
+{
+        int n,p,cost,cap=spellpower(cn),any=0;
+
+        val[META_COMPAT]=cap;
+        val[META_SPELLBONUS]=spell_race_mod(10000,ch[cn].kindred,cn)/100;
+
+        if (ch[cn].skill[SK_BLESS][0]) val[META_BLESS]=spell_race_mod(min(ch[cn].skill[SK_BLESS][5],cap),ch[cn].kindred,cn)/5+3;
+        if (ch[cn].skill[SK_ENHANCE][0]) val[META_ENHANCE]=spell_race_mod(min(ch[cn].skill[SK_ENHANCE][5],cap),ch[cn].kindred,cn)/4+4;
+        if (ch[cn].skill[SK_PROTECT][0]) val[META_PROTECT]=spell_race_mod(min(ch[cn].skill[SK_PROTECT][5],cap),ch[cn].kindred,cn)/4+4;
+        if (ch[cn].skill[SK_MSHIELD][0]) {
+                p=spell_race_mod(ch[cn].skill[SK_MSHIELD][5]*256,ch[cn].kindred,cn);
+                val[META_MSHIELD]=p/1024+1;
+                val[META_MSHIELDTIME]=p*100/TICKS;
+        }
+        if (ch[cn].skill[SK_HEAL][0]) val[META_HEAL]=spell_race_mod(ch[cn].skill[SK_HEAL][5]*2500,ch[cn].kindred,cn)/1000;
+        if (ch[cn].skill[SK_CURSE][0]) val[META_CURSE]=-(spell_race_mod(ch[cn].skill[SK_CURSE][5],ch[cn].kindred,cn)/3);
+        if (ch[cn].skill[SK_STUN][0]) val[META_STUNTIME]=(spell_race_mod(ch[cn].skill[SK_STUN][5],ch[cn].kindred,cn)+TICKS)*100/TICKS;
+        if (ch[cn].skill[SK_BLAST][0]) {
+                val[META_BLAST]=spell_race_mod(ch[cn].skill[SK_BLAST][5],ch[cn].kindred,cn)*2;
+                cost=val[META_BLAST]/8+5;
+                if ((ch[cn].flags&CF_PLAYER) && (ch[cn].kindred&(KIN_HARAKIM|KIN_ARCHHARAKIM))) cost/=3;
+                if (ch[cn].skill[SK_CONCEN][0]) cost=max(1,cost-cost*ch[cn].skill[SK_CONCEN][5]/300);       // spellcost()
+                val[META_BLASTCOST]=cost;
+        }
+        if (ch[cn].skill[SK_GHOST][0]) {
+                p=spell_race_mod(ch[cn].skill[SK_GHOST][5]*4/11,ch[cn].kindred,cn);
+                if ((ch[cn].flags&CF_PLAYER) && (ch[cn].kindred&(KIN_HARAKIM|KIN_ARCHHARAKIM)) && gc_staff(cn))
+                        p=p*((ch[cn].kindred&KIN_ARCHHARAKIM) ? GC_STAFF_ARCH : GC_STAFF_HARAKIM)/100;
+                if (ch[cn].flags&CF_PLAYER) p=p*(1000+ch[cn].attrib[AT_INT][5])/1000;
+                val[META_GHOST]=p;
+        }
+
+        show[META_BLESS]=ch[cn].skill[SK_BLESS][0]!=0;
+        show[META_ENHANCE]=ch[cn].skill[SK_ENHANCE][0]!=0;
+        show[META_PROTECT]=ch[cn].skill[SK_PROTECT][0]!=0;
+        show[META_MSHIELD]=show[META_MSHIELDTIME]=ch[cn].skill[SK_MSHIELD][0]!=0;
+        show[META_HEAL]=ch[cn].skill[SK_HEAL][0]!=0;
+        show[META_CURSE]=ch[cn].skill[SK_CURSE][0]!=0;
+        show[META_STUNTIME]=ch[cn].skill[SK_STUN][0]!=0;
+        show[META_BLAST]=show[META_BLASTCOST]=ch[cn].skill[SK_BLAST][0]!=0;
+        show[META_GHOST]=ch[cn].skill[SK_GHOST][0]!=0;
+        for (n=META_BLESS; n<=META_GHOST; n++) any|=show[n];
+        show[META_ACTIVE]=any;
+}
