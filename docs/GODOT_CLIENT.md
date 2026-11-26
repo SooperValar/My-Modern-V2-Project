@@ -103,6 +103,10 @@ git checkout -b myv2
 - `upstream` lets us pull James's later fixes; `myv2` is our own branch, so his `main` stays clean.
 - After this, `MyV2\TLG-Godot-Source` is no longer needed (Claude can delete it).
 
+**Playing without the editor (Nov 26):** `MyV2\Start MyV2.bat` (not in git) builds `Godot-Client\game` with
+`dotnet build -c Debug`, then starts the winget Godot (`%LOCALAPPDATA%\Microsoft\WinGet\Packages\GodotEngine.GodotEngine.Mono_...\Godot_v4.7.2-stable_mono_win64\`)
+with `--path` on the game: straight to the launcher. Cody checked it works.
+
 ### 1d. Check it builds and runs, unchanged
 ```powershell
 dotnet build TheLastGate.sln
