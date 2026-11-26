@@ -342,8 +342,10 @@ and reports new ones sorted into take / Cody's call / skip / later. Reviewed so 
 - **Skipped:** 83b703a3 (tooltips read from chat; ours come from SV_ITEMINFO), e6b0ae8b tarot values, afbd6c3d and
   0b7ddfca (his server-commit checker), 1106260c (his release), 82c5701f stubborn use (experimental), 594adc90 sprites
   as Godot resources (clashes with loading our art from MyV2\Client).
-- **Cody's call (shown to him Nov 26):** the new window style: 68dbf135, b4db3cfa, 2fcc4b3c, d51dac11, 72fc2485,
-  437fc678, 6671004c; ff1464c4 softer infravision tint.
+- **Skipped for now (Cody, Nov 26):** the new window style: 68dbf135, b4db3cfa, 2fcc4b3c, d51dac11, 72fc2485,
+  437fc678, 6671004c. It draws the same classic look in code (sharper when scaled); too much clash with our HUD for
+  little visible change. Raise it again only if he builds something on top of it we'd want (movable or resizable
+  windows). Still Cody's call: ff1464c4 softer infravision tint.
 - **Later (Step 6):** 72b2e7d2, c6c19315 (packaging speed-ups).
 
 ## Step 6: getting it to players (later; only with Cody's "go live")
