@@ -306,7 +306,7 @@ the player walked); MyV2 sends 12 bits. Run the core tests after any change to t
    held to Compatibility x Spell Bonus; Compatibility = the base attribute sum; Hit = Parry = the weapon's skill),
    `Rules/MeleeModel` adds Est. Melee Hit Dmg and Action Speed rows; Endurance row; Off-hand, tarot, tree, enchants
    and gear hidden (their code is still there, at zero); active buffs read from SV_SPELLTIME's power, not TLG's
-   #buffs reply. Server sends hidden metas 86 / 87. GodotTests now run in the cloud (Godot 4.7.2 Linux, headless
+   #buffs reply. Only your own casts count: buffs already on you are taken out (myv2 68550b9b). Server sends hidden metas 86 / 87 (LIVE Nov 25, 23:12). GodotTests now run in the cloud (Godot 4.7.2 Linux, headless
    needed for 81 of them): the planner's 137 pass; 174 older failures in other suites (TLG numbers, URLs) are left
    from earlier steps. MOTD skipped for now (Cody).
 
