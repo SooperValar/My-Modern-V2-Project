@@ -113,7 +113,7 @@ of 3.0.0 and up, so merc.exe never sees a message it doesn't know.
   (lucky hits and 2H-axe crits included), Damage/Second, Strength Bonus, both lucky hits, Critical Hit (2H axe).
   Defenses: Deflect (2H sword), Thorns, Hit Point / Endurance / Mana regen a second standing (as do_regenerate, with the
   moon, tier effects, amulets and permanent spells), Resistance, Immunity. The names live in the client
-  (`MyV2MetaStats.cs`); the slots must match. Not live yet.
+  (`MyV2MetaStats.cs`); the slots must match. Live since Nov 25, 21:07.
 
 ## HUD changes
 

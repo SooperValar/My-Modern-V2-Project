@@ -299,7 +299,7 @@ the player walked); MyV2 sends 12 bits. Run the core tests after any change to t
 7. SET ASIDE Nov 25 (Cody: building works much better in the MyV2 Editor; not needed for the switch). Was: **Build mode** (gods: the held item 46, backpack shows build pieces with tip_build tooltips).
 8. **Group C:** Offenses / Defenses lists and Hit / Parry Score: DONE in code Nov 25 (server SV_META 81 from
    `meta_stats()`, client `State/MyV2MetaStats.cs` holds names, descriptions and slots; TLG's text request (CL 40)
-   removed; lists don't scroll while they fit in the 10 rows; tested headless on the test server; waits for "go live").
+   removed; lists don't scroll while they fit in the 10 rows; tested headless on the test server; LIVE Nov 25, 21:07).
    Still to do: the MOTD (Cody writes it), planner previews with MyV2's formulas.
 
 **Then on the server (needs "go live"):**
