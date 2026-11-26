@@ -121,6 +121,9 @@ of 3.0.0 and up, so merc.exe never sees a message it doesn't know.
 - **Planner helpers** (`svr_do.c` fight_skill_number, `client.h` META_SPEEDSTEP / META_WEAPONSKILL): two meta stats
   the client never shows, for the Godot client's planner: slot 86 is ch[].speed (the speedtab row) and slot 87 the
   skill number get_fight_skill() reads. Live since Nov 25, 23:12.
+- **Godot client only** (`gendefs.h` MINVERSION 2.15.06 -> 3.0.0): merc.exe is retired (Cody, Nov 25). A client
+  older than the Godot client's 3.0.0 is logged out before it enters the game (LO_VERSION: "Client version too old.
+  Update needed."); the server log says "Client too old". Not live yet.
 
 ## HUD changes
 

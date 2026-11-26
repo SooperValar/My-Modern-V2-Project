@@ -311,7 +311,8 @@ the player walked); MyV2 sends 12 bits. Run the core tests after any change to t
    from earlier steps. MOTD skipped for now (Cody).
 
 **Then on the server (needs "go live"):**
-- Login refuses a client older than GODOT_CLIENT (0x030000) with a line saying to use the new client.
+- DONE Nov 25 (not live yet): login refuses a client older than GODOT_CLIENT (MINVERSION 0x030000, LO_VERSION;
+  merc.exe shows its own "Client version too old. Update needed."). Tested on the test server both ways.
 - Clean-up: messages sent only to the Godot client (SV_ZONE, the tooltip table, ...) lose their version checks;
   merc.exe-only paths (the old tooltip lines, WP_CLIENT) can go.
 

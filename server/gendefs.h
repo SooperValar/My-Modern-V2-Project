@@ -12,7 +12,7 @@ All rights reserved.
 #define DATDIR          ".dat"
 
 #define VERSION         0x020E07
-#define MINVERSION      0x020F06	// 2.15.06: the new world sprites (numbers above 34,767) need it
+#define MINVERSION      0x030000	// 3.0.0: the Godot client only (Nov 25); merc.exe (2.15.x) is turned away with LO_VERSION
 #define CLIENT_LATEST   0x020F09	// 2.15.09 (Nov 20): the trash window. 2.15.08 (Nov 20): hide mode for the new walls, arches, trees. 2.15.07 (Nov 15): the 3D monsters draw their own shadow. the newest published client (Launcher.exe gets it): older ones are told on login to
 					// start the game with Launcher.exe. Raise it when a new client is published (publish_client.py).
 
