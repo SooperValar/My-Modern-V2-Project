@@ -269,7 +269,10 @@ raising, skills, sounds, MyV2 art, zone name, item tooltips (stat table), buff t
 outlines / marks / ground glow, trash window (button, Shift+click, close gives back).
 
 **Nov 25, 19:01: the server's view is 54x54 (TLG's size; the client's `WorldMap.Size` back to 54), LIVE. merc.exe
-can't play any more, so the switch has in effect happened; the login check below is still to do.**
+can't play any more, so the switch has in effect happened; the login check below is still to do.** Client myv2 d0eecba5
+(Cody checked it in game). **Lesson:** the client read light packets' tile number with 11 bits (TLG's mask 2047),
+fine for 44x44 (1936 tiles) but wrapping the bottom third of a 54x54 view onto the top (dark patches that moved as
+the player walked); MyV2 sends 12 bits. Run the core tests after any change to the map size.
 
 **Gaps to check or fix before the switch (each: Claude checks, Cody tries it):**
 1. DONE Nov 25 (myv2 2b340959): Ctrl+click = take one (9); TLG's Ctrl/Alt sell, all-keys trash and the gear-set
@@ -279,10 +282,10 @@ can't play any more, so the switch has in effect happened; the login check below
    (3, ignored), so MyV2's "Ctrl+click: take one" doesn't work. Audit every key combination against `plr_cmd_inv`.
 2. ~~**Depot**~~ DONE Nov 25: `ShopKind.Bank` (|0x8000; clicks were already right), rent text ("Rent a day",
    "Store for", "Depot: n of 62 items"), Ctrl+click does nothing; server tooltips for depot and trash slots LIVE 16:19.
-3. Checked Nov 25 (clicks and tooltips already match merc.exe; Cody to try). Was: **Grave / body loot window:** shop kind 1, items 0-39 + worn 40-59. Check taking items.
-4. Checked Nov 25 (`World/AutoWalk`: four arrows near the view's corners, 7 tiles a step; Cody to look for them).
+3. DONE Nov 25 (clicks and tooltips already matched merc.exe; Cody checked). Was: **Grave / body loot window:** shop kind 1, items 0-39 + worn 40-59. Check taking items.
+4. DONE Nov 25 (`World/AutoWalk`: four arrows near the view's corners, 7 tiles a step; Cody checked).
    Was: **Map edges:** merc.exe walks on when the view's edge arrows are clicked (xmove 1-4). Check the Godot client.
-5. FIXED Nov 25 in the client: the first exit click sent `/tavern` (logs a god out on the spot); now it only warns,
+5. DONE Nov 25 (myv2 d0eecba5, Cody checked): the first exit click sent `/tavern` (logs a god out on the spot); now it only warns,
    with merc.exe's words, and the second click sends CL_CMD_EXIT. Was: **Exit:** merc.exe's F12 exit (costs health and gold) vs the client's TLG exit sequence (`#tavern`?).
 6. **Skill buttons / hotkeys:** right click a skill = description / assign to a button; F-keys. Check against the
    client's hotbar.
