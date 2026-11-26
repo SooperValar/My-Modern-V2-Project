@@ -123,7 +123,7 @@ of 3.0.0 and up, so merc.exe never sees a message it doesn't know.
   skill number get_fight_skill() reads. Live since Nov 25, 23:12.
 - **Godot client only** (`gendefs.h` MINVERSION 2.15.06 -> 3.0.0): merc.exe is retired (Cody, Nov 25). A client
   older than the Godot client's 3.0.0 is logged out before it enters the game (LO_VERSION: "Client version too old.
-  Update needed."); the server log says "Client too old". Not live yet.
+  Update needed."); the server log says "Client too old". Live since Nov 25, 23:53.
 
 ## HUD changes
 
