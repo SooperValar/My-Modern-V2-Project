@@ -419,14 +419,15 @@ void tier_kill_drop(int cn,int co)
 /* Soulstones from any enemy a player (or a player's companion) kills. The chance
  * follows the player's rank, so new players find them often and it tapers off:
  * 1 in (SOULDROP_BASE + SOULDROP_PER_RANK * rank) kills - 1 in 20 for a Private,
- * 1 in 80 at rank 10, 1 in 158 at rank 23. The stone is made like a Strong
- * enemy's: 10-15% of the enemy's experience value, its level from that. Strong
- * enemies already carry one and don't roll again. */
+ * 1 in 80 at rank 10 - but never rarer than armor (1 in SOULDROP_MAX, from rank 14).
+ * The stone's level follows the enemy's rank like armor drops do (Cody, Nov 26):
+ * tier_enemy_soulstone(). Strong enemies already carry one and don't roll again. */
 #define SOULDROP_BASE		20
 #define SOULDROP_PER_RANK	6
+#define SOULDROP_MAX		100	// = tier_kill_drop's 1 in 100 for normal enemies
 void soul_kill_drop(int cn,int co)
 {
-	int cc,exp,rank,in;
+	int cc,in;
 
 	if (!IS_SANECHAR(cn) || !IS_SANECHAR(co)) return;
 	if (ch[co].flags&(CF_PLAYER|CF_LABKEEPER|CF_USURP)) return;
@@ -434,22 +435,12 @@ void soul_kill_drop(int cn,int co)
 	if (!(ch[cc].flags&CF_PLAYER) && IS_SANECHAR(ch[cn].data[63])) cc=ch[cn].data[63];	// a player's companion
 	if (!(ch[cc].flags&CF_PLAYER)) return;
 	if (!strncmp(ch[co].name,"Strong ",7)) return;
-	if (RANDOM(SOULDROP_BASE+SOULDROP_PER_RANK*points2rank(ch[cc].points_tot))) return;
+	if (RANDOM(min(SOULDROP_MAX,SOULDROP_BASE+SOULDROP_PER_RANK*points2rank(ch[cc].points_tot)))) return;
 
-	exp=ch[co].points_tot/10+RANDOM(ch[co].points_tot/20+1);
-	if (exp<1) return;
-	rank=points2rank(exp);
-	in=god_create_item(1146);
+	in=tier_enemy_soulstone(points2rank(ch[co].points_tot),0);
 	if (!in) return;
-	sprintf(it[in].name,"Soulstone");
-	sprintf(it[in].reference,"soulstone");
-	sprintf(it[in].description,"Level %d soulstone, holding %d exp.",rank,exp);
-	it[in].data[0]=rank;
-	it[in].data[1]=exp;
-	it[in].temp=0;
-	it[in].driver=68;
 	if (!god_give_char(in,co)) { it[in].used=USE_EMPTY; return; }
-	chlog(cc,"Soulstone drop: level %d from %s",rank,ch[co].name);
+	chlog(cc,"Soulstone drop: level %d from %s",it[in].data[0],ch[co].name);
 }
 
 /* treasure chests that gave "of the Lion" armor: a Magic piece of that metal */
@@ -614,6 +605,21 @@ int tier_make_soulstone(int level,int exp)	// a soulstone like the ones Strong m
 	it[in].temp=0;
 	it[in].driver=68;
 	return in;
+}
+
+/* the soulstone an enemy of that rank drops (strong 0) or carries (Strong
+ * monsters, boost_char): its level follows the rank like armor drops - normal
+ * rank -1..0, Strong rank 0..+1, kept to 1-20 (Cody, Nov 26; was 10-15% of the
+ * enemy's exp, 2-8 levels below its armor). The exp is somewhere inside that
+ * level, so merging stones and the crucibles work as before. */
+int tier_enemy_soulstone(int rank,int strong)
+{
+	int level,exp;
+
+	level=strong ? rank+RANDOM(2) : rank-RANDOM(2);
+	level=max(1,min(20,level));
+	exp=rank_exp[level]+RANDOM(rank_exp[level+1]-rank_exp[level]);
+	return tier_make_soulstone(level,exp);
 }
 
 int tier_make_upstone(int level)

@@ -1774,7 +1774,7 @@ int use_grolm(int cn,int in)
 
 void boost_char(int cn,int divi)
 {
-	int n,in,rank,exp;
+	int n,in;
 	char buf[80];
 	
 	for (n=0; n<5; n++) {
@@ -1788,22 +1788,8 @@ void boost_char(int cn,int divi)
         strncpy(ch[cn].name,buf,39); ch[cn].name[39]=0;
 	strncpy(ch[cn].reference,buf,39); ch[cn].reference[39]=0;
 
-        in=god_create_item(1146);
-        if (in) {
-        	exp=ch[cn].points_tot/10+RANDOM(ch[cn].points_tot/20+1);
-        	rank=points2rank(exp);
-        	
-        	sprintf(it[in].name,"Soulstone");
-        	sprintf(it[in].reference,"soulstone");
-        	sprintf(it[in].description,"Level %d soulstone, holding %d exp.",rank,exp);
-        	
-        	it[in].data[0]=rank;
-        	it[in].data[1]=exp;
-        	it[in].temp=0;
-        	it[in].driver=68;
-        	
-        	god_give_char(in,cn);
-        }
+        in=tier_enemy_soulstone(points2rank(ch[cn].points_tot),1);	// level: its rank 0..+1 (tier.c)
+        if (in && !god_give_char(in,cn)) it[in].used=USE_EMPTY;
 }
 
 int spawn_penta_enemy(int in)

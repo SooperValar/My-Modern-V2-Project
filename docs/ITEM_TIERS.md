@@ -204,7 +204,7 @@ Every Epic gets one. Left out: **Night sight** (it is the reward of the four-pot
 
 ## How soulstones work now (for reference)
 
-- A "Strong" monster (randomly boosted when it spawns) carries a soulstone holding 10-15% of that monster's experience. The stone's **level is the character rank that this much experience would give** (same scale as ranks; "That's as high as they go" above 20). So it comes from the monster, not from the player who finds it.
+- Every enemy can drop a soulstone, and a "Strong" monster (randomly boosted when it spawns) carries one. Since Nov 26 the stone's **level follows the enemy's rank like armor drops** (normal rank -1 to 0, Strong 0 to +1, 1-20; `tier_enemy_soulstone`). Before, it held 10-15% of the enemy's experience and took the rank that would give, which was 2-8 levels below the armor.
 - Stone on stone: the first stone gains a random part (0-100%) of the second one's experience, the second is used up.
 - Stone on equipment: random bonuses with a total strength of the stone's level, and the item then needs that rank to wear (`soultrans_equipment`).
 - Suggestion: keep this rank scale for the tiers too. Item level, soulstone level and the rank needed to wear the item are then the same number, which is easy to understand ("a level 12 helm needs rank 12 and a level 12 stone").

@@ -226,7 +226,10 @@ New sprites above 34,767 need client 2.15.06 or later: raise `MINVERSION` when t
 ## Open items (details in docs/TODO.md and docs/HOSTING.md)
 
 **Where we left off (Nov 26, 22:45) - read this first.** Everything is live, released and pushed (project main, Godot client
-myv2 / release v3.0.0). Nothing is waiting half-done.
+myv2 / release v3.0.0).
+- **Nov 26, 23:20: soulstone levels fixed in code, NOT live yet** (TODO "Soulstone levels too low"): stone level = enemy rank
+  -1..0 (Strong 0..+1), drops never rarer than armor's 1 in 100. Both server folders, test build OK. Going live: Cody's
+  "go live", then update-code when `"online": 0`.
 - **The Godot client is THE client.** 3.0.0 released Nov 26 (Velopack installer + Update button; GitHub Actions on the
   fork builds it from `myv2` with MyV2's art; Release Please keeps a release PR open: Cody says "release", Claude writes
   player notes (`release-notes` skill in the Godot repo), Cody pastes them into the PR description and merges). Details:

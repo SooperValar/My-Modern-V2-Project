@@ -48,7 +48,7 @@ world, quests, the editor, the client and Discord. Merged Nov 10 from the old TO
    spot) and says so; Recall reads it instead of Aston. To work out: which object is each town's shrine, where the recall
    spot is, whether to charge for it, and what new characters start with (Aston).
 0. ★ **Quest plan, area by area**: bands A-B done, Fenwatch + Drowned Village (Nov 16) + Barrow Hills + Lizard Hatcheries (Nov 17) live: band C done; Stonehold + its people, the Golem Foundry (Nov 17), the Ashen Fields (Nov 18) and the Gargoyle Spires with Bastion Road and the Monastery (Nov 19) live - band D done; next band E (the Last Bastion): **follow `docs/QUEST_BUILD.md`** - [Quests](#6-quests)
-1. ★ **Soulstone levels too low** (MAJOR) - [Fixes](#1-fixes-and-balance)
+1. ★ **Soulstone levels too low** (MAJOR): built Nov 26, waiting for "go live" - [Fixes](#1-fixes-and-balance)
 2. ★ **Discord**: built Nov 14 (CHANGES.md "Discord"); waiting on Cody's webhooks / bot (HOSTING.md "Discord links")
 3. ★ **Walking speed, speed modes and attack speed** (look at it together first) - [Systems](#2-gameplay-systems)
 4. ★ **Town NPCs' door loop** - [Fixes](#1-fixes-and-balance)
@@ -66,14 +66,12 @@ world, quests, the editor, the client and Discord. Merged Nov 10 from the old TO
 
 ## 1. Fixes and balance
 
-### ★ Soulstone levels too low (MAJOR) (was #28)
-Cody: "I'm getting level 6 armors dropping but only level 2 soul stones."
-Now (`tier.c` ~419, `soul_kill_drop`): a stone drops in 1 of (20 + 6 x the player's rank) kills; it holds 10-15% of the
-enemy's experience value and its level comes from that exp, so ordinary monsters give low-level stones while armor
-levels follow a different scale. Strong monsters carry their own stone (same 10-15% rule, `tier_make_soulstone`).
-To do: compare the stone level formula with the armor item-level formula (`docs/ITEM_TIERS.md`), make stones match the
-level of armor that drops in the same area (e.g. stone level = the enemy's armor drop level, or a higher exp share),
-maybe raise the drop rate for high ranks.
+### ★ Soulstone levels too low (MAJOR) (was #28) - BUILT Nov 26, waiting for Cody's "go live"
+Cody: "I'm getting level 6 armors dropping but only level 2 soul stones." Cause: stones held 10-15% of the enemy's exp and
+took their level from that, 2-8 levels below the armor (enemy rank -1..+1). Built (Nov 26, both server folders, tested
+on a test build): stone level = enemy rank -1..0 (Strong 0..+1), 1-20, exp inside that level (`tier_enemy_soulstone`);
+drop chance never rarer than armor's 1 in 100 (`SOULDROP_MAX`, from rank 14). CHANGES.md "Soulstones from any enemy".
+Left: go live (update-code, only when `"online": 0`), then Cody checks drops in game.
 
 ### ★ Town NPCs and their doors: no more open / close loop (was #27)
 Town NPCs walk to "their" doors and close them (`driver.c` ~1592, `npc_driver_low`: up to four door spots in

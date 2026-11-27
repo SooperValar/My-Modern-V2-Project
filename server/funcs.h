@@ -81,6 +81,7 @@ int tier_effect_pct(int level,int lo,int hi);
 void god_tier_item(int cn,char *a1,char *a2,char *a3,char *a4);
 int tier_soulstone(int cn,int in,int in2);
 int tier_make_soulstone(int level,int exp);
+int tier_enemy_soulstone(int rank,int strong);
 int tier_make_upstone(int level);
 int use_soul_crucible(int cn,int in);
 int use_upgrade_stone(int cn,int in);
