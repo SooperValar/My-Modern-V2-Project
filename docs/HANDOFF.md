@@ -5,7 +5,7 @@ live, Cody's standing rules, and what is still open. The full list of what was c
 `CHANGES.md`; the open items and design ideas in `docs/TODO.md` (by category) and `docs/HOSTING.md`.
 
 **Starting a new chat:** Cody can paste:
-> Read `docs/HANDOFF.md` in my project (Client\Claude outputs\My-Modern-V2-Project) first, then `docs/TODO.md`. Then: <the task>.
+> Read `docs/HANDOFF.md` in my project (Client\Claude outputs\My-Modern-V2-Project) first ("Where we left off (Nov 26)" in "Open items"), then `docs/TODO.md`, and `docs/GODOT_CLIENT.md` for client work. Then: <the task>.
 
 ---
 
@@ -22,9 +22,10 @@ in the browser that can edit the running game live).
 |---|---|
 | Live game server (runs here) | Ubuntu in WSL, home folder `/home/cody` (`~`): `./server`, sources, `.dat/` (world data) |
 | Windows copy of the server source (Claude edits this) | `C:\Users\Cody\Desktop\MyV2\Server` (= `$HOME/mnt/MyV2/Server` in Claude's device shell when Cody adds the whole `MyV2` folder, which is the easy way: one "Add folder" covers Server, Client and the project; `$HOME/mnt/Server` if he adds it alone) |
-| Client (what Cody plays) | `C:\Users\Cody\Desktop\MyV2\Client` (`merc.exe`, `Launcher.exe`, `GFX\`, `sfx\`, `gx00.*`, `pnglib.*`) |
+| Client (what players use, since Nov 26) | The **Godot client**, installed by `MercenariesOfAsgardV2-win-Setup.exe` from github.com/SooperValar/myv2-godot-client releases (updates itself). Source: `C:\Users\Cody\Desktop\MyV2\Godot-Client` (branch `myv2`), see `docs/GODOT_CLIENT.md` |
+| Art the client reads | `C:\Users\Cody\Desktop\MyV2\Client` (`GFX\`, `sfx\`, `gx00.*`, `pnglib.*`; published to this repo's `client-dist` branch, which the release builds use). The old `merc.exe` / `Launcher.exe` there are retired (the server refuses them) but kept |
 | Git project (GitHub, public) | `C:\Users\Cody\Desktop\MyV2\Client\Claude outputs\My-Modern-V2-Project` = github.com/SooperValar/My-Modern-V2-Project |
-| Player download | `Client\For Players\Mercenaries-of-Asgard-v2.zip` (rebuilt by `publish_client.py`); public link: the GitHub release, see HOSTING.md |
+| Player download | github.com/SooperValar/myv2-godot-client/releases/latest/download/MercenariesOfAsgardV2-win-Setup.exe (Discord #welcome links it) |
 
 Project layout: `server/` (server source, the same files as the Windows Server folder),
 `client/` (client source; `client/launcher/` the launcher; `client/package/README.txt` the player
@@ -46,9 +47,15 @@ Note: the real client source is the project's `client/` folder (the old copies i
   Server console, Data changes, Tools), not as a diary: when something changes, update the old lines too. Use today's
   names everywhere (Greataxe, Intuition, Ice Gargoyle Cape); an original game item that was renamed gets "(Previously: Ice Cloak)".
 - Keep `CHANGES.md` up to date with every change; commit every change (in the project folder).
-  **Claude pushes itself (Nov 20, push access granted)**: commit on the PC, `git bundle create <MyV2\Client\push.bundle> origin/main..HEAD`,
-  stage the bundle, in the cloud clone `git fetch <bundle> HEAD:refs/tmp/push` and `git push origin refs/tmp/push:main`,
-  then delete the bundle. Commits end with the Co-Authored-By / Claude-Session lines. (The PC's shell can't reach GitHub.)
+  **Claude pushes itself** (since Nov 26 the simple way): clone both repos in the cloud (`SooperValar/My-Modern-V2-Project`
+  main, `SooperValar/myv2-godot-client` myv2), commit and `git push` there, then bring the PC copy up to date in the
+  device shell: `git fetch -q https://github.com/SooperValar/<repo>.git <branch>:refs/tmp/x && S=$(git rev-parse refs/tmp/x)`,
+  then for the project `git reset -q --hard $S`; for the Godot repo `P=$(git diff --name-only HEAD $S); git reset -q $S;
+  git checkout -- $P` (its art is LFS and the PC shell has no git-lfs, so never `--hard` there; the checkout is
+  essential or the working files stay old), then `git update-ref refs/remotes/origin/<branch> $S; git update-ref -d refs/tmp/x`.
+  Use `S=$(git rev-parse ...)`, never a typed sha. Remove a stale `.git/index.lock` if no git is running. Commits end
+  with the Co-Authored-By / Claude-Session lines. Don't commit or push while Cody might be. The cloud can't push tags or
+  create releases / edit PRs (GitHub 403): Claude makes the tag in the PC copy and Cody runs `git push origin <tag>`.
 - **Server source is changed in BOTH places and kept identical**: the Windows Server folder and
   the project's `server/`. Never copy a whole file over the other blindly; edit, then copy the
   edited file across and check they match (md5).
@@ -150,6 +157,10 @@ stopped via `stop-send`, then `update-world` and `reload-editor`):
 
 ## The client and the launcher
 
+**Since Nov 26 players use the Godot client** (`docs/GODOT_CLIENT.md`); this section is about the old C client
+(`merc.exe`), which the server now refuses. Its files and tools stay in case they're needed. Publishing art to
+`client-dist` (below) still matters: the Godot release builds take GFX / sfx / pnglib from there.
+
 - Source: `client/` (Visual Studio C, GDI). **Claude builds `merc.exe` itself with the BuildKit**:
   `Client\BuildKit\myv2-buildkit.tar.gz` (Microsoft's Windows SDK / MSVC files + `build_client.sh`; read
   `Client\BuildKit\README.txt` first). **Private: never add it to git, never publish it, never copy it into the
@@ -214,13 +225,35 @@ New sprites above 34,767 need client 2.15.06 or later: raise `MINVERSION` when t
 
 ## Open items (details in docs/TODO.md and docs/HOSTING.md)
 
-**Nov 26: Step 6 done: Godot client 3.0.0 is released** (installer + updater; test releases 0.9.0/0.9.1 still to delete); #welcome points to its Setup.exe. Cody has no `gh` on his PC. GODOT_CLIENT.md "Step 6" has how releases, test tags and the art work. The cloud session can't push tags or create releases; Cody pushes tags from the PC copy.
+**Where we left off (Nov 26, 22:45) - read this first.** Everything is live, released and pushed (project main, Godot client
+myv2 / release v3.0.0). Nothing is waiting half-done.
+- **The Godot client is THE client.** 3.0.0 released Nov 26 (Velopack installer + Update button; GitHub Actions on the
+  fork builds it from `myv2` with MyV2's art; Release Please keeps a release PR open: Cody says "release", Claude writes
+  player notes (`release-notes` skill in the Godot repo), Cody pastes them into the PR description and merges). Details:
+  `docs/GODOT_CLIENT.md` "Step 6". Discord #welcome (Cody's own post) points to the installer; Claude edited it through
+  Claude in Chrome with Cody signed in (Discord's API is blocked from Claude's shells).
+- **Live on the server Nov 26:** 60-slot backpack (13:36) and stack counts in the depot / trash windows (15:21).
+  Protocol 3.0.0 (`MINVERSION`); raise it together with `Protocol.NetworkingVersion` only for changes old clients can't handle.
+- **Client work Nov 26 (in 3.0.0):** upstream picks from James's client (list in GODOT_CLIENT.md "Upstream"), GC
+  commands on the hotkey buttons, a MyV2 hotkey skill menu, removing / clearing previous characters in the launcher,
+  the out-of-date message, the helm app icon. James's new window style: skipped for now (Cody).
+- **Scheduled task:** every Tuesday 5:24 PM (cloud) lists James's new upstream commits sorted take / Cody's call / skip
+  / later; Cody says which to bring over.
+- **Open, Cody decides what's next:** alternate armor set (an ↻ swap), the Editor and tools/world showing backpack
+  slots 40-59 (`item2`), deleting the two test releases (Cody: GitHub releases page, then
+  `git push origin --delete updater-test-v0.9.0 updater-test-v0.9.1`). Buffer GC on hold (likely part of a new class).
+  MOTD / tutorial windows skipped for now. Older open items: TODO.md.
+- **Cloud environment (rebuild per session if needed):** .NET 10 SDK (+ 8 runtime) and Godot 4.7.2 mono in /tmp,
+  `xvfb-run` for GodotTests, `git lfs pull --include "data/archives/*"` in the Godot repo. The 26 Core art tests fail in
+  the cloud only (no SkiaSharp native library). A test server: build the project's `server/` in /tmp and run it on
+  copies of the .dat (never the live data). Network for Bash may be off: then no installs.
 
-**Nov 26: the 60-slot backpack** is live since 13:36 (CHANGES.md "60-slot backpack", GODOT_CLIENT.md; backup myv2-20261126-1335 taken just before). Slots 40-59 are `item2` in the old `future2` space, so the .dat files keep their layout; the Editor and tools/world still see only slots 0-39.
+**60-slot backpack notes:** slots 40-59 are `item2` in the old `future2` space, so the .dat files keep their layout
+(backup myv2-20261126-1335 taken just before it went live). Cody has no `gh` on his PC.
 
-**New (Nov 21, 23:45): a Godot client for MyV2** - Cody wants a new client built from James Black's Godot client for The Last Gate (James gave permission). **Planning only so far; read `docs/GODOT_CLIENT.md`** (findings, the protocol differences, and Step 1, the setup Cody does with Claude walking him through it). Step 1 is DONE (Nov 22, `MyV2\Godot-Client`, branch `myv2`); Cody chose building option (b). Nov 24: .NET builds in the device shell (/tmp), **Step 2 done in code** (branch `myv2` f05a4e86, tested headless on a test server); Cody tries it in Godot with a copy of his .moa. Step 3 (our art + sounds, read from MyV2\\Client) done in code Nov 24 (myv2 315f2d95). Next: Step 4 (hide the TLG-only parts). Group A (hide TLG-only parts, HUD fitted) done (myv2 d1cf8f91); zone name live; B1 item tooltips done (myv2 4b8c03bb) and the server now handles the network every tick (live Nov 24, 22:46). Next: rest of group B (buff timers, waypoint window, tier glow/marks, trash window).
+**History (Nov 21-24): how the Godot client started.** **New (Nov 21, 23:45): a Godot client for MyV2** - Cody wants a new client built from James Black's Godot client for The Last Gate (James gave permission). **Planning only so far; read `docs/GODOT_CLIENT.md`** (findings, the protocol differences, and Step 1, the setup Cody does with Claude walking him through it). Step 1 is DONE (Nov 22, `MyV2\Godot-Client`, branch `myv2`); Cody chose building option (b). Nov 24: .NET builds in the device shell (/tmp), **Step 2 done in code** (branch `myv2` f05a4e86, tested headless on a test server); Cody tries it in Godot with a copy of his .moa. Step 3 (our art + sounds, read from MyV2\\Client) done in code Nov 24 (myv2 315f2d95). Next: Step 4 (hide the TLG-only parts). Group A (hide TLG-only parts, HUD fitted) done (myv2 d1cf8f91); zone name live; B1 item tooltips done (myv2 4b8c03bb) and the server now handles the network every tick (live Nov 24, 22:46). Next: rest of group B (buff timers, waypoint window, tier glow/marks, trash window).
 
-**Where we left off (Nov 21, 22:30) - read this first.** Everything below is live and pushed (GitHub main 4c5e4b0):
+**Earlier: where we left off (Nov 21, 22:30).** Everything below is live and pushed (GitHub main 4c5e4b0):
 - Nov 20-21 work (CHANGES.md from "Sprite numbers" on): chasm fixes; sea cliffs / low banks / stone canal water and
   low + 2-square grass ledges with automatic blocking (editor `drops` palette, chasm brush + box tool K, "Chasm and water
   pieces" box); steps brush (sprites 37532-37567); low blocks for hide mode (client 2.15.08); band C retune and several
