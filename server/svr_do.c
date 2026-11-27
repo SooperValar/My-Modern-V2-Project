@@ -659,58 +659,76 @@ void do_gtell(int cn, char *text)
         }
 }
 
+/* a "#command   what it does" line within the Godot client's chat (about 44 wide, MyV2 Nov 27): on one line when
+ * it fits in 43, else the command, then the description indented under it */
+static void help_line(int cn,int font,const char *line)
+{
+	char cmd[80],*desc;
+	int n,pad;
+
+	for (n=0; line[n] && n<79 && !(line[n]==' ' && line[n+1]==' '); n++) cmd[n]=line[n];
+	cmd[n]=0;
+	desc=(char*)line+n;
+	while (*desc==' ') desc++;
+	pad=n<16 ? 16 : n;
+	if (!*desc) do_char_log(cn,font,"%s\n",cmd);
+	else if (pad+1+(int)strlen(desc)<=43) do_char_log(cn,font,"%-*s %s\n",pad,cmd,desc);
+	else if (n+1+(int)strlen(desc)<=43) do_char_log(cn,font,"%s %s\n",cmd,desc);
+	else { do_char_log(cn,font,"%s\n",cmd); do_char_log(cn,font,"    %s\n",desc); }
+}
+
 void do_help(int cn,char *topic)
 {
 	//             "!        .         .         .         .        !"
 	do_char_log(cn,1,"The following commands are available:\n");
 	do_char_log(cn,1," \n");
-	do_char_log(cn,1,"#afk <message>         away from keyboard.\n");
-	do_char_log(cn,1,"#allow <player>        to access your grave.\n");
-	do_char_log(cn,1,"#armor                 armor tiers and sets.\n");
-	do_char_log(cn,1,"#belt                  all belts.\n");
-	do_char_log(cn,1,"#bow                   you'll bow.\n");
-	do_char_log(cn,1,"#burning               show/hide Burning Hits damage.\n");
-	do_char_log(cn,1,"#exp                   experience and exp/hour.\n");
-	do_char_log(cn,1,"#fightback             toggle auto-figtback.\n");
-	do_char_log(cn,1,"#follow <player>|self  you'll follow player.\n");
-	do_char_log(cn,1,"#gca                   GC attacks your Alt-selected enemy.\n");
-	do_char_log(cn,1,"#gold <amount>         get X gold coins.\n");
-	do_char_log(cn,1,"#silver <amount>       get X silver coins.\n");
-	do_char_log(cn,1,"#group <player>        group with player.\n");
-	do_char_log(cn,1,"#gtell <message        tell to your group.\n");
-	do_char_log(cn,1,"#ignore <player>       ignore that player.\n");
-	do_char_log(cn,1,"#iignore <player>      ignore normal talk too.\n");
-	do_char_log(cn,1,"#lag <seconds>         lag control.\n");
-	do_char_log(cn,1,"#hudfont smooth|classic  HUD text font.\n");
-	do_char_log(cn,1,"#lowhp <hp>            red glow below <hp>.\n");
-	do_char_log(cn,1,"#moddedarmor           of the Lion, Snake, ...\n");
-	do_char_log(cn,1,"#noshout               you won't hear shouts.\n");
-	do_char_log(cn,1,"#played                time played, created.\n");
-	do_char_log(cn,1,"#journal               your quests.\n");
-	do_char_log(cn,1,"#areas                 areas to clear, and how far you are.\n");
-	do_char_log(cn,1,"#kills                 kill quests, and how far you are.\n");
-	do_char_log(cn,1,"#quest [n|p2|all]      quests, easiest first; n: details.\n");
-	do_char_log(cn,1,"#repair                repair all worn gear.\n");
-	do_char_log(cn,1,"#repairinv             repair backpack gear.\n");
-	do_char_log(cn,1,"#rank                  your rank, the next one and the exp to it.\n");
-	do_char_log(cn,1,"#ranks                 every rank and the exp it needs.\n");
-	do_char_log(cn,1,"#rings                 all rings and gems.\n");
-	do_char_log(cn,1,"#notell                you won't hear tells.\n");
-	do_char_log(cn,1,"#seen <player>         when last seen here?.\n");
-	do_char_log(cn,1,"#shout <text>          to all players.\n");
-	do_char_log(cn,1,"#skua                  leave purple.\n");
-	do_char_log(cn,1,"#sort <order>          sort inventory.\n");
-	do_char_log(cn,1,"#specialarmor          unique armor (Fire, Ice..).\n");
-	do_char_log(cn,1,"#spellignore           don't attack if spelled.\n");
-	do_char_log(cn,1,"#tell <player> <text>  tells player text.\n");
-	do_char_log(cn,1,"#wave                  you'll wave.\n");
-	do_char_log(cn,1,"#weapon                weapon lists (#sword..).\n");
-	do_char_log(cn,1,"#who                   see who's online.\n");
+	help_line(cn,1,"#afk <message>         away from keyboard.");
+	help_line(cn,1,"#allow <player>        to access your grave.");
+	help_line(cn,1,"#armor                 armor tiers and sets.");
+	help_line(cn,1,"#belt                  all belts.");
+	help_line(cn,1,"#bow                   you'll bow.");
+	help_line(cn,1,"#burning               show/hide Burning Hits damage.");
+	help_line(cn,1,"#exp                   experience and exp/hour.");
+	help_line(cn,1,"#fightback             toggle auto-figtback.");
+	help_line(cn,1,"#follow <player>|self  you'll follow player.");
+	help_line(cn,1,"#gca                   GC attacks your Alt-selected enemy.");
+	help_line(cn,1,"#gold <amount>         get X gold coins.");
+	help_line(cn,1,"#silver <amount>       get X silver coins.");
+	help_line(cn,1,"#group <player>        group with player.");
+	help_line(cn,1,"#gtell <message        tell to your group.");
+	help_line(cn,1,"#ignore <player>       ignore that player.");
+	help_line(cn,1,"#iignore <player>      ignore normal talk too.");
+	help_line(cn,1,"#lag <seconds>         lag control.");
+	help_line(cn,1,"#hudfont smooth|classic  HUD text font.");
+	help_line(cn,1,"#lowhp <hp>            red glow below <hp>.");
+	help_line(cn,1,"#moddedarmor           of the Lion, Snake, ...");
+	help_line(cn,1,"#noshout               you won't hear shouts.");
+	help_line(cn,1,"#played                time played, created.");
+	help_line(cn,1,"#journal               your quests.");
+	help_line(cn,1,"#areas                 areas to clear, and how far you are.");
+	help_line(cn,1,"#kills                 kill quests, and how far you are.");
+	help_line(cn,1,"#quest [n|p2|all]      quests, easiest first; n: details.");
+	help_line(cn,1,"#repair                repair all worn gear.");
+	help_line(cn,1,"#repairinv             repair backpack gear.");
+	help_line(cn,1,"#rank                  your rank and the exp to the next.");
+	help_line(cn,1,"#ranks                 every rank and the exp it needs.");
+	help_line(cn,1,"#rings                 all rings and gems.");
+	help_line(cn,1,"#notell                you won't hear tells.");
+	help_line(cn,1,"#seen <player>         when last seen here?.");
+	help_line(cn,1,"#shout <text>          to all players.");
+	help_line(cn,1,"#skua                  leave purple.");
+	help_line(cn,1,"#sort <order>          sort inventory.");
+	help_line(cn,1,"#specialarmor          unique armor (Fire, Ice..).");
+	help_line(cn,1,"#spellignore           don't attack if spelled.");
+	help_line(cn,1,"#tell <player> <text>  tells player text.");
+	help_line(cn,1,"#wave                  you'll wave.");
+	help_line(cn,1,"#weapon                weapon lists (#sword..).");
+	help_line(cn,1,"#who                   see who's online.");
 	do_char_log(cn,1," \n");
 
 	if (ch[cn].flags&(CF_POH_LEADER)) {
-		do_char_log(cn,1,"#poh <player>          add player to POH.\n");
-		do_char_log(cn,1,"#pol <player>          make plr POH leader.\n");
+		help_line(cn,1,"#poh <player>          add player to POH.");
+		help_line(cn,1,"#pol <player>          make plr POH leader.");
 	}
 
 	do_char_log(cn,1,"Most of the commands are toggles. That is, use the same command again to turn off the effect. You can replace the '#' with '/'.\n");
@@ -719,105 +737,105 @@ void do_help(int cn,char *topic)
 	if (ch[cn].flags&(CF_STAFF|CF_IMP|CF_USURP)) {
 		do_char_log(cn,2,"Staff Commands:\n");
 		do_char_log(cn,2," \n");
-		do_char_log(cn,2,"#announce <message>    broadcast IMPORTANT msg.\n");
-		do_char_log(cn,2,"#caution <text>        warn the population.\n");
-		do_char_log(cn,2,"#info <player>         identify player.\n");
-		do_char_log(cn,2,"#look <player>         look at player.\n");
-		do_char_log(cn,2,"#stell <text>          tell all staff members.\n");
+		help_line(cn,2,"#announce <message>    broadcast IMPORTANT msg.");
+		help_line(cn,2,"#caution <text>        warn the population.");
+		help_line(cn,2,"#info <player>         identify player.");
+		help_line(cn,2,"#look <player>         look at player.");
+		help_line(cn,2,"#stell <text>          tell all staff members.");
 		do_char_log(cn,2," \n");
 	}
 
 	if (ch[cn].flags&(CF_IMP|CF_USURP)) {
 		do_char_log(cn,3,"Imp Commands:\n");
 		do_char_log(cn,3," \n");
-		do_char_log(cn,3,"#addban <player>       add plr to ban list.\n");
-		do_char_log(cn,3,"#delban <lineno>       del plr from ban list.\n");
-		do_char_log(cn,3,"#enemy <NPC><char>     make NPC fight char.\n");
-		do_char_log(cn,3,"#enter                 fake enter the game.\n");
-		do_char_log(cn,3,"#exit                  return from #USURP.\n");
-		do_char_log(cn,3,"#force <char><text>    make him act.\n");
-		//do_char_log(cn,3,"#gargoyle              turn self into a garg.\n");
-		do_char_log(cn,3,"#give <player>         give the item on your cursor.\n");
-		do_char_log(cn,3,"#goto <char>           go to char.\n");
-		do_char_log(cn,3,"#goto <x> <y>          goto x,y.\n");
-		do_char_log(cn,3,"#goto n|e|s|w <nnn>    goto <nnn> in dir.\n");
-		//do_char_log(cn,3,"#grolm                 turn self into a grolm.\n");
-		do_char_log(cn,3,"#itell <text>          tell all imps.\n");
-		do_char_log(cn,3,"#kick <player>         kick player out.\n");
-		do_char_log(cn,3,"#leave                 fake leave the game.\n");
-		do_char_log(cn,3,"#listban               show ban list.\n");
-		do_char_log(cn,3,"#look <player>         look at player.\n");
-		do_char_log(cn,3,"#luck <player> <val>   set players luck.\n");
-		do_char_log(cn,3,"#mark <player> <text>  mark a player with notes.\n");
-		do_char_log(cn,3,"#name <name> <N.Name>  change chars(npcs) names.\n");
-		do_char_log(cn,3,"#nodesc <player>       remove description.\n");
-		do_char_log(cn,3,"#nolist <player>       exempt from top 10.\n");
-		do_char_log(cn,3,"#nostaff               you won't hear #stell.\n");
-		do_char_log(cn,3,"#nowho <player>        not listed in who.\n");
-		do_char_log(cn,3,"#npclist <search>      display list of NPCs.\n");
-		do_char_log(cn,3,"#raise <player> <exp>  give player exps.\n");
-		do_char_log(cn,3,"#recall                go to your recall point.\n");
-		do_char_log(cn,3,"#respawn <temp-id>     make npcs id respawn.\n");
-		do_char_log(cn,3,"#shutup <player>       make unable to talk.\n");
-		do_char_log(cn,3,"#shrines <player>      all Kwai shrines, max sword.\n");
-		do_char_log(cn,3,"#slap <player>         slap in face.\n");
-		do_char_log(cn,3,"#sprite <player>       change a player's sprite.\n");
-		do_char_log(cn,3,"#temple                go to the Temple of Skua.\n");
-		//do_char_log(cn,3,"#summon <name> [<rank> [<which>]]\n");
-		do_char_log(cn,3,"#thrall <name> [<rank>] clone slave.\n");
-		do_char_log(cn,3,"#usurp <ID>            turn self into ID.\n");
-		do_char_log(cn,3,"#write [\"title\"] <text> make a note with your text.\n");
+		help_line(cn,3,"#addban <player>       add plr to ban list.");
+		help_line(cn,3,"#delban <lineno>       del plr from ban list.");
+		help_line(cn,3,"#enemy <NPC><char>     make NPC fight char.");
+		help_line(cn,3,"#enter                 fake enter the game.");
+		help_line(cn,3,"#exit                  return from #USURP.");
+		help_line(cn,3,"#force <char><text>    make him act.");
+		//help_line(cn,3,"#gargoyle              turn self into a garg.");
+		help_line(cn,3,"#give <player>         give the item on your cursor.");
+		help_line(cn,3,"#goto <char>           go to char.");
+		help_line(cn,3,"#goto <x> <y>          goto x,y.");
+		help_line(cn,3,"#goto n|e|s|w <nnn>    goto <nnn> in dir.");
+		//help_line(cn,3,"#grolm                 turn self into a grolm.");
+		help_line(cn,3,"#itell <text>          tell all imps.");
+		help_line(cn,3,"#kick <player>         kick player out.");
+		help_line(cn,3,"#leave                 fake leave the game.");
+		help_line(cn,3,"#listban               show ban list.");
+		help_line(cn,3,"#look <player>         look at player.");
+		help_line(cn,3,"#luck <player> <val>   set players luck.");
+		help_line(cn,3,"#mark <player> <text>  mark a player with notes.");
+		help_line(cn,3,"#name <name> <N.Name>  change chars(npcs) names.");
+		help_line(cn,3,"#nodesc <player>       remove description.");
+		help_line(cn,3,"#nolist <player>       exempt from top 10.");
+		help_line(cn,3,"#nostaff               you won't hear #stell.");
+		help_line(cn,3,"#nowho <player>        not listed in who.");
+		help_line(cn,3,"#npclist <search>      display list of NPCs.");
+		help_line(cn,3,"#raise <player> <exp>  give player exps.");
+		help_line(cn,3,"#recall                go to your recall point.");
+		help_line(cn,3,"#respawn <temp-id>     make npcs id respawn.");
+		help_line(cn,3,"#shutup <player>       make unable to talk.");
+		help_line(cn,3,"#shrines <player>      all Kwai shrines, max sword.");
+		help_line(cn,3,"#slap <player>         slap in face.");
+		help_line(cn,3,"#sprite <player>       change a player's sprite.");
+		help_line(cn,3,"#temple                go to the Temple of Skua.");
+		//help_line(cn,3,"#summon <name> [<rank> [<which>]]");
+		help_line(cn,3,"#thrall <name> [<rank>] clone slave.");
+		help_line(cn,3,"#usurp <ID>            turn self into ID.");
+		help_line(cn,3,"#write [\"title\"] <text>  make a note with your text.");
 		do_char_log(cn,3," \n");
 	}
 	if (ch[cn].flags&(CF_GOD)) {
 		do_char_log(cn,3,"God Commands:\n");
 		do_char_log(cn,3," \n");
-		//do_char_log(cn,3,"#build <template>       build mode.\n");
-		do_char_log(cn,3,"#create <item template> creating items.\n");
-		do_char_log(cn,3,"#godshop <category>     free shop of every item.\n");
-		do_char_log(cn,3,"#setrecall <player> <x> <y>|here|default  recall point.\n");
-		//do_char_log(cn,3,"#creator <player>       make player a Creator.\n");
-		do_char_log(cn,3,"#ggold <player> <gold> [silver] give money.\n");
-		do_char_log(cn,3,"#lower <player> <exp>   take exp away.\n");
-		do_char_log(cn,3,"#skill <player> <skill> <value> set a skill.\n");
-		do_char_log(cn,3,"#god <player>           make player a God.\n");
-		do_char_log(cn,3,"#prestige <player> [n]  prestige level (+look).\n");
-		do_char_log(cn,3,"#imp <player> <amount>  make player an Imp.\n");
-		do_char_log(cn,3,"#mailpass <player>      send passwd to admin.\n");
-		do_char_log(cn,3,"#password <name>        change a plr's passwd.\n");
-		do_char_log(cn,3,"#perase <player>        total player erase.\n");
-		do_char_log(cn,3,"#pol <player>           make player POH leader.\n");
-		//do_char_log(cn,3,"#race <player> <temp>   new race for a player(avoid).\n");
-		do_char_log(cn,3,"#send <player> <target> teleport player to target.\n");
-		do_char_log(cn,3,"#soullevel <level>      soulstone of that level.\n");
-		do_char_log(cn,3,"#staff <player>         make a player staffer.\n");
-		do_char_log(cn,3,"#summon <name> [<rank> [<which>]]\n");
-		do_char_log(cn,3,"#tavern                 log off quickly.\n");
-		do_char_log(cn,3,"#tier <1-3> <level> [f|m|c|u] [h|a]  tier helmet/armor.\n");
-		do_char_log(cn,3,"#upstone <level>        upgrade stone of that level.\n");
+		//help_line(cn,3,"#build <template>       build mode.");
+		help_line(cn,3,"#create <item template> creating items.");
+		help_line(cn,3,"#godshop <category>     free shop of every item.");
+		help_line(cn,3,"#setrecall <player> <x> <y>|here|default  recall point.");
+		//help_line(cn,3,"#creator <player>       make player a Creator.");
+		help_line(cn,3,"#ggold <player> <gold> [silver] give money.");
+		help_line(cn,3,"#lower <player> <exp>   take exp away.");
+		help_line(cn,3,"#skill <player> <skill> <value>  set a skill.");
+		help_line(cn,3,"#god <player>           make player a God.");
+		help_line(cn,3,"#prestige <player> [n]  prestige level (+look).");
+		help_line(cn,3,"#imp <player> <amount>  make player an Imp.");
+		help_line(cn,3,"#mailpass <player>      send passwd to admin.");
+		help_line(cn,3,"#password <name>        change a plr's passwd.");
+		help_line(cn,3,"#perase <player>        total player erase.");
+		help_line(cn,3,"#pol <player>           make player POH leader.");
+		//help_line(cn,3,"#race <player> <temp>   new race for a player(avoid).");
+		help_line(cn,3,"#send <player> <target>  teleport player to target.");
+		help_line(cn,3,"#soullevel <level>      soulstone of that level.");
+		help_line(cn,3,"#staff <player>         make a player staffer.");
+		help_line(cn,3,"#summon <name> [<rank> [<which>]]");
+		help_line(cn,3,"#tavern                 log off quickly.");
+		help_line(cn,3,"#tier <1-3> <level> [f|m|c|u] [h|a]  tier helmet/armor.");
+		help_line(cn,3,"#upstone <level>        upgrade stone of that level.");
 		do_char_log(cn,3," \n");
 	}
 	if (ch[cn].flags&(CF_CREATOR)) {
 		do_char_log(cn,3,"Builder Commands:\n");
 		do_char_log(cn,3," \n");
-		do_char_log(cn,3,"#build                  start build mode (explains the pages).\n");
-		do_char_log(cn,3,"#build <page>|next|prev go to a build page.\n");
-		do_char_log(cn,3,"#build end              stop building.\n");
-		do_char_log(cn,3,"#undo                   undo last build action.\n");
-		do_char_log(cn,3,"#clear                  remove objects in an area.\n");
-		do_char_log(cn,3,"#tile [x y]             what is on a tile (mouse).\n");
-		do_char_log(cn,3,"#light                  recompute all lighting.\n");
+		help_line(cn,3,"#build                  start build mode (explains the pages).");
+		help_line(cn,3,"#build <page>|next|prev go to a build page.");
+		help_line(cn,3,"#build end              stop building.");
+		help_line(cn,3,"#undo                   undo last build action.");
+		help_line(cn,3,"#clear                  remove objects in an area.");
+		help_line(cn,3,"#tile [x y]             what is on a tile (mouse).");
+		help_line(cn,3,"#light                  recompute all lighting.");
 		do_char_log(cn,3," \n");
 	}
 	if (ch[cn].flags&(CF_GREATERGOD)) {
 		do_char_log(cn,3,"Greater God Commands:\n");
 		do_char_log(cn,3," \n");
-                do_char_log(cn,3,"#creator <player>       make player a Creator.\n");
-                do_char_log(cn,3,"#greatergod <player>    make player a G-God.\n");
-                do_char_log(cn,3,"#lookinv <player>       look for items.\n");
-		do_char_log(cn,3,"#lookdepot <player>     look for items.\n");
-		do_char_log(cn,3,"#lookequip <player>     look for items.\n");
-		do_char_log(cn,3,"#steal <player> <item>  Steal item from player.\n");
+                help_line(cn,3,"#creator <player>       make player a Creator.");
+                help_line(cn,3,"#greatergod <player>    make player a G-God.");
+                help_line(cn,3,"#lookinv <player>       look for items.");
+		help_line(cn,3,"#lookdepot <player>     look for items.");
+		help_line(cn,3,"#lookequip <player>     look for items.");
+		help_line(cn,3,"#steal <player> <item>  Steal item from player.");
 
 		do_char_log(cn,3," \n");
 	}
@@ -1722,8 +1740,8 @@ void do_info_specialw(int cn)
 
 	do_char_log(cn,1,"Now listing special weapons:\n");
 	do_char_log(cn,1," \n");
-	do_char_log(cn,1," Weapon              | Type  | AGL STR Skill |    WV\n");
-	do_char_log(cn,1,"---------------------+-------+---------------+-------\n");
+	do_char_log(cn,1," Weapon            Type  AGL STR Skill    WV\n");	// 43 wide: the Godot chat (Nov 27)
+	do_char_log(cn,1,"-------------------------------------------\n");
 	for (n=0; n<(int)(sizeof(t)/sizeof(int)); n++) {
 		tn=t[n];
 		if (it_temp[tn].used==USE_EMPTY) continue;
@@ -1760,7 +1778,7 @@ void do_info_specialw(int cn)
 		info_n(st,it_temp[tn].attrib[AT_STREN][2]);
 		info_n(sv,it_temp[tn].skill[sk][2]);
 
-		do_char_log(cn,1," %-17s %1s | %-5s | %3s %3s %4s  | %5s\n",name,mark,typ,ag,st,sv,wv);
+		do_char_log(cn,1," %-16.16s%1s %-5s %3s %3s %4s %5s\n",name,mark,typ,ag,st,sv,wv);
 	}
 	do_char_log(cn,1," \n");
 	for (n=0; n<note; n++) do_char_log(cn,2,"%s\n",notes[n]);
@@ -1770,12 +1788,12 @@ void do_info_weapon(int cn)
 {
 	do_char_log(cn,1,"Weapon information. Use one of these:\n");
 	do_char_log(cn,1," \n");
-	do_char_log(cn,1,"#dagger                lists daggers\n");
-	do_char_log(cn,1,"#sword                 lists swords\n");
-	do_char_log(cn,1,"#twohand               lists two-handed swords\n");
-	do_char_log(cn,1,"#axe                   lists axes\n");
-	do_char_log(cn,1,"#greataxe              lists greataxes\n");
-	do_char_log(cn,1,"#specialw              lists special weapons\n");
+	help_line(cn,1,"#dagger                lists daggers");
+	help_line(cn,1,"#sword                 lists swords");
+	help_line(cn,1,"#twohand               lists two-handed swords");
+	help_line(cn,1,"#axe                   lists axes");
+	help_line(cn,1,"#greataxe              lists greataxes");
+	help_line(cn,1,"#specialw              lists special weapons");
 	do_char_log(cn,1," \n");
 	do_char_log(cn,2,"* Weapon value (WV) only counts if your skill for that weapon type is high enough.\n");
 }
@@ -1788,9 +1806,9 @@ void do_info_belt(int cn)
 
 	do_char_log(cn,1,"Now listing belts:\n");
 	do_char_log(cn,1," \n");
-	do_char_log(cn,1,"                   |        |     Gives:     |\n");
-	do_char_log(cn,1," Belt              | Needs  | BR WI IN AG ST | HP EN MA\n");
-	do_char_log(cn,1,"-------------------+--------+----------------+---------\n");
+	do_char_log(cn,1," Belt                     Needs\n");	// two lines a belt, 43 wide: the Godot chat (Nov 27)
+	do_char_log(cn,1,"   Gives: BR WI IN AG ST   HP EN MA\n");
+	do_char_log(cn,1,"-------------------------------------------\n");
 	for (n=0; n<(int)(sizeof(t)/sizeof(int)); n++) {
 		if (it_temp[t[n]].used==USE_EMPTY) continue;
 		// "Leather Belt" twice: tell them apart
@@ -1802,7 +1820,8 @@ void do_info_belt(int cn)
 		need[0]=0;
 		for (k=0; k<5; k++) if (it_temp[t[n]].attrib[k][2]) sprintf(need,"%s %d",info_at2[k],it_temp[t[n]].attrib[k][2]);
 		if (it_temp[t[n]].hp[2]) sprintf(need,"HP %d",it_temp[t[n]].hp[2]);
-		do_char_log(cn,1," %-17s | %-6s |%s%s%s%s%s |%s%s%s\n",name,need,a[0],a[1],a[2],a[3],a[4],h[0],h[1],h[2]);
+		do_char_log(cn,1," %-24s %s\n",name,need[0] ? need : "-");
+		do_char_log(cn,1,"         %s%s%s%s%s  %s%s%s\n",a[0],a[1],a[2],a[3],a[4],h[0],h[1],h[2]);
 		for (sk=0,m=0,k=0; k<50; k++) if (it_temp[t[n]].skill[k][0]) { if (!sk) m=it_temp[t[n]].skill[k][0]; sk++; }
 		if (sk) do_char_log(cn,2,"   %s: %+d to %d spells and skills\n",name,m,sk);
 	}
@@ -1866,15 +1885,16 @@ void do_info_specialarmor(int cn)
 
 	do_char_log(cn,1,"Now listing special armor:\n");
 	do_char_log(cn,1," \n");
-	do_char_log(cn,1," Armor                 | Slot  | AV | Needs\n");
-	do_char_log(cn,1,"-----------------------+-------+----+-------------------\n");
+	do_char_log(cn,1," Armor                Slot   AV\n");	// two lines each, 43 wide: the Godot chat (Nov 27)
+	do_char_log(cn,1,"-------------------------------------------\n");
 	for (n=0; n<(int)(sizeof(a)/sizeof(a[0])); n++) {
 		if (it_temp[a[n].t].used==USE_EMPTY) continue;
 		info_armor_needs(a[n].t,needs);
 		info_gives_all(a[n].t,gives);
 		mark[0]=0;
 		if (gives[0] && note<8) { sprintf(notes[note],"%d) %s: %s.",note+1,a[n].name,gives); note++; sprintf(mark,"%d",note); }
-		do_char_log(cn,1," %-19s %1s | %-5s | %2d | %s\n",a[n].name,mark,a[n].slot,it_temp[a[n].t].armor[0],needs);
+		do_char_log(cn,1," %-19s%1s %-5s  %2d\n",a[n].name,mark,a[n].slot,it_temp[a[n].t].armor[0]);
+		do_char_log(cn,1,"    Needs: %s\n",needs);
 	}
 	do_char_log(cn,1," \n");
 	for (n=0; n<note; n++) do_char_log(cn,2,"%s\n",notes[n]);
@@ -1935,7 +1955,7 @@ void do_ranks(int cn)
 {
 	int r,me=points2rank(ch[cn].points_tot); char a[16];
 	do_char_log(cn,1,"The ranks and the experience they start at:\n");
-	for (r=0; r<24; r++) do_char_log(cn,r==me ? 2 : 1,"%2d. %-20s %12s%s\n",r+1,rank_name[r],commas(rank_start[r],a),r==me ? "  <- you" : "");
+	for (r=0; r<24; r++) do_char_log(cn,r==me ? 2 : 1,"%2d %-18s %12s%s\n",r+1,rank_name[r],commas(rank_start[r],a),r==me ? " <-" : "");
 }
 
 void do_info_rings(int cn)
@@ -1951,8 +1971,9 @@ void do_info_rings(int cn)
 
 	do_char_log(cn,1,"Now listing rings:\n");
 	do_char_log(cn,1," \n");
-	do_char_log(cn,1," Stone           | Rank | Silver ring  | Golden ring\n");
-	do_char_log(cn,1,"-----------------+------+--------------+-------------------\n");
+	do_char_log(cn,1," Stone           Rank\n");	// two lines a ring, 43 wide: the Godot chat (Nov 27)
+	do_char_log(cn,1,"   S: silver ring  G: golden ring\n");
+	do_char_log(cn,1,"-------------------------------------------\n");
 	for (s=0; s<6; s++) {
 		for (z=0; z<4; z++) {
 			tg=gold[s][z]; ts=silver[s][z];
@@ -1960,7 +1981,7 @@ void do_info_rings(int cn)
 			sprintf(name,"%s %s",size[z],stone[s]);
 
 			if (ts && it_temp[ts].used!=USE_EMPTY) { info_ringbonus(ts,1,tmp); sprintf(sv,"%s *",tmp); }
-			else strcpy(sv,"  (no)");
+			else strcpy(sv,"-");
 
 			info_ringbonus(tg,0,gv);
 			if ((it_temp[tg].flags&IF_USEACTIVATE) && it_temp[tg].attrib[0][1]+it_temp[tg].attrib[1][1]+it_temp[tg].attrib[2][1]+it_temp[tg].attrib[3][1]+it_temp[tg].attrib[4][1]) {
@@ -1975,9 +1996,10 @@ void do_info_rings(int cn)
 				if (rank[strlen(rank)-1]==' ') rank[strlen(rank)-1]=0;
 			} else strcpy(rank,"-");
 
-			do_char_log(cn,1," %-15s | %-4s | %-12s | %s\n",name,rank,sv,gv);
+			do_char_log(cn,1," %-15s %s\n",name,rank);
+			do_char_log(cn,1,"   S: %-14s G: %s\n",sv,gv);
 		}
-		if (s<2) do_char_log(cn,1,"                 |      |              |\n");
+		if (s<5) do_char_log(cn,1," \n");
 	}
 	do_char_log(cn,1," \n");
 	if (it_temp[1201].used!=USE_EMPTY)
@@ -2002,9 +2024,9 @@ void do_info_moddedarmor(int cn)
 			{"of the Bear","+4 Strength","+8 Strength"},{"of Magic","+10 Mana","+20 Mana"},
 			{"of Life","+10 Hitpoints","+20 Hitpoints"},{"of Defence","+2 Armor value","+4 Armor value"}};
 		int n;
-		do_char_log(cn,1," Name           | Normal          | Godly\n");
-		do_char_log(cn,1,"----------------+-----------------+----------------\n");
-		for (n=0; n<8; n++) do_char_log(cn,1," %-14s | %-15s | %s\n",row[n][0],row[n][1],row[n][2]);
+		do_char_log(cn,1,"Name          Normal         Godly\n");	// 43 wide: the Godot chat (Nov 27)
+		do_char_log(cn,1,"-------------------------------------------\n");
+		for (n=0; n<8; n++) do_char_log(cn,1,"%-13s %-14s %s\n",row[n][0],row[n][1],row[n][2]);
 	}
 	do_char_log(cn,1," \n");
 	do_char_log(cn,2,"* Each name has the same chance (1 in 8).\n");

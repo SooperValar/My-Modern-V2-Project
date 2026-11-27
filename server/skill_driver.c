@@ -1021,7 +1021,7 @@ void char_info(int cn,int co)
                 else if (ch[co].skill[n][0] && n2==-1) n2=n;
 
                 if (n1!=-1 && n2!=-1) {
-                        do_char_log(cn,1,"%-12.12s %3d/%3d  !  %-12.12s %3d/%3d\n",
+                        do_char_log(cn,1,"%-12.12s %3d/%3d | %-12.12s %3d/%3d\n",
                                 skilltab[n1].name,ch[co].skill[n1][0],ch[co].skill[n1][5],
                                 skilltab[n2].name,ch[co].skill[n2][0],ch[co].skill[n2][5]);
                         n1=-1;
@@ -1033,10 +1033,10 @@ void char_info(int cn,int co)
                 do_char_log(cn,1,"%-12.12s %3d/%3d\n",
                         skilltab[n1].name,ch[co].skill[n1][0],ch[co].skill[n1][5]);
 
-        do_char_log(cn,1,"%-12.12s %3d/%3d  !  %-12.12s %3d/%3d\n",
+        do_char_log(cn,1,"%-12.12s %3d/%3d | %-12.12s %3d/%3d\n",
                 at_name[0],ch[co].attrib[0][0],ch[co].attrib[0][5],
                 at_name[1],ch[co].attrib[1][0],ch[co].attrib[1][5]);
-        do_char_log(cn,1,"%-12.12s %3d/%3d  !  %-12.12s %3d/%3d\n",
+        do_char_log(cn,1,"%-12.12s %3d/%3d | %-12.12s %3d/%3d\n",
                 at_name[2],ch[co].attrib[2][0],ch[co].attrib[2][5],
                 at_name[3],ch[co].attrib[3][0],ch[co].attrib[3][5]);
         do_char_log(cn,1,"%-12.12s %3d/%3d\n",
