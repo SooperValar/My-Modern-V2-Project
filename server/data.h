@@ -641,6 +641,7 @@ struct character
 #define TE_MAX		8	// the effects Epic pieces roll (1..TE_MAX); the ones below are hand-given (Legendaries)
 #define TE_FLEETFOOT	9	// move speed + FLEETFOOT_STEPS (Winged Boots, Nov 27)
 #define FLEETFOOT_STEPS	3
+#define TE_ANKHGRACE	10	// hit points, endurance and mana regenerate while moving / fighting at half the standing rate (Amulet of Ankh)
 
 #define TIER_CRUCIBLE_TEMP	1369	// Lesser Soul Crucible, Soul Crucible, Greater Soul Crucible: 1369-1371
 #define TIER_UPSTONE_TEMP	1372	// upgrade stone

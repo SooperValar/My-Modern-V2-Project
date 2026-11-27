@@ -542,6 +542,12 @@ int tier_tip_effect(int in,char lines[4][60])
 			strcpy(lines[0],"Effect: Enlightened");
 			sprintf(lines[1],"%d%% more experience from kills.",tier_effect_pct(lv,1,5));
 			return 2;
+		case TE_ANKHGRACE:
+			strcpy(lines[0],"Effect: Ankh's Grace");
+			strcpy(lines[1],"Hit points, endurance and mana");
+			strcpy(lines[2],"keep regenerating while you move");
+			strcpy(lines[3],"and fight (half the standing rate).");
+			return 4;
 		case TE_FLEETFOOT:
 			strcpy(lines[0],"Effect: Fleet Foot");
 			sprintf(lines[1],"Move Speed +%d: you walk, turn,",FLEETFOOT_STEPS);

@@ -210,7 +210,7 @@ static void con_cmd(char *line)
 		if (t<1 || t>=MAXTITEM || it_temp[t].used==USE_EMPTY) { out("  No item template %d.\n",t); return; }
 		pl=it_temp[t].placement;
 		if (pl&PL_HEAD) k=WN_HEAD; else if (pl&PL_BODY) k=WN_BODY; else if (pl&PL_ARMS) k=WN_ARMS; else if (pl&PL_LEGS) k=WN_LEGS;
-		else if (pl&PL_FEET) k=WN_FEET; else if (pl&PL_CLOAK) k=WN_CLOAK; else if (pl&(PL_WEAPON|PL_TWOHAND)) k=WN_RHAND; else if (pl&PL_SHIELD) k=WN_LHAND;
+		else if (pl&PL_FEET) k=WN_FEET; else if (pl&PL_NECK) k=WN_NECK; else if (pl&PL_CLOAK) k=WN_CLOAK; else if (pl&(PL_WEAPON|PL_TWOHAND)) k=WN_RHAND; else if (pl&PL_SHIELD) k=WN_LHAND;
 		if (k<0) { out("  Not wearable this way.\n"); return; }
 		if (!(in=god_create_item(t))) return;
 		if (ch[co].worn[k]) it[ch[co].worn[k]].used=USE_EMPTY;

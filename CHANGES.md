@@ -407,10 +407,18 @@ tooltip's tier line leaves out the category for them (`tier_tip_lines`).
 - **Winged Boots** (template 907, from the Treasure Chest in the Gargoyle's Nest at 427,228): Legendary, item level
   13 (Lieutenant Colonel), Armor 6, the effect **Fleet Foot** (Move Speed +3), Agility +14, Stealth +10, Perception
   +8, Endurance +65, Hit points +35; no attributes needed. (Previously: Armor 5, Agility +8, 30 needed in every attribute.)
+- **Amulet of Ankh** (template 768, from the "Amulet of Ankh on Table" in the Black Stronghold at 427,339):
+  Legendary, item level 10 (First Lieutenant), the effect **Ankh's Grace**, all five attributes +3, Resistance +12,
+  Immunity +8, Light +10, Hit points / Endurance / Mana +30; no attributes needed. (Previously: Resistance +15, Light
+  +10, and 15 in every attribute and 100 hit points / endurance / mana needed.) BUILT, NOT live.
+- **Ankh's Grace** (`TE_ANKHGRACE` 10): hit points, endurance and mana keep regenerating while moving and fighting, at
+  half the standing Regenerate / Rest / Meditate rate - the Amulet of Ankh's old power, now an effect any Legendary
+  can carry (`do_regenerate` and the regen meta rows read the effect, not template 768). The three quest amulets'
+  half-strength version is unchanged. Next planned: the Titanium Armor of Ankh with "Ankh's Fortitude" (Cody).
 - **Fleet Foot** (`TE_FLEETFOOT` 9, data.h; Cody Nov 27): move speed +`FLEETFOOT_STEPS` (3), shown like the Epic
   effects ("Effect: Fleet Foot" in purple). Hand-given only: Epic pieces roll effects 1..`TE_MAX` (8), so they never
   get it. Like the other effects only the best worn piece counts (players).
-- Console `wear` also prints Speed, move / attack / cast speed, HP, End and Perception (test aid).
+- Console `wear` also prints Speed, move / attack / cast speed, HP, End and Perception, and knows the neck slot (test aid).
 
 ### Stacks of potions, combined spell scrolls (TODO 14)
 - **Potions stack**, up to 20 of the same kind in one backpack slot (anything used up when used that has no special driver: healing, mana and other potions, Ratling Eye Essence...). The count shows on the item, the tooltip says "A stack of 7 (Ctrl+click: take one)".

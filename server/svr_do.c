@@ -4327,12 +4327,13 @@ void do_regenerate(int cn)
                 ch[cn].a_hp+=reg; hp=1; gothp+=reg;
         }
 
-        if ((in=ch[cn].worn[WN_NECK]) && it[in].temp==768) { // amulet of ankh
+        in=ch[cn].worn[WN_NECK];
+        if (tier_char_effect(cn,TE_ANKHGRACE)) {	// Ankh's Grace (the Amulet of Ankh; was its template 768 only)
                 if (ch[cn].skill[SK_REGEN][0]) ch[cn].a_hp+=ch[cn].skill[SK_REGEN][5]*moonmult/60;
                 if (ch[cn].skill[SK_REST][0]) ch[cn].a_end+=ch[cn].skill[SK_REST][5]*moonmult/60;
                 if (ch[cn].skill[SK_MEDIT][0]) ch[cn].a_mana+=ch[cn].skill[SK_MEDIT][5]*moonmult/60;
         }
-        else if ((in=ch[cn].worn[WN_NECK])) {	// MyV2 (Nov 21, Cody): quest amulets that work like the Ankh at half its rate
+        else if (in) {	// MyV2 (Nov 21, Cody): quest amulets that work like the Ankh at half its rate
                 int m=(it[in].temp==2019) ? 1 : (it[in].temp==2086 || it[in].temp==2082) ? 7 : 0;	// Greyfang: hit points; the Still Mind, Shrike's Eye: all three
                 if ((m&1) && ch[cn].skill[SK_REGEN][0]) ch[cn].a_hp+=ch[cn].skill[SK_REGEN][5]*moonmult/120;
                 if ((m&2) && ch[cn].skill[SK_REST][0]) ch[cn].a_end+=ch[cn].skill[SK_REST][5]*moonmult/120;
@@ -6209,7 +6210,8 @@ void meta_stats(int cn,int *val,unsigned char *show)
         tier_regen(cn,1,moonmult,(ch[cn].flags&CF_NOHPREG)!=0,(ch[cn].flags&CF_NOENDREG)!=0,(ch[cn].flags&CF_NOMANAREG)!=0);
         hp+=ch[cn].a_hp-ahp; end+=ch[cn].a_end-aend; mana+=ch[cn].a_mana-amana;
         ch[cn].a_hp=ahp; ch[cn].a_end=aend; ch[cn].a_mana=amana;
-        if ((in=ch[cn].worn[WN_NECK]) && it[in].temp==768) {
+        in=ch[cn].worn[WN_NECK];
+        if (tier_char_effect(cn,TE_ANKHGRACE)) {
                 if (ch[cn].skill[SK_REGEN][0]) hp+=ch[cn].skill[SK_REGEN][5]*moonmult/60;
                 if (ch[cn].skill[SK_REST][0]) end+=ch[cn].skill[SK_REST][5]*moonmult/60;
                 if (ch[cn].skill[SK_MEDIT][0]) mana+=ch[cn].skill[SK_MEDIT][5]*moonmult/60;
