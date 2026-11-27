@@ -348,5 +348,25 @@ and reports new ones sorted into take / Cody's call / skip / later. Reviewed so 
   windows). Still Cody's call: ff1464c4 softer infravision tint.
 - **Later (Step 6):** 72b2e7d2, c6c19315 (packaging speed-ups).
 
-## Step 6: getting it to players (later; only with Cody's "go live")
-Its own Velopack auto-updater (GitHub releases on the fork) or our `client-dist` launcher. Decide when it plays well.
+## Step 6: getting it to players (built Nov 26; first real release waits for Cody's "release")
+
+**How it works:** Velopack installer and updater, from GitHub releases on SooperValar/myv2-godot-client (public).
+App "Mercenaries of Asgard v2", pack id `MercenariesOfAsgardV2`, Windows only, helm icon (`game/images/app-icon.*`
+cut from `docs/brand/asgard-icon-helm.png`). Installs to `%LocalAppData%\MercenariesOfAsgardV2`. Unsigned: the first
+Setup.exe run shows SmartScreen ("More info" > "Run anyway").
+- **Art in the build:** `.github/workflows/package.yml` clones this repo's `client-dist` branch (GFX, sfx, pnglib) and takes
+  gx00.dat/.idx from the player zip on this repo's latest release; `tools/package-release.sh` copies them beside the exe.
+  New sprites: publish to `client-dist` as before; the next build has them. The LFS data (109 MB) is cached in CI.
+- **Out of date:** the launcher checks for updates when it opens (Update button lights). If the server sends the client
+  away with exit 11 (version too old), the launcher says "Your client is out of date. Click Update to get the newest
+  version." and checks again. Two numbers: the release number (every update) and the protocol number
+  (`Protocol.NetworkingVersion` = server `MINVERSION`, 3.0.0), raised together only when old clients must stop working.
+- **Releases:** Release Please runs on pushes to `myv2` and keeps a release PR open; merging it (Cody, on GitHub) makes
+  the release, the package workflow attaches the files. Changelog starts after 6fdc4e1a (`last-release-sha`).
+  First real release: a commit with footer `Release-As: 3.0.0`. Player install link: the release's
+  `MercenariesOfAsgardV2-win-Setup.exe`.
+- **Test builds:** a tag `updater-test-v<version>` builds on the `test-win` channel, which players never read. The cloud
+  session can't push tags or make releases (GitHub 403); Claude makes the tag in the PC copy and Cody runs
+  `git push origin <tag>`. Used: 0.9.0, 0.9.1 (Nov 26: install, then Update to 0.9.1 worked on Cody's PC).
+- The PC copy can fetch straight from GitHub (`git fetch https://github.com/SooperValar/myv2-godot-client.git myv2:refs/tmp/bN`),
+  so bundles aren't needed for the Godot repo any more.

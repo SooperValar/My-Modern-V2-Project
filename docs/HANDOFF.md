@@ -214,6 +214,8 @@ New sprites above 34,767 need client 2.15.06 or later: raise `MINVERSION` when t
 
 ## Open items (details in docs/TODO.md and docs/HOSTING.md)
 
+**Nov 26: Step 6 (Godot client installer + updater) is built and tested** with test releases 0.9.0/0.9.1; the first real release (3.0.0) waits for Cody's "release". GODOT_CLIENT.md "Step 6" has how releases, test tags and the art work. The cloud session can't push tags or create releases; Cody pushes tags from the PC copy.
+
 **Nov 26: the 60-slot backpack** is live since 13:36 (CHANGES.md "60-slot backpack", GODOT_CLIENT.md; backup myv2-20261126-1335 taken just before). Slots 40-59 are `item2` in the old `future2` space, so the .dat files keep their layout; the Editor and tools/world still see only slots 0-39.
 
 **New (Nov 21, 23:45): a Godot client for MyV2** - Cody wants a new client built from James Black's Godot client for The Last Gate (James gave permission). **Planning only so far; read `docs/GODOT_CLIENT.md`** (findings, the protocol differences, and Step 1, the setup Cody does with Claude walking him through it). Step 1 is DONE (Nov 22, `MyV2\Godot-Client`, branch `myv2`); Cody chose building option (b). Nov 24: .NET builds in the device shell (/tmp), **Step 2 done in code** (branch `myv2` f05a4e86, tested headless on a test server); Cody tries it in Godot with a copy of his .moa. Step 3 (our art + sounds, read from MyV2\\Client) done in code Nov 24 (myv2 315f2d95). Next: Step 4 (hide the TLG-only parts). Group A (hide TLG-only parts, HUD fitted) done (myv2 d1cf8f91); zone name live; B1 item tooltips done (myv2 4b8c03bb) and the server now handles the network every tick (live Nov 24, 22:46). Next: rest of group B (buff timers, waypoint window, tier glow/marks, trash window).

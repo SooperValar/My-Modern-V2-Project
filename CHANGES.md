@@ -140,6 +140,11 @@ of 3.0.0 and up, so merc.exe never sees a message it doesn't know.
 - **Stack counts in the depot and trash windows** (`svr_do.c` send_window_marks): both windows now send their item glow
   and marks (SV_TIERS / SV_ITEMMARKS), so a stack shows its count and a single item shows none; before, the Godot
   client showed a 0 on every item there (Cody, Nov 26). Live since Nov 26, 15:21.
+- **Godot client packaging (Step 6, client only; no server change):** Velopack installer/updater named "Mercenaries of
+  Asgard v2" with the helm icon, built by GitHub Actions on the fork with MyV2's art inside; out-of-date clients are
+  pointed to the Update button. Test cycle 0.9.0 -> 0.9.1 worked on Cody's PC. Also on the client branch this day:
+  upstream picks (chat 119 letters, buff numbers only on a cast, Ctrl+Shift queues takes, planner in the background),
+  GC commands on the hotkey buttons, a MyV2 hotkey skill menu, and removing/clearing previous characters in the launcher.
 
 ## HUD changes
 
