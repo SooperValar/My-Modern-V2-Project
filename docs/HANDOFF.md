@@ -234,9 +234,9 @@ myv2 / release v3.0.0).
   bonuses (editor Items page -> Stats -> Speed). Godot client **3.1.0 released** (Nov 27, 01:33; protocol 3.1.0, the
   server turns 3.0 clients away). Cody: formulas use total (modified) attributes on purpose. Next: Cody plays, then
   items / abilities with speed bonuses and number tweaks.
-- **Nov 27, 02:05: Ghost Companion follows at its master's move speed (not fighting) - BUILT, NOT live** (both server
-  folders; CHANGES.md speed section). Server-only, no client change. Going live: Cody's "go live", update-code when
-  `"online": 0`. Cody tests the speed rework in the morning.
+- **Nov 27, 01:56: Ghost Companion follows at its master's move speed (not fighting) - LIVE** (CHANGES.md speed
+  section). Server-only. **Waiting on Cody:** in-game test of the speed rework, the companion and a speed item in the
+  editor (Items page -> Stats -> Speed; not yet saved in the running editor by anyone).
 - **Nov 26, 23:18: soulstone levels fixed and LIVE** (TODO "Soulstone levels too low"): stone level = enemy rank
   -1..0 (Strong 0..+1), drops never rarer than armor's 1 in 100. Cody checks drops in game. (Cloud push needs the repo in the
   session's sources first: if `git push` gets a 403 from the git proxy, call `add_repo` (owner SooperValar, push) and push again.)
