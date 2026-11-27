@@ -125,7 +125,7 @@ of 3.0.0 and up, so merc.exe never sees a message it doesn't know.
   `#rings`, `#specialarmor`: one line an item with narrower columns. `#specialw`, `#moddedarmor`, `#areas`: narrower.
   `#who`, `#ranks`, the look at a character, `#armor` and the weapon lists already fit and are as they were.
   (First try, live 16:49, assumed 44 and split tables into two lines; Cody: "look horrible".)
-- **Help window pages** (`help.c`, new; built Nov 27, NOT live yet): the Godot client asks with `CL_CMD_HELP` (41: page,
+- **Help window pages** (`help.c`, new; live Nov 27, 18:23): the Godot client asks with `CL_CMD_HELP` (41: page,
   argument) and the server answers with `SV_HELP` (82, 64 bytes: page, kind (start / heading / cell / line / end), row,
   column, colour, part, 56 letters). Pages: 1 Commands (what `#help` lists, as a two-column table), 2 Quests (every quest
   as # / giver / where / reward / exp, no paging; argument 1 = all quests), 3 one quest's details (argument = quest number,
@@ -202,7 +202,7 @@ A new HUD drawn on its own canvas (window size ÷ 1.5) and composited over the w
 - World zoom (default 115%, `zoom=` in `client.ini`) crops into the world surface before scaling, slightly lowered so the HUD has room.
 - Auto-walk markers sit just outside the visible edge midpoints and are clickable.
 - **Low hitpoints glow**: `/lowhp <hp>` turns on a soft red glow that pulses on the ground under your character while your hitpoints are below that number, a little stronger the lower you go. `/lowhp` alone explains it and shows the current setting; `/lowhp 0` turns it off (the default). The client handles the command itself and remembers it in `client.ini` (`[display] lowhp_hp`).
-- **Hide mode in the Godot client** (F6; built Nov 27, not released yet): walls drop to their low block, the new walls
+- **Hide mode in the Godot client** (F6; client 3.2.0, Nov 27): walls drop to their low block, the new walls
   36000-36079 to their material's low blocks (first+8 plain, first+9 grain), the wider arches stay, the original trees
   to their stumps (18190+) and the new trees 38100-38163 to 38164+ (`MapSpriteRules.LowSprite`).
 - **Trees in Hide mode** (F6): trees now drop to a short stump like walls drop to a low block, so you can see past forests (stumps 18190-18202, `tools/sprites/art/stumps/`; client `hide_sprite`). Before, a tree's "low" sprite was the same tree.
@@ -211,7 +211,7 @@ A new HUD drawn on its own canvas (window size ÷ 1.5) and composited over the w
 
 ## New features in the HUD
 
-- **Help window** (Godot client; built Nov 27, not released yet): a **Help** button under Hide (next to Options), `/help`
+- **Help window** (client 3.2.0, Nov 27): a **Help** button under Hide (next to Options), `/help`
   or `#help`, opens a window with tabs. **Commands**: every player command and what it does. **Quests**: every quest with
   giver, place, reward and exp; click one for its details (Back returns), "Show all quests" includes the done ones (blue).
   `/quest`, `/quest all`, `/quest <n>` open the Quests tab too. `/who` stays in chat (and will get a tab later). Planned

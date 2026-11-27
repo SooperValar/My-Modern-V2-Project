@@ -24,8 +24,7 @@ world, quests, the editor, the client and Discord. Merged Nov 10 from the old TO
   new sets small (2 variants, 3x3 water) and record every range in SPRITE_MAP.md.
 
 - ◐ **Help window instead of chat info** (Cody, Nov 27: "move away from in chat info and towards a help menu"; "I will
-  definitely want to expand it later"). Step 1 built (Commands + Quests tabs, Help button, `/help`; not live / pushed,
-  see HANDOFF). Step 2: Areas, Kill quests, Ranks, Who tabs (`/who` stays in chat too). Step 3: Armor, Weapons, Rings,
+  definitely want to expand it later"). Step 1 LIVE (Commands + Quests tabs, Help button, `/help`; client 3.2.0, Nov 27). Step 2: Areas, Kill quests, Ranks, Who tabs (`/who` stays in chat too). Step 3: Armor, Weapons, Rings,
   Belts, Special items. Each tab = a page number in `help.c` that captures the chat command's output.
 
 - ● **Godot client for MyV2** (Cody, Nov 21): built from github.com/jamesblack/thelastgate-godot (James OK'd it). `docs/GODOT_CLIENT.md`. Groups A and B done (Nov 25). **Nov 25: MyV2 switches to the Godot client only** (merc.exe dropped): work through the gap list in "The switch", then the server refuses old clients (done), then the 60-slot backpack (live Nov 26, 13:36). Later: the Editor and tools/world read slots 40-59 (item2). Step 6 (installer + updater) done: client 3.0.0 released Nov 26; Discord #welcome points to its Setup.exe. Buffer GC on hold (Cody, Nov 26: likely part of a new class later). Later: delete the test releases (Cody has no gh: delete them on the GitHub releases page, then `git push origin --delete updater-test-v0.9.0 updater-test-v0.9.1`).
@@ -277,7 +276,7 @@ as one special quest. Build one area at a time from the bottom, with `tools/worl
   - Band D around Stonehold: Golem Foundry 650,670 - 740,765; Monastery 650,855 - 740,950; Ashen Fields 725,690 - 815,785; Gargoyle Spires 745,845 - 830,940. Elysium (776-822, 795-825) stays where it is, walled off.
   - Pass to the Last Bastion: 716,828 - 834,842 (just east of Elysium). Last Bastion 835,800 - 895,865; band E: Frostfang Peaks 835,690 - 925,790; Barbarian Highlands 835,880 - 925,975; Citadel of Kael 900,795 - 1010,870; Abyssal Rift 930,880 - 1020,975; band F: Shattered Throne 835,590 - 925,685; Heart of the Rift 930,590 - 1020,685.
   - Left free for later: 645,455 - 1020,585; 645,105 - 795,445; the north strip x 130-315, y 755-900. Every hub area is built with its road to the next hub in place, ending in an open gap.
-- ✓ (Godot client rule `MapSpriteRules.LowSprite`, Nov 27, not pushed) The new walls 36000-36077 have no cut-down hidden form either (their +1 is the next variant, so hide walls shows a whole wall). The window walls do it right (N+1 = a low slab); the plain ones would need renumbering or a client rule.
+- ✓ (Godot client rule `MapSpriteRules.LowSprite`, client 3.2.0) The new walls 36000-36077 have no cut-down hidden form either (their +1 is the next variant, so hide walls shows a whole wall). The window walls do it right (N+1 = a low slab); the plain ones would need renumbering or a client rule.
 - New object sprite sets have no real cut-down "hidden" form: with hide walls on, a new tree shows the next variant
   (the original trees show stumps). Make proper hidden forms some time; run `tools/world/check_hide_sprites.py` after each build.
 - Timed potions need no code: armor[1] / attrib[i][1] / skill[n][1] with a duration, like the Agility Potion (Stoneskin, Fireward, Draught of the Void). Still code: Clear Water / Second Wind-style full restores are fine already (end / mana [0]); Elixir of the Good Moon (spell power) and Frozen Heart (regeneration) need some.
