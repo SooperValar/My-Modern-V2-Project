@@ -1115,8 +1115,14 @@ unsigned char speedtab[SPEEDROWS][20]=
 };
 
 /* MyV2 (Nov 27, Cody): move, attack and cast speed (really_update_char, svr_do.c). Rows of speedtab, 0 fastest. */
+/* a player's Ghost Companion walks at its master's move speed while it isn't fighting (Cody, Nov 27) */
 int ch_move_step(int cn)
 {
+        int co;
+
+        if (ch[cn].temp==CT_COMPANION && !ch[cn].attack_cn && (co=ch[cn].data[63])>0 && co<MAXCHARS &&
+            ch[co].used==USE_ACTIVE && (ch[co].flags&CF_PLAYER))
+                return max(0,min(SPEEDROWS-1,ch[co].speed+ch[co].move_delta));
         return max(0,min(SPEEDROWS-1,ch[cn].speed+ch[cn].move_delta));
 }
 

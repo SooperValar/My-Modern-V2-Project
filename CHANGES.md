@@ -511,6 +511,13 @@ attributes are the totals, items and spells included, on purpose;
   `cast_delta`) and the Speed stat (`speed_stat`), in `future1`'s spare bytes. Every character works its speeds out
   again at start-up and when made from a template (the old saved rows are on the old table). The client gets the row
   of whatever each character is doing.
+- **Ghost Companions walk at their master's move speed** while they aren't fighting (no attack target); in a fight
+  they go back to their own speed and speed mode (`ch_move_step`, Cody Nov 27). Built Nov 27, 02:05, NOT live yet.
+- **Monsters**: attack speed is unchanged (same formula; monsters carry no speed bonuses). Cast speed now follows
+  Intuition instead of Strength: of the 1,357 templates that know a spell or Warcry, 1,145 cast as before, 69 one step
+  faster and 6 two steps faster (Archmage, Garrett, Magnus, Shiva, Sigurd, Tower Arch-Harakim), and 137 one or two
+  steps slower (knights, guards, Grolms, Barbaric Fighters...). Checked on base attributes, Nov 27. Their move speed
+  has the +2 like everyone.
 - **Protocol 3.1.0** (`MINVERSION` 0x030100): client 3.0.x would animate the new rows wrongly, so the server turns it
   away; the Godot client 3.1 has the 30-row table (`StatusSpeed.cs`) and shows **Attack Speed** (top row), **Cast
   Speed** (Offenses, Active, with the spells), **Move Speed** and **Speed** (Defenses, Passive).
