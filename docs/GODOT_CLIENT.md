@@ -296,7 +296,7 @@ the player walked); MyV2 sends 12 bits. Run the core tests after any change to t
    Position and TLG's 8 GC words were removed (MyV2 lacks them; add back when the server gets them); GC Attack added
    (#gca + the Alt-selected character, like merc.exe; a typed bare #gca gets it too). NEXT: Cody wants more GC
    commands on the server: DONE Nov 25 (Offense / Defense / Passive / Buffs on the server, LIVE 20:27; the client's
-   8 GC hotkeys say the words; Move keeps MyV2's random step; a "buffer GC" may come later). Note: whole-step (integer)
+   8 GC hotkeys say the words; Move keeps MyV2's random step; a "buffer GC" (a companion that casts buffs) is on hold: Cody, Nov 26, likely part of a new class later). Note: whole-step (integer)
    scaling was considered for crisp pixel text and dropped: it falls to the lower step (a maximized 2560x1440 window
    would show 1x); fullscreen on 2560x1440 is exactly 2x already. Was: **Skill buttons / hotkeys:** right click a skill = description / assign to a button; F-keys. Check against the
    client's hotbar.
