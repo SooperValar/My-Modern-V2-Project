@@ -50,7 +50,7 @@ world, quests, the editor, the client and Discord. Merged Nov 10 from the old TO
 0. ★ **Quest plan, area by area**: bands A-B done, Fenwatch + Drowned Village (Nov 16) + Barrow Hills + Lizard Hatcheries (Nov 17) live: band C done; Stonehold + its people, the Golem Foundry (Nov 17), the Ashen Fields (Nov 18) and the Gargoyle Spires with Bastion Road and the Monastery (Nov 19) live - band D done; next band E (the Last Bastion): **follow `docs/QUEST_BUILD.md`** - [Quests](#6-quests)
 1. ★ **Soulstone levels too low** (MAJOR): LIVE Nov 26, 23:18 (Cody checks in game) - [Fixes](#1-fixes-and-balance)
 2. ★ **Discord**: built Nov 14 (CHANGES.md "Discord"); waiting on Cody's webhooks / bot (HOSTING.md "Discord links")
-3. ★ **Walking speed, speed modes and attack speed**: built Nov 27 (Speed / move / attack / cast, faster move rows, +2 move, item bonuses), not live; next: which items and abilities get bonuses, tweak numbers - [Systems](#2-gameplay-systems)
+3. ★ **Walking speed, speed modes and attack speed**: LIVE Nov 27, 01:34 (Speed / move / attack / cast, faster move rows, +2 move, item bonuses; client 3.1.0); next: which items and abilities get bonuses, tweak numbers - [Systems](#2-gameplay-systems)
 4. ★ **Town NPCs' door loop** - [Fixes](#1-fixes-and-balance)
 5. ★ **Logout at shutdown** - [Fixes](#1-fixes-and-balance)
 6. ★ **Resizable game window** - [Client](#8-client-sprites-and-art)
@@ -100,7 +100,7 @@ the game's other undead keep ~12 hp/s. The Graveyard undead (below) should go in
 ## 2. Gameplay systems
 
 ### ★ Walking speed, the three speed modes and attack speed (was #26)
-**Nov 27: built, not live** (CHANGES.md "Speed, move speed, attack speed and cast speed"): Speed (mode + race +
+**Nov 27: LIVE 01:34, client 3.1.0** (CHANGES.md "Speed, move speed, attack speed and cast speed"): Speed (mode + race +
 bonuses) and three speeds from it - attack (Agi + Str), cast (Agi + Int), move (Agi + max(Str, Will), +2); the speed
 table has 10 faster rows that only moves use; items / spells carry Speed / move / attack / cast bonuses (editor Items
 page -> Stats -> Speed); protocol 3.1.0 with Godot client 3.1. **Next (Cody decides):** items and abilities with

@@ -54,8 +54,10 @@ Note: the real client source is the project's `client/` folder (the old copies i
   git checkout -- $P` (its art is LFS and the PC shell has no git-lfs, so never `--hard` there; the checkout is
   essential or the working files stay old), then `git update-ref refs/remotes/origin/<branch> $S; git update-ref -d refs/tmp/x`.
   Use `S=$(git rev-parse ...)`, never a typed sha. Remove a stale `.git/index.lock` if no git is running. Commits end
-  with the Co-Authored-By / Claude-Session lines. Don't commit or push while Cody might be. The cloud can't push tags or
-  create releases / edit PRs (GitHub 403): Claude makes the tag in the PC copy and Cody runs `git push origin <tag>`.
+  with the Co-Authored-By / Claude-Session lines. Don't commit or push while Cody might be. Once a repo is attached with `add_repo` (Cody's OK),
+  the cloud can edit and merge PRs through the REST API (`gh api -X PATCH .../pulls/N -F body=@file`, `gh api -X PUT
+  .../pulls/N/merge -f merge_method=merge`; GraphQL / `gh pr` is blocked) - that is how 3.1.0 was released. Tags: not tried
+  since; before, Claude made the tag in the PC copy and Cody ran `git push origin <tag>`.
 - **Server source is changed in BOTH places and kept identical**: the Windows Server folder and
   the project's `server/`. Never copy a whole file over the other blindly; edit, then copy the
   edited file across and check they match (md5).
@@ -227,13 +229,11 @@ New sprites above 34,767 need client 2.15.06 or later: raise `MINVERSION` when t
 
 **Where we left off (Nov 26, 22:45) - read this first.** Everything is live, released and pushed (project main, Godot client
 myv2 / release v3.0.0).
-- **Nov 27, ~01:30: the speed rework is BUILT, NOT live** (CHANGES.md "Speed, move speed, attack speed and cast
-  speed"; TODO "Walking speed"): Speed + attack / cast / move speeds, 10 faster speed-table rows for moves, move +2,
-  item speed bonuses (editor Items page). Server (both folders) + project pushed. **Godot client: commits on `myv2` in
-  Cody's PC copy, NOT pushed** (the cloud needs Cody's OK to attach `SooperValar/myv2-godot-client`). Protocol 3.1.0:
-  server and client go live together - push the client, Cody says "release" (Release Please PR -> 3.1.0), wait for
-  the build, then "go live" (update-code when `"online": 0`, `reload-editor`). Tested: server build, a test server on
-  .dat copies, the walk simulation (server and client frames agree), client tests (26 known art failures only).
+- **Nov 27, 01:34: the speed rework is LIVE** (CHANGES.md "Speed, move speed, attack speed and cast speed"; TODO
+  "Walking speed"): Speed + attack / cast / move speeds, 10 faster speed-table rows for moves, move +2, item speed
+  bonuses (editor Items page -> Stats -> Speed). Godot client **3.1.0 released** (Nov 27, 01:33; protocol 3.1.0, the
+  server turns 3.0 clients away). Cody: formulas use total (modified) attributes on purpose. Next: Cody plays, then
+  items / abilities with speed bonuses and number tweaks.
 - **Nov 26, 23:18: soulstone levels fixed and LIVE** (TODO "Soulstone levels too low"): stone level = enemy rank
   -1..0 (Strong 0..+1), drops never rarer than armor's 1 in 100. Cody checks drops in game. (Cloud push needs the repo in the
   session's sources first: if `git push` gets a 403 from the git proxy, call `add_repo` (owner SooperValar, push) and push again.)

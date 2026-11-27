@@ -485,9 +485,10 @@ NPCs can now hold real conversations and run quests made in the editor (see [Que
 - A full backpack keeps the chest closed so you can come back.
 - **Chests can be turned** between the game's own two looks: lock facing south or west.
 
-### Speed, move speed, attack speed and cast speed (Nov 27)
+### Speed, move speed, attack speed and cast speed (live Nov 27, 01:34; client 3.1.0)
 
-One speed used to drive every action, and it could not go faster than one animation frame a tick. Now (Cody, Nov 27;
+One speed used to drive every action, and it could not go faster than one animation frame a tick. Now (Cody, Nov 27; the
+attributes are the totals, items and spells included, on purpose;
 `svr_do.c` really_update_char, `svr_act.c` ch_act_speed / plr_act):
 - **Speed**: the speed mode (slow 12, normal 14, fast 16) + race + **Speed bonuses**. All three speeds start from it,
   so the speed mode still moves everything.
