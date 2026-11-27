@@ -397,7 +397,7 @@ The design is in `docs/ITEM_TIERS.md`.
 - **Soulstones from any enemy**: any enemy a player (or their companion) kills can now drop a soulstone; before, only "Strong" pentagram enemies carried one. The chance follows the player's rank, so new players find them often: 1 in (20 + 6 x rank) kills - 1 in 20 at rank 0, 1 in 50 at rank 5, 1 in 80 at rank 10 - but never rarer than armor's 1 in 100 (from rank 14 on). **The stone's level follows the enemy's rank like armor drops do** (Cody, live Nov 26): the enemy's rank -1 to 0 (1-20), and the stone holds experience inside that level, so merging stones and the crucibles work as before. Strong enemies carry their own stone, rank 0 to +1, and don't roll again. (Previously: the stone held 10-15% of the enemy's experience and took its level from that, 2-8 levels below the armor the same enemy drops: "level 6 armor but only level 2 stones".) Logged. A grave holding a soulstone glows.
 - **Grave glow only for something worth a look**: every NPC grave glowed, because every NPC dies holding the weapon and armor it fought with. Now an NPC's body or grave glows only when it holds something special: a Magic/Rare/Epic/Legendary piece, a unique item, or a magic item in its backpack (potions, scrolls, rings...). Its own fighting gear and gold don't count. A player's body/grave still glows while it holds anything, so players can find their belongings.
 
-### Legendary items: Winged Boots (Nov 27)
+### Legendary items: Winged Boots (live Nov 27, 14:38)
 
 Legendary (orange) is the tier for hand-made unique items (Cody, Nov 27; a new tier can come later). A Legendary has
 fixed bonuses, an item level (the rank needed to wear it, shown as "Legendary, item level N"), the orange name and
@@ -406,7 +406,7 @@ setting the tier fields (`future3`: tier 4, category 0, level; see `tools/world/
 tooltip's tier line leaves out the category for them (`tier_tip_lines`).
 - **Winged Boots** (template 907, from the Treasure Chest in the Gargoyle's Nest at 427,228): Legendary, item level
   13 (Lieutenant Colonel), Armor 6, the effect **Fleet Foot** (Move Speed +3), Agility +14, Stealth +10, Perception
-  +8, Endurance +65, Hit points +35; no attributes needed. (Previously: Armor 5, Agility +8, 30 needed in every attribute.) BUILT, NOT live.
+  +8, Endurance +65, Hit points +35; no attributes needed. (Previously: Armor 5, Agility +8, 30 needed in every attribute.)
 - **Fleet Foot** (`TE_FLEETFOOT` 9, data.h; Cody Nov 27): move speed +`FLEETFOOT_STEPS` (3), shown like the Epic
   effects ("Effect: Fleet Foot" in purple). Hand-given only: Epic pieces roll effects 1..`TE_MAX` (8), so they never
   get it. Like the other effects only the best worn piece counts (players).

@@ -234,10 +234,10 @@ myv2 / release v3.0.0).
   bonuses (editor Items page -> Stats -> Speed). Godot client **3.1.0 released** (Nov 27, 01:33; protocol 3.1.0, the
   server turns 3.0 clients away). Cody: formulas use total (modified) attributes on purpose. Next: Cody plays, then
   items / abilities with speed bonuses and number tweaks.
-- **Nov 27, ~15:00: Winged Boots as the first Legendary - BUILT, NOT live** (CHANGES.md "Legendary items"): server
-  `tier.c` (tooltip line) + `console.c` (wear prints speeds) in both folders; data via
-  `tools/world/legendary/winged_boots.py` (tested on a .dat copy: template + 2 copies). Going live: Cody's "go live",
-  then `"online": 0` -> stop-send, run the tool on Server\.dat, update-code + update-world, check `log`.
+- **Nov 27, 14:38: Winged Boots are the first Legendary - LIVE** (CHANGES.md "Legendary items"): item level 13, the
+  effect Fleet Foot (move speed +3, `TE_FLEETFOOT`, never rolled), Agi +14, Stealth +10, Perception +8, End +65, HP +35,
+  AV 6. Done with stop-send, `tools/world/legendary/winged_boots.py` on Server\.dat (template + 2 copies), get,
+  update-world (backup /home/cody/claude-backups/20261127-143754). Cody checks the tooltip in game.
 - **Nov 27, 01:56: Ghost Companion follows at its master's move speed (not fighting) - LIVE** (CHANGES.md speed
   section). Server-only. **Waiting on Cody:** in-game test of the speed rework, the companion and a speed item in the
   editor (Items page -> Stats -> Speed; not yet saved in the running editor by anyone).
