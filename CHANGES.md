@@ -410,12 +410,12 @@ tooltip's tier line leaves out the category for them (`tier_tip_lines`).
 - **Amulet of Ankh** (template 768, from the "Amulet of Ankh on Table" in the Black Stronghold at 427,339):
   Legendary, item level 10 (First Lieutenant), the effect **Ankh's Grace**, all five attributes +3, Resistance +12,
   Immunity +8, Light +10, Hit points / Endurance / Mana +30; no attributes needed. (Previously: Resistance +15, Light
-  +10, and 15 in every attribute and 100 hit points / endurance / mana needed.) BUILT, NOT live.
+  +10, and 15 in every attribute and 100 hit points / endurance / mana needed.) Live Nov 27, 15:40.
 - **Titanium Armor of Ankh** (template 772, from the "Armor of Ankh on Wall" in the Black Stronghold at 412,339):
   Legendary, item level 12 (Captain), Armor 9, the effect **Ankh's Protection**, Willpower +8, Braveness +6, Heal +15,
   Regenerate +10, Light +10, Hit points +90, Endurance +45, Mana +30; no attributes or hit points needed.
   (Previously: Armor 8, Hit points +50, Heal +25, Light +10; 30 in every attribute and 300 hit points needed.)
-  BUILT, NOT live.
+  Live Nov 27, 15:40.
 - **Ankh's Protection** (`TE_ANKHPROT` 11, `ANKHPROT_PCT` 10): 10% less damage from every hit and spell, after armor
   (`do_hurt`). Tested Nov 27: 4,000 Gargoyle Knight blows at Armor 9 did 25.4 a round against 28.4 in plain Titanium
   Armor. (Named by Cody; "Ankh's Fortitude" was the first idea.)
