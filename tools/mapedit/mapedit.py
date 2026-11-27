@@ -84,7 +84,7 @@ IT_FIELDS = {
     'hp': (337, '<3h'), 'end': (343, '<3h'), 'mana': (349, '<3h'), 'skill': (355, '150b'), 'armor': (505, '2b'),
     'weapon': (507, '2b'), 'light': (509, '<2h'), 'duration': (513, '<I'), 'cost': (517, '<I'), 'power': (521, '<I'),
     'sprite_override': (535, '<H'), 'sprite': (537, '<2H'), 'status': (541, '2B'), 'gethit_dam': (543, '2b'),
-    'min_rank': (545, 'b'), 'speedb': (546, '3b'), 'driver': (593, 'B'), 'data': (594, '<10i'),
+    'min_rank': (545, 'b'), 'speedb': (546, '3B'), 'driver': (593, 'B'), 'data': (594, '<10i'),
 }
 
 
@@ -8034,11 +8034,13 @@ const ITEM_TABS = {
     const t3 = document.createElement('table'); t3.className = 'st'; t3.innerHTML = `<tr><th></th><th>${drink ? 'Right away' : 'Normal'}</th><th>${drink ? 'While it lasts' : 'Active'}</th></tr>`;
     const put2 = (name, arr, lo, hi) => { const r = t3.insertRow(); r.insertCell().textContent = name; for (let k = 0; k < 2; k++) { const i = num(() => arr[k], v => arr[k] = v, lo, hi); if (k === 0 && drink) { i.style.opacity = '.35'; i.title = 'Does nothing for a drink'; } r.insertCell().append(i); } };
     put2('Armor value', c.armor, -128, 127); put2('Weapon value', c.weapon, -128, 127); put2('Light', c.light, -32768, 32767); put2('Damage to attackers', c.gethit_dam, -128, 127);
-    // MyV2 (Nov 26): speed bonuses, steps on the game's speed table (+ = faster); worn, or while a spell lasts
+    // MyV2 (Nov 27): speed bonuses, four signed nibbles in speedb (-8..+7 steps on the game's speed table, + = faster)
     const t4 = document.createElement('table'); t4.className = 'st'; t4.innerHTML = '<tr><th></th><th>Steps</th></tr>';
     if (!Array.isArray(c.speedb)) c.speedb = [0, 0, 0];
-    [['Speed (walk + attack)', 'Walking, turning, blows, spells and everything else'], ['Walk speed', 'Walking and turning'], ['Attack speed', 'Blows, spells and skills']].forEach(([name, tip], k) => {
-      const r = t4.insertRow(); const l = r.insertCell(); l.textContent = name; l.title = tip; r.insertCell().append(num(() => c.speedb[k], v => c.speedb[k] = v, -19, 19)); });
+    const nibGet = k => { const v = (c.speedb[k >> 1] >> ((k & 1) * 4)) & 15; return v >= 8 ? v - 16 : v; };
+    const nibSet = (k, v) => { v = Math.max(-8, Math.min(7, Math.round(+v || 0))) & 15; const sh = (k & 1) * 4; c.speedb[k >> 1] = (c.speedb[k >> 1] & ~(15 << sh) & 255) | (v << sh); };
+    [['Speed (all)', 'Moving, attacking and casting'], ['Move speed', 'Walking, turning, picking up, using, giving'], ['Attack speed', 'Melee blows'], ['Cast speed', 'Spells and skills']].forEach(([name, tip], k) => {
+      const r = t4.insertRow(); const l = r.insertCell(); l.textContent = name; l.title = tip; r.insertCell().append(num(() => nibGet(k), v => nibSet(k, v), -8, 7)); });
     const h = document.createElement('div'); h.innerHTML = '<h4>Attributes</h4>'; h.append(t1); h.insertAdjacentHTML('beforeend', '<h4>Armor, weapon, light</h4>'); h.append(t3);
     h.insertAdjacentHTML('beforeend', '<h4>Speed</h4><div class="hint">Steps on the speed table, + is faster. The speed mode (slow / normal / fast) is about 2 steps.</div>'); h.append(t4); cols.append(h);
     const t2 = mk(); SKILLS.forEach((s, z) => put3(t2, s, c.skill, z * 3, -128, 127, true));

@@ -62,9 +62,10 @@ void player_exit(int nr);
 void xsend(int nr,unsigned char *buf,int len);
 void plr_act(int nr);
 int ch_act_speed(int cn);
-int ch_walk_step(int cn);
+int ch_move_step(int cn);
+int ch_cast_step(int cn);
 int ch_attack_step(int cn,int melee);
-int step_rate(int step);
+int step_rate(int step,int frames);
 int attack_steps(int cn);
 
 // tier.c: item tiers for helmets and body armor

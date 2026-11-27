@@ -803,6 +803,10 @@ int main(int argc,char *args[])
 	load_mod();
 	wp_load();	// MyV2 waypoints: read the list, make the circles (waypoint.c)
 
+        {       // MyV2 (Nov 27): work every character's speeds out again (the speed table grew; saved rows are old)
+                int cn;
+                for (cn=1; cn<MAXCHARS; cn++) if (ch[cn].used!=USE_EMPTY) ch[cn].flags|=CF_UPDATE;
+        }
         xlog("Entering game loop... (type help in this terminal for console commands)");
 
         while (!doleave) {

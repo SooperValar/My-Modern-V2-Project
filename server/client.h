@@ -111,10 +111,11 @@ struct cmap
 #define META_RESIST		54
 #define META_DEFLECT		55	// percent, hundredths
 #define META_THORNS		56
-#define META_WALKSPEED		57	// MyV2 (Nov 26): steps a second, hundredths
-#define META_BASESPEED		58	// Speed (pick up, use, give...), actions a second, hundredths
+#define META_MOVESPEED		57	// MyV2 (Nov 27): steps a second, hundredths
+#define META_BASESPEED		58	// the Speed stat (speed mode + race + Speed bonuses), a plain number
+#define META_CASTSPEED		30	// casts a second, hundredths (after the spells' rows)
 // never shown: the Godot client's planner reads them
-#define META_SPEEDSTEP		86	// ch[].speed, the speedtab row
+#define META_SPEEDSTEP		86	// the attack speed's speedtab row, counted the old way (0..19) for the planner
 #define META_WEAPONSKILL	87	// the skill number get_fight_skill() reads
 
 struct cplayer

@@ -13,7 +13,7 @@ All rights reserved.
 
 #define VERSION         0x020E07
 #define INVSLOTS        60	// MyV2 (Nov 26): backpack slots; 40-59 live in item2[] (data.h, INV() in macros.h)
-#define MINVERSION      0x030000	// 3.0.0: the Godot client only (Nov 25); merc.exe (2.15.x) is turned away with LO_VERSION
+#define MINVERSION      0x030100	// 3.1.0 (Nov 27): the speed table has 30 rows (moves faster than before); 3.0.0: the Godot client only (Nov 25); merc.exe (2.15.x) is turned away with LO_VERSION
 					// start the game with Launcher.exe. Raise it when a new client is published (publish_client.py).
 
 // line-of-sight grid (was 40x40, center 20)
@@ -22,6 +22,7 @@ All rights reserved.
 #define VIS_PLR_RADIUS  27      // display sight radius for players (was 16, then 22 for the 44x44 view)
 
 #define TICKS                   18
+#define MOVE_BUMP               2       // MyV2 (Nov 27, Cody): move speed starts 2 steps above the others
 #define TICK                    (1000000/TICKS)
 
 #define MAPX                      1024

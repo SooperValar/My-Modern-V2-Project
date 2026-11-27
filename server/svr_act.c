@@ -1076,9 +1076,22 @@ void plr_doact(int cn)
         }
 }
 
-unsigned char speedtab[20][20]=
+/* MyV2 (Nov 27): rows 0-9 are faster than the game's old fastest (row 10): a 2 moves two frames on that tick
+ * (plr_act). Each row is one frame per 20 ticks faster than the next. Only moves use rows 0-9 (really_update_char).
+ * The Godot client has the same table (StatusSpeed.cs). */
+unsigned char speedtab[SPEEDROWS][20]=
 {
 //  1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0
+        {2,1,2,1,2,1,2,1,2,1,2,1,2,1,2,1,2,1,2,1},      //30 frames
+        {2,1,2,1,2,1,2,1,2,1,1,2,1,2,1,2,1,2,1,1},      //29 frames
+        {2,1,2,1,1,2,1,2,1,1,2,1,2,1,1,2,1,2,1,1},      //28 frames
+        {2,1,2,1,1,2,1,1,2,1,1,2,1,1,2,1,1,2,1,1},      //27 frames
+        {2,1,1,2,1,1,2,1,1,1,2,1,1,2,1,1,2,1,1,1},      //26 frames
+        {2,1,1,1,2,1,1,1,2,1,1,1,2,1,1,1,2,1,1,1},      //25 frames
+        {2,1,1,1,1,2,1,1,1,1,2,1,1,1,1,2,1,1,1,1},      //24 frames
+        {2,1,1,1,1,1,2,1,1,1,1,1,1,2,1,1,1,1,1,1},      //23 frames
+        {2,1,1,1,1,1,1,1,1,1,2,1,1,1,1,1,1,1,1,1},      //22 frames
+        {2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},      //21 frames
         {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},      //20
         {1,1,1,1,1,1,1,1,1,0,1,1,1,1,1,1,1,1,1,1},      //19
         {1,1,1,1,1,0,1,1,1,1,1,1,1,1,0,1,1,1,1,1},      //18
@@ -1101,49 +1114,52 @@ unsigned char speedtab[20][20]=
         {0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0}       //1
 };
 
-/* MyV2 (Nov 26, Cody): walk speed and attack speed apart from Speed (really_update_char, svr_do.c).
- * Rows of speedtab, 0 fastest .. 19 slowest. */
-int ch_walk_step(int cn)
+/* MyV2 (Nov 27, Cody): move, attack and cast speed (really_update_char, svr_do.c). Rows of speedtab, 0 fastest. */
+int ch_move_step(int cn)
 {
-        return max(0,min(19,ch[cn].speed+ch[cn].walk_delta));
+        return max(0,min(SPEEDROWS-1,ch[cn].speed+ch[cn].move_delta));
 }
 
-/* melee: a two-handed axe makes blows AXE2H_SLOW steps slower (spells and skills are not blows) */
+int ch_cast_step(int cn)
+{
+        return max(0,min(SPEEDROWS-1,ch[cn].speed+ch[cn].cast_delta));
+}
+
+/* melee: a two-handed axe makes blows AXE2H_SLOW steps slower */
 int ch_attack_step(int cn,int melee)
 {
-        int s=ch[cn].speed+ch[cn].atk_delta,in;
+        int s=ch[cn].speed,in;
 
         if (melee && (in=ch[cn].worn[WN_RHAND])!=0 && IS_SANEITEM(in) &&
             (it[in].flags&(IF_WP_AXE|IF_WP_TWOHAND))==(IF_WP_AXE|IF_WP_TWOHAND)) s+=AXE2H_SLOW;
-        return max(0,min(19,s));
+        return max(0,min(SPEEDROWS-1,s));
 }
 
-/* actions a second at a speed row, hundredths (8 frames to a step, blow or cast) */
-int step_rate(int step)
+/* actions a second at a speed row for an action of that many frames, hundredths */
+int step_rate(int step,int frames)
 {
         int n,cnt=0;
 
-        step=max(0,min(19,step));
+        step=max(0,min(SPEEDROWS-1,step));
         for (n=0; n<20; n++) cnt+=speedtab[step][n];
-        return cnt*TICKS*100/(20*8);
+        return cnt*TICKS*100/(20*frames);
 }
 
-/* speed used for the current action: walking and turning at walk speed, blows (status2 0, 5, 6), spells and
- * skills (9) at attack speed, the rest (pick up, drop, give, use, bow, wave) at Speed.
+/* speed used for the current action: walking, turning, picking up, dropping, giving, using, bowing and waving at
+ * move speed; blows (status2 0, 5, 6) at attack speed; spells and skills (9) at cast speed.
  * svr_tick.c sends the same value to the client so the animation matches. */
 int ch_act_speed(int cn)
 {
         int st=ch[cn].status,s2=ch[cn].status2;
 
-        if (st>=16 && st<=159) return ch_walk_step(cn);
         if (st>=160 && st<=191) {
                 if (s2==0 || s2==5 || s2==6) return ch_attack_step(cn,1);
-                if (s2==9) return ch_attack_step(cn,0);
+                if (s2==9) return ch_cast_step(cn);
         }
-        return ch[cn].speed;
+        return ch_move_step(cn);
 }
 
-/* how many of every 20 ticks move a blow on one frame (speedtab), for the Godot client's attack speed */
+/* how many frames of every 20 ticks a blow moves on (speedtab), for the Godot client's attack speed */
 int attack_steps(int cn)
 {
         int s=ch_attack_step(cn,1),n,cnt=0;
@@ -1157,7 +1173,41 @@ static inline int speedo(int n)
         return speedtab[ch_act_speed(n)][ctick];
 }
 
+/* MyV2 (Nov 27): the animation block a status is in (first frame, frames); 0 when it isn't one */
+static int anim_block(int st,int *first)
+{
+        int f,len;
+
+        if (st>=16 && st<=47) { f=16; len=8; }		// straight steps
+        else if (st>=48 && st<=95) { f=48; len=12; }	// diagonal steps
+        else if (st>=96 && st<=159) { f=96; len=4; }	// turns
+        else if (st>=160 && st<=191) { f=160; len=8; }	// actions
+        else return 0;
+        *first=f+((st-f)/len)*len;
+        return len;
+}
+
+static void plr_act_tick(int cn);
+
+/* MyV2 (Nov 27): a tick that moves two frames (speedtab 2, moves faster than the old fastest): the first frame
+ * here, the second by the case in plr_act_tick (which may finish the step). On the step's last frame the step is
+ * done first and the next step then starts one frame in. Same as the Godot client's CharacterStatuses.MoveOn. */
 void plr_act(int cn)
+{
+        int two,first,len,last=0;
+
+        if (ch[cn].stunned || (ch[cn].flags&CF_STONED)) { plr_act_tick(cn); return; }
+        two=speedtab[ch_act_speed(cn)][ctick]>1;
+        if (two && (len=anim_block(ch[cn].status,&first))) {
+                if (ch[cn].status<first+len-1) ch[cn].status++;
+                else last=1;
+        }
+        plr_act_tick(cn);
+        if (last && ch[cn].status>=16 && ch[cn].status<=159 && anim_block(ch[cn].status,&first) && ch[cn].status==first)
+                ch[cn].status++;
+}
+
+static void plr_act_tick(int cn)
 {
         if (ch[cn].stunned) { act_idle(cn); return; }
         if (ch[cn].flags&CF_STONED) { act_idle(cn); return; }

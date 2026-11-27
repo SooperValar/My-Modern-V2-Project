@@ -109,17 +109,17 @@ of 3.0.0 and up, so merc.exe never sees a message it doesn't know.
 - **Meta stats for the Godot client** (`svr_do.c` meta_stats, `skill_driver.c` meta_spells, `svr_act.c` attack_steps,
   `svr_tick.c`, `client.h` META_*): SV_META (81, 7 bytes: slot, int value, show) sends the numbers behind the client's
   left-panel lists, laid out like The Last Gate's, only when one changes. Top rows: Compatibility (spellpower), Spell
-  Bonus (race and moon), Mana Cost Multiplier (Concentrate), Attack Speed (blows and casts a second; Previously: Action Speed, when MyV2
+  Bonus (race and moon), Mana Cost Multiplier (Concentrate), Attack Speed (melee blows a second; Previously: Action Speed, when MyV2
   had one speed for everything), Weapon Value, Hit Score, Parry Score. Offenses, Passive: Est. Melee Hit Dmg and DPS, ceiling and
   floor damage, Strength Bonus, lucky hits, 2H-axe Critical Chance and Multiplier, Surround Hit; Active (each spell
   only when known, cast on yourself, before the target's Immunity): Bless, Enhance, Protect, Magic Shield and its
   duration, Heal, Curse, Stun duration, Blast damage and mana cost, Ghost Comp Strength. Defenses: Armor Value,
   health / endurance / mana regen a second standing (moon, tier effects, amulets, permanent spells), Effective
-  Immunity (half the skill), Effective Resistance, 2H-sword Deflect Chance, Thorns, Walk Speed (slot 57) and Speed (slot 58; client 3.0.1 names them, older clients skip the slots). Hidden rows close up in the client.
+  Immunity (half the skill), Effective Resistance, 2H-sword Deflect Chance, Thorns, Move Speed (slot 57) and Speed (58, a plain number); Cast Speed is slot 30 (after the spells). Hidden rows close up in the client.
   The names live in the client (`MyV2MetaStats.cs`); the slots must match. First version live Nov 25, 21:07; the
   TLG-style lists live since 22:08.
 - **Planner helpers** (`svr_do.c` fight_skill_number, `client.h` META_SPEEDSTEP / META_WEAPONSKILL): two meta stats
-  the client never shows, for the Godot client's planner: slot 86 is the attack speed's speedtab row (`ch_attack_step`; was ch[].speed) and slot 87 the
+  the client never shows, for the Godot client's planner: slot 86 is the attack speed's speedtab row counted the old way, 0-19 (`ch_attack_step` - SPEED_OLDFAST) and slot 87 the
   skill number get_fight_skill() reads. Live since Nov 25, 23:12.
 - **Godot client only** (`gendefs.h` MINVERSION 2.15.06 -> 3.0.0): merc.exe is retired (Cody, Nov 25). A client
   older than the Godot client's 3.0.0 is logged out before it enters the game (LO_VERSION: "Client version too old.
@@ -485,23 +485,34 @@ NPCs can now hold real conversations and run quests made in the editor (see [Que
 - A full backpack keeps the chest closed so you can come back.
 - **Chests can be turned** between the game's own two looks: lock facing south or west.
 
-### Walk speed and attack speed (Nov 26)
+### Speed, move speed, attack speed and cast speed (Nov 27)
 
-One speed used to drive every action. Now there are three (`svr_do.c` really_update_char, `svr_act.c` ch_act_speed):
-- **Speed**: the old formula, (Agility + Strength) / 50 + the speed mode (slow / normal / fast) + race + **Speed
-  bonuses**. Picking up, dropping, using, giving, bowing and waving go at Speed.
-- **Walk speed** = Speed + **walk speed bonuses**: walking and turning.
-- **Attack speed** = Speed + **attack speed bonuses**: melee blows, spells and skills (a two-handed axe's
-  `AXE2H_SLOW`, now 0, counts for blows only).
-- The speed mode is part of Speed, so it moves both. Without bonuses nothing plays differently than before.
-- **Items and spells can carry the three bonuses** (`it[].speedb[3]`, `IT_SPEED` / `IT_WALKSPD` / `IT_ATKSPD` in
-  data.h, the item's old spare `future[3]`, zero everywhere): steps on the speed table, + is faster (a speed mode is
-  about 2 steps; row 0 is the limit). They count while worn (not in no-magic areas) or while a spell lasts. Item
-  tooltips list them (green / red). Set them on the editor's Items page (Stats tab, "Speed").
-- The character keeps walk and attack speed as steps from Speed (`walk_delta`, `atk_delta`, two of `future1`'s spare
-  bytes; 0 = the same as Speed, so old saves are fine). The client gets the speed of whatever each character is
-  doing, so animations match.
-- The Godot client's stats: **Attack Speed** (top row), **Walk Speed** and **Speed** (Defenses, Passive); client 3.0.1.
+One speed used to drive every action, and it could not go faster than one animation frame a tick. Now (Cody, Nov 27;
+`svr_do.c` really_update_char, `svr_act.c` ch_act_speed / plr_act):
+- **Speed**: the speed mode (slow 12, normal 14, fast 16) + race + **Speed bonuses**. All three speeds start from it,
+  so the speed mode still moves everything.
+- **Attack speed** (melee blows) = Speed + (Agility + Strength) / 50 + attack bonuses. The same as the old single speed.
+- **Cast speed** (spells and skills, Warcry too) = Speed + (Agility + Intuition) / 50 + cast bonuses.
+- **Move speed** (walking, turning, picking up, dropping, using, giving, bowing, waving) = Speed + (Agility + the higher
+  of Strength and Willpower) / 50 + **2** (`MOVE_BUMP`, gendefs.h) + move bonuses.
+- Each point is one row of the speed table (`speedtab`, now 30 rows; `SPEEDROWS`). **Rows 0-9 are new and faster than
+  the game's old fastest** (row 10): on some ticks they move two frames (`plr_act`: the first frame before the action's
+  case, the second by it; on a step's last frame the step finishes and the next starts one frame in). Only moves use
+  them: walking now goes up to 3.38 steps a second (was 2.25); attacks and casts stop at the old fastest.
+- Examples on normal mode: a warrior (Agility 60, Strength 80) attacks 1.80 a second as before, casts 1.69, walks 2.02
+  (was 1.80 for everything); a mage (Agility 40, Strength 20, Willpower 70, Intuition 80) attacks 1.69, casts 1.80
+  (was 1.69), walks 2.02.
+- **Items and spells can carry the four bonuses** (Speed, move, attack, cast; -8..+7 steps each, + is faster, a speed
+  mode is 2 steps): four signed nibbles in `it[].speedb` (the item's old spare `future[3]`, zero everywhere; `IT_SPD`,
+  `SPD_*` in data.h). They count while worn (not in no-magic areas) or while a spell lasts. Item tooltips list them
+  (green / red). Set them on the editor's Items page (Stats tab, "Speed").
+- The character keeps attack speed's row in `ch[].speed`, move and cast speed as rows from it (`move_delta`,
+  `cast_delta`) and the Speed stat (`speed_stat`), in `future1`'s spare bytes. Every character works its speeds out
+  again at start-up and when made from a template (the old saved rows are on the old table). The client gets the row
+  of whatever each character is doing.
+- **Protocol 3.1.0** (`MINVERSION` 0x030100): client 3.0.x would animate the new rows wrongly, so the server turns it
+  away; the Godot client 3.1 has the 30-row table (`StatusSpeed.cs`) and shows **Attack Speed** (top row), **Cast
+  Speed** (Offenses, Active, with the spells), **Move Speed** and **Speed** (Defenses, Passive).
 
 ## Balance changes and fixes
 
@@ -1201,7 +1212,7 @@ Details: `tools/sprites/quest_items/README.txt`.
 
 ## Editor: Items page (Nov 16)
 
-(Nov 26: the Stats tab has a **Speed** box: Speed, Walk speed and Attack speed bonuses, -19 to +19 steps; `speedb` in IT_FIELDS.)
+(Nov 27: the Stats tab has a **Speed** box: Speed, Move, Attack and Cast speed bonuses, -8 to +7 steps; `speedb` in IT_FIELDS, four nibbles.)
 
 A new **Items** page (left bar, under Map): every item template in one list with its picture, number, name, kind
 (weapon and its skill, armor and where it is worn, ring, amulet, used up, quest...), min. rank, value, weapon and armor

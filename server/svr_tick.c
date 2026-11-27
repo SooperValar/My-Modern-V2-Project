@@ -988,9 +988,9 @@ void plr_cmd_iteminfo(int nr)
 			else if (it[in].flags&IF_WP_TWOHAND) { int c=wp2h_chance(player[nr].usnr,0); tip_line(nr,where,slot,&line,3,"Deflects %d.%d%% of melee hits",c/10,c%10); tip_line(nr,where,slot,&line,3,"(more with Agility)"); }
 			if ((it[in].flags&IF_WP_STAFF) && (it[in].placement&(PL_WEAPON|PL_TWOHAND))) { tip_line(nr,where,slot,&line,3,"Harakim: Ghost Companion +%d%%",GC_STAFF_HARAKIM-100); tip_line(nr,where,slot,&line,3,"(Arch-Harakim +%d%%)",GC_STAFF_ARCH-100); }
 			if (it[in].gethit_dam[act]) tip_line(nr,where,slot,&line,2," 1-%d Damage to attackers",it[in].gethit_dam[act]);	// do_hurt: RANDOM(d)+1
-			{	// MyV2 (Nov 26): speed bonuses, in speed-table steps
-				static char *sn[3]={"Speed","Walk Speed","Attack Speed"}; int k;
-				for (k=0; k<3; k++) if (it[in].speedb[k]) tip_line(nr,where,slot,&line,it[in].speedb[k]>0 ? 2 : 0," %s %+d",sn[k],it[in].speedb[k]);
+			{	// MyV2 (Nov 27): speed bonuses, in speed-table steps
+				static char *sn[4]={"Speed","Move Speed","Attack Speed","Cast Speed"}; int k,v;
+				for (k=0; k<4; k++) if ((v=IT_SPD(in,k))) tip_line(nr,where,slot,&line,v>0 ? 2 : 0," %s %+d",sn[k],v);
 			}
 			tip_sep();
 			tip_sep();

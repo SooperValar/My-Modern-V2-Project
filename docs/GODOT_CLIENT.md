@@ -360,7 +360,7 @@ Setup.exe run shows SmartScreen ("More info" > "Run anyway").
 - **Out of date:** the launcher checks for updates when it opens (Update button lights). If the server sends the client
   away with exit 11 (version too old), the launcher says "Your client is out of date. Click Update to get the newest
   version." and checks again. Two numbers: the release number (every update) and the protocol number
-  (`Protocol.NetworkingVersion` = server `MINVERSION`, 3.0.0), raised together only when old clients must stop working.
+  (`Protocol.NetworkingVersion` = server `MINVERSION`, 3.0.0; 3.1.0 from the speed rework, Nov 27: the 30-row speed table), raised together only when old clients must stop working.
 - **Releases:** Release Please runs on pushes to `myv2` and keeps a release PR open; merging it (Cody, on GitHub) makes
   the release, the package workflow attaches the files. Changelog starts after 6fdc4e1a (`last-release-sha`).
   First real release: a commit with footer `Release-As: 3.0.0`. Player install link: the release's

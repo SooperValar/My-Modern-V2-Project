@@ -155,6 +155,7 @@ int god_create_char(int temp,int withitems)
         ch[n].pass1=RANDOM(0x3fffffff);
         ch[n].pass2=RANDOM(0x3fffffff);
         ch[n].temp=temp;
+        ch[n].flags|=CF_UPDATE;         // MyV2 (Nov 27): speeds from the new speed table (the template's row is old)
 
         while (1) {
                 strcpy(ch[n].name,mkp());

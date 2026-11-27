@@ -227,11 +227,13 @@ New sprites above 34,767 need client 2.15.06 or later: raise `MINVERSION` when t
 
 **Where we left off (Nov 26, 22:45) - read this first.** Everything is live, released and pushed (project main, Godot client
 myv2 / release v3.0.0).
-- **Nov 27, ~00:10: walk speed / attack speed split BUILT, NOT live** (CHANGES.md "Walk speed and attack speed"; TODO
-  "Walking speed"): server (both folders), editor Items page Speed box, Godot client (myv2: Attack Speed / Walk Speed /
-  Speed rows, release 3.0.1 when Cody says "release"). Tested: server build, logic check, a test server on .dat copies,
-  client tests (only the 26 known art tests fail). Going live: Cody's "go live" -> update-code when `"online": 0`, then
-  `reload-editor`. Old clients just skip the two new stat slots, so the server can go first.
+- **Nov 27, ~01:30: the speed rework is BUILT, NOT live** (CHANGES.md "Speed, move speed, attack speed and cast
+  speed"; TODO "Walking speed"): Speed + attack / cast / move speeds, 10 faster speed-table rows for moves, move +2,
+  item speed bonuses (editor Items page). Server (both folders) + project pushed. **Godot client: commits on `myv2` in
+  Cody's PC copy, NOT pushed** (the cloud needs Cody's OK to attach `SooperValar/myv2-godot-client`). Protocol 3.1.0:
+  server and client go live together - push the client, Cody says "release" (Release Please PR -> 3.1.0), wait for
+  the build, then "go live" (update-code when `"online": 0`, `reload-editor`). Tested: server build, a test server on
+  .dat copies, the walk simulation (server and client frames agree), client tests (26 known art failures only).
 - **Nov 26, 23:18: soulstone levels fixed and LIVE** (TODO "Soulstone levels too low"): stone level = enemy rank
   -1..0 (Strong 0..+1), drops never rarer than armor's 1 in 100. Cody checks drops in game. (Cloud push needs the repo in the
   session's sources first: if `git push` gets a 403 from the git proxy, call `add_repo` (owner SooperValar, push) and push again.)

@@ -3950,7 +3950,7 @@ void do_update_char(int cn)
 
 void really_update_char(int cn)
 {
-        int n,m,oldlight,z,sublight=0,spd=0,wspd=0,aspd=0;
+        int n,m,oldlight,z,sublight=0,spd[4]={0,0,0,0};
         int hp=0,end=0,mana=0,weapon=0,armor=0,light=0,gethit=0,infra=0;
         int attrib[5];
         int skill[50];
@@ -4024,7 +4024,7 @@ void really_update_char(int cn)
                                 else skill[z]+=it[m].skill[z][0];
                         }
 
-                        spd+=it[m].speedb[0]; wspd+=it[m].speedb[1]; aspd+=it[m].speedb[2];
+                        for (z=0; z<4; z++) spd[z]+=IT_SPD(m,z);
                 }
 
                 if (it[m].active) {
@@ -4065,7 +4065,7 @@ void really_update_char(int cn)
 
                         for (z=0; z<50; z++) skill[z]+=it[m].skill[z][1];
 
-                        spd+=it[m].speedb[0]; wspd+=it[m].speedb[1]; aspd+=it[m].speedb[2];
+                        for (z=0; z<4; z++) spd[z]+=IT_SPD(m,z);
 
                         armor+=it[m].armor[1];
                         weapon+=it[m].weapon[1];
@@ -4168,24 +4168,30 @@ void really_update_char(int cn)
         if (map[ch[cn].x+ch[cn].y*MAPX].flags&MF_NOLIGHT) light=0;      // Lab 11's dark water
         ch[cn].light=light;
 
-        /* MyV2 (Nov 26, Cody): three speeds. Speed = (Agility + Strength) / 50 + the speed mode + race + Speed
-         * bonuses; walk speed (walking, turning) and attack speed (blows, spells, skills) are Speed plus their own
-         * bonuses. Picking up, using, giving and the rest go at Speed. ch_act_speed() in svr_act.c picks one. */
+        /* MyV2 (Nov 27, Cody): Speed and three speeds from it. Speed = the speed mode (slow 12, normal 14, fast 16)
+         * + race + Speed bonuses. Each speed adds two attributes / 50 and its own bonuses:
+         *   attack (melee blows)                 Agility + Strength
+         *   cast (spells and skills)             Agility + Intuition
+         *   move (walking, turning, picking up,  Agility + the higher of Strength and Willpower, + MOVE_BUMP
+         *         using, giving and the rest)
+         * A speed of n points is speedtab row SPEEDROWS - n (0 fastest). Attacks and casts stop at SPEED_OLDFAST
+         * (the game's old fastest); moves can go faster. ch_act_speed() in svr_act.c picks one per action. */
         n=10;
-        if (ch[cn].mode==0) {
-                n=(ch[cn].attrib[AT_AGIL][5]+ch[cn].attrib[AT_STREN][5])/50+ch[cn].speed_mod+12;
-        }
-        if (ch[cn].mode==1) { // normal
-                n=(ch[cn].attrib[AT_AGIL][5]+ch[cn].attrib[AT_STREN][5])/50+ch[cn].speed_mod+14;
-        }
-        if (ch[cn].mode==2) { // fast
-                n=(ch[cn].attrib[AT_AGIL][5]+ch[cn].attrib[AT_STREN][5])/50+ch[cn].speed_mod+16;
-        }
+        if (ch[cn].mode==0) n=12;
+        if (ch[cn].mode==1) n=14;       // normal
+        if (ch[cn].mode==2) n=16;       // fast
+        n+=ch[cn].speed_mod+spd[SPD_ALL];
+        ch[cn].speed_stat=max(0,min(255,n));
+        {
+                int ag=ch[cn].attrib[AT_AGIL][5],st=ch[cn].attrib[AT_STREN][5],wi=ch[cn].attrib[AT_WILL][5],in=ch[cn].attrib[AT_INT][5],atk,cst,mov;
 
-        n+=spd;
-        ch[cn].speed=max(0,min(19,20-n));
-        ch[cn].walk_delta=max(0,min(19,20-n-wspd))-ch[cn].speed;
-        ch[cn].atk_delta=max(0,min(19,20-n-aspd))-ch[cn].speed;
+                atk=max(SPEED_OLDFAST,min(SPEEDROWS-1,SPEEDROWS-(n+(ag+st)/50+spd[SPD_ATTACK])));
+                cst=max(SPEED_OLDFAST,min(SPEEDROWS-1,SPEEDROWS-(n+(ag+in)/50+spd[SPD_CAST])));
+                mov=max(0,min(SPEEDROWS-1,SPEEDROWS-(n+(ag+max(st,wi))/50+MOVE_BUMP+spd[SPD_MOVE])));
+                ch[cn].speed=atk;
+                ch[cn].cast_delta=cst-atk;
+                ch[cn].move_delta=mov-atk;
+        }
 
         if (ch[cn].a_hp>ch[cn].hp[5]*1000) ch[cn].a_hp=ch[cn].hp[5]*1000;
         if (ch[cn].a_end>ch[cn].end[5]*1000) ch[cn].a_end=ch[cn].end[5]*1000;
@@ -6161,10 +6167,11 @@ void meta_stats(int cn,int *val,unsigned char *show)
         str=ch[cn].attrib[AT_STREN][5];
         extra=str>3 ? str/2-1 : 0;                              // RANDOM(str/2) in do_attack
 
-        val[META_SPEED]=step_rate(ch_attack_step(cn,1));       // attack speed: blows a second (8 frames to a blow)
-        val[META_SPEEDSTEP]=ch_attack_step(cn,1);               // the planner's attack step
-        val[META_WALKSPEED]=step_rate(ch_walk_step(cn));        // steps a second
-        val[META_BASESPEED]=step_rate(ch[cn].speed);            // Speed: picking up, using, giving...
+        val[META_SPEED]=step_rate(ch_attack_step(cn,1),8);     // attack speed: blows a second (8 frames to a blow)
+        val[META_SPEEDSTEP]=ch_attack_step(cn,1)-SPEED_OLDFAST; // the planner's attack step, counted the old way
+        val[META_MOVESPEED]=step_rate(ch_move_step(cn),8);      // straight steps a second
+        val[META_CASTSPEED]=step_rate(ch_cast_step(cn),8);      // casts a second
+        val[META_BASESPEED]=ch[cn].speed_stat;                  // the Speed stat
         val[META_WEAPONSKILL]=fight_skill_number(cn);
         val[META_WEAPON]=ch[cn].weapon;
         val[META_HIT]=hit;
@@ -6234,7 +6241,8 @@ void meta_stats(int cn,int *val,unsigned char *show)
         show[META_RESIST]=val[META_RESIST]>0;
         show[META_DEFLECT]=wields_2h(cn,0);
         show[META_THORNS]=val[META_THORNS]>0;
-        show[META_WALKSPEED]=show[META_BASESPEED]=1;
+        show[META_MOVESPEED]=show[META_BASESPEED]=1;
 
         meta_spells(cn,val,show);
+        show[META_CASTSPEED]=show[META_ACTIVE];                 // under Active Stats, with the spells
 }

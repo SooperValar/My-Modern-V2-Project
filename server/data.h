@@ -514,11 +514,12 @@ struct character
 	char passwd[16];
 
 	char lastattack;		// neater display: remembers the last attack animation
-        // MyV2 (Nov 26): walk and attack speed, as steps on the speed table from ch[].speed (the Speed row;
-        // svr_do.c really_update_char). 0 = the same as Speed, so old saved characters are fine.
-        signed char walk_delta;
-        signed char atk_delta;
-        char future1[23];               // space for future expansion
+        // MyV2 (Nov 27): move and cast speed as rows of speedtab counted from ch[].speed (= the attack speed's
+        // row), and the Speed stat (speed mode + race + Speed bonuses); svr_do.c really_update_char.
+        signed char move_delta;
+        signed char cast_delta;
+        unsigned char speed_stat;
+        char future1[22];               // space for future expansion
 
         unsigned short sprite_override; // MyV2: unsigned (sprites up to 65535)
 
@@ -607,9 +608,14 @@ struct character
 #define IT_TSUFFIX(in)	(it[in].future3[5])	// skill giving the name's suffix: SK_* + 1, 0 none
 #define IT_TBASE(in)	(it[in].future3[6])	// the plain template it was made from
 #define IT_STACK(in)	(it[in].future3[7])	// MyV2: how many potions in this stack (0 / 1 = one; tier.c stack_*)
-#define IT_SPEED(in)	(it[in].speedb[0])	// MyV2: Speed bonus (walk + attack), speed-table steps
-#define IT_WALKSPD(in)	(it[in].speedb[1])	// MyV2: walk speed bonus
-#define IT_ATKSPD(in)	(it[in].speedb[2])	// MyV2: attack speed bonus (melee, spells and skills)
+// MyV2 (Nov 27): an item's speed bonus k, -8..+7 (speedb holds four signed nibbles)
+#define SPD_ALL		0	// Speed: moves, attacks and casts
+#define SPD_MOVE	1	// move speed: walking, turning, picking up, using, giving...
+#define SPD_ATTACK	2	// attack speed: melee blows
+#define SPD_CAST	3	// cast speed: spells and skills
+#define IT_SPD(in,k)	((int)((((it[in].speedb[(k)>>1])>>(((k)&1)*4))&15)^8)-8)
+#define SPEEDROWS	30	// speedtab rows: 0..9 faster than the game's old fastest (two frames on some ticks)
+#define SPEED_OLDFAST	10	// the old row 0: attacks and casts stop here; moves can go up to row 0
 #define STACK_MAX	20	// potions (or bounty items) in one stack
 #define STACKS(k)	((k)==1 || (k)==3)	// stack_kind(): kinds counted in IT_STACK (potions, bounty items)
 #define STACK_CHARGES	254	// charges a combined spell scroll can hold (the number shown on it)
@@ -711,8 +717,8 @@ struct item
         char gethit_dam[2];             // 547, damage for hitting this item
 
 	char min_rank;			// minimum rank to wear the item
-	signed char speedb[3];		// MyV2 (Nov 26): speed bonuses in speed-table steps (+ = faster), worn or as a spell:
-					// [0] Speed (walking and attacks), [1] walk speed, [2] attack speed (was future[3], zero everywhere)
+	unsigned char speedb[3];	// MyV2 (Nov 27): speed bonuses, four signed nibbles (-8..+7 steps on the speed table,
+					// + = faster), worn or as a spell: IT_SPD(in,SPD_*). [2]'s nibbles are spare. (was future[3], zero)
         int future3[9];             	// 587
 
         int t_bought;                   // 591
