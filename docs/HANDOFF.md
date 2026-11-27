@@ -234,12 +234,14 @@ myv2 / release v3.0.0).
   bonuses (editor Items page -> Stats -> Speed). Godot client **3.1.0 released** (Nov 27, 01:33; protocol 3.1.0, the
   server turns 3.0 clients away). Cody: formulas use total (modified) attributes on purpose. Next: Cody plays, then
   items / abilities with speed bonuses and number tweaks.
-- **Nov 27, 16:15: Godot client equipment slots as MyV2 uses them** (myv2 70a5367c, pushed, NOT released - Cody holds
-  the release for more changes): Back in TLG's old Card box, Belt in the old Back box, Legs in the old Belt box; slot 5
-  is `WornSlot.Legs` (was Charm, same value 64); the unused SecondCharm slot hidden; hotbar "*Legs". The relabelled
-  frame art (`data/overrides/00001.png`, `18001.png`, made by `tools/myv2-hud/slots.py`) is on Cody's PC, **Cody commits
-  and pushes those two files from Windows** (LFS uploads are refused from Claude's cloud shell: "LFS: Authorization
-  error" to github-cloud.s3.amazonaws.com). Lesson: LFS files can't be pushed from the cloud; Cody pushes them.
+- **Nov 27, 16:15: Godot client equipment slots as MyV2 uses them** (myv2 70a5367c code + 85151b1e frame art, pushed,
+  NOT released - Cody holds the release for more changes): Back in TLG's old Card box, Belt in the old Back box, Legs in
+  the old Belt box; slot 5 is `WornSlot.Legs` (was Charm, same value 64); the unused SecondCharm slot hidden; hotbar
+  "*Legs"; frame art `data/overrides/00001.png`, `18001.png` made by `tools/myv2-hud/slots.py`.
+  **LFS files can't be pushed from Claude's cloud shell** ("LFS: Authorization error" to github-cloud.s3.amazonaws.com).
+  The way that works: computer use on Cody's PC with **GitHub Desktop** (granted at full tier; the repo is added there,
+  LFS initialised): tick only the files, commit, Push origin. Terminals are click-only under computer use.
+  Cody's PC copy still shows `tools/myv2-hud/columns.py`, `extend.py`, `tabs.py` as deleted (from before Nov 27, left alone).
 - **Nov 27, 15:40: Amulet of Ankh (Ankh's Grace) and Titanium Armor of Ankh (Ankh's Protection, 10% less damage)
   are LIVE Legendaries** (CHANGES.md "Legendary items"; `tools/world/legendary/ankh_amulet.py`, `ankh_armor.py` on
   Server\.dat; backup /home/cody/claude-backups/20261127-154024). Legendaries so far: Winged Boots, the two Ankh items.
