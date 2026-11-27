@@ -222,6 +222,10 @@ struct cplayer
 #define CL_PASSWD			33
 #define CL_CMD_ITEMINFO			34	// where, slot, shop char: ask for an item tooltip
 #define CL_CMD_WAYPOINT			35	// waypoint number: travel there (waypoint.c)
+#define CL_CMD_HELP			41	// page (short), arg (int): a page of the Godot client's Help window (help.c)
+#define HELP_COMMANDS			1
+#define HELP_QUESTS			2
+#define HELP_QUEST			3
 
 #define CL_CMD_CTICK			255
 
@@ -307,6 +311,7 @@ struct cplayer
 #define SV_ITEMMARKS		78	// kind (as SV_TIERS), LOOK_SLOTS x (letter, number; 255 = no number): 166 bytes
 #define SV_WAYPOINT		79	// a row of the waypoint travel window (waypoint.c): 80 bytes
 #define SV_ZONE			80	// the name of the zone the player is in (get_area_m), 40 bytes NUL-padded: 41 bytes
+#define SV_HELP			82	// a piece of a Help window page (help.c): 64 bytes
 #define SV_META			81	// meta stat n (byte), value (int), show (byte): 7 bytes. The numbers of the Godot client's Offenses / Defenses lists; the client holds the names
 
 #define SV_SETMAP		128	// 128-255 are used !!!

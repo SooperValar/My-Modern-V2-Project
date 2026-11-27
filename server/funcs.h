@@ -556,3 +556,11 @@ void ccp_driver(int cn);
 void ccp_msg(int cn,int type,int dat1,int dat2,int dat3,int dat4);
 void ccp_shout(int cn,int co,char *text);
 void ccp_tell(int cn,int co,char *text);
+
+// help.c (MyV2, Nov 27): the Godot client's Help window
+extern int help_capture_cn,help_rows;
+void plr_cmd_help(int nr);
+void help_cells(int font,int n,const char **cells);
+void help_capture_line(int font,const char *text);
+void do_help(int cn,char *topic);
+void do_quest(int cn,char *a,char *b);

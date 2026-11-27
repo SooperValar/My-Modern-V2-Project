@@ -253,7 +253,8 @@ void do_char_log(int cn,int font,char *format,...)
 
         va_start(args,format);
         vsprintf(buf,format,args);
-        do_log(cn,font,buf);
+        if (help_capture_cn && cn==help_capture_cn) help_capture_line(font,buf);	// a Help window page is built (help.c)
+        else do_log(cn,font,buf);
         va_end(args);
 }
 
@@ -670,6 +671,7 @@ static void help_line(int cn,int font,const char *line)
 	cmd[n]=0;
 	desc=(char*)line+n;
 	while (*desc==' ') desc++;
+	if (help_capture_cn==cn && help_rows) { const char *cells[2]={cmd,desc}; help_cells(font,2,cells); return; }	// the Help window
 	pad=n<22 ? 22 : n;
 	if (!*desc) do_char_log(cn,font,"%s\n",cmd);
 	else if (pad+1+(int)strlen(desc)<=48) do_char_log(cn,font,"%-*s %s\n",pad,cmd,desc);
@@ -680,8 +682,10 @@ static void help_line(int cn,int font,const char *line)
 void do_help(int cn,char *topic)
 {
 	//             "!        .         .         .         .        !"
-	do_char_log(cn,1,"The following commands are available:\n");
-	do_char_log(cn,1," \n");
+	if (!help_rows) {	// the Help window (help.c) has its own headings
+		do_char_log(cn,1,"The following commands are available:\n");
+		do_char_log(cn,1," \n");
+	}
 	help_line(cn,1,"#afk <message>         away from keyboard.");
 	help_line(cn,1,"#allow <player>        to access your grave.");
 	help_line(cn,1,"#armor                 armor tiers and sets.");
@@ -2317,11 +2321,14 @@ void do_quest(int cn,char *a,char *b)
 	pages=(cnt+QUEST_PAGE-1)/QUEST_PAGE;
 	if (page<1) page=1;
 	if (page>pages) page=pages;
-	do_char_log(cn,1,"Quests%s, easiest first (page %d of %d):\n",all ? " (all)" : "",page,pages);
-	// two lines a quest, at most 48 characters: the Godot client's chat (Nov 27; was one 57-wide row)
-	do_char_log(cn,2," # %-19s %s\n","Giver","Where");
-	do_char_log(cn,2,"   %-34s %10s\n","Reward","Exp");
-	for (n=(page-1)*QUEST_PAGE; n<cnt && n<page*QUEST_PAGE; n++) {
+	if (help_rows) { page=1; pages=1; }	// the Help window (help.c): every one, as table rows
+	else {
+		do_char_log(cn,1,"Quests%s, easiest first (page %d of %d):\n",all ? " (all)" : "",page,pages);
+		// two lines a quest, at most 48 characters: the Godot client's chat (Nov 27; was one 57-wide row)
+		do_char_log(cn,2," # %-19s %s\n","Giver","Where");
+		do_char_log(cn,2,"   %-34s %10s\n","Reward","Exp");
+	}
+	for (n=(page-1)*QUEST_PAGE; n<cnt && (help_rows || n<page*QUEST_PAGE); n++) {
 		t=q[n].t;
 		if (t<0) {		// a chain quest: its giver, the part's first reward (» marks a chain)
 			int ci[8],ni,ex,lo,pa,ps,g=chain_giver(-t);
@@ -2330,8 +2337,11 @@ void do_quest(int cn,char *a,char *b)
 			ni=chain_step(-t,cn,ci,8,&ex,&lo,&pa,&ps);
 			if (ni && ci[0]>0 && ci[0]<MAXTITEM) snprintf(rew,sizeof(rew),"\xbb%s",it_temp[ci[0]].name); else strcpy(rew,"\xbb-");
 			if (ex>0) qol_num(ex,exp); else strcpy(exp,"-");
-			do_char_log(cn,q[n].known ? 3 : 1,"%2d %-19.19s %.25s\n",n+1,chain_name(-t),area[0] ? area : "?");
-			do_char_log(cn,q[n].known ? 3 : 1,"   %-34.34s %10s\n",rew,exp);	// (its name: the chain is easier to tell apart than its giver)
+			if (help_rows) { char nb[8]; const char *c[5]; sprintf(nb,"%d",n+1); c[0]=nb; c[1]=chain_name(-t); c[2]=area[0] ? area : "?"; c[3]=rew; c[4]=exp; help_cells(q[n].known ? 3 : 1,5,c); }
+			else {
+				do_char_log(cn,q[n].known ? 3 : 1,"%2d %-19.19s %.25s\n",n+1,chain_name(-t),area[0] ? area : "?");
+				do_char_log(cn,q[n].known ? 3 : 1,"   %-34.34s %10s\n",rew,exp);
+			}	// (its name: the chain is easier to tell apart than its giver)
 			chains++;
 			continue;
 		}
@@ -2350,9 +2360,17 @@ void do_quest(int cn,char *a,char *b)
 		}
 		{
 			int col=q[n].known || (q[n].skill>=0 && !ch[cn].skill[q[n].skill][2]) ? 3 : 1;
-			do_char_log(cn,col,"%2d %-19.19s %.25s\n",n+1,ch_temp[t].name,area[0] ? area : "?");
-			do_char_log(cn,col,"   %-34.34s %10s\n",rew,exp);
+			if (help_rows) { char nb[8]; const char *c[5]; sprintf(nb,"%d",n+1); c[0]=nb; c[1]=ch_temp[t].name; c[2]=area[0] ? area : "?"; c[3]=rew; c[4]=exp; help_cells(col,5,c); }
+			else {
+				do_char_log(cn,col,"%2d %-19.19s %.25s\n",n+1,ch_temp[t].name,area[0] ? area : "?");
+				do_char_log(cn,col,"   %-34.34s %10s\n",rew,exp);
+			}
 		}
+	}
+	if (help_rows) {	// the Help window: what the table's marks mean
+		if (chains) do_char_log(cn,2,"\xbb a chain quest: one part at a time. Click a quest for the part you are on.\n");
+		if (all) do_char_log(cn,3,"Blue: done, not for your class, or not for your rank.\n");
+		return;
 	}
 	if (chains) do_char_log(cn,2,"\xbb a chain quest: one part at a time (#quest <n>: the part you are on).\n");
 	if (page<pages) snprintf(buf,sizeof(buf),"  #quest%s p%d: next page",all ? " all" : "",page+1);

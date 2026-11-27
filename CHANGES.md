@@ -125,6 +125,12 @@ of 3.0.0 and up, so merc.exe never sees a message it doesn't know.
   `#rings`, `#specialarmor`: one line an item with narrower columns. `#specialw`, `#moddedarmor`, `#areas`: narrower.
   `#who`, `#ranks`, the look at a character, `#armor` and the weapon lists already fit and are as they were.
   (First try, live 16:49, assumed 44 and split tables into two lines; Cody: "look horrible".)
+- **Help window pages** (`help.c`, new; built Nov 27, NOT live yet): the Godot client asks with `CL_CMD_HELP` (41: page,
+  argument) and the server answers with `SV_HELP` (82, 64 bytes: page, kind (start / heading / cell / line / end), row,
+  column, colour, part, 56 letters). Pages: 1 Commands (what `#help` lists, as a two-column table), 2 Quests (every quest
+  as # / giver / where / reward / exp, no paging; argument 1 = all quests), 3 one quest's details (argument = quest number,
+  +0x8000 for "all"). The pages are made by the same `do_help` / `do_quest` code as the chat, captured while it runs
+  (`help_capture_line`), so chat and window never disagree. Old clients never ask, so nothing changes for them.
 - **Planner helpers** (`svr_do.c` fight_skill_number, `client.h` META_SPEEDSTEP / META_WEAPONSKILL): two meta stats
   the client never shows, for the Godot client's planner: slot 86 is the attack speed's speedtab row counted the old way, 0-19 (`ch_attack_step` - SPEED_OLDFAST) and slot 87 the
   skill number get_fight_skill() reads. Live since Nov 25, 23:12.
@@ -196,12 +202,20 @@ A new HUD drawn on its own canvas (window size ÷ 1.5) and composited over the w
 - World zoom (default 115%, `zoom=` in `client.ini`) crops into the world surface before scaling, slightly lowered so the HUD has room.
 - Auto-walk markers sit just outside the visible edge midpoints and are clickable.
 - **Low hitpoints glow**: `/lowhp <hp>` turns on a soft red glow that pulses on the ground under your character while your hitpoints are below that number, a little stronger the lower you go. `/lowhp` alone explains it and shows the current setting; `/lowhp 0` turns it off (the default). The client handles the command itself and remembers it in `client.ini` (`[display] lowhp_hp`).
+- **Hide mode in the Godot client** (F6; built Nov 27, not released yet): walls drop to their low block, the new walls
+  36000-36079 to their material's low blocks (first+8 plain, first+9 grain), the wider arches stay, the original trees
+  to their stumps (18190+) and the new trees 38100-38163 to 38164+ (`MapSpriteRules.LowSprite`).
 - **Trees in Hide mode** (F6): trees now drop to a short stump like walls drop to a low block, so you can see past forests (stumps 18190-18202, `tools/sprites/art/stumps/`; client `hide_sprite`). Before, a tree's "low" sprite was the same tree.
 - **Tiered items and graves glow** on the ground and in item windows (see [Tiered armor](#tiered-armor)): the client draws a one-pixel outline in the tier colour (`dd_glow_screen`, `dd_glow_world` in `dd.c`).
 - **Lit tiles** in build mode show a small warm white dot (sprite 18233, `engine.c`).
 
 ## New features in the HUD
 
+- **Help window** (Godot client; built Nov 27, not released yet): a **Help** button under Hide (next to Options), `/help`
+  or `#help`, opens a window with tabs. **Commands**: every player command and what it does. **Quests**: every quest with
+  giver, place, reward and exp; click one for its details (Back returns), "Show all quests" includes the done ones (blue).
+  `/quest`, `/quest all`, `/quest <n>` open the Quests tab too. `/who` stays in chat (and will get a tab later). Planned
+  tabs: Areas, Kill quests, Ranks, Who; then Armor, Weapons, Rings, Belts, Special items. Frame art: `tools/myv2-hud/helpbtn.py`.
 - **Item tooltips**: rest the mouse on an item in the backpack, the equipment or an open shop or grave for a moment and a small window shows it: name, weapon/armor value, bonuses (green), what it does when activated, requirements (red when your base values don't meet them, including rank and Seyan'Du/Purple-only items), condition, and value. In a shop it shows the price you'd pay with your Bartering; with a shop open, backpack items show what that merchant would pay, or that he doesn't buy that kind of item; elsewhere the base value. Plus the first lines of the description (up to 6). Answers are reused for 5 seconds. Lines of other panels are cut out under the tooltip in the clean theme. Everything is shown openly, because the same numbers are in `#armor`, `#belt`, `#rings` and so on; a new item flag `IF_NEEDIDENT` (bit 40, unused for now) hides an item's powers until it is identified, for unique late-game equipment.
 - **Buff timers**: a small panel between the character panel and the chat lists every spell on you with the time left (m:ss, or h:mm:ss). Harmful spells (curse, stun, warcry) are red, and a buff's time turns red in its last 30 seconds. The client counts down between updates. The panel is hidden when the window is too narrow for it.
 - **Hotkeys**: Ctrl+1 to Ctrl+9, Ctrl+0, Ctrl+- and Ctrl+= fire skill buttons 1-12 (left to right, top to bottom), next to the original Shift/Ctrl+F1-F12.

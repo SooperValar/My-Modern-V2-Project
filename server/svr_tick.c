@@ -1401,6 +1401,7 @@ void plr_cmd(int nr)
                 case CL_CMD_USE:        plr_cmd_use(nr); return;
                 case CL_CMD_INV:        plr_cmd_inv(nr); return;
                 case CL_CMD_EXIT:       plr_cmd_exit(nr); return;
+                case CL_CMD_HELP:       plr_cmd_help(nr); return;	// MyV2: the Help window (help.c)
         }
 
         if (ch[cn].stunned) return;

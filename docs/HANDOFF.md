@@ -238,8 +238,14 @@ myv2 / release v3.0.0).
   chat's text is 288 px of 6-px letters = 48 characters (not 44: the first try split tables into two lines and looked
   bad). `#quest` two lines a quest; `help_line()` (old column-23 look) for `#help` / `#weapon`; one line an item in
   `#belt`, `#rings`, `#specialarmor`. **New chat tables: keep them within 48 characters.**
-- **Godot client: walls in hide mode (MapSpriteRules.LowSprite, merc.exe's hide_sprite ported) - built, NOT pushed**
-  (waits for Cody's "push the client"; the change is only in the cloud clone /home/claude/myv2-godot-client, uncommitted).
+- **Nov 27, evening: Help window step 1 + the hide-mode wall fix - built, committed in the cloud clone, NOT pushed /
+  NOT live** (CHANGES.md "Help window", "Help window pages", "Hide mode in the Godot client"; TODO "Help window").
+  Server: new `help.c` + svr_do.c / svr_tick.c / client.h / funcs.h / Makefile (Server and project server/ identical);
+  needs Cody's "go live" (safe for 3.1 clients: they never send CL_CMD_HELP). Client: myv2 commits ab48aede (walls),
+  0add278f (GodotTests fixed for the 3.1 speed rows: all 2156 pass), bc280c99 (Help window) in /home/claude/myv2-godot-client,
+  plus the frame art `data/overrides/00001.png`, `18001.png` with the Help button (LFS: GitHub Desktop on the PC, see
+  below). Needs "push the client"; release (3.2) when Cody says. If the cloud clone is gone, the commits must be redone.
+  Testing: a test server in the device shell (/tmp/spd, port 5555) and a headless Core client (/tmp/hl) that dumps pages.
 - **Nov 27, 16:15: Godot client equipment slots as MyV2 uses them** (myv2 70a5367c code + 85151b1e frame art, pushed,
   NOT released - Cody holds the release for more changes): Back in TLG's old Card box, Belt in the old Back box, Legs in
   the old Belt box; slot 5 is `WornSlot.Legs` (was Charm, same value 64); the unused SecondCharm slot hidden; hotbar
