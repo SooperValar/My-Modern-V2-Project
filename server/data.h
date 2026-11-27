@@ -514,7 +514,11 @@ struct character
 	char passwd[16];
 
 	char lastattack;		// neater display: remembers the last attack animation
-        char future1[25];               // space for future expansion
+        // MyV2 (Nov 26): walk and attack speed, as steps on the speed table from ch[].speed (the Speed row;
+        // svr_do.c really_update_char). 0 = the same as Speed, so old saved characters are fine.
+        signed char walk_delta;
+        signed char atk_delta;
+        char future1[23];               // space for future expansion
 
         unsigned short sprite_override; // MyV2: unsigned (sprites up to 65535)
 
@@ -603,6 +607,9 @@ struct character
 #define IT_TSUFFIX(in)	(it[in].future3[5])	// skill giving the name's suffix: SK_* + 1, 0 none
 #define IT_TBASE(in)	(it[in].future3[6])	// the plain template it was made from
 #define IT_STACK(in)	(it[in].future3[7])	// MyV2: how many potions in this stack (0 / 1 = one; tier.c stack_*)
+#define IT_SPEED(in)	(it[in].speedb[0])	// MyV2: Speed bonus (walk + attack), speed-table steps
+#define IT_WALKSPD(in)	(it[in].speedb[1])	// MyV2: walk speed bonus
+#define IT_ATKSPD(in)	(it[in].speedb[2])	// MyV2: attack speed bonus (melee, spells and skills)
 #define STACK_MAX	20	// potions (or bounty items) in one stack
 #define STACKS(k)	((k)==1 || (k)==3)	// stack_kind(): kinds counted in IT_STACK (potions, bounty items)
 #define STACK_CHARGES	254	// charges a combined spell scroll can hold (the number shown on it)
@@ -704,7 +711,8 @@ struct item
         char gethit_dam[2];             // 547, damage for hitting this item
 
 	char min_rank;			// minimum rank to wear the item
-	char future[3];			
+	signed char speedb[3];		// MyV2 (Nov 26): speed bonuses in speed-table steps (+ = faster), worn or as a spell:
+					// [0] Speed (walking and attacks), [1] walk speed, [2] attack speed (was future[3], zero everywhere)
         int future3[9];             	// 587
 
         int t_bought;                   // 591

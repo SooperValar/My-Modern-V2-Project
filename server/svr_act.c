@@ -1101,32 +1101,53 @@ unsigned char speedtab[20][20]=
         {0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0}       //1
 };
 
-/* speed used for the current action: a two-handed axe makes attacks
- * AXE2H_SLOW steps slower (walking and everything else stay the same).
+/* MyV2 (Nov 26, Cody): walk speed and attack speed apart from Speed (really_update_char, svr_do.c).
+ * Rows of speedtab, 0 fastest .. 19 slowest. */
+int ch_walk_step(int cn)
+{
+        return max(0,min(19,ch[cn].speed+ch[cn].walk_delta));
+}
+
+/* melee: a two-handed axe makes blows AXE2H_SLOW steps slower (spells and skills are not blows) */
+int ch_attack_step(int cn,int melee)
+{
+        int s=ch[cn].speed+ch[cn].atk_delta,in;
+
+        if (melee && (in=ch[cn].worn[WN_RHAND])!=0 && IS_SANEITEM(in) &&
+            (it[in].flags&(IF_WP_AXE|IF_WP_TWOHAND))==(IF_WP_AXE|IF_WP_TWOHAND)) s+=AXE2H_SLOW;
+        return max(0,min(19,s));
+}
+
+/* actions a second at a speed row, hundredths (8 frames to a step, blow or cast) */
+int step_rate(int step)
+{
+        int n,cnt=0;
+
+        step=max(0,min(19,step));
+        for (n=0; n<20; n++) cnt+=speedtab[step][n];
+        return cnt*TICKS*100/(20*8);
+}
+
+/* speed used for the current action: walking and turning at walk speed, blows (status2 0, 5, 6), spells and
+ * skills (9) at attack speed, the rest (pick up, drop, give, use, bow, wave) at Speed.
  * svr_tick.c sends the same value to the client so the animation matches. */
 int ch_act_speed(int cn)
 {
-        int s=ch[cn].speed,in;
+        int st=ch[cn].status,s2=ch[cn].status2;
 
-        if (ch[cn].status>=160 && ch[cn].status<=191 &&
-            (ch[cn].status2==0 || ch[cn].status2==5 || ch[cn].status2==6) &&
-            (in=ch[cn].worn[WN_RHAND])!=0 && IS_SANEITEM(in) &&
-            (it[in].flags&(IF_WP_AXE|IF_WP_TWOHAND))==(IF_WP_AXE|IF_WP_TWOHAND)) {
-                s+=AXE2H_SLOW;
-                if (s>19) s=19;
+        if (st>=16 && st<=159) return ch_walk_step(cn);
+        if (st>=160 && st<=191) {
+                if (s2==0 || s2==5 || s2==6) return ch_attack_step(cn,1);
+                if (s2==9) return ch_attack_step(cn,0);
         }
-        return s;
+        return ch[cn].speed;
 }
 
-/* how many of every 20 ticks move an attack on one frame (speedtab), for the Godot client's attack speed */
+/* how many of every 20 ticks move a blow on one frame (speedtab), for the Godot client's attack speed */
 int attack_steps(int cn)
 {
-        int s=ch[cn].speed,in,n,cnt=0;
+        int s=ch_attack_step(cn,1),n,cnt=0;
 
-        if ((in=ch[cn].worn[WN_RHAND])!=0 && IS_SANEITEM(in) &&
-            (it[in].flags&(IF_WP_AXE|IF_WP_TWOHAND))==(IF_WP_AXE|IF_WP_TWOHAND)) s+=AXE2H_SLOW;
-        if (s<0) s=0;
-        if (s>19) s=19;
         for (n=0; n<20; n++) cnt+=speedtab[s][n];
         return cnt;
 }

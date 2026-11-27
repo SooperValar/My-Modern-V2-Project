@@ -50,7 +50,7 @@ world, quests, the editor, the client and Discord. Merged Nov 10 from the old TO
 0. ★ **Quest plan, area by area**: bands A-B done, Fenwatch + Drowned Village (Nov 16) + Barrow Hills + Lizard Hatcheries (Nov 17) live: band C done; Stonehold + its people, the Golem Foundry (Nov 17), the Ashen Fields (Nov 18) and the Gargoyle Spires with Bastion Road and the Monastery (Nov 19) live - band D done; next band E (the Last Bastion): **follow `docs/QUEST_BUILD.md`** - [Quests](#6-quests)
 1. ★ **Soulstone levels too low** (MAJOR): LIVE Nov 26, 23:18 (Cody checks in game) - [Fixes](#1-fixes-and-balance)
 2. ★ **Discord**: built Nov 14 (CHANGES.md "Discord"); waiting on Cody's webhooks / bot (HOSTING.md "Discord links")
-3. ★ **Walking speed, speed modes and attack speed** (look at it together first) - [Systems](#2-gameplay-systems)
+3. ★ **Walking speed, speed modes and attack speed**: split built Nov 26 (Speed / walk / attack, item bonuses); next: which items and abilities get them, and the formulas - [Systems](#2-gameplay-systems)
 4. ★ **Town NPCs' door loop** - [Fixes](#1-fixes-and-balance)
 5. ★ **Logout at shutdown** - [Fixes](#1-fixes-and-balance)
 6. ★ **Resizable game window** - [Client](#8-client-sprites-and-art)
@@ -100,6 +100,12 @@ the game's other undead keep ~12 hp/s. The Graveyard undead (below) should go in
 ## 2. Gameplay systems
 
 ### ★ Walking speed, the three speed modes and attack speed (was #26)
+**Nov 26: split built** (CHANGES.md "Walk speed and attack speed"): Speed (the old formula + Speed bonuses; picking up,
+using, giving), walk speed (walking, turning) and attack speed (blows, spells, skills), each item / spell able to add
+to Speed, walk or attack (editor Items page -> Stats -> Speed); Godot client 3.0.1 shows the three. Same formulas as
+before for now (Cody). **Next (Cody decides):** items and abilities with bonuses (e.g. winged boots: walk speed), whether
+stats should matter more or less, what the modes cost / give. The notes below are how the old single speed worked.
+
 Cody wants changes here; look at it together first. How it works now: one speed value is used for every action,
 walking AND attacking (`ch[].speed`, set in `really_update_char`, `svr_do.c` ~4007):
 n = (Agility + Strength) / 50 + speed_mod (items / spells) + 12 slow / 14 normal / 16 fast, speed = 20 - n
