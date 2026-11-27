@@ -2164,7 +2164,7 @@ static void quest_words(int cn,char *s,char *out,int max)	// an NPC text with %s
 	*d=0;
 }
 
-#define QUEST_PAGE 15
+#define QUEST_PAGE 10	// two chat lines each (Nov 27)
 
 static void quest_reward_text(char *buf,int len,int item,int cnt,int exp,int gold)	// "Ruby, 500 exp and 10G 50S"; cnt: how many of the item
 {
@@ -2299,7 +2299,9 @@ void do_quest(int cn,char *a,char *b)
 	if (page<1) page=1;
 	if (page>pages) page=pages;
 	do_char_log(cn,1,"Quests%s, easiest first (page %d of %d):\n",all ? " (all)" : "",page,pages);
-	do_char_log(cn,2," #  %-12s %-16s %-14s %7s\n","Giver","Where","Reward","Exp");
+	// two lines a quest, at most 43 characters: the Godot client's chat is about 44 wide (Nov 27; was one 57-wide row)
+	do_char_log(cn,2," # %-18s %s\n","Giver","Where");
+	do_char_log(cn,2,"     %-26s %10s\n","Reward","Exp");
 	for (n=(page-1)*QUEST_PAGE; n<cnt && n<page*QUEST_PAGE; n++) {
 		t=q[n].t;
 		if (t<0) {		// a chain quest: its giver, the part's first reward (» marks a chain)
@@ -2309,7 +2311,8 @@ void do_quest(int cn,char *a,char *b)
 			ni=chain_step(-t,cn,ci,8,&ex,&lo,&pa,&ps);
 			if (ni && ci[0]>0 && ci[0]<MAXTITEM) snprintf(rew,sizeof(rew),"\xbb%s",it_temp[ci[0]].name); else strcpy(rew,"\xbb-");
 			if (ex>0) qol_num(ex,exp); else strcpy(exp,"-");
-			do_char_log(cn,q[n].known ? 3 : 1,"%2d  %-12.12s %-16.16s %-14.14s %7s\n",n+1,chain_name(-t),area[0] ? area : "?",rew,exp);	// (its name: the chain is easier to tell apart than its giver)
+			do_char_log(cn,q[n].known ? 3 : 1,"%2d %-18.18s %.21s\n",n+1,chain_name(-t),area[0] ? area : "?");
+			do_char_log(cn,q[n].known ? 3 : 1,"     %-26.26s %10s\n",rew,exp);	// (its name: the chain is easier to tell apart than its giver)
 			chains++;
 			continue;
 		}
@@ -2326,8 +2329,11 @@ void do_quest(int cn,char *a,char *b)
 			else strcpy(rew,"-");
 			if (ex1>0) qol_num(ex1,exp); else strcpy(exp,"-");
 		}
-		do_char_log(cn,q[n].known || (q[n].skill>=0 && !ch[cn].skill[q[n].skill][2]) ? 3 : 1,"%2d  %-12.12s %-16.16s %-14.14s %7s\n",
-			n+1,ch_temp[t].name,area[0] ? area : "?",rew,exp);
+		{
+			int col=q[n].known || (q[n].skill>=0 && !ch[cn].skill[q[n].skill][2]) ? 3 : 1;
+			do_char_log(cn,col,"%2d %-18.18s %.21s\n",n+1,ch_temp[t].name,area[0] ? area : "?");
+			do_char_log(cn,col,"     %-26.26s %10s\n",rew,exp);
+		}
 	}
 	if (chains) do_char_log(cn,2,"\xbb a chain quest: one part at a time (#quest <n>: the part you are on).\n");
 	if (page<pages) snprintf(buf,sizeof(buf),"  #quest%s p%d: next page",all ? " all" : "",page+1);
