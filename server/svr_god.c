@@ -755,7 +755,7 @@ void god_who(int cn)
         int n, players, font,showarea;
 
         players = 0;
-        do_char_log(cn,3,"-------------------------------------------\n");
+        do_char_log(cn,3,"-----------------------------------------------\n");
         for (n=1; n<MAXCHARS; n++) {
                 if (!IS_ACTIVECHAR(n)) {
                         continue;
@@ -782,7 +782,7 @@ void god_who(int cn)
                 if ((ch[n].flags&CF_GOD) && !(ch[cn].flags&CF_GOD)) showarea=0;
                 if ((ch[n].kindred&KIN_PURPLE) && !(ch[cn].flags&(CF_GOD|CF_IMP|CF_USURP))) showarea=0;
 
-                do_char_log(cn,font,"%4d: %-10.10s%c%c%c %-8.8s %.14s\n",
+                do_char_log(cn,font,"%4d: %-10.10s%c%c%c %-8.8s %.18s\n",
                                 n,ch[n].name,
                                 IS_PURPLE(n) ? '*' : ' ',
                                 (ch[n].flags&CF_POH) ? '+' : ' ',
@@ -802,7 +802,7 @@ void god_who(int cn)
                         (ch[n].flags&CF_POH_LEADER) ? '+' : ' ',
                         get_area(n,0));
         }
-        do_char_log(cn,3,"-------------------------------------------\n");
+        do_char_log(cn,3,"-----------------------------------------------\n");
         do_char_log(cn,1,"%3d player%s online.\n",
                     players, (players > 1) ? "s" : "");
 }
@@ -812,7 +812,7 @@ void god_implist(int cn)
         int n,players,showarea;
 
         players = 0;
-        do_char_log(cn,3,"-------------------------------------------\n");
+        do_char_log(cn,3,"-----------------------------------------------\n");
         for (n=1; n<MAXCHARS; n++) {
 		if (!IS_USEDCHAR(n)) continue;
                 if (!IS_PLAYER(n)) continue;
@@ -831,7 +831,7 @@ void god_implist(int cn)
                                 int2str(ch[n].points_tot),
                                 !showarea ? "--------" : get_area(n,0));
         }
-        do_char_log(cn,3,"-------------------------------------------\n");
+        do_char_log(cn,3,"-----------------------------------------------\n");
         do_char_log(cn,1,"%3d imp%s.\n",
                     players, (players > 1) ? "s" : "");
 }
@@ -840,7 +840,7 @@ void user_who(int cn)
 {
         int n, players, gc, font,showarea;
 
-        do_char_log(cn,1,"-------------------------------------------\n");
+        do_char_log(cn,1,"-----------------------------------------------\n");
         players = 0;
         /* list players */
         for (n=1; n<MAXCHARS; n++) {
@@ -863,12 +863,12 @@ void user_who(int cn)
                         !showarea ? "--------" : get_area(n,0));
         }
         if ((gc=ch[cn].data[CHD_COMPANION]) && IS_SANECHAR(gc)) {
-                do_char_log(cn,3,"%4d: %-10.10s@ %-8.8s %.16s\n",
+                do_char_log(cn,3,"%4d: %-10.10s@ %-8.8s %.20s\n",
                                 gc,ch[gc].name,
                                 int2str(ch[gc].points_tot),
                         get_area(gc,0));
         }
-        do_char_log(cn,1,"-------------------------------------------\n");
+        do_char_log(cn,1,"-----------------------------------------------\n");
         do_char_log(cn,1,"%3d player%s online.\n",
                     players, (players > 1) ? "s" : "");
 }

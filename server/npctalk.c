@@ -1597,9 +1597,9 @@ void do_areas(int cn)
 		shown++;
 		can=clear_ready(cn,a,&r);
 		cnt=popcount64(r.mask[a]);
-		if (!can) do_char_log(cn,3,"  %-20.20s cleared%s%s%s\n",clears[a].zone,clear_name(a)!=clears[a].zone ? " (" : "",clear_name(a)!=clears[a].zone ? clears[a].label : "",clear_name(a)!=clears[a].zone ? ")" : "");
-		else if (r.fl[a]&CLR_RUN2) do_char_log(cn,1,"  %-20.20s %d/%d %s, again as Seyan'Du\n",clears[a].zone,cnt,clears[a].n,clears[a].label[0] ? clears[a].label : "enemies");
-		else do_char_log(cn,1,"  %-20.20s %d/%d %s\n",clears[a].zone,cnt,clears[a].n,clears[a].label[0] ? clears[a].label : "enemies");
+		if (!can) do_char_log(cn,3,"  %-24.24s cleared%s%s%s\n",clears[a].zone,clear_name(a)!=clears[a].zone ? " (" : "",clear_name(a)!=clears[a].zone ? clears[a].label : "",clear_name(a)!=clears[a].zone ? ")" : "");
+		else if (r.fl[a]&CLR_RUN2) do_char_log(cn,1,"  %-24.24s %d/%d %s, again as Seyan'Du\n",clears[a].zone,cnt,clears[a].n,clears[a].label[0] ? clears[a].label : "enemies");
+		else do_char_log(cn,1,"  %-24.24s %d/%d %s\n",clears[a].zone,cnt,clears[a].n,clears[a].label[0] ? clears[a].label : "enemies");
 	}
 	if (!shown) do_char_log(cn,1,"There are no areas to clear yet.\n");
 }

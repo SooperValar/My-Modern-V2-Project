@@ -118,12 +118,13 @@ of 3.0.0 and up, so merc.exe never sees a message it doesn't know.
   Immunity (half the skill), Effective Resistance, 2H-sword Deflect Chance, Thorns, Move Speed (slot 57) and Speed (58, a plain number); Cast Speed is slot 30 (after the spells). Hidden rows close up in the client.
   The names live in the client (`MyV2MetaStats.cs`); the slots must match. First version live Nov 25, 21:07; the
   TLG-style lists live since 22:08.
-- **Chat tables fit the Godot chat** (live Nov 27, 16:49): merc.exe's chat was wider; the Godot chat wraps at about 44 characters,
-  so every table is now at most 43 wide. `#quest`: two lines a quest (number, giver, place; then reward and exp), 10 a
-  page (was 15). `#help` and `#weapon`: `help_line()` puts "#command  what it does" on one line when it fits, else the
-  description indented under it. `#belt`, `#rings`, `#specialarmor`: two lines an item. `#specialw`, `#moddedarmor`,
-  `#ranks`, `#areas` ("12/30"), `#who` and the god / companion lines, and the look at a character (two columns with
-  " | "): narrower columns. Tables that already fit (`#armor`, `#sword` and the other weapon lists) are unchanged.
+- **Chat tables fit the Godot chat** (Nov 27): merc.exe's chat was wider; the Godot chat's text is 288 pixels of
+  6-pixel letters, so 48 characters. Every table is now at most 48 wide. `#quest`: two lines a quest (number, giver,
+  place; then reward and exp), 10 a page (was 15). `#help` and `#weapon`: `help_line()` keeps the old look (descriptions
+  from column 23) when a line fits, else the description right after the command or indented under it. `#belt` (47),
+  `#rings`, `#specialarmor`: one line an item with narrower columns. `#specialw`, `#moddedarmor`, `#areas`: narrower.
+  `#who`, `#ranks`, the look at a character, `#armor` and the weapon lists already fit and are as they were.
+  (First try, live 16:49, assumed 44 and split tables into two lines; Cody: "look horrible".)
 - **Planner helpers** (`svr_do.c` fight_skill_number, `client.h` META_SPEEDSTEP / META_WEAPONSKILL): two meta stats
   the client never shows, for the Godot client's planner: slot 86 is the attack speed's speedtab row counted the old way, 0-19 (`ch_attack_step` - SPEED_OLDFAST) and slot 87 the
   skill number get_fight_skill() reads. Live since Nov 25, 23:12.

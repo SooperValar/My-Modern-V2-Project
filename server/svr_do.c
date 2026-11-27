@@ -659,8 +659,8 @@ void do_gtell(int cn, char *text)
         }
 }
 
-/* a "#command   what it does" line within the Godot client's chat (about 44 wide, MyV2 Nov 27): on one line when
- * it fits in 43, else the command, then the description indented under it */
+/* a "#command   what it does" line within the Godot client's chat (48 characters: 288 pixels of 6-pixel letters,
+ * MyV2 Nov 27): descriptions from column 23 as before when it fits, else right after the command, else indented under it */
 static void help_line(int cn,int font,const char *line)
 {
 	char cmd[80],*desc;
@@ -670,10 +670,10 @@ static void help_line(int cn,int font,const char *line)
 	cmd[n]=0;
 	desc=(char*)line+n;
 	while (*desc==' ') desc++;
-	pad=n<16 ? 16 : n;
+	pad=n<22 ? 22 : n;
 	if (!*desc) do_char_log(cn,font,"%s\n",cmd);
-	else if (pad+1+(int)strlen(desc)<=43) do_char_log(cn,font,"%-*s %s\n",pad,cmd,desc);
-	else if (n+1+(int)strlen(desc)<=43) do_char_log(cn,font,"%s %s\n",cmd,desc);
+	else if (pad+1+(int)strlen(desc)<=48) do_char_log(cn,font,"%-*s %s\n",pad,cmd,desc);
+	else if (n+1+(int)strlen(desc)<=48) do_char_log(cn,font,"%s %s\n",cmd,desc);
 	else { do_char_log(cn,font,"%s\n",cmd); do_char_log(cn,font,"    %s\n",desc); }
 }
 
@@ -1806,9 +1806,9 @@ void do_info_belt(int cn)
 
 	do_char_log(cn,1,"Now listing belts:\n");
 	do_char_log(cn,1," \n");
-	do_char_log(cn,1," Belt                     Needs\n");	// two lines a belt, 43 wide: the Godot chat (Nov 27)
-	do_char_log(cn,1,"   Gives: BR WI IN AG ST   HP EN MA\n");
-	do_char_log(cn,1,"-------------------------------------------\n");
+	do_char_log(cn,1,"                     |    Gives:     |\n");	// 47 wide: the Godot chat (Nov 27)
+	do_char_log(cn,1,"Belt           Needs | BR WI IN AG ST| HP EN MA\n");
+	do_char_log(cn,1,"---------------------+---------------+---------\n");
 	for (n=0; n<(int)(sizeof(t)/sizeof(int)); n++) {
 		if (it_temp[t[n]].used==USE_EMPTY) continue;
 		// "Leather Belt" twice: tell them apart
@@ -1820,8 +1820,8 @@ void do_info_belt(int cn)
 		need[0]=0;
 		for (k=0; k<5; k++) if (it_temp[t[n]].attrib[k][2]) sprintf(need,"%s %d",info_at2[k],it_temp[t[n]].attrib[k][2]);
 		if (it_temp[t[n]].hp[2]) sprintf(need,"HP %d",it_temp[t[n]].hp[2]);
-		do_char_log(cn,1," %-24s %s\n",name,need[0] ? need : "-");
-		do_char_log(cn,1,"         %s%s%s%s%s  %s%s%s\n",a[0],a[1],a[2],a[3],a[4],h[0],h[1],h[2]);
+		if (!strcmp(name,"Belt of Hitpoints")) strcpy(name,"Belt of HP");
+		do_char_log(cn,1,"%-14.14s %-6s|%s%s%s%s%s|%s%s%s\n",name,need[0] ? need : "-",a[0],a[1],a[2],a[3],a[4],h[0],h[1],h[2]);
 		for (sk=0,m=0,k=0; k<50; k++) if (it_temp[t[n]].skill[k][0]) { if (!sk) m=it_temp[t[n]].skill[k][0]; sk++; }
 		if (sk) do_char_log(cn,2,"   %s: %+d to %d spells and skills\n",name,m,sk);
 	}
@@ -1885,16 +1885,15 @@ void do_info_specialarmor(int cn)
 
 	do_char_log(cn,1,"Now listing special armor:\n");
 	do_char_log(cn,1," \n");
-	do_char_log(cn,1," Armor                Slot   AV\n");	// two lines each, 43 wide: the Godot chat (Nov 27)
-	do_char_log(cn,1,"-------------------------------------------\n");
+	do_char_log(cn,1,"Armor                Slot  AV Needs\n");	// 48 wide: the Godot chat (Nov 27)
+	do_char_log(cn,1,"------------------------------------------------\n");
 	for (n=0; n<(int)(sizeof(a)/sizeof(a[0])); n++) {
 		if (it_temp[a[n].t].used==USE_EMPTY) continue;
 		info_armor_needs(a[n].t,needs);
 		info_gives_all(a[n].t,gives);
 		mark[0]=0;
 		if (gives[0] && note<8) { sprintf(notes[note],"%d) %s: %s.",note+1,a[n].name,gives); note++; sprintf(mark,"%d",note); }
-		do_char_log(cn,1," %-19s%1s %-5s  %2d\n",a[n].name,mark,a[n].slot,it_temp[a[n].t].armor[0]);
-		do_char_log(cn,1,"    Needs: %s\n",needs);
+		do_char_log(cn,1,"%-19s%1s %-5s %2d %.18s\n",a[n].name,mark,a[n].slot,it_temp[a[n].t].armor[0],needs);
 	}
 	do_char_log(cn,1," \n");
 	for (n=0; n<note; n++) do_char_log(cn,2,"%s\n",notes[n]);
@@ -1955,7 +1954,7 @@ void do_ranks(int cn)
 {
 	int r,me=points2rank(ch[cn].points_tot); char a[16];
 	do_char_log(cn,1,"The ranks and the experience they start at:\n");
-	for (r=0; r<24; r++) do_char_log(cn,r==me ? 2 : 1,"%2d %-18s %12s%s\n",r+1,rank_name[r],commas(rank_start[r],a),r==me ? " <-" : "");
+	for (r=0; r<24; r++) do_char_log(cn,r==me ? 2 : 1,"%2d. %-20s %12s%s\n",r+1,rank_name[r],commas(rank_start[r],a),r==me ? "  <-" : "");
 }
 
 void do_info_rings(int cn)
@@ -1971,9 +1970,8 @@ void do_info_rings(int cn)
 
 	do_char_log(cn,1,"Now listing rings:\n");
 	do_char_log(cn,1," \n");
-	do_char_log(cn,1," Stone           Rank\n");	// two lines a ring, 43 wide: the Godot chat (Nov 27)
-	do_char_log(cn,1,"   S: silver ring  G: golden ring\n");
-	do_char_log(cn,1,"-------------------------------------------\n");
+	do_char_log(cn,1,"Stone           Rank Silver    Golden\n");	// 48 wide: the Godot chat (Nov 27)
+	do_char_log(cn,1,"------------------------------------------------\n");
 	for (s=0; s<6; s++) {
 		for (z=0; z<4; z++) {
 			tg=gold[s][z]; ts=silver[s][z];
@@ -1996,10 +1994,9 @@ void do_info_rings(int cn)
 				if (rank[strlen(rank)-1]==' ') rank[strlen(rank)-1]=0;
 			} else strcpy(rank,"-");
 
-			do_char_log(cn,1," %-15s %s\n",name,rank);
-			do_char_log(cn,1,"   S: %-14s G: %s\n",sv,gv);
+			do_char_log(cn,1,"%-15s %-4s %-9s %s\n",name,rank,sv,gv);
 		}
-		if (s<5) do_char_log(cn,1," \n");
+		if (s<2) do_char_log(cn,1," \n");
 	}
 	do_char_log(cn,1," \n");
 	if (it_temp[1201].used!=USE_EMPTY)
@@ -2321,9 +2318,9 @@ void do_quest(int cn,char *a,char *b)
 	if (page<1) page=1;
 	if (page>pages) page=pages;
 	do_char_log(cn,1,"Quests%s, easiest first (page %d of %d):\n",all ? " (all)" : "",page,pages);
-	// two lines a quest, at most 43 characters: the Godot client's chat is about 44 wide (Nov 27; was one 57-wide row)
-	do_char_log(cn,2," # %-18s %s\n","Giver","Where");
-	do_char_log(cn,2,"     %-26s %10s\n","Reward","Exp");
+	// two lines a quest, at most 48 characters: the Godot client's chat (Nov 27; was one 57-wide row)
+	do_char_log(cn,2," # %-19s %s\n","Giver","Where");
+	do_char_log(cn,2,"   %-34s %10s\n","Reward","Exp");
 	for (n=(page-1)*QUEST_PAGE; n<cnt && n<page*QUEST_PAGE; n++) {
 		t=q[n].t;
 		if (t<0) {		// a chain quest: its giver, the part's first reward (» marks a chain)
@@ -2333,8 +2330,8 @@ void do_quest(int cn,char *a,char *b)
 			ni=chain_step(-t,cn,ci,8,&ex,&lo,&pa,&ps);
 			if (ni && ci[0]>0 && ci[0]<MAXTITEM) snprintf(rew,sizeof(rew),"\xbb%s",it_temp[ci[0]].name); else strcpy(rew,"\xbb-");
 			if (ex>0) qol_num(ex,exp); else strcpy(exp,"-");
-			do_char_log(cn,q[n].known ? 3 : 1,"%2d %-18.18s %.21s\n",n+1,chain_name(-t),area[0] ? area : "?");
-			do_char_log(cn,q[n].known ? 3 : 1,"     %-26.26s %10s\n",rew,exp);	// (its name: the chain is easier to tell apart than its giver)
+			do_char_log(cn,q[n].known ? 3 : 1,"%2d %-19.19s %.25s\n",n+1,chain_name(-t),area[0] ? area : "?");
+			do_char_log(cn,q[n].known ? 3 : 1,"   %-34.34s %10s\n",rew,exp);	// (its name: the chain is easier to tell apart than its giver)
 			chains++;
 			continue;
 		}
@@ -2353,8 +2350,8 @@ void do_quest(int cn,char *a,char *b)
 		}
 		{
 			int col=q[n].known || (q[n].skill>=0 && !ch[cn].skill[q[n].skill][2]) ? 3 : 1;
-			do_char_log(cn,col,"%2d %-18.18s %.21s\n",n+1,ch_temp[t].name,area[0] ? area : "?");
-			do_char_log(cn,col,"     %-26.26s %10s\n",rew,exp);
+			do_char_log(cn,col,"%2d %-19.19s %.25s\n",n+1,ch_temp[t].name,area[0] ? area : "?");
+			do_char_log(cn,col,"   %-34.34s %10s\n",rew,exp);
 		}
 	}
 	if (chains) do_char_log(cn,2,"\xbb a chain quest: one part at a time (#quest <n>: the part you are on).\n");
