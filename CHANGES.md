@@ -118,7 +118,7 @@ of 3.0.0 and up, so merc.exe never sees a message it doesn't know.
   Immunity (half the skill), Effective Resistance, 2H-sword Deflect Chance, Thorns, Move Speed (slot 57) and Speed (58, a plain number); Cast Speed is slot 30 (after the spells). Hidden rows close up in the client.
   The names live in the client (`MyV2MetaStats.cs`); the slots must match. First version live Nov 25, 21:07; the
   TLG-style lists live since 22:08.
-- **Chat tables fit the Godot chat** (Nov 27): merc.exe's chat was wider; the Godot chat's text is 288 pixels of
+- **Chat tables fit the Godot chat** (live Nov 27, 17:30): merc.exe's chat was wider; the Godot chat's text is 288 pixels of
   6-pixel letters, so 48 characters. Every table is now at most 48 wide. `#quest`: two lines a quest (number, giver,
   place; then reward and exp), 10 a page (was 15). `#help` and `#weapon`: `help_line()` keeps the old look (descriptions
   from column 23) when a line fits, else the description right after the command or indented under it. `#belt` (47),
