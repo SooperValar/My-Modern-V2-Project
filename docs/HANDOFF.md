@@ -234,6 +234,10 @@ myv2 / release v3.0.0).
   bonuses (editor Items page -> Stats -> Speed). Godot client **3.1.0 released** (Nov 27, 01:33; protocol 3.1.0, the
   server turns 3.0 clients away). Cody: formulas use total (modified) attributes on purpose. Next: Cody plays, then
   items / abilities with speed bonuses and number tweaks.
+- **Nov 27, 16:49: chat tables at most 43 wide - LIVE** (CHANGES.md "Chat tables fit the Godot chat"): the Godot
+  chat wraps at ~44, merc.exe's was wider. `#quest` two lines a quest; `help_line()` for `#help` / `#weapon`; two lines an
+  item in `#belt`, `#rings`, `#specialarmor`; narrower `#specialw`, `#moddedarmor`, `#ranks`, `#areas`, `#who`, char_info.
+  New chat tables: keep them within 43 characters. Cody checks them in game.
 - **Nov 27, 16:15: Godot client equipment slots as MyV2 uses them** (myv2 70a5367c code + 85151b1e frame art, pushed,
   NOT released - Cody holds the release for more changes): Back in TLG's old Card box, Belt in the old Back box, Legs in
   the old Belt box; slot 5 is `WornSlot.Legs` (was Charm, same value 64); the unused SecondCharm slot hidden; hotbar
