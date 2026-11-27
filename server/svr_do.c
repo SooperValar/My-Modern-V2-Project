@@ -4180,6 +4180,7 @@ void really_update_char(int cn)
         if (ch[cn].mode==0) n=12;
         if (ch[cn].mode==1) n=14;       // normal
         if (ch[cn].mode==2) n=16;       // fast
+        if (tier_char_effect(cn,TE_FLEETFOOT)) spd[SPD_MOVE]+=FLEETFOOT_STEPS;	// Fleet Foot (the best piece; doesn't stack)
         n+=ch[cn].speed_mod+spd[SPD_ALL];
         ch[cn].speed_stat=max(0,min(255,n));
         {

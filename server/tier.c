@@ -542,6 +542,11 @@ int tier_tip_effect(int in,char lines[4][60])
 			strcpy(lines[0],"Effect: Enlightened");
 			sprintf(lines[1],"%d%% more experience from kills.",tier_effect_pct(lv,1,5));
 			return 2;
+		case TE_FLEETFOOT:
+			strcpy(lines[0],"Effect: Fleet Foot");
+			sprintf(lines[1],"Move Speed +%d: you walk, turn,",FLEETFOOT_STEPS);
+			strcpy(lines[2],"pick up and use things faster.");
+			return 3;
 	}
 	return 0;
 }

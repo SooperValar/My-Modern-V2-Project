@@ -405,8 +405,11 @@ glow, no wear, and soulstones and upgrade stones can't change it. It can be any 
 setting the tier fields (`future3`: tier 4, category 0, level; see `tools/world/legendary/winged_boots.py`); the
 tooltip's tier line leaves out the category for them (`tier_tip_lines`).
 - **Winged Boots** (template 907, from the Treasure Chest in the Gargoyle's Nest at 427,228): Legendary, item level
-  13 (Lieutenant Colonel), Armor 6, **Move Speed +3**, Agility +14, Stealth +10, Perception +8, Endurance +65, Hit
-  points +35; no attributes needed. (Previously: Armor 5, Agility +8, 30 needed in every attribute.) BUILT, NOT live.
+  13 (Lieutenant Colonel), Armor 6, the effect **Fleet Foot** (Move Speed +3), Agility +14, Stealth +10, Perception
+  +8, Endurance +65, Hit points +35; no attributes needed. (Previously: Armor 5, Agility +8, 30 needed in every attribute.) BUILT, NOT live.
+- **Fleet Foot** (`TE_FLEETFOOT` 9, data.h; Cody Nov 27): move speed +`FLEETFOOT_STEPS` (3), shown like the Epic
+  effects ("Effect: Fleet Foot" in purple). Hand-given only: Epic pieces roll effects 1..`TE_MAX` (8), so they never
+  get it. Like the other effects only the best worn piece counts (players).
 - Console `wear` also prints Speed, move / attack / cast speed, HP, End and Perception (test aid).
 
 ### Stacks of potions, combined spell scrolls (TODO 14)

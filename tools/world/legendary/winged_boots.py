@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""Winged Boots (template 907) as the first Legendary (Cody, Nov 27): fixed bonuses, item level 13.
+"""Winged Boots (template 907) as the first Legendary (Cody, Nov 27): fixed bonuses, item level 13,
+the effect Fleet Foot (move speed +3).
 
 Run on a STOPPED copy of the .dat folder (stop-send, run on Server/.dat, update-world):
     python3 winged_boots.py <.dat folder> [--dry]
@@ -14,14 +15,13 @@ AT_BRAVE, AT_WILL, AT_INT, AT_AGIL, AT_STREN = range(5)
 SK_STEALTH, SK_PERCEPT = 8, 9
 TIER_LEGEND, LEVEL = 4, 13
 IF_IDENTIFIED = 1 << 37
-SPD_MOVE = 1                      # nibble 1 = high nibble of speedb[0]
+TE_FLEETFOOT = 9                  # server data.h: move speed +3, shown as an effect
 
 STATS = {
     'armor': 6,
     'attrib': {AT_AGIL: 14},      # when worn; no attribute needed
     'skill': {SK_STEALTH: 10, SK_PERCEPT: 8},
     'hp': 35, 'end': 65,
-    'move_speed': 3,
     'min_rank': LEVEL,
 }
 
@@ -38,11 +38,9 @@ def patch(buf, o):
     struct.pack_into('<2I', buf, o + 298, 0, 0)          # max_age: no wear
     struct.pack_into('<I', buf, o + 314, 0)              # max_damage: never breaks
     struct.pack_into('b', buf, o + 545, STATS['min_rank'])
-    sp = STATS['move_speed'] & 15
-    buf[o + 546] = (sp << 4) if SPD_MOVE & 1 else sp     # speedb[0]; [1], [2] stay 0
-    buf[o + 547] = 0; buf[o + 548] = 0
+    buf[o + 546] = buf[o + 547] = buf[o + 548] = 0       # no plain speed bonuses: Fleet Foot gives the move speed
     f3 = list(struct.unpack_from('<9i', buf, o + 549))
-    f3[0:7] = [TIER_LEGEND, 0, LEVEL, 0, 0, 0, 0]       # tier, category, level, effect, prefix, suffix, base
+    f3[0:7] = [TIER_LEGEND, 0, LEVEL, TE_FLEETFOOT, 0, 0, 0]   # tier, category, level, effect, prefix, suffix, base
     struct.pack_into('<9i', buf, o + 549, *f3)
     flags = struct.unpack_from('<Q', buf, o + 281)[0] | IF_IDENTIFIED
     struct.pack_into('<Q', buf, o + 281, flags)

@@ -638,7 +638,9 @@ struct character
 #define TE_WARDING	6	// curses and stuns wear off sooner
 #define TE_LASTING	7	// helpful spells cast last longer
 #define TE_ENLIGHT	8	// more experience from kills
-#define TE_MAX		8
+#define TE_MAX		8	// the effects Epic pieces roll (1..TE_MAX); the ones below are hand-given (Legendaries)
+#define TE_FLEETFOOT	9	// move speed + FLEETFOOT_STEPS (Winged Boots, Nov 27)
+#define FLEETFOOT_STEPS	3
 
 #define TIER_CRUCIBLE_TEMP	1369	// Lesser Soul Crucible, Soul Crucible, Greater Soul Crucible: 1369-1371
 #define TIER_UPSTONE_TEMP	1372	// upgrade stone
