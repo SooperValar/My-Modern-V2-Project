@@ -234,10 +234,13 @@ myv2 / release v3.0.0).
   bonuses (editor Items page -> Stats -> Speed). Godot client **3.1.0 released** (Nov 27, 01:33; protocol 3.1.0, the
   server turns 3.0 clients away). Cody: formulas use total (modified) attributes on purpose. Next: Cody plays, then
   items / abilities with speed bonuses and number tweaks.
+- **Nov 27, ~15:35: Titanium Armor of Ankh as a Legendary (Ankh's Protection, 10% less damage) - BUILT, NOT live**
+  (CHANGES.md "Legendary items"; `tools/world/legendary/ankh_armor.py`). Goes live together with the amulet below:
+  stop-send, both tools on Server\.dat, get, update-world.
 - **Nov 27, ~15:10: Amulet of Ankh as a Legendary (Ankh's Grace) - BUILT, NOT live** (CHANGES.md "Legendary
   items"): server data.h / tier.c / svr_do.c / console.c in both folders; data via
   `tools/world/legendary/ankh_amulet.py` (tested on a .dat copy). Going live like the boots: "go live", `"online": 0`,
-  stop-send, the tool on Server\.dat, get, update-world. Next (Cody): Titanium Armor of Ankh, "Ankh's Fortitude".
+  stop-send, the tool on Server\.dat, get, update-world.
 - **Nov 27, 14:38: Winged Boots are the first Legendary - LIVE** (CHANGES.md "Legendary items"): item level 13, the
   effect Fleet Foot (move speed +3, `TE_FLEETFOOT`, never rolled), Agi +14, Stealth +10, Perception +8, End +65, HP +35,
   AV 6. Done with stop-send, `tools/world/legendary/winged_boots.py` on Server\.dat (template + 2 copies), get,

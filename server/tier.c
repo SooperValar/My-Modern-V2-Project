@@ -542,6 +542,11 @@ int tier_tip_effect(int in,char lines[4][60])
 			strcpy(lines[0],"Effect: Enlightened");
 			sprintf(lines[1],"%d%% more experience from kills.",tier_effect_pct(lv,1,5));
 			return 2;
+		case TE_ANKHPROT:
+			strcpy(lines[0],"Effect: Ankh's Protection");
+			sprintf(lines[1],"You take %d%% less damage",ANKHPROT_PCT);
+			strcpy(lines[2],"from every hit and spell.");
+			return 3;
 		case TE_ANKHGRACE:
 			strcpy(lines[0],"Effect: Ankh's Grace");
 			strcpy(lines[1],"Hit points, endurance and mana");

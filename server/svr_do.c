@@ -3413,6 +3413,8 @@ int do_hurt(int cn,int co,int dam,int type)
                 else dam*=750;
         }
 
+        if (tier_char_effect(co,TE_ANKHPROT)) dam=dam*(100-ANKHPROT_PCT)/100;	// Ankh's Protection (Legendary effect)
+
         if (ch[co].flags&CF_IMMORTAL) dam=0;
 
         if (type!=3) {

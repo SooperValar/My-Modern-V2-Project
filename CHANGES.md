@@ -411,10 +411,18 @@ tooltip's tier line leaves out the category for them (`tier_tip_lines`).
   Legendary, item level 10 (First Lieutenant), the effect **Ankh's Grace**, all five attributes +3, Resistance +12,
   Immunity +8, Light +10, Hit points / Endurance / Mana +30; no attributes needed. (Previously: Resistance +15, Light
   +10, and 15 in every attribute and 100 hit points / endurance / mana needed.) BUILT, NOT live.
+- **Titanium Armor of Ankh** (template 772, from the "Armor of Ankh on Wall" in the Black Stronghold at 412,339):
+  Legendary, item level 12 (Captain), Armor 9, the effect **Ankh's Protection**, Willpower +8, Braveness +6, Heal +15,
+  Regenerate +10, Light +10, Hit points +90, Endurance +45, Mana +30; no attributes or hit points needed.
+  (Previously: Armor 8, Hit points +50, Heal +25, Light +10; 30 in every attribute and 300 hit points needed.)
+  BUILT, NOT live.
+- **Ankh's Protection** (`TE_ANKHPROT` 11, `ANKHPROT_PCT` 10): 10% less damage from every hit and spell, after armor
+  (`do_hurt`). Tested Nov 27: 4,000 Gargoyle Knight blows at Armor 9 did 25.4 a round against 28.4 in plain Titanium
+  Armor. (Named by Cody; "Ankh's Fortitude" was the first idea.)
 - **Ankh's Grace** (`TE_ANKHGRACE` 10): hit points, endurance and mana keep regenerating while moving and fighting, at
   half the standing Regenerate / Rest / Meditate rate - the Amulet of Ankh's old power, now an effect any Legendary
   can carry (`do_regenerate` and the regen meta rows read the effect, not template 768). The three quest amulets'
-  half-strength version is unchanged. Next planned: the Titanium Armor of Ankh with "Ankh's Fortitude" (Cody).
+  half-strength version is unchanged. 
 - **Fleet Foot** (`TE_FLEETFOOT` 9, data.h; Cody Nov 27): move speed +`FLEETFOOT_STEPS` (3), shown like the Epic
   effects ("Effect: Fleet Foot" in purple). Hand-given only: Epic pieces roll effects 1..`TE_MAX` (8), so they never
   get it. Like the other effects only the best worn piece counts (players).
