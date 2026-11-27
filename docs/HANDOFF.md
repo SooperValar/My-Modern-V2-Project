@@ -214,7 +214,7 @@ New sprites above 34,767 need client 2.15.06 or later: raise `MINVERSION` when t
 
 ## Open items (details in docs/TODO.md and docs/HOSTING.md)
 
-**Nov 26: Step 6 (Godot client installer + updater) is built and tested** with test releases 0.9.0/0.9.1; the first real release (3.0.0) waits for Cody's "release". GODOT_CLIENT.md "Step 6" has how releases, test tags and the art work. The cloud session can't push tags or create releases; Cody pushes tags from the PC copy.
+**Nov 26: Step 6 done: Godot client 3.0.0 is released** (installer + updater; test releases 0.9.0/0.9.1 still to delete); #welcome points to its Setup.exe. Cody has no `gh` on his PC. GODOT_CLIENT.md "Step 6" has how releases, test tags and the art work. The cloud session can't push tags or create releases; Cody pushes tags from the PC copy.
 
 **Nov 26: the 60-slot backpack** is live since 13:36 (CHANGES.md "60-slot backpack", GODOT_CLIENT.md; backup myv2-20261126-1335 taken just before). Slots 40-59 are `item2` in the old `future2` space, so the .dat files keep their layout; the Editor and tools/world still see only slots 0-39.
 
