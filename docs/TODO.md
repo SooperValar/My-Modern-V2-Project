@@ -183,7 +183,7 @@ Special greataxes to go with the Fire / Ice themes.
 More special weapons so Sword, Two-Handed, Dagger and Greataxe have similar levels. First step: **a table of every
 weapon** (type, level / requirements, damage, specials) generated from the world data, to see the gaps.
 
-### ○ Item tiers part 5: Legendaries
+### ◐ Item tiers part 5: Legendaries - first one built Nov 27 (Winged Boots; CHANGES.md "Legendary items")
 Hand-designed named pieces; the current special armors move here. See `docs/ITEM_TIERS.md`.
 
 ### ● Merchants tab + shop rework: Cody checks in game (was #23)

@@ -220,6 +220,9 @@ static void con_cmd(char *line)
 		    ch[co].name,it[in].name,set_pieces(co,SET_FIRE),set_pieces(co,SET_ICE),ch[co].armor,ch[co].attrib[AT_AGIL][5],ch[co].attrib[AT_STREN][5],
 		    ch[co].attrib[AT_WILL][5],ch[co].attrib[AT_INT][5],ch[co].skill[SK_BLAST][5],ch[co].skill[SK_STEALTH][5],
 		    wp2h_chance(co,0)/10,wp2h_chance(co,0)%10,wp2h_chance(co,1)/10,wp2h_chance(co,1)%10);
+		out("  Speed %d, move %d.%02d/s, attack %d.%02d/s, cast %d.%02d/s; HP %d, End %d, Perception %d\n",ch[co].speed_stat,
+		    step_rate(ch_move_step(co),8)/100,step_rate(ch_move_step(co),8)%100,step_rate(ch_attack_step(co,1),8)/100,step_rate(ch_attack_step(co,1),8)%100,
+		    step_rate(ch_cast_step(co),8)/100,step_rate(ch_cast_step(co),8)%100,ch[co].hp[5],ch[co].end[5],ch[co].skill[SK_PERCEPT][5]);
 		return;
 	}
 	if (!strcmp(w[0],"fighttest")) {	// fighttest <player> <NPC template> <rounds> [back|kill]: the player hits the NPC (or "back": the NPC hits the player); damage total (test server only)

@@ -496,7 +496,8 @@ void tier_tip_lines(int in,char *l1,char *l2)
 {
 	l1[0]=l2[0]=0;
 	if (!IT_TIER(in)) return;
-	sprintf(l1,"%s %s, item level %d",tier_word[IT_TIER(in)],cat_word[IT_TCAT(in)],IT_TLEVEL(in));
+	if (!IT_TCAT(in)) sprintf(l1,"%s, item level %d",tier_word[IT_TIER(in)],IT_TLEVEL(in));	// a Legendary: no category
+	else sprintf(l1,"%s %s, item level %d",tier_word[IT_TIER(in)],cat_word[IT_TCAT(in)],IT_TLEVEL(in));
 }
 
 /* the Epic effect for the tooltip: its name, then up to 3 short lines (at

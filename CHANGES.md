@@ -397,6 +397,18 @@ The design is in `docs/ITEM_TIERS.md`.
 - **Soulstones from any enemy**: any enemy a player (or their companion) kills can now drop a soulstone; before, only "Strong" pentagram enemies carried one. The chance follows the player's rank, so new players find them often: 1 in (20 + 6 x rank) kills - 1 in 20 at rank 0, 1 in 50 at rank 5, 1 in 80 at rank 10 - but never rarer than armor's 1 in 100 (from rank 14 on). **The stone's level follows the enemy's rank like armor drops do** (Cody, live Nov 26): the enemy's rank -1 to 0 (1-20), and the stone holds experience inside that level, so merging stones and the crucibles work as before. Strong enemies carry their own stone, rank 0 to +1, and don't roll again. (Previously: the stone held 10-15% of the enemy's experience and took its level from that, 2-8 levels below the armor the same enemy drops: "level 6 armor but only level 2 stones".) Logged. A grave holding a soulstone glows.
 - **Grave glow only for something worth a look**: every NPC grave glowed, because every NPC dies holding the weapon and armor it fought with. Now an NPC's body or grave glows only when it holds something special: a Magic/Rare/Epic/Legendary piece, a unique item, or a magic item in its backpack (potions, scrolls, rings...). Its own fighting gear and gold don't count. A player's body/grave still glows while it holds anything, so players can find their belongings.
 
+### Legendary items: Winged Boots (Nov 27)
+
+Legendary (orange) is the tier for hand-made unique items (Cody, Nov 27; a new tier can come later). A Legendary has
+fixed bonuses, an item level (the rank needed to wear it, shown as "Legendary, item level N"), the orange name and
+glow, no wear, and soulstones and upgrade stones can't change it. It can be any slot. Made from a template by
+setting the tier fields (`future3`: tier 4, category 0, level; see `tools/world/legendary/winged_boots.py`); the
+tooltip's tier line leaves out the category for them (`tier_tip_lines`).
+- **Winged Boots** (template 907, from the Treasure Chest in the Gargoyle's Nest at 427,228): Legendary, item level
+  13 (Lieutenant Colonel), Armor 6, **Move Speed +3**, Agility +14, Stealth +10, Perception +8, Endurance +65, Hit
+  points +35; no attributes needed. (Previously: Armor 5, Agility +8, 30 needed in every attribute.) BUILT, NOT live.
+- Console `wear` also prints Speed, move / attack / cast speed, HP, End and Perception (test aid).
+
 ### Stacks of potions, combined spell scrolls (TODO 14)
 - **Potions stack**, up to 20 of the same kind in one backpack slot (anything used up when used that has no special driver: healing, mana and other potions, Ratling Eye Essence...). The count shows on the item, the tooltip says "A stack of 7 (Ctrl+click: take one)".
 - Getting one (buying, a reward, a quest) puts it on a matching stack; putting a stack from the hand on a matching one merges them (what doesn't fit stays in the hand). **Ctrl+click** a stack takes one into the hand, or adds one to the matching stack in the hand (client 2.15.02). Shift+click still moves the whole stack. Using one takes one off the stack. **Selling sells the whole stack** (price x count).
