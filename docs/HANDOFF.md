@@ -244,6 +244,10 @@ myv2 / release v3.0.0).
   bc280c99 (Help window), b64a4e00 (Help button art, pushed with GitHub Desktop); release PR #3 merged -> v3.2.0
   (also carries the equipment-slot fix). Next: Help steps 2 and 3. Testing: a test server in the device shell
   (/tmp/spd, port 5555) and a headless Core client (/tmp/hl) that dumps the pages.
+  **Nov 27, 19:10, after 3.2.0 (committed in the cloud clone, NOT pushed):** myv2 01bdc88c (Help window tabs in a tab
+  strip inside the frame, like Options; Cody: "the top of the help window doesn't seem finished") and 80970bba (belts
+  centred in the Belt box: belt sprites 16660-16666 draw on the bottom rows of their 32 px, so the slot's
+  `CentresItemHeight` lifts the item to the middle). Need "push the client", then a release.
   **Syncing the PC's Godot-Client copy:** the device shell's `git reset` / writing files over tracked ones was refused
   by the safety check this time; use GitHub Desktop's Fetch / Pull origin (computer use) instead, which also gets LFS.
 - **Nov 27, 16:15: Godot client equipment slots as MyV2 uses them** (myv2 70a5367c code + 85151b1e frame art; released in 3.2.0): Back in TLG's old Card box, Belt in the old Back box, Legs in
