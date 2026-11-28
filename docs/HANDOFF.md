@@ -66,6 +66,8 @@ Note: the real client source is the project's `client/` folder (the old copies i
 - (Old) **Restarts and code updates are pre-approved (Cody, Nov 14):** the server has no regular players and is almost
   always empty, so stop / restart / update-code / update-world whenever the work needs it, without asking first.
   Still check `who` first and use `"warn":30` if anyone is online. (Was: ask before every stop and wait for "go".)
+- **Client releases come in chunks** (Cody, Nov 27): a release takes a while, so gather fixes and finish a feature
+  (e.g. all Help window tabs) before asking for "push the client" / "release". Commit as usual meanwhile.
 - New sprites get **new numbers**; never replace the game's own sprites (fixing one of Claude's
   own in place is OK).
 - Directions follow the minimap: north = smaller x, west = smaller y. On screen: larger x is
@@ -247,7 +249,7 @@ myv2 / release v3.0.0).
   **Nov 27, 19:10, after 3.2.0 (committed in the cloud clone, NOT pushed):** myv2 01bdc88c (Help window tabs in a tab
   strip inside the frame, like Options; Cody: "the top of the help window doesn't seem finished") and 80970bba (belts
   centred in the Belt box: belt sprites 16660-16666 draw on the bottom rows of their 32 px, so the slot's
-  `CentresItemHeight` lifts the item to the middle). Need "push the client", then a release.
+  `CentresItemHeight` lifts the item to the middle). Held until the Help window is finished (Cody: release in chunks).
   **Syncing the PC's Godot-Client copy:** the device shell's `git reset` / writing files over tracked ones was refused
   by the safety check this time; use GitHub Desktop's Fetch / Pull origin (computer use) instead, which also gets LFS.
 - **Nov 27, 16:15: Godot client equipment slots as MyV2 uses them** (myv2 70a5367c code + 85151b1e frame art; released in 3.2.0): Back in TLG's old Card box, Belt in the old Back box, Legs in
