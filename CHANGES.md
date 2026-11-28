@@ -135,9 +135,13 @@ of 3.0.0 and up, so merc.exe never sees a message it doesn't know.
   8 Armor (`#armor` tiers, then `#moddedarmor`'s tiered-armor text), 9 Weapons (`help_weapons(cn,type)`, the argument
   is the sub-tab: 0 daggers, 1 swords, 2 two-handed swords, 3 axes, 4 greataxes, 5 staffs; the tiers, then that type's
   special weapons in green with what else they need and give, then the type's notes), 10 Rings (a grid: a stone a row,
-  a size a column, the rank row, notes), 11 Belts (gives BR..MA, skills),
+  a size a column, the rank row, notes; the argument is the sub-tab: 0 Attribute Rings, 1 Skill Rings (the Ring of the
+  Prophets), 2 Other; `help_rings()`), 11 Belts (gives BR..MA, skills),
   12 Special items (`#specialw` and `#specialarmor` as Weapons / Armor sections: needs, WV / AV, gives in full, then the
-  set bonuses). Pages 4-12 built Nov 27 evening, NOT live yet. The pages are made by the same `do_help` / `do_quest` code as the chat, captured while it runs
+  set bonuses). **The server sends the layout**: each heading's row is its column's width in tenths, and a page with
+  sub-tabs sends them as pieces of kind 4 (row = the argument that shows it, text = its name; a sub-tab with nothing in
+  it isn't sent). So a new sub-tab (a new kind of ring: add its template to `info_skill_rings` / `info_other_rings`)
+  or a new layout needs no new client. Pages 4-12 built Nov 27 evening, NOT live yet. The pages are made by the same `do_help` / `do_quest` code as the chat, captured while it runs
   (`help_capture_line`), so chat and window never disagree. Old clients never ask, so nothing changes for them.
 - **Planner helpers** (`svr_do.c` fight_skill_number, `client.h` META_SPEEDSTEP / META_WEAPONSKILL): two meta stats
   the client never shows, for the Godot client's planner: slot 86 is the attack speed's speedtab row counted the old way, 0-19 (`ch_attack_step` - SPEED_OLDFAST) and slot 87 the
@@ -227,7 +231,9 @@ A new HUD drawn on its own canvas (window size ÷ 1.5) and composited over the w
   **Armor**: the tiers (needs, AV per piece, full set) and tiered armor (Magic, Rare, Epic, Legendary). **Weapons**: a
   sub-tab for each weapon type with its tiers (needs, WV), its special weapons (Sword of Stealth, Burning Two-Handed
   Sword...) and its notes (blessed versions, your deflect / critical chance). **Rings**: a grid, a stone a row and a
-  size a column (Huge: the value while used in brackets), the rank each size needs, and the silver-ring notes. **Belts**: every belt and what it gives. **Special items**: special weapons
+  size a column (Huge: the value while used in brackets), the rank each size needs, and the silver-ring notes, under
+  the sub-tab **Attribute Rings**; **Skill Rings** lists the Ring of the Prophets (an **Other** sub-tab appears when
+  there is such a ring). **Belts**: every belt and what it gives. **Special items**: special weapons
   and armor with everything they need and give, and the Fire / Ice set bonuses.
   `/quest`, `/quest all`, `/quest <n>`, `/areas`, `/kills`, `/ranks`, `/armor`, `/moddedarmor`, `/weapon` (and `/sword`,
   `/dagger`, `/twohand`, `/axe`, `/greataxe`), `/rings`, `/belt`, `/specialw`, `/specialarmor` open their tab (a weapon type opens its sub-tab); `/who`

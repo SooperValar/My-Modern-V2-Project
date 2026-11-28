@@ -1849,7 +1849,16 @@ void help_weapons(int cn,int type)
 	char typ[8],ag[8],st[8],sv[8],wv[12],extra[300];
 	const char *cells[6]={NULL,ag,st,sv,wv,extra};
 
+	static char *names[6]={"Daggers","Swords","Two-handed swords","Axes","Greataxes","Staffs"};
+	int t;
+
 	if (type<0 || type>5) type=0;
+	for (t=0; t<6; t++) {
+		for (shown=cnts[t],n=0; !shown && n<(int)(sizeof(info_specials)/sizeof(int)); n++)
+			if (it_temp[info_specials[n]].used!=USE_EMPTY && info_wtype(info_specials[n],typ)==sks[t]) shown=1;
+		if (shown) help_subtab(t,names[t]);
+	}
+	shown=0;
 	for (n=0; n<cnts[type]; n++) {
 		tn=lists[type][n];
 		if (it_temp[tn].used==USE_EMPTY) continue;
@@ -2127,9 +2136,6 @@ void do_info_rings(int cn)
 		help_rows=0;
 		if (stones[0]) do_char_log(cn,1,"Silver rings (%s; Small to Big) give the same bonus, but only while used (switched on), and they wear out while on.\n",stones);
 		do_char_log(cn,1,"(+24): what a Huge golden ring gives while used. Golden rings work all the time.\n");
-		if (it_temp[1201].used!=USE_EMPTY)
-			do_char_log(cn,1,"The Ring of the Prophets (needs %s): +%d to 14 spells, +%d while used.\n",
-				rank_name[(int)it_temp[1201].min_rank],it_temp[1201].skill[SK_MSHIELD][0],it_temp[1201].skill[SK_MSHIELD][1]);
 		do_char_log(cn,2,"* To make a ring, use a plain Silver or Golden Ring while holding the stone. Huge stones only fit golden rings.\n");
 		help_rows=1;
 		return;
@@ -2176,6 +2182,53 @@ void do_info_rings(int cn)
 	do_char_log(cn,2,"* Only while the ring is used (switched on), and it wears out while on. Golden rings work all the time; the Huge ones give the second value while used.\n");
 	do_char_log(cn,2,"* To make a ring, use a plain Silver or Golden Ring while holding the stone. Huge stones only fit golden rings.\n");
 	do_char_log(cn,2,"* Cpl = Corporal, MSg = Master Sergeant, SgM = Sergeant Major.\n");
+}
+
+/* MyV2: the Help window's Rings page (help.c), one kind of ring a sub-tab: 0 attribute rings (the grid of
+ * do_info_rings), 1 skill rings, 2 other rings. A sub-tab shows only when it has a ring. */
+static int info_skill_rings[]={1201};
+static int info_other_rings[]={0};
+
+static int info_rings_used(int *t,int cnt)
+{
+	int n;
+	for (n=0; n<cnt; n++) if (t[n] && it_temp[t[n]].used!=USE_EMPTY) return 1;
+	return 0;
+}
+
+void help_rings(int cn,int type)
+{
+	static int *lists[3]={NULL,info_skill_rings,info_other_rings};
+	static int cnts[3]={0,sizeof(info_skill_rings)/sizeof(int),sizeof(info_other_rings)/sizeof(int)};
+	int n,k,tn,v,act,cnt;
+	char rank[40],gives[420],used[40];
+	const char *cells[4]={NULL,rank,gives,used};
+
+	help_subtab(0,"Attribute Rings");
+	if (info_rings_used(info_skill_rings,cnts[1])) help_subtab(1,"Skill Rings");
+	if (info_rings_used(info_other_rings,cnts[2])) help_subtab(2,"Other");
+	if (type<1 || type>2) {
+		help_heading(0,0,8,"Stone"); help_heading(1,0,12,"Gives"); help_heading(2,0,10,"Small"); help_heading(3,0,11,"Medium");
+		help_heading(4,0,11,"Big"); help_heading(5,0,20,"Huge");
+		do_info_rings(cn);
+		return;
+	}
+	help_heading(0,0,16,"Ring"); help_heading(1,0,12,"Needs"); help_heading(2,0,22,"Gives"); help_heading(3,0,12,"While used");
+	for (n=0; n<cnts[type]; n++) {
+		tn=lists[type][n];
+		if (!tn || it_temp[tn].used==USE_EMPTY) continue;
+		cells[0]=it_temp[tn].name;
+		if (it_temp[tn].min_rank>0) sprintf(rank,"%s",rank_name[(int)it_temp[tn].min_rank]); else strcpy(rank,"-");
+		for (v=0,act=0,cnt=0,k=0; k<MAXSKILL && k<50; k++) if (it_temp[tn].skill[k][0]) { if (!cnt) { v=it_temp[tn].skill[k][0]; act=it_temp[tn].skill[k][1]; } cnt++; }
+		if (cnt>1) sprintf(gives,"%+d to %d spells and skills",v,cnt);
+		else if (cnt) { for (k=0; !it_temp[tn].skill[k][0]; k++) ; sprintf(gives,"%s %+d",skilltab[k].name,v); }
+		else info_gives_all(tn,gives);
+		if ((it_temp[tn].flags&IF_USEACTIVATE) && act) sprintf(used,"%+d",act); else strcpy(used,"-");
+		help_cells(1,4,cells);
+	}
+	help_rows=0;
+	do_char_log(cn,2,"* While used: what the ring gives while switched on. It wears out while on.\n");
+	help_rows=1;
 }
 
 void do_info_moddedarmor(int cn)	// MyV2: tiered armor took the place of "of the Lion" style armor

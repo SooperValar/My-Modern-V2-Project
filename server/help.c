@@ -2,7 +2,8 @@
  *
  * The client asks for a page (CL_CMD_HELP: short page at byte 1, int arg at byte 3); the server answers with SV_HELP packets of 64 bytes:
  *   [0] SV_HELP  [1] page  [2] kind  [3..4] row  [5] column  [6] font  [7] part  [8..63] 56 characters of text
- * kind 0 starts the page (row = the arg asked for), 1 a column heading (font 1 = right-aligned), 2 a table cell,
+ * kind 0 starts the page (row = the arg asked for), 1 a column heading (font 1 = right-aligned, row = its width in
+ * tenths), 2 a table cell, 4 a sub-tab (row = the arg that shows it, in the order they come),
  * 3 a line of text under the table, 255 ends the page (row = the number of table rows). A longer text comes in parts
  * 0, 1, 2... of the same row / column, which the client joins.
  * Pages reuse the chat commands: while a page is built (help_capture_cn) do_char_log() turns their lines into the
@@ -10,8 +11,9 @@
  * Pages: 1 commands (#help), 2 quests (arg 1: all), 3 one quest in detail (arg: its number, +0x8000: of "all"),
  * 4 areas (#areas), 5 kill quests (#kills), 6 ranks (#ranks, then #rank under the table), 7 who is online (#who),
  * 8 armor (#armor and #moddedarmor: tiered armor), 9 weapons (arg: 0 daggers, 1 swords, 2 two-handed swords, 3 axes,
- * 4 greataxes, 5 staffs; each with its special weapons), 10 rings (a grid by stone), 11 belts, 12 special items (#specialw and
- * #specialarmor). */
+ * 4 greataxes, 5 staffs; each with its special weapons), 10 rings (arg: 0 attribute rings as a grid by stone, 1 skill
+ * rings, 2 other rings), 11 belts, 12 special items (#specialw and #specialarmor). Pages with sub-tabs send them.
+ * Column widths and sub-tabs come from here, so a new layout or a new sub-tab needs no new client. */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -41,9 +43,16 @@ static void hp_send(int kind,int row,int col,int font,const char *text)
 	} while (off<len);
 }
 
-static void help_heading(int col,int right,const char *title)
+/* a column heading; width: the column's share of the table in tenths (the client's stretch ratio) */
+void help_heading(int col,int right,int width,const char *title)
 {
-	hp_send(1,0,col,right,title);
+	hp_send(1,width,col,right,title);
+}
+
+/* a sub-tab the page offers: asking for the page with arg shows it (Weapons: a weapon type, Rings: a kind of ring) */
+void help_subtab(int arg,const char *name)
+{
+	hp_send(4,arg,0,0,name);
 }
 
 /* a table row of n cells */
@@ -88,12 +97,12 @@ void plr_cmd_help(int nr)
 	switch (page) {
 		case HELP_COMMANDS:
 			help_rows=1;
-			help_heading(0,0,"Command"); help_heading(1,0,"What it does");
+			help_heading(0,0,14,"Command"); help_heading(1,0,26,"What it does");
 			do_help(cn,NULL);
 			break;
 		case HELP_QUESTS:
 			help_rows=1;
-			help_heading(0,1,"#"); help_heading(1,0,"Giver"); help_heading(2,0,"Where"); help_heading(3,0,"Reward"); help_heading(4,1,"Exp");
+			help_heading(0,1,3,"#"); help_heading(1,0,13,"Giver"); help_heading(2,0,15,"Where"); help_heading(3,0,16,"Reward"); help_heading(4,1,6,"Exp");
 			do_quest(cn,(arg&1) ? "all" : NULL,NULL);
 			break;
 		case HELP_QUEST:
@@ -103,53 +112,52 @@ void plr_cmd_help(int nr)
 			break;
 		case HELP_AREAS:
 			help_rows=1;
-			help_heading(0,0,"Area"); help_heading(1,0,"Progress");
+			help_heading(0,0,16,"Area"); help_heading(1,0,24,"Progress");
 			do_areas(cn);
 			break;
 		case HELP_KILLS:
 			help_rows=1;
-			help_heading(0,1,"#"); help_heading(1,0,"Task"); help_heading(2,0,"Giver"); help_heading(3,0,"Where");
-			help_heading(4,0,"Reward"); help_heading(5,0,"Status");
+			help_heading(0,1,3,"#"); help_heading(1,0,19,"Task"); help_heading(2,0,10,"Giver"); help_heading(3,0,11,"Where");
+			help_heading(4,0,13,"Reward"); help_heading(5,0,11,"Status");
 			do_kills(cn);
 			break;
 		case HELP_RANKS:
 			help_rows=1;
-			help_heading(0,1,"#"); help_heading(1,0,"Rank"); help_heading(2,1,"Starts at");
+			help_heading(0,1,3,"#"); help_heading(1,0,22,"Rank"); help_heading(2,1,15,"Starts at");
 			do_ranks(cn);
 			help_rows=0;
 			do_rank(cn);
 			break;
 		case HELP_WHO:
 			help_rows=1;
-			help_heading(0,0,"Rank"); help_heading(1,0,"Name"); help_heading(2,0,"Group"); help_heading(3,0,"Where");
+			help_heading(0,0,6,"Rank"); help_heading(1,0,12,"Name"); help_heading(2,0,12,"Group"); help_heading(3,0,24,"Where");
 			user_who(cn);
 			break;
 		case HELP_ARMOR:
 			help_rows=1;
-			help_heading(0,0,"Armor"); help_heading(1,1,"Needs AGL"); help_heading(2,1,"Needs STR"); help_heading(3,1,"AV per piece"); help_heading(4,1,"Full set");
+			help_heading(0,0,14,"Armor"); help_heading(1,1,10,"Needs AGL"); help_heading(2,1,10,"Needs STR"); help_heading(3,1,10,"AV per piece"); help_heading(4,1,10,"Full set");
 			do_info_armor(cn);
 			do_info_moddedarmor(cn);
 			break;
 		case HELP_WEAPONS:
 			help_rows=1;
-			help_heading(0,0,"Weapon"); help_heading(1,1,"Needs AGL"); help_heading(2,1,"Needs STR"); help_heading(3,1,"Needs skill"); help_heading(4,1,"WV"); help_heading(5,0,"Also");
+			help_heading(0,0,20,"Weapon"); help_heading(1,1,8,"Needs AGL"); help_heading(2,1,8,"Needs STR"); help_heading(3,1,8,"Needs skill"); help_heading(4,1,6,"WV"); help_heading(5,0,30,"Also");
 			help_weapons(cn,arg);
 			break;
 		case HELP_RINGS:
 			help_rows=1;
-			help_heading(0,0,"Stone"); help_heading(1,0,"Gives"); help_heading(2,0,"Small"); help_heading(3,0,"Medium"); help_heading(4,0,"Big"); help_heading(5,0,"Huge");
-			do_info_rings(cn);
+			help_rings(cn,arg);
 			break;
 		case HELP_BELTS:
 			help_rows=1;
-			help_heading(0,0,"Belt"); help_heading(1,0,"Needs");
-			help_heading(2,1,"BR"); help_heading(3,1,"WI"); help_heading(4,1,"IN"); help_heading(5,1,"AG"); help_heading(6,1,"ST");
-			help_heading(7,1,"HP"); help_heading(8,1,"EN"); help_heading(9,1,"MA"); help_heading(10,0,"Skills");
+			help_heading(0,0,14,"Belt"); help_heading(1,0,8,"Needs");
+			help_heading(2,1,4,"BR"); help_heading(3,1,4,"WI"); help_heading(4,1,4,"IN"); help_heading(5,1,4,"AG"); help_heading(6,1,4,"ST");
+			help_heading(7,1,4,"HP"); help_heading(8,1,4,"EN"); help_heading(9,1,4,"MA"); help_heading(10,0,22,"Skills");
 			do_info_belt(cn);
 			break;
 		case HELP_SPECIAL:
 			help_rows=1;
-			help_heading(0,0,"Item"); help_heading(1,0,"Type"); help_heading(2,0,"Needs"); help_heading(3,1,"WV / AV"); help_heading(4,0,"Gives");
+			help_heading(0,0,16,"Item"); help_heading(1,0,6,"Type"); help_heading(2,0,22,"Needs"); help_heading(3,1,6,"WV / AV"); help_heading(4,0,26,"Gives");
 			do_info_specialw(cn);
 			do_info_specialarmor(cn);
 			break;
