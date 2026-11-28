@@ -255,6 +255,12 @@ myv2 / release v3.0.0).
   their type), Rings (Attribute / Skill sub-tabs, grid by stone), Belts, Special items; the tab strip fix and belt
   centring. Sub-tabs and column widths come from the server (help.c kind 4, heading row = width in tenths), so new
   sub-tabs / layouts are server-only; a new top-level tab needs the client. The live npctalk.dat has no kill quests yet.
+  **Nov 27, 21:40, Cody's 3.3 review - built, NOT live / pushed:** God commands and below blue, Imp grey; Seyan'Du WV
+  15-103 (22 shrines); Belts = Base / Special sub-tabs (buckle colours: 16660/16662 red, 16663/16664 gold, 16665/16666
+  white); new Amulets tab (client myv2 91ad43e6, page 13); Fists of Heaven under Hand to Hand; "Two-Handed Swords".
+  Server parts work with 3.3 clients (sub-tabs, belts, H2H, Seyan); the Amulets tab and the blue need the next client.
+  Open question for Cody: belt templates 113 and 1106 are both "Belt" - 113's picture is an axe (1375), 1106's (16925)
+  doesn't exist in the archives.
   **Syncing the PC's Godot-Client copy:** the device shell's `git reset` / writing files over tracked ones was refused
   by the safety check this time; use GitHub Desktop's Fetch / Pull origin (computer use) instead, which also gets LFS.
 - **Nov 27, 16:15: Godot client equipment slots as MyV2 uses them** (myv2 70a5367c code + 85151b1e frame art; released in 3.2.0): Back in TLG's old Card box, Belt in the old Back box, Legs in

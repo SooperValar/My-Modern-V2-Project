@@ -2052,7 +2052,7 @@ void do_kills(int cn)
 		if (kq[a].rmin1 || kq[a].rmax1) o+=snprintf(tm+o,sizeof(tm)-o,"%srank %s%s%s",o ? ", " : "",kq[a].rmin1 ? rank_name[kq[a].rmin1-1] : "",
 		      kq[a].rmax1 ? (kq[a].rmin1 ? " to " : "up to ") : "+",kq[a].rmax1 ? rank_name[kq[a].rmax1-1] : "");
 		if (kq[a].cmask) o+=snprintf(tm+o,sizeof(tm)-o,"%s%s",o ? ", " : "",kq_class_text(kq[a].cmask));
-		if (o && help_rows) { const char *cells[2]={"",tm}; help_cells(3,2,cells); }
+		if (o && help_rows) { const char *cells[2]={"",tm}; help_cells(HELP_DIM,2,cells); }
 		else if (o) kqlog(cn,1,"   (%s)\n",tm);
 	}
 	if (!nr) kqlog(cn,1,"There are no kill quests for you yet.\n");

@@ -12,7 +12,8 @@
  * 4 areas (#areas), 5 kill quests (#kills), 6 ranks (#ranks, then #rank under the table), 7 who is online (#who),
  * 8 armor (#armor and #moddedarmor: tiered armor), 9 weapons (arg: 0 daggers, 1 swords, 2 two-handed swords, 3 axes,
  * 4 greataxes, 5 staffs; each with its special weapons), 10 rings (arg: 0 attribute rings as a grid by stone, 1 skill
- * rings, 2 other rings), 11 belts, 12 special items (#specialw and #specialarmor). Pages with sub-tabs send them.
+ * rings, 2 other rings), 11 belts (arg: 0 base, 1 special), 12 special items (#specialw and #specialarmor),
+ * 13 amulets (arg: 0 base, 1 special). Pages with sub-tabs send them.
  * Column widths and sub-tabs come from here, so a new layout or a new sub-tab needs no new client. */
 
 #include <stdio.h>
@@ -150,10 +151,11 @@ void plr_cmd_help(int nr)
 			break;
 		case HELP_BELTS:
 			help_rows=1;
-			help_heading(0,0,14,"Belt"); help_heading(1,0,8,"Needs");
-			help_heading(2,1,4,"BR"); help_heading(3,1,4,"WI"); help_heading(4,1,4,"IN"); help_heading(5,1,4,"AG"); help_heading(6,1,4,"ST");
-			help_heading(7,1,4,"HP"); help_heading(8,1,4,"EN"); help_heading(9,1,4,"MA"); help_heading(10,0,22,"Skills");
-			do_info_belt(cn);
+			help_belts(cn,arg);
+			break;
+		case HELP_AMULETS:
+			help_rows=1;
+			help_amulets(cn,arg);
 			break;
 		case HELP_SPECIAL:
 			help_rows=1;

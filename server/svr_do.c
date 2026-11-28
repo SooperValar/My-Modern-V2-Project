@@ -681,6 +681,8 @@ static void help_line(int cn,int font,const char *line)
 
 void do_help(int cn,char *topic)
 {
+	int impf=help_rows ? HELP_DIM : 3;	// the Help window: Imp commands grey, God commands and below blue
+
 	//             "!        .         .         .         .        !"
 	if (!help_rows) {	// the Help window (help.c) has its own headings
 		do_char_log(cn,1,"The following commands are available:\n");
@@ -750,46 +752,46 @@ void do_help(int cn,char *topic)
 	}
 
 	if (ch[cn].flags&(CF_IMP|CF_USURP)) {
-		do_char_log(cn,3,"Imp Commands:\n");
-		do_char_log(cn,3," \n");
-		help_line(cn,3,"#addban <player>       add plr to ban list.");
-		help_line(cn,3,"#delban <lineno>       del plr from ban list.");
-		help_line(cn,3,"#enemy <NPC><char>     make NPC fight char.");
-		help_line(cn,3,"#enter                 fake enter the game.");
-		help_line(cn,3,"#exit                  return from #USURP.");
-		help_line(cn,3,"#force <char><text>    make him act.");
-		//help_line(cn,3,"#gargoyle              turn self into a garg.");
-		help_line(cn,3,"#give <player>         give the item on your cursor.");
-		help_line(cn,3,"#goto <char>           go to char.");
-		help_line(cn,3,"#goto <x> <y>          goto x,y.");
-		help_line(cn,3,"#goto n|e|s|w <nnn>    goto <nnn> in dir.");
-		//help_line(cn,3,"#grolm                 turn self into a grolm.");
-		help_line(cn,3,"#itell <text>          tell all imps.");
-		help_line(cn,3,"#kick <player>         kick player out.");
-		help_line(cn,3,"#leave                 fake leave the game.");
-		help_line(cn,3,"#listban               show ban list.");
-		help_line(cn,3,"#look <player>         look at player.");
-		help_line(cn,3,"#luck <player> <val>   set players luck.");
-		help_line(cn,3,"#mark <player> <text>  mark a player with notes.");
-		help_line(cn,3,"#name <name> <N.Name>  change chars(npcs) names.");
-		help_line(cn,3,"#nodesc <player>       remove description.");
-		help_line(cn,3,"#nolist <player>       exempt from top 10.");
-		help_line(cn,3,"#nostaff               you won't hear #stell.");
-		help_line(cn,3,"#nowho <player>        not listed in who.");
-		help_line(cn,3,"#npclist <search>      display list of NPCs.");
-		help_line(cn,3,"#raise <player> <exp>  give player exps.");
-		help_line(cn,3,"#recall                go to your recall point.");
-		help_line(cn,3,"#respawn <temp-id>     make npcs id respawn.");
-		help_line(cn,3,"#shutup <player>       make unable to talk.");
-		help_line(cn,3,"#shrines <player>      all Kwai shrines, max sword.");
-		help_line(cn,3,"#slap <player>         slap in face.");
-		help_line(cn,3,"#sprite <player>       change a player's sprite.");
-		help_line(cn,3,"#temple                go to the Temple of Skua.");
-		//help_line(cn,3,"#summon <name> [<rank> [<which>]]");
-		help_line(cn,3,"#thrall <name> [<rank>] clone slave.");
-		help_line(cn,3,"#usurp <ID>            turn self into ID.");
-		help_line(cn,3,"#write [\"title\"] <text>  make a note with your text.");
-		do_char_log(cn,3," \n");
+		do_char_log(cn,impf,"Imp Commands:\n");
+		do_char_log(cn,impf," \n");
+		help_line(cn,impf,"#addban <player>       add plr to ban list.");
+		help_line(cn,impf,"#delban <lineno>       del plr from ban list.");
+		help_line(cn,impf,"#enemy <NPC><char>     make NPC fight char.");
+		help_line(cn,impf,"#enter                 fake enter the game.");
+		help_line(cn,impf,"#exit                  return from #USURP.");
+		help_line(cn,impf,"#force <char><text>    make him act.");
+		//help_line(cn,impf,"#gargoyle              turn self into a garg.");
+		help_line(cn,impf,"#give <player>         give the item on your cursor.");
+		help_line(cn,impf,"#goto <char>           go to char.");
+		help_line(cn,impf,"#goto <x> <y>          goto x,y.");
+		help_line(cn,impf,"#goto n|e|s|w <nnn>    goto <nnn> in dir.");
+		//help_line(cn,impf,"#grolm                 turn self into a grolm.");
+		help_line(cn,impf,"#itell <text>          tell all imps.");
+		help_line(cn,impf,"#kick <player>         kick player out.");
+		help_line(cn,impf,"#leave                 fake leave the game.");
+		help_line(cn,impf,"#listban               show ban list.");
+		help_line(cn,impf,"#look <player>         look at player.");
+		help_line(cn,impf,"#luck <player> <val>   set players luck.");
+		help_line(cn,impf,"#mark <player> <text>  mark a player with notes.");
+		help_line(cn,impf,"#name <name> <N.Name>  change chars(npcs) names.");
+		help_line(cn,impf,"#nodesc <player>       remove description.");
+		help_line(cn,impf,"#nolist <player>       exempt from top 10.");
+		help_line(cn,impf,"#nostaff               you won't hear #stell.");
+		help_line(cn,impf,"#nowho <player>        not listed in who.");
+		help_line(cn,impf,"#npclist <search>      display list of NPCs.");
+		help_line(cn,impf,"#raise <player> <exp>  give player exps.");
+		help_line(cn,impf,"#recall                go to your recall point.");
+		help_line(cn,impf,"#respawn <temp-id>     make npcs id respawn.");
+		help_line(cn,impf,"#shutup <player>       make unable to talk.");
+		help_line(cn,impf,"#shrines <player>      all Kwai shrines, max sword.");
+		help_line(cn,impf,"#slap <player>         slap in face.");
+		help_line(cn,impf,"#sprite <player>       change a player's sprite.");
+		help_line(cn,impf,"#temple                go to the Temple of Skua.");
+		//help_line(cn,impf,"#summon <name> [<rank> [<which>]]");
+		help_line(cn,impf,"#thrall <name> [<rank>] clone slave.");
+		help_line(cn,impf,"#usurp <ID>            turn self into ID.");
+		help_line(cn,impf,"#write [\"title\"] <text>  make a note with your text.");
+		do_char_log(cn,impf," \n");
 	}
 	if (ch[cn].flags&(CF_GOD)) {
 		do_char_log(cn,3,"God Commands:\n");
@@ -1762,6 +1764,7 @@ static int info_specials[]={116,129,136,442,503,813,167,1202,682};
 // the weapon type and the skill a weapon uses
 static int info_wtype(int tn,char *typ)
 {
+	if (it_temp[tn].skill[SK_HAND][2]>1) { strcpy(typ,"H2H"); return SK_HAND; }
 	if ((it_temp[tn].flags&(IF_WP_AXE|IF_WP_TWOHAND))==(IF_WP_AXE|IF_WP_TWOHAND)) { strcpy(typ,"GrAxe"); return SK_AXE2H; }
 	if (it_temp[tn].flags&IF_WP_TWOHAND) { strcpy(typ,"2Hand"); return SK_TWOHAND; }
 	if (it_temp[tn].flags&IF_WP_STAFF) { strcpy(typ,"Staff"); return SK_STAFF; }
@@ -1818,7 +1821,7 @@ void do_info_specialw(int cn)
 		mark[0]=0;
 		if (buf[0] && note<9) { sprintf(notes[note],"%d) %s.",note+1,buf); note++; sprintf(mark,"%d",note); }
 
-		if (tn==682) sprintf(wv,"%d-%d",it_temp[tn].weapon[0],it_temp[tn].weapon[0]+80);
+		if (tn==682) sprintf(wv,"%d-%d",it_temp[tn].weapon[0],it_temp[tn].weapon[0]+SEYAN_SHRINES*4);
 		else sprintf(wv,"%d",it_temp[tn].weapon[0]);
 		if (help_rows) {
 			char needs[300],gives[200]; const char *c[5]={it_temp[tn].name,typ,needs,wv,gives};
@@ -1842,18 +1845,18 @@ void do_info_specialw(int cn)
  * special weapons, then the notes */
 void help_weapons(int cn,int type)
 {
-	static int sks[6]={SK_DAGGER,SK_SWORD,SK_TWOHAND,SK_AXE,SK_AXE2H,SK_STAFF};
-	static int *lists[6]={info_daggers,info_swords,info_twohands,info_axes,info_greataxes,NULL};
-	static int cnts[6]={5,5,5,3,5,0};
+	static int sks[7]={SK_DAGGER,SK_SWORD,SK_TWOHAND,SK_AXE,SK_AXE2H,SK_STAFF,SK_HAND};
+	static int *lists[7]={info_daggers,info_swords,info_twohands,info_axes,info_greataxes,NULL,NULL};
+	static int cnts[7]={5,5,5,3,5,0,0};
 	int n,c,tn,shown=0;
 	char typ[8],ag[8],st[8],sv[8],wv[12],extra[300];
 	const char *cells[6]={NULL,ag,st,sv,wv,extra};
 
-	static char *names[6]={"Daggers","Swords","Two-handed swords","Axes","Greataxes","Staffs"};
+	static char *names[7]={"Daggers","Swords","Two-Handed Swords","Axes","Greataxes","Staffs","Hand to Hand"};
 	int t;
 
-	if (type<0 || type>5) type=0;
-	for (t=0; t<6; t++) {
+	if (type<0 || type>6) type=0;
+	for (t=0; t<7; t++) {
 		for (shown=cnts[t],n=0; !shown && n<(int)(sizeof(info_specials)/sizeof(int)); n++)
 			if (it_temp[info_specials[n]].used!=USE_EMPTY && info_wtype(info_specials[n],typ)==sks[t]) shown=1;
 		if (shown) help_subtab(t,names[t]);
@@ -1873,7 +1876,7 @@ void help_weapons(int cn,int type)
 		if (!shown++ && cnts[type]) do_char_log(cn,1,"Special:\n");
 		cells[0]=it_temp[tn].name;
 		info_n(ag,it_temp[tn].attrib[AT_AGIL][2]); info_n(st,it_temp[tn].attrib[AT_STREN][2]); info_n(sv,it_temp[tn].skill[sks[type]][2]);
-		if (tn==682) sprintf(wv,"%d-%d",it_temp[tn].weapon[0],it_temp[tn].weapon[0]+80);
+		if (tn==682) sprintf(wv,"%d-%d",it_temp[tn].weapon[0],it_temp[tn].weapon[0]+SEYAN_SHRINES*4);
 		else sprintf(wv,"%d",it_temp[tn].weapon[0]);
 		info_special_extra(tn,sks[type],extra);
 		help_cells(2,6,cells);
@@ -1904,9 +1907,22 @@ void do_info_weapon(int cn)
 	do_char_log(cn,2,"* Weapon value (WV) only counts if your skill for that weapon type is high enough.\n");
 }
 
+static int info_base_belts[]={1106,113,777,778,779,780,781,782,193};
+
+// belts of the same name are told apart by their buckle (the sprite)
+static const char *info_buckle(int spr)
+{
+	switch (spr) {
+		case 16660: case 16662: return "red buckle";
+		case 16663: case 16664: return "gold buckle";
+		case 16665: case 16666: return "white buckle";
+		default: return NULL;
+	}
+}
+
 void do_info_belt(int cn)
 {
-	static int t[]={1106,113,777,778,779,780,781,782,193};
+	static int *t=info_base_belts;
 	int n,m,k,sk,dup;
 	char name[24],a[5][4],h[3][4],need[30];
 
@@ -1917,10 +1933,10 @@ void do_info_belt(int cn)
 		do_char_log(cn,1,"Belt           Needs | BR WI IN AG ST| HP EN MA\n");
 		do_char_log(cn,1,"---------------------+---------------+---------\n");
 	}
-	for (n=0; n<(int)(sizeof(t)/sizeof(int)); n++) {
+	for (n=0; n<(int)(sizeof(info_base_belts)/sizeof(int)); n++) {
 		if (it_temp[t[n]].used==USE_EMPTY) continue;
 		// "Leather Belt" twice: tell them apart
-		for (dup=0,m=0; m<(int)(sizeof(t)/sizeof(int)); m++) if (m!=n && !strcmp(it_temp[t[m]].name,it_temp[t[n]].name)) dup=(m<n) ? 2 : 1;
+		for (dup=0,m=0; m<(int)(sizeof(info_base_belts)/sizeof(int)); m++) if (m!=n && !strcmp(it_temp[t[m]].name,it_temp[t[n]].name)) dup=(m<n) ? 2 : 1;
 		if (dup) sprintf(name,"%.12s %c",it_temp[t[n]].name,dup==1 ? 'A' : 'B');
 		else sprintf(name,"%.17s",it_temp[t[n]].name);
 		for (k=0; k<5; k++) info_num(a[k],it_temp[t[n]].attrib[k][0]);
@@ -1932,7 +1948,10 @@ void do_info_belt(int cn)
 			char sks[40]=""; const char *c[11];
 			for (sk=0,m=0,k=0; k<50; k++) if (it_temp[t[n]].skill[k][0]) { if (!sk) m=it_temp[t[n]].skill[k][0]; sk++; }
 			if (sk) sprintf(sks,"%+d to %d spells and skills",m,sk);
-			c[0]=name; c[1]=need[0] ? need+(need[0]==' ') : "-";
+			char full[80];
+			if (dup && info_buckle(it_temp[t[n]].sprite[0])) sprintf(full,"%s (%s)",it_temp[t[n]].name,info_buckle(it_temp[t[n]].sprite[0]));
+			else strcpy(full,it_temp[t[n]].name);
+			c[0]=full; c[1]=need[0] ? need+(need[0]==' ') : "-";
 			for (k=0; k<5; k++) c[2+k]=strcmp(a[k],"  .") ? a[k]+strspn(a[k]," ") : "";
 			for (k=0; k<3; k++) c[7+k]=strcmp(h[k],"  .") ? h[k]+strspn(h[k]," ") : "";
 			c[10]=sks;
@@ -1943,6 +1962,111 @@ void do_info_belt(int cn)
 		do_char_log(cn,1,"%-14.14s %-6s|%s%s%s%s%s|%s%s%s\n",name,need[0] ? need : "-",a[0],a[1],a[2],a[3],a[4],h[0],h[1],h[2]);
 		for (sk=0,m=0,k=0; k<50; k++) if (it_temp[t[n]].skill[k][0]) { if (!sk) m=it_temp[t[n]].skill[k][0]; sk++; }
 		if (sk) do_char_log(cn,2,"   %s: %+d to %d spells and skills\n",name,m,sk);
+	}
+}
+
+/* MyV2: the Help window's Belts and Amulets pages (help.c). Sub-tab 0: the game's own (a fixed list), 1: every other
+ * belt / amulet in the item templates that gives something, so new ones show up by themselves. */
+static int info_base_amulets[]={105,1105,107,115,191,192,207,208,209,210,211,212,213,214,215,216};
+
+static void info_gives_all(int t,char *out);
+static void info_armor_needs(int t,char *out);
+
+static int info_in(int t,int *list,int cnt)
+{
+	int n;
+	for (n=0; n<cnt; n++) if (list[n]==t) return 1;
+	return 0;
+}
+
+static int info_gives_any(int t)
+{
+	int k;
+	if (it_temp[t].hp[0] || it_temp[t].end[0] || it_temp[t].mana[0] || it_temp[t].armor[0]) return 1;
+	for (k=0; k<5; k++) if (it_temp[t].attrib[k][0]) return 1;
+	for (k=0; k<MAXSKILL && k<50; k++) if (it_temp[t].skill[k][0]) return 1;
+	return 0;
+}
+
+static int info_has_special(int place,int *base,int cnt)
+{
+	int t;
+	for (t=1; t<MAXTITEM; t++) if (it_temp[t].used!=USE_EMPTY && (it_temp[t].placement&place) && !info_in(t,base,cnt) && info_gives_any(t)) return 1;
+	return 0;
+}
+
+// a row: name, what it needs (attributes, HP/EN/MA, rank), what it gives
+static void info_item_row(int t,const char *name,const char *gives)
+{
+	char needs[120],all[420];
+	const char *cells[3]={name,needs,all};
+	info_armor_needs(t,needs);
+	if (it_temp[t].min_rank>0) sprintf(needs+(strcmp(needs,"-") ? strlen(needs) : 0),"%s%s",strcmp(needs,"-") ? ", rank " : "rank ",rank_name[(int)it_temp[t].min_rank]);
+	if (gives) strcpy(all,gives);
+	else {
+		info_gives_all(t,all);
+		if (it_temp[t].armor[0]) sprintf(all+strlen(all),"%sArmor %+d",all[0] ? ", " : "",it_temp[t].armor[0]);
+	}
+	help_cells(1,3,cells);
+}
+
+static void info_special_rows(int place,int *base,int cnt)
+{
+	int t;
+	for (t=1; t<MAXTITEM; t++)
+		if (it_temp[t].used!=USE_EMPTY && (it_temp[t].placement&place) && !info_in(t,base,cnt) && info_gives_any(t)) info_item_row(t,it_temp[t].name,NULL);
+}
+
+void help_belts(int cn,int type)
+{
+	int cnt=sizeof(info_base_belts)/sizeof(int);
+	help_subtab(0,"Base Belts");
+	if (info_has_special(PL_BELT,info_base_belts,cnt)) help_subtab(1,"Special Belts");
+	if (type!=1) {
+		help_heading(0,0,20,"Belt"); help_heading(1,0,8,"Needs");
+		help_heading(2,1,4,"BR"); help_heading(3,1,4,"WI"); help_heading(4,1,4,"IN"); help_heading(5,1,4,"AG"); help_heading(6,1,4,"ST");
+		help_heading(7,1,4,"HP"); help_heading(8,1,4,"EN"); help_heading(9,1,4,"MA"); help_heading(10,0,20,"Skills");
+		do_info_belt(cn);
+		return;
+	}
+	help_heading(0,0,16,"Belt"); help_heading(1,0,12,"Needs"); help_heading(2,0,34,"Gives");
+	info_special_rows(PL_BELT,info_base_belts,cnt);
+}
+
+// a run of amulets of one name that differ only in endurance (the Leather Necklaces): its range, for one row
+static int info_endurance_run(int *list,int from,int to,int *lo,int *hi)
+{
+	int n,k,t;
+	*lo=1<<30; *hi=-(1<<30);
+	for (n=from; n<to; n++) {
+		t=list[n];
+		if (it_temp[t].used==USE_EMPTY || it_temp[t].hp[0] || it_temp[t].mana[0] || it_temp[t].armor[0]) return 0;
+		for (k=0; k<5; k++) if (it_temp[t].attrib[k][0]) return 0;
+		for (k=0; k<MAXSKILL && k<50; k++) if (it_temp[t].skill[k][0]) return 0;
+		if (it_temp[t].end[0]) { *lo=min(*lo,it_temp[t].end[0]); *hi=max(*hi,it_temp[t].end[0]); }
+	}
+	return *hi>=*lo;
+}
+
+void help_amulets(int cn,int type)
+{
+	int cnt=sizeof(info_base_amulets)/sizeof(int),n,m,k,t,lo,hi;
+	char gives[60];
+
+	help_subtab(0,"Base Amulets");
+	if (info_has_special(PL_NECK,info_base_amulets,cnt)) help_subtab(1,"Special Amulets");
+	help_heading(0,0,16,"Amulet"); help_heading(1,0,12,"Needs"); help_heading(2,0,34,"Gives");
+	if (type==1) { info_special_rows(PL_NECK,info_base_amulets,cnt); return; }
+	for (n=0; n<cnt; n=m) {
+		t=info_base_amulets[n];
+		for (m=n+1; m<cnt && !strcmp(it_temp[info_base_amulets[m]].name,it_temp[t].name); m++) ;
+		if (m-n>1 && info_endurance_run(info_base_amulets,n,m,&lo,&hi)) {
+			sprintf(gives,"Endurance %+d to %+d",lo,hi);
+			info_item_row(t,it_temp[t].name,gives);
+			continue;
+		}
+		for (k=n; k<m; k++) if (it_temp[info_base_amulets[k]].used!=USE_EMPTY && info_gives_any(info_base_amulets[k]))
+			info_item_row(info_base_amulets[k],it_temp[info_base_amulets[k]].name,NULL);
 	}
 }
 
@@ -2132,7 +2256,7 @@ void do_info_rings(int cn)
 		}
 		cells[0]="Rank needed"; cells[1]="";
 		for (z=0; z<4; z++) cells[2+z]=!same[z] ? "(above)" : rk[z]>0 ? rank_name[rk[z]] : "-";
-		help_cells(3,6,cells);
+		help_cells(HELP_DIM,6,cells);
 		help_rows=0;
 		if (stones[0]) do_char_log(cn,1,"Silver rings (%s; Small to Big) give the same bonus, but only while used (switched on), and they wear out while on.\n",stones);
 		do_char_log(cn,1,"(+24): what a Huge golden ring gives while used. Golden rings work all the time.\n");

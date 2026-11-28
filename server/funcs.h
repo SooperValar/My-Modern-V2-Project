@@ -564,6 +564,8 @@ void help_cells(int font,int n,const char **cells);
 void help_capture_line(int font,const char *text);
 void help_weapons(int cn,int type);
 void help_rings(int cn,int type);
+void help_belts(int cn,int type);
+void help_amulets(int cn,int type);
 void help_heading(int col,int right,int width,const char *title);
 void help_subtab(int arg,const char *name);
 void do_info_armor(int cn);
