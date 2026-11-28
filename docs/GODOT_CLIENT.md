@@ -348,7 +348,7 @@ and reports new ones sorted into take / Cody's call / skip / later. Reviewed so 
   windows). Still Cody's call: ff1464c4 softer infravision tint.
 - **Later (Step 6):** 72b2e7d2, c6c19315 (packaging speed-ups).
 
-## Step 6: getting it to players (RELEASED: client 3.0.0, Nov 26 22:30; 3.1.0 Nov 27 01:33, the speed rework; 3.2.0 Nov 27 evening, the Help window + hide-mode walls + equipment slots)
+## Step 6: getting it to players (RELEASED: client 3.0.0, Nov 26 22:30; 3.1.0 Nov 27 01:33, the speed rework; 3.2.0 Nov 27 evening, the Help window + hide-mode walls + equipment slots; 3.3.0 Nov 27 20:59, the rest of the Help window)
 
 **How it works:** Velopack installer and updater, from GitHub releases on SooperValar/myv2-godot-client (public).
 App "Mercenaries of Asgard v2", pack id `MercenariesOfAsgardV2`, Windows only, helm icon (`game/images/app-icon.*`

@@ -141,7 +141,7 @@ of 3.0.0 and up, so merc.exe never sees a message it doesn't know.
   set bonuses). **The server sends the layout**: each heading's row is its column's width in tenths, and a page with
   sub-tabs sends them as pieces of kind 4 (row = the argument that shows it, text = its name; a sub-tab with nothing in
   it isn't sent). So a new sub-tab (a new kind of ring: add its template to `info_skill_rings` / `info_other_rings`)
-  or a new layout needs no new client. Pages 4-12 built Nov 27 evening, NOT live yet. The pages are made by the same `do_help` / `do_quest` code as the chat, captured while it runs
+  or a new layout needs no new client. Pages 4-12 live Nov 27, 20:36. The pages are made by the same `do_help` / `do_quest` code as the chat, captured while it runs
   (`help_capture_line`), so chat and window never disagree. Old clients never ask, so nothing changes for them.
 - **Planner helpers** (`svr_do.c` fight_skill_number, `client.h` META_SPEEDSTEP / META_WEAPONSKILL): two meta stats
   the client never shows, for the Godot client's planner: slot 86 is the attack speed's speedtab row counted the old way, 0-19 (`ch_attack_step` - SPEED_OLDFAST) and slot 87 the
@@ -237,7 +237,7 @@ A new HUD drawn on its own canvas (window size ÷ 1.5) and composited over the w
   and armor with everything they need and give, and the Fire / Ice set bonuses.
   `/quest`, `/quest all`, `/quest <n>`, `/areas`, `/kills`, `/ranks`, `/armor`, `/moddedarmor`, `/weapon` (and `/sword`,
   `/dagger`, `/twohand`, `/axe`, `/greataxe`), `/rings`, `/belt`, `/specialw`, `/specialarmor` open their tab (a weapon type opens its sub-tab); `/who`
-  stays in chat too. Long cells wrap. (Area Quests to Special items: built Nov 27 evening, not released.) Frame art: `tools/myv2-hud/helpbtn.py`.
+  stays in chat too. Long cells wrap. (Area Quests to Special items: client 3.3.0, Nov 27.) Frame art: `tools/myv2-hud/helpbtn.py`.
 - **Item tooltips**: rest the mouse on an item in the backpack, the equipment or an open shop or grave for a moment and a small window shows it: name, weapon/armor value, bonuses (green), what it does when activated, requirements (red when your base values don't meet them, including rank and Seyan'Du/Purple-only items), condition, and value. In a shop it shows the price you'd pay with your Bartering; with a shop open, backpack items show what that merchant would pay, or that he doesn't buy that kind of item; elsewhere the base value. Plus the first lines of the description (up to 6). Answers are reused for 5 seconds. Lines of other panels are cut out under the tooltip in the clean theme. Everything is shown openly, because the same numbers are in `#armor`, `#belt`, `#rings` and so on; a new item flag `IF_NEEDIDENT` (bit 40, unused for now) hides an item's powers until it is identified, for unique late-game equipment.
 - **Buff timers**: a small panel between the character panel and the chat lists every spell on you with the time left (m:ss, or h:mm:ss). Harmful spells (curse, stun, warcry) are red, and a buff's time turns red in its last 30 seconds. The client counts down between updates. The panel is hidden when the window is too narrow for it.
 - **Hotkeys**: Ctrl+1 to Ctrl+9, Ctrl+0, Ctrl+- and Ctrl+= fire skill buttons 1-12 (left to right, top to bottom), next to the original Shift/Ctrl+F1-F12.

@@ -250,19 +250,11 @@ myv2 / release v3.0.0).
   strip inside the frame, like Options; Cody: "the top of the help window doesn't seem finished") and 80970bba (belts
   centred in the Belt box: belt sprites 16660-16666 draw on the bottom rows of their 32 px, so the slot's
   `CentresItemHeight` lifts the item to the middle). Held until the Help window is finished (Cody: release in chunks).
-  **Help step 2 (Nov 27, 19:40): Areas, Kill quests, Ranks, Who tabs** - client myv2 a4cd2a98 (cloud clone, NOT pushed),
-  server help.c pages 4-7 + npctalk.c (do_areas, do_kills), svr_do.c (do_ranks), svr_god.c (user_who) table branches:
-  NOT live (needs "go live"; safe for 3.2 clients, which never ask for those pages). The live npctalk.dat has no kill
-  quests yet, so that tab says "There are no kill quests for you yet" (layout checked with sample rows).
-  **Help step 3 (Nov 27, 20:00): Armor, Weapons, Rings, Belts, Special items tabs; Areas renamed Area Quests** - client
-  myv2 7a6b8a75 (cloud clone, NOT pushed); server help.c pages 8-12, svr_do.c table branches in do_info_armor /
-  moddedarmor / rings / belt / specialw / specialarmor + `help_weapons()`, funcs.h, client.h: NOT live. The Help window is
-  now complete for Cody's plan. **Nov 27, 20:30, Cody's review:** rings as a grid by stone, the Armor tab explains
-  tiered armor (the old "of the Lion / Godly" armor no longer drops; `#moddedarmor` in chat says the same now), and
-  Weapons has sub-tabs per type with the special weapons under their type (client myv2 9f3058ec). Then (Cody: "be sure
-  nothing gets locked in"): sub-tabs and column widths come from the server (myv2 79d325d2), Rings has Attribute Rings
-  / Skill Rings (/ Other once there is one). New tabs still need the client; new sub-tabs and layouts don't. Next is "go live" (server, safe for 3.2 clients), then "push the client" (no LFS art
-  this time, plain git push from the cloud clone) and "release" (3.3.0).
+  **Nov 27, 20:36: Help window steps 2-3 LIVE, client 3.3.0 RELEASED** (CHANGES.md "Help window", "Help window
+  pages"): Area Quests, Kill quests, Ranks, Who, Armor (with tiered armor), Weapons (sub-tab per type, specials under
+  their type), Rings (Attribute / Skill sub-tabs, grid by stone), Belts, Special items; the tab strip fix and belt
+  centring. Sub-tabs and column widths come from the server (help.c kind 4, heading row = width in tenths), so new
+  sub-tabs / layouts are server-only; a new top-level tab needs the client. The live npctalk.dat has no kill quests yet.
   **Syncing the PC's Godot-Client copy:** the device shell's `git reset` / writing files over tracked ones was refused
   by the safety check this time; use GitHub Desktop's Fetch / Pull origin (computer use) instead, which also gets LFS.
 - **Nov 27, 16:15: Godot client equipment slots as MyV2 uses them** (myv2 70a5367c code + 85151b1e frame art; released in 3.2.0): Back in TLG's old Card box, Belt in the old Back box, Legs in

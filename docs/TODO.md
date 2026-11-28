@@ -23,10 +23,10 @@ world, quests, the editor, the client and Discord. Merged Nov 10 from the old TO
   downtime with no players, before the sprite room actually runs out (rerun the scan now and then). Until then: keep
   new sets small (2 variants, 3x3 water) and record every range in SPRITE_MAP.md.
 
-- ◐ **Help window instead of chat info** (Cody, Nov 27: "move away from in chat info and towards a help menu"; "I will
-  definitely want to expand it later"). Step 1 LIVE (Commands + Quests tabs, Help button, `/help`; client 3.2.0, Nov 27). Step 2 (Areas, Kill quests, Ranks, Who) built Nov 27 evening:
-  Step 3 (Armor, Weapons, Rings, Belts, Special items) built
-  too. Server not live, client not pushed (see HANDOFF). Each tab = a page number in `help.c` that captures the chat command's output.
+- ✓ **Help window instead of chat info** (Cody, Nov 27: "move away from in chat info and towards a help menu"; "I will
+  definitely want to expand it later"). LIVE, client 3.3.0: Commands, Quests, Area Quests, Kill quests, Ranks, Who,
+  Armor, Weapons, Rings, Belts, Special items. Each tab = a page number in `help.c`; sub-tabs and column widths come from
+  the server. Later: new rings go in `info_skill_rings` / `info_other_rings` (svr_do.c); other tabs can get sub-tabs.
 
 - ● **Godot client for MyV2** (Cody, Nov 21): built from github.com/jamesblack/thelastgate-godot (James OK'd it). `docs/GODOT_CLIENT.md`. Groups A and B done (Nov 25). **Nov 25: MyV2 switches to the Godot client only** (merc.exe dropped): work through the gap list in "The switch", then the server refuses old clients (done), then the 60-slot backpack (live Nov 26, 13:36). Later: the Editor and tools/world read slots 40-59 (item2). Step 6 (installer + updater) done: client 3.0.0 released Nov 26; Discord #welcome points to its Setup.exe. Buffer GC on hold (Cody, Nov 26: likely part of a new class later). Later: delete the test releases (Cody has no gh: delete them on the GitHub releases page, then `git push origin --delete updater-test-v0.9.0 updater-test-v0.9.1`).
 
