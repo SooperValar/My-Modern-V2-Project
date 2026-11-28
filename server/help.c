@@ -9,7 +9,8 @@
  * page's text lines, and help_line() / #quest's list (help_rows) give table rows instead of chat lines.
  * Pages: 1 commands (#help), 2 quests (arg 1: all), 3 one quest in detail (arg: its number, +0x8000: of "all"),
  * 4 areas (#areas), 5 kill quests (#kills), 6 ranks (#ranks, then #rank under the table), 7 who is online (#who),
- * 8 armor (#armor and #moddedarmor), 9 weapons (every weapon type), 10 rings, 11 belts, 12 special items (#specialw and
+ * 8 armor (#armor and #moddedarmor: tiered armor), 9 weapons (arg: 0 daggers, 1 swords, 2 two-handed swords, 3 axes,
+ * 4 greataxes, 5 staffs; each with its special weapons), 10 rings (a grid by stone), 11 belts, 12 special items (#specialw and
  * #specialarmor). */
 
 #include <stdio.h>
@@ -131,12 +132,12 @@ void plr_cmd_help(int nr)
 			break;
 		case HELP_WEAPONS:
 			help_rows=1;
-			help_heading(0,0,"Weapon"); help_heading(1,1,"Needs AGL"); help_heading(2,1,"Needs STR"); help_heading(3,1,"Needs skill"); help_heading(4,1,"WV");
-			help_weapons(cn);
+			help_heading(0,0,"Weapon"); help_heading(1,1,"Needs AGL"); help_heading(2,1,"Needs STR"); help_heading(3,1,"Needs skill"); help_heading(4,1,"WV"); help_heading(5,0,"Also");
+			help_weapons(cn,arg);
 			break;
 		case HELP_RINGS:
 			help_rows=1;
-			help_heading(0,0,"Ring"); help_heading(1,0,"Rank"); help_heading(2,0,"Silver"); help_heading(3,0,"Golden");
+			help_heading(0,0,"Stone"); help_heading(1,0,"Gives"); help_heading(2,0,"Small"); help_heading(3,0,"Medium"); help_heading(4,0,"Big"); help_heading(5,0,"Huge");
 			do_info_rings(cn);
 			break;
 		case HELP_BELTS:

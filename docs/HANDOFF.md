@@ -257,7 +257,9 @@ myv2 / release v3.0.0).
   **Help step 3 (Nov 27, 20:00): Armor, Weapons, Rings, Belts, Special items tabs; Areas renamed Area Quests** - client
   myv2 7a6b8a75 (cloud clone, NOT pushed); server help.c pages 8-12, svr_do.c table branches in do_info_armor /
   moddedarmor / rings / belt / specialw / specialarmor + `help_weapons()`, funcs.h, client.h: NOT live. The Help window is
-  now complete for Cody's plan: next is "go live" (server, safe for 3.2 clients), then "push the client" (no LFS art
+  now complete for Cody's plan. **Nov 27, 20:30, Cody's review:** rings as a grid by stone, the Armor tab explains
+  tiered armor (the old "of the Lion / Godly" armor no longer drops; `#moddedarmor` in chat says the same now), and
+  Weapons has sub-tabs per type with the special weapons under their type (client myv2 9f3058ec). Next is "go live" (server, safe for 3.2 clients), then "push the client" (no LFS art
   this time, plain git push from the cloud clone) and "release" (3.3.0).
   **Syncing the PC's Godot-Client copy:** the device shell's `git reset` / writing files over tracked ones was refused
   by the safety check this time; use GitHub Desktop's Fetch / Pull origin (computer use) instead, which also gets LFS.

@@ -705,7 +705,7 @@ void do_help(int cn,char *topic)
 	help_line(cn,1,"#lag <seconds>         lag control.");
 	help_line(cn,1,"#hudfont smooth|classic  HUD text font.");
 	help_line(cn,1,"#lowhp <hp>            red glow below <hp>.");
-	help_line(cn,1,"#moddedarmor           of the Lion, Snake, ...");
+	help_line(cn,1,"#moddedarmor           tiered armor (Magic, Rare..).");
 	help_line(cn,1,"#noshout               you won't hear shouts.");
 	help_line(cn,1,"#played                time played, created.");
 	help_line(cn,1,"#journal               your quests.");
@@ -1651,7 +1651,7 @@ void do_info_armor(int cn)
 	if (help_rows) return;
 	do_char_log(cn,1," \n");
 	do_char_log(cn,2,"* #specialarmor lists unique armor (Fire, Ice, ...).\n");
-	do_char_log(cn,2,"* #moddedarmor lists the magic names (of the Lion, ...).\n");
+	do_char_log(cn,2,"* #moddedarmor explains tiered armor (Magic, Rare, Epic, Legendary).\n");
 }
 
 static void info_weapon_table(int cn,char *what,char *skill,int sk,int *t,int cnt)
@@ -1724,22 +1724,6 @@ void do_info_axe(int cn)
 	info_weapon_table(cn,"axes","Axe",SK_AXE,info_axes,3);
 }
 
-/* MyV2: the Help window's Weapons page (help.c): every weapon type in one table, then the notes */
-void help_weapons(int cn)
-{
-	int c;
-	info_weapon_table(cn,"daggers","Dagger",SK_DAGGER,info_daggers,5);
-	info_weapon_table(cn,"swords","Sword",SK_SWORD,info_swords,5);
-	info_weapon_table(cn,"two-handed swords","2Hand",SK_TWOHAND,info_twohands,5);
-	info_weapon_table(cn,"axes","Axe",SK_AXE,info_axes,3);
-	info_weapon_table(cn,"greataxes","GrAxe",SK_AXE2H,info_greataxes,5);
-	do_char_log(cn,2,"* Weapon value (WV) only counts if your skill for that weapon type is high enough.\n");
-	info_blessed(cn);
-	c=wp2h_chance(cn,0);
-	do_char_log(cn,2,"* Two-handed swords take both hands: no shield. Deflect: while you wield one, some melee hits against you are deflected: %d%% to %d%%, more with Agility (you: %d.%d%%).\n",WP2H_MIN/10,WP2H_MAX/10,c/10,c%10);
-	c=wp2h_chance(cn,1);
-	do_char_log(cn,2,"* Greataxes take both hands: no shield. Critical hits: some of your hits do double damage: %d%% to %d%%, more with Strength (you: %d.%d%%).\n",WP2H_MIN/10,WP2H_MAX/10,c/10,c%10);
-}
 
 // "needs" and "gives" text of a special item
 static void info_needs(int t,char *out)
@@ -1773,13 +1757,41 @@ static void info_n(char *out,int v)	// requirement as text, '.' if there is none
 	else strcpy(out,".");
 }
 
+static int info_specials[]={116,129,136,442,503,813,167,1202,682};
+
+// the weapon type and the skill a weapon uses
+static int info_wtype(int tn,char *typ)
+{
+	if ((it_temp[tn].flags&(IF_WP_AXE|IF_WP_TWOHAND))==(IF_WP_AXE|IF_WP_TWOHAND)) { strcpy(typ,"GrAxe"); return SK_AXE2H; }
+	if (it_temp[tn].flags&IF_WP_TWOHAND) { strcpy(typ,"2Hand"); return SK_TWOHAND; }
+	if (it_temp[tn].flags&IF_WP_STAFF) { strcpy(typ,"Staff"); return SK_STAFF; }
+	if (it_temp[tn].flags&IF_WP_AXE) { strcpy(typ,"Axe"); return SK_AXE; }
+	if (it_temp[tn].flags&IF_WP_DAGGER) { strcpy(typ,"Dagger"); return SK_DAGGER; }
+	strcpy(typ,"Sword"); return SK_SWORD;
+}
+
+// what a special weapon needs besides Agility, Strength and its own skill, and what it gives
+static void info_special_extra(int tn,int sk,char *buf)
+{
+	static char *sn[7]={"Hand to Hand","Karate","Dagger","Sword","Axe","Staff","Two-Handed"};
+	char tmp[200];
+	int k;
+
+	buf[0]=0;
+	for (k=0; k<5; k++) if (k!=AT_AGIL && k!=AT_STREN && it_temp[tn].attrib[k][2]>1) { sprintf(tmp,"%s%s %d",buf[0] ? ", " : "Also needs ",info_attr[k],it_temp[tn].attrib[k][2]); strcat(buf,tmp); }
+	for (k=0; k<7; k++) if (k!=sk && it_temp[tn].skill[k][2]>1) { sprintf(tmp,"%s%s %d",buf[0] ? ", " : "Also needs ",sn[k],it_temp[tn].skill[k][2]); strcat(buf,tmp); }
+	if (it_temp[tn].min_rank>0) { sprintf(tmp,"%srank %s",buf[0] ? ", " : "Also needs ",rank_name[(int)it_temp[tn].min_rank]); strcat(buf,tmp); }
+	info_gives(tn,tmp);
+	if (tmp[0]) { strcat(buf,buf[0] ? ". Gives " : "Gives "); strcat(buf,tmp); }
+	if (tn==682) sprintf(buf,"Seyan'Du only. +4 WV for each of the %d shrines of Kwai visited",SEYAN_SHRINES);
+}
+
 void do_info_specialw(int cn)
 {
-	static int t[]={116,129,136,442,503,813,167,1202,682};
-	static char *sn[7]={"Hand to Hand","Karate","Dagger","Sword","Axe","Staff","Two-Handed"};
-	int n,k,sk,note=0,tn;
-	char name[60],*p,typ[8],buf[200],tmp[100],mark[4],wv[12],ag[8],st[8],sv[8];
-	char notes[9][220];
+	static int *t=info_specials;
+	int n,sk,note=0,tn;
+	char name[60],*p,typ[8],buf[300],mark[4],wv[12],ag[8],st[8],sv[8];
+	char notes[9][320];
 
 	if (help_rows) do_char_log(cn,1,"Weapons:\n");	// the Help window's Special items page (help.c)
 	else {
@@ -1788,7 +1800,7 @@ void do_info_specialw(int cn)
 		do_char_log(cn,1," Weapon            Type  AGL STR Skill    WV\n");	// 43 wide: the Godot chat (Nov 27)
 		do_char_log(cn,1,"-------------------------------------------\n");
 	}
-	for (n=0; n<(int)(sizeof(t)/sizeof(int)); n++) {
+	for (n=0; n<(int)(sizeof(info_specials)/sizeof(int)); n++) {
 		tn=t[n];
 		if (it_temp[tn].used==USE_EMPTY) continue;
 
@@ -1799,22 +1811,10 @@ void do_info_specialw(int cn)
 		if (!strcmp(name,"Sword of Seyan'Du")) strcpy(name,"Seyan'Du Sword");
 		name[17]=0;
 
-		// weapon type and the skill it uses
-		if ((it_temp[tn].flags&(IF_WP_AXE|IF_WP_TWOHAND))==(IF_WP_AXE|IF_WP_TWOHAND)) { strcpy(typ,"GrAxe"); sk=SK_AXE2H; }
-		else if (it_temp[tn].flags&IF_WP_TWOHAND) { strcpy(typ,"2Hand"); sk=SK_TWOHAND; }
-		else if (it_temp[tn].flags&IF_WP_STAFF) { strcpy(typ,"Staff"); sk=SK_STAFF; }
-		else if (it_temp[tn].flags&IF_WP_AXE) { strcpy(typ,"Axe"); sk=SK_AXE; }
-		else if (it_temp[tn].flags&IF_WP_DAGGER) { strcpy(typ,"Dagger"); sk=SK_DAGGER; }
-		else { strcpy(typ,"Sword"); sk=SK_SWORD; }
+		sk=info_wtype(tn,typ);
 
 		// what does not fit the grid goes into a numbered note under it
-		buf[0]=0;
-		for (k=0; k<5; k++) if (k!=AT_AGIL && k!=AT_STREN && it_temp[tn].attrib[k][2]>1) { sprintf(tmp,"%s%s %d",buf[0] ? ", " : "Also needs ",info_attr[k],it_temp[tn].attrib[k][2]); strcat(buf,tmp); }
-		for (k=0; k<7; k++) if (k!=sk && it_temp[tn].skill[k][2]>1) { sprintf(tmp,"%s%s %d",buf[0] ? ", " : "Also needs ",sn[k],it_temp[tn].skill[k][2]); strcat(buf,tmp); }
-		if (it_temp[tn].min_rank>0) { sprintf(tmp,"%srank %s",buf[0] ? ", " : "Also needs ",rank_name[(int)it_temp[tn].min_rank]); strcat(buf,tmp); }
-		info_gives(tn,tmp);
-		if (tmp[0]) { strcat(buf,buf[0] ? ". Gives " : "Gives "); strcat(buf,tmp); }
-		if (tn==682) sprintf(buf,"Seyan'Du only. +4 WV for each of the %d shrines of Kwai visited",SEYAN_SHRINES);
+		info_special_extra(tn,sk,buf);
 		mark[0]=0;
 		if (buf[0] && note<9) { sprintf(notes[note],"%d) %s.",note+1,buf); note++; sprintf(mark,"%d",note); }
 
@@ -1836,6 +1836,49 @@ void do_info_specialw(int cn)
 	if (help_rows) return;
 	do_char_log(cn,1," \n");
 	for (n=0; n<note; n++) do_char_log(cn,2,"%s\n",notes[n]);
+}
+
+/* MyV2: the Help window's Weapons page (help.c), one weapon type a page (its sub-tab): the tiers, then that type's
+ * special weapons, then the notes */
+void help_weapons(int cn,int type)
+{
+	static int sks[6]={SK_DAGGER,SK_SWORD,SK_TWOHAND,SK_AXE,SK_AXE2H,SK_STAFF};
+	static int *lists[6]={info_daggers,info_swords,info_twohands,info_axes,info_greataxes,NULL};
+	static int cnts[6]={5,5,5,3,5,0};
+	int n,c,tn,shown=0;
+	char typ[8],ag[8],st[8],sv[8],wv[12],extra[300];
+	const char *cells[6]={NULL,ag,st,sv,wv,extra};
+
+	if (type<0 || type>5) type=0;
+	for (n=0; n<cnts[type]; n++) {
+		tn=lists[type][n];
+		if (it_temp[tn].used==USE_EMPTY) continue;
+		cells[0]=it_temp[tn].name;
+		info_n(ag,it_temp[tn].attrib[AT_AGIL][2]); info_n(st,it_temp[tn].attrib[AT_STREN][2]);
+		info_n(sv,it_temp[tn].skill[sks[type]][2]); sprintf(wv,"%d",it_temp[tn].weapon[0]); extra[0]=0;
+		help_cells(1,6,cells);
+	}
+	for (n=0; n<(int)(sizeof(info_specials)/sizeof(int)); n++) {
+		tn=info_specials[n];
+		if (it_temp[tn].used==USE_EMPTY || info_wtype(tn,typ)!=sks[type]) continue;
+		if (!shown++ && cnts[type]) do_char_log(cn,1,"Special:\n");
+		cells[0]=it_temp[tn].name;
+		info_n(ag,it_temp[tn].attrib[AT_AGIL][2]); info_n(st,it_temp[tn].attrib[AT_STREN][2]); info_n(sv,it_temp[tn].skill[sks[type]][2]);
+		if (tn==682) sprintf(wv,"%d-%d",it_temp[tn].weapon[0],it_temp[tn].weapon[0]+80);
+		else sprintf(wv,"%d",it_temp[tn].weapon[0]);
+		info_special_extra(tn,sks[type],extra);
+		help_cells(2,6,cells);
+	}
+	do_char_log(cn,2,"* Weapon value (WV) only counts if your skill for that weapon type is high enough.\n");
+	if (type<=2) info_blessed(cn);
+	if (type==2) {
+		c=wp2h_chance(cn,0);
+		do_char_log(cn,2,"* Two-handed swords take both hands: no shield. Deflect: while you wield one, some melee hits against you are deflected: %d%% to %d%%, more with Agility (you: %d.%d%%).\n",WP2H_MIN/10,WP2H_MAX/10,c/10,c%10);
+	}
+	if (type==4) {
+		c=wp2h_chance(cn,1);
+		do_char_log(cn,2,"* Greataxes take both hands: no shield. Critical hits: some of your hits do double damage: %d%% to %d%%, more with Strength (you: %d.%d%%).\n",WP2H_MIN/10,WP2H_MAX/10,c/10,c%10);
+	}
 }
 
 void do_info_weapon(int cn)
@@ -2053,6 +2096,45 @@ void do_info_rings(int cn)
 	int s,z,tg,ts;
 	char name[30],sv[30],gv[40],tmp[30],rank[8];
 
+	if (help_rows) {	// the Help window's Rings page (help.c): a stone a row, a size a column
+		static char *what[6]={"Willpower","Strength","all attributes","Agility","Intuition","Braveness"};
+		char val[4][60],stones[80]="";
+		const char *cells[6];
+		int k,v,act,same[4],rk[4];
+
+		for (z=0; z<4; z++) { same[z]=1; rk[z]=-1; }
+		for (s=0; s<6; s++) for (z=0; z<4; z++) {
+			tg=gold[s][z]; if (it_temp[tg].used==USE_EMPTY) continue;
+			if (rk[z]==-1) rk[z]=it_temp[tg].min_rank; else if (rk[z]!=it_temp[tg].min_rank) same[z]=0;
+		}
+		for (s=0; s<6; s++) {
+			cells[0]=stone[s]; cells[1]=what[s];
+			for (z=0; z<4; z++) {
+				tg=gold[s][z]; val[z][0]=0; cells[2+z]=val[z];
+				if (it_temp[tg].used==USE_EMPTY) continue;
+				for (v=0,act=0,k=0; k<5; k++) if (it_temp[tg].attrib[k][0]) { v=it_temp[tg].attrib[k][0]; act=it_temp[tg].attrib[k][1]; }
+				sprintf(val[z],"%+d",v);
+				if ((it_temp[tg].flags&IF_USEACTIVATE) && act) sprintf(val[z]+strlen(val[z])," (%+d)",act);
+				if (!same[z] && it_temp[tg].min_rank>0) sprintf(val[z]+strlen(val[z]),", %s",rank_name[(int)it_temp[tg].min_rank]);
+			}
+			help_cells(1,6,cells);
+			ts=silver[s][0];
+			if (ts && it_temp[ts].used!=USE_EMPTY) { if (stones[0]) strcat(stones,", "); strcat(stones,stone[s]); }
+		}
+		cells[0]="Rank needed"; cells[1]="";
+		for (z=0; z<4; z++) cells[2+z]=!same[z] ? "(above)" : rk[z]>0 ? rank_name[rk[z]] : "-";
+		help_cells(3,6,cells);
+		help_rows=0;
+		if (stones[0]) do_char_log(cn,1,"Silver rings (%s; Small to Big) give the same bonus, but only while used (switched on), and they wear out while on.\n",stones);
+		do_char_log(cn,1,"(+24): what a Huge golden ring gives while used. Golden rings work all the time.\n");
+		if (it_temp[1201].used!=USE_EMPTY)
+			do_char_log(cn,1,"The Ring of the Prophets (needs %s): +%d to 14 spells, +%d while used.\n",
+				rank_name[(int)it_temp[1201].min_rank],it_temp[1201].skill[SK_MSHIELD][0],it_temp[1201].skill[SK_MSHIELD][1]);
+		do_char_log(cn,2,"* To make a ring, use a plain Silver or Golden Ring while holding the stone. Huge stones only fit golden rings.\n");
+		help_rows=1;
+		return;
+	}
+
 	if (!help_rows) {
 		do_char_log(cn,1,"Now listing rings:\n");
 		do_char_log(cn,1," \n");
@@ -2096,39 +2178,21 @@ void do_info_rings(int cn)
 	do_char_log(cn,2,"* Cpl = Corporal, MSg = Master Sergeant, SgM = Sergeant Major.\n");
 }
 
-void do_info_moddedarmor(int cn)
+void do_info_moddedarmor(int cn)	// MyV2: tiered armor took the place of "of the Lion" style armor
 {
-	if (help_rows) {	// the Help window's Armor page (help.c): text under the tier table
-		static char *row[8][3]={
-			{"of the Lion","+4 Braveness","+8"},{"of the Snake","+4 Willpower","+8"},{"of the Owl","+4 Intuition","+8"},
-			{"of the Weasel","+4 Agility","+8"},{"of the Bear","+4 Strength","+8"},{"of Magic","+10 Mana","+20"},
-			{"of Life","+10 Hitpoints","+20"},{"of Defence","+2 Armor value","+4"}};
-		int n;
-		help_rows=0;
-		do_char_log(cn,1,"Magic names. Bronze, Steel, Golden, Emerald, Crystal and Titanium helmets and body armor found in chests always carry one of these (each 1 in 8):\n");
-		for (n=0; n<8; n++) do_char_log(cn,1,"   %-14s %s (Godly: %s)\n",row[n][0],row[n][1],row[n][2]);
-		do_char_log(cn,2,"* 1 in 8 are \"Godly\" (double bonus), 1 in 8 are \"Shining\" (normal bonus, and the item gives light).\n");
-		help_rows=1;
-		return;
-	}
-	do_char_log(cn,1,"Magic helmets and armor:\n");
-	do_char_log(cn,1," \n");
-	do_char_log(cn,1,"Bronze, Steel, Golden, Emerald, Crystal and Titanium helmets and body armor found in chests always carry one of these:\n");
-	do_char_log(cn,1," \n");
-	{
-		static char *row[8][3]={
-			{"of the Lion","+4 Braveness","+8 Braveness"},{"of the Snake","+4 Willpower","+8 Willpower"},
-			{"of the Owl","+4 Intuition","+8 Intuition"},{"of the Weasel","+4 Agility","+8 Agility"},
-			{"of the Bear","+4 Strength","+8 Strength"},{"of Magic","+10 Mana","+20 Mana"},
-			{"of Life","+10 Hitpoints","+20 Hitpoints"},{"of Defence","+2 Armor value","+4 Armor value"}};
-		int n;
-		do_char_log(cn,1,"Name          Normal         Godly\n");	// 43 wide: the Godot chat (Nov 27)
-		do_char_log(cn,1,"-------------------------------------------\n");
-		for (n=0; n<8; n++) do_char_log(cn,1,"%-13s %-14s %s\n",row[n][0],row[n][1],row[n][2]);
-	}
-	do_char_log(cn,1," \n");
-	do_char_log(cn,2,"* Each name has the same chance (1 in 8).\n");
-	do_char_log(cn,2,"* 1 in 8 are \"Godly\" (double bonus), 1 in 8 are \"Shining\" (normal bonus, and the item gives light).\n");
+	int rows=help_rows;
+
+	help_rows=0;	// the Help window's Armor page: text under the tier table
+	do_char_log(cn,1,"Tiered armor. Helmets and body armor can be found as:\n");
+	do_char_log(cn,1,"   Magic (blue)       one bonus\n");
+	do_char_log(cn,1,"   Rare (gold)        main attribute and 1-2 skills, twice as strong\n");
+	do_char_log(cn,1,"   Epic (purple)      two attributes, 3 skills and a special effect, three times as strong\n");
+	do_char_log(cn,1,"   Legendary (orange) unique items with fixed bonuses and effects, such as the Winged Boots\n");
+	do_char_log(cn,2,"* Item level 1-20 = the rank needed to wear it. Its category (Fighter, Mercenary, Mage, Utility) decides the bonuses, plus hitpoints, endurance and mana.\n");
+	do_char_log(cn,2,"* Epic effects: Regeneration, Clarity, Stamina, Thorns, Light, Warding, Lasting, Enlightened.\n");
+	do_char_log(cn,2,"* Monsters drop them, Strong monsters much more often; treasure chests give Magic pieces.\n");
+	do_char_log(cn,2,"* A soulstone on a plain helmet or armor makes it Magic; on a tiered piece of its level it rerolls the bonuses. Two soulstones in a Soul Crucible make an upgrade stone, which raises a piece one tier.\n");
+	help_rows=rows;
 }
 
 
