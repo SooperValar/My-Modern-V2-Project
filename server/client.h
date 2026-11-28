@@ -237,6 +237,7 @@ struct cplayer
 #define HELP_SPECIAL			12
 #define HELP_AMULETS			13
 #define HELP_DIM			10	// a Help window font: grey (fonts 0-9 are the chat's)
+#define HELP_LABEL			11	// a Help window font: a row of labels, drawn like the column headings
 
 #define CL_CMD_CTICK			255
 

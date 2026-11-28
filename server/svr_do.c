@@ -1913,9 +1913,9 @@ static int info_base_belts[]={1106,113,777,778,779,780,781,782,193};
 static const char *info_buckle(int spr)
 {
 	switch (spr) {
-		case 16660: case 16662: return "red buckle";
-		case 16663: case 16664: return "gold buckle";
-		case 16665: case 16666: return "white buckle";
+		case 16660: case 16662: return "Red";
+		case 16663: case 16664: return "Gold";
+		case 16665: case 16666: return "White";
 		default: return NULL;
 	}
 }
@@ -1949,7 +1949,7 @@ void do_info_belt(int cn)
 			for (sk=0,m=0,k=0; k<50; k++) if (it_temp[t[n]].skill[k][0]) { if (!sk) m=it_temp[t[n]].skill[k][0]; sk++; }
 			if (sk) sprintf(sks,"%+d to %d spells and skills",m,sk);
 			char full[80];
-			if (dup && info_buckle(it_temp[t[n]].sprite[0])) sprintf(full,"%s (%s)",it_temp[t[n]].name,info_buckle(it_temp[t[n]].sprite[0]));
+			if (dup && info_buckle(it_temp[t[n]].sprite[0])) sprintf(full,"%s With %s Buckle",it_temp[t[n]].name,info_buckle(it_temp[t[n]].sprite[0]));
 			else strcpy(full,it_temp[t[n]].name);
 			c[0]=full; c[1]=need[0] ? need+(need[0]==' ') : "-";
 			for (k=0; k<5; k++) c[2+k]=strcmp(a[k],"  .") ? a[k]+strspn(a[k]," ") : "";
@@ -2010,11 +2010,42 @@ static void info_item_row(int t,const char *name,const char *gives)
 	help_cells(1,3,cells);
 }
 
+/* an item as a small table of its own: a row of labels (Needs, then what it gives) over a row with its name and the
+ * values; more than INFO_CARD_STATS bonuses go on to further pairs of rows */
+#define INFO_CARD_STATS	6
+
+static void info_card(int t)
+{
+	char lab[40][40],val[40][40],needs[120];
+	const char *labels[INFO_CARD_STATS+2],*values[INFO_CARD_STATS+2];
+	int n=0,k,at,first;
+
+	for (k=0; k<5; k++) if (it_temp[t].attrib[k][0]) { strcpy(lab[n],info_attr[k]); sprintf(val[n++],"%+d",it_temp[t].attrib[k][0]); }
+	if (it_temp[t].hp[0]) { strcpy(lab[n],"Hitpoints"); sprintf(val[n++],"%+d",it_temp[t].hp[0]); }
+	if (it_temp[t].end[0]) { strcpy(lab[n],"Endurance"); sprintf(val[n++],"%+d",it_temp[t].end[0]); }
+	if (it_temp[t].mana[0]) { strcpy(lab[n],"Mana"); sprintf(val[n++],"%+d",it_temp[t].mana[0]); }
+	if (it_temp[t].armor[0]) { strcpy(lab[n],"Armor"); sprintf(val[n++],"%+d",it_temp[t].armor[0]); }
+	for (k=0; k<MAXSKILL && k<50 && n<40; k++) if (it_temp[t].skill[k][0] && skilltab[k].name[0]) {
+		snprintf(lab[n],sizeof(lab[n]),"%s",skilltab[k].name); sprintf(val[n++],"%+d",it_temp[t].skill[k][0]);
+	}
+	info_armor_needs(t,needs);
+	if (it_temp[t].min_rank>0) sprintf(needs+(strcmp(needs,"-") ? strlen(needs) : 0),"%s%s",strcmp(needs,"-") ? ", " : "",rank_name[(int)it_temp[t].min_rank]);
+	for (at=0,first=1; first || at<n; first=0) {
+		labels[0]=""; values[0]=first ? it_temp[t].name : "";
+		labels[1]=first ? "Needs" : ""; values[1]=first ? needs : "";
+		for (k=0; k<INFO_CARD_STATS; k++,at++) { labels[2+k]=at<n ? lab[at] : ""; values[2+k]=at<n ? val[at] : ""; }
+		help_cells(HELP_LABEL,INFO_CARD_STATS+2,labels);
+		help_cells(1,INFO_CARD_STATS+2,values);
+	}
+}
+
 static void info_special_rows(int place,int *base,int cnt)
 {
-	int t;
+	int t,k;
+	help_heading(0,0,18,place==PL_BELT ? "Belt" : "Amulet"); help_heading(1,0,14,"");
+	for (k=0; k<INFO_CARD_STATS; k++) help_heading(2+k,0,11,"");
 	for (t=1; t<MAXTITEM; t++)
-		if (it_temp[t].used!=USE_EMPTY && (it_temp[t].placement&place) && !info_in(t,base,cnt) && info_gives_any(t)) info_item_row(t,it_temp[t].name,NULL);
+		if (it_temp[t].used!=USE_EMPTY && (it_temp[t].placement&place) && !info_in(t,base,cnt) && info_gives_any(t)) info_card(t);
 }
 
 void help_belts(int cn,int type)
@@ -2029,7 +2060,6 @@ void help_belts(int cn,int type)
 		do_info_belt(cn);
 		return;
 	}
-	help_heading(0,0,16,"Belt"); help_heading(1,0,12,"Needs"); help_heading(2,0,34,"Gives");
 	info_special_rows(PL_BELT,info_base_belts,cnt);
 }
 
@@ -2055,8 +2085,8 @@ void help_amulets(int cn,int type)
 
 	help_subtab(0,"Base Amulets");
 	if (info_has_special(PL_NECK,info_base_amulets,cnt)) help_subtab(1,"Special Amulets");
-	help_heading(0,0,16,"Amulet"); help_heading(1,0,12,"Needs"); help_heading(2,0,34,"Gives");
 	if (type==1) { info_special_rows(PL_NECK,info_base_amulets,cnt); return; }
+	help_heading(0,0,16,"Amulet"); help_heading(1,0,12,"Needs"); help_heading(2,0,34,"Gives");
 	for (n=0; n<cnt; n=m) {
 		t=info_base_amulets[n];
 		for (m=n+1; m<cnt && !strcmp(it_temp[info_base_amulets[m]].name,it_temp[t].name); m++) ;

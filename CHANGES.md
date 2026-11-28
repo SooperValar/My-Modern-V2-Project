@@ -137,10 +137,10 @@ of 3.0.0 and up, so merc.exe never sees a message it doesn't know.
   special weapons in green with what else they need and give, then the type's notes), 10 Rings (a grid: a stone a row,
   a size a column, the rank row, notes; the argument is the sub-tab: 0 Attribute Rings, 1 Skill Rings (the Ring of the
   Prophets), 2 Other; `help_rings()`), 11 Belts (`help_belts()`: 0 Base Belts, the game's own as a grid, same names told
-  apart by their buckle colour; 1 Special Belts, every other belt template that gives something, so new ones show up by
-  themselves), 13 Amulets (`help_amulets()`: 0 Base, the Leather Necklaces as one row with the range; 1 Special, read
-  from the templates like Special Belts),
-  12 Special items (`#specialw` and `#specialarmor` as Weapons / Armor sections: needs, WV / AV, gives in full, then the
+  apart by their buckle ("Golden Belt With Red Buckle"); 1 Special Belts, every other belt template that gives
+  something, so new ones show up by themselves, each as its own small table: a label row (Needs, then the stats it
+  gives; window font 11, `HELP_LABEL`) over a row with its name and the values, `info_card()`), 13 Amulets
+  (`help_amulets()`: 0 Base, the Leather Necklaces as one row with the range; 1 Special, laid out like Special Belts),s (`#specialw` and `#specialarmor` as Weapons / Armor sections: needs, WV / AV, gives in full, then the
   set bonuses). **The server sends the layout**: each heading's row is its column's width in tenths, and a page with
   sub-tabs sends them as pieces of kind 4 (row = the argument that shows it, text = its name; a sub-tab with nothing in
   it isn't sent). So a new sub-tab (a new kind of ring: add its template to `info_skill_rings` / `info_other_rings`)
@@ -236,8 +236,8 @@ A new HUD drawn on its own canvas (window size ÷ 1.5) and composited over the w
   Sword...) and its notes (blessed versions, your deflect / critical chance). **Rings**: a grid, a stone a row and a
   size a column (Huge: the value while used in brackets), the rank each size needs, and the silver-ring notes, under
   the sub-tab **Attribute Rings**; **Skill Rings** lists the Ring of the Prophets (an **Other** sub-tab appears when
-  there is such a ring). **Belts**: Base Belts (the game's own, buckle colour for same names) and Special Belts
-  (quest belts and any new one). **Amulets**: Base Amulets and Special Amulets (Ankh, the Outsider's Eye, quest amulets).
+  there is such a ring). **Belts**: Base Belts (the game's own: Gold Belt, Green Belt, "Leather Belt With White
+  Buckle"...) and Special Belts (quest belts and any new one, each with its own row of stat labels). **Amulets**: Base Amulets and Special Amulets (Ankh, the Outsider's Eye, quest amulets; laid out like Special Belts).
   Commands: God, Builder and Greater God commands in blue, Imp commands grey (window font 10, `HELP_DIM`). Fists of
   Heaven is a Hand to Hand weapon (its own Weapons sub-tab); the Sword of Seyan'Du's WV range counts the 22 shrines (15-103). **Special items**: special weapons
   and armor with everything they need and give, and the Fire / Ice set bonuses.

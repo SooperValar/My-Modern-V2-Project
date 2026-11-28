@@ -259,8 +259,11 @@ myv2 / release v3.0.0).
   15-103 (22 shrines); Belts = Base / Special sub-tabs (buckle colours: 16660/16662 red, 16663/16664 gold, 16665/16666
   white); new Amulets tab (client myv2 91ad43e6, page 13); Fists of Heaven under Hand to Hand; "Two-Handed Swords".
   Server parts work with 3.3 clients (sub-tabs, belts, H2H, Seyan); the Amulets tab and the blue need the next client.
-  Open question for Cody: belt templates 113 and 1106 are both "Belt" - 113's picture is an axe (1375), 1106's (16925)
-  doesn't exist in the archives.
+  Then (21:55): base belts named "Golden Belt With Red Buckle"; Special Belts / Amulets as one small table per item
+  (label row + value row, myv2 999579d8); templates 113 / 1106 ("Belt" both) to be renamed Gold Belt (Haunted Castle
+  quest item) / Green Belt (chest reward) with `tools/world/belts/name_belts.py` (2 templates + 1 item; at go live:
+  stop-send, run on Server/.dat, get). Their pictures are fine in MyV2's own art (gx00): a preview built from the Godot
+  repo's archives alone shows TLG's sprites for MyV2's numbers, so check item art with MYV2_CLIENT set to MyV2's Client.
   **Syncing the PC's Godot-Client copy:** the device shell's `git reset` / writing files over tracked ones was refused
   by the safety check this time; use GitHub Desktop's Fetch / Pull origin (computer use) instead, which also gets LFS.
 - **Nov 27, 16:15: Godot client equipment slots as MyV2 uses them** (myv2 70a5367c code + 85151b1e frame art; released in 3.2.0): Back in TLG's old Card box, Belt in the old Back box, Legs in
