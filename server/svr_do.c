@@ -1957,6 +1957,15 @@ void do_rank(int cn)
 void do_ranks(int cn)
 {
 	int r,me=points2rank(ch[cn].points_tot); char a[16];
+	if (help_rows) {	// the Help window's Ranks page (help.c)
+		char num[8],name[40]; const char *cells[3];
+		for (r=0; r<24; r++) {
+			snprintf(num,sizeof(num),"%d",r+1); snprintf(name,sizeof(name),"%s%s",rank_name[r],r==me ? "  (you)" : "");
+			cells[0]=num; cells[1]=name; cells[2]=commas(rank_start[r],a);
+			help_cells(r==me ? 2 : 1,3,cells);
+		}
+		return;
+	}
 	do_char_log(cn,1,"The ranks and the experience they start at:\n");
 	for (r=0; r<24; r++) do_char_log(cn,r==me ? 2 : 1,"%2d. %-20s %12s%s\n",r+1,rank_name[r],commas(rank_start[r],a),r==me ? "  <-" : "");
 }

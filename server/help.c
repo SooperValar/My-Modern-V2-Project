@@ -7,7 +7,8 @@
  * 0, 1, 2... of the same row / column, which the client joins.
  * Pages reuse the chat commands: while a page is built (help_capture_cn) do_char_log() turns their lines into the
  * page's text lines, and help_line() / #quest's list (help_rows) give table rows instead of chat lines.
- * Pages: 1 commands (#help), 2 quests (arg 1: all), 3 one quest in detail (arg: its number, +0x8000: of "all"). */
+ * Pages: 1 commands (#help), 2 quests (arg 1: all), 3 one quest in detail (arg: its number, +0x8000: of "all"),
+ * 4 areas (#areas), 5 kill quests (#kills), 6 ranks (#ranks, then #rank under the table), 7 who is online (#who). */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -62,7 +63,7 @@ void help_capture_line(int font,const char *text)
 	while (len>0 && (buf[len-1]=='\n' || buf[len-1]==' ')) buf[--len]=0;
 	if (help_rows) {
 		const char *cells[2];
-		if (!len) return;
+		if (!len || strspn(buf,"-")==(size_t)len) return;
 		if (len<40 && buf[len-1]==':') { cells[0]=buf; cells[1]=""; help_cells(font,2,cells); return; }
 	}
 	hp_send(3,hp_line++,0,font,buf);
@@ -96,6 +97,29 @@ void plr_cmd_help(int nr)
 			help_rows=0;
 			sprintf(num,"%d",arg&0x7fff);
 			do_quest(cn,num,(arg&0x8000) ? "all" : NULL);
+			break;
+		case HELP_AREAS:
+			help_rows=1;
+			help_heading(0,0,"Area"); help_heading(1,0,"Progress");
+			do_areas(cn);
+			break;
+		case HELP_KILLS:
+			help_rows=1;
+			help_heading(0,1,"#"); help_heading(1,0,"Task"); help_heading(2,0,"Giver"); help_heading(3,0,"Where");
+			help_heading(4,0,"Reward"); help_heading(5,0,"Status");
+			do_kills(cn);
+			break;
+		case HELP_RANKS:
+			help_rows=1;
+			help_heading(0,1,"#"); help_heading(1,0,"Rank"); help_heading(2,1,"Starts at");
+			do_ranks(cn);
+			help_rows=0;
+			do_rank(cn);
+			break;
+		case HELP_WHO:
+			help_rows=1;
+			help_heading(0,0,"Rank"); help_heading(1,0,"Name"); help_heading(2,0,"Group"); help_heading(3,0,"Where");
+			user_who(cn);
 			break;
 	}
 	help_capture_cn=0; help_rows=0;

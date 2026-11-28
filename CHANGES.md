@@ -129,7 +129,10 @@ of 3.0.0 and up, so merc.exe never sees a message it doesn't know.
   argument) and the server answers with `SV_HELP` (82, 64 bytes: page, kind (start / heading / cell / line / end), row,
   column, colour, part, 56 letters). Pages: 1 Commands (what `#help` lists, as a two-column table), 2 Quests (every quest
   as # / giver / where / reward / exp, no paging; argument 1 = all quests), 3 one quest's details (argument = quest number,
-  +0x8000 for "all"). The pages are made by the same `do_help` / `do_quest` code as the chat, captured while it runs
+  +0x8000 for "all"), 4 Areas (`#areas`: area / progress), 5 Kill quests (`#kills`: # / task / giver / where / reward /
+  status, the notes on a second row), 6 Ranks (`#ranks` as rank / starts at, yours green, then `#rank` under the table),
+  7 Who (`#who`: rank / name / group (Purple, PoH, PoH leader) / where, your Ghost Companion, then the player count).
+  Pages 4-7 built Nov 27 evening, NOT live yet. The pages are made by the same `do_help` / `do_quest` code as the chat, captured while it runs
   (`help_capture_line`), so chat and window never disagree. Old clients never ask, so nothing changes for them.
 - **Planner helpers** (`svr_do.c` fight_skill_number, `client.h` META_SPEEDSTEP / META_WEAPONSKILL): two meta stats
   the client never shows, for the Godot client's planner: slot 86 is the attack speed's speedtab row counted the old way, 0-19 (`ch_attack_step` - SPEED_OLDFAST) and slot 87 the
@@ -214,8 +217,10 @@ A new HUD drawn on its own canvas (window size ÷ 1.5) and composited over the w
 - **Help window** (client 3.2.0, Nov 27): a **Help** button under Hide (next to Options), `/help`
   or `#help`, opens a window with tabs. **Commands**: every player command and what it does. **Quests**: every quest with
   giver, place, reward and exp; click one for its details (Back returns), "Show all quests" includes the done ones (blue).
-  `/quest`, `/quest all`, `/quest <n>` open the Quests tab too. `/who` stays in chat (and will get a tab later). Planned
-  tabs: Areas, Kill quests, Ranks, Who; then Armor, Weapons, Rings, Belts, Special items. Frame art: `tools/myv2-hud/helpbtn.py`.
+  **Areas**: every area clear and your progress. **Kill quests**: yours with giver, place, reward and status. **Ranks**:
+  every rank and the exp it starts at, yours green, and how far you are to the next. **Who**: who is online, where.
+  `/quest`, `/quest all`, `/quest <n>`, `/areas`, `/kills`, `/ranks` open their tab; `/who` stays in chat too. Long
+  cells wrap. (Areas to Who: built Nov 27 evening, not released.) Planned: Armor, Weapons, Rings, Belts, Special items. Frame art: `tools/myv2-hud/helpbtn.py`.
 - **Item tooltips**: rest the mouse on an item in the backpack, the equipment or an open shop or grave for a moment and a small window shows it: name, weapon/armor value, bonuses (green), what it does when activated, requirements (red when your base values don't meet them, including rank and Seyan'Du/Purple-only items), condition, and value. In a shop it shows the price you'd pay with your Bartering; with a shop open, backpack items show what that merchant would pay, or that he doesn't buy that kind of item; elsewhere the base value. Plus the first lines of the description (up to 6). Answers are reused for 5 seconds. Lines of other panels are cut out under the tooltip in the clean theme. Everything is shown openly, because the same numbers are in `#armor`, `#belt`, `#rings` and so on; a new item flag `IF_NEEDIDENT` (bit 40, unused for now) hides an item's powers until it is identified, for unique late-game equipment.
 - **Buff timers**: a small panel between the character panel and the chat lists every spell on you with the time left (m:ss, or h:mm:ss). Harmful spells (curse, stun, warcry) are red, and a buff's time turns red in its last 30 seconds. The client counts down between updates. The panel is hidden when the window is too narrow for it.
 - **Hotkeys**: Ctrl+1 to Ctrl+9, Ctrl+0, Ctrl+- and Ctrl+= fire skill buttons 1-12 (left to right, top to bottom), next to the original Shift/Ctrl+F1-F12.

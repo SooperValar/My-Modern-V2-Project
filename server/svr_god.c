@@ -854,6 +854,19 @@ void user_who(int cn)
                 if ((ch[n].flags&CF_GOD) && !(ch[cn].flags&CF_GOD)) showarea=0;
                 if ((ch[n].kindred&KIN_PURPLE) && !(ch[cn].flags&(CF_GOD|CF_IMP|CF_USURP))) showarea=0;
 
+                if (help_rows) {	/* the Help window's Who page (help.c) */
+                        char rank[8],group[40]; const char *cells[4];
+                        const char *rk=who_rank_name[points2rank(ch[n].points_tot)];
+                        while (*rk==' ') rk++;
+                        snprintf(rank,sizeof(rank),"%.5s",rk);
+                        for (int k=strlen(rank)-1; k>=0 && rank[k]==' '; k--) rank[k]=0;
+                        snprintf(group,sizeof(group),"%s%s%s",IS_PURPLE(n) ? "Purple" : "",
+                                IS_PURPLE(n) && (ch[n].flags&(CF_POH|CF_POH_LEADER)) ? ", " : "",
+                                (ch[n].flags&CF_POH_LEADER) ? "PoH leader" : (ch[n].flags&CF_POH) ? "PoH" : "");
+                        cells[0]=rank; cells[1]=ch[n].name; cells[2]=group; cells[3]=!showarea ? "--------" : get_area(n,0);
+                        help_cells(font,4,cells);
+                        continue;
+                }
                 do_char_log(cn,font,"%.5s %-10.10s%c%c%c %.23s\n",
                         who_rank_name[points2rank(ch[n].points_tot)],
                         ch[n].name,
@@ -862,14 +875,17 @@ void user_who(int cn)
                         (ch[n].flags&CF_POH_LEADER) ? '+' : ' ',
                         !showarea ? "--------" : get_area(n,0));
         }
-        if ((gc=ch[cn].data[CHD_COMPANION]) && IS_SANECHAR(gc)) {
+        if ((gc=ch[cn].data[CHD_COMPANION]) && IS_SANECHAR(gc) && help_rows) {
+                const char *cells[4]={"",ch[gc].name,"your Ghost Companion",get_area(gc,0)};
+                help_cells(3,4,cells);
+        } else if ((gc=ch[cn].data[CHD_COMPANION]) && IS_SANECHAR(gc)) {
                 do_char_log(cn,3,"%4d: %-10.10s@ %-8.8s %.20s\n",
                                 gc,ch[gc].name,
                                 int2str(ch[gc].points_tot),
                         get_area(gc,0));
         }
         do_char_log(cn,1,"-----------------------------------------------\n");
-        do_char_log(cn,1,"%3d player%s online.\n",
+        do_char_log(cn,1,help_rows ? "%d player%s online.\n" : "%3d player%s online.\n",
                     players, (players > 1) ? "s" : "");
 }
 

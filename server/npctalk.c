@@ -1593,10 +1593,18 @@ void do_areas(int cn)
 	clrow_get(cn,&r);
 	for (a=1; a<=MAXCLEAR; a++) {
 		if (!clears[a].used) continue;
-		if (!shown) do_char_log(cn,1,"Areas to clear:\n");
+		if (!shown && !help_rows) do_char_log(cn,1,"Areas to clear:\n");
 		shown++;
 		can=clear_ready(cn,a,&r);
 		cnt=popcount64(r.mask[a]);
+		if (help_rows) {	// the Help window's Areas page (help.c)
+			char prog[80]; const char *cells[2];
+			if (!can) snprintf(prog,sizeof(prog),"cleared%s%s%s",clear_name(a)!=clears[a].zone ? " (" : "",clear_name(a)!=clears[a].zone ? clears[a].label : "",clear_name(a)!=clears[a].zone ? ")" : "");
+			else snprintf(prog,sizeof(prog),"%d/%d %s%s",cnt,clears[a].n,clears[a].label[0] ? clears[a].label : "enemies",(r.fl[a]&CLR_RUN2) ? ", again as Seyan'Du" : "");
+			cells[0]=clears[a].zone; cells[1]=prog;
+			help_cells(can ? 1 : 3,2,cells);
+			continue;
+		}
 		if (!can) do_char_log(cn,3,"  %-24.24s cleared%s%s%s\n",clears[a].zone,clear_name(a)!=clears[a].zone ? " (" : "",clear_name(a)!=clears[a].zone ? clears[a].label : "",clear_name(a)!=clears[a].zone ? ")" : "");
 		else if (r.fl[a]&CLR_RUN2) do_char_log(cn,1,"  %-24.24s %d/%d %s, again as Seyan'Du\n",clears[a].zone,cnt,clears[a].n,clears[a].label[0] ? clears[a].label : "enemies");
 		else do_char_log(cn,1,"  %-24.24s %d/%d %s\n",clears[a].zone,cnt,clears[a].n,clears[a].label[0] ? clears[a].label : "enemies");
@@ -2011,7 +2019,7 @@ void do_kills(int cn)
 		if (!kq[a].used) continue;
 		why=kq_why(cn,&r,a,&wait); font=1;
 		if (why==KW_REQ && !r.st[a]) continue;	// hidden until its requirements are met
-		if (!nr) kqlog(cn,1,"Kill quests:\n");
+		if (!nr && !help_rows) kqlog(cn,1,"Kill quests:\n");
 		nr++;
 		if (r.st[a]==KQ_READY) snprintf(st,sizeof(st),"done: return to %s",ch_temp[kq[a].giver].name);
 		else if (r.st[a]==KQ_TAKEN && kq[a].tlimit) snprintf(st,sizeof(st),"%d/%d, %s left",r.cnt[a],kq[a].count,kq_mins((kq[a].tlimit*60-((int)time(NULL)-r.t0[a])+59)/60));
@@ -2024,8 +2032,18 @@ void do_kills(int cn)
 		else if (why==KW_WAIT) { snprintf(st,sizeof(st),"again in %s",kq_mins(wait)); font=3; }
 		else snprintf(st,sizeof(st),"say QUEST to %s",ch_temp[kq[a].giver].name);
 		if (r.st[a]) font=2;
-		kqlog(cn,font,"%2d Kill %d %s%s - %s\n",nr,kq[a].count,kq_label(a),kq_where(a),st);
-		kqlog(cn,1,"   %s, %s. Reward: %s\n",ch_temp[kq[a].giver].name,get_area_street(ch_temp[kq[a].giver].x,ch_temp[kq[a].giver].y),kq_reward_text(a,r.done[a]));
+		if (help_rows) {	// the Help window's Kill quests page (help.c): one row, its notes on a second
+			char num[8],task[160],where[120],reward[200]; const char *cells[6];
+			snprintf(num,sizeof(num),"%d",nr);
+			snprintf(task,sizeof(task),"Kill %d %s%s",kq[a].count,kq_label(a),kq_where(a));
+			snprintf(where,sizeof(where),"%s",get_area_street(ch_temp[kq[a].giver].x,ch_temp[kq[a].giver].y));
+			snprintf(reward,sizeof(reward),"%s",kq_reward_text(a,r.done[a]));
+			cells[0]=num; cells[1]=task; cells[2]=ch_temp[kq[a].giver].name; cells[3]=where; cells[4]=reward; cells[5]=st;
+			help_cells(font,6,cells);
+		} else {
+			kqlog(cn,font,"%2d Kill %d %s%s - %s\n",nr,kq[a].count,kq_label(a),kq_where(a),st);
+			kqlog(cn,1,"   %s, %s. Reward: %s\n",ch_temp[kq[a].giver].name,get_area_street(ch_temp[kq[a].giver].x,ch_temp[kq[a].giver].y),kq_reward_text(a,r.done[a]));
+		}
 		o=0; tm[0]=0;
 		if (!kq[a].limit) o+=snprintf(tm+o,sizeof(tm)-o,"repeatable%s",r.done[a] ? "" : "");
 		else if (kq[a].limit>1) o+=snprintf(tm+o,sizeof(tm)-o,"%d of %d times",r.done[a],kq[a].limit);
@@ -2034,7 +2052,8 @@ void do_kills(int cn)
 		if (kq[a].rmin1 || kq[a].rmax1) o+=snprintf(tm+o,sizeof(tm)-o,"%srank %s%s%s",o ? ", " : "",kq[a].rmin1 ? rank_name[kq[a].rmin1-1] : "",
 		      kq[a].rmax1 ? (kq[a].rmin1 ? " to " : "up to ") : "+",kq[a].rmax1 ? rank_name[kq[a].rmax1-1] : "");
 		if (kq[a].cmask) o+=snprintf(tm+o,sizeof(tm)-o,"%s%s",o ? ", " : "",kq_class_text(kq[a].cmask));
-		if (o) kqlog(cn,1,"   (%s)\n",tm);
+		if (o && help_rows) { const char *cells[2]={"",tm}; help_cells(3,2,cells); }
+		else if (o) kqlog(cn,1,"   (%s)\n",tm);
 	}
 	if (!nr) kqlog(cn,1,"There are no kill quests for you yet.\n");
 }

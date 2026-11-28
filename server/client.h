@@ -226,6 +226,10 @@ struct cplayer
 #define HELP_COMMANDS			1
 #define HELP_QUESTS			2
 #define HELP_QUEST			3
+#define HELP_AREAS			4
+#define HELP_KILLS			5
+#define HELP_RANKS			6
+#define HELP_WHO			7
 
 #define CL_CMD_CTICK			255
 

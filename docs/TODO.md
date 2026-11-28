@@ -24,7 +24,8 @@ world, quests, the editor, the client and Discord. Merged Nov 10 from the old TO
   new sets small (2 variants, 3x3 water) and record every range in SPRITE_MAP.md.
 
 - ◐ **Help window instead of chat info** (Cody, Nov 27: "move away from in chat info and towards a help menu"; "I will
-  definitely want to expand it later"). Step 1 LIVE (Commands + Quests tabs, Help button, `/help`; client 3.2.0, Nov 27). Step 2: Areas, Kill quests, Ranks, Who tabs (`/who` stays in chat too). Step 3: Armor, Weapons, Rings,
+  definitely want to expand it later"). Step 1 LIVE (Commands + Quests tabs, Help button, `/help`; client 3.2.0, Nov 27). Step 2 (Areas, Kill quests, Ranks, Who) built Nov 27 evening:
+  server not live, client not pushed (see HANDOFF). Step 3: Armor, Weapons, Rings,
   Belts, Special items. Each tab = a page number in `help.c` that captures the chat command's output.
 
 - ● **Godot client for MyV2** (Cody, Nov 21): built from github.com/jamesblack/thelastgate-godot (James OK'd it). `docs/GODOT_CLIENT.md`. Groups A and B done (Nov 25). **Nov 25: MyV2 switches to the Godot client only** (merc.exe dropped): work through the gap list in "The switch", then the server refuses old clients (done), then the 60-slot backpack (live Nov 26, 13:36). Later: the Editor and tools/world read slots 40-59 (item2). Step 6 (installer + updater) done: client 3.0.0 released Nov 26; Discord #welcome points to its Setup.exe. Buffer GC on hold (Cody, Nov 26: likely part of a new class later). Later: delete the test releases (Cody has no gh: delete them on the GitHub releases page, then `git push origin --delete updater-test-v0.9.0 updater-test-v0.9.1`).

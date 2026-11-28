@@ -250,6 +250,10 @@ myv2 / release v3.0.0).
   strip inside the frame, like Options; Cody: "the top of the help window doesn't seem finished") and 80970bba (belts
   centred in the Belt box: belt sprites 16660-16666 draw on the bottom rows of their 32 px, so the slot's
   `CentresItemHeight` lifts the item to the middle). Held until the Help window is finished (Cody: release in chunks).
+  **Help step 2 (Nov 27, 19:40): Areas, Kill quests, Ranks, Who tabs** - client myv2 a4cd2a98 (cloud clone, NOT pushed),
+  server help.c pages 4-7 + npctalk.c (do_areas, do_kills), svr_do.c (do_ranks), svr_god.c (user_who) table branches:
+  NOT live (needs "go live"; safe for 3.2 clients, which never ask for those pages). The live npctalk.dat has no kill
+  quests yet, so that tab says "There are no kill quests for you yet" (layout checked with sample rows). Next: step 3.
   **Syncing the PC's Godot-Client copy:** the device shell's `git reset` / writing files over tracked ones was refused
   by the safety check this time; use GitHub Desktop's Fetch / Pull origin (computer use) instead, which also gets LFS.
 - **Nov 27, 16:15: Godot client equipment slots as MyV2 uses them** (myv2 70a5367c code + 85151b1e frame art; released in 3.2.0): Back in TLG's old Card box, Belt in the old Back box, Legs in
