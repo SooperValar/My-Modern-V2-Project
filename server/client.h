@@ -230,6 +230,11 @@ struct cplayer
 #define HELP_KILLS			5
 #define HELP_RANKS			6
 #define HELP_WHO			7
+#define HELP_ARMOR			8
+#define HELP_WEAPONS			9
+#define HELP_RINGS			10
+#define HELP_BELTS			11
+#define HELP_SPECIAL			12
 
 #define CL_CMD_CTICK			255
 

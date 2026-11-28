@@ -8,7 +8,9 @@
  * Pages reuse the chat commands: while a page is built (help_capture_cn) do_char_log() turns their lines into the
  * page's text lines, and help_line() / #quest's list (help_rows) give table rows instead of chat lines.
  * Pages: 1 commands (#help), 2 quests (arg 1: all), 3 one quest in detail (arg: its number, +0x8000: of "all"),
- * 4 areas (#areas), 5 kill quests (#kills), 6 ranks (#ranks, then #rank under the table), 7 who is online (#who). */
+ * 4 areas (#areas), 5 kill quests (#kills), 6 ranks (#ranks, then #rank under the table), 7 who is online (#who),
+ * 8 armor (#armor and #moddedarmor), 9 weapons (every weapon type), 10 rings, 11 belts, 12 special items (#specialw and
+ * #specialarmor). */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -120,6 +122,35 @@ void plr_cmd_help(int nr)
 			help_rows=1;
 			help_heading(0,0,"Rank"); help_heading(1,0,"Name"); help_heading(2,0,"Group"); help_heading(3,0,"Where");
 			user_who(cn);
+			break;
+		case HELP_ARMOR:
+			help_rows=1;
+			help_heading(0,0,"Armor"); help_heading(1,1,"Needs AGL"); help_heading(2,1,"Needs STR"); help_heading(3,1,"AV per piece"); help_heading(4,1,"Full set");
+			do_info_armor(cn);
+			do_info_moddedarmor(cn);
+			break;
+		case HELP_WEAPONS:
+			help_rows=1;
+			help_heading(0,0,"Weapon"); help_heading(1,1,"Needs AGL"); help_heading(2,1,"Needs STR"); help_heading(3,1,"Needs skill"); help_heading(4,1,"WV");
+			help_weapons(cn);
+			break;
+		case HELP_RINGS:
+			help_rows=1;
+			help_heading(0,0,"Ring"); help_heading(1,0,"Rank"); help_heading(2,0,"Silver"); help_heading(3,0,"Golden");
+			do_info_rings(cn);
+			break;
+		case HELP_BELTS:
+			help_rows=1;
+			help_heading(0,0,"Belt"); help_heading(1,0,"Needs");
+			help_heading(2,1,"BR"); help_heading(3,1,"WI"); help_heading(4,1,"IN"); help_heading(5,1,"AG"); help_heading(6,1,"ST");
+			help_heading(7,1,"HP"); help_heading(8,1,"EN"); help_heading(9,1,"MA"); help_heading(10,0,"Skills");
+			do_info_belt(cn);
+			break;
+		case HELP_SPECIAL:
+			help_rows=1;
+			help_heading(0,0,"Item"); help_heading(1,0,"Type"); help_heading(2,0,"Needs"); help_heading(3,1,"WV / AV"); help_heading(4,0,"Gives");
+			do_info_specialw(cn);
+			do_info_specialarmor(cn);
 			break;
 	}
 	help_capture_cn=0; help_rows=0;

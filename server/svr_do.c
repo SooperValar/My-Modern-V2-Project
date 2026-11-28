@@ -1611,6 +1611,8 @@ static void info_tier(int t,char *out)	// first word of the template name ("Bron
 	out[n]=0;
 }
 
+static void info_n(char *out,int v);
+
 static void info_num(char *out,int v)	// right aligned 3 wide, '.' for 0
 {
 	if (v) sprintf(out,"%3d",v);
@@ -1623,20 +1625,30 @@ void do_info_armor(int cn)
 	int n,t;
 	char tier[16];
 
-	do_char_log(cn,1,"Now listing armor:\n");
-	do_char_log(cn,1," \n");
-	do_char_log(cn,1," Armor     |  Needs   | AV per | Full set\n");
-	do_char_log(cn,1," Tier      | AGL  STR |  piece |   (x6)\n");
-	do_char_log(cn,1,"-----------+----------+--------+---------\n");
+	if (!help_rows) {
+		do_char_log(cn,1,"Now listing armor:\n");
+		do_char_log(cn,1," \n");
+		do_char_log(cn,1," Armor     |  Needs   | AV per | Full set\n");
+		do_char_log(cn,1," Tier      | AGL  STR |  piece |   (x6)\n");
+		do_char_log(cn,1,"-----------+----------+--------+---------\n");
+	}
 	for (n=0; n<(int)(sizeof(tiers)/sizeof(int)); n++) {
 		t=tiers[n];
 		if (it_temp[t].used==USE_EMPTY) continue;
 		info_tier(t,tier);
+		if (help_rows) {	// the Help window's Armor page (help.c)
+			char ag[8],st[8],av[8],set[8]; const char *c[5]={tier,ag,st,av,set};
+			info_n(ag,it_temp[t].attrib[AT_AGIL][2]); info_n(st,it_temp[t].attrib[AT_STREN][2]);
+			sprintf(av,"%d",it_temp[t].armor[0]); sprintf(set,"%d",it_temp[t].armor[0]*6);
+			help_cells(1,5,c);
+			continue;
+		}
 		do_char_log(cn,1," %-9s | %3d  %3d |   %3d  |   %3d\n",tier,
 			it_temp[t].attrib[AT_AGIL][2],it_temp[t].attrib[AT_STREN][2],it_temp[t].armor[0],it_temp[t].armor[0]*6);
 	}
 	do_char_log(cn,1," \n");
 	do_char_log(cn,2,"* Helmet, cloak, armor, sleeves, leggings and boots of a tier all give the same armor value.\n");
+	if (help_rows) return;
 	do_char_log(cn,1," \n");
 	do_char_log(cn,2,"* #specialarmor lists unique armor (Fire, Ice, ...).\n");
 	do_char_log(cn,2,"* #moddedarmor lists the magic names (of the Lion, ...).\n");
@@ -1647,6 +1659,18 @@ static void info_weapon_table(int cn,char *what,char *skill,int sk,int *t,int cn
 	int n;
 	char tier[16];
 
+	if (help_rows) {	// the Help window's Weapons page (help.c): a section of the one table
+		char ag[8],st[8],sv[8],wv[8]; const char *c[5]={NULL,ag,st,sv,wv};
+		do_char_log(cn,1,"%c%s:\n",toupper(what[0]),what+1);
+		for (n=0; n<cnt; n++) {
+			if (it_temp[t[n]].used==USE_EMPTY) continue;
+			c[0]=it_temp[t[n]].name;
+			info_n(ag,it_temp[t[n]].attrib[AT_AGIL][2]); info_n(st,it_temp[t[n]].attrib[AT_STREN][2]);
+			info_n(sv,it_temp[t[n]].skill[sk][2]); sprintf(wv,"%d",it_temp[t[n]].weapon[0]);
+			help_cells(1,5,c);
+		}
+		return;
+	}
 	do_char_log(cn,1,"Now listing %s:\n",what);
 	do_char_log(cn,1," \n");
 	do_char_log(cn,1," Weapon    |     Needs:          | Gives\n");
@@ -1667,39 +1691,54 @@ static void info_blessed(int cn)
 	do_char_log(cn,2,"* Skua's, Purple One's, Kwai's and Gorn's versions need the same. Skua's and Purple One's give +5 WV and can be used once for their god's protection (more armor and resistance); Kwai's and Gorn's give +4 WV.\n");
 }
 
+static int info_swords[]={31,32,33,34,524},info_daggers[]={27,28,29,30,523},info_twohands[]={35,36,37,38,125};
+static int info_greataxes[]={AXE2H_T_BRONZE,AXE2H_T_BRONZE+1,AXE2H_T_BRONZE+2,AXE2H_T_BRONZE+3,AXE2H_T_BRONZE+4},info_axes[]={501,158,502};
+
 void do_info_sword(int cn)
 {
-	static int t[]={31,32,33,34,524};
-	info_weapon_table(cn,"swords","Sword",SK_SWORD,t,5);
+	info_weapon_table(cn,"swords","Sword",SK_SWORD,info_swords,5);
 	info_blessed(cn);
 }
 
 void do_info_dagger(int cn)
 {
-	static int t[]={27,28,29,30,523};
-	info_weapon_table(cn,"daggers","Dagger",SK_DAGGER,t,5);
+	info_weapon_table(cn,"daggers","Dagger",SK_DAGGER,info_daggers,5);
 	info_blessed(cn);
 }
 
 void do_info_twohand(int cn)
 {
-	static int t[]={35,36,37,38,125};
-	info_weapon_table(cn,"two-handed swords","2Hand",SK_TWOHAND,t,5);
+	info_weapon_table(cn,"two-handed swords","2Hand",SK_TWOHAND,info_twohands,5);
 	info_blessed(cn);
 	{ int c=wp2h_chance(cn,0); do_char_log(cn,2,"* Two-handed swords take both hands: no shield. Deflect: while you wield one, some melee hits against you are deflected: %d%% to %d%%, more with Agility (you: %d.%d%%).\n",WP2H_MIN/10,WP2H_MAX/10,c/10,c%10); }
 }
 
 void do_info_greataxe(int cn)
 {
-	static int t[]={AXE2H_T_BRONZE,AXE2H_T_BRONZE+1,AXE2H_T_BRONZE+2,AXE2H_T_BRONZE+3,AXE2H_T_BRONZE+4};
-	info_weapon_table(cn,"greataxes","GrAxe",SK_AXE2H,t,5);
+	info_weapon_table(cn,"greataxes","GrAxe",SK_AXE2H,info_greataxes,5);
 	{ int c=wp2h_chance(cn,1); do_char_log(cn,2,"* Greataxes take both hands: no shield. Critical hits: some of your hits do double damage: %d%% to %d%%, more with Strength (you: %d.%d%%).\n",WP2H_MIN/10,WP2H_MAX/10,c/10,c%10); }
 }
 
 void do_info_axe(int cn)
 {
-	static int t[]={501,158,502};
-	info_weapon_table(cn,"axes","Axe",SK_AXE,t,3);
+	info_weapon_table(cn,"axes","Axe",SK_AXE,info_axes,3);
+}
+
+/* MyV2: the Help window's Weapons page (help.c): every weapon type in one table, then the notes */
+void help_weapons(int cn)
+{
+	int c;
+	info_weapon_table(cn,"daggers","Dagger",SK_DAGGER,info_daggers,5);
+	info_weapon_table(cn,"swords","Sword",SK_SWORD,info_swords,5);
+	info_weapon_table(cn,"two-handed swords","2Hand",SK_TWOHAND,info_twohands,5);
+	info_weapon_table(cn,"axes","Axe",SK_AXE,info_axes,3);
+	info_weapon_table(cn,"greataxes","GrAxe",SK_AXE2H,info_greataxes,5);
+	do_char_log(cn,2,"* Weapon value (WV) only counts if your skill for that weapon type is high enough.\n");
+	info_blessed(cn);
+	c=wp2h_chance(cn,0);
+	do_char_log(cn,2,"* Two-handed swords take both hands: no shield. Deflect: while you wield one, some melee hits against you are deflected: %d%% to %d%%, more with Agility (you: %d.%d%%).\n",WP2H_MIN/10,WP2H_MAX/10,c/10,c%10);
+	c=wp2h_chance(cn,1);
+	do_char_log(cn,2,"* Greataxes take both hands: no shield. Critical hits: some of your hits do double damage: %d%% to %d%%, more with Strength (you: %d.%d%%).\n",WP2H_MIN/10,WP2H_MAX/10,c/10,c%10);
 }
 
 // "needs" and "gives" text of a special item
@@ -1742,10 +1781,13 @@ void do_info_specialw(int cn)
 	char name[60],*p,typ[8],buf[200],tmp[100],mark[4],wv[12],ag[8],st[8],sv[8];
 	char notes[9][220];
 
-	do_char_log(cn,1,"Now listing special weapons:\n");
-	do_char_log(cn,1," \n");
-	do_char_log(cn,1," Weapon            Type  AGL STR Skill    WV\n");	// 43 wide: the Godot chat (Nov 27)
-	do_char_log(cn,1,"-------------------------------------------\n");
+	if (help_rows) do_char_log(cn,1,"Weapons:\n");	// the Help window's Special items page (help.c)
+	else {
+		do_char_log(cn,1,"Now listing special weapons:\n");
+		do_char_log(cn,1," \n");
+		do_char_log(cn,1," Weapon            Type  AGL STR Skill    WV\n");	// 43 wide: the Godot chat (Nov 27)
+		do_char_log(cn,1,"-------------------------------------------\n");
+	}
 	for (n=0; n<(int)(sizeof(t)/sizeof(int)); n++) {
 		tn=t[n];
 		if (it_temp[tn].used==USE_EMPTY) continue;
@@ -1778,12 +1820,20 @@ void do_info_specialw(int cn)
 
 		if (tn==682) sprintf(wv,"%d-%d",it_temp[tn].weapon[0],it_temp[tn].weapon[0]+80);
 		else sprintf(wv,"%d",it_temp[tn].weapon[0]);
+		if (help_rows) {
+			char needs[300],gives[200]; const char *c[5]={it_temp[tn].name,typ,needs,wv,gives};
+			info_needs(tn,needs); info_gives(tn,gives);
+			if (tn==682) sprintf(gives,"Seyan'Du only. +4 WV for each of the %d shrines of Kwai visited",SEYAN_SHRINES);
+			help_cells(1,5,c);
+			continue;
+		}
 		info_n(ag,it_temp[tn].attrib[AT_AGIL][2]);
 		info_n(st,it_temp[tn].attrib[AT_STREN][2]);
 		info_n(sv,it_temp[tn].skill[sk][2]);
 
 		do_char_log(cn,1," %-16.16s%1s %-5s %3s %3s %4s %5s\n",name,mark,typ,ag,st,sv,wv);
 	}
+	if (help_rows) return;
 	do_char_log(cn,1," \n");
 	for (n=0; n<note; n++) do_char_log(cn,2,"%s\n",notes[n]);
 }
@@ -1808,11 +1858,13 @@ void do_info_belt(int cn)
 	int n,m,k,sk,dup;
 	char name[24],a[5][4],h[3][4],need[30];
 
-	do_char_log(cn,1,"Now listing belts:\n");
-	do_char_log(cn,1," \n");
-	do_char_log(cn,1,"                     |    Gives:     |\n");	// 47 wide: the Godot chat (Nov 27)
-	do_char_log(cn,1,"Belt           Needs | BR WI IN AG ST| HP EN MA\n");
-	do_char_log(cn,1,"---------------------+---------------+---------\n");
+	if (!help_rows) {
+		do_char_log(cn,1,"Now listing belts:\n");
+		do_char_log(cn,1," \n");
+		do_char_log(cn,1,"                     |    Gives:     |\n");	// 47 wide: the Godot chat (Nov 27)
+		do_char_log(cn,1,"Belt           Needs | BR WI IN AG ST| HP EN MA\n");
+		do_char_log(cn,1,"---------------------+---------------+---------\n");
+	}
 	for (n=0; n<(int)(sizeof(t)/sizeof(int)); n++) {
 		if (it_temp[t[n]].used==USE_EMPTY) continue;
 		// "Leather Belt" twice: tell them apart
@@ -1824,6 +1876,17 @@ void do_info_belt(int cn)
 		need[0]=0;
 		for (k=0; k<5; k++) if (it_temp[t[n]].attrib[k][2]) sprintf(need,"%s %d",info_at2[k],it_temp[t[n]].attrib[k][2]);
 		if (it_temp[t[n]].hp[2]) sprintf(need,"HP %d",it_temp[t[n]].hp[2]);
+		if (help_rows) {	// the Help window's Belts page (help.c)
+			char sks[40]=""; const char *c[11];
+			for (sk=0,m=0,k=0; k<50; k++) if (it_temp[t[n]].skill[k][0]) { if (!sk) m=it_temp[t[n]].skill[k][0]; sk++; }
+			if (sk) sprintf(sks,"%+d to %d spells and skills",m,sk);
+			c[0]=name; c[1]=need[0] ? need+(need[0]==' ') : "-";
+			for (k=0; k<5; k++) c[2+k]=strcmp(a[k],"  .") ? a[k]+strspn(a[k]," ") : "";
+			for (k=0; k<3; k++) c[7+k]=strcmp(h[k],"  .") ? h[k]+strspn(h[k]," ") : "";
+			c[10]=sks;
+			help_cells(1,11,c);
+			continue;
+		}
 		if (!strcmp(name,"Belt of Hitpoints")) strcpy(name,"Belt of HP");
 		do_char_log(cn,1,"%-14.14s %-6s|%s%s%s%s%s|%s%s%s\n",name,need[0] ? need : "-",a[0],a[1],a[2],a[3],a[4],h[0],h[1],h[2]);
 		for (sk=0,m=0,k=0; k<50; k++) if (it_temp[t[n]].skill[k][0]) { if (!sk) m=it_temp[t[n]].skill[k][0]; sk++; }
@@ -1887,20 +1950,29 @@ void do_info_specialarmor(int cn)
 	char needs[80],gives[400],mark[4];
 	char notes[8][420];
 
-	do_char_log(cn,1,"Now listing special armor:\n");
-	do_char_log(cn,1," \n");
-	do_char_log(cn,1,"Armor                Slot  AV Needs\n");	// 48 wide: the Godot chat (Nov 27)
-	do_char_log(cn,1,"------------------------------------------------\n");
+	if (help_rows) do_char_log(cn,1,"Armor:\n");	// the Help window's Special items page (help.c)
+	else {
+		do_char_log(cn,1,"Now listing special armor:\n");
+		do_char_log(cn,1," \n");
+		do_char_log(cn,1,"Armor                Slot  AV Needs\n");	// 48 wide: the Godot chat (Nov 27)
+		do_char_log(cn,1,"------------------------------------------------\n");
+	}
 	for (n=0; n<(int)(sizeof(a)/sizeof(a[0])); n++) {
 		if (it_temp[a[n].t].used==USE_EMPTY) continue;
 		info_armor_needs(a[n].t,needs);
 		info_gives_all(a[n].t,gives);
+		if (help_rows) {
+			char av[8]; const char *c[5]={strstr(a[n].name," set ") ? a[n].name : it_temp[a[n].t].name,a[n].slot,needs,av,gives};
+			sprintf(av,"%d",it_temp[a[n].t].armor[0]);
+			help_cells(1,5,c);
+			continue;
+		}
 		mark[0]=0;
 		if (gives[0] && note<8) { sprintf(notes[note],"%d) %s: %s.",note+1,a[n].name,gives); note++; sprintf(mark,"%d",note); }
 		do_char_log(cn,1,"%-19s%1s %-5s %2d %.18s\n",a[n].name,mark,a[n].slot,it_temp[a[n].t].armor[0],needs);
 	}
 	do_char_log(cn,1," \n");
-	for (n=0; n<note; n++) do_char_log(cn,2,"%s\n",notes[n]);
+	if (!help_rows) for (n=0; n<note; n++) do_char_log(cn,2,"%s\n",notes[n]);
 	do_char_log(cn,2,"* Fire set bonus (melee): 4 pieces: Weapon Specialization, your weapon's special +%d%% (two-handed sword deflect, greataxe critical hits). 6 pieces: Burning Hits, your melee hits burn for %d%% extra damage.\n",SET_SPECIALTY/10,SET_BURN_PCT);
 	do_char_log(cn,2,"* Ice set bonus (casters): 4 pieces: All Spells +%d. 6 pieces: Frost Armor, %d%% of the melee hits that land on you chill the attacker (Agility and Strength -%d for %d seconds) and hurt it with a little cold.\n",SET_SPELLS,SET_FROST_CHANCE,SET_FROST_ATTR,SET_FROST_TICKS/TICKS);
 	do_char_log(cn,2,"* Needs: \"all 30\" = 30 in every attribute, HEM = Hitpoints, Endurance and Mana.\n");
@@ -1981,10 +2053,12 @@ void do_info_rings(int cn)
 	int s,z,tg,ts;
 	char name[30],sv[30],gv[40],tmp[30],rank[8];
 
-	do_char_log(cn,1,"Now listing rings:\n");
-	do_char_log(cn,1," \n");
-	do_char_log(cn,1,"Stone           Rank Silver    Golden\n");	// 48 wide: the Godot chat (Nov 27)
-	do_char_log(cn,1,"------------------------------------------------\n");
+	if (!help_rows) {
+		do_char_log(cn,1,"Now listing rings:\n");
+		do_char_log(cn,1," \n");
+		do_char_log(cn,1,"Stone           Rank Silver    Golden\n");	// 48 wide: the Godot chat (Nov 27)
+		do_char_log(cn,1,"------------------------------------------------\n");
+	}
 	for (s=0; s<6; s++) {
 		for (z=0; z<4; z++) {
 			tg=gold[s][z]; ts=silver[s][z];
@@ -2007,7 +2081,8 @@ void do_info_rings(int cn)
 				if (rank[strlen(rank)-1]==' ') rank[strlen(rank)-1]=0;
 			} else strcpy(rank,"-");
 
-			do_char_log(cn,1,"%-15s %-4s %-9s %s\n",name,rank,sv,gv);
+			if (help_rows) { const char *c[4]={name,rank,sv,gv}; help_cells(1,4,c); }	// the Help window's Rings page (help.c)
+			else do_char_log(cn,1,"%-15s %-4s %-9s %s\n",name,rank,sv,gv);
 		}
 		if (s<2) do_char_log(cn,1," \n");
 	}
@@ -2023,6 +2098,19 @@ void do_info_rings(int cn)
 
 void do_info_moddedarmor(int cn)
 {
+	if (help_rows) {	// the Help window's Armor page (help.c): text under the tier table
+		static char *row[8][3]={
+			{"of the Lion","+4 Braveness","+8"},{"of the Snake","+4 Willpower","+8"},{"of the Owl","+4 Intuition","+8"},
+			{"of the Weasel","+4 Agility","+8"},{"of the Bear","+4 Strength","+8"},{"of Magic","+10 Mana","+20"},
+			{"of Life","+10 Hitpoints","+20"},{"of Defence","+2 Armor value","+4"}};
+		int n;
+		help_rows=0;
+		do_char_log(cn,1,"Magic names. Bronze, Steel, Golden, Emerald, Crystal and Titanium helmets and body armor found in chests always carry one of these (each 1 in 8):\n");
+		for (n=0; n<8; n++) do_char_log(cn,1,"   %-14s %s (Godly: %s)\n",row[n][0],row[n][1],row[n][2]);
+		do_char_log(cn,2,"* 1 in 8 are \"Godly\" (double bonus), 1 in 8 are \"Shining\" (normal bonus, and the item gives light).\n");
+		help_rows=1;
+		return;
+	}
 	do_char_log(cn,1,"Magic helmets and armor:\n");
 	do_char_log(cn,1," \n");
 	do_char_log(cn,1,"Bronze, Steel, Golden, Emerald, Crystal and Titanium helmets and body armor found in chests always carry one of these:\n");
